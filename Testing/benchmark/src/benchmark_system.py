@@ -299,6 +299,21 @@ def main():
                 double_op_dir = Path(benchmark_result_dir) / "double_operator"
                 if double_op_dir.exists():
                     try:
+                        # First use enhanced_plots.py directly with the double operator results
+                        double_op_results = double_op_dir / "avg_results.csv"
+                        if double_op_results.exists():
+                            double_op_plots_dir = double_op_dir / "plots"
+                            double_op_plots_dir.mkdir(exist_ok=True, parents=True)
+
+                            subprocess.run(
+                                ["python3", str(enhanced_plots_path),
+                                 "--results-csv", str(double_op_results),
+                                 "--output-dir", str(double_op_plots_dir)],
+                                check=True
+                            )
+                            print(f"  Success: Double operator plots created in {double_op_plots_dir}")
+
+                        # Then try the legacy double_plots.py for compatibility
                         double_plots_path = src_dir / "double_plots.py"
                         if double_plots_path.exists():
                             subprocess.run(
@@ -306,7 +321,7 @@ def main():
                                  "--benchmark-dir", str(benchmark_result_dir)],
                                 check=True
                             )
-                            print("  Success: Double operator plots created")
+                            print("  Success: Double operator plots created with legacy script")
                     except Exception as e:
                         print(f"  Error generating double operator plots: {e}")
 
@@ -330,3 +345,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+#pplot latest dir:
+#python3 src/benchmark_system.py   --skip-data-gen   --skip-test-gen   --skip-benchmark   --skip-processing   --output-dir benchmark_results   --use-latest

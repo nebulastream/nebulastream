@@ -93,6 +93,7 @@ def create_double_operator_plots(df, output_dir):
     # Check if necessary columns exist
     required_cols = ['swap_strategy', 'operator_chain', 'buffer_size']
     if not all(col in df.columns for col in required_cols):
+        print(f"Missing required columns. Found: {df.columns.tolist()}")
         return False
 
     # Create plots for each operator ID (3 and 5)
@@ -101,9 +102,11 @@ def create_double_operator_plots(df, output_dir):
         5: ['pipeline_5_eff_tp', 'pipeline_5_comp_tp']
     }
 
+    # First create plots for all data together
     for op_id, metrics in operator_metrics.items():
         for metric in metrics:
             if metric not in df.columns:
+                print(f"Warning: Metric {metric} not found in dataframe")
                 continue
 
             metric_name = 'Effective' if 'eff_tp' in metric else 'Computational'
@@ -116,6 +119,9 @@ def create_double_operator_plots(df, output_dir):
                 values=metric,
                 aggfunc='mean'
             )
+
+            if pivot_df.empty:
+                continue
 
             ax = pivot_df.plot(kind='bar', colormap='viridis')
             plt.title(f'Operator {op_id}: {metric_name} Throughput by Buffer Size')
@@ -132,19 +138,37 @@ def create_double_operator_plots(df, output_dir):
             plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_buffer.png")
             plt.close()
 
-            # Plot by operator chain if multiple chains exist
-            if df['operator_chain'].nunique() > 1:
+    # Create separate plots for each operator chain
+    for chain in df['operator_chain'].unique():
+        chain_df = df[df['operator_chain'] == chain]
+        chain_name = chain.replace(' ', '_').lower()
+
+        # Create chain-specific directory
+        chain_dir = output_dir / f"chain_{chain_name}"
+        chain_dir.mkdir(exist_ok=True, parents=True)
+
+        for op_id, metrics in operator_metrics.items():
+            for metric in metrics:
+                if metric not in chain_df.columns:
+                    continue
+
+                metric_name = 'Effective' if 'eff_tp' in metric else 'Computational'
+
+                # Plot by buffer size for this specific chain
                 plt.figure(figsize=(12, 8))
-                pivot_df = df.pivot_table(
-                    index='operator_chain',
+                pivot_df = chain_df.pivot_table(
+                    index='buffer_size',
                     columns='swap_strategy',
                     values=metric,
                     aggfunc='mean'
                 )
 
+                if pivot_df.empty:
+                    continue
+
                 ax = pivot_df.plot(kind='bar', colormap='viridis')
-                plt.title(f'Operator {op_id}: {metric_name} Throughput by Operator Chain')
-                plt.xlabel('Operator Chain')
+                plt.title(f'{chain} - Op {op_id}: {metric_name} Throughput by Buffer Size')
+                plt.xlabel('Buffer Size')
                 plt.ylabel(f'{metric_name} Throughput (tuples/s)')
                 plt.yscale('log')
                 plt.grid(True, axis='y', linestyle='--', alpha=0.7)
@@ -154,26 +178,56 @@ def create_double_operator_plots(df, output_dir):
                     ax.bar_label(container, fmt='%.2e', rotation=90, padding=3)
 
                 plt.tight_layout()
-                plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_chain.png")
+                plt.savefig(chain_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_buffer.png")
                 plt.close()
 
-    # Create a summary plot comparing swap strategies
-    plt.figure(figsize=(14, 10))
-    sns.barplot(
-        data=df,
-        x='swap_strategy',
-        y='pipeline_3_eff_tp',
-        hue='operator_chain',
-        palette='viridis'
-    )
-    plt.title('Double Operator: Throughput by Swap Strategy')
-    plt.xlabel('Swap Strategy')
-    plt.ylabel('Effective Throughput (tuples/s)')
-    plt.yscale('log')
-    plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.savefig(output_dir / "double_op_throughput_by_strategy.png")
-    plt.close()
+    # Create comparison plots between operator chains
+    for op_id, metrics in operator_metrics.items():
+        for metric in metrics:
+            if metric not in df.columns:
+                continue
+
+            metric_name = 'Effective' if 'eff_tp' in metric else 'Computational'
+
+            plt.figure(figsize=(14, 10))
+            sns.barplot(
+                data=df,
+                x='operator_chain',
+                y=metric,
+                hue='swap_strategy',
+                palette='viridis'
+            )
+            plt.title(f'Operator {op_id}: {metric_name} Throughput by Operator Chain')
+            plt.xlabel('Operator Chain')
+            plt.ylabel(f'{metric_name} Throughput (tuples/s)')
+            plt.yscale('log')
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_chain.png")
+            plt.close()
+
+    # Create strategy comparison plots
+    for strategy in df['swap_strategy'].unique():
+        strategy_df = df[df['swap_strategy'] == strategy]
+        strategy_name = strategy.replace(' ', '_').lower()
+
+        plt.figure(figsize=(14, 10))
+        for op_id in [3, 5]:
+            if f'pipeline_{op_id}_eff_tp' in df.columns:
+                plt.bar(
+                    [f"{chain} (Op {op_id})" for chain in df['operator_chain'].unique()],
+                    [strategy_df[strategy_df['operator_chain'] == chain][f'pipeline_{op_id}_eff_tp'].mean()
+                     for chain in df['operator_chain'].unique()]
+                )
+
+        plt.title(f'Strategy {strategy}: Throughput Comparison')
+        plt.xlabel('Operator Chain')
+        plt.ylabel('Effective Throughput (tuples/s)')
+        plt.yscale('log')
+        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(output_dir / f"strategy_{strategy_name}_comparison.png")
+        plt.close()
 
     return True
 
