@@ -20,12 +20,14 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
@@ -37,6 +39,8 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -62,8 +66,11 @@ static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& 
 RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGetAs<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
-    PRECONDITION(logicalOperator.getInputOriginIds().size() == 2, "Expected two origin id vector");
-    PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
+    PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 2, "Expected two children");
+    auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
+    PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
+    auto& outputOriginIds = outputOriginIdsOpt.value();
+    PRECONDITION(std::ranges::size(outputOriginIdsOpt.value()) == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
 
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
@@ -72,15 +79,22 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto leftInputSchema = join->getLeftSchema();
     auto rightInputSchema = join->getRightSchema();
     auto outputSchema = join.getOutputSchema();
-    auto outputOriginId = join.getOutputOriginIds().at(0);
+    auto outputOriginId = outputOriginIds[0];
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join->getWindowType());
     const auto pageSize = conf.pageSize.getValue();
 
 
-    auto nested = logicalOperator.getInputOriginIds();
-    auto flatView = nested | std::views::join;
-    const std::vector inputOriginIds(flatView.begin(), flatView.end());
+    const auto inputOriginIds
+        = join.getChildren()
+        | std::views::transform(
+              [](const auto& child)
+              {
+                  auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
+                  PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
+                  return childOutputOriginIds.value();
+              })
+        | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
     auto leftBufferRef = TupleBufferRef::create(pageSize, leftInputSchema);

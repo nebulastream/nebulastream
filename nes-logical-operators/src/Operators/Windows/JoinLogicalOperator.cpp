@@ -65,9 +65,7 @@ std::string_view JoinLogicalOperator::getName() const noexcept
 bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 {
     return *getWindowType() == *rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and getOutputSchema() == rhs.outputSchema
-        and getRightSchema() == rhs.getRightSchema() and getLeftSchema() == rhs.getLeftSchema()
-        and getInputOriginIds() == rhs.getInputOriginIds() and getOutputOriginIds() == rhs.getOutputOriginIds()
-        and getTraitSet() == rhs.getTraitSet();
+        and getRightSchema() == rhs.getRightSchema() and getLeftSchema() == rhs.getLeftSchema() and getTraitSet() == rhs.getTraitSet();
 }
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -75,13 +73,13 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join(opId: {}, outputOriginIds: [{}], windowType: {}, joinFunction: {}, windowStartField: {}, windowEndField: {})",
+            "Join(opId: {}, windowType: {}, joinFunction: {}, windowStartField: {}, windowEndField: {}, traitSet: {})",
             id,
-            fmt::join(outputOriginIds, ", "),
             getWindowType()->toString(),
             getJoinFunction().explain(verbosity),
             windowMetaData.windowStartFieldName,
-            windowMetaData.windowEndFieldName);
+            windowMetaData.windowEndFieldName,
+            traitSet.explain(verbosity));
     }
     return fmt::format("Join({})", getJoinFunction().explain(verbosity));
 }
@@ -157,34 +155,6 @@ Schema JoinLogicalOperator::getOutputSchema() const
     return outputSchema;
 }
 
-std::vector<std::vector<OriginId>> JoinLogicalOperator::getInputOriginIds() const
-{
-    return inputOriginIds;
-}
-
-std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-JoinLogicalOperator JoinLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    if (ids.size() != 2)
-    {
-        throw CannotDeserialize("Join should have only two inputs");
-    }
-    auto copy = *this;
-    copy.inputOriginIds = std::move(ids);
-    return copy;
-}
-
-JoinLogicalOperator JoinLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = ids;
-    return copy;
-}
-
 std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
 {
     return children;
@@ -230,30 +200,10 @@ void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
-    {
-        *traitSetProto->add_traits() = trait.second.serialize();
-    }
-
     for (const auto& inputSchema : getInputSchemas())
     {
         auto* schProto = proto.add_input_schemas();
         SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-    for (const auto& originList : getInputOriginIds())
-    {
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originList)
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
     }
 
     auto* outSch = proto.mutable_output_schema();
@@ -361,9 +311,7 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
         }
 
         auto logicalOperator = JoinLogicalOperator(function, windowType, joinType.asEnum<JoinLogicalOperator::JoinType>().value());
-        return logicalOperator.withInferredSchema(arguments.inputSchemas)
-            .withInputOriginIds(arguments.inputOriginIds)
-            .withOutputOriginIds(arguments.outputOriginIds);
+        return logicalOperator.withInferredSchema(arguments.inputSchemas);
     }
     throw UnknownLogicalOperator();
 }

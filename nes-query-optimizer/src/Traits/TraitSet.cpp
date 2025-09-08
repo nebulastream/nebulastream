@@ -15,6 +15,14 @@
 #include <Traits/TraitSet.hpp>
 
 #include <cstddef>
+#include <ranges>
+#include <string>
+#include <typeindex>
+#include <utility>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 namespace NES
 {
@@ -27,6 +35,17 @@ bool operator==(const TraitSet& lhs, const TraitSet& rhs)
 std::size_t TraitSet::size() const
 {
     return traitMap.size();
+}
+
+std::string TraitSet::explain(ExplainVerbosity verbosity) const
+{
+    return fmt::format(
+        "{}",
+        fmt::join(
+            traitMap
+                | std::views::transform([verbosity](const std::pair<const std::type_index, Trait>& pair)
+                                        { return fmt::format("{}: {}", pair.first.name(), pair.second.explain(verbosity)); }),
+            ", "));
 }
 
 }

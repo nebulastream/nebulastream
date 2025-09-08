@@ -30,8 +30,6 @@ using LogicalOperatorRegistryReturnType = LogicalOperator;
 
 struct LogicalOperatorRegistryArguments
 {
-    std::vector<std::vector<OriginId>> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     DescriptorConfig::Config config;
