@@ -16,7 +16,7 @@ def get_config_from_file(config_file):
 
     return config
 
-def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cmake-build-release", project_dir=None):
+def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=None, build_dir="cmake-build-release", project_dir=None):
     """Run benchmark for all queries with repetitions using the new directory structure."""
     if layouts is None:
         layouts = ["ROW_LAYOUT", "COLUMNAR_LAYOUT"]
@@ -81,6 +81,7 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
             continue
 
         buffer_test_file = test_files[0]
+        print(f"Processing test file: {buffer_test_file}")
         buffer_size = re.search(r'bufferSize(\d+)', str(buffer_dir)).group(1)
 
         # Get query directories for this buffer size
@@ -103,9 +104,10 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
             strategy = config["swap_strategy"]
 
             if len(op_chain.split(",")) > 1:
-                print(f"  Multiple operators in chain: {op_chain}")
+                #print(f"  Multiple operators in chain: {op_chain}")
 
                 #multiple operators in query
+                #TODO: use USE_SINGLE_LAYOUT with given MemLayout else custom strategy
                 if strategy == "ALL_COL":
                     layouts = ["COLUMNAR_LAYOUT"]
                 elif strategy == "ALL_ROW":
@@ -119,7 +121,7 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                 print(f"Warning: Could not determine query ID for {query_dir}, skipping...")
                 continue
 
-            print(f"Processing query {query_id} in {query_dir}")
+            #print(f"Processing query {query_id} in {query_dir}")
 
             # Calculate Docker path mapping for the test file
             # The test file path must be relative to project_dir to map correctly in Docker
@@ -135,7 +137,7 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                         run_dir = run_dir / f"run{run}"
                     run_dir.mkdir(exist_ok=True)
 
-                    print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}...")
+                    #print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}...")
 
                     # Docker command using existing test file with query ID
                     cmd = [
@@ -202,12 +204,15 @@ if __name__ == "__main__":
     parser.add_argument('--repeats', type=int, default=2, help='Number of repetitions')
     parser.add_argument('--build-dir', default='cmake-build-release', help='Build directory name')
     parser.add_argument('--project-dir', default=os.path.abspath(os.getcwd()), help='Project root directory')
+    parser.add_argument('--run-options', default='all', help='options: all, single or double')
     args = parser.parse_args()
 
     run_benchmark(
         args.test_file,
         args.output_dir,
         args.repeats,
+        args.run_options,
         build_dir=args.build_dir,
         project_dir=args.project_dir
+
     )

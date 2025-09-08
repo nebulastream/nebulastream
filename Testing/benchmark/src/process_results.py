@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 import shutil
 
-def process_benchmark(benchmark_dir):
+def process_benchmark(benchmark_dir, run_options='all'):
     """Process benchmark results using enginestatsread.py for each query with new directory structure."""
     try:
         benchmark_dir = Path(benchmark_dir)
@@ -26,6 +26,7 @@ def process_benchmark(benchmark_dir):
         print(f"Processing results in: {benchmark_dir}")
 
         # Find filter and map directories
+        empty_files = 0
         filter_dir = benchmark_dir / "filter"
         map_dir = benchmark_dir / "map"
 
@@ -45,7 +46,7 @@ def process_benchmark(benchmark_dir):
                 continue
 
             operator_type = op_dir.name  # "filter" or "map"
-            print(f"Collecting trace files for {operator_type} operations...")
+            #print(f"Collecting trace files for {operator_type} operations...")
 
             # Process each buffer size directory
             for buffer_dir in op_dir.glob("bufferSize*"):
@@ -81,6 +82,11 @@ def process_benchmark(benchmark_dir):
 
                         trace_file = trace_files[0]
 
+                        if trace_file.stat().st_size == 0:
+                            empty_files += 1
+                            #print(f"Warning: Empty trace file found: {trace_file}, skipping...")
+                            continue
+
                         # Store file info with metadata
                         trace_file_info.append({
                             'file_path': trace_file,
@@ -94,10 +100,10 @@ def process_benchmark(benchmark_dir):
                         })
 
         if not trace_file_info:
-            print("No trace files found to process")
+            print(f"No trace files found to process (emtpy ones: {empty_files})")
             return None
 
-        print(f"Found {len(trace_file_info)} trace files to process")
+        print(f"Found {len(trace_file_info)} trace files to process and {empty_files} empty trace files.")
 
         # Create a temporary directory for enginestatsread.py output
         temp_dir = benchmark_dir / "temp_results"
@@ -172,14 +178,14 @@ def process_benchmark(benchmark_dir):
                     # Combine all results
                     output_csv = benchmark_dir / f"{benchmark_dir.name}_results.csv"
                     combined_df.to_csv(output_csv, index=False)
-                    print(f"Combined results saved to {output_csv}")
+                    #print(f"Combined results saved to {output_csv}")
 
                     # Average results across runs for all queries
                     avg_df = combined_df.groupby(['query_id', 'layout', 'buffer_size', 'operator_type']).mean(numeric_only=True).reset_index()
 
                     avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
                     avg_df.to_csv(avg_csv, index=False)
-                    print(f"Averaged results saved to {avg_csv}")
+                    #print(f"Averaged results saved to {avg_csv}")
 
                     return str(avg_csv)
 
@@ -201,6 +207,7 @@ def process_benchmark(benchmark_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process benchmark results')
     parser.add_argument('--benchmark-dir', required=True, help='Path to benchmark directory')
+    parser.add_argument('--run-options', required=True, default='double', help='options: all, single or double')
     args = parser.parse_args()
 
-    process_benchmark(args.benchmark_dir)
+    process_benchmark(args.benchmark_dir, args.run_options)

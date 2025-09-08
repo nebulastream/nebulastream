@@ -52,7 +52,7 @@ def main():
     parser.add_argument('--test-file', help='Use existing test file')
     parser.add_argument('--build-dir', default='cmake-build-release', help='Build directory name')
     parser.add_argument('--project-dir', default=os.environ.get('PWD', os.getcwd()), help='Project root directory')
-    parser.add_argument('--run_options', default='double', help='options: all, single or double')
+    parser.add_argument('--run-options', default='double', help='options: all, single or double')
     parser.add_argument('--use-latest', action='store_true', help='Use latest benchmark directory instead of creating new one')
     args = parser.parse_args()
 
@@ -129,7 +129,7 @@ def main():
                 "--output", str(test_file),
                 "--result-dir", str(benchmark_dir),
                 "--columns", ','.join(map(str, args.columns)),
-                "--run_options", args.run_options
+                "--run-options", args.run_options
             ], check=False, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -165,7 +165,8 @@ def main():
                 "--output-dir", str(benchmark_dir),
                 "--repeats", str(args.repeats),
                 "--build-dir", str(build_dir),
-                "--project-dir", str(project_dir)
+                "--project-dir", str(project_dir),
+                "--run-options", args.run_options
             ], text=True, capture_output=True, check=False)
 
             if result.returncode != 0:
@@ -189,10 +190,16 @@ def main():
         try:
             process_result = subprocess.run([
                 "python3", str(src_dir / "process_results.py"),
-                "--benchmark-dir", benchmark_result_dir
+                "--benchmark-dir", benchmark_result_dir,
+                "--run-options", args.run_options
             ], text=True, capture_output=True, check=False)
 
-            #print(process_result.stdout)
+            if process_result.returncode != 0:
+                print(f"Error processing benchmarks: {process_result.stderr}")
+                return
+            else:
+                print(process_result.stdout)
+                print("processed trace files successfully")
 
             # Extract the results CSV path from the output
             results_csv = None
