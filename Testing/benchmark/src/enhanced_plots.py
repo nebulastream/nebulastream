@@ -102,62 +102,135 @@ def create_double_operator_plots(df, output_dir):
         5: ['pipeline_5_eff_tp', 'pipeline_5_comp_tp']
     }
 
-    # First create plots for all data together
+    # Group data by operator chain
+    chain_groups = df.groupby('operator_chain')
+
+    # 1. First create global plots across all chains
+    create_global_plots(df, output_dir, operator_metrics)
+
+    # 2. Create per-chain plots for each operator chain
+    for chain_name, chain_df in chain_groups:
+        chain_dir = output_dir / f"chain_{chain_name.replace(' ', '_').lower()}"
+        chain_dir.mkdir(exist_ok=True, parents=True)
+
+        # 2.1 Create plots per pipeline ID for this chain
+        create_pipeline_plots(chain_df, chain_dir, operator_metrics)
+
+        # 2.2 Create parameter-based plots for this chain
+        create_parameter_plots(chain_df, chain_dir, operator_metrics)
+
+    # 3. Create comparison plots between chains and strategies
+    create_comparison_plots(df, output_dir, operator_metrics)
+
+    return True
+
+def create_global_plots(df, output_dir, operator_metrics):
+    """Create global plots across all operator chains."""
+    # Plot overall execution time by swap strategy and operator chain
+    plt.figure(figsize=(14, 10))
+    sns.barplot(
+        data=df,
+        x='operator_chain',
+        y='full_query_duration',
+        hue='swap_strategy',
+        palette='viridis'
+    )
+    plt.title('Query Execution Time by Operator Chain and Strategy')
+    plt.xlabel('Operator Chain')
+    plt.ylabel('Execution Time (ms)')
+    plt.yscale('log')
+    plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(output_dir / "execution_time_by_chain_strategy.png")
+    plt.close()
+
+    # Plot throughput by buffer size for each pipeline ID
     for op_id, metrics in operator_metrics.items():
         for metric in metrics:
             if metric not in df.columns:
-                print(f"Warning: Metric {metric} not found in dataframe")
                 continue
 
             metric_name = 'Effective' if 'eff_tp' in metric else 'Computational'
 
-            # Plot by buffer size
             plt.figure(figsize=(12, 8))
-            pivot_df = df.pivot_table(
-                index='buffer_size',
-                columns='swap_strategy',
-                values=metric,
-                aggfunc='mean'
+            sns.lineplot(
+                data=df,
+                x='buffer_size',
+                y=metric,
+                hue='swap_strategy',
+                style='operator_chain',
+                markers=True,
+                palette='viridis'
             )
-
-            if pivot_df.empty:
-                continue
-
-            ax = pivot_df.plot(kind='bar', colormap='viridis')
-            plt.title(f'Operator {op_id}: {metric_name} Throughput by Buffer Size')
+            plt.title(f'Pipeline {op_id}: {metric_name} Throughput by Buffer Size')
             plt.xlabel('Buffer Size')
             plt.ylabel(f'{metric_name} Throughput (tuples/s)')
+            plt.xscale('log')
             plt.yscale('log')
-            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-
-            # Add value labels
-            for container in ax.containers:
-                ax.bar_label(container, fmt='%.2e', rotation=90, padding=3)
-
+            plt.grid(True, linestyle='--', alpha=0.7)
             plt.tight_layout()
-            plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_buffer.png")
+            plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_global.png")
             plt.close()
 
-    # Create separate plots for each operator chain
-    for chain in df['operator_chain'].unique():
-        chain_df = df[df['operator_chain'] == chain]
-        chain_name = chain.replace(' ', '_').lower()
+def create_pipeline_plots(df, output_dir, operator_metrics):
+    """Create plots specific to each pipeline in an operator chain."""
+    # For each query (based on unique parameters), create a plot with both pipelines
+    params_to_group = ['buffer_size', 'num_columns', 'accessed_columns']
+    param_groups = df.groupby(params_to_group)
 
-        # Create chain-specific directory
-        chain_dir = output_dir / f"chain_{chain_name}"
-        chain_dir.mkdir(exist_ok=True, parents=True)
+    for param_values, param_df in param_groups:
+        param_str = '_'.join([f"{p}{v}" for p, v in zip(params_to_group, param_values)])
 
+        # Plot comparing pipeline 3 and 5 in the same query
+        plt.figure(figsize=(12, 8))
+        metrics_to_plot = []
+        for op_id in [3, 5]:
+            metric = f'pipeline_{op_id}_eff_tp'
+            if metric in param_df.columns:
+                metrics_to_plot.append((op_id, metric))
+
+        if metrics_to_plot:
+            for op_id, metric in metrics_to_plot:
+                sns.barplot(
+                    data=param_df,
+                    x='swap_strategy',
+                    y=metric,
+                    label=f'Pipeline {op_id}'
+                )
+
+            plt.title(f'Effective Throughput by Pipeline ID ({param_str})')
+            plt.xlabel('Swap Strategy')
+            plt.ylabel('Effective Throughput (tuples/s)')
+            plt.yscale('log')
+            plt.legend()
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(output_dir / f"pipeline_comparison_{param_str}.png")
+            plt.close()
+
+def create_parameter_plots(df, output_dir, operator_metrics):
+    """Create plots showing effect of different parameters similar to single operator plots."""
+    # Parameters to analyze
+    parameters = ['buffer_size', 'num_columns', 'accessed_columns']
+
+    for param in parameters:
+        if param not in df.columns:
+            continue
+
+        # For each pipeline ID and metric
         for op_id, metrics in operator_metrics.items():
             for metric in metrics:
-                if metric not in chain_df.columns:
+                if metric not in df.columns:
                     continue
 
                 metric_name = 'Effective' if 'eff_tp' in metric else 'Computational'
 
-                # Plot by buffer size for this specific chain
+                # Plot by parameter, grouped by swap strategy
                 plt.figure(figsize=(12, 8))
-                pivot_df = chain_df.pivot_table(
-                    index='buffer_size',
+
+                # Group data and calculate means
+                pivot_df = df.pivot_table(
+                    index=param,
                     columns='swap_strategy',
                     values=metric,
                     aggfunc='mean'
@@ -167,8 +240,8 @@ def create_double_operator_plots(df, output_dir):
                     continue
 
                 ax = pivot_df.plot(kind='bar', colormap='viridis')
-                plt.title(f'{chain} - Op {op_id}: {metric_name} Throughput by Buffer Size')
-                plt.xlabel('Buffer Size')
+                plt.title(f'Pipeline {op_id}: {metric_name} Throughput by {param}')
+                plt.xlabel(param)
                 plt.ylabel(f'{metric_name} Throughput (tuples/s)')
                 plt.yscale('log')
                 plt.grid(True, axis='y', linestyle='--', alpha=0.7)
@@ -178,58 +251,56 @@ def create_double_operator_plots(df, output_dir):
                     ax.bar_label(container, fmt='%.2e', rotation=90, padding=3)
 
                 plt.tight_layout()
-                plt.savefig(chain_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_buffer.png")
+                plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_{param}.png")
                 plt.close()
 
-    # Create comparison plots between operator chains
-    for op_id, metrics in operator_metrics.items():
-        for metric in metrics:
-            if metric not in df.columns:
-                continue
-
-            metric_name = 'Effective' if 'eff_tp' in metric else 'Computational'
-
-            plt.figure(figsize=(14, 10))
-            sns.barplot(
-                data=df,
-                x='operator_chain',
-                y=metric,
-                hue='swap_strategy',
-                palette='viridis'
-            )
-            plt.title(f'Operator {op_id}: {metric_name} Throughput by Operator Chain')
-            plt.xlabel('Operator Chain')
-            plt.ylabel(f'{metric_name} Throughput (tuples/s)')
-            plt.yscale('log')
-            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-            plt.tight_layout()
-            plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_chain.png")
-            plt.close()
-
-    # Create strategy comparison plots
+def create_comparison_plots(df, output_dir, operator_metrics):
+    """Create plots comparing different strategies and chains."""
+    # Plot execution time by strategy for each chain
     for strategy in df['swap_strategy'].unique():
         strategy_df = df[df['swap_strategy'] == strategy]
         strategy_name = strategy.replace(' ', '_').lower()
 
         plt.figure(figsize=(14, 10))
-        for op_id in [3, 5]:
-            if f'pipeline_{op_id}_eff_tp' in df.columns:
-                plt.bar(
-                    [f"{chain} (Op {op_id})" for chain in df['operator_chain'].unique()],
-                    [strategy_df[strategy_df['operator_chain'] == chain][f'pipeline_{op_id}_eff_tp'].mean()
-                     for chain in df['operator_chain'].unique()]
-                )
 
-        plt.title(f'Strategy {strategy}: Throughput Comparison')
+        # Group by operator chain
+        chain_times = strategy_df.groupby('operator_chain')['full_query_duration'].mean()
+        plt.bar(chain_times.index, chain_times.values)
+
+        plt.title(f'Strategy {strategy}: Execution Time Comparison')
         plt.xlabel('Operator Chain')
-        plt.ylabel('Effective Throughput (tuples/s)')
+        plt.ylabel('Execution Time (ms)')
         plt.yscale('log')
         plt.grid(True, axis='y', linestyle='--', alpha=0.7)
         plt.tight_layout()
-        plt.savefig(output_dir / f"strategy_{strategy_name}_comparison.png")
+        plt.savefig(output_dir / f"strategy_{strategy_name}_execution_time.png")
         plt.close()
 
-    return True
+    # For each operator chain, compare throughput across different strategies
+    for chain in df['operator_chain'].unique():
+        chain_df = df[df['operator_chain'] == chain]
+        chain_name = chain.replace(' ', '_').lower()
+
+        # For each pipeline ID, plot throughput by strategy
+        for op_id in [3, 5]:
+            metric = f'pipeline_{op_id}_eff_tp'
+            if metric not in chain_df.columns:
+                continue
+
+            plt.figure(figsize=(12, 8))
+            sns.boxplot(
+                data=chain_df,
+                x='swap_strategy',
+                y=metric
+            )
+            plt.title(f'{chain} - Pipeline {op_id}: Throughput by Strategy')
+            plt.xlabel('Swap Strategy')
+            plt.ylabel('Effective Throughput (tuples/s)')
+            plt.yscale('log')
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(output_dir / f"{chain_name}_op{op_id}_throughput_by_strategy.png")
+            plt.close()
 
 def main():
     parser = argparse.ArgumentParser(description='Create enhanced benchmark plots')

@@ -294,38 +294,66 @@ def main():
                                         query_count += 1
                                     except Exception as e:
                                         print(f"  Error generating plots for {avg_csv}: {e}")
-
+                    print(f"Successfully generated plots for {query_count} individual queries")
                 # Process double operator results
                 double_op_dir = Path(benchmark_result_dir) / "double_operator"
                 if double_op_dir.exists():
                     try:
-                        # First use enhanced_plots.py directly with the double operator results
-                        double_op_results = double_op_dir / "avg_results.csv"
-                        if double_op_results.exists():
+                        # First create a consolidated CSV for all double operator results
+                        double_op_avg_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_double_operator_avg_results.csv"
+
+                        if double_op_avg_results.exists():
+                            # Create plots directory
                             double_op_plots_dir = double_op_dir / "plots"
                             double_op_plots_dir.mkdir(exist_ok=True, parents=True)
 
+                            # Generate plots using enhanced_plots.py
                             subprocess.run(
                                 ["python3", str(enhanced_plots_path),
-                                 "--results-csv", str(double_op_results),
+                                 "--results-csv", str(double_op_avg_results),
                                  "--output-dir", str(double_op_plots_dir)],
                                 check=True
                             )
                             print(f"  Success: Double operator plots created in {double_op_plots_dir}")
 
-                        # Then try the legacy double_plots.py for compatibility
-                        double_plots_path = src_dir / "double_plots.py"
-                        if double_plots_path.exists():
-                            subprocess.run(
-                                ["python3", str(double_plots_path),
-                                 "--benchmark-dir", str(benchmark_result_dir)],
-                                check=True
-                            )
-                            print("  Success: Double operator plots created with legacy script")
+                            # Also generate operator chain specific plots
+                            for chain_dir in double_op_dir.glob("bufferSize*/*/"):
+                                if chain_dir.is_dir():
+                                    chain_name = chain_dir.name
+                                    chain_csv = double_op_dir / f"{chain_name}_results.csv"
+
+                                    # If we don't have a chain-specific CSV, we need to generate it
+                                    if not chain_csv.exists():
+                                        # Find query results for this chain
+                                        chain_data = []
+                                        for query_dir in chain_dir.glob("query_*"):
+                                            avg_results = query_dir / "avg_results.csv"
+                                            if avg_results.exists():
+                                                chain_data.append(pd.read_csv(avg_results))
+
+                                        if chain_data:
+                                            chain_df = pd.concat(chain_data, ignore_index=True)
+                                            chain_df.to_csv(chain_csv, index=False)
+
+                                    if chain_csv.exists():
+                                        chain_plots_dir = double_op_dir / f"plots_{chain_name}"
+                                        chain_plots_dir.mkdir(exist_ok=True, parents=True)
+
+                                        try:
+                                            subprocess.run(
+                                                ["python3", str(enhanced_plots_path),
+                                                 "--results-csv", str(chain_csv),
+                                                 "--output-dir", str(chain_plots_dir)],
+                                                check=True
+                                            )
+                                            print(f"  Success: Created plots for {chain_name} in {chain_plots_dir}")
+                                        except Exception as e:
+                                            print(f"  Error generating plots for {chain_name}: {e}")
+
                     except Exception as e:
                         print(f"  Error generating double operator plots: {e}")
 
-                print(f"Successfully generated plots for {query_count} individual queries")
+
 
             except Exception as e:
                 print(f"Error during plot generation: {e}")
