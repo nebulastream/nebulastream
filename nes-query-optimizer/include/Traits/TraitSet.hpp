@@ -16,10 +16,12 @@
 #include <cstddef>
 #include <optional>
 #include <ranges>
+#include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
 #include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -84,6 +86,8 @@ public:
     [[nodiscard]] auto end() const { return traitMap.cend(); }
 
     [[nodiscard]] std::size_t size() const;
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     std::unordered_map<std::type_index, Trait> traitMap;

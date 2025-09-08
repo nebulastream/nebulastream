@@ -57,7 +57,6 @@ LogicalFunction SelectionLogicalOperator::getPredicate() const
 bool SelectionLogicalOperator::operator==(const SelectionLogicalOperator& rhs) const
 {
     return predicate == rhs.predicate && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getInputOriginIds() == rhs.getInputOriginIds() && getOutputOriginIds() == rhs.getOutputOriginIds()
         && getTraitSet() == rhs.getTraitSet();
 };
 
@@ -65,7 +64,8 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, Operat
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SELECTION(opId: {}, predicate: {})", opId, predicate.explain(verbosity));
+        return fmt::format(
+            "SELECTION(opId: {}, predicate: {}, traitSet: {})", opId, predicate.explain(verbosity), traitSet.explain(verbosity));
     }
     return fmt::format("SELECTION({})", predicate.explain(verbosity));
 }
@@ -126,30 +126,6 @@ Schema SelectionLogicalOperator::getOutputSchema() const
     return outputSchema;
 }
 
-std::vector<std::vector<OriginId>> SelectionLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
-}
-
-std::vector<OriginId> SelectionLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-SelectionLogicalOperator SelectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    auto copy = *this;
-    copy.inputOriginIds = std::move(ids.at(0));
-    return copy;
-}
-
-SelectionLogicalOperator SelectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = std::move(ids);
-    return copy;
-}
-
 std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
 {
     return children;
@@ -160,29 +136,12 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
-    {
-        *traitSetProto->add_traits() = trait.second.serialize();
-    }
 
     auto inputs = getInputSchemas();
-    auto originLists = getInputOriginIds();
     for (size_t i = 0; i < inputs.size(); ++i)
     {
         auto* schProto = proto.add_input_schemas();
         SchemaSerializationUtil::serializeSchema(inputs[i], schProto);
-
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originLists[i])
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
     }
 
     auto* outSch = proto.mutable_output_schema();
@@ -215,9 +174,7 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
         }
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
         auto logicalOperator = SelectionLogicalOperator(function);
-        return logicalOperator.withInferredSchema(arguments.inputSchemas)
-            .withInputOriginIds(arguments.inputOriginIds)
-            .withOutputOriginIds(arguments.outputOriginIds);
+        return logicalOperator.withInferredSchema(arguments.inputSchemas);
     }
     throw UnknownLogicalOperator();
 }

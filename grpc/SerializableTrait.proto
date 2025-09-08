@@ -18,10 +18,9 @@ package NES;
 import "SerializableVariantDescriptor.proto";
 
 message SerializableTrait {
-  string trait_type = 1;
-  map<string, SerializableVariantDescriptor> config = 2;
+  map<string, SerializableVariantDescriptor> config = 1;
 }
 
 message SerializableTraitSet {
-  repeated SerializableTrait traits = 1;
+  map<string, SerializableTrait> traits = 1;
 }

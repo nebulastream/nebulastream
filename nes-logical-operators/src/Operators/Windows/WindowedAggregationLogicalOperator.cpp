@@ -116,7 +116,6 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
     }
 
     return *windowType == *rhs.getWindowType() && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getInputOriginIds() == rhs.getInputOriginIds() && getOutputOriginIds() == rhs.getOutputOriginIds()
         && getTraitSet() == rhs.getTraitSet();
 }
 
@@ -208,32 +207,6 @@ Schema WindowedAggregationLogicalOperator::getOutputSchema() const
     return outputSchema;
 }
 
-std::vector<std::vector<OriginId>> WindowedAggregationLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
-}
-
-std::vector<OriginId> WindowedAggregationLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    PRECONDITION(ids.size() == 1, "Windowed aggregation should have only one input");
-    auto copy = *this;
-    copy.inputOriginIds = ids.at(0);
-    return copy;
-}
-
-WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withOutputOriginIds(const std::vector<OriginId>& ids) const
-{
-    PRECONDITION(ids.size() == 1, "Windowed aggregation should have only one output OriginId");
-    auto copy = *this;
-    copy.outputOriginIds = ids;
-    return copy;
-}
-
 std::vector<LogicalOperator> WindowedAggregationLogicalOperator::getChildren() const
 {
     return children;
@@ -289,29 +262,12 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
-    {
-        *traitSetProto->add_traits() = trait.second.serialize();
-    }
 
     const auto inputs = getInputSchemas();
-    const auto originLists = getInputOriginIds();
     for (size_t i = 0; i < inputs.size(); ++i)
     {
         auto* inSch = proto.add_input_schemas();
         SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
-
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originLists[i])
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
     }
 
     auto* outSch = proto.mutable_output_schema();
@@ -461,13 +417,11 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
     }
 
     auto logicalOperator = WindowedAggregationLogicalOperator(keys, windowAggregations, windowType);
-    if (arguments.inputOriginIds.size() != 1 or arguments.outputOriginIds.size() != 1 or arguments.inputSchemas.empty())
+    if (arguments.inputSchemas.empty())
     {
         throw CannotDeserialize("Cannot construct WindowedAggregation");
     }
-    return logicalOperator.withInferredSchema(arguments.inputSchemas)
-        .withInputOriginIds(arguments.inputOriginIds)
-        .withOutputOriginIds(arguments.outputOriginIds);
+    return logicalOperator.withInferredSchema(arguments.inputSchemas);
 }
 
 }

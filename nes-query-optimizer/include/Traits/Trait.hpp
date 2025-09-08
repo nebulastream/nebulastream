@@ -19,10 +19,14 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <type_traits>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_set>
+
+#include <Util/PlanRenderer.hpp>
 
 #include <ErrorHandling.hpp>
 #include <SerializableTrait.pb.h>
@@ -40,6 +44,7 @@ struct TraitConcept
     /// Returns the type information of this trait.
     /// @return const std::type_info& The type information of this trait.
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
+    [[nodiscard]] virtual std::string_view getName() const = 0;
 
     /// Serializes this trait to a protobuf message.
     /// @return SerializableTrait The serialized trait.
@@ -49,6 +54,8 @@ struct TraitConcept
     /// @param other The trait to compare with.
     /// @return bool True if the traits are equal, false otherwise.
     virtual bool operator==(const TraitConcept& other) const = 0;
+
+    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
 
     /// Computes the hash value for this trait.
     /// @return size_t The hash value.
@@ -65,12 +72,9 @@ struct DefaultTrait : TraitConcept
 
     [[nodiscard]] const std::type_info& getType() const final { return typeid(Derived); }
 
-    [[nodiscard]] SerializableTrait serialize() const final
-    {
-        SerializableTrait trait;
-        trait.set_trait_type(getType().name());
-        return trait;
-    }
+    [[nodiscard]] SerializableTrait serialize() const final { return SerializableTrait{}; }
+
+    [[nodiscard]] std::string explain(ExplainVerbosity) const final { return "DefaultTrait"; }
 
     friend Derived;
 
@@ -139,6 +143,9 @@ struct Trait
     [[nodiscard]] SerializableTrait serialize() const;
 
     [[nodiscard]] const std::type_info& getTypeInfo() const;
+    [[nodiscard]] std::string_view getName() const;
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     struct Concept : TraitConcept
@@ -174,9 +181,13 @@ private:
             return false;
         }
 
+        [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
+
         [[nodiscard]] size_t hash() const override { return data.hash(); }
 
         [[nodiscard]] const std::type_info& getType() const override { return data.getType(); }
+
+        [[nodiscard]] std::string_view getName() const override { return data.getName(); }
 
         [[nodiscard]] SerializableTrait serialize() const override { return data.serialize(); }
     };

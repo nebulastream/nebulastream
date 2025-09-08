@@ -24,6 +24,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
@@ -52,6 +53,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         auto* sOp = serializableQueryPlan.add_operators();
         itr.serialize(*sOp);
+        TraitSetSerializationUtil::serialize(itr.getTraitSet(), sOp->mutable_trait_set());
     }
 
     /// Serialize the root operator ids
@@ -71,12 +73,13 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     {
         CPPTRACE_TRY
         {
-            auto [_, inserted] = baseOps.emplace(serializedOp.operator_id(), OperatorSerializationUtil::deserializeOperator(serializedOp));
+            const auto operatorId = serializedOp.operator_id();
+            auto [_, inserted] = baseOps.emplace(operatorId, OperatorSerializationUtil::deserializeOperator(serializedOp));
             if (!inserted)
             {
                 throw CannotDeserialize("Duplicate operator id in {}", serializedQueryPlan.DebugString());
             }
-            auto& opChildren = baseChildren[serializedOp.operator_id()];
+            auto& opChildren = baseChildren[operatorId];
             opChildren.reserve(serializedOp.children_ids_size());
             for (auto child : serializedOp.children_ids())
             {

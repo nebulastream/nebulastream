@@ -70,11 +70,6 @@ public:
     [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
-    [[nodiscard]] JoinLogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const;
-    [[nodiscard]] JoinLogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
-
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
@@ -123,8 +118,6 @@ private:
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-    std::vector<std::vector<OriginId>> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
     Schema leftInputSchema, rightInputSchema, outputSchema;
 };
 

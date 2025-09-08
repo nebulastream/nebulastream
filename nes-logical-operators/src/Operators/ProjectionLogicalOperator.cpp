@@ -98,7 +98,6 @@ const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOpera
 bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
     return projections == rhs.projections && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getInputOriginIds() == rhs.getInputOriginIds() && getOutputOriginIds() == rhs.getOutputOriginIds()
         && getTraitSet() == rhs.getTraitSet();
 };
 
@@ -127,6 +126,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
         }
     }
     builder << fmt::format("{}", fmt::join(explainedProjections, ", "));
+    builder << fmt::format(", traitSet: {}", traitSet.explain(verbosity));
     builder << "])";
     return builder.str();
 }
@@ -211,34 +211,6 @@ Schema ProjectionLogicalOperator::getOutputSchema() const
     return outputSchema;
 }
 
-std::vector<std::vector<OriginId>> ProjectionLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
-}
-
-std::vector<OriginId> ProjectionLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-ProjectionLogicalOperator ProjectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    if (ids.size() != 1)
-    {
-        throw CannotDeserialize("Projection should have only one input");
-    }
-    auto copy = *this;
-    copy.inputOriginIds = ids.at(0);
-    return copy;
-}
-
-ProjectionLogicalOperator ProjectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = std::move(ids);
-    return copy;
-}
-
 std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
 {
     return children;
@@ -249,29 +221,12 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
-    {
-        *traitSetProto->add_traits() = trait.second.serialize();
-    }
 
     const auto inputs = getInputSchemas();
-    const auto originLists = getInputOriginIds();
     for (size_t i = 0; i < inputs.size(); ++i)
     {
         auto* inSch = proto.add_input_schemas();
         SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
-
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originLists[i])
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
     }
 
     auto* outSch = proto.mutable_output_schema();
@@ -318,9 +273,7 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOper
                 | std::ranges::to<std::vector>(),
             ProjectionLogicalOperator::Asterisk(asterisk));
 
-        return logicalOperator.withInferredSchema(arguments.inputSchemas)
-            .withInputOriginIds(arguments.inputOriginIds)
-            .withOutputOriginIds(arguments.outputOriginIds);
+        return logicalOperator.withInferredSchema(arguments.inputSchemas);
     }
     throw UnknownLogicalOperator();
 }

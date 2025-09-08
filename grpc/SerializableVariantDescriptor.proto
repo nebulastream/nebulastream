@@ -76,6 +76,10 @@ message SerializableEnumWrapper {
     string value = 1;
 }
 
+message UInt64List {
+  repeated uint64 values = 1;
+}
+
 message SerializableVariantDescriptor {
   oneof value {
     int32 int_value = 1;
@@ -92,5 +96,6 @@ message SerializableVariantDescriptor {
     AggregationFunctionList aggregation_function_list = 12;
     WindowInfos window_infos = 13;
     ProjectionList projections = 14;
+    UInt64List ulongs = 15;
   }
 }
