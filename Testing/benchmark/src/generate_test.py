@@ -46,45 +46,40 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
 
     # Generate query SQL
     query = f"# Query {test_id}: Chain {chain_str} with strategy {strategy}\n"
-    query += f"# BufferSize: {buffer_size}, Operators: {chain_str}, SwapStrategy: {strategy}, Strategy: {strategy}\n"
-    query += "SELECT "
+    query += f"# BufferSize: {buffer_size}, Operators: {chain_str}, num_cols: {num_cols}, acc_cols: {access_cols}, th: {threshold}\n"
 
-    # Generate different queries based on operator chain
+    # Determine appropriate sink based on number of accessed columns
+    if access_cols == 1:
+        sink = "MixedSink1"
+    else:
+        sink = "MixedSink2"
+
     if op_chain == ['map', 'filter']:
         # First map then filter
+        if access_cols == 1:
+            inner_expr = f"col_0 + col_0 AS result1"
+            outer_expr = f"result1 > UINT64({threshold})"
+        else:
+            inner_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
+            inner_expr = ", ".join(inner_exprs)
+            outer_expr = " AND ".join([f"result{i+1} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
 
-        # Multi-column access
-        inner_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
-        inner_expr = ", ".join(inner_exprs)
-        outer_expr = " AND ".join([f"result{i+1} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
-        sink = f"MixedSink{access_cols}"
-
-
-
-        query += f"* FROM (SELECT {inner_expr} FROM bench_data{num_cols}"
-
-        query += f" INTO {sink};\n"
+        # Structure query properly with nested SELECT statements
+        query += f"SELECT {'*' if access_cols == 1 else 'result1, result2'} FROM (SELECT {inner_expr} FROM bench_data{num_cols}) WHERE ({outer_expr}) INTO {sink};\n"
 
     elif op_chain == ['filter', 'map']:
         # First filter then map
-
-
         filter_expr = " AND ".join([f"col_{i} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
-        map_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
-        map_expr = ", ".join(map_exprs)
-        sink = f"MixedSink{access_cols}"
 
+        if access_cols == 1:
+            map_expr = f"col_0 + col_0 AS result1"
+        else:
+            map_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
+            map_expr = ", ".join(map_exprs)
 
+        # Structure query properly with nested SELECT statements
+        query += f"SELECT {map_expr} FROM (SELECT * FROM bench_data{num_cols} WHERE ({filter_expr})) INTO {sink};\n"
 
-        query += f"{map_expr} FROM (SELECT * FROM bench_data{num_cols} WHERE ({filter_expr})"
-
-
-        query += ")"
-
-
-        query += f" INTO {sink};\n"
-
-    # Similar cases for map-map and filter-filter chains...
 
     # Store configuration
     config = {
@@ -172,8 +167,8 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
             f.write(sink + "\n")
 
         f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")
-        f.write("SINK MixedSink1 TYPE Checksum UINT64 result\n")
-        f.write("SINK MixedSink2 TYPE Checksum UINT64 result1 UINT64 result2\n\n")
+        f.write("SINK MixedSink1 TYPE Checksum UINT64 result1\n")
+        #f.write("SINK MixedSink2 TYPE Checksum UINT64 result1 UINT64 result2\n\n")
         for acc_cols in accessed_columns_list:
             if acc_cols>1:
                 sink= f"SINK MixedSink{acc_cols} TYPE Checksum"
@@ -349,9 +344,11 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
                             with open(test_file, 'a') as f:
                                 f.write(query)
                                 f.write("----\n1, 1\n\n")
-                            test_id +=1
-                            query_id += 1
+
+                            # Store query config and increment IDs properly
                             query_configs[query_id] = config
+                            test_id += 1
+                            query_id += 1
 
     # Write query mapping to a file for later reference
     with open(result_dir / "query_mapping.txt", 'w') as f:
@@ -412,7 +409,7 @@ if __name__ == "__main__":
     parser.add_argument('--output', required=True, help='Output test file path')
     parser.add_argument('--result-dir', required=True, help='Result directory for organized structure')
     parser.add_argument('--columns', type=parse_int_list, default=[10], help='List of number of columns to use')
-    parser.add_argument('--run_options', default='all', help='options: all, single or double')
+    parser.add_argument('--run-options', default='all', help='options: all, single or double')
     args = parser.parse_args()
 
     # Customizable parameters
