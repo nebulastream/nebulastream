@@ -9,75 +9,60 @@ import json
 import shutil
 
 def process_benchmark(benchmark_dir, run_options='all'):
-    """Process benchmark results using enginestatsread.py for each query with new directory structure."""
+    """Process benchmark results with support for double operator configurations."""
     try:
         benchmark_dir = Path(benchmark_dir)
 
         # Validate benchmark directory
         if not benchmark_dir.exists():
             print(f"Error: Benchmark directory does not exist: {benchmark_dir}")
-            print(f"Raw path value received: '{benchmark_dir}'")
-            return None
-
-        if not benchmark_dir.is_dir():
-            print(f"Error: Path is not a directory: {benchmark_dir}")
             return None
 
         print(f"Processing results in: {benchmark_dir}")
 
-        # Find filter and map directories
-        empty_files = 0
-        filter_dir = benchmark_dir / "filter"
-        map_dir = benchmark_dir / "map"
-        double_op_dir = benchmark_dir / "double_operator"
+        # Initialize directory collections based on run_options
+        dirs_to_process = []
 
-        dirs = []
-        if run_options == 'single' or run_options == 'all':
+        # Setup directory structure based on run_options
+        if run_options in ['single', 'all']:
+            # Single operator directories
+            single_op_dir = benchmark_dir / "single_operator"
+            if single_op_dir.exists():
+                for op_type in ['filter', 'map']:
+                    op_dir = single_op_dir / op_type
+                    if op_dir.exists():
+                        dirs_to_process.append(op_dir)
+            else:
+                # Legacy structure support
+                for op_type in ['filter', 'map']:
+                    op_dir = benchmark_dir / op_type
+                    if op_dir.exists():
+                        dirs_to_process.append(op_dir)
 
-            # Check if expected subdirectories exist
-            if not filter_dir.exists() and not map_dir.exists():
-                if run_options == 'all':
-                    if not double_op_dir.exists():
-                        print(f"Warning: Neither 'filter', 'map' nor 'double_operator' directories found in {benchmark_dir}")
-                        print("Available contents:")
-                        for item in benchmark_dir.iterdir():
-                            print(f"  - {item.name}")
-                        return None
-                    else:
-                        for a in double_op_dir.iterdir():
-                            if a.is_dir():
-                                dirs.append(a)
-                print(f"Warning: Neither 'filter' nor 'map' directories found in {benchmark_dir}")
-                print("Available contents:")
-                for item in benchmark_dir.iterdir():
-                    print(f"  - {item.name}")
-                return None
-            if filter_dir.exists():
-                dirs.append(filter_dir)
-            if map_dir.exists():
-                dirs.append(map_dir)
+        if run_options in ['double', 'all']:
+            # Double operator directories
+            double_op_dir = benchmark_dir / "double_operator"
+            if double_op_dir.exists():
+                for strategy_dir in double_op_dir.iterdir():
+                    if strategy_dir.is_dir():
+                        dirs_to_process.append(strategy_dir)
 
-        elif run_options == 'double':
-            if not double_op_dir.exists():
-                print(f"Warning: 'double_operator' directory not found in {benchmark_dir}")
-                print("Available contents:")
-                for item in benchmark_dir.iterdir():
-                    print(f"  - {item.name}")
-                return None
-            for a in double_op_dir.iterdir():
-                if a.is_dir():
-                    dirs.append(a)
-
+        if not dirs_to_process:
+            print(f"No compatible directories found for run_options: {run_options}")
+            print("Available contents:")
+            for item in benchmark_dir.iterdir():
+                print(f"  - {item.name}")
+            return None
 
         # Collect all trace files and their metadata
         trace_file_info = []
+        empty_files = 0
 
-        for op_dir in dirs:
-            if not op_dir.exists():
-                continue
+        for op_dir in dirs_to_process:
+            operator_type = op_dir.name  # "filter", "map", or a swap strategy name
 
-            operator_type = op_dir.name  # "filter" or "map"
-            #print(f"Collecting trace files for {operator_type} operations...")
+            # Determine if this is a single or double operator directory
+            is_double_op = "double_operator" in str(op_dir)
 
             # Process each buffer size directory
             for buffer_dir in op_dir.glob("bufferSize*"):
@@ -99,6 +84,19 @@ def process_benchmark(benchmark_dir, run_options='all'):
                     if query_id == 0:
                         continue
 
+                    # Extract operator chain info for double operators
+                    operator_chain = None
+                    if "operator_chain" in config:
+                        operator_chain = config["operator_chain"]
+                    elif "double_operator" in str(op_dir) and "_" in query_dir.name:
+                        # Try to extract from directory name (query_filter_map_cols...)
+                        parts = query_dir.name.split("_")
+                        if len(parts) >= 3:
+                            operator_chain = f"['{parts[1]}', '{parts[2]}']"
+
+                    # Extract swap strategy
+                    swap_strategy = config.get('swap_strategy', operator_type)
+
                     # Process each run directory
                     for run_dir in query_dir.glob("run*"):
                         # Extract run number and layout from directory name
@@ -115,7 +113,6 @@ def process_benchmark(benchmark_dir, run_options='all'):
 
                         if trace_file.stat().st_size == 0:
                             empty_files += 1
-                            #print(f"Warning: Empty trace file found: {trace_file}, skipping...")
                             continue
 
                         # Store file info with metadata
@@ -127,11 +124,14 @@ def process_benchmark(benchmark_dir, run_options='all'):
                             'buffer_size': buffer_size,
                             'operator_type': operator_type,
                             'query_dir': query_dir,
-                            'config': config
+                            'config': config,
+                            'is_double_op': is_double_op,
+                            'operator_chain': operator_chain,
+                            'swap_strategy': swap_strategy
                         })
 
         if not trace_file_info:
-            print(f"No trace files found to process (emtpy ones: {empty_files})")
+            print(f"No trace files found to process (empty ones: {empty_files})")
             return None
 
         print(f"Found {len(trace_file_info)} trace files to process and {empty_files} empty trace files.")
@@ -179,6 +179,27 @@ def process_benchmark(benchmark_dir, run_options='all'):
                         query_results['layout'] = info['layout']
                         query_results['buffer_size'] = info['buffer_size']
                         query_results['operator_type'] = info['operator_type']
+                        query_results['is_double_op'] = info['is_double_op']
+                        query_results['operator_chain'] = info['operator_chain']
+                        query_results['swap_strategy'] = info['swap_strategy']
+
+                        # For double operators, extract full query duration and calculate swap penalty
+                        if info['is_double_op']:
+                            # Extract durations for each operator in the pipeline
+                            pipeline_stages = sorted([col for col in query_results.columns if col.startswith('pipeline_')
+                                                      and '_duration' in col and not col.endswith('_avg')])
+
+                            if pipeline_stages:
+                                # Total query duration is the sum of all pipeline durations
+                                query_results['full_query_duration'] = query_results[pipeline_stages].sum(axis=1)
+
+                                # Calculate swap penalty
+                                # Higher values indicate more overhead from swapping
+                                swap_overhead = query_results.get('swap_overhead', 0)
+                                compute_time = query_results.get('pipeline_3_compute_time', 0)
+                                if not isinstance(swap_overhead, int) and not isinstance(compute_time, int):
+                                    query_results['swap_penalty_ratio'] = swap_overhead / (compute_time + 1e-10)
+                                    query_results['swap_penalty_ms'] = swap_overhead
 
                         all_results.append(query_results)
 
@@ -202,21 +223,35 @@ def process_benchmark(benchmark_dir, run_options='all'):
                             # Calculate average results for this query across runs
                             avg_df = query_results.groupby(['layout']).mean(numeric_only=True).reset_index()
                             avg_df['operator_type'] = query_info['operator_type']
+                            avg_df['is_double_op'] = query_info['is_double_op']
+                            avg_df['operator_chain'] = query_info['operator_chain']
+                            avg_df['swap_strategy'] = query_info['swap_strategy']
+
                             avg_csv = query_dir / "avg_results.csv"
                             avg_df.to_csv(avg_csv, index=False)
-
 
                     # Combine all results
                     output_csv = benchmark_dir / f"{benchmark_dir.name}_results.csv"
                     combined_df.to_csv(output_csv, index=False)
-                    #print(f"Combined results saved to {output_csv}")
+
+                    # Create separate results files for single and double operators
+                    single_ops_df = combined_df[~combined_df['is_double_op']]
+                    if not single_ops_df.empty:
+                        single_csv = benchmark_dir / f"{benchmark_dir.name}_single_operator_results.csv"
+                        single_ops_df.to_csv(single_csv, index=False)
+
+                    double_ops_df = combined_df[combined_df['is_double_op']]
+                    if not double_ops_df.empty:
+                        double_csv = benchmark_dir / f"{benchmark_dir.name}_double_operator_results.csv"
+                        double_ops_df.to_csv(double_csv, index=False)
 
                     # Average results across runs for all queries
-                    avg_df = combined_df.groupby(['query_id', 'layout', 'buffer_size', 'operator_type']).mean(numeric_only=True).reset_index()
+                    avg_columns = ['query_id', 'layout', 'buffer_size', 'operator_type',
+                                   'is_double_op', 'operator_chain', 'swap_strategy']
+                    avg_df = combined_df.groupby(avg_columns).mean(numeric_only=True).reset_index()
 
                     avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
                     avg_df.to_csv(avg_csv, index=False)
-                    #print(f"Averaged results saved to {avg_csv}")
 
                     return str(avg_csv)
 
@@ -238,7 +273,7 @@ def process_benchmark(benchmark_dir, run_options='all'):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process benchmark results')
     parser.add_argument('--benchmark-dir', required=True, help='Path to benchmark directory')
-    parser.add_argument('--run-options', required=True, default='double', help='options: all, single or double')
+    parser.add_argument('--run-options', required=True, default='all', help='options: all, single or double')
     args = parser.parse_args()
 
     process_benchmark(args.benchmark_dir, args.run_options)
