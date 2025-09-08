@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-09-03_15-17-01'
+DATETIME = '2025-09-04_13-42-25'
 # FILE = 'combined_benchmark_statistics.csv'
 FILE = 'combined_slice_accesses.csv'
 
@@ -179,14 +179,14 @@ def add_numeric_labels_per_hue(ax, data, hue, param, legend, spacing=0.0725):
     ax.legend(handles, new_labels, title='ID: ' + legend)
 
 
-def find_default_values_for_params(min_support_ratio=1.0):
+def find_default_values_for_params(data, min_support_ratio=1.0):
     likely_defaults = {}
 
     for param in all_config_params:
         other_params = [p for p in all_config_params if p != param]
 
         # Sum up the numbers of unique values across all other parameters for each value of this parameter
-        grouped = df.groupby(param)[other_params].nunique().sum(axis=1)
+        grouped = data.groupby(param)[other_params].nunique().sum(axis=1)
 
         # Get most widely used value and all other values that occur with a similar frequency
         max_usage = grouped.max()
@@ -264,7 +264,7 @@ watermark_predictor_config_params = [
 all_config_params = shared_config_params + file_backed_config_params
 
 # Find all default values for each config parameter
-default_param_values = find_default_values_for_params()
+default_param_values = find_default_values_for_params(df)
 
 # Find unique configs that both slice store types have in common
 default_configs = df[df['slice_store_type'] == 'DEFAULT'][all_config_params].drop_duplicates()
@@ -276,6 +276,7 @@ common_config_dicts = common_configs.to_dict(orient='records')
 print(f'Percentage of invalid rows: {int(100 * (len(df) - len(df[df.apply(valid_row, axis=1)])) / len(df))}%')
 df_old = df.copy()
 df = df[df.apply(valid_row, axis=1)]
+default_param_values_2 = find_default_values_for_params(df)
 
 # Compute correctness of predictors
 df['prediction_correctness'] = df.apply(compute_prediction_correctness, axis=1)
@@ -296,7 +297,7 @@ df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | '
 df['correctness_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
 
 # Sort by all hue values
-df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'watermark_predictor_type', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'], ascending=[True, True, True, True, True, True, True])
+df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta', 'watermark_predictor_type'], ascending=[True, True, True, True, True, True, True])
 
 # %% Compare slice store types for different configs
 
@@ -660,7 +661,7 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
     ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
 
     # Create numeric labels for each hue value and add legend
-    add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend)
+    add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend, 0.0675)
 
     # Add legend below
     add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
@@ -688,3 +689,7 @@ for hue_value in df['file_backed_hue'].unique():
 
 # %% Memory-Model parameter plots for different memory budgets over time
 
+print(len(df_old['dir_name'].unique()))
+print(len(df['dir_name'].unique()))
+print(len(df_old))
+print(len(df))

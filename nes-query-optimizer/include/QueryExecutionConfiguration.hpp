@@ -105,7 +105,7 @@ public:
            {std::make_shared<NumberValidation>()}};
     UIntOption predictionTimeDelta
         = {"predictionTimeDelta",
-           "0",
+           "500",
            "Time delta in microseconds that is added to watermark predictions to account for execution time.",
            {std::make_shared<NumberValidation>()}};
     BoolOption withCleanup = {"withCleanup", "true", "Delete state on external storage devices for file backed slice store."};
@@ -117,12 +117,12 @@ public:
            "[NO_SEPARATION_KEEP_KEYS|NO_SEPARATION|SEPARATE_PAYLOAD|SEPARATE_KEYS]."};
     EnumOption<WatermarkPredictorType> watermarkPredictorType
         = {"watermarkPredictorType",
-           WatermarkPredictorType::RLS,
+           WatermarkPredictorType::REGRESSION,
            "Type of watermark predictor for file backed slice store "
            "[KALMAN|REGRESSION|RLS]."};
     UIntOption maxNumFileDescriptors
         = {"maxNumFileDescriptors",
-           "1024",
+           "0",
            "Maximum number of file descriptors that exist at once for file backed slice store (0 equals no limit).",
            {std::make_shared<NumberValidation>()}};
     UIntOption fileDescriptorBufferSize
@@ -132,7 +132,7 @@ public:
            {std::make_shared<NumberValidation>()}};
     UIntOption numberOfBuffersPerWorker
         = {"numberOfBuffersPerWorker",
-           "1024",
+           "16384",
            "Number of buffers per worker of file descriptors for file backed data structures.",
            {std::make_shared<NumberValidation>()}};
     StringOption fileBackedWorkingDir = {"fileBackedWorkingDir", "", "Working directory for file backed data structures."};

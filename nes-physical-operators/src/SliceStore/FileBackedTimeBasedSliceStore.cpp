@@ -76,7 +76,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 {
     const auto workerThread = WorkerThreadId(threadId % numberOfWorkerThreads);
     const auto slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, threadId, joinBuildSide, createNewSlice);
-    auto& alteredSlicesVec = alteredSlicesPerThread[{workerThread, joinBuildSide}];
+    auto& alteredSlicesVec = alteredSlices[{workerThread, joinBuildSide}];
     alteredSlicesVec.insert(alteredSlicesVec.end(), slicesVec.begin(), slicesVec.end());
 #ifdef LOG_SLICE_ACCESS
     logger->log(
@@ -195,8 +195,8 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     /// Initialise maps to keep track of altered slices
     for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
     {
-        alteredSlicesPerThread[{WorkerThreadId(i), JoinBuildSideType::Left}];
-        alteredSlicesPerThread[{WorkerThreadId(i), JoinBuildSideType::Right}];
+        alteredSlices[{WorkerThreadId(i), JoinBuildSideType::Left}];
+        alteredSlices[{WorkerThreadId(i), JoinBuildSideType::Right}];
     }
 
 #ifdef LOG_SLICE_ACCESS
@@ -257,7 +257,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
         }
     }
 
-    auto& alteredSlicesVec = alteredSlicesPerThread[{workerThreadId, joinBuildSide}];
+    auto& alteredSlicesVec = alteredSlices[{workerThreadId, joinBuildSide}];
 #ifdef LOG_SLICE_ACCESS
     const auto now = std::chrono::system_clock::now();
     for (const auto& slice : alteredSlicesVec)
@@ -303,7 +303,7 @@ FileBackedTimeBasedSliceStore::updateSlicesReactive(const WorkerThreadId threadI
 {
     /// Reserve space for every altered slice as we update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    auto& alteredSlicesVec = alteredSlicesPerThread[{threadId, joinBuildSide}];
+    auto& alteredSlicesVec = alteredSlices[{threadId, joinBuildSide}];
     slicesToUpdate.reserve(alteredSlicesVec.size());
 
     std::ranges::transform(
@@ -319,7 +319,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
 {
     /// Reserve space for every altered slice as we update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    auto& alteredSlicesVec = alteredSlicesPerThread[{threadId, joinBuildSide}];
+    auto& alteredSlicesVec = alteredSlices[{threadId, joinBuildSide}];
     slicesToUpdate.reserve(alteredSlicesVec.size());
 
     std::ranges::transform(
@@ -342,7 +342,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
 {
     /// Reserve space for every altered slice as we might update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
-    auto& alteredSlicesVec = alteredSlicesPerThread[{threadId, joinBuildSide}];
+    auto& alteredSlicesVec = alteredSlices[{threadId, joinBuildSide}];
     slicesToUpdate.reserve(alteredSlicesVec.size());
 
     auto tupleSize = memoryLayout->getTupleSize();

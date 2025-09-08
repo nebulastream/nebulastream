@@ -113,7 +113,6 @@ private:
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide) const;
-
     void readSliceFromFiles(
         const std::shared_ptr<Slice>& slice,
         Memory::AbstractBufferProvider* bufferProvider,
@@ -123,8 +122,8 @@ private:
         JoinBuildSideType joinBuildSide) const;
 
     void updateWatermarkPredictor(OriginId originId);
-    void measureReadAndWriteExecTimes(const std::array<size_t, TEST_DATA_SIZES.size()>& dataSizes);
 
+    void measureReadAndWriteExecTimes(const std::array<size_t, TEST_DATA_SIZES.size()>& dataSizes);
     static uint64_t getExecTimesForDataSize(const std::pair<double, double>& execTimeFunction, const size_t dataSize)
     {
         return static_cast<uint64_t>(execTimeFunction.first * dataSize + execTimeFunction.second);
@@ -150,21 +149,20 @@ private:
     /// The FileDescriptorManager manages the creation and destruction of FileReader and FileWriter objects and controls the internal memory
     /// pool used by them. The map keeps track of which slices were requested by the build operator since the last call to updateSlices.
     std::shared_ptr<FileDescriptorManager> fileDescriptorManager;
-    std::map<std::pair<WorkerThreadId, JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
+    std::map<std::pair<WorkerThreadId, JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlices;
 
     /// The pairs hold the slope and intercept needed to calculate execution times of write or read operations for certain data sizes
     /// which is also used for predictions.
     std::pair<double, double> writeExecTimeFunction;
     std::pair<double, double> readExecTimeFunction;
 
-    /// Track slices operations for benchmarking purposes
-    //std::vector<std::shared_ptr<AsyncLogger>> logger;
-    std::shared_ptr<AsyncLogger> logger;
-
+    /// Store configuration parameters
     uint64_t numberOfWorkerThreads;
-
     SliceStoreInfo sliceStoreInfo;
     FileDescriptorManagerInfo fileDescriptorManagerInfo;
+
+    /// Track slice operations for benchmarking purposes
+    std::shared_ptr<AsyncLogger> logger;
 };
 
 }
