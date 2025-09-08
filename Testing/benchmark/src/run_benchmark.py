@@ -106,7 +106,12 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
                 print(f"  Multiple operators in chain: {op_chain}")
 
                 #multiple operators in query
-                layouts = ["ROW_LAYOUT"] #layout field gets ignored if strategy is set
+                if strategy == "ALL_COL":
+                    layouts = ["COLUMNAR_LAYOUT"]
+                elif strategy == "ALL_ROW":
+                    layouts = ["ROW_LAYOUT"]
+                else:
+                    layouts = ["ROW_LAYOUT"] #layout field gets ignored if other strategy is set
             else:
                 layouts = ["ROW_LAYOUT", "COLUMNAR_LAYOUT"]
 
@@ -123,7 +128,11 @@ def run_benchmark(test_file, output_dir, repeats=2, layouts=None, build_dir="cma
             # Run for each layout
             for layout in layouts:
                 for run in range(1, repeats + 1):
-                    run_dir = query_dir / f"run{run}_{layout}"
+                    run_dir = query_dir
+                    if len(layouts) >1:
+                        run_dir = run_dir / f"run{run}_{layout}"
+                    else:
+                        run_dir = run_dir / f"run{run}"
                     run_dir.mkdir(exist_ok=True)
 
                     print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}...")

@@ -21,13 +21,12 @@ def swap_config_to_strategy(swap_config):
     else:
         return "CUSTOM"  # For other configurations
 
-def generate_double_operator_query(test_id, buffer_size, num_cols, access_cols, op_chain, swap_config, result_dir):
+def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, access_cols, op_chain, swap_config, result_dir):
     """Generate a query with a chain of two operators and configurable swaps"""
 
     # Create strategy-specific directory in double_operator
     strategy = swap_config
     chain_str = '_'.join(op_chain)
-
     # For directory structure
     strategy_dir = result_dir / strategy
     strategy_dir.mkdir(exist_ok=True)
@@ -53,17 +52,12 @@ def generate_double_operator_query(test_id, buffer_size, num_cols, access_cols, 
     # Generate different queries based on operator chain
     if op_chain == ['map', 'filter']:
         # First map then filter
-        if access_cols == 1:
-            # Single column access
-            inner_expr = f"col_0 + col_0 AS result1"
-            outer_expr = f"result1 > UINT64({threshold})"
-            sink = "MapSink"
-        else:
-            # Multi-column access
-            inner_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
-            inner_expr = ", ".join(inner_exprs)
-            outer_expr = " AND ".join([f"result{i+1} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
-            sink = f"MapSink{access_cols}"
+
+        # Multi-column access
+        inner_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
+        inner_expr = ", ".join(inner_exprs)
+        outer_expr = " AND ".join([f"result{i+1} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
+        sink = f"MixedSink{access_cols}"
 
 
 
@@ -73,15 +67,12 @@ def generate_double_operator_query(test_id, buffer_size, num_cols, access_cols, 
 
     elif op_chain == ['filter', 'map']:
         # First filter then map
-        if access_cols == 1:
-            filter_expr = f"col_0 > UINT64({threshold})"
-            map_expr = f"col_0 + col_0 AS result"
-            sink = "MapSink"
-        else:
-            filter_expr = " AND ".join([f"col_{i} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
-            map_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
-            map_expr = ", ".join(map_exprs)
-            sink = f"MapSink{access_cols}"
+
+
+        filter_expr = " AND ".join([f"col_{i} > UINT64({threshold})" for i in range(min(access_cols, num_cols))])
+        map_exprs = [f"col_{i} + col_{i} AS result{i+1}" for i in range(min(access_cols, num_cols))]
+        map_expr = ", ".join(map_exprs)
+        sink = f"MixedSink{access_cols}"
 
 
 
@@ -97,8 +88,8 @@ def generate_double_operator_query(test_id, buffer_size, num_cols, access_cols, 
 
     # Store configuration
     config = {
-        'query_id': test_id,
-        'test_id': test_id,  # Make sure test_id is also stored
+        'query_id': query_id,
+        'test_id': test_id,
         'buffer_size': buffer_size,
         'num_columns': num_cols,
         'accessed_columns': access_cols,
@@ -179,8 +170,17 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
             for col_index in range(2,acc_cols + 1):#)column_names[1:acc_cols]:
                 sink +=(f" UINT64 result{col_index}")
             f.write(sink + "\n")
-        f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")
 
+        f.write("SINK MapSink TYPE Checksum UINT64 result\n\n")
+        f.write("SINK MixedSink1 TYPE Checksum UINT64 result\n")
+        f.write("SINK MixedSink2 TYPE Checksum UINT64 result1 UINT64 result2\n\n")
+        for acc_cols in accessed_columns_list:
+            if acc_cols>1:
+                sink= f"SINK MixedSink{acc_cols} TYPE Checksum"
+                for col_index in range(1,acc_cols + 1):#)column_names[1:acc_cols]:
+                    sink +=(f" UINT64 result{col_index}")
+                f.write(sink + "\n")
+        f.write("\n")
     # Create operator directories
 
     result_dir = Path(result_dir)
@@ -331,13 +331,15 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
                     continue
 
                 for swap_config in params['swap_strategy']:
+                    test_id=1
                     for num_col in [n for n in num_columns_list if n <= len(column_names)]:
                         for access_col in [a for a in accessed_columns_list if a <= num_col]:
                             # Generate double operator query
                             query, config, test_file = generate_double_operator_query(
-                                query_id, buffer_size, num_col, access_col, op_chain,
+                                query_id, test_id, buffer_size, num_col, access_col, op_chain,
                                 swap_config, double_operator_dir
                             )
+
 
                             # Append to test file or create if doesn't exist
                             if not os.path.exists(test_file):
@@ -347,7 +349,7 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
                             with open(test_file, 'a') as f:
                                 f.write(query)
                                 f.write("----\n1, 1\n\n")
-
+                            test_id +=1
                             query_id += 1
                             query_configs[query_id] = config
 
@@ -432,8 +434,8 @@ if __name__ == "__main__":
         'swap_strategy': [
             #[True, True, True],      # last swap cant be true because sink is always row
             swap_config_to_strategy([False, False, False]),    # No swaps
-            swap_config_to_strategy([False, True, False]),
-            swap_config_to_strategy([True, False, False]),
+            #swap_config_to_strategy([False, True, False]), #TODO: implement first and second
+            #swap_config_to_strategy([True, False, False]),
             swap_config_to_strategy([True, True, False]),
 
         ]
