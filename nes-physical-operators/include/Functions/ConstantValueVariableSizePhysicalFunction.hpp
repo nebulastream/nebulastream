@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string_view>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -30,6 +31,7 @@ namespace NES
 class ConstantValueVariableSizePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
+    explicit ConstantValueVariableSizePhysicalFunction(std::string_view value);
     explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
