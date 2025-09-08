@@ -66,9 +66,7 @@ concept LogicalOperatorConcept = requires(
     TraitSet traitSet,
     const T& rhs,
     SerializableOperator& serializableOperator,
-    std::vector<Schema> inputSchemas,
-    std::vector<std::vector<OriginId>> inputOriginIds,
-    std::vector<OriginId> outputOriginIds) {
+    std::vector<Schema> inputSchemas) {
     /// Returns a string representation of the operator
     { thisOperator.explain(verbosity, operatorId) } -> std::convertible_to<std::string>;
 
@@ -98,18 +96,6 @@ concept LogicalOperatorConcept = requires(
 
     /// Returns the output schema of the operator
     { thisOperator.getOutputSchema() } -> std::convertible_to<Schema>;
-
-    /// Returns the input origin IDs of the operator
-    { thisOperator.getInputOriginIds() } -> std::convertible_to<std::vector<std::vector<OriginId>>>;
-
-    /// Returns the output origin IDs of the operator
-    { thisOperator.getOutputOriginIds() } -> std::convertible_to<std::vector<OriginId>>;
-
-    /// Creates a new operator with the given input origin IDs
-    { thisOperator.withInputOriginIds(inputOriginIds) } -> std::convertible_to<T>;
-
-    /// Creates a new operator with the given output origin IDs
-    { thisOperator.withOutputOriginIds(outputOriginIds) } -> std::convertible_to<T>;
 
     /// Creates a new operator with inferred schema based on input schemas
     { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
@@ -154,10 +140,6 @@ struct ErasedLogicalOperator
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
     [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
     [[nodiscard]] virtual Schema getOutputSchema() const = 0;
-    [[nodiscard]] virtual std::vector<std::vector<OriginId>> getInputOriginIds() const = 0;
-    [[nodiscard]] virtual std::vector<OriginId> getOutputOriginIds() const = 0;
-    [[nodiscard]] virtual LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const = 0;
-    [[nodiscard]] virtual LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const = 0;
     [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const = 0;
     [[nodiscard]] virtual bool equals(const ErasedLogicalOperator& other) const = 0;
     [[nodiscard]] virtual OperatorId getOperatorId() const = 0;
@@ -338,20 +320,6 @@ struct TypedLogicalOperator
 
     [[nodiscard]] Schema getOutputSchema() const { return self->getOutputSchema(); }
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const { return self->getInputOriginIds(); }
-
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const { return self->getOutputOriginIds(); }
-
-    [[nodiscard]] TypedLogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-    {
-        return self->withInputOriginIds(std::move(ids));
-    }
-
-    [[nodiscard]] TypedLogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const
-    {
-        return self->withOutputOriginIds(std::move(ids));
-    }
-
     [[nodiscard]] TypedLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const
     {
         return self->withInferredSchema(std::move(inputSchemas));
@@ -405,17 +373,6 @@ struct OperatorModel : ErasedLogicalOperator
     [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return impl.getInputSchemas(); }
 
     [[nodiscard]] Schema getOutputSchema() const override { return impl.getOutputSchema(); }
-
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override { return impl.getInputOriginIds(); }
-
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override { return impl.getOutputOriginIds(); }
-
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override
-    {
-        return impl.withInputOriginIds(ids);
-    }
-
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override { return impl.withOutputOriginIds(ids); }
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override
     {

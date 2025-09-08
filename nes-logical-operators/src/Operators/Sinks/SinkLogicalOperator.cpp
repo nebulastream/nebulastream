@@ -51,8 +51,7 @@ bool SinkLogicalOperator::operator==(const SinkLogicalOperator& rhs) const
         || (sinkDescriptor.has_value() && rhs.sinkDescriptor.has_value() && *sinkDescriptor == *rhs.sinkDescriptor);
 
     return sinkName == rhs.sinkName && descriptorsEqual && getOutputSchema() == rhs.getOutputSchema()
-        && getInputSchemas() == rhs.getInputSchemas() && getInputOriginIds() == rhs.getInputOriginIds()
-        && getOutputOriginIds() == rhs.getOutputOriginIds() && getTraitSet() == rhs.getTraitSet();
+        && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
 }
 
 std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -62,11 +61,12 @@ std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
         if (sinkDescriptor.has_value())
         {
             return fmt::format(
-                "SINK(opId: {}, sinkName: {}, sinkDescriptor: {}, schema: {})",
+                "SINK(opId: {}, sinkName: {}, sinkDescriptor: {}, schema: {}, traitSet: {})",
                 id,
                 sinkName,
                 (sinkDescriptor) ? fmt::format("{}", *sinkDescriptor) : "(null)",
-                *sinkDescriptor->getSchema());
+                *sinkDescriptor->getSchema(),
+                traitSet.explain(verbosity));
         }
         return fmt::format("SINK(opId: {}, sinkName: {})", id, sinkName);
     }
@@ -163,30 +163,6 @@ Schema SinkLogicalOperator::getOutputSchema() const
     return *this->sinkDescriptor.value().getSchema();
 }
 
-std::vector<std::vector<OriginId>> SinkLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
-}
-
-std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-SinkLogicalOperator SinkLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    auto copy = *this;
-    copy.inputOriginIds = ids.at(0);
-    return copy;
-}
-
-SinkLogicalOperator SinkLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = ids;
-    return copy;
-}
-
 std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
 {
     return children;
@@ -216,20 +192,6 @@ void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     if (sinkDescriptor)
     {
         proto.mutable_sinkdescriptor()->CopyFrom(sinkDescriptor->serialize());
-    }
-
-    for (const auto& originList : getInputOriginIds())
-    {
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originList)
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
     }
 
     const DescriptorConfig::ConfigType timeVariant = sinkName;
