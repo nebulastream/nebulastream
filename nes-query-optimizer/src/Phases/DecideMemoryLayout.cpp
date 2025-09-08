@@ -80,6 +80,7 @@ LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator
                         traitSet.insert(MemoryLayoutTypeTrait{incomingLayout, targetLayout});
                     }
                 }
+                break;
             }
         case MemoryLayoutStrategy::LEGACY:
             {
