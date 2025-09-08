@@ -33,7 +33,7 @@ public:
     /// Adds all fields from the other record to this record. This will overwrite existing fields.
     void reassignFields(const Record& other);
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
-    void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType);
+    void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal);
     nautilus::val<uint64_t> getNumberOfFields() const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
