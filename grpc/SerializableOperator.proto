@@ -54,23 +54,12 @@ message SerializableSinkLogicalOperator
 {
   string sinkName = 1;
   optional SerializableSinkDescriptor sinkDescriptor = 2;
-  message OriginList {
-    repeated uint64 origin_ids = 1;
-  }
-  repeated OriginList input_origin_lists = 3;
-  repeated uint64 output_origin_ids = 4;
 }
 
 message SerializableLogicalOperator {
   string operator_type = 1;
-  SerializableTraitSet trait_set = 2;
-  SerializableSchema output_schema = 3;
-  repeated SerializableSchema input_schemas = 4;
-  message OriginList {
-    repeated uint64 origin_ids = 1;
-  }
-  repeated OriginList input_origin_lists = 5;
-  repeated uint64 output_origin_ids = 6;
+  SerializableSchema output_schema = 2;
+  repeated SerializableSchema input_schemas = 3;
 }
 
 message SerializableOperator
@@ -78,9 +67,10 @@ message SerializableOperator
   uint64 operator_id = 1;
   repeated uint64 children_ids = 2;
   map<string, SerializableVariantDescriptor> config = 3;
+  SerializableTraitSet trait_set = 4;
   oneof value {
-    SerializableSourceDescriptorLogicalOperator source = 4;
-    SerializableSinkLogicalOperator sink = 5;
-    SerializableLogicalOperator operator = 6;
+    SerializableSourceDescriptorLogicalOperator source = 5;
+    SerializableSinkLogicalOperator sink = 6;
+    SerializableLogicalOperator operator = 7;
   }
 }

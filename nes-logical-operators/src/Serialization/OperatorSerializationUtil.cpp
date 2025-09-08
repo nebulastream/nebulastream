@@ -27,9 +27,11 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -47,7 +49,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             const auto& serializedSource = serializedOperator.source();
             auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
             auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-            return sourceOperator.withOutputOriginIds({{OriginId(serializedSource.sourceoriginid())}});
+            return sourceOperator;
         }
 
         if (serializedOperator.has_sink())
@@ -68,26 +70,6 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
             auto sinkOperator = SinkLogicalOperator();
             sinkOperator.sinkName = std::get<std::string>(sinkName);
-
-            std::vector<std::vector<OriginId>> inputIdsVec;
-            for (const auto& originList : sink.input_origin_lists())
-            {
-                std::vector<OriginId> ids;
-                for (const auto& id : originList.origin_ids())
-                {
-                    ids.emplace_back(id);
-                }
-                inputIdsVec.emplace_back(std::move(ids));
-            }
-            sinkOperator = sinkOperator.withInputOriginIds(inputIdsVec);
-
-            std::vector<OriginId> outputIds;
-            for (const auto& id : sink.output_origin_ids())
-            {
-                outputIds.emplace_back(id);
-            }
-            sinkOperator = sinkOperator.withOutputOriginIds(outputIds);
-
             sinkOperator.sinkDescriptor
                 = serializedSinkDescriptor.transform([](const auto& serialized) { return deserializeSinkDescriptor(serialized); });
 
@@ -103,28 +85,10 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             }
 
             auto registryArgument = LogicalOperatorRegistryArguments{
-                .inputOriginIds = {}, /// inputOriginIds - will be populated from operator_().input_origin_lists
-                .outputOriginIds = {}, /// outputOriginIds - will be populated from operator_().output_origin_ids
                 .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
                 .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
                 .config = config};
 
-            for (const auto& originList : serializedOperator.operator_().input_origin_lists())
-            {
-                std::vector<OriginId> ids;
-                for (const auto& id : originList.origin_ids())
-                {
-                    ids.emplace_back(id);
-                }
-                registryArgument.inputOriginIds.push_back(ids);
-            }
-
-            std::vector<OriginId> outputIds;
-            for (const auto& id : serializedOperator.operator_().output_origin_ids())
-            {
-                outputIds.emplace_back(id);
-            }
-            registryArgument.outputOriginIds = outputIds;
 
             for (const auto& schema : serializedOperator.operator_().input_schemas())
             {
@@ -142,7 +106,8 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 
     if (result.has_value())
     {
-        return result->withOperatorId(OperatorId{serializedOperator.operator_id()});
+        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set());
+        return result->withTraitSet(std::move(traitSet)).withOperatorId(OperatorId{serializedOperator.operator_id()});
     }
 
     throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());

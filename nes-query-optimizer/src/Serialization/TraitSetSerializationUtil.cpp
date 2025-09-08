@@ -15,6 +15,7 @@
 #include <Serialization/TraitSetSerializationUtil.hpp>
 
 #include <ranges>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
@@ -27,30 +28,28 @@ SerializableTraitSet* TraitSetSerializationUtil::serialize(const NES::TraitSet& 
 {
     for (const auto& trait : traitSet | std::views::values)
     {
-        *traitSetPtr->add_traits() = trait.serialize();
+        traitSetPtr->mutable_traits()->try_emplace(trait.getName(), trait.serialize());
     }
     return traitSetPtr;
 }
 
 TraitSet TraitSetSerializationUtil::deserialize(const SerializableTraitSet* traitSetPtr)
 {
-    const auto deserializedTraits = traitSetPtr->traits()
-        | std::views::transform(
-                                        [](const SerializableTrait& trait)
-                                        {
-                                            DescriptorConfig::Config config;
-                                            for (const auto& [key, value] : trait.config())
-                                            {
-                                                config[key] = protoToDescriptorConfigType(value);
-                                            }
-                                            auto deserializedTrait
-                                                = TraitRegistry::instance().create(trait.trait_type(), TraitRegistryArguments{config});
-                                            if (!deserializedTrait.has_value())
-                                            {
-                                                throw CannotDeserialize("Failed to deserialize trait of type {}", trait.trait_type());
-                                            }
-                                            return deserializedTrait.value();
-                                        });
+    std::vector<Trait> deserializedTraits;
+    for (const auto& [name, trait] : traitSetPtr->traits())
+    {
+        DescriptorConfig::Config config;
+        for (const auto& [key, value] : trait.config())
+        {
+            config[key] = protoToDescriptorConfigType(value);
+        }
+        auto deserializedTrait = TraitRegistry::instance().create(name, TraitRegistryArguments{config});
+        if (!deserializedTrait.has_value())
+        {
+            throw CannotDeserialize("Failed to deserialize trait of type {}", name);
+        }
+        deserializedTraits.push_back(deserializedTrait.value());
+    }
 
     return TraitSet{deserializedTraits};
 }

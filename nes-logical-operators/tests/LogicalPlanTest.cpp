@@ -163,12 +163,18 @@ TEST_F(LogicalPlanTest, GetOperatorsById)
     EXPECT_EQ(op3.value().getId(), sinkOp.getId());
 }
 
+namespace
+{
+struct TestTrait final : DefaultTrait<TestTrait>
+{
+    static constexpr std::string_view NAME = "TestTrait";
+
+    [[nodiscard]] std::string_view getName() const override { return NAME; }
+};
+}
+
 TEST_F(LogicalPlanTest, AddTraits)
 {
-    struct TestTrait final : DefaultTrait<TestTrait>
-    {
-    };
-
     EXPECT_TRUE(std::ranges::empty(sourceOp.getTraitSet()));
     const auto sourceWithTrait = sourceOp.withTraitSet(TraitSet{TestTrait{}});
     auto sourceTraitSet = sourceWithTrait.getTraitSet();
