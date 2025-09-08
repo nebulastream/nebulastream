@@ -17,8 +17,10 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <utility>
 #include <vector>
+
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
@@ -38,6 +40,8 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -142,15 +146,20 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGetAs<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
-    PRECONDITION(logicalOperator.getInputOriginIds().size() == 1, "Expected one origin id vector");
-    PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
+    PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 1, "Expected one child");
+    auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
+    auto inputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getChildren().at(0).getTraitSet());
+    PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
+    PRECONDITION(inputOriginIdsOpt.has_value(), "Expected the inputOriginIds trait to be set");
+    auto& outputOriginIds = outputOriginIdsOpt.value();
+    PRECONDITION(std::ranges::size(outputOriginIds) == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
 
     auto aggregation = logicalOperator.getAs<WindowedAggregationLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
     auto outputSchema = aggregation.getOutputSchema();
-    auto inputOriginIds = aggregation.getInputOriginIds()[0];
-    auto outputOriginId = aggregation.getOutputOriginIds()[0];
+    auto outputOriginId = outputOriginIds[0];
+    auto inputOriginIds = inputOriginIdsOpt.value();
     auto timeFunction = getTimeFunction(*aggregation);
     auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation->getWindowType());
     INVARIANT(windowType != nullptr, "Window type must be a time-based window type");
@@ -203,7 +212,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+        inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
     auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions);
     auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData);
 

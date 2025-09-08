@@ -40,6 +40,8 @@
 #include <QueryManager/QueryManager.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
+
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -142,7 +144,8 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, ParserConfig{});
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
+    auto sourceOperator
+        = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withTraitSet(TraitSet{OutputOriginIdsTrait{{OriginId{1}}}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 
     const auto result = runQueries(
@@ -173,7 +176,8 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, ParserConfig{});
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
+    auto sourceOperator
+        = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withTraitSet(TraitSet{OutputOriginIdsTrait{{OriginId{1}}}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 
     const auto result = runQueries(

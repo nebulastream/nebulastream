@@ -20,12 +20,15 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -36,37 +39,34 @@ namespace
 LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, OriginId& lastOriginId)
 {
     std::vector<LogicalOperator> newChildren;
-    std::vector<std::vector<OriginId>> childOriginIds;
+    std::vector<OutputOriginIdsTrait> childOriginIds;
     for (const auto& child : visitingOperator.getChildren())
     {
         auto newChild = propagateOriginIds(child, lastOriginId);
         newChildren.push_back(newChild);
-        childOriginIds.push_back(newChild.getOutputOriginIds());
+        const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(newChild.getTraitSet());
+        INVARIANT(childOriginIdsOpt.has_value(), "Child operator must have origin ids trait");
+        childOriginIds.push_back(childOriginIdsOpt.value());
     }
 
-    auto copy = visitingOperator;
+    auto traitSet = visitingOperator.getTraitSet();
 
-    if (copy.tryGetAs<OriginIdAssigner>().has_value())
+    if (visitingOperator.tryGetAs<OriginIdAssigner>().has_value())
     {
         lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
-        copy = copy.withOutputOriginIds({lastOriginId});
+        const auto success = tryInsert(traitSet, OutputOriginIdsTrait{{lastOriginId}});
+        INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
     }
     else
     {
-        copy = copy.withOutputOriginIds(
-            childOriginIds | std::views::join | std::ranges::to<std::unordered_set>() | std::ranges::to<std::vector>());
+        const auto success = tryInsert(
+            traitSet,
+            OutputOriginIdsTrait{
+                childOriginIds | std::views::join | std::ranges::to<std::unordered_set>() | std::ranges::to<std::vector>()});
+        INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
     }
 
-    if (copy.tryGetAs<SourceDescriptorLogicalOperator>().has_value())
-    {
-        copy = copy.withInputOriginIds({copy.getOutputOriginIds()});
-    }
-    else
-    {
-        copy = copy.withInputOriginIds(childOriginIds);
-    }
-
-    return copy.withChildren(newChildren);
+    return visitingOperator.withTraitSet(traitSet).withChildren(newChildren);
 }
 }
 

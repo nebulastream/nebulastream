@@ -55,10 +55,6 @@ public:
     [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
-    [[nodiscard]] SourceDescriptorLogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const;
-    [[nodiscard]] SourceDescriptorLogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
@@ -71,7 +67,6 @@ private:
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-    std::vector<OriginId> sourceOriginIds;
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
