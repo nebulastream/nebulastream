@@ -29,19 +29,50 @@ def process_benchmark(benchmark_dir, run_options='all'):
         empty_files = 0
         filter_dir = benchmark_dir / "filter"
         map_dir = benchmark_dir / "map"
+        double_op_dir = benchmark_dir / "double_operator"
 
-        # Check if expected subdirectories exist
-        if not filter_dir.exists() and not map_dir.exists():
-            print(f"Warning: Neither 'filter' nor 'map' directories found in {benchmark_dir}")
-            print("Available contents:")
-            for item in benchmark_dir.iterdir():
-                print(f"  - {item.name}")
-            return None
+        dirs = []
+        if run_options == 'single' or run_options == 'all':
+
+            # Check if expected subdirectories exist
+            if not filter_dir.exists() and not map_dir.exists():
+                if run_options == 'all':
+                    if not double_op_dir.exists():
+                        print(f"Warning: Neither 'filter', 'map' nor 'double_operator' directories found in {benchmark_dir}")
+                        print("Available contents:")
+                        for item in benchmark_dir.iterdir():
+                            print(f"  - {item.name}")
+                        return None
+                    else:
+                        for a in double_op_dir.iterdir():
+                            if a.is_dir():
+                                dirs.append(a)
+                print(f"Warning: Neither 'filter' nor 'map' directories found in {benchmark_dir}")
+                print("Available contents:")
+                for item in benchmark_dir.iterdir():
+                    print(f"  - {item.name}")
+                return None
+            if filter_dir.exists():
+                dirs.append(filter_dir)
+            if map_dir.exists():
+                dirs.append(map_dir)
+
+        elif run_options == 'double':
+            if not double_op_dir.exists():
+                print(f"Warning: 'double_operator' directory not found in {benchmark_dir}")
+                print("Available contents:")
+                for item in benchmark_dir.iterdir():
+                    print(f"  - {item.name}")
+                return None
+            for a in double_op_dir.iterdir():
+                if a.is_dir():
+                    dirs.append(a)
+
 
         # Collect all trace files and their metadata
         trace_file_info = []
 
-        for op_dir in [filter_dir, map_dir]:
+        for op_dir in dirs:
             if not op_dir.exists():
                 continue
 
