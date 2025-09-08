@@ -55,34 +55,46 @@ LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator
     auto traitSet = logicalOperator.getTraitSet();
     std::erase_if(traitSet, [](const Trait& trait) { return trait.tryGet<MemoryLayoutTypeTrait>().has_value(); });
 
-    if (this->conf.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    switch (this->conf.layoutStrategy.getValue())
     {
-        if (logicalOperator.tryGet<SourceDescriptorLogicalOperator>() || logicalOperator.tryGet<SourceNameLogicalOperator>())
-        {
-            /// sources are always in row layout
-            traitSet.insert(MemoryLayoutTypeTrait{Schema::MemoryLayoutType::ROW_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT});
-        }else
-        {
-            auto incomingTraitSet = getMemoryLayoutTypeTrait(children[0]);
-            auto incomingLayout = incomingTraitSet.targetLayoutType;
-            auto targetLayout = this->conf.memoryLayout.getValue();
-            if (logicalOperator.tryGet<SinkLogicalOperator>())
-            {
-                /// Sinks target layout can currently only be row layout
-                traitSet.insert(MemoryLayoutTypeTrait{incomingLayout, Schema::MemoryLayoutType::ROW_LAYOUT});
-            }else
-            {
-                traitSet.insert(MemoryLayoutTypeTrait{incomingLayout, targetLayout});
-            }
-        }
-    }
-    else if (this->conf.layoutStrategy.getValue() == MemoryLayoutStrategy::LEGACY)
-    {
-        return logicalOperator;
-    }
-    ///TODO: add advanced strategies here
-    ///note that aggregate has to have same format as event time watermark assigner before
 
+        case MemoryLayoutStrategy::ALL_COL:
+        case MemoryLayoutStrategy::ALL_ROW:
+        case MemoryLayoutStrategy::USE_SINGLE_LAYOUT:
+            {
+                if (logicalOperator.tryGet<SourceDescriptorLogicalOperator>() || logicalOperator.tryGet<SourceNameLogicalOperator>())
+                {
+                    /// sources are always in row layout
+                    traitSet.insert(MemoryLayoutTypeTrait{Schema::MemoryLayoutType::ROW_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT});
+                }else
+                {
+                    auto incomingTraitSet = getMemoryLayoutTypeTrait(children[0]);
+                    auto incomingLayout = incomingTraitSet.targetLayoutType;
+                    auto targetLayout = this->conf.memoryLayout.getValue();
+                    if (logicalOperator.tryGet<SinkLogicalOperator>())
+                    {
+                        /// Sinks target layout can currently only be row layout
+                        traitSet.insert(MemoryLayoutTypeTrait{incomingLayout, Schema::MemoryLayoutType::ROW_LAYOUT});
+                    }else
+                    {
+                        traitSet.insert(MemoryLayoutTypeTrait{incomingLayout, targetLayout});
+                    }
+                }
+            }
+        case MemoryLayoutStrategy::LEGACY:
+            {
+                return logicalOperator;
+            }
+        case MemoryLayoutStrategy::FIRST: ///TODO: implement first and second
+            {
+                return logicalOperator;}
+            case MemoryLayoutStrategy::SECOND:
+            {
+               return logicalOperator;
+            }
+            ///TODO: add advanced strategies here
+                    ///note that aggregate has to have same format as event time watermark assigner before
+    }
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }
 }

@@ -33,7 +33,7 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecut
     /// For now, we just decide the join type (if one exists in the query) and lower to physical operators in a pure function.
     DecideJoinTypes joinTypeDecider(defaultQueryExecution.joinStrategy);
     const auto optimizedPlan = joinTypeDecider.apply(plan);
-    if (defaultQueryExecution.layoutStrategy.getValue() == MemoryLayoutStrategy::USE_SINGLE_LAYOUT)
+    if (defaultQueryExecution.layoutStrategy.getValue() != MemoryLayoutStrategy::LEGACY)
     {
         DecideMemoryLayout memoryLayoutDecider(defaultQueryExecution);
         const auto layoutOptimizedPlan = memoryLayoutDecider.apply(optimizedPlan);

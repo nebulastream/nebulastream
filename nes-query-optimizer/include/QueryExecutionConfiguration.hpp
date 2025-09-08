@@ -43,7 +43,11 @@ enum class StreamJoinStrategy : uint8_t
 enum class MemoryLayoutStrategy : uint8_t
 {
     LEGACY,
-    USE_SINGLE_LAYOUT
+    USE_SINGLE_LAYOUT,
+    ALL_ROW,
+    ALL_COL,
+    FIRST,
+    SECOND
 };
 
 class QueryExecutionConfiguration : public BaseConfiguration
