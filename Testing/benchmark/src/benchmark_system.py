@@ -67,6 +67,8 @@ def main():
     base_output_dir = Path(args.output_dir)
     base_output_dir.mkdir(exist_ok=True, parents=True)
 
+    #TODO: fix If both --skip-data-gen is true and no --data-file is provided, the code might fail without clear error handling.
+
     # Determine which benchmark directory to use
     benchmark_dir = None
     if args.use_latest:
@@ -113,9 +115,9 @@ def main():
                 "--columns", ','.join(map(str, args.columns))
 
             ], check=True)
-    elif not data_file:
-        print("Error: --data-file must be specified when using --skip-data-gen")
-        return
+    #elif not data_file:
+        #print("Error: --data-file must be specified when using --skip-data-gen")
+       # return
 
     # Step 2: Generate test file
     test_file = args.test_file
@@ -297,7 +299,7 @@ def main():
                 double_op_dir = Path(benchmark_result_dir) / "double_operator"
                 if double_op_dir.exists():
                     try:
-                        double_plots_path = src_dir / "double_operator_plots.py"
+                        double_plots_path = src_dir / "double_plots.py"
                         if double_plots_path.exists():
                             subprocess.run(
                                 ["python3", str(double_plots_path),

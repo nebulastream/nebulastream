@@ -85,6 +85,98 @@ def plot_by_param(df, output_dir, param_name, param_label, log_scale=False):
 
         #print(f"Created plot: {filename}")
 
+def create_double_operator_plots(df, output_dir):
+    """Create plots specifically for double operator benchmarks."""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(exist_ok=True, parents=True)
+
+    # Check if necessary columns exist
+    required_cols = ['swap_strategy', 'operator_chain', 'buffer_size']
+    if not all(col in df.columns for col in required_cols):
+        return False
+
+    # Create plots for each operator ID (3 and 5)
+    operator_metrics = {
+        3: ['pipeline_3_eff_tp', 'pipeline_3_comp_tp'],
+        5: ['pipeline_5_eff_tp', 'pipeline_5_comp_tp']
+    }
+
+    for op_id, metrics in operator_metrics.items():
+        for metric in metrics:
+            if metric not in df.columns:
+                continue
+
+            metric_name = 'Effective' if 'eff_tp' in metric else 'Computational'
+
+            # Plot by buffer size
+            plt.figure(figsize=(12, 8))
+            pivot_df = df.pivot_table(
+                index='buffer_size',
+                columns='swap_strategy',
+                values=metric,
+                aggfunc='mean'
+            )
+
+            ax = pivot_df.plot(kind='bar', colormap='viridis')
+            plt.title(f'Operator {op_id}: {metric_name} Throughput by Buffer Size')
+            plt.xlabel('Buffer Size')
+            plt.ylabel(f'{metric_name} Throughput (tuples/s)')
+            plt.yscale('log')
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+
+            # Add value labels
+            for container in ax.containers:
+                ax.bar_label(container, fmt='%.2e', rotation=90, padding=3)
+
+            plt.tight_layout()
+            plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_buffer.png")
+            plt.close()
+
+            # Plot by operator chain if multiple chains exist
+            if df['operator_chain'].nunique() > 1:
+                plt.figure(figsize=(12, 8))
+                pivot_df = df.pivot_table(
+                    index='operator_chain',
+                    columns='swap_strategy',
+                    values=metric,
+                    aggfunc='mean'
+                )
+
+                ax = pivot_df.plot(kind='bar', colormap='viridis')
+                plt.title(f'Operator {op_id}: {metric_name} Throughput by Operator Chain')
+                plt.xlabel('Operator Chain')
+                plt.ylabel(f'{metric_name} Throughput (tuples/s)')
+                plt.yscale('log')
+                plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+
+                # Add value labels
+                for container in ax.containers:
+                    ax.bar_label(container, fmt='%.2e', rotation=90, padding=3)
+
+                plt.tight_layout()
+                plt.savefig(output_dir / f"op{op_id}_{metric_name.lower()}_throughput_by_chain.png")
+                plt.close()
+
+    # Create a summary plot comparing swap strategies
+    plt.figure(figsize=(14, 10))
+    sns.barplot(
+        data=df,
+        x='swap_strategy',
+        y='pipeline_3_eff_tp',
+        hue='operator_chain',
+        palette='viridis'
+    )
+    plt.title('Double Operator: Throughput by Swap Strategy')
+    plt.xlabel('Swap Strategy')
+    plt.ylabel('Effective Throughput (tuples/s)')
+    plt.yscale('log')
+    plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(output_dir / "double_op_throughput_by_strategy.png")
+    plt.close()
+
+    return True
+
 def main():
     parser = argparse.ArgumentParser(description='Create enhanced benchmark plots')
     parser.add_argument('--results-csv', required=True, help='Path to benchmark results CSV')
@@ -108,8 +200,19 @@ def main():
     if 'layout' in df.columns:
         df['layout'] = df['layout'].astype(str)
 
-    # Create plots
-    create_layout_comparison_plots(df, output_dir)
+    # Check if this is a double operator benchmark
+    is_double_op = False
+    if 'is_double_op' in df.columns:
+        is_double_op = df['is_double_op'].any()
+    elif 'swap_strategy' in df.columns and 'operator_chain' in df.columns:
+        is_double_op = True
+
+    # Create appropriate plots based on benchmark type
+    if is_double_op:
+        if create_double_operator_plots(df, output_dir):
+            print(f"Double operator plots created in {output_dir}")
+    else:
+        create_layout_comparison_plots(df, output_dir)
 
     # Additionally call the existing plots.py script
     #try:
