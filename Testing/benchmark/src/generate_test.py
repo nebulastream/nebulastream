@@ -27,6 +27,7 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
     # Create strategy-specific directory in double_operator
     strategy = swap_config
     chain_str = '_'.join(op_chain)
+
     # For directory structure
     strategy_dir = result_dir / strategy
     strategy_dir.mkdir(exist_ok=True)
@@ -34,11 +35,42 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
     buffer_dir = strategy_dir / f"bufferSize{buffer_size}"
     buffer_dir.mkdir(exist_ok=True)
 
-    query_dir = buffer_dir / f"query_{chain_str}_cols{num_cols}_access{access_cols}"
+    # Create operator chain directory
+    chain_dir = buffer_dir / chain_str
+    chain_dir.mkdir(exist_ok=True)
+
+    # Calculate threshold for filters (use same threshold calculation as single operators)
+    selectivity = 50  # Default selectivity
+    threshold = int((100 - selectivity) * 0.01 * (2**32-1))
+    func_type = "add"  # Default function type
+
+    # Determine function type and selectivity based on operator chain
+    if "filter" in op_chain:
+        selectivity_str = f"sel{selectivity}"
+    else:
+        selectivity_str = ""
+
+    if "map" in op_chain:
+        func_type_str = f"{func_type}"
+    else:
+        func_type_str = ""
+
+    # Build query directory name with proper parameters
+    query_params = []
+    if selectivity_str:
+        query_params.append(selectivity_str)
+    if func_type_str:
+        query_params.append(func_type_str)
+    query_params.append(f"cols{num_cols}")
+    query_params.append(f"acc{access_cols}")
+    query_params.append(strategy)
+
+    query_dir_name = "query_" + "_".join(query_params)
+    query_dir = chain_dir / query_dir_name
     query_dir.mkdir(exist_ok=True)
 
-    # Prepare test file path
-    test_file = buffer_dir / f"{chain_str}_queries_buffer{buffer_size}.test"
+    # Prepare test file path - keep test files in strategy-specific locations
+    test_file = buffer_dir / f"{chain_str}_{strategy}_queries_buffer{buffer_size}.test"
 
     # Calculate threshold for filters (use same threshold calculation as single operators)
     selectivity = 50  # Default selectivity
@@ -46,7 +78,7 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
 
     # Generate query SQL
     query = f"# Query {test_id}: Chain {chain_str} with strategy {strategy}\n"
-    query += f"# BufferSize: {buffer_size}, Operators: {chain_str}, num_cols: {num_cols}, acc_cols: {access_cols}, th: {threshold}\n"
+    query += f"# BufferSize: {buffer_size}, Operators: {chain_str}, num_cols: {num_cols}, acc_cols: {access_cols}, func{func_type} sel: {selectivity}, th: {threshold}\n"
 
     # Determine appropriate sink based on number of accessed columns
     if access_cols == 1:
@@ -89,12 +121,15 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
         'num_columns': num_cols,
         'accessed_columns': access_cols,
         'operator_chain': op_chain,
-        'swap_strategy': strategy
+        'swap_strategy': strategy,
+        'selectivity': selectivity if 'filter' in op_chain else None,
+        'function_type': func_type if 'map' in op_chain else None
     }
 
     with open(query_dir / "config.txt", 'w') as f:
         for k, v in config.items():
-            f.write(f"{k}: {v}\n")
+            if v is not None:
+                f.write(f"{k}: {v}\n")
 
     return query, config, test_file
 def generate_test_file(data_file, output_path, result_dir, params, run_options='all'):
@@ -414,11 +449,11 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 400000],#, 20000000],#+ 40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000],#, 400000],#, 20000000],#+ 40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10], TODO: correctly use more than 2 columns
         'accessed_columns': [1, 2],#, 5, 10],
-        'function_types': ['add', 'exp'],
-        'selectivities': [5, 15],#, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+        'function_types': ['add'],#, 'exp'],
+        'selectivities': [5],# 15],#, 25, 35, 45, 50, 55, 65, 75, 85, 95],
 
         'operator_chains': [
             ['map'],                  # Single map

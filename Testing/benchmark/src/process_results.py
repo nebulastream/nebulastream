@@ -32,12 +32,7 @@ def process_benchmark(benchmark_dir, run_options='all'):
                     op_dir = single_op_dir / op_type
                     if op_dir.exists():
                         dirs_to_process.append(op_dir)
-            else:
-                # Legacy structure support
-                for op_type in ['filter', 'map']:
-                    op_dir = benchmark_dir / op_type
-                    if op_dir.exists():
-                        dirs_to_process.append(op_dir)
+
 
         if run_options in ['double', 'all']:
             # Double operator directories
@@ -68,8 +63,14 @@ def process_benchmark(benchmark_dir, run_options='all'):
             for buffer_dir in op_dir.glob("bufferSize*"):
                 buffer_size = int(buffer_dir.name.replace("bufferSize", ""))
 
+                query_dirs = list(buffer_dir.glob("query_*"))
+                if run_options == "double" or run_options == "all":
+                    for dir in buffer_dir.iterdir():
+                        if dir.is_dir():
+                            query_dirs.extend(dir.glob("query_*"))
+
                 # Process each query directory
-                for query_dir in buffer_dir.glob("query_*"):
+                for query_dir in query_dirs:
                     # Read query configuration
                     config = {}
                     config_file = query_dir / "config.txt"

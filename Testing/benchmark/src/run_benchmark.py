@@ -84,6 +84,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
         # Find test files in this buffer directory
         test_files = list(buffer_dir.glob("*.test"))
         if not test_files:
+            print(f"Warning: No test files found in {buffer_dir}, skipping...")
             continue
 
         # Process all test files in the directory
@@ -96,7 +97,21 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
             strategy = parent_dir.name if parent_dir.name in ["ALL_ROW", "ALL_COL", "FIRST", "SECOND"] else "USE_SINGLE_LAYOUT"
 
             # Get query directories for this buffer size
-            query_dirs = list(buffer_dir.glob("query_*"))
+
+            query_dirs = []
+
+            if run_options == "all" or run_options == "single": #TODO: use util func for query dir extraction
+                query_dirs.extend(list(buffer_dir.glob("query_*")))
+                if run_options == "all":
+                    for dir in buffer_dir.iterdir():
+                        if dir.is_dir():
+                            query_dirs.extend(list(dir.glob("query_*")))
+            else:
+
+                for dir in buffer_dir.iterdir():
+                    if dir.is_dir():
+                        #print(f"running queries from subdirectory: {dir}")
+                        query_dirs.extend(list(dir.glob("query_*")))
 
             for query_dir in query_dirs:
                 # Extract query ID from config file
@@ -132,8 +147,8 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
 
                         # Calculate Docker path mapping for the test file
                         docker_test_path = f"/tmp/nebulastream/Testing/benchmark/{os.path.relpath(buffer_test_file, project_dir)}"
-
-                        #print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}...")
+                        #print (f"Using test file in Docker: {docker_test_path}")
+                        print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}, layout {layout}, strat {config_strategy}...")
 
                         # Docker command using existing test file with query ID
                         cmd = [
@@ -182,6 +197,16 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
                                 #print(f"  Saved most recent trace file: {trace_file.name} to {trace_dest}")
                             else:
                                 print(f"  No trace file found for Query {query_id}, Run {run}")
+                            search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests")
+                            log_files = list(search_path.glob("**/*.log"))
+                            if log_files:
+                                log_files.sort()
+                                log_file = log_files[-1]
+                                log_dest = run_dir / f"{log_file.name.replace('.log', '')}_{layout}_buffer{buffer_size}_query{query_id}.log"
+                                shutil.copy(log_file, log_dest)
+                                #print(f"  Saved most recent log file: {log_file.name} to {log_dest}")
+                            else:
+                                print(f"  No log file found for Query {query_id}, Run {run}")
 
                         except Exception as e:
                             print(f"Error running benchmark: {e}", file=os.sys.stderr)
