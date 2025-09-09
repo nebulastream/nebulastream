@@ -26,6 +26,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -53,7 +54,7 @@ void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionCon
 {
 }
 
-WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
+NAUTILUS_INLINE WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
 {
     return *sliceAndWindowStore;
 }
