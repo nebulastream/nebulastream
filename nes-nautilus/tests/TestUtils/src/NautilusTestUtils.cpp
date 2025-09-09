@@ -43,7 +43,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
@@ -107,11 +107,12 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
     /// We set the threshold to be 10k tuples.
     constexpr auto thresholdForCompile = 10 * 1000;
-    auto backend = numberOfTuples > thresholdForCompile ? ExecutionMode::COMPILER : ExecutionMode::INTERPRETER;
+    auto backend = numberOfTuples > thresholdForCompile ? ExecutionConfiguration::ExecutionMode::COMPILER
+                                                        : ExecutionConfiguration::ExecutionMode::INTERPRETER;
     if (not compiledFunctions.contains({FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend}))
     {
         nautilus::engine::Options options;
-        const auto compilation = backend == ExecutionMode::COMPILER;
+        const auto compilation = backend == ExecutionConfiguration::ExecutionMode::COMPILER;
         options.setOption("engine.Compilation", compilation);
         options.setOption("engine.backend", std::string("mlir"));
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
@@ -184,7 +185,7 @@ NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>&
 
 void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
-    ExecutionMode backend,
+    ExecutionConfiguration::ExecutionMode backend,
     nautilus::engine::Options& options,
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer)
@@ -256,7 +257,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     };
     /// NOLINTEND(performance-unnecessary-value-param)
 
-    const bool compilation = (backend == ExecutionMode::COMPILER);
+    const bool compilation = (backend == ExecutionConfiguration::ExecutionMode::COMPILER);
     options.setOption("engine.Compilation", compilation);
     options.setOption("engine.backend", std::string("mlir"));
     auto engine = nautilus::engine::NautilusEngine(options);

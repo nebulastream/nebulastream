@@ -27,7 +27,7 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -94,13 +94,15 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// to its tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), whose tier-0 backends are
     /// intentionally not built into our nautilus package and which would also conflict with the thread model above.
     options.setOption("engine.backend", std::string("mlir"));
-    switch (pipelineQueryPlan->getExecutionMode())
+    const auto executionConfiguration = pipelineQueryPlan->getExecutionConfiguration();
+    switch (executionConfiguration.getExecutionMode())
     {
-        case ExecutionMode::COMPILER: {
+        case ExecutionConfiguration::ExecutionMode::COMPILER: {
             options.setOption("engine.Compilation", true);
+            options.setOption("mlir.inline_invoke_calls", executionConfiguration.isNautilusInliningEnabled());
             break;
         }
-        case ExecutionMode::INTERPRETER: {
+        case ExecutionConfiguration::ExecutionMode::INTERPRETER: {
             options.setOption("engine.Compilation", false);
             break;
         }

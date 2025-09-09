@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
@@ -43,9 +43,9 @@ void PhysicalPlanBuilder::addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> s
     sinks.emplace_back(std::move(sink));
 }
 
-void PhysicalPlanBuilder::setExecutionMode(ExecutionMode mode)
+void PhysicalPlanBuilder::setExecutionConfiguration(ExecutionConfiguration executionConfiguration)
 {
-    executionMode = mode;
+    this->executionConfiguration = std::move(executionConfiguration);
 }
 
 void PhysicalPlanBuilder::setOperatorBufferSize(uint64_t bufferSize)
@@ -56,7 +56,7 @@ void PhysicalPlanBuilder::setOperatorBufferSize(uint64_t bufferSize)
 PhysicalPlan PhysicalPlanBuilder::finalize() &&
 {
     auto sources = flip(sinks);
-    return {queryId, std::move(sources), executionMode, operatorBufferSize};
+    return {queryId, std::move(sources), executionConfiguration, operatorBufferSize};
 }
 
 using PhysicalOpPtr = std::shared_ptr<PhysicalOperatorWrapper>;
