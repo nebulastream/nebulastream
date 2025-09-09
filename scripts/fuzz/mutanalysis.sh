@@ -36,13 +36,6 @@ then
     exit 1
 fi
 
-git status > /dev/null
-if ! git diff-files --quiet
-then
-    echo requires clean working tree
-    exit 1
-fi
-
 out_dir=/out/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")
 mkdir $out_dir
 mkdir $out_dir/crashes
@@ -60,6 +53,13 @@ cd $wdir
 git clone --depth=1 --branch=fuzz https://github.com/nebulastream/nebulastream.git
 git clone --depth=1 "https://fwc:$FWC_NES_CORPORA_TOKEN@github.com/fwc/nes-corpora.git" /nes-corpora
 cd nebulastream || exit 1
+
+git status > /dev/null
+if ! git diff-files --quiet
+then
+    echo requires clean working tree
+    exit 1
+fi
 
 rm -rf mutations
 python3 standalone_mutator.py -o mutations $(git ls-files -- "*.cpp" | grep -v test | grep -v fuzz)
