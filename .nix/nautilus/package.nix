@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "598041b59644088ed431bb27a35e77f48c1e8bad";
-    hash = "sha512-/UXpeKTGNk+fd7ecSPP2RIJ8/hA7E602JnSi4K+s15YKYbKN+LaHSuAXgT3NaJqe3LqYD6NqaFUqMVGmf/6Q3g==";
+    rev = "48ec95391c9f984dfcc24a63aefe43d38e9d7b1d";
+    hash = "sha512-r+BOalsNn3qUum4GWEb+RD8dOtBgx7LlJx8yTLLq7W/A2SRvZP1u3uJ/bgFFaqCeXp+weXLkdgz6EG5D5sAL4Q==";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -62,6 +62,10 @@ let
     version = "0.1";
 
     src = nautilusSrc;
+    patches = [
+      ./patches/0001-disable-ubsan-function-call-check.patch
+      ./patches/0003-ubsan-fix-variadic-expansion.patch
+    ];
 
     nativeBuildInputs = [
       pkgs.cmake
@@ -108,6 +112,7 @@ let
       "-DENABLE_C_BACKEND=ON"
       "-DENABLE_BC_BACKEND=OFF"
       "-DENABLE_TESTS=OFF"
+      "-DENABLE_INLINING_PASS=OFF"
       "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
       "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"
     ];
