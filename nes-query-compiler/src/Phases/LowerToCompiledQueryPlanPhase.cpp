@@ -108,6 +108,7 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     {
         case ExecutionMode::COMPILER: {
             options.setOption("engine.Compilation", true);
+            options.setOption("engine.Inline", true);
             break;
         }
         case ExecutionMode::INTERPRETER: {
