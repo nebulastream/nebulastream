@@ -19,7 +19,7 @@ get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 # Add Library
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
 target_link_libraries(nes-nautilus PUBLIC nes-memory)
-
+nautilus_inline(nes-nautilus)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-nautilus REUSE_FROM nes-common)
