@@ -18,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -74,7 +75,6 @@ std::mutex LazySingleton<SingletonType>::instantiationMutex;
 class IOThread
 {
 public:
-    // Run the io_context on a pool of threads. A good default is std::thread::hardware_concurrency().
     explicit IOThread(size_t poolSize = 8)
         : workGuard(asio::make_work_guard(ioc))
     {
@@ -89,13 +89,6 @@ public:
     {
         workGuard.reset(); // Allow io_context::run() to exit
         ioc.stop();
-        for (auto& t : threads)
-        {
-            if (t.joinable())
-            {
-                t.join();
-            }
-        }
         NES_DEBUG("IOThread: stopped.");
     }
 
@@ -111,7 +104,7 @@ public:
 private:
     asio::io_context ioc;
     asio::executor_work_guard<decltype(ioc.get_executor())> workGuard;
-    std::vector<std::thread> threads;
+    std::vector<std::jthread> threads;
 };
 
 }
