@@ -122,6 +122,7 @@ do
         done
     fi
 
+    cmake --build cmake-build-lfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz > /dev/null 2> /dev/null
 
     log_out running corpus
     KILLED_BY_CORPUS=false
@@ -148,6 +149,8 @@ do
         mv $patched_file.bak $patched_file
         continue
     fi
+
+    cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz > /dev/null 2> /dev/null
 
     for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
     do
