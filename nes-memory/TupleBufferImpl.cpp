@@ -24,6 +24,7 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -232,72 +233,72 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 /// ------------------ Utility functions for TupleBuffer ------------------------
 /// -----------------------------------------------------------------------------
 
-uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
+NAUTILUS_INLINE uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
 {
     return numberOfTuples;
 }
 
-void BufferControlBlock::setNumberOfTuples(const uint64_t numberOfTuples)
+NAUTILUS_INLINE void BufferControlBlock::setNumberOfTuples(const uint64_t numberOfTuples)
 {
     this->numberOfTuples = numberOfTuples;
 }
 
-Timestamp BufferControlBlock::getWatermark() const noexcept
+NAUTILUS_INLINE Timestamp BufferControlBlock::getWatermark() const noexcept
 {
     return watermark;
 }
 
-void BufferControlBlock::setWatermark(const Timestamp watermark)
+NAUTILUS_INLINE void BufferControlBlock::setWatermark(const Timestamp watermark)
 {
     this->watermark = watermark;
 }
 
-SequenceNumber BufferControlBlock::getSequenceNumber() const noexcept
+NAUTILUS_INLINE SequenceNumber BufferControlBlock::getSequenceNumber() const noexcept
 {
     return sequenceNumber;
 }
 
-void BufferControlBlock::setSequenceNumber(const SequenceNumber sequenceNumber)
+NAUTILUS_INLINE void BufferControlBlock::setSequenceNumber(const SequenceNumber sequenceNumber)
 {
     this->sequenceNumber = sequenceNumber;
 }
 
-ChunkNumber BufferControlBlock::getChunkNumber() const noexcept
+NAUTILUS_INLINE ChunkNumber BufferControlBlock::getChunkNumber() const noexcept
 {
     return chunkNumber;
 }
 
-void BufferControlBlock::setChunkNumber(const ChunkNumber chunkNumber)
+NAUTILUS_INLINE void BufferControlBlock::setChunkNumber(const ChunkNumber chunkNumber)
 {
     this->chunkNumber = chunkNumber;
 }
 
-bool BufferControlBlock::isLastChunk() const noexcept
+NAUTILUS_INLINE bool BufferControlBlock::isLastChunk() const noexcept
 {
     return lastChunk;
 }
 
-void BufferControlBlock::setLastChunk(const bool lastChunk)
+NAUTILUS_INLINE void BufferControlBlock::setLastChunk(const bool lastChunk)
 {
     this->lastChunk = lastChunk;
 }
 
-void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)
+NAUTILUS_INLINE void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)
 {
     this->creationTimestamp = timestamp;
 }
 
-Timestamp BufferControlBlock::getCreationTimestamp() const noexcept
+NAUTILUS_INLINE Timestamp BufferControlBlock::getCreationTimestamp() const noexcept
 {
     return creationTimestamp;
 }
 
-OriginId BufferControlBlock::getOriginId() const noexcept
+NAUTILUS_INLINE OriginId BufferControlBlock::getOriginId() const noexcept
 {
     return originId;
 }
 
-void BufferControlBlock::setOriginId(const OriginId originId)
+NAUTILUS_INLINE void BufferControlBlock::setOriginId(const OriginId originId)
 {
     this->originId = originId;
 }
