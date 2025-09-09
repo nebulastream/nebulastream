@@ -57,6 +57,11 @@ const ConfigField<ExecutionMode> EXECUTION_MODE{
     ExecutionMode::COMPILER,
     "COMPILER"};
 
+const ConfigField<bool> NAUTILUS_INLINING{
+    Identifier::parse("nautilus_inlining"),
+    "Enables proxy function inlining in nautilus. (only relevant with COMPILER execution mode)",
+    true};
+
 const ConfigField<uint64_t> NUMBER_OF_PARTITIONS{
     Identifier::parse("number_of_partitions"),
     "Number of buckets in a hash table. Fixed at query-compilation time and never grown: the hash maps do not rehash, so too low "
@@ -106,6 +111,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
     return createConfigSchema(
         Identifier::parse("default_query_execution"),
         EXECUTION_MODE,
+        NAUTILUS_INLINING,
         PAGE_SIZE,
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
@@ -118,6 +124,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
 {
     return {
         config.get(EXECUTION_MODE),
+        config.get(NAUTILUS_INLINING),
         config.get(NUMBER_OF_PARTITIONS),
         config.get(PAGE_SIZE),
         config.get(NUMBER_OF_RECORDS_PER_KEY),

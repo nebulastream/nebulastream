@@ -34,6 +34,7 @@ struct QueryExecutionConfiguration
 
     QueryExecutionConfiguration(
         ExecutionMode executionMode,
+        bool nautilusInlining,
         uint64_t numberOfPartitions,
         uint64_t pageSize,
         uint64_t numberOfRecordsPerKey,
@@ -41,6 +42,7 @@ struct QueryExecutionConfiguration
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration)
         : executionMode(executionMode)
+        , nautilusInlining(nautilusInlining)
         , numberOfPartitions(numberOfPartitions)
         , pageSize(pageSize)
         , numberOfRecordsPerKey(numberOfRecordsPerKey)
@@ -51,6 +53,7 @@ struct QueryExecutionConfiguration
     }
 
     ExecutionMode executionMode;
+    bool nautilusInlining;
     uint64_t numberOfPartitions;
     uint64_t pageSize;
     uint64_t numberOfRecordsPerKey;
