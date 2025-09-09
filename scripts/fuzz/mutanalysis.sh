@@ -77,7 +77,7 @@ cmake --build cmake-build-lfz --target snw-proto-fuzz snw-strict-fuzz snw-text-f
 # cmake --build cmake-build-afl --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 
-for patch in $(find mutations -name "*.patch" -print0 | xargs -0 sha256sum | sort | awk '{ print $2 }')
+for patch in $(find mutations -name "*.patch" -print0 | xargs -0 -I {} sh -c 'echo $(tail -8 {} | sha256sum) {}' | sort | awk '{ print $3 }')
 do
     git status > /dev/null
     if ! git diff-files --quiet
