@@ -108,7 +108,7 @@ struct DropPhysicalSourceStatement
 
 struct DropSinkStatement
 {
-    SinkDescriptor descriptor;
+    std::string name;
 };
 
 using QueryStatement = LogicalPlan;
@@ -164,7 +164,6 @@ class StatementBinder
 public:
     explicit StatementBinder(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::shared_ptr<const SinkCatalog>& sinkCatalog,
         const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept;
 
     StatementBinder(const StatementBinder& other) = delete;

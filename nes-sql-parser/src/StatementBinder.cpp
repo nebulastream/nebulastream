@@ -64,7 +64,6 @@ namespace NES
 class StatementBinder::Impl
 {
     std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
     std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
 
 public:
@@ -72,9 +71,8 @@ public:
 
     Impl(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::shared_ptr<const SinkCatalog>& sinkCatalog,
         const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
-        : sourceCatalog(sourceCatalog), sinkCatalog(sinkCatalog), queryBinder(queryBinder)
+        : sourceCatalog(sourceCatalog), queryBinder(queryBinder)
     {
     }
 
@@ -560,11 +558,7 @@ public:
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
         {
             const auto sinkName = bindIdentifier(dropSinkAst->name);
-            if (const auto sink = sinkCatalog->getSinkDescriptor(sinkName); sink.has_value())
-            {
-                return DropSinkStatement{*sink};
-            }
-            throw UnknownSinkName(sinkName);
+            return DropSinkStatement{sinkName};
         }
         throw InvalidStatement("Unrecognized DROP statement");
     }
@@ -609,9 +603,8 @@ public:
 
 StatementBinder::StatementBinder(
     const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-    const std::shared_ptr<const SinkCatalog>& sinkCatalog,
     const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
-    : impl(std::make_unique<Impl>(sourceCatalog, sinkCatalog, queryPlanBinder))
+    : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
 {
 }
 

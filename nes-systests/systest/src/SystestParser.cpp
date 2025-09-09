@@ -32,6 +32,7 @@
 #include <utility>
 #include <vector>
 
+#include "SQLQueryParser/AntlrSQLQueryParser.hpp"
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
@@ -43,6 +44,8 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
+
+#include "StatementHandler.hpp"
 
 namespace
 {
@@ -179,6 +182,7 @@ namespace NES::Systest
 {
 
 static constexpr auto SystestLogicalSourceToken = "Source"s;
+static constexpr auto CreateToken = "CREATE"s;
 static constexpr auto AttachSourceToken = "Attach"s;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
@@ -187,6 +191,7 @@ static constexpr auto ErrorToken = "ERROR"s;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{SystestLogicalSourceToken, TokenType::LOGICAL_SOURCE},
+     {CreateToken, TokenType::CREATE},
      {AttachSourceToken, TokenType::ATTACH_SOURCE},
      {QueryToken, TokenType::QUERY},
      {SinkToken, TokenType::SINK},
@@ -272,6 +277,11 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
     this->onErrorExpectationCallback = std::move(callback);
 }
 
+void SystestParser::registerOnCreateCallback(CreateCallback callback){
+    this->onCreateCallback = std::move(callback);
+}
+
+
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
 {
@@ -285,6 +295,12 @@ void SystestParser::parse()
                 {
                     onAttachSourceCallback(expectAttachSource());
                 }
+                break;
+            }
+            case TokenType::CREATE: {
+                // Get whole query
+                std::string query = expectCreateQuery();
+                onCreateCallback(query);
                 break;
             }
             case TokenType::LOGICAL_SOURCE: {
@@ -364,13 +380,18 @@ void SystestParser::applySubstitutionRules(std::string& line)
     }
 }
 
-std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
+std::optional<TokenType> SystestParser::getTokenIfValid(std::string line)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (Util::toLowerCase(potentialToken).starts_with(Util::toLowerCase(QueryToken)))
+    if (Util::toLowerCase(line).starts_with(Util::toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
     }
+
+    std::string potentialToken;
+    std::istringstream stream(line);
+    stream >> potentialToken;
+
     /// Lookup in map
     const auto* it = std::ranges::find_if(
         stringToToken, [&potentialToken](const auto& pair) { return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken); });
@@ -410,13 +431,11 @@ std::optional<TokenType> SystestParser::getNextToken()
         return std::nullopt;
     }
 
-    std::string potentialToken;
-    std::istringstream stream(lines[currentLine]);
-    stream >> potentialToken;
+    const std::string line = lines[currentLine];
 
-    INVARIANT(!potentialToken.empty(), "a potential token should never be empty");
+    INVARIANT(!line.empty(), "a potential token should never be empty");
 
-    return getTokenIfValid(potentialToken);
+    return getTokenIfValid(line);
 }
 
 std::optional<TokenType> SystestParser::peekToken() const
@@ -432,12 +451,10 @@ std::optional<TokenType> SystestParser::peekToken() const
         return std::nullopt;
     }
 
-    std::string potentialToken;
-    std::istringstream stream(lines[peekLine]);
-    stream >> potentialToken;
+    std::string line = lines[peekLine];
 
-    INVARIANT(!potentialToken.empty(), "a potential token should never be empty");
-    return getTokenIfValid(potentialToken);
+    INVARIANT(!line.empty(), "a potential token should never be empty");
+    return getTokenIfValid(line);
 }
 
 SystestParser::SystestSink SystestParser::expectSink() const
@@ -555,6 +572,10 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
 
     SystestLogicalSource source;
     auto& line = lines[currentLine];
+    auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(line);
+    auto parseResult = managedParser->parseMultiple();
+
+
     const auto attachSourceTokens = Util::splitWithStringDelimiter<std::string>(line, " ");
 
     /// Read and discard the first word as it is always Source
@@ -701,6 +722,25 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     }
     return tuples;
 }
+
+
+std::string SystestParser::expectCreateQuery()
+{
+    std::string createQuery;
+    std::string line;
+
+    while (currentLine < lines.size())
+    {
+        line = lines[currentLine++];
+
+        if (emptyOrComment(line)) { continue; }
+        createQuery += line;
+        if (createQuery.ends_with(';')) { return createQuery; }
+        createQuery += '\n';
+    }
+    return "IMPL create query thingy";
+}
+
 
 std::string SystestParser::expectQuery()
 {
