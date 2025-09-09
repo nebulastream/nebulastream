@@ -15,7 +15,8 @@ find_package(boost_asio REQUIRED CONFIG)
 add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
-add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
+add_library(nes-sources ${NES_SOURCES_SOURCE_FILES}
+        src/Blocking/Sources/BlockingFileSource.cpp)
 target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-systest-sources PRIVATE Boost::asio)
 
 target_include_directories(nes-sources PUBLIC

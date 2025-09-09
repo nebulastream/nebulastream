@@ -32,6 +32,8 @@ add_source_files(nes-sources
 # Register plugins
 add_plugin(File Source nes-sources Async/Sources/FileSource.cpp)
 add_plugin(File SourceValidation nes-sources Async/Sources/FileSource.cpp)
+add_plugin(BlockingFile Source nes-sources Blocking/Sources/BlockingFileSource.cpp)
+add_plugin(BlockingFile SourceValidation nes-sources Blocking/Sources/BlockingFileSource.cpp)
 add_plugin(TCP Source nes-sources Async/Sources/TCPSource.cpp)
 add_plugin(TCP SourceValidation nes-sources Async/Sources/TCPSource.cpp)
 add_plugin(BlockingTCP Source nes-sources Blocking/Sources/BlockingTCPSource.cpp)
@@ -40,6 +42,8 @@ add_plugin(BlockingTCP SourceValidation nes-sources Blocking/Sources/BlockingTCP
 # Systest adaptors
 add_plugin(File InlineData nes-sources Async/Sources/FileSource.cpp)
 add_plugin(File FileData nes-sources Async/Sources/FileSource.cpp)
+add_plugin(BlockingFile InlineData nes-sources Blocking/Sources/BlockingFileSource.cpp)
+add_plugin(BlockingFile FileData nes-sources Blocking/Sources/BlockingFileSource.cpp)
 add_plugin(TCP InlineData nes-sources-registry Async/Sources/TCPSource.cpp)
 add_plugin(TCP FileData nes-sources-registry Async/Sources/TCPSource.cpp)
 add_plugin(BlockingTCP InlineData nes-sources-registry Blocking/Sources/BlockingTCPSource.cpp)
