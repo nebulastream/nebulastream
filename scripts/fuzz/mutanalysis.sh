@@ -55,12 +55,12 @@ export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 
                                      cmake -B cmake-build-nrm -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
                                      cmake -B cmake-build-lfz -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
-CC=afl-clang-lto CXX=afl-clang-lto++ cmake -B cmake-build-afl -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
+# CC=afl-clang-lto CXX=afl-clang-lto++ cmake -B cmake-build-afl -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
 CC=hfuzz-clang   CXX=hfuzz-clang++   cmake -B cmake-build-hfz -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
 
 cmake --build cmake-build-nrm
 cmake --build cmake-build-lfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
-cmake --build cmake-build-afl --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
+# cmake --build cmake-build-afl --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 
 for patch in $(find mutations -name "*.patch" -print0 | xargs -0 sha256sum | sort | awk '{ print $2 }')
@@ -140,52 +140,52 @@ do
         rm -f timed_out
 
 
-        log_out running $harness aflpp
-
-        rm -rf afl-out
-
-        afl-fuzz -V 600 -i /nes-corpora/$harness/corpus -o afl-out -t 10000 -I "touch crash_found" -M main  -- $(find cmake-build-afl -name $harness) > afl-main.log &
-        for i in $(seq $(( $(nproc) / 2 - 1 )) )
-        do
-        afl-fuzz -V 600 -i /nes-corpora/$harness/corpus -o afl-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
-        done
-
-        while pgrep -P $$ > /dev/null
-        do
-            if [ -e crash_found ]
-            then
-                # kill all child processes
-                pkill -P $$
-                rm crash_found
-
-                for crash in afl-out/main/crashes/id*
-                do
-                    mv $crash $out_dir/crashes
-                    log_out mutant $patch killed by aflpp $harness with $crash
-                done
-
-                for i in $(seq $(( $(nproc) / 2 - 1 )) )
-                do
-                    for crash in afl-out/sub-$i/crashes/id*
-                    do
-                        mv $crash $out_dir/crashes
-                        log_out mutant $patch killed by aflpp $harness with $crash
-                    done
-                done
-
-                sleep 10
-
-                while pgrep -P $$ > /dev/null
-                do
-                    echo some children still alive
-                    pgrep -P $$ || true
-                    echo sending sigkill
-                    pkill -P $$ --signal kill || true
-                    sleep 1
-                done
-            fi
-            sleep 1
-        done
+        # log_out running $harness aflpp
+        #
+        # rm -rf afl-out
+        #
+        # afl-fuzz -V 600 -i /nes-corpora/$harness/corpus -o afl-out -t 10000 -I "touch crash_found" -M main  -- $(find cmake-build-afl -name $harness) > afl-main.log &
+        # for i in $(seq $(( $(nproc) / 2 - 1 )) )
+        # do
+        # afl-fuzz -V 600 -i /nes-corpora/$harness/corpus -o afl-out -t 10000 -I "touch crash_found" -S sub-$i -- $(find cmake-build-afl -name $harness) > afl-sub-$i.log &
+        # done
+        #
+        # while pgrep -P $$ > /dev/null
+        # do
+        #     if [ -e crash_found ]
+        #     then
+        #         # kill all child processes
+        #         pkill -P $$
+        #         rm crash_found
+        #
+        #         for crash in afl-out/main/crashes/id*
+        #         do
+        #             mv $crash $out_dir/crashes
+        #             log_out mutant $patch killed by aflpp $harness with $crash
+        #         done
+        #
+        #         for i in $(seq $(( $(nproc) / 2 - 1 )) )
+        #         do
+        #             for crash in afl-out/sub-$i/crashes/id*
+        #             do
+        #                 mv $crash $out_dir/crashes
+        #                 log_out mutant $patch killed by aflpp $harness with $crash
+        #             done
+        #         done
+        #
+        #         sleep 10
+        #
+        #         while pgrep -P $$ > /dev/null
+        #         do
+        #             echo some children still alive
+        #             pgrep -P $$ || true
+        #             echo sending sigkill
+        #             pkill -P $$ --signal kill || true
+        #             sleep 1
+        #         done
+        #     fi
+        #     sleep 1
+        # done
 
         log_out running $harness honggfuzz
         if ! honggfuzz --run_time 600 -i /nes-corpora/$harness/corpus -o hfz_out --crashdir hf-crashes --exit_upon_crash --exit_code_upon_crash 1 -- $(find cmake-build-hfz -name $harness) 2> hf.log
