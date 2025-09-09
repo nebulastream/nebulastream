@@ -13,8 +13,8 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF 8e822c5ace0ebd4fd11a49cd6c0bf29b622d7956
-        SHA512 3f33d24d43772ec1a82e166403d86890e07441b8e970a7324365cc3d2c3d8af1b0892ae3af3a1c15c3e18bbd40ed1aa5ceeb738fe9c0e8bc172abe37f3f2ba7f
+		REF 0d5ba4060d97e6e9276116dfff274f11a65fb392
+        SHA512 02bd135142cec0e9ca09fc707a2821ec29467d98bfe4de47bd78164bc29def8bbd69e84cf0bc306d5b3d95063e52c31c7d58978aab893612c1848d2af89de605
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 )
