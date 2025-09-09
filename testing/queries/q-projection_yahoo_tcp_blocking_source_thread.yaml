@@ -52,4 +52,4 @@ sinks:
   type: Monitoring
   config:
     filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
-    sizeOfInputDataInBytes: 24860711550
+    sizeOfInputDataInBytes: 4972142310

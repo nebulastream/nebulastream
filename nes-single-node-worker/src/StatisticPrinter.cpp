@@ -35,61 +35,61 @@ namespace NES
 
 namespace
 {
-void threadRoutine(
-    const std::stop_token& token, std::ofstream& file, folly::MPMCQueue<PrintingStatisticListener::CombinedEventType>& events)
-{
-    setThreadName("StatPrinter");
-    while (!token.stop_requested())
-    {
-        PrintingStatisticListener::CombinedEventType event = QueryStart{WorkerThreadId(0), QueryId(0)}; /// Will be overwritten
-
-        if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100), event))
-        {
-            continue;
-        }
-        std::visit(
-            Overloaded{
-                [&](SubmitQuerySystemEvent startQuery)
-                {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query);
-                },
-                [&](StartQuerySystemEvent startQuery)
-                { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
-                [&](TaskExecutionStart taskStartEvent)
-                {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
-                        taskStartEvent.timestamp,
-                        taskStartEvent.taskId,
-                        taskStartEvent.pipelineId,
-                        taskStartEvent.queryId,
-                        taskStartEvent.numberOfTuples);
-                },
-                [&](TaskEmit emitEvent)
-                {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {}\n",
-                        emitEvent.timestamp,
-                        emitEvent.taskId,
-                        emitEvent.fromPipeline,
-                        emitEvent.toPipeline,
-                        emitEvent.queryId,
-                        emitEvent.numberOfTuples);
-                },
-                [&](TaskExecutionComplete taskStopEvent)
-                {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
-                        taskStopEvent.timestamp,
-                        taskStopEvent.taskId,
-                        taskStopEvent.pipelineId,
-                        taskStopEvent.queryId);
-                },
-                [](auto) {}},
-            event);
-    }
-}
+// void threadRoutine(
+//     const std::stop_token& token, std::ofstream& file, folly::MPMCQueue<PrintingStatisticListener::CombinedEventType>& events)
+// {
+//     setThreadName("StatPrinter");
+//     while (!token.stop_requested())
+//     {
+//         PrintingStatisticListener::CombinedEventType event = QueryStart{WorkerThreadId(0), QueryId(0)}; /// Will be overwritten
+//
+//         if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100), event))
+//         {
+//             continue;
+//         }
+//         std::visit(
+//             Overloaded{
+//                 [&](SubmitQuerySystemEvent startQuery)
+//                 {
+//                     file << fmt::format(
+//                         "{:%Y-%m-%d %H:%M:%S} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query);
+//                 },
+//                 [&](StartQuerySystemEvent startQuery)
+//                 { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
+//                 [&](TaskExecutionStart taskStartEvent)
+//                 {
+//                     file << fmt::format(
+//                         "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
+//                         taskStartEvent.timestamp,
+//                         taskStartEvent.taskId,
+//                         taskStartEvent.pipelineId,
+//                         taskStartEvent.queryId,
+//                         taskStartEvent.numberOfTuples);
+//                 },
+//                 [&](TaskEmit emitEvent)
+//                 {
+//                     file << fmt::format(
+//                         "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {}\n",
+//                         emitEvent.timestamp,
+//                         emitEvent.taskId,
+//                         emitEvent.fromPipeline,
+//                         emitEvent.toPipeline,
+//                         emitEvent.queryId,
+//                         emitEvent.numberOfTuples);
+//                 },
+//                 [&](TaskExecutionComplete taskStopEvent)
+//                 {
+//                     file << fmt::format(
+//                         "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
+//                         taskStopEvent.timestamp,
+//                         taskStopEvent.taskId,
+//                         taskStopEvent.pipelineId,
+//                         taskStopEvent.queryId);
+//                 },
+//                 [](auto) {}},
+//             event);
+//     }
+// }
 }
 
 void PrintingStatisticListener::onEvent(Event event)
@@ -104,7 +104,7 @@ void PrintingStatisticListener::onEvent(SystemEvent event)
 
 PrintingStatisticListener::PrintingStatisticListener(const std::filesystem::path& path)
     : file(path, std::ios::out | std::ios::app)
-    , printThread([this](const std::stop_token& stopToken) { threadRoutine(stopToken, file, events); })
+    // , printThread([this](const std::stop_token& stopToken) { threadRoutine(stopToken, file, events); })
 {
     NES_INFO("Writing Statistics to: {}", path);
 }

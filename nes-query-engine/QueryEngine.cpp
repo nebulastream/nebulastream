@@ -680,7 +680,6 @@ void ThreadPool::addThread()
                 {
                     continue;
                 }
-                // Todo: if both calls
                 try
                 {
                     if (std::visit(worker, task))
