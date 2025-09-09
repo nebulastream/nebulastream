@@ -19,6 +19,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <atomic>
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -26,7 +27,6 @@
 
 namespace NES::Sources
 {
-
 namespace asio = boost::asio;
 
 /// A singleton primitive that has a few special properties:
@@ -66,29 +66,43 @@ std::weak_ptr<SingletonType> LazySingleton<SingletonType>::weakRef;
 template <typename SingletonType>
 std::mutex LazySingleton<SingletonType>::instantiationMutex;
 
-/// Wraps an asio::io_context and an associated thread that runs the io_context.
-/// This ensures that the lifetime of the io_context is tied to the lifetime of the thread and both can be managed by the owner of the IOThread.
-/// The thread is started upon construction and calls io_context::run() until the destructor is called.
-/// Without the workGuard, the io_context::run() function would return as soon as there are no more handlers to execute, causing the thread to exit.
-/// This way, the io_context is usable as long as this object is alive and can be controlled by us.
-// A replacement for your IOThread class
+/// IOThread implementation with multiple io_contexts for better thread-cache locality
+/// Each thread runs its own io_context, and tasks are distributed round-robin
 class IOThread
 {
 public:
-    explicit IOThread(size_t poolSize = 8)
-        : workGuard(asio::make_work_guard(ioc))
+    explicit IOThread(const size_t poolSize = 8)
+        : ioContexts(poolSize), nextContext(0)
     {
         NES_DEBUG("IOThread: starting with {} threads.", poolSize);
+
+        // Create one io_context per thread
         for (size_t i = 0; i < poolSize; ++i)
         {
-            threads.emplace_back([this] { ioc.run(); });
+            // Create work guard to keep io_context running
+            workGuards.emplace_back(asio::make_work_guard(ioContexts.at(i)));
+
+            // Create thread that runs this specific io_context
+            threads.emplace_back([ioc = &ioContexts.at(i)]() {
+                ioc->run();
+            });
         }
     }
 
     ~IOThread()
     {
-        workGuard.reset(); // Allow io_context::run() to exit
-        ioc.stop();
+        NES_DEBUG("IOThread: stopping all contexts.");
+
+        // Reset all work guards to allow io_contexts to exit
+        workGuards.clear();
+
+        // Stop all io_contexts
+        for (auto& ioc : ioContexts)
+        {
+            ioc.stop();
+        }
+
+        // Threads will join automatically due to jthread
         NES_DEBUG("IOThread: stopped.");
     }
 
@@ -98,13 +112,39 @@ public:
     IOThread(IOThread&&) = delete;
     IOThread& operator=(IOThread&&) = delete;
 
-    // asio::io_context& ioContext() { return ioc; }
-    asio::io_context& ioContext() { return ioc; }
+    asio::io_context& ioContext()
+    {
+        // Use atomic fetch_add for thread-safe round-robin selection
+        const size_t index = nextContext.fetch_add(1, std::memory_order_relaxed) % ioContexts.size();
+        return ioContexts[index];
+    }
+
+    asio::io_context& ioContext(size_t index)
+    {
+        if (index >= ioContexts.size())
+        {
+            throw std::out_of_range("IOThread: io_context index out of range");
+        }
+        return ioContexts[index];
+    }
+
+    /// Get the number of io_contexts in the pool
+    size_t size() const noexcept
+    {
+        return ioContexts.size();
+    }
 
 private:
-    asio::io_context ioc;
-    asio::executor_work_guard<decltype(ioc.get_executor())> workGuard;
-    std::vector<std::jthread> threads;
-};
+    /// Pool of io_contexts, one per thread
+    std::vector<asio::io_context> ioContexts;
 
+    /// Work guards to keep io_contexts running
+    std::vector<asio::executor_work_guard<asio::io_context::executor_type>> workGuards;
+
+    /// Threads running the io_contexts
+    std::vector<std::jthread> threads;
+
+    /// Atomic counter for round-robin selection
+    std::atomic<size_t> nextContext;
+};
 }
