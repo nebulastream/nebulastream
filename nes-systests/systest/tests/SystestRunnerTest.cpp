@@ -36,6 +36,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <DataTypes/DataType.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -96,7 +97,10 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor
+        = SinkCatalog{}
+              .addSinkDescriptor("dummySink", Schema{}.addField("foo", DataType::Type::BOOLEAN), "Print", {{"input_format", "CSV"}})
+              .value();
 };
 
 class MockQueryManager final : public QueryManager
@@ -177,7 +181,10 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
+            SystestQuery::PlanInfo{
+                .queryPlan = plan,
+                .sourcesToFilePathsAndCounts = {},
+                .sinkOutputSchema = Schema{}.addField("foo", DataType::Type::BOOLEAN)},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
