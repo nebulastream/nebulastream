@@ -93,6 +93,10 @@ do
         continue
     fi
 
+    cmake --build cmake-build-nrm --target clean
+    cmake --build cmake-build-lfz --target clean
+    cmake --build cmake-build-hfz --target clean
+
     patched_file=$(head -n 1 $patch | cut -d" " -f 2)
     cp $patched_file $patched_file.bak
     if ! patch --forward $patched_file < $patch
