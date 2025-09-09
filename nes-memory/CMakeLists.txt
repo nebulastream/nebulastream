@@ -20,6 +20,8 @@ add_library(nes-memory
         MemoryUtils.cpp
 )
 
+nautilus_inline(nes-memory)
+
 target_include_directories(nes-memory
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
