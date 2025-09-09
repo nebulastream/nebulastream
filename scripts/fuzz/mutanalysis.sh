@@ -260,6 +260,5 @@ do
 
         rm -rf hf-crashes/
     done
-    log_out mutant $patch survived
     mv $patched_file.bak $patched_file
 done
