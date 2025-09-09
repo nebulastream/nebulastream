@@ -122,7 +122,6 @@ SourceDescriptor toSd(const SerializableSourceDescriptor& sourceDescriptor)
     const auto* const sourceType = "File";
     const auto workerIdInt = sourceDescriptor.workerid();
     const auto workerId = WorkerId{workerIdInt};
-    const auto buffersInLocalPool = sourceDescriptor.numberofbuffersinlocalpool();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
@@ -147,7 +146,6 @@ SinkLogicalOperator toSn(const FSinkDscrtr& serializableSinkDescriptor)
     {
         schema.addField("dummy", DataType::Type::BOOLEAN);
     }
-    auto addTimestamp = serializableSinkDescriptor.addtimestamp();
     const auto* sinkType = "File";
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
