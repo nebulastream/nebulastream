@@ -233,6 +233,9 @@ endif ()
 
 add_custom_target(build_all_plugins)
 
+# Includes nautilus-inline cmake function
+include(cmake/NautilusInlining.cmake)
+
 # Adds sub-directories
 file(GLOB NES_DIRECTORIES_ALL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
 set(NES_DIRECTORIES)
