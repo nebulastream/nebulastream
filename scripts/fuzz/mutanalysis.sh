@@ -131,10 +131,15 @@ do
         then
             for crash in crash-*
             do
+                if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
+                then
+                    log_out mutant $patch crash $crash seems to be a fluke
+                    rm $crash
+                    continue
+                fi
                 log_out mutant $patch killed by $harness corpus with $crash
+                KILLED_BY_CORPUS=true
             done
-            log_out mutant $patch killed by $harness with corpus
-            KILLED_BY_CORPUS=true
         fi
     done
 
@@ -155,6 +160,12 @@ do
         do
             for crash in crash-*
             do
+                if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
+                then
+                    log_out mutant $patch crash $crash seems to be a fluke
+                    rm $crash
+                    continue
+                fi
                 # kill all child processes
                 pkill -P $$
 
