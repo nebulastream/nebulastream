@@ -34,17 +34,6 @@
 
 namespace NES
 {
-SliceStart getNLJSliceStartProxy(const NLJSlice* nljSlice)
-{
-    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-    return nljSlice->getSliceStart();
-}
-
-SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
-{
-    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-    return nljSlice->getSliceEnd();
-}
 
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
@@ -73,16 +62,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         },
         operatorHandler,
         timestamp);
-    const auto nljPagedVectorMemRef = invoke(
-        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
-        {
-            PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
-        },
-        sliceReference,
-        executionCtx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide));
-
+    const auto nljPagedVectorMemRef = invoke(getPagedVectorRefProxy, sliceReference, executionCtx.workerThreadId, nautilus::val<JoinBuildSideType>(joinBuildSide));
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, memoryProvider);

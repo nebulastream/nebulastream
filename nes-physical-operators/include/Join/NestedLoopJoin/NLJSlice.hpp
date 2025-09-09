@@ -50,4 +50,7 @@ private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;
 };
+
+[[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide);
+
 }
