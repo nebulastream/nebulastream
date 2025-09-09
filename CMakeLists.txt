@@ -233,6 +233,8 @@ endif ()
 
 add_custom_target(build_all_plugins)
 
+include(cmake/NautilusInlining.cmake)
+
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
