@@ -27,18 +27,14 @@ logical:
         type: UINT16
 physical:
   - logical: tcp_source
-    type: BlockingTCP
+    type: FileBlocking
     parserConfig:
       tupleDelimiter: "\n"
       fieldDelimiter: ","
       type: CSV
     sourceConfig:
-      socketPort: 1111
-      socketHost: localhost
-      socketDomain: AF_INET
-      socketType: SOCK_STREAM
-      socketBufferSize: 2
-      formattingThread: BlockingSourceThread
+      filePath: /home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-systests/testdata/large/ysb/ysb_1k_data_474M.csv
+#      formattingThread: BlockingSourceThread
 
 sinks:
   name: csv_sink
@@ -50,6 +46,8 @@ sinks:
     - name: tcp_source$campaign_id
       type: UINT64
   type: Monitoring
+  #  type: File
   config:
     filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
-    sizeOfInputDataInBytes: 24860711550
+    sizeOfInputDataInBytes: 4972142310
+#    inputFormat: CSV

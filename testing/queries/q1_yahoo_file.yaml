@@ -1,5 +1,6 @@
+#  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
 query: |
-  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
+  SELECT start, end, campaign_id, SUM(user_id) AS sum_user_id FROM tcp_source WHERE event_type < UINT64(1) GROUP BY campaign_id WINDOW TUMBLING(current_ms, SIZE 30 SEC) INTO csv_sink
 logical:
   - name: tcp_source
     schema:
@@ -27,29 +28,26 @@ logical:
         type: UINT16
 physical:
   - logical: tcp_source
-    type: BlockingTCP
+    type: File
     parserConfig:
       tupleDelimiter: "\n"
       fieldDelimiter: ","
       type: CSV
     sourceConfig:
-      socketPort: 1111
-      socketHost: localhost
-      socketDomain: AF_INET
-      socketType: SOCK_STREAM
-      socketBufferSize: 2
-      formattingThread: BlockingSourceThread
+      filePath: /home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-systests/testdata/large/ysb/ysb_1k_data_474M.csv
 
 sinks:
   name: csv_sink
   schema:
-    - name: tcp_source$user_id
+    - name: tcp_source$start
       type: UINT64
-    - name: tcp_source$page_id
+    - name: tcp_source$end
       type: UINT64
     - name: tcp_source$campaign_id
+      type: UINT64
+    - name: tcp_source$sum_user_id
       type: UINT64
   type: Monitoring
   config:
     filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
-    sizeOfInputDataInBytes: 24860711550
+    sizeOfInputDataInBytes: 497214231
