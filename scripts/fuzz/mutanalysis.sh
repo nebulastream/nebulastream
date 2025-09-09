@@ -114,7 +114,7 @@ do
     fi
 
     log_out running ctest
-    if ! timeout --kill-after=1m 30m ctest -j 32 --test-dir cmake-build-nrm --stop-on-failure --repeat until-pass:3 --quiet -O ctest.log
+    if ! timeout --kill-after=1m 30m ctest -j $(nproc) --test-dir cmake-build-nrm --stop-on-failure --repeat until-pass:3 --quiet -O ctest.log
     then
         for testcase in $(cat ctest.log | grep Failed | awk '$2 == "-" { print $3 }')
         do
