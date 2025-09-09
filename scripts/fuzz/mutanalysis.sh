@@ -36,6 +36,13 @@ then
     exit 1
 fi
 
+git status > /dev/null
+if ! git diff-files --quiet
+then
+    echo requires clean working tree
+    exit 1
+fi
+
 out_dir=/out/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")
 mkdir $out_dir
 mkdir $out_dir/crashes
@@ -54,6 +61,7 @@ git clone --depth=1 --branch=fuzz https://github.com/nebulastream/nebulastream.g
 git clone --depth=1 "https://fwc:$FWC_NES_CORPORA_TOKEN@github.com/fwc/nes-corpora.git" /nes-corpora
 cd nebulastream || exit 1
 
+rm -rf mutations
 python3 standalone_mutator.py -o mutations $(git ls-files -- "*.cpp" | grep -v test | grep -v fuzz)
 
 export AFL_SKIP_CPUFREQ=1
@@ -71,10 +79,33 @@ cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-f
 
 for patch in $(find mutations -name "*.patch" -print0 | xargs -0 sha256sum | sort | awk '{ print $2 }')
 do
+    git status > /dev/null
+    if ! git diff-files --quiet
+    then
+        log_out requires clean working tree
+        exit 1
+    fi
+
     log_out checking $patch
-    if ! python3 check_mutations.py $patch cmake-build-nrm/compile_commands.json || ! cmake --build cmake-build-nrm
+    if ! python3 check_mutations.py $patch cmake-build-nrm/compile_commands.json
+    then
+        log_out cannot build $patch quickly
+        continue
+    fi
+
+    patched_file=$(head -n 1 $patch | cut -d" " -f 2)
+    cp $patched_file $patched_file.bak
+    if ! patch --forward $patched_file < $patch
+    then
+        log_out cannot apply $patch
+        mv $patched_file.bak $patched_file
+        continue
+    fi
+
+    if ! cmake --build cmake-build-nrm -j $(nproc) > /dev/null 2>/dev/null
     then
         log_out cannot build $patch
+        mv $patched_file.bak $patched_file
         continue
     fi
 
@@ -105,6 +136,7 @@ do
 
     if $KILLED_BY_CORPUS
     then
+        mv $patched_file.bak $patched_file
         continue
     fi
 
@@ -201,6 +233,12 @@ do
 
         for crash in hf-crashes/*
         do
+            if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
+            then
+                log_out mutant $patch crash $crash seems to be a fluke
+                rm $crash
+                continue
+            fi
             mv "$crash" $out_dir/crashes
             log_out mutant $patch killed by honggfuzz $harness with "$crash"
         done
@@ -208,4 +246,5 @@ do
         rm -rf hf-crashes/
     done
     log_out mutant $patch survived
+    mv $patched_file.bak $patched_file
 done
