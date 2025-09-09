@@ -30,6 +30,12 @@ then
     exit 1
 fi
 
+if [ $(ulimit -c) != 0 ]
+then
+    echo "better use docker flag '--ulimit core=0'"
+    exit 1
+fi
+
 out_dir=/out/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")
 mkdir $out_dir
 mkdir $out_dir/crashes
