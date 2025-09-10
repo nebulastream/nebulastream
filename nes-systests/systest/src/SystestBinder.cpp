@@ -76,11 +76,15 @@ class SystestTopology
 
 public:
     explicit SystestTopology(const std::vector<CLI::WorkerConfig>& cluster)
-        : workerCatalog{std::make_shared<WorkerCatalog>(WorkerCatalog::from(
-              cluster
-              | std::views::transform([](const auto& config)
-                                      { return WorkerConfig{config.host, config.grpc, config.capacity, config.downstreamNodes}; })
-              | std::ranges::to<std::vector>()))}
+        : workerCatalog{std::make_shared<WorkerCatalog>(
+            WorkerCatalog::from(
+                cluster
+                | std::views::transform(
+                    [](const auto& config)
+                    {
+                        return WorkerConfig{config.host, config.grpc, config.capacity, config.downstreamNodes};
+                    })
+                | std::ranges::to<std::vector>()))}
     {
     }
 

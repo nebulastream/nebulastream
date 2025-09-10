@@ -15,13 +15,16 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <memory>
 #include <ranges>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include <bits/ranges_algo.h>
 #include <fmt/format.h>
 
 #include <Identifiers/Identifiers.hpp>
@@ -49,6 +52,7 @@ struct OptimizedLogicalPlan
 
     explicit OptimizedLogicalPlan(LogicalPlan optimizedPlan) : plan{std::move(optimizedPlan)} { }
 
+    ~OptimizedLogicalPlan() = default;
     OptimizedLogicalPlan(OptimizedLogicalPlan&&) = default;
     OptimizedLogicalPlan(const OptimizedLogicalPlan&) = default;
     OptimizedLogicalPlan& operator=(OptimizedLogicalPlan&&) = default;
@@ -61,6 +65,7 @@ struct PlacedLogicalPlan
 
     explicit PlacedLogicalPlan(LogicalPlan placedPlan) : plan{std::move(placedPlan)} { }
 
+    ~PlacedLogicalPlan() = default;
     PlacedLogicalPlan(PlacedLogicalPlan&&) = default;
     PlacedLogicalPlan(const PlacedLogicalPlan&) = default;
     PlacedLogicalPlan& operator=(PlacedLogicalPlan&&) = default;
@@ -71,8 +76,11 @@ struct DecomposedLogicalPlan
 {
     std::unordered_map<GrpcAddr, std::vector<LogicalPlan>> localPlans;
 
+    DecomposedLogicalPlan() = default;
+
     explicit DecomposedLogicalPlan(std::unordered_map<GrpcAddr, std::vector<LogicalPlan>> plans) : localPlans{std::move(plans)} { }
 
+    ~DecomposedLogicalPlan() = default;
     DecomposedLogicalPlan(DecomposedLogicalPlan&&) = default;
     DecomposedLogicalPlan(const DecomposedLogicalPlan&) = default;
     DecomposedLogicalPlan& operator=(DecomposedLogicalPlan&&) = default;
@@ -81,9 +89,22 @@ struct DecomposedLogicalPlan
 
 struct DistributedLogicalPlan
 {
-    explicit DistributedLogicalPlan(DecomposedLogicalPlan&& plan) : plan(std::move(plan))
+    using CapacityCleanup = std::function<void(const DistributedLogicalPlan&)>;
+
+    DistributedLogicalPlan() = default;
+
+    explicit DistributedLogicalPlan(DecomposedLogicalPlan&& plan, CapacityCleanup cleanupCallback = {})
+        : plan(std::move(plan)), cleanupCallback(std::move(cleanupCallback))
     {
         PRECONDITION(not this->plan.localPlans.empty(), "Input plan should not be empty");
+    }
+
+    ~DistributedLogicalPlan()
+    {
+        if (cleanupCallback)
+        {
+            cleanupCallback(*this);
+        }
     }
 
     const LogicalPlan& operator*() const { return plan.localPlans.begin()->second.front(); }
@@ -93,17 +114,9 @@ struct DistributedLogicalPlan
     const LogicalPlan* operator->() const { return &(**this); }
 
     /// Subscript operator for accessing plans by its grpc addr
-    const std::vector<LogicalPlan>& operator[](const GrpcAddr& grpc) const
-    {
-        const auto it = plan.localPlans.find(grpc);
-        if (it == plan.localPlans.end())
-        {
-            throw std::out_of_range(fmt::format("No plan found in decomposed plan under addr {}", grpc));
-        }
-        return it->second;
-    }
+    const std::vector<LogicalPlan>& operator[](const GrpcAddr& grpc) const { return plan.localPlans.at(grpc); }
 
-    std::vector<LogicalPlan>& operator[](const GrpcAddr& connection) { return plan.localPlans.at(connection); }
+    std::vector<LogicalPlan>& operator[](const GrpcAddr& grpc) { return plan.localPlans.at(grpc); }
 
     size_t size() const
     {
@@ -117,8 +130,32 @@ struct DistributedLogicalPlan
 
     auto end() const { return plan.localPlans.cend(); }
 
+    /// Move constructor and assignment
+    DistributedLogicalPlan(DistributedLogicalPlan&& other) noexcept = default;
+    DistributedLogicalPlan& operator=(DistributedLogicalPlan&& other) noexcept = default;
+
+    /// Copy constructor - copies plan data but not the cleanup callback
+    /// This ensures cleanup only happens once (for the original/moved instance)
+    DistributedLogicalPlan(const DistributedLogicalPlan& other) : plan(other.plan)
+    {
+        /// Note: cleanup callback is intentionally not copied
+        /// Cleanup should only happen once for the original instance
+    }
+
+    /// Copy assignment - copies plan data but not the cleanup callback
+    DistributedLogicalPlan& operator=(const DistributedLogicalPlan& other)
+    {
+        if (this != &other)
+        {
+            plan = other.plan;
+            /// Note: cleanup callback is intentionally not copied
+        }
+        return *this;
+    }
+
 private:
     DecomposedLogicalPlan plan;
+    CapacityCleanup cleanupCallback;
 };
 }
 

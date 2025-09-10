@@ -58,18 +58,23 @@ class Topology
 public:
     using NodeId = Node::Id;
 
-    static Topology from(const std::vector<std::pair<HostAddr, std::vector<HostAddr> > > &workers) {
+    static Topology from(const std::vector<std::pair<HostAddr, std::vector<HostAddr>>>& workers)
+    {
         Topology topology;
-        for (const auto &[host, downstream]: workers) {
-            const auto &[it, wasInserted] = topology.dag.try_emplace(host);
-            if (not wasInserted) {
+        for (const auto& [host, downstream] : workers)
+        {
+            const auto& [it, wasInserted] = topology.dag.try_emplace(host);
+            if (not wasInserted)
+            {
                 throw InvalidTopology("Tried to insert the same node [{}] twice", host);
             }
             it->second.downstreamNodes = downstream;
         }
 
-        for (const auto &[host, downstream]: workers) {
-            for (const auto &downstreamNode: downstream) {
+        for (const auto& [host, downstream] : workers)
+        {
+            for (const auto& downstreamNode : downstream)
+            {
                 topology.dag.at(downstreamNode).upstreamNodes.emplace_back(host);
             }
         }

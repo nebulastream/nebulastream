@@ -14,25 +14,27 @@
 
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
+#include <functional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
 #include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
 
-#include <nlohmann/json.hpp>
 #include <yaml-cpp/node/convert.h>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <WorkerConfig.hpp>
+#include "Util/Pointers.hpp"
 
 namespace NES
 {
@@ -67,6 +69,8 @@ class Query
         std::variant<Embedded, Cluster> embeddedOrCluster;
     } backend;
 
+    PlanStage::DistributedLogicalPlan plan;
+
 public:
     /// Friend declarations for YAML serialization
     template <typename T>
@@ -76,10 +80,14 @@ public:
     Query() : id{getNextDistributedQueryId()}, backend{std::vector<LocalQuery>{}} { }
 
     /// Embedded worker constructor
-    Query(const LocalQueryId queryId) : id{getNextDistributedQueryId()}, backend{queryId} { }
+    Query(const LocalQueryId queryId, PlanStage::DistributedLogicalPlan&& plan)
+        : id{getNextDistributedQueryId()}, backend{queryId}, plan{std::move(plan)}
+    {
+    }
 
     /// Cluster constructor
-    explicit Query(std::vector<LocalQuery> queries) : id{getNextDistributedQueryId()}, backend{std::move(queries)}
+    Query(std::vector<LocalQuery> queries, PlanStage::DistributedLogicalPlan&& plan)
+        : id{getNextDistributedQueryId()}, backend{std::move(queries)}, plan{std::move(plan)}
     {
         PRECONDITION(
             not std::get<std::vector<LocalQuery>>(backend.embeddedOrCluster).empty(),
@@ -87,6 +95,7 @@ public:
     }
 
     ~Query() = default;
+
     /// A query should only have one owner - move-only semantics
     Query(const Query& other) = delete;
     Query& operator=(const Query& other) = delete;

@@ -17,7 +17,9 @@
 #include <expected>
 #include <vector>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Util/Pointers.hpp>
 #include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryPlanning.hpp>
@@ -41,8 +43,8 @@ class QueryManager
     UniquePtr<QuerySubmissionBackend> backend;
 
 public:
-    QueryManager(UniquePtr<QuerySubmissionBackend> backend);
-    [[nodiscard]] std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
+    explicit QueryManager(UniquePtr<QuerySubmissionBackend> backend);
+    [[nodiscard]] std::expected<Query, Exception> registerQuery(PlanStage::DistributedLogicalPlan&& plan);
     std::expected<void, Exception> start(const Query& query);
     std::expected<void, std::vector<Exception>> stop(const Query& query);
     std::expected<void, std::vector<Exception>> unregister(const Query& query);

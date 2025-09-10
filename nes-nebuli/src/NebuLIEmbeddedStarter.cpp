@@ -12,29 +12,25 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <chrono>
-#include <exception>
-#include <fstream>
-#include <functional>
 #include <memory>
 #include <ranges>
 #include <string>
-#include <string_view>
-#include <vector>
-#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <Util/ThreadNaming.hpp>
-#include <YAML/YamlBinder.hpp>
 #include <argparse/argparse.hpp>
-#include <fmt/color.h>
-#include <google/protobuf/text_format.h>
-#include <grpcpp/create_channel.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/QueryManager.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <YAML/YamlBinder.hpp>
+#include <YAML/YamlLoader.hpp>
 #include <ErrorHandling.hpp>
-#include <GrpcService.hpp>
 #include <NESThread.hpp>
+#include <QueryConfig.hpp>
 #include <QueryPlanning.hpp>
-#include <Repl.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 extern void enable_memcom();
 
@@ -64,7 +60,7 @@ int main(const int argc, char** argv)
     NES::QueryManager queryManager(
         std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(ctx.workerCatalog->getAllWorkers(), configuration));
 
-    auto query = queryManager.registerQuery(distributedPlan);
+    auto query = queryManager.registerQuery(std::move(distributedPlan));
     if (!query.has_value())
     {
         NES_ERROR("Failed to register query: {}", query.error());

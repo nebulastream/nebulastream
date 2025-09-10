@@ -14,13 +14,24 @@
 
 #include <QueryManager/QueryManager.hpp>
 
+#include <exception>
+#include <expected>
+#include <utility>
+#include <vector>
+
+#include <Listeners/QueryLog.hpp>
+#include <Util/Pointers.hpp>
+#include <DistributedQueryId.hpp>
+#include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
+
 namespace NES
 {
 QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend) : backend(std::move(backend))
 {
 }
 
-std::expected<Query, Exception> QueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
+std::expected<Query, Exception> QueryManager::registerQuery(PlanStage::DistributedLogicalPlan&& plan)
 {
     std::vector<LocalQuery> localQueries;
     localQueries.reserve(plan.size());
@@ -46,7 +57,7 @@ std::expected<Query, Exception> QueryManager::registerQuery(const PlanStage::Dis
             }
         }
     }
-    return Query{localQueries};
+    return Query{localQueries, std::move(plan)};
 }
 
 std::expected<void, Exception> QueryManager::start(const Query& query)

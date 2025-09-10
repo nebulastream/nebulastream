@@ -211,9 +211,9 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 
         /// Plan the query using QueryPlanner - statement is a LogicalPlan
         auto boundPlan = PlanStage::BoundLogicalPlan{statement};
-        const auto finalizedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
+        auto finalizedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
 
-        auto queryHandle = queryManager->registerQuery(finalizedPlan);
+        auto queryHandle = queryManager->registerQuery(std::move(finalizedPlan));
         if (!queryHandle.has_value())
         {
             return std::unexpected{queryHandle.error()};

@@ -39,13 +39,11 @@ namespace NES::CLI
 {
 YamlBinder::YamlBinder(const QueryConfig& config)
     : queryConfig{config}
-    , workerCatalog{std::make_unique<WorkerCatalog>(
-        WorkerCatalog::from(
-            config.workerNodes | std::views::transform(
-                [](const auto& worker)
-                {
-                    return NES::WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes};
-                }) | std::ranges::to<std::vector>()))}
+    , workerCatalog{std::make_unique<WorkerCatalog>(WorkerCatalog::from(
+          config.workerNodes
+          | std::views::transform([](const auto& worker)
+                                  { return NES::WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes}; })
+          | std::ranges::to<std::vector>()))}
     , sourceCatalog{std::make_unique<SourceCatalog>()}
     , sinkCatalog{std::make_unique<SinkCatalog>()}
 {

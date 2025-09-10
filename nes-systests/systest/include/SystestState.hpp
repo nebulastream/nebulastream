@@ -125,9 +125,8 @@ struct SubmittedQuery
 {
     SubmittedQuery() = delete;
 
-    SubmittedQuery(Query&& qry, PlannedQuery&& planned) /// NOLINT(*-rvalue-reference-param-not-moved)
-        : query{std::move(qry)}, ctx{std::move(planned.ctx)}, planInfo{std::move(*planned.planInfoOrException)}
-    {
+    SubmittedQuery(Query &&qry, PlannedQuery &&planned) /// NOLINT(*-rvalue-reference-param-not-moved)
+        : query{std::move(qry)}, ctx{std::move(planned.ctx)}, planInfo{std::move(*planned.planInfoOrException)} {
     }
 
     Query query;

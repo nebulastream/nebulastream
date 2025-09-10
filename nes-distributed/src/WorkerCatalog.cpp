@@ -21,21 +21,16 @@
 #include <vector>
 
 #include <Util/Logger/Logger.hpp>
-#include <WorkerConfig.hpp>
 #include <NetworkTopology.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
 WorkerCatalog::WorkerCatalog(const std::vector<WorkerConfig>& workerConfigs)
-    : workers{
-        std::views::transform(workerConfigs, [](const auto& worker) { return std::make_pair(worker.host, worker); }) | std::ranges::to<
-            std::unordered_map>()
-    }
-    , topology{
-        Topology::from(
-            std::views::transform(
-                workerConfigs,
-                [](const auto& worker) { return std::make_pair(worker.host, worker.downstream); }) | std::ranges::to<std::vector>())}
+    : workers{std::views::transform(workerConfigs, [](const auto& worker) { return std::make_pair(worker.host, worker); }) | std::ranges::to<std::unordered_map>()}
+    , topology{Topology::from(
+          std::views::transform(workerConfigs, [](const auto& worker) { return std::make_pair(worker.host, worker.downstream); })
+          | std::ranges::to<std::vector>())}
 {
 }
 
@@ -77,7 +72,9 @@ void WorkerCatalog::returnCapacity(const HostAddr& hostAddr, const size_t capaci
         NES_WARNING("Worker with addr {} not found in the catalog", hostAddr);
         return;
     }
-    workers.at(hostAddr).capacity += capacity;
+
+    auto& worker = workers.at(hostAddr);
+    worker.capacity += capacity;
 }
 
 size_t WorkerCatalog::getNumWorkers() const
@@ -92,6 +89,6 @@ const Topology& WorkerCatalog::getTopology() const
 
 std::vector<WorkerConfig> WorkerCatalog::getAllWorkers() const
 {
-    return workers | std::views::values | std::ranges::to<std::vector<WorkerConfig> >();
+    return workers | std::views::values | std::ranges::to<std::vector<WorkerConfig>>();
 }
 }
