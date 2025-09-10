@@ -31,15 +31,20 @@ class QueryTracker
     std::vector<FailedQuery> failedQueries;
     std::vector<FinishedQuery> finishedQueries;
 
+    size_t iteration = 0;
+    bool shuffle;
     uint64_t numConcurrentQueries;
 
+    void doShuffle();
+
 public:
-    QueryTracker(const std::vector<PlannedQuery>& queries, uint64_t concurrency);
+    QueryTracker(const std::vector<PlannedQuery>& queries, uint64_t concurrency, bool shuffle);
     QueryTracker() = delete;
 
     [[nodiscard]] std::vector<FailedQuery> getFailedQueries() const;
     [[nodiscard]] size_t getTotalQueries() const;
     [[nodiscard]] bool done() const;
+    [[nodiscard]] bool nextIteration();
 
     std::optional<PlannedQuery> nextPending();
     std::optional<SubmittedQuery> nextSubmitted();

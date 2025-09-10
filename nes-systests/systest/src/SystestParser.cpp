@@ -103,7 +103,7 @@ std::optional<std::filesystem::path> validateYamlConfigPath(const std::string_vi
     return (ext == ".yaml" or ext == ".yml") ? std::optional{path} : std::nullopt;
 }
 
-NES::SystestAttachSource parseAttachSource(const std::string& line)
+NES::SystestAttachSource parseAttachSource(const std::string& configDir, const std::string& line)
 {
     const auto attachSourceTokens = NES::Util::splitWithStringDelimiter<std::string>(line, " ");
     /// Attach SourceType (SourceConfig) IFormatter (IFormatterConfig) LogicalSourceName DataIngestionType
@@ -131,7 +131,7 @@ NES::SystestAttachSource parseAttachSource(const std::string& line)
 
     attachSource.sourceType = std::string(attachSourceTokens.at(nextTokenIdx++));
     attachSource.sourceConfigurationPath
-        = [](const std::vector<std::string>& attachSourceTokens, const std::string_view sourceType, size_t& nextTokenIdx)
+        = [configDir](const std::vector<std::string>& attachSourceTokens, const std::string_view sourceType, size_t& nextTokenIdx)
     {
         if (const auto sourceConfigPath = validateYamlConfigPath(attachSourceTokens.at(nextTokenIdx)))
         {
@@ -139,12 +139,12 @@ NES::SystestAttachSource parseAttachSource(const std::string& line)
             return sourceConfigPath.value();
         }
         /// Set default source config path
-        return std::filesystem::path(TEST_CONFIGURATION_DIR) / fmt::format("sources/{}_default.yaml", NES::Util::toLowerCase(sourceType));
+        return std::filesystem::path(fmt::format("{}/sources/{}_default.yaml", configDir, NES::Util::toLowerCase(sourceType)));
     }(attachSourceTokens, attachSource.sourceType, nextTokenIdx);
 
     attachSource.inputFormatterType = attachSourceTokens.at(nextTokenIdx++);
     attachSource.inputFormatterConfigurationPath
-        = [](const std::vector<std::string>& attachSourceTokens, const std::string_view inputFormatterType, size_t& nextTokenIdx)
+        = [configDir](const std::vector<std::string>& attachSourceTokens, const std::string_view inputFormatterType, size_t& nextTokenIdx)
     {
         if (const auto inputFormatterConfigPath = validateYamlConfigPath(attachSourceTokens.at(nextTokenIdx)))
         {
@@ -152,8 +152,8 @@ NES::SystestAttachSource parseAttachSource(const std::string& line)
             return inputFormatterConfigPath.value();
         }
         /// Set default source config path
-        return std::filesystem::path(TEST_CONFIGURATION_DIR)
-            / fmt::format("inputFormatters/{}_default.yaml", NES::Util::toLowerCase(inputFormatterType));
+        return std::filesystem::path(
+            fmt::format("{}/inputFormatters/{}_default.yaml", configDir, NES::Util::toLowerCase(inputFormatterType)));
     }(attachSourceTokens, attachSource.inputFormatterType, nextTokenIdx);
 
     attachSource.logicalSourceName = attachSourceTokens.at(nextTokenIdx++);
@@ -540,7 +540,7 @@ SystestParser::expectInlineGeneratorSource(SystestLogicalSource& source, const s
             .sourceType = "Generator",
             .sourceConfigurationPath = "inline:///",
             .inputFormatterType = "CSV",
-            .inputFormatterConfigurationPath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
+            .inputFormatterConfigurationPath = std::filesystem::path(this->configDir) / "inputFormatters/csv_default.yaml",
             .logicalSourceName = source.name,
             .testDataIngestionType = TestDataIngestionType::GENERATOR,
             .tuples = {},
@@ -586,10 +586,9 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
                     ++currentLine; /// proceed to results
                     return SystestAttachSource{
                         .sourceType = "File",
-                        .sourceConfigurationPath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "sources/file_default.yaml",
+                        .sourceConfigurationPath = std::filesystem::path(configDir) / "sources/file_default.yaml",
                         .inputFormatterType = "CSV",
-                        .inputFormatterConfigurationPath
-                        = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
+                        .inputFormatterConfigurationPath = std::filesystem::path(configDir) / "inputFormatters/csv_default.yaml",
                         .logicalSourceName = source.name,
                         .testDataIngestionType = dataIngestionType.value(),
                         .tuples = expectTuples(false),
@@ -600,10 +599,9 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
                 case TestDataIngestionType::FILE: {
                     return SystestAttachSource{
                         .sourceType = "File",
-                        .sourceConfigurationPath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "sources/file_default.yaml",
+                        .sourceConfigurationPath = std::filesystem::path(configDir) / "sources/file_default.yaml",
                         .inputFormatterType = "CSV",
-                        .inputFormatterConfigurationPath
-                        = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
+                        .inputFormatterConfigurationPath = std::filesystem::path(configDir) / "inputFormatters/csv_default.yaml",
                         .logicalSourceName = source.name,
                         .testDataIngestionType = dataIngestionType.value(),
                         .tuples = {},
@@ -616,8 +614,7 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
                         .sourceType = "Generator",
                         .sourceConfigurationPath = expectFilePath(),
                         .inputFormatterType = "CSV",
-                        .inputFormatterConfigurationPath
-                        = std::filesystem::path(TEST_CONFIGURATION_DIR) / "inputFormatters/csv_default.yaml",
+                        .inputFormatterConfigurationPath = std::filesystem::path(configDir) / "inputFormatters/csv_default.yaml",
                         .logicalSourceName = source.name,
                         .testDataIngestionType = dataIngestionType.value(),
                         .tuples = {},
@@ -654,7 +651,7 @@ SystestAttachSource SystestParser::expectAttachSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
-    switch (auto attachSource = parseAttachSource(lines[currentLine]); attachSource.testDataIngestionType)
+    switch (auto attachSource = parseAttachSource(configDir, lines[currentLine]); attachSource.testDataIngestionType)
     {
         case TestDataIngestionType::INLINE: {
             attachSource.tuples = {expectTuples(true)};

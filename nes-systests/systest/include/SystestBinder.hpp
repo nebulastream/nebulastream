@@ -23,6 +23,8 @@
 #include <Util/Pointers.hpp>
 #include <SystestState.hpp>
 
+#include "QueryConfig.hpp"
+
 namespace NES::Systest
 {
 /// The systest binder uses the SystestParser to create SystestQuery objects that contain everything to run and validate systest queries.
@@ -36,7 +38,7 @@ public:
         const std::filesystem::path& workingDir,
         const std::filesystem::path& testDataDir,
         const std::filesystem::path& configDir,
-        const std::string& topologyPath);
+        CLI::ClusterConfig clusterConfig);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<PlannedQuery>, size_t> loadPlanQueries(TestFileMap& discoveredTestFiles);

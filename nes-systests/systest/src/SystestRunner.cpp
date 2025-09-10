@@ -15,6 +15,7 @@
 #include <SystestRunner.hpp>
 
 #include <chrono>
+#include <csignal>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -52,10 +53,8 @@ UniquePtr<QuerySubmissionBackend> createSubmissionBackend(const SystestRunner::E
         Overloaded{
             [](const SystestRunner::LocalExecution& local) -> UniquePtr<QuerySubmissionBackend>
             {
-                const auto topologyPath = local.topologyPath.value_or(TEST_CONFIGURATION_DIR "/topologies/default_distributed.yaml");
-                auto [nodes] = CLI::YamlLoader<CLI::ClusterConfig>::load(topologyPath);
                 return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-                    std::views::all(nodes)
+                    std::views::all(local.topology.nodes)
                         | std::views::transform(
                             [](const CLI::WorkerConfig& worker) -> WorkerConfig
                             { return WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes}; })
@@ -64,10 +63,8 @@ UniquePtr<QuerySubmissionBackend> createSubmissionBackend(const SystestRunner::E
             },
             [](const SystestRunner::DistributedExecution& distributed) -> UniquePtr<QuerySubmissionBackend>
             {
-                const auto topologyPath = distributed.topologyPath.value_or(TEST_CONFIGURATION_DIR "/topologies/default_distributed.yaml");
-                auto [nodes] = CLI::YamlLoader<CLI::ClusterConfig>::load(topologyPath);
                 return std::make_unique<GRPCQuerySubmissionBackend>(
-                    std::views::all(nodes)
+                    std::views::all(distributed.topology.nodes)
                     | std::views::transform(
                         [](const CLI::WorkerConfig& worker) -> WorkerConfig
                         { return WorkerConfig{worker.host, worker.grpc, worker.capacity, worker.downstreamNodes}; })
@@ -77,30 +74,53 @@ UniquePtr<QuerySubmissionBackend> createSubmissionBackend(const SystestRunner::E
 }
 }
 
-SystestRunner::SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, const uint64_t queryConcurrency)
-    : queryTracker{std::move(inputQueries), queryConcurrency}
+SystestRunner::SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, const SystestRunner::RunnerConfig& config)
+    : queryTracker{std::move(inputQueries), config.queryConcurrency, config.shuffle}
+    , endless{config.endless}
     , executionMode{executionMode}
     , queryManager(createSubmissionBackend(executionMode))
     , reporter{std::make_unique<QueryResultReporter>(queryTracker.getTotalQueries())}
 {
 }
 
-SystestRunner SystestRunner::from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, const uint64_t queryConcurrency)
+SystestRunner SystestRunner::from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, const SystestRunner::RunnerConfig& config)
 {
-    return SystestRunner{std::move(queries), std::move(executionMode), queryConcurrency};
+    return SystestRunner{std::move(queries), std::move(executionMode), config};
+}
+
+std::atomic_bool continueSubmittingQueries = false;
+
+namespace
+{
+void signalHandler(int)
+{
+    continueSubmittingQueries = false;
+}
 }
 
 std::vector<FailedQuery> SystestRunner::run(nlohmann::json* _Nullable benchmarkResults) &&
 {
-    while (not queryTracker.done())
+    if (endless)
     {
-        submit();
-        handle();
+        continueSubmittingQueries = true;
+        signal(SIGINT, signalHandler);
+        signal(SIGTERM, signalHandler);
     }
+
+    do
+    {
+        while (not queryTracker.done())
+        {
+            if (!submit())
+                handle();
+        }
+    } while (continueSubmittingQueries && queryTracker.nextIteration());
 
     if (benchmarkResults)
     {
         serializeBenchmarkResults(finishedQueries, *benchmarkResults);
+        benchmarkResults->at("failedQueries") = reportedFailures.size();
+        benchmarkResults->at("totalQueries") = benchmarkResults->at("totalQueries").get<size_t>() + reportedFailures.size();
     }
 
     return reportedFailures;
@@ -110,8 +130,9 @@ std::vector<FailedQuery> SystestRunner::run(nlohmann::json* _Nullable benchmarkR
 /// or there are no more queries to submit.
 /// Queries that have failed during planning are marked as failed and ignored.
 /// Same thing applies to queries that fail during deployment.
-void SystestRunner::submit()
+bool SystestRunner::submit()
 {
+    bool atLeastOneQueryWasSubmitted = false;
     while (auto planned = queryTracker.nextPending())
     {
         auto planningResult = planned->planInfoOrException;
@@ -134,10 +155,11 @@ void SystestRunner::submit()
                             });
                 })
             .and_then(
-                [this](auto&& submitted) -> std::expected<void, Exception>
+                [this, &atLeastOneQueryWasSubmitted](auto&& submitted) -> std::expected<void, Exception>
                 {
                     return queryManager.start(submitted.query)
                         .transform([this, &submitted] { queryTracker.moveToSubmitted(std::forward<decltype(submitted)>(submitted)); });
+                    atLeastOneQueryWasSubmitted = true;
                 })
             .or_else(
                 [this, &planned](const Exception& exception)
@@ -146,6 +168,7 @@ void SystestRunner::submit()
                     return std::expected<void, Exception>{};
                 });
     }
+    return atLeastOneQueryWasSubmitted;
 }
 
 /// Consume from submitted queries and request their status from the execution backend.
@@ -154,6 +177,12 @@ void SystestRunner::handle()
 {
     while (auto submittedQuery = queryTracker.nextSubmitted())
     {
+        if (submittedQuery->submittedAt + std::chrono::seconds(100) < std::chrono::system_clock::now())
+        {
+            fmt::println(std::cerr, "Query {} has reached timeout", submittedQuery->ctx.testName);
+            std::exit(EXIT_FAILURE);
+        }
+
         queryManager
             .status(submittedQuery->query) /// NOLINT(*-unused-return-value)
             .and_then(

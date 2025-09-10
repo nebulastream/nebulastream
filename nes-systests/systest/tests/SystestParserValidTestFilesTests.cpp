@@ -69,7 +69,8 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     bool logicalSourceCallbackCalled = false;
     bool attachSourceCallbackCalled = false;
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
+
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
     parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { logicalSourceCallbackCalled = true; });
@@ -165,7 +166,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     bool queryCallbackCalled = false;
     bool attachSourceCallbackCalled = false;
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnSystestLogicalSourceCallback(
         [&logicalSourceCallbackCalled, &expectedLogicalSource](const SystestParser::SystestLogicalSource& source)
@@ -286,7 +287,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     bool queryCallbackCalled = false;
     bool attachSourceCallbackCalled = false;
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnSystestLogicalSourceCallback(
         [&](const SystestParser::SystestLogicalSource& source)
@@ -340,7 +341,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
     bool queryCallbackCalled = false;
     bool errorCallbackCalled = false;
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     parser.registerOnQueryCallback(
         [&queryCallbackCalled, &expectQuery](const std::string& query, SystestQueryId)
         {

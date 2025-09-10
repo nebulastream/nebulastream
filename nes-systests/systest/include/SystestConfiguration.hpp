@@ -27,6 +27,9 @@
 namespace NES
 {
 
+static constexpr auto DEFAULT_LOCAL_TOPOLOGY = "default_local.yaml";
+static constexpr auto DEFAULT_DISTRIBUTED_TOPOLOGY = "default_distributed.yaml";
+
 class SystestConfiguration final : public BaseConfiguration
 {
 public:
@@ -37,8 +40,8 @@ public:
         = {"tests_discover_dir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
     StringOption testDataDir
         = {"test_data_dir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
-    StringOption configDir
-        = {"config_dir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
+    StringOption configDir = {
+        "config_dir", DEFAULT_TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " DEFAULT_TEST_CONFIGURATION_DIR};
     StringOption logFilePath = {"logFilePath", "Path to the log file"};
     StringOption directlySpecifiedTestFiles
         = {"directly_specified_test_files",
@@ -55,7 +58,7 @@ public:
     SequenceOption<StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
     StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
-    StringOption topology = {"topology", "", "path to topology file used for query planning and deployment"};
+    StringOption topologyPath = {"topology", DEFAULT_DISTRIBUTED_TOPOLOGY, "path to topology file used for query planning and deployment"};
     BoolOption remote = {"remote", "", "use local or remote deployment"};
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
 

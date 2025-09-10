@@ -59,7 +59,7 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     constexpr std::string_view testFileName = "MultipleCorrectAndIncorrect";
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}{}", SYSTEST_DATA_DIR, testFileName, EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFileName));
-    config.topology.setValue(fmt::format("{}/topologies/default_local.yaml", TEST_CONFIGURATION_DIR));
+    config.topologyPath.setValue(fmt::format("{}/topologies/default_local.yaml", DEFAULT_TEST_CONFIGURATION_DIR));
 
     const auto systestResult = executeSystests(config);
     ASSERT_TRUE(systestResult.returnType == SystestExecutorResult::ReturnType::FAILED) << " Return type not as expected.";
@@ -84,7 +84,7 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}{}", SYSTEST_DATA_DIR, directory, testFile, EXTENSION));
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
-    config.topology.setValue(fmt::format("{}/topologies/default_local.yaml", TEST_CONFIGURATION_DIR));
+    config.topologyPath.setValue(fmt::format("{}/topologies/default_local.yaml", DEFAULT_TEST_CONFIGURATION_DIR));
 
     const auto systestResult = executeSystests(config);
     ASSERT_TRUE(systestResult.returnType == SystestExecutorResult::ReturnType::FAILED) << " Return type not as expected.";

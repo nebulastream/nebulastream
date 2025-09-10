@@ -117,7 +117,7 @@ void serializeBenchmarkResults(const std::vector<FinishedQuery>& finished, nlohm
     for (const auto& finishedQuery : finished)
     {
         nlohmann::json queryResult;
-        queryResult["testName"] = finishedQuery.ctx.testName;
+        queryResult["testName"] = fmt::format("{}:{}", finishedQuery.ctx.testName, finishedQuery.ctx.queryIdInFile);
         queryResult["passed"] = true; /// If it's in finishedQueries, it passed
 
         /// Add performance metrics if available

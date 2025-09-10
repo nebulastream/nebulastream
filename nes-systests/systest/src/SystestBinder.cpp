@@ -307,11 +307,14 @@ private:
 struct SystestBinder::Impl
 {
     explicit Impl(
-        std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir, std::string topologyFile)
+        std::filesystem::path workingDir,
+        std::filesystem::path testDataDir,
+        std::filesystem::path configDir,
+        CLI::ClusterConfig clusterConfig)
         : workingDir(std::move(workingDir))
         , testDataDir(std::move(testDataDir))
         , configDir(std::move(configDir))
-        , topologyFile(std::move(topologyFile))
+        , clusterConfig(std::move(clusterConfig))
     {
     }
 
@@ -321,7 +324,8 @@ struct SystestBinder::Impl
         std::vector<PlannedQuery> queries;
         uint64_t loadedFiles = 0;
 
-        for (const auto& testfile : discoveredTestFiles | std::views::values)
+        SystestTopology systestTopology{clusterConfig.nodes};
+        for (auto& testFile : discoveredTestFiles | std::views::values)
         {
             std::cout << "Loading queries from test file: file://" << testFile.getLogFilePath() << '\n' << std::flush;
             try
@@ -410,7 +414,7 @@ struct SystestBinder::Impl
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
         auto sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
-        SystestParser parser{};
+        SystestParser parser{configDir};
 
         parser.registerSubstitutionRule(
             {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
@@ -698,15 +702,15 @@ private:
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
-    std::string topologyFile;
+    CLI::ClusterConfig clusterConfig;
 };
 
 SystestBinder::SystestBinder(
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
     const std::filesystem::path& configDir,
-    const std::string& topologyPath)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, topologyPath))
+    CLI::ClusterConfig clusterConfig)
+    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, std::move(clusterConfig)))
 {
 }
 

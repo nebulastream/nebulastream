@@ -133,6 +133,7 @@ struct SubmittedQuery
     Query query;
     SystestQueryContext ctx;
     PlanInfo planInfo;
+    std::chrono::system_clock::time_point submittedAt = std::chrono::system_clock::now();
     /// Optional benchmarking metrics
     std::optional<size_t> bytesProcessed;
     std::optional<size_t> tuplesProcessed;

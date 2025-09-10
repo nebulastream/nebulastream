@@ -28,37 +28,47 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestState.hpp>
 
+#include "QueryConfig.hpp"
+
 namespace NES::Systest
 {
 
 class SystestRunner
 {
 public:
+    struct RunnerConfig
+    {
+        bool endless;
+        bool shuffle;
+        size_t queryConcurrency;
+    };
+
     struct LocalExecution
     {
-        std::optional<std::filesystem::path> topologyPath;
+        CLI::ClusterConfig topology;
         SingleNodeWorkerConfiguration singleNodeWorkerConfig;
     };
 
     struct DistributedExecution
     {
-        std::optional<std::filesystem::path> topologyPath;
+        CLI::ClusterConfig topology;
     };
 
     using ExecutionMode = std::variant<LocalExecution, DistributedExecution>;
 
 private:
     QueryTracker queryTracker;
+    bool endless = false;
     ExecutionMode executionMode;
     QueryManager queryManager;
     std::unique_ptr<QueryResultReporter> reporter;
     std::vector<FailedQuery> reportedFailures;
     std::vector<FinishedQuery> finishedQueries;
 
-    SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, uint64_t queryConcurrency);
+    SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, const RunnerConfig& config);
 
 public:
-    static SystestRunner from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, uint64_t queryConcurrency);
+    static SystestRunner from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, const RunnerConfig& config);
 
     SystestRunner() = delete;
     ~SystestRunner() = default;
@@ -70,7 +80,7 @@ public:
     std::vector<FailedQuery> run(nlohmann::json* _Nullable benchmarkResults) &&;
 
 private:
-    void submit();
+    bool submit();
     void handle();
     void onStopped(SubmittedQuery&& submitted, const DistributedQueryStatus& queryStatus);
 

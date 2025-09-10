@@ -1,0 +1,7 @@
+type: Generator
+stop_generator_when_sequence_finishes: ALL
+max_runtime_ms: 1000000
+seed: 1
+generator_schema: |
+  SEQUENCE UINT64 0 10 1
+  SEQUENCE UINT64 0 5 1

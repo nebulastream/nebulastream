@@ -19,9 +19,19 @@
 namespace NES::Systest
 {
 
-QueryTracker::QueryTracker(const std::vector<PlannedQuery>& queries, const uint64_t concurrency)
-    : pendingQueries{queries}, numConcurrentQueries{concurrency}
+QueryTracker::QueryTracker(const std::vector<PlannedQuery>& queries, const uint64_t concurrency, bool shuffle)
+    : pendingQueries{queries}, shuffle{shuffle}, numConcurrentQueries{concurrency}
 {
+    doShuffle();
+}
+
+void QueryTracker::doShuffle()
+{
+    if (shuffle)
+    {
+        std::mt19937 rng(std::random_device{}());
+        std::ranges::shuffle(pendingQueries, rng);
+    }
 }
 
 std::vector<FailedQuery> QueryTracker::getFailedQueries() const
@@ -37,6 +47,21 @@ size_t QueryTracker::getTotalQueries() const
 bool QueryTracker::done() const
 {
     return pendingQueries.empty() && submittedQueries.empty();
+}
+
+bool QueryTracker::nextIteration()
+{
+    iteration++;
+    for (auto& q : finishedQueries)
+    {
+        if (std::holds_alternative<ExpectedError>(q.ctx.expectedResultsOrError))
+        {
+            continue;
+        }
+        pendingQueries.emplace_back(q.ctx, q.planInfo.value());
+    }
+    doShuffle();
+    return !pendingQueries.empty();
 }
 
 std::optional<PlannedQuery> QueryTracker::nextPending()

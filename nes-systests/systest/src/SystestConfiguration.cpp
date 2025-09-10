@@ -32,6 +32,6 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &testDataDir,
         &endlessMode,
         &excludeGroups,
-        &topology};
+        &topologyPath};
 }
 }
