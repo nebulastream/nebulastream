@@ -346,6 +346,39 @@ struct SystestBinder::Impl
         return buildSystests;
     }
 
+    static void createCallback(const StatementBinder &binder, std::shared_ptr<SourceCatalog> sourceCatalog, const std::string& query)
+    {
+        const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
+        const auto parseResult = managedParser->parseSingle();
+        if (not parseResult.has_value()) throw InvalidQuerySyntax();
+
+        const auto binding = binder.bind(parseResult.value().get());
+        if (not binding.has_value()) { throw InvalidQuerySyntax(); }
+
+        const auto statement = binding.value();
+
+        if (std::holds_alternative<CreateLogicalSourceStatement>(statement))
+        {
+            auto createLogicalSourceStatement = std::get<CreateLogicalSourceStatement>(statement);
+            const auto created = sourceCatalog->addLogicalSource(
+                createLogicalSourceStatement.name,
+                createLogicalSourceStatement.schema
+            );
+
+            if (not created.has_value()) { throw InvalidQuerySyntax(); }
+        }
+        else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
+        {
+            auto createPhysicalSourceStatement = std::get<CreatePhysicalSourceStatement>(statement);
+
+            std::cout << "Here we go again.";
+        }
+        else
+        {
+            throw  UnsupportedQuery();
+        }
+    };
+
     /// NOLINTBEGIN(readability-function-cognitive-complexity)
     std::vector<SystestQueryBuilder> loadFromSLTFile(
         const std::filesystem::path& testFilePath,
@@ -386,38 +419,9 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback(
-            [&binder, &sourceCatalog](const std::string& query)
-            {
-                const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
-                const auto parseResult = managedParser->parseSingle();
-                if (not parseResult.has_value()) throw InvalidQuerySyntax();
+            [&] (const std::string& query) {createCallback(binder, sourceCatalog, query);}
+            );
 
-                const auto binding = binder.bind(parseResult.value().get());
-                if (not binding.has_value()) throw InvalidQuerySyntax();
-
-                const auto statement = binding.value();
-
-                if (std::holds_alternative<CreateLogicalSourceStatement>(statement))
-                {
-                    auto createLogicalSourceStatement = std::get<CreateLogicalSourceStatement>(statement);
-                    const auto created = sourceCatalog->addLogicalSource(
-                        createLogicalSourceStatement.name,
-                        createLogicalSourceStatement.schema
-                    );
-
-                    if (not created.has_value()) throw InvalidQuerySyntax();
-                }
-                else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
-                {
-                    auto createPhysicalSourceStatement = std::get<CreatePhysicalSourceStatement>(statement);
-
-                    std::cout << "Here we go again.";
-                }
-                else
-                {
-                    throw  UnsupportedQuery();
-                }
-            });
 
         parser.registerOnSystestLogicalSourceCallback(
             [&](const SystestParser::SystestLogicalSource& source)
