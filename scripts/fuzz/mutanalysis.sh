@@ -77,6 +77,42 @@ cmake --build cmake-build-lfz --target snw-proto-fuzz snw-strict-fuzz snw-text-f
 # cmake --build cmake-build-afl --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 
+ctest --test-dir cmake-build-nrm -N | grep "  Test" | awk -F": " '{ print "ctestcase::" $2 }' | sed "s/ /_/g" | tee -a $out_log
+
+log_out "assuring that ctest passes"
+if ! timeout --kill-after=1m 30m ctest -j $(nproc) --test-dir cmake-build-nrm --quiet --output-junit junit.xml
+then
+    for testcase in $(cat cmake-build-nrm/junit.xml | grep 'status="fail"' | awk -F'"' '{ print $2 }' | sed "s/ /_/g")
+    do
+        log_out "test $testcase failed unexpectedly"
+    done
+    exit 1
+fi
+
+log_out "assuring that corpus passes"
+unexpected_corpus_crash=false
+for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
+do
+    if ! $(find cmake-build-lfz -name $harness) -runs=0 /nes-corpora/$harness/corpus > /dev/null 2> /dev/null
+    then
+        for crash in crash-*
+        do
+            if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
+            then
+                log_out mutant $patch crash $crash seems to be a fluke
+                rm $crash
+                continue
+            fi
+            log_out "$harness with $crash failed unexpectedly"
+            unexpected_corpus_crash=true
+        done
+    fi
+done
+if $unexpected_corpus_crash
+then
+    exit 1
+fi
+
 for patch in $(find mutations -name "*.patch" -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c 'echo $(tail -8 {} | sha256sum) {}' | sort | awk '{ print $3 }')
 do
     git status > /dev/null
