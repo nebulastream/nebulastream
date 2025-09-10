@@ -48,8 +48,7 @@ sinks:
       type: UINT64
     - name: tcp_source$sum_user_id
       type: UINT64
-  type: File
+  type: Monitoring
   config:
-    inputFormat: CSV
-    append: false
     filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+    sizeOfInputDataInBytes: 4972142310
