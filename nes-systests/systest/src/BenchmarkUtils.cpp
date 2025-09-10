@@ -69,18 +69,25 @@ std::optional<std::pair<size_t, size_t>> calculateSourceMetrics(const PlanInfo& 
     return {{totalBytesProcessed, totalTuplesProcessed}};
 }
 
-std::optional<std::chrono::duration<double>> extractElapsedTime(const DistributedQueryStatus& status)
+std::chrono::duration<double> extractElapsedTime(const DistributedQueryStatus& status)
 {
-    /// Find the first local status with timing information
+    PRECONDITION(not status.localStatusSnapshots.empty(), "Cannot extract elapsed time from empty query status");
+    auto latestStopTimestamp = std::chrono::system_clock::time_point::min();
+    auto earliestRunningTimestamp = std::chrono::system_clock::time_point::max();
     for (const auto& localStatus : status.localStatusSnapshots)
     {
-        if (localStatus.metrics.running.has_value() and localStatus.metrics.stop.has_value())
+        INVARIANT(localStatus.metrics.running.has_value(), "Running metrics should be available");
+        INVARIANT(localStatus.metrics.stop.has_value(), "Stop metrics should be available");
+        if (localStatus.metrics.stop.value() > latestStopTimestamp)
         {
-            return std::chrono::duration_cast<std::chrono::duration<double>>(
-                localStatus.metrics.stop.value() - localStatus.metrics.running.value());
+            latestStopTimestamp = localStatus.metrics.stop.value();
+        }
+        if (localStatus.metrics.running.value() < latestStopTimestamp)
+        {
+            earliestRunningTimestamp = localStatus.metrics.running.value();
         }
     }
-    return std::nullopt;
+    return latestStopTimestamp - earliestRunningTimestamp;
 }
 
 std::string calculateThroughput(const size_t bytesProcessed, const size_t tuplesProcessed, const std::chrono::duration<double> elapsedTime)

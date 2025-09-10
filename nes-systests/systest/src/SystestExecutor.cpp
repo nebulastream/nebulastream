@@ -102,9 +102,8 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     /// distributed mode, otherwise fall back to local (dummy topology, will lead to single-node execution)
     program.add_argument("--topology")
-        .help(
-            "path to a topology file. If no argument is provided, defaults to \"configs/topologies/default_distributed.yaml\". "
-            "If flag is not used, local topology is used.")
+        .help("path to a topology file. If no argument is provided, defaults to \"configs/topologies/default_distributed.yaml\". "
+              "If flag is not used, local topology is used.")
         .nargs(argparse::nargs_pattern::optional)
         .default_value(std::string());
 

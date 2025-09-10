@@ -34,7 +34,8 @@ class QueryTracker
     uint64_t numConcurrentQueries;
 
 public:
-    QueryTracker(const std::vector<PlannedQuery>& queries, uint64_t concurrency);
+    QueryTracker(std::vector<PlannedQuery> queries, uint64_t concurrency);
+
     QueryTracker() = delete;
 
     [[nodiscard]] std::vector<FailedQuery> getFailedQueries() const;

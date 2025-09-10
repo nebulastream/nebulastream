@@ -41,7 +41,7 @@ struct BenchmarkMetrics
 std::optional<std::pair<size_t, size_t>> calculateSourceMetrics(const PlanInfo& planInfo);
 
 /// Extract elapsed time from QueryStatus (using the last run's timing)
-std::optional<std::chrono::duration<double>> extractElapsedTime(const DistributedQueryStatus& status);
+std::chrono::duration<double> extractElapsedTime(const DistributedQueryStatus &status);
 
 /// Calculate and format throughput string from metrics
 std::string calculateThroughput(size_t bytesProcessed, size_t tuplesProcessed, std::chrono::duration<double> elapsedTime);

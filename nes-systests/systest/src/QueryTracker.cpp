@@ -19,7 +19,7 @@
 namespace NES::Systest
 {
 
-QueryTracker::QueryTracker(const std::vector<PlannedQuery>& queries, const uint64_t concurrency)
+QueryTracker::QueryTracker(std::vector<PlannedQuery> queries, const uint64_t concurrency)
     : pendingQueries{queries}, numConcurrentQueries{concurrency}
 {
 }
@@ -48,7 +48,7 @@ std::optional<PlannedQuery> QueryTracker::nextPending()
 
     auto query = std::move(pendingQueries.back());
     pendingQueries.pop_back();
-    return {query};
+    return {std::move(query)};
 }
 
 std::optional<SubmittedQuery> QueryTracker::nextSubmitted()
@@ -59,7 +59,7 @@ std::optional<SubmittedQuery> QueryTracker::nextSubmitted()
     }
     auto query = std::move(submittedQueries.front());
     submittedQueries.pop_front();
-    return query;
+    return {std::move(query)};
 }
 
 void QueryTracker::moveToFailed(FailedQuery&& failed)

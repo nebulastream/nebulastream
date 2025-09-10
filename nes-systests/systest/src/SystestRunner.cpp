@@ -117,9 +117,9 @@ void SystestRunner::submit()
         auto planningResult = planned->planInfoOrException;
         planningResult
             .and_then(
-                [this, &planned](const auto& planInfo) mutable
+                [this, &planned](auto& planInfo) mutable
                 {
-                    return queryManager.registerQuery(planInfo.plan)
+                    return queryManager.registerQuery(std::move(planInfo.plan))
                         .transform(
                             [&planned](auto&& query) mutable
                             {
@@ -218,9 +218,9 @@ void SystestRunner::onStopped(SubmittedQuery&& submitted, const DistributedQuery
     const auto elapsedTime = extractElapsedTime(queryStatus);
     std::optional<std::string> throughput;
 
-    if (elapsedTime.has_value() and submitted.bytesProcessed.has_value() and submitted.tuplesProcessed.has_value())
+    if (submitted.bytesProcessed.has_value() and submitted.tuplesProcessed.has_value())
     {
-        throughput = calculateThroughput(*submitted.bytesProcessed, *submitted.tuplesProcessed, *elapsedTime);
+        throughput = calculateThroughput(*submitted.bytesProcessed, *submitted.tuplesProcessed, elapsedTime);
     }
 
     auto finished = FinishedQuery{std::move(submitted)};
@@ -229,20 +229,13 @@ void SystestRunner::onStopped(SubmittedQuery&& submitted, const DistributedQuery
     finishedQueries.push_back(finished);
 
     /// Report with performance information
-    if (elapsedTime && throughput)
+    if (throughput)
     {
-        const auto performanceMessage = fmt::format(" in {:.3f}s ({})", elapsedTime->count(), *throughput);
+        const auto performanceMessage = fmt::format(" in {:.3f}s ({})", elapsedTime.count(), *throughput);
         reporter->reportSuccess(finished.ctx, performanceMessage);
     }
-    else if (elapsedTime)
-    {
-        const auto performanceMessage = fmt::format(" in {:.3f}s", elapsedTime->count());
-        reporter->reportSuccess(finished.ctx, performanceMessage);
-    }
-    else
-    {
-        reporter->reportSuccess(finished.ctx, " (no timing data)");
-    }
+    const auto performanceMessage = fmt::format(" in {:.3f}s", elapsedTime.count());
+    reporter->reportSuccess(finished.ctx, performanceMessage);
 
     queryTracker.moveToFinished(std::move(finished));
 }
