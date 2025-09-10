@@ -73,7 +73,6 @@ public:
     std::vector<LogicalFunction> functionBuilder;
     std::vector<FieldAccessLogicalFunction> groupByFields;
     std::vector<std::string> joinSources;
-    std::optional<LogicalFunction> joinFunction;
     std::vector<LogicalFunction> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
