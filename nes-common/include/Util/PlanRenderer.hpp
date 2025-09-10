@@ -106,8 +106,10 @@ public:
         }
         CPPTRACE_CATCH(...)
         {
+#ifndef FUZZING
             NES_ERROR("Failed to print queryplan with following exception:");
             tryLogCurrentException();
+#endif
         }
     }
 
@@ -444,7 +446,10 @@ private:
     /// we want to print another child underneath, replace the PARENT_LAST_BRANCH (┘) connector with a PARENT_CHILD_LAST_BRANCH (┤).
     void printAsciiBranch(const BranchCase toPrint, const size_t position, std::string& output) const
     {
-        INVARIANT(position < output.size(), "Position is out of bounds.");
+        if (position >= output.size())
+        {
+            throw UnknownException("Position is out of bounds.");
+        }
         switch (toPrint)
         {
             case BranchCase::ParentFirst:

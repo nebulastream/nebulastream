@@ -13,6 +13,7 @@
 */
 #include <cstddef>
 #include <cstdint>
+#include <sstream>
 #include <utility>
 #include <cpptrace/from_current.hpp>
 
@@ -29,8 +30,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         std::string query(reinterpret_cast<const char*>(data), size);
         auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-        std::cout << "parsed" << std::endl;
-        std::cout << plan << std::endl;
+        std::stringstream s;
+        s << plan;
         return 0;
     }
     CPPTRACE_CATCH(...)
