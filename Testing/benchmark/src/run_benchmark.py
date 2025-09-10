@@ -148,8 +148,8 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
                         # Calculate Docker path mapping for the test file
                         docker_test_path = f"/tmp/nebulastream/Testing/benchmark/{os.path.relpath(buffer_test_file, project_dir)}"
                         #print (f"Using test file in Docker: {docker_test_path}")
-                        print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}, layout {layout}, strat {config_strategy}...")
-
+                        #print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}, layout {layout}, strat {config_strategy}...")
+                        
                         # Docker command using existing test file with query ID
                         cmd = [
                             "docker", "run", "--entrypoint=",

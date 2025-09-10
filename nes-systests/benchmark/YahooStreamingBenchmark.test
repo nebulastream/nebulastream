@@ -11,6 +11,7 @@ TESTDATA/large/ysb/ysb_10k_data_479M.csv
 SINK ysb10kChecksum TYPE Checksum UINT64 ysb10k$start UINT64 ysb10k$end UINT64 ysb10k$campaign_id UINT64 ysb10k$sum_user_id
 SINK ysb1kChecksum TYPE Checksum UINT64 ysb1k$user_id UINT64 ysb1k$page_id UINT64 ysb1k$campaign_id UINT64 ysb1k$ad_type UINT64 ysb1k$event_type UINT64 ysb1k$current_ms UINT64 ysb1k$ip UINT64 ysb1k$d1 UINT64 ysb1k$d2 UINT32 ysb1k$d3 UINT16 ysb1k$d4
 SINK ysb1kMapChecksum TYPE Checksum UINT64 ysb1k$user_id UINT64 click_score
+SINK ysb1kSum TYPE Checksum UINT64 col1
 
 # Query 1: Filter 5% selectivity - ad clicks on specific pages
 SELECT * FROM ysb1k WHERE page_id % UINT64(20) = UINT64(0) INTO ysb1kChecksum;
@@ -47,3 +48,10 @@ INTO ysb1kMapChecksum;
 14236360, 35170842947
 
 
+SELECT user_id + UINT64(2) AS col1 FROM (SELECT * FROM ysb1k WHERE user_id % UINT64(2) = UINT64(0)) INTO ysb1kSum;
+----
+14236360, 35170842947
+
+SELECT col1 FROM (SELECT user_id + UINT64(2) AS col1 FROM ysb1k) WHERE col1 % UINT64(2) = UINT64(0) INTO ysb1kSum;
+----
+14236360, 35170842947
