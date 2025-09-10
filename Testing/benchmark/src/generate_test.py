@@ -21,7 +21,7 @@ def swap_config_to_strategy(swap_config):
     else:
         return "CUSTOM"  # For other configurations
 
-def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, access_cols, op_chain, swap_config, result_dir):
+def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, access_cols, op_chain, swap_config, result_dir, func_type, selectivity):
     """Generate a query with a chain of two operators and configurable swaps"""
 
     # Create strategy-specific directory in double_operator
@@ -40,9 +40,9 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
     chain_dir.mkdir(exist_ok=True)
 
     # Calculate threshold for filters (use same threshold calculation as single operators)
-    selectivity = 50  # Default selectivity
-    threshold = int((100 - selectivity) * 0.01 * (2**32-1))
-    func_type = "add"  # Default function type
+    #selectivity = 50  # Default selectivity
+    #threshold = int((100 - selectivity) * 0.01 * (2**32-1))
+    #func_type = "add"  # Default function type
 
     # Determine function type and selectivity based on operator chain
     if "filter" in op_chain:
@@ -73,7 +73,7 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
     test_file = buffer_dir / f"{chain_str}_{strategy}_queries_buffer{buffer_size}.test"
 
     # Calculate threshold for filters (use same threshold calculation as single operators)
-    selectivity = 50  # Default selectivity
+    #selectivity = 50  # Default selectivity
     threshold = int((100 - selectivity) * 0.01 * (2**32-1))
 
     # Generate query SQL
@@ -365,25 +365,37 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
                     for num_col in [n for n in num_columns_list if n <= len(column_names)]:
                         for access_col in [a for a in accessed_columns_list if a <= num_col]:
                             # Generate double operator query
-                            query, config, test_file = generate_double_operator_query(
-                                query_id, test_id, buffer_size, num_col, access_col, op_chain,
-                                swap_config, double_operator_dir
-                            )
+                            for func_type in function_types if 'map' in op_chain else [None]:
+                                for selectivity in selectivities if 'filter' in op_chain else [None]:
+                                    # Generate query only if parameters are relevant
+                                    if ('map' in op_chain and func_type is None) or ('filter' in op_chain and selectivity is None):
+                                        continue
+
+                                    # Calculate individual selectivity needed for each column
+                                    individual_selectivity = None
+                                    threshold = None
+                                    ##if 'filter' in op_chain:
+                                        #individual_selectivity = selectivity**(1.0/access_col)
+                                       # threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))
+                                    query, config, test_file = generate_double_operator_query(
+                                        query_id, test_id, buffer_size, num_col, access_col, op_chain,
+                                        swap_config, double_operator_dir, func_type, selectivity
+                                    )
 
 
-                            # Append to test file or create if doesn't exist
-                            if not os.path.exists(test_file):
-                                # Copy header content from main test file
-                                shutil.copy(output_path, test_file)
+                                    # Append to test file or create if doesn't exist
+                                    if not os.path.exists(test_file):
+                                        # Copy header content from main test file
+                                        shutil.copy(output_path, test_file)
 
-                            with open(test_file, 'a') as f:
-                                f.write(query)
-                                f.write("----\n1, 1\n\n")
+                                    with open(test_file, 'a') as f:
+                                        f.write(query)
+                                        f.write("----\n1, 1\n\n")
 
-                            # Store query config and increment IDs properly
-                            query_configs[query_id] = config
-                            test_id += 1
-                            query_id += 1
+                                    # Store query config and increment IDs properly
+                                    query_configs[query_id] = config
+                                    test_id += 1
+                                    query_id += 1
 
     # Write query mapping to a file for later reference
     with open(result_dir / "query_mapping.txt", 'w') as f:
@@ -449,11 +461,11 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000],#, 400000],#, 20000000],#+ 40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000, 40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10], TODO: correctly use more than 2 columns
-        'accessed_columns': [1, 2],#, 5, 10],
-        'function_types': ['add'],#, 'exp'],
-        'selectivities': [5],# 15],#, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+        'accessed_columns': [1, 2, 5, 10],
+        'function_types': ['add', 'exp'],
+        'selectivities': [5, 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
 
         'operator_chains': [
             ['map'],                  # Single map
