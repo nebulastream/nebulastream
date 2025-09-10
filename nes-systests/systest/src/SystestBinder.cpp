@@ -565,24 +565,25 @@ struct SystestBinder::Impl
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
-        auto& currentTest = plans.emplace(currentQueryNumberInTest, currentQueryNumberInTest).first->second;
-        currentTest.setQueryDefinition(query);
+        SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
+        currentBuilder.setQueryDefinition(query);
         if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
         {
-            currentTest.setException(sinkExpected.error());
+            currentBuilder.setException(sinkExpected.error());
         }
         else
         {
             try
             {
                 auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                currentTest.setBoundPlan(std::move(plan));
+                currentBuilder.setBoundPlan(std::move(plan));
             }
             catch (Exception& e)
             {
-                currentTest.setException(e);
+                currentBuilder.setException(e);
             }
         }
+        plans.emplace(currentQueryNumberInTest, currentBuilder);
     }
 
     static void errorExpectationCallback(
