@@ -114,16 +114,13 @@ private:
     /// @param condition must be true to correctly call function guarded by precondition
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional reference like `{0}`.
     /// TODO #1035: remove namespace NES::Logger
-    /// Remark: the NES_ERROR must be wrapped in the lambda to enable function inlining during query compilation
     #define PRECONDITION(condition, formatString, ...) \
         do \
         { \
             if (!(condition)) \
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
-                auto nes_error_lambda = [&](const std::string& trace) \
-                { NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); }; \
-                nes_error_lambda(trace); \
+                NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
                     logger->shutdown(); \
@@ -136,16 +133,13 @@ private:
     /// @param condition is assumed to be true
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
     /// TODO #1035: remove namespace NES::Logger
-    /// Remark: the NES_ERROR must be wrapped in the lambda to enable function inlining during query compilation
     #define INVARIANT(condition, formatString, ...) \
         do \
         { \
             if (!(condition)) \
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
-                auto nes_error_lambda = [&](const std::string& trace) \
-                { NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); }; \
-                nes_error_lambda(trace); \
+                NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
                     logger->shutdown(); \
