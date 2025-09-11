@@ -1,0 +1,117 @@
+name: Execute Query
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+        description: "ref of the branch"
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the benchmarking image"
+      runtime_seconds:
+        required: false
+        type: string
+        description: "Runtime of the query in seconds, after this the query is stopped. This is directly assigned to bash variable, so it can be string that evaluates to a number i.e $((5*60)) for a 5 minute runtime."
+        default: "$((23*60*60))"
+      query_config:
+        required: false
+        type: string
+        default: |
+          query: |
+            SELECT * FROM generator_source INTO void_sink
+          sinks:
+            - name: void_sink
+              schema:
+                - name: generator_source$double
+                  type: FLOAT64
+              type: Void
+              config: {}
+                
+          logical:
+            - name: generator_source
+              schema:
+                - name: double
+                  type: FLOAT64
+
+          physical:
+            - logical: generator_source
+              parser_config:
+                type: CSV
+                fieldDelimiter: ","
+              type: Generator
+              source_config:
+                stop_generator_when_sequence_finishes: NONE
+                seed: 1
+                generator_schema: |
+                  NORMAL_DISTRIBUTION FLOAT64 0 1
+
+jobs:
+  execute-query:
+    name: "Execute Query with runtime of ${{ inputs.runtime_seconds }} seconds"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
+      volumes:
+        - ccache:/ccache
+        - test-file-cache:/test-file-cache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 1440 # 24 hours
+    runs-on: [ self-hosted, linux, Build]
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Configure NebulaStream
+        run: |
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+
+      - name: Create Nebuli Query file
+        run: |
+          cat << 'EOF' > query.yml
+          ${{ inputs.query_config }}
+          EOF
+
+      - name: Start single node Worker
+        run: |
+          build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
+          echo "WORKER_PID=$!" >> $GITHUB_ENV
+
+      - name: Register and Start Query
+        run: |
+          build/nes-nebuli/nes-nebuli -d -s localhost:8080 register -x -i query.yml
+
+      - name: Wait and monitor
+        shell: bash
+        run: |
+          SECONDS=0
+          MAX_SECONDS=${{ inputs.runtime_seconds}}
+          echo "Stress test runtime set to $MAX_SECONDS seconds"
+          
+          while [ $SECONDS -lt $MAX_SECONDS ]; do
+            if ! kill -0 $WORKER_PID 2>/dev/null; then
+              echo "Worker has exited unexpectedly!"
+              tail -n 50 worker.log
+              exit 1
+            fi
+            sleep 60
+          done
+
+      - name: Stop Query
+        run: |
+          build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 1
+
+      - name: Stop Worker
+        run: |
+          kill $WORKER_PID
+          wait $WORKER_PID || true
+          tail -n 50 worker.log
