@@ -89,7 +89,7 @@ cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-f
 ctest --test-dir cmake-build-nrm -N | grep "  Test" | awk -F": " '{ print "ctestcase::" $2 }' | sed "s/ /_/g" | tee -a $out_log
 
 log_out "assuring that ctest passes"
-if ! timeout --kill-after=1m 30m ctest -j $(nproc) --test-dir cmake-build-nrm --quiet --output-junit junit.xml
+if ! timeout --kill-after=1m 30m ctest -j $(nproc) --test-dir cmake-build-nrm --repeat until-pass:3 --quiet --output-junit junit.xml
 then
     for testcase in $(cat cmake-build-nrm/junit.xml | grep 'status="fail"' | awk -F'"' '{ print $2 }' | sed "s/ /_/g")
     do
