@@ -130,6 +130,7 @@ do
     then
         continue
     fi
+    log_out "iter $i/$iters + $skip"
 
     if [ $i -ge $(( $iters + $skip + 1 )) ]
     then
