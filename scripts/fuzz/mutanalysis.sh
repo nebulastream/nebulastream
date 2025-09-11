@@ -36,6 +36,15 @@ then
     exit 1
 fi
 
+if [ $# != 2 ]
+then
+    echo "Usage: $0 NUM_MUTANTS OFFSET_MUTANTS"
+    exit 1
+fi
+
+iters=$1
+skip=$2
+
 out_dir=/out/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")
 mkdir $out_dir
 mkdir $out_dir/crashes
@@ -45,7 +54,7 @@ log_out() {
     echo "$(date -Is) $*" | tee -a $out_log
 }
 
-wdir=/wdir/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")
+wdir=/wdir/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")_$iters-$skip
 
 mkdir $wdir
 cd $wdir
@@ -113,8 +122,20 @@ then
     exit 1
 fi
 
+i=0
 for patch in $(find mutations -name "*.patch" -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c 'echo $(tail -8 {} | sha256sum) {}' | sort | awk '{ print $3 }')
 do
+    i=$(( i + 1 ))
+    if [ $i -le $skip ]
+    then
+        continue
+    fi
+
+    if [ $i -ge $(( $iters + $skip + 1 )) ]
+    then
+        exit
+    fi
+
     git status > /dev/null
     if ! git diff-files --quiet
     then
