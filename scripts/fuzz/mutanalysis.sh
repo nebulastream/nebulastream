@@ -170,7 +170,7 @@ do
             do
                 if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
                 then
-                    log_out mutant $patch crash $crash seems to be a fluke
+                    log_out mutant $patch harness $harness crash $crash seems to be a fluke
                     rm $crash
                     continue
                 fi
@@ -201,7 +201,7 @@ do
             do
                 if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
                 then
-                    log_out mutant $patch crash $crash seems to be a fluke
+                    log_out mutant $patch harness $harness crash $crash seems to be a fluke
                     rm $crash
                     continue
                 fi
