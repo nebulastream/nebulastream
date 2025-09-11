@@ -298,9 +298,8 @@ void SystestParser::parse()
                 break;
             }
             case TokenType::CREATE: {
-                // Get whole query
-                std::string query = expectCreateQuery();
-                onCreateCallback(query);
+                auto [query, input] = expectCreateQuery();
+                onCreateCallback(query, input);
                 break;
             }
             case TokenType::LOGICAL_SOURCE: {
@@ -572,10 +571,6 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
 
     SystestLogicalSource source;
     auto& line = lines[currentLine];
-    auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(line);
-    auto parseResult = managedParser->parseMultiple();
-
-
     const auto attachSourceTokens = Util::splitWithStringDelimiter<std::string>(line, " ");
 
     /// Read and discard the first word as it is always Source
@@ -724,21 +719,37 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
 }
 
 
-std::string SystestParser::expectCreateQuery()
+std::pair<std::string, std::vector<std::string>> SystestParser::expectCreateQuery()
 {
     std::string createQuery;
-    std::string line;
+    std::vector<std::string> input;
 
     while (currentLine < lines.size())
     {
-        line = lines[currentLine++];
-
-        if (emptyOrComment(line)) { continue; }
+        std::string line = lines[currentLine];
+        if (emptyOrComment(line))
+        {
+            currentLine++;
+            continue;
+        }
         createQuery += line;
-        if (createQuery.ends_with(';')) { return createQuery; }
+        if (createQuery.ends_with(';')) { break; }
         createQuery += '\n';
+        currentLine++;
     }
-    return "IMPL create query thingy";
+
+    if (currentLine + 2 < lines.size() && lines[currentLine + 1].starts_with("INLINE"))
+    {
+        currentLine += 2;
+        while (currentLine < lines.size() && !lines[currentLine].empty())
+        {
+            input.push_back(lines[currentLine]);
+            currentLine++;
+        }
+        currentLine--;
+    }
+
+    return std::make_pair(createQuery, input);
 }
 
 
