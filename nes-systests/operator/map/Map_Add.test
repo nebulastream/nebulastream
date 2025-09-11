@@ -1,17 +1,13 @@
 # name: map/Map_Add.test
 # description: Simple map tests with an add function
 # groups: [Map]
-CREATE LOGICAL SOURCE endless(id UINT64, value UINT64, timestamp UINT64);
 
-CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       'CSV' as PARSER.`TYPE`,
-       10000000 AS `SOURCE`.MAX_RUNTIME_MS,
-       1 AS `SOURCE`.SEED,
-       'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA);
-
-
-Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File SET(
+    '/dev/null' AS `SOURCE`.FILE_PATH,
+    'CSV' AS PARSER.`TYPE`
+);
+INLINE
 1,1,1000
 2,1,1001
 3,1,1002

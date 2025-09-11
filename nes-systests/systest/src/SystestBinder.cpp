@@ -346,7 +346,28 @@ struct SystestBinder::Impl
         return buildSystests;
     }
 
-    static void createCallback(const StatementBinder &binder, std::shared_ptr<SourceCatalog> sourceCatalog, const std::string& query)
+    static void createLogicalSource(std::shared_ptr<SourceCatalog>& sourceCatalog, const CreateLogicalSourceStatement& statement)
+    {
+        const auto created = sourceCatalog->addLogicalSource(
+            statement.name,
+            statement.schema
+        );
+        if (not created.has_value()) { throw InvalidQuerySyntax(); }
+    }
+
+    static void createPhysicalSource(const CreatePhysicalSourceStatement& statement, const std::vector<std::string>& input)
+    {
+        // Register Physical source based on statement,
+        // and add given input if available.
+        std::cout << "Hello there\n";
+
+    }
+
+    static void createCallback(
+            const StatementBinder &binder,
+            std::shared_ptr<SourceCatalog> sourceCatalog,
+            const std::string& query,
+            const std::vector<std::string>& input)
     {
         const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
         const auto parseResult = managedParser->parseSingle();
@@ -355,23 +376,15 @@ struct SystestBinder::Impl
         const auto binding = binder.bind(parseResult.value().get());
         if (not binding.has_value()) { throw InvalidQuerySyntax(); }
 
-        const auto statement = binding.value();
+        const auto& statement = binding.value();
 
         if (std::holds_alternative<CreateLogicalSourceStatement>(statement))
         {
-            auto createLogicalSourceStatement = std::get<CreateLogicalSourceStatement>(statement);
-            const auto created = sourceCatalog->addLogicalSource(
-                createLogicalSourceStatement.name,
-                createLogicalSourceStatement.schema
-            );
-
-            if (not created.has_value()) { throw InvalidQuerySyntax(); }
+            createLogicalSource(sourceCatalog, std::get<CreateLogicalSourceStatement>(statement));
         }
         else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
         {
-            auto createPhysicalSourceStatement = std::get<CreatePhysicalSourceStatement>(statement);
-
-            std::cout << "Here we go again.";
+            createPhysicalSource(std::get<CreatePhysicalSourceStatement>(statement), input);
         }
         else
         {
@@ -419,7 +432,7 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback(
-            [&] (const std::string& query) {createCallback(binder, sourceCatalog, query);}
+            [&] (const std::string& query, const std::vector<std::string>& input) {createCallback(binder, sourceCatalog, query, input);}
             );
 
 
