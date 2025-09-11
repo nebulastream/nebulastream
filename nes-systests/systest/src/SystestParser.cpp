@@ -32,10 +32,10 @@
 #include <utility>
 #include <vector>
 
-#include "SQLQueryParser/AntlrSQLQueryParser.hpp"
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Strings.hpp>
@@ -45,7 +45,7 @@
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
 
-#include "StatementHandler.hpp"
+#include <StatementHandler.hpp>
 
 namespace
 {
@@ -277,10 +277,10 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
     this->onErrorExpectationCallback = std::move(callback);
 }
 
-void SystestParser::registerOnCreateCallback(CreateCallback callback){
+void SystestParser::registerOnCreateCallback(CreateCallback callback)
+{
     this->onCreateCallback = std::move(callback);
 }
-
 
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
@@ -718,7 +718,6 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     return tuples;
 }
 
-
 std::pair<std::string, std::vector<std::string>> SystestParser::expectCreateQuery()
 {
     std::string createQuery;
@@ -733,7 +732,10 @@ std::pair<std::string, std::vector<std::string>> SystestParser::expectCreateQuer
             continue;
         }
         createQuery += line;
-        if (createQuery.ends_with(';')) { break; }
+        if (createQuery.ends_with(';'))
+        {
+            break;
+        }
         createQuery += '\n';
         currentLine++;
     }
@@ -751,7 +753,6 @@ std::pair<std::string, std::vector<std::string>> SystestParser::expectCreateQuer
 
     return std::make_pair(createQuery, input);
 }
-
 
 std::string SystestParser::expectQuery()
 {

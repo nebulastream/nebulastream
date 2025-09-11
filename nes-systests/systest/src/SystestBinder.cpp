@@ -34,7 +34,6 @@
 #include <variant>
 #include <vector>
 
-#include "SQLQueryParser/StatementBinder.hpp"
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
@@ -44,6 +43,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
@@ -348,33 +348,74 @@ struct SystestBinder::Impl
 
     static void createLogicalSource(std::shared_ptr<SourceCatalog>& sourceCatalog, const CreateLogicalSourceStatement& statement)
     {
-        const auto created = sourceCatalog->addLogicalSource(
-            statement.name,
-            statement.schema
-        );
-        if (not created.has_value()) { throw InvalidQuerySyntax(); }
+        const auto created = sourceCatalog->addLogicalSource(statement.name, statement.schema);
+        if (not created.has_value())
+        {
+            throw InvalidQuerySyntax();
+        }
     }
 
-    static void createPhysicalSource(const CreatePhysicalSourceStatement& statement, const std::vector<std::string>& input)
+    void addInlineDataToFileSource(CreatePhysicalSourceStatement& statement, const std::vector<std::string>& input)
     {
-        // Register Physical source based on statement,
-        // and add given input if available.
-        std::cout << "Hello there\n";
+        std::ofstream file;
+        auto testFilePath = tempnam((workingDir / "testfile").c_str(), "source");
+        file.open(testFilePath);
+        if (!file.is_open())
+        {
+            throw UnknownException();
+        }
+        for (size_t i = 0; i < input.size(); i++)
+        {
+            file << input[i] << '\n';
+        }
+        file.close();
 
+        auto s = statement.sourceConfig.find("file_path");
+        s->second = std::string{testFilePath};
     }
 
-    static void createCallback(
-            const StatementBinder &binder,
-            std::shared_ptr<SourceCatalog> sourceCatalog,
-            const std::string& query,
-            const std::vector<std::string>& input)
+    void createPhysicalSource(
+        std::shared_ptr<SourceCatalog>& sourceCatalog, CreatePhysicalSourceStatement statement, const std::vector<std::string>& input)
+    {
+        if (!input.empty())
+        {
+            if (statement.sourceType == "File")
+            {
+                addInlineDataToFileSource(statement, input);
+            }
+            else
+            {
+                std::cout << "Inline data not yet supported in systest for sourceType \"" << statement.sourceType
+                          << "\". The given inline input will be ignored";
+            }
+        }
+
+
+        if (const auto created
+            = sourceCatalog->addPhysicalSource(statement.attachedTo, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+        {
+            return;
+        }
+
+        throw InvalidQuerySyntax();
+    }
+
+    void createCallback(
+        const StatementBinder& binder,
+        std::shared_ptr<SourceCatalog>& sourceCatalog,
+        const std::string& query,
+        const std::vector<std::string>& input)
     {
         const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
         const auto parseResult = managedParser->parseSingle();
-        if (not parseResult.has_value()) throw InvalidQuerySyntax();
+        if (not parseResult.has_value())
+            throw InvalidQuerySyntax();
 
         const auto binding = binder.bind(parseResult.value().get());
-        if (not binding.has_value()) { throw InvalidQuerySyntax(); }
+        if (not binding.has_value())
+        {
+            throw InvalidQuerySyntax();
+        }
 
         const auto& statement = binding.value();
 
@@ -384,11 +425,11 @@ struct SystestBinder::Impl
         }
         else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
         {
-            createPhysicalSource(std::get<CreatePhysicalSourceStatement>(statement), input);
+            createPhysicalSource(sourceCatalog, std::get<CreatePhysicalSourceStatement>(statement), input);
         }
         else
         {
-            throw  UnsupportedQuery();
+            throw UnsupportedQuery();
         }
     };
 
@@ -407,8 +448,7 @@ struct SystestBinder::Impl
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
         SystestParser parser{};
         const auto binder = NES::StatementBinder{
-            sourceCatalog,
-            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
         parser.registerSubstitutionRule(
             {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
@@ -431,9 +471,8 @@ struct SystestBinder::Impl
                 sltSinkProvider.registerSink(sinkParsed.type, sinkParsed.name, schema);
             });
 
-        parser.registerOnCreateCallback(
-            [&] (const std::string& query, const std::vector<std::string>& input) {createCallback(binder, sourceCatalog, query, input);}
-            );
+        parser.registerOnCreateCallback([&](const std::string& query, const std::vector<std::string>& input)
+                                        { createCallback(binder, sourceCatalog, query, input); });
 
 
         parser.registerOnSystestLogicalSourceCallback(
@@ -592,8 +631,8 @@ struct SystestBinder::Impl
                     throw UnknownSourceName("{}", attachSource.logicalSourceName);
                 }
 
-                const auto physicalSource
-                    = sourceCatalog.get()->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
+                const auto physicalSource = sourceCatalog.get()->addPhysicalSource(
+                    logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
                 if (not physicalSource.has_value())
                 {
                     NES_ERROR(
