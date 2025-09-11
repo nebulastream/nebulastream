@@ -400,9 +400,20 @@ struct SystestBinder::Impl
         throw InvalidQuerySyntax();
     }
 
+    void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
+    {
+        Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        for (const auto& field : statement.schema.getFields())
+        {
+            schema.addField(field.name, field.dataType);
+        }
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
+    }
+
     void createCallback(
         const StatementBinder& binder,
         std::shared_ptr<SourceCatalog>& sourceCatalog,
+        SLTSinkFactory& sltSinkProvider,
         const std::string& query,
         const std::vector<std::string>& input)
     {
@@ -426,6 +437,10 @@ struct SystestBinder::Impl
         else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
         {
             createPhysicalSource(sourceCatalog, std::get<CreatePhysicalSourceStatement>(statement), input);
+        }
+        else if (std::holds_alternative<CreateSinkStatement>(statement))
+        {
+            createSink(sltSinkProvider, std::get<CreateSinkStatement>(statement));
         }
         else
         {
@@ -472,7 +487,7 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback([&](const std::string& query, const std::vector<std::string>& input)
-                                        { createCallback(binder, sourceCatalog, query, input); });
+                                        { createCallback(binder, sourceCatalog, sltSinkProvider, query, input); });
 
 
         parser.registerOnSystestLogicalSourceCallback(
