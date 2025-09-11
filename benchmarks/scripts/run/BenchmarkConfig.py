@@ -32,17 +32,17 @@ WINDOW_SIZE_SLIDE = [
     # Representing a tumbling window of 277.78h, resulting in 1 concurrent window
     (1000 * 1000 * 1000, 1000 * 1000 * 1000),
     # Representing a tumbling window of 2.78h, resulting in 1 concurrent window
-    (10 * 1000 * 1000, 10 * 1000 * 1000),
+    # (10 * 1000 * 1000, 10 * 1000 * 1000),
     # Representing a tumbling window of 10s, resulting in 1 concurrent window
     (10 * 1000, 10 * 1000),
-    # Representing a sliding window of 277.78h with slide of 16.67min, resulting in 100 concurrent windows
-    (1000 * 1000 * 1000, 1000 * 1000),
-    # Representing a sliding window of 277.78h with slide of 100s, resulting in 10000 concurrent windows
-    (1000 * 1000 * 1000, 100 * 1000),
+    # Representing a sliding window of 277.78h with slide of 16.67min, resulting in 1000 concurrent windows
+    # (1000 * 1000 * 1000, 1000 * 1000),
+    # Representing a sliding window of 2.78h with slide of 1s, resulting in 10000 concurrent windows
+    (10 * 1000 * 1000, 1000),
     # Representing a sliding window of 10s with slide of 5s, resulting in 2 concurrent windows
-    (10 * 1000, 5000),
-    # Representing a sliding window of 10s with slide of 500ms, resulting in 20 concurrent windows
-    (10 * 1000, 500)
+    (10 * 1000, 5 * 1000),
+    # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
+    (10 * 1000, 100)
 ]
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 

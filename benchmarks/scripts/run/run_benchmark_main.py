@@ -52,7 +52,7 @@ WAIT_BETWEEN_COMMANDS = 2
 WAIT_BEFORE_SIGKILL = 5
 
 # Compilation for misc.
-LOG_SLICE_ACCESSES = True
+LOG_SLICE_ACCESSES = False
 DELETE_ENGINE_STATS = True
 SERVER_NAME = "amd"
 DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)

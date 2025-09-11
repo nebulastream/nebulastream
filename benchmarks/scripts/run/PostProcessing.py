@@ -445,7 +445,7 @@ class PostProcessing:
             # has_read_pred = pd.notna(row["first_read_pred_start"]) and pd.notna(row["last_read_pred_end"])
             return has_write_nopred and has_read_nopred  # and (has_write_pred or has_read_pred)
 
-        df = df[df.apply(valid_row, axis=1)]
+        # df = df[df.apply(valid_row, axis=1)]
 
         # Shift all timestamps by the minimal window start of any task
         timestamp_cols = [
