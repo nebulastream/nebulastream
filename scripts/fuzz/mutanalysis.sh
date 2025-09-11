@@ -321,5 +321,6 @@ do
 
         rm -rf hf-crashes/
     done
+    log_out finished $patch
     mv $patched_file.bak $patched_file
 done
