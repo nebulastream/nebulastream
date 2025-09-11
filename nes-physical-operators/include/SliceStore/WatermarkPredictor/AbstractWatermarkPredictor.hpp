@@ -29,14 +29,6 @@ enum class WatermarkPredictorType : uint8_t
     RLS
 };
 
-struct WatermarkPredictorInfo
-{
-    WatermarkPredictorType type;
-    uint64_t initial;
-    uint64_t param1;
-    double param2;
-};
-
 class AbstractWatermarkPredictor
 {
 public:

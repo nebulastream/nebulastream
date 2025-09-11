@@ -15,7 +15,7 @@
 #include <ranges>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <SliceStore/FileBackedTimeBasedSliceStore.hpp>
-#include <SliceStore/WatermarkPredictor/KalmanBasedWindowTriggerPredictor.hpp>
+#include <SliceStore/WatermarkPredictor/KalmanBasedWatermarkPredictor.hpp>
 #include <SliceStore/WatermarkPredictor/RLSBasedWatermarkPredictor.hpp>
 #include <SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -48,7 +48,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
         switch (watermarkPredictorType)
         {
             case WatermarkPredictorType::KALMAN: {
-                watermarkPredictors.emplace(origin, std::make_shared<KalmanWindowTriggerPredictor>());
+                watermarkPredictors.emplace(origin, std::make_shared<KalmanBasedWatermarkPredictor>());
                 break;
             }
             case WatermarkPredictorType::REGRESSION: {

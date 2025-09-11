@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ranges>
 #include <SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 
 namespace NES
@@ -25,7 +26,7 @@ Timestamp AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
     const std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>>& watermarkPredictors, const uint64_t timestamp)
 {
     auto minWatermark = Timestamp(UINT64_MAX);
-    for (const auto& [_, predictor] : watermarkPredictors)
+    for (const auto& predictor : watermarkPredictors | std::views::values)
     {
         minWatermark = std::min(minWatermark, predictor->getEstimatedWatermark(timestamp));
     }

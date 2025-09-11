@@ -22,10 +22,10 @@
 namespace NES
 {
 
-class KalmanWindowTriggerPredictor final : public AbstractWatermarkPredictor
+class KalmanBasedWatermarkPredictor final : public AbstractWatermarkPredictor
 {
 public:
-    explicit KalmanWindowTriggerPredictor(uint64_t initial = 0);
+    explicit KalmanBasedWatermarkPredictor(uint64_t initial = 0);
 
     void update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) override;
     [[nodiscard]] Timestamp getEstimatedWatermark(uint64_t timestamp) const override;

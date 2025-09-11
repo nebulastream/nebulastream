@@ -22,9 +22,10 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-09-04_13-42-25'
-# FILE = 'combined_benchmark_statistics.csv'
-FILE = 'combined_slice_accesses.csv'
+DATETIME = '2025-09-11_09-16-14'
+FILE = 'combined_benchmark_statistics.csv'
+# FILE = 'combined_slice_accesses.csv'
+SLICE_ACCESSES = False
 
 
 # Define helper functions
@@ -179,7 +180,7 @@ def add_numeric_labels_per_hue(ax, data, hue, param, legend, spacing=0.0725):
     ax.legend(handles, new_labels, title='ID: ' + legend)
 
 
-def find_default_values_for_params(data, min_support_ratio=1.0):
+def find_default_values_for_params(data, min_support_ratio=0.9):
     likely_defaults = {}
 
     for param in all_config_params:
@@ -272,19 +273,26 @@ file_backed_configs = df[df['slice_store_type'] == 'FILE_BACKED'][all_config_par
 common_configs = pd.merge(default_configs, file_backed_configs, on=all_config_params)
 common_config_dicts = common_configs.to_dict(orient='records')
 
-# Filter out invalid rows
-print(f'Percentage of invalid rows: {int(100 * (len(df) - len(df[df.apply(valid_row, axis=1)])) / len(df))}%')
-df_old = df.copy()
-df = df[df.apply(valid_row, axis=1)]
-default_param_values_2 = find_default_values_for_params(df)
+if SLICE_ACCESSES:
+    # Filter out invalid rows
+    print(f'Percentage of invalid rows: {int(100 * (len(df) - len(df[df.apply(valid_row, axis=1)])) / len(df))}%')
+    df_old = df.copy()
+    df = df[df.apply(valid_row, axis=1)]
+    default_param_values_2 = find_default_values_for_params(df)
+    
+    # Compute correctness of predictors
+    df['prediction_correctness'] = df.apply(compute_prediction_correctness, axis=1)
+    df['prediction_correctness_2'] = df.apply(compute_prediction_correctness_2, axis=1)
+    
+    # Compute precision of predictors
+    df['prediction_precision'] = df.apply(compute_prediction_precision, axis=1)
+    df['prediction_precision_2'] = df.apply(compute_prediction_precision_2, axis=1)
 
-# Compute correctness of predictors
-df['prediction_correctness'] = df.apply(compute_prediction_correctness, axis=1)
-df['prediction_correctness_2'] = df.apply(compute_prediction_correctness_2, axis=1)
-
-# Compute precision of predictors
-df['prediction_precision'] = df.apply(compute_prediction_precision, axis=1)
-df['prediction_precision_2'] = df.apply(compute_prediction_precision_2, axis=1)
+# Sort by all hue values
+df = df.sort_values(by=['slice_store_type', 'query', 'timestamp_increment', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta', 'watermark_predictor_type'], ascending=[True, True, True, True, True, True, True])
+# queries = df['query'].drop_duplicates().tolist()
+# for query in queries:
+#     print(query)
 
 # Map long queries to short codes
 query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)}
@@ -295,9 +303,6 @@ df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df[
 df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
 df['correctness_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
-
-# Sort by all hue values
-df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query_id', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta', 'watermark_predictor_type'], ascending=[True, True, True, True, True, True, True])
 
 # %% Compare slice store types for different configs
 
@@ -513,7 +518,7 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     if param == 'query':
         # Sort data by whether or not the query contained variable sized data
         data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
-        data_scaled = data_scaled.sort_values(by=['query_id', 'var_sized_data'], ascending=[True, True])
+        data_scaled = data_scaled.sort_values(by=['var_sized_data', 'query_id'], ascending=[True, True])
 
         data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
         legend = 'Slice Store | Time Increment'
@@ -526,11 +531,15 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     if pd.api.types.is_numeric_dtype(data_scaled[param]):
         data_scaled, param_unit = convert_units(data_scaled, param, '')
         ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
+        ax.legend(title=legend)
 
         # Add labels for min and max values of metric for this param for each value of hue
         add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
     else:
         ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+
+        # Create numeric labels for each hue value and add legend
+        add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend, 0.2)
 
     # Add legend below
     if param == 'query_id':
@@ -541,7 +550,6 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     plt.title(f'Effect of {param} on {label}')
     plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
     plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
-    plt.legend(title=legend)
     plt.show()
 
 

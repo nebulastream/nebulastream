@@ -12,7 +12,7 @@
 
 add_source_files(nes-physical-operators
         AbstractWatermarkPredictor.cpp
-        KalmanBasedWindowTriggerPredictor.cpp
+        KalmanBasedWatermarkPredictor.cpp
         RandomWatermarkPredictor.cpp
         RegressionBasedWatermarkPredictor.cpp
         RLSBasedWatermarkPredictor.cpp

@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <SliceStore/WatermarkPredictor/KalmanBasedWindowTriggerPredictor.hpp>
+#include <SliceStore/WatermarkPredictor/KalmanBasedWatermarkPredictor.hpp>
 
 namespace NES
 {
 
-KalmanWindowTriggerPredictor::KalmanWindowTriggerPredictor(const uint64_t initial) : AbstractWatermarkPredictor(initial), lastX(0), R(1e-2)
+KalmanBasedWatermarkPredictor::KalmanBasedWatermarkPredictor(const uint64_t initial) : AbstractWatermarkPredictor(initial), lastX(0), R(1e-2)
 {
     state << 0, 0;
     P = Eigen::Matrix2d::Identity();
@@ -25,7 +25,7 @@ KalmanWindowTriggerPredictor::KalmanWindowTriggerPredictor(const uint64_t initia
     H << 1, 0;
 }
 
-void KalmanWindowTriggerPredictor::update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data)
+void KalmanBasedWatermarkPredictor::update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data)
 {
     const std::lock_guard lock(mtx);
     for (const auto& [timestamp, watermark] : data)
@@ -52,7 +52,7 @@ void KalmanWindowTriggerPredictor::update(const std::vector<std::pair<uint64_t, 
     init = true;
 }
 
-Timestamp KalmanWindowTriggerPredictor::getEstimatedWatermark(const uint64_t timestamp) const
+Timestamp KalmanBasedWatermarkPredictor::getEstimatedWatermark(const uint64_t timestamp) const
 {
     if (!init)
     {
