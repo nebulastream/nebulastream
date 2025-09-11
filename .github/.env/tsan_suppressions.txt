@@ -1,0 +1,5 @@
+# Suppress lock-order-inversion between RunningQueryPlan::start and QueryCatalog::start
+# Currently, it is impossible that these two operations (targeting the same query) run concurrently.
+
+deadlock:NES::RunningQueryPlan::start
+deadlock:NES::QueryCatalog::start
