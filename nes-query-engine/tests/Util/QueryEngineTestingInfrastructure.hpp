@@ -19,6 +19,7 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <future>
 #include <initializer_list>
 #include <memory>
@@ -206,11 +207,15 @@ public:
     std::atomic_bool failOnStart = false;
     std::atomic_bool failOnStop = false;
     std::atomic<size_t> throwOnNthInvocation = -1;
+    std::atomic<size_t> repeatCount = 0;
+    std::atomic<size_t> repeatCountDuringStop = 0;
 
     std::promise<void> start;
     std::promise<void> stop;
+    std::promise<void> destruction;
     std::shared_future<void> startFuture = start.get_future().share();
     std::shared_future<void> stopFuture = stop.get_future().share();
+    std::shared_future<void> destructionFuture = destruction.get_future().share();
 
     /// Back reference this is set during construction of a TestPipeline
     ExecutablePipelineStage* stage = nullptr;
@@ -218,6 +223,11 @@ public:
     [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
 
     [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+
+    [[nodiscard]] testing::AssertionResult waitForDestruction() const
+    {
+        return waitForFuture(destructionFuture, DEFAULT_LONG_AWAIT_TIMEOUT);
+    }
 
     [[nodiscard]] testing::AssertionResult keepRunning() const
     {
@@ -227,6 +237,8 @@ public:
     [[nodiscard]] testing::AssertionResult wasStarted() const { return waitForFuture(startFuture, std::chrono::milliseconds(0)); }
 
     [[nodiscard]] testing::AssertionResult wasStopped() const { return waitForFuture(stopFuture, std::chrono::milliseconds(0)); }
+
+    [[nodiscard]] testing::AssertionResult wasDestroyed() const { return waitForFuture(destructionFuture, std::chrono::milliseconds(0)); }
 };
 
 struct TestPipeline final : ExecutablePipelineStage
@@ -236,7 +248,11 @@ struct TestPipeline final : ExecutablePipelineStage
         this->controller->stage = this;
     }
 
-    ~TestPipeline() override { controller->stage = nullptr; }
+    ~TestPipeline() override
+    {
+        controller->stage = nullptr;
+        controller->destruction.set_value();
+    }
 
     void start(PipelineExecutionContext&) override
     {
@@ -248,13 +264,29 @@ struct TestPipeline final : ExecutablePipelineStage
         }
     }
 
-    void stop(PipelineExecutionContext&) override
+    std::atomic_size_t stopCalled = 0;
+
+    void stop(PipelineExecutionContext& pec) override
     {
         std::this_thread::sleep_for(controller->stopDuration.load());
-        controller->stop.set_value();
         if (controller->failOnStop)
         {
             throw Exception("I should throw here.", 9999);
+        }
+
+        auto stopCalls = stopCalled.fetch_add(1);
+        auto repeatsDuringStop = controller->repeatCountDuringStop.load();
+        if (stopCalls == repeatsDuringStop)
+        {
+            controller->stop.set_value();
+        }
+        else if (stopCalls > repeatsDuringStop)
+        {
+            controller->stop.set_exception(std::make_exception_ptr(TestException("Pipeline was terminated to often")));
+        }
+        else /*if (stopCalls < repeatsDuringStop)*/
+        {
+            pec.repeatTask(TupleBuffer(), std::chrono::milliseconds(10));
         }
     }
 
@@ -264,6 +296,22 @@ struct TestPipeline final : ExecutablePipelineStage
         {
             throw Exception("I should throw here.", 9999);
         }
+
+        /// Handle repeat functionality
+        const size_t maxRepeats = controller->repeatCount.load();
+        if (maxRepeats > 0)
+        {
+            /// Get current repeat count from creation timestamp
+            const uint64_t currentRepeatCount = inputTupleBuffer.getWatermark().getRawValue();
+            if (currentRepeatCount < maxRepeats)
+            {
+                auto copiedBuffer = Testing::copyBuffer(inputTupleBuffer, *pipelineExecutionContext.getBufferManager());
+                copiedBuffer.setWatermark(Timestamp(currentRepeatCount + 1));
+                pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
+                return;
+            }
+        }
+
         pipelineExecutionContext.emitBuffer(inputTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 
@@ -282,47 +330,89 @@ struct TestSinkController
 
     std::vector<TupleBuffer> takeBuffers();
 
-    testing::AssertionResult waitForInitialization(std::chrono::milliseconds timeout) const { return waitForFuture(setup_future, timeout); }
+    testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
 
-    testing::AssertionResult waitForDestruction(std::chrono::milliseconds timeout) const
+    testing::AssertionResult waitForDestruction() const { return waitForFuture(destructionFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+
+    testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+
+    [[nodiscard]] testing::AssertionResult keepRunning() const
     {
-        return waitForFuture(destroyed_future, timeout);
+        return waitForFuture(stopFuture, DEFAULT_AWAIT_TIMEOUT) ? testing::AssertionFailure() : testing::AssertionSuccess();
     }
 
-    testing::AssertionResult waitForShutdown(std::chrono::milliseconds timeout) const { return waitForFuture(shutdown_future, timeout); }
+    testing::AssertionResult wasStopped() const { return waitForFuture(stopFuture, std::chrono::milliseconds(0)); }
+
+    testing::AssertionResult wasStarted() const { return waitForFuture(startFuture, std::chrono::milliseconds(0)); }
+
+    testing::AssertionResult wasDestroyed() const { return waitForFuture(destructionFuture, std::chrono::milliseconds(0)); }
 
     std::atomic<size_t> invocations = 0;
+    std::atomic<size_t> repeatCount = 0;
+    std::atomic<size_t> repeatCountDuringStop = 0;
 
 private:
     folly::Synchronized<std::vector<TupleBuffer>, std::mutex> receivedBuffers;
     std::condition_variable receivedBufferTrigger;
-    std::promise<void> setup;
-    std::promise<void> shutdown;
-    std::promise<void> destroyed;
-    std::shared_future<void> setup_future = setup.get_future().share();
-    std::shared_future<void> shutdown_future = shutdown.get_future().share();
-    std::shared_future<void> destroyed_future = destroyed.get_future().share();
+    std::promise<void> start;
+    std::promise<void> stop;
+    std::promise<void> destruction;
+    std::shared_future<void> startFuture = start.get_future().share();
+    std::shared_future<void> stopFuture = stop.get_future().share();
+    std::shared_future<void> destructionFuture = destruction.get_future().share();
     friend class TestSink;
 };
 
 class TestSink final : public ExecutablePipelineStage
 {
 public:
-    void start(PipelineExecutionContext&) override { controller->setup.set_value(); }
+    void start(PipelineExecutionContext&) override { controller->start.set_value(); }
 
-    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override
+    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
         controller->insertBuffer(Testing::copyBuffer(inputBuffer, *bufferProvider));
+
+        /// Handle repeat functionality
+        const size_t maxRepeats = controller->repeatCount.load();
+        if (maxRepeats > 0)
+        {
+            /// Get current repeat count from creation timestamp
+            const uint64_t currentRepeatCount = inputBuffer.getWatermark().getRawValue();
+            if (currentRepeatCount < maxRepeats)
+            {
+                auto copiedBuffer = Testing::copyBuffer(inputBuffer, *bufferProvider);
+                copiedBuffer.setWatermark(Timestamp(currentRepeatCount + 1));
+                pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
+            }
+        }
     }
 
-    void stop(PipelineExecutionContext&) override { controller->shutdown.set_value(); }
+    std::atomic_size_t stopCalled = 0;
+
+    void stop(PipelineExecutionContext& pec) override
+    {
+        auto stopCalls = stopCalled.fetch_add(1);
+        auto repeatsDuringStop = controller->repeatCountDuringStop.load();
+        if (stopCalls == repeatsDuringStop)
+        {
+            controller->stop.set_value();
+        }
+        else if (stopCalls > repeatsDuringStop)
+        {
+            controller->stop.set_exception(std::make_exception_ptr(TestException("Pipeline was terminated to often")));
+        }
+        else /*if (stopCalls < repeatsDuringStop)*/
+        {
+            pec.repeatTask(TupleBuffer(), std::chrono::milliseconds(10));
+        }
+    }
 
     TestSink(std::shared_ptr<AbstractBufferProvider> bufferProvider, std::shared_ptr<TestSinkController> controller)
         : bufferProvider(std::move(bufferProvider)), controller(std::move(controller))
     {
     }
 
-    ~TestSink() override { controller->destroyed.set_value(); }
+    ~TestSink() override { controller->destruction.set_value(); }
 
     TestSink(const TestSink& other) = delete;
     TestSink(TestSink&& other) noexcept = delete;
