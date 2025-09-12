@@ -108,6 +108,8 @@ public:
         this->operatorHandlers = operatorHandlers;
     }
 
+    void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override;
+
     WorkerThreadId workerThreadId;
     PipelineId pipelineId;
 

@@ -74,6 +74,8 @@ public:
         pec.emitBuffer(rawBuffer, continuationPolicy);
     }
 
+    void repeat(PipelineExecutionContext& pec) const { pec.repeatTask(rawBuffer, std::chrono::milliseconds{0}); }
+
     [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
