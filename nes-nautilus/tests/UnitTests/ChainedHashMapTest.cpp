@@ -120,7 +120,7 @@ TEST_P(ChainedHashMapTest, fixedDataTypesUpdate)
     checkEntryIterator(hashMap, exactMap);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ChainedHashMapTest,
     ChainedHashMapTest,
     ::testing::Combine(
