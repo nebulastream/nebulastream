@@ -14,6 +14,7 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 
+#include <cctype>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -53,6 +54,27 @@ LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
 
 LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
+    /// WORKAROUND slow in ANTLR parsing
+    std::map<char, int> charCount;
+    for (char c : queryString)
+    {
+        charCount[c]++;
+    }
+
+    for (auto [chr, cnt] : charCount)
+    {
+        if (not std::isalnum(chr) and cnt > 1000)
+        {
+            throw InvalidQuerySyntax("seems like a slow query, {} of {} seems much..", cnt, chr);
+        }
+    }
+
+    if (charCount['('] > 100 || charCount[')'] > 100
+        || queryString.find("((((((((((((((((((((((((((((((((((((((((((((((((((((((") != std::string::npos)
+    {
+        throw InvalidQuerySyntax("seems like a slow query");
+    }
+
     try
     {
         antlr4::ANTLRInputStream input(queryString.data(), queryString.length());

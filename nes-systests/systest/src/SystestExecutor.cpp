@@ -38,6 +38,7 @@
 #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
 #include <QueryManager/GRPCQueryManager.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -122,6 +123,9 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         .help("Benchmark (time) all specified queries and store results into 'BenchmarkResults.json' in the result directory")
         .default_value(false)
         .implicit_value(true);
+
+
+    program.add_argument("--dump-queries").flag().help("only dump query as protobuf");
 
     try
     {
@@ -354,6 +358,11 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         config.endlessMode = true;
     }
 
+    if (program.is_used("--dump-queries"))
+    {
+        config.dumpQueries = true;
+    }
+
     if (program.is_used("--list"))
     {
         std::cout << Systest::loadTestFileMap(config);
@@ -499,6 +508,28 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
         Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
+
+        if (config.dumpQueries)
+        {
+            for (const auto& q : queries)
+            {
+                if (!q.planInfoOrException.has_value())
+                {
+                    continue;
+                }
+                auto qp = q.planInfoOrException.value().queryPlan;
+                auto s = QueryPlanSerializationUtil::serializeQueryPlan(qp);
+
+                std::ofstream ofs_txtpb{fmt::format("systest_{}_{:04}.txtpb", q.testName, q.queryIdInFile.getRawValue())};
+                ofs_txtpb << s.DebugString();
+
+                std::ofstream ofs_nesql{fmt::format("systest_{}_{:04}.nesql", q.testName, q.queryIdInFile.getRawValue())};
+                ofs_nesql << q.queryDefinition;
+            }
+            std::cout << " dumped queries, now quitting" << std::endl;
+            std::exit(0);
+        }
+
         if (loadedFiles != discoveredTestFiles.size())
         {
             return {

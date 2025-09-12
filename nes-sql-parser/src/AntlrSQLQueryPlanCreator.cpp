@@ -190,7 +190,6 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
         const auto opTokenType = context->op->getType();
         const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
         helpers.top().joinKeyRelationHelper.push_back(function);
-        helpers.top().joinFunction = function;
     }
     else
     {
@@ -389,9 +388,11 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         helpers.top().windowAggs.pop_back();
         aggFunc->asField = (FieldAccessLogicalFunction(context->getText()));
         helpers.top().windowAggs.push_back(aggFunc);
-        INVARIANT(
-            std::nullopt != helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>(),
-            "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
+        if (helpers.top().functionBuilder.empty() or not helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>())
+        {
+            throw InvalidQuerySyntax(
+                "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
+        }
         helpers.top().functionBuilder.pop_back();
         helpers.top().addProjection(std::nullopt, aggFunc->asField);
         helpers.top().hasUnnamedAggregation = false;
@@ -583,6 +584,10 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         const auto accessFunction = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
         const auto fieldAccessNode = accessFunction.get<FieldAccessLogicalFunction>();
+        if (helpers.top().windowAggs.empty())
+        {
+            throw UnknownException("bug in parser?!");
+        }
         const auto lastAggregation = helpers.top().windowAggs.back();
         const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), lastAggregation->getName());
         const auto asField = FieldAccessLogicalFunction(newName);
@@ -633,7 +638,6 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
         helpers.top().joinKeyRelationHelper.pop_back();
         const auto function = createFunctionFromOpBoolean(leftFunction, rightFunction, helpers.top().opBoolean);
         helpers.top().joinKeyRelationHelper.push_back(function);
-        helpers.top().joinFunction = function;
     }
     else
     {
@@ -708,7 +712,7 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     const auto rightQueryPlan = helpers.top().queryPlans[1];
     helpers.top().queryPlans.clear();
 
-    if (!helpers.top().joinFunction)
+    if (helpers.top().joinKeyRelationHelper.size() != 1)
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
@@ -717,7 +721,7 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
     const auto queryPlan = LogicalPlanBuilder::addJoin(
-        leftQueryPlan, rightQueryPlan, helpers.top().joinFunction.value(), helpers.top().windowType, helpers.top().joinType);
+        leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), helpers.top().windowType, helpers.top().joinType);
     if (not helpers.empty())
     {
         /// we are in a subquery
@@ -747,13 +751,8 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
         }
         const auto innerFunction = helpers.top().joinKeyRelationHelper.back();
         helpers.top().joinKeyRelationHelper.pop_back();
-        if (!helpers.top().joinFunction)
-        {
-            throw InvalidQuerySyntax("Negate requires child op at {}", context->getText());
-        }
-        auto negatedFunction = NegateLogicalFunction(helpers.top().joinFunction.value());
+        auto negatedFunction = NegateLogicalFunction(innerFunction);
         helpers.top().joinKeyRelationHelper.emplace_back(negatedFunction);
-        helpers.top().joinFunction = negatedFunction;
     }
     else
     {

@@ -44,7 +44,7 @@ jobs:
         with:
           fetch-depth: ${{ steps.increment.outputs.result }}
       - name: Configure NebulaStream for Clang-Tidy
-        run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_LIBFUZZER=ON
       # We need to build the project, as some headers are only created during the build.
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
