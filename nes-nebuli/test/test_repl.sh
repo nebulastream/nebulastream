@@ -54,7 +54,7 @@ mkdir --parents "$WORKDIR_PATH"
 SQL_CONTENT=$(cat "$SQL_FILE" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKDIR|$WORKDIR_PATH|g")
 echo "$SQL_CONTENT" > "$GEN_OUT_PATH"/"$(basename "$SQL_FILE" .sql)"_gen.sql
 EXPECTED_OUTPUT_1=$(cat "$EXPECTED_OUTPUT_PATH" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKDIR|$WORKDIR_PATH|g")
-EXPECTED_OUTPUT_2=$(cat "$EXPECTED_OUTPUT_PATH" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKDIR|$WORKDIR_PATH|g" | sed "s|Running|Registered|g")
+EXPECTED_OUTPUT_2=$(cat "$EXPECTED_OUTPUT_PATH" | sed "s|TESTDATA|$TESTDATA_PATH|g" | sed "s|WORKDIR|$WORKDIR_PATH|g" | sed "s|Running|Registered|Started|g")
 echo "$EXPECTED_OUTPUT_1" > "$GEN_OUT_PATH"/"$(basename "$EXPECTED_OUTPUT_PATH_1" .sql)"_gen.sql
 echo "$EXPECTED_OUTPUT_2" > "$GEN_OUT_PATH"/"$(basename "$EXPECTED_OUTPUT_PATH_2" .sql)"_gen.sql
 
