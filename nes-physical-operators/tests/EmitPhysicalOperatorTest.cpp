@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <barrier>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -49,6 +50,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <EmitPhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -89,6 +91,8 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {
         }
+
+        void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
         ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
