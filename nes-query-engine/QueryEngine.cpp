@@ -41,6 +41,7 @@
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -261,7 +262,7 @@ public:
             TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure))),
         };
 
-        auto task = WorkTask(qid, node->id, node, buffer, std::move(wrappedCallback));
+        auto task = WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread
@@ -354,6 +355,7 @@ public:
         , bufferProvider(std::move(bufferProvider))
         , admissionQueue(admissionQueueSize)
         , internalTaskQueue(internalTaskQueueSize)
+        , delayedTaskSubmitter([this](Task&& task) noexcept { internalTaskQueue.blockingWrite(std::move(task)); })
     {
     }
 
@@ -436,6 +438,7 @@ private:
 
     detail::Queue admissionQueue;
     detail::Queue internalTaskQueue;
+    DelayedTaskSubmitter<> delayedTaskSubmitter;
 
     /// Class Invariant: numberOfThreads == pool.size().
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
@@ -461,6 +464,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
+        bool repeated = false;
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -468,6 +472,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
+                INVARIANT(repeated == false, "A task cannot be repeated more than once");
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
@@ -475,7 +480,12 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
                 {
                     pool.statistic->onEvent(
                         TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    return pool.emitWork(task.queryId, pipeline, tupleBuffer, TaskCallback{}, continuationPolicy);
+
+                    pool.delayedTaskSubmitter.submitTaskIn(
+                        WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)),
+                        std::chrono::milliseconds(25));
+                    repeated = true;
+                    return true;
                 }
                 /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 return std::ranges::all_of(
@@ -589,6 +599,14 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
                 return true;
             }
 
+            if (policy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
+            {
+                pool.delayedTaskSubmitter.submitTaskIn(
+                    StopPipelineTask(stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback)),
+                    std::chrono::milliseconds(25));
+                return true;
+            }
+
             for (const auto& successor : stopPipelineTask.pipeline->successors)
             {
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
@@ -600,8 +618,10 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
+    auto pipelineId = stopPipelineTask.pipeline->id;
+    auto queryId = stopPipelineTask.queryId;
     stopPipelineTask.pipeline->stage->stop(pec);
-    pool.statistic->onEvent(PipelineStop{WorkerThread::id, stopPipelineTask.queryId, stopPipelineTask.pipeline->id});
+    pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
 
