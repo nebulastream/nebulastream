@@ -190,3 +190,11 @@ using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
 
 }
+
+namespace fmt
+{
+template <typename T>
+struct fmt::formatter<NES::ScalarOption<T>> : fmt::ostream_formatter
+{
+};
+}

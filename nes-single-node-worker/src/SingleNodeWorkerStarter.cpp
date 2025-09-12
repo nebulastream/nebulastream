@@ -75,12 +75,12 @@ int main(const int argc, const char* argv[])
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
-            builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
+            builder.AddListeningPort(configuration->grpcAddressUri.toString(), grpc::InsecureServerCredentials());
             builder.RegisterService(&workerService);
 
             const auto server = builder.BuildAndStart();
             const auto hook = shutdownHook(*server);
-            NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri));
+            NES_INFO("Server listening on {}", configuration->grpcAddressUri);
             server->Wait();
             NES_INFO("GRPC Server was shutdown. Terminating the SingleNodeWorker");
         }
