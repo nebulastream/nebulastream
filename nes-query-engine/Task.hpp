@@ -152,8 +152,9 @@ struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
 
-    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, TaskCallback callback);
+    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, size_t attempts, TaskCallback callback);
 
+    size_t attempts;
     std::weak_ptr<RunningSource> target;
 };
 
