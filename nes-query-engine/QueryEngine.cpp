@@ -205,41 +205,88 @@ struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
+    std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+
+#ifndef NO_ASSERT
+    bool wasRepeated = false;
+#endif
 
     DefaultPEC(
         size_t numberOfThreads,
         WorkerThreadId threadId,
         PipelineId pipelineId,
         std::shared_ptr<AbstractBufferProvider> bm,
-        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler)
-        : handler(std::move(handler)), bm(std::move(bm)), numberOfThreads(numberOfThreads), threadId(threadId), pipelineId(pipelineId)
+        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
+        std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
+        : handler(std::move(handler))
+        , repeatHandler(std::move(repeatHandler))
+        , bm(std::move(bm))
+        , numberOfThreads(numberOfThreads)
+        , threadId(threadId)
+        , pipelineId(pipelineId)
     {
     }
 
-    [[nodiscard]] WorkerThreadId getId() const override { return threadId; }
+    [[nodiscard]] WorkerThreadId getId() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return threadId;
+    }
 
-    TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
+    TupleBuffer allocateTupleBuffer() override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return bm->getBufferBlocking();
+    }
 
-    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return numberOfThreads; }
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return numberOfThreads;
+    }
 
-    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
+    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return handler(buffer, policy);
+    }
 
-    std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bm; }
+    void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds duration) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+#ifndef NO_ASSERT
+        wasRepeated = true;
+#endif
 
-    PipelineId getPipelineId() const override { return pipelineId; }
+        repeatHandler(buffer, duration);
+    }
+
+    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return bm;
+    }
+
+    [[nodiscard]] PipelineId getPipelineId() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return pipelineId;
+    }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
         PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return *operatorHandlers;
     }
 
     void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& handlers) override
     {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         operatorHandlers = std::addressof(handlers);
     }
 };
@@ -284,14 +331,11 @@ public:
         switch (continuationPolicy)
         {
             case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
-                taskQueue.addInternalTaskNonBlocking(std::move(task));
-                return true;
-
-            case PipelineExecutionContext::ContinuationPolicy::REPEAT:
             case PipelineExecutionContext::ContinuationPolicy::NEVER:
-                taskQueue.addInternalTaskNonBlocking(std::move(task));
+                addInternalTask(std::move(task));
                 return true;
         }
+        std::unreachable();
     }
 
     void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
@@ -435,7 +479,6 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
-        bool repeated = false;
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -443,22 +486,8 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
-                INVARIANT(repeated == false, "A task cannot be repeated more than once");
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
-                /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
-                if (continuationPolicy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
-                {
-                    pool.statistic->onEvent(
-                        TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
-
-                    pool.delayedTaskSubmitter.submitTaskIn(
-                        WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)),
-                        std::chrono::milliseconds(25));
-                    repeated = true;
-                    return true;
-                }
-                /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 return std::ranges::all_of(
                     pipeline->successors,
                     [&](const auto& successor)
@@ -467,7 +496,22 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
                             TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
                         return pool.emitWork(task.queryId, successor, tupleBuffer, TaskCallback{}, continuationPolicy);
                     });
-            });
+            },
+            [&](const TupleBuffer& tupleBuffer, std::chrono::milliseconds duration)
+            {
+                if (duration.count() > 0)
+                {
+                    pool.delayedTaskSubmitter.submitTaskIn(
+                        WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)), duration);
+                }
+                else
+                {
+                    pool.addInternalTask(WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)));
+                }
+                pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+            }
+
+        );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
@@ -504,6 +548,13 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "Currently we assume that a pipeline cannot emit data during setup. All pipeline initializations happen "
                     "concurrently and there is no guarantee that the successor pipeline has been initialized");
                 return false;
+            },
+            [&](const TupleBuffer&, std::chrono::milliseconds)
+            {
+                INVARIANT(
+                    false,
+                    "Repeat pipeline setup is currently not supported. Although there is no inherit reason this wouldn't work, but its not "
+                    "tested");
             });
         pipeline->stage->start(pec);
         pool.statistic->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
@@ -573,14 +624,6 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
                 return true;
             }
 
-            if (policy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
-            {
-                pool.delayedTaskSubmitter.submitTaskIn(
-                    StopPipelineTask(stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback)),
-                    std::chrono::milliseconds(25));
-                return true;
-            }
-
             for (const auto& successor : stopPipelineTask.pipeline->successors)
             {
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
@@ -589,6 +632,19 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
                 pool.emitWork(stopPipelineTask.queryId, successor, tupleBuffer, TaskCallback{}, policy);
             }
             return true;
+        },
+        [&](const TupleBuffer&, std::chrono::milliseconds duration)
+        {
+            StopPipelineTask repeatedTask(
+                stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback));
+            if (duration.count() > 0)
+            {
+                pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatedTask), duration);
+            }
+            else
+            {
+                pool.addInternalTask(std::move(repeatedTask));
+            }
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
