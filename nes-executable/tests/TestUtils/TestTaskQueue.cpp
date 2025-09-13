@@ -35,11 +35,6 @@ bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, c
 {
     switch (continuationPolicy)
     {
-        case ContinuationPolicy::REPEAT: {
-            PRECONDITION(repeatTaskCallback != nullptr, "Cannot repeat a task without a valid repeatTaskCallback function");
-            repeatTaskCallback();
-            break;
-        }
         case ContinuationPolicy::NEVER: {
             resultBuffers->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
             break;
@@ -59,6 +54,12 @@ TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
         return buffer.value();
     }
     throw BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
+}
+
+void TestPipelineExecutionContext::repeatTask(const TupleBuffer&, std::chrono::milliseconds)
+{
+    PRECONDITION(repeatTaskCallback != nullptr, "Cannot repeat a task without a valid repeatTaskCallback function");
+    repeatTaskCallback();
 }
 
 void TestPipelineStage::execute(const TupleBuffer& tupleBuffer, PipelineExecutionContext& pec)

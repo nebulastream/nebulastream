@@ -189,25 +189,26 @@ struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
 
-    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, TaskCallback callback)
-        : BaseTask(queryId, std::move(callback)), target(std::move(target))
+    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, size_t attempts, TaskCallback callback)
+        : BaseTask(queryId, std::move(callback)), attempts(attempts), target(std::move(target))
     {
     }
 
+    size_t attempts;
     std::weak_ptr<RunningSource> target;
 };
 
 struct FailSourceTask : BaseTask
 {
-    FailSourceTask() : exception("", 0) { }
+    FailSourceTask() : exception(nullptr) { }
 
-    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, TaskCallback callback)
-        : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::move(exception))
+    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback)
+        : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::make_unique<Exception>(std::move(exception)))
     {
     }
 
     std::weak_ptr<RunningSource> target;
-    Exception exception;
+    std::unique_ptr<Exception> exception;
 };
 
 struct StopQueryTask : BaseTask
