@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-09-11_09-16-14'
+DATETIME = '2025-09-13_11-13-29'
 FILE = 'combined_benchmark_statistics.csv'
 # FILE = 'combined_slice_accesses.csv'
 SLICE_ACCESSES = False
@@ -70,13 +70,14 @@ def convert_units(data, col, unit='B', order_idx=3, factor=1000.0):
     # Get max value for metric
     max_val = data[col].max()
 
-    while max_val >= factor and order_idx < len(orders) - 1:
+    order_idx_tmp = order_idx
+    while max_val >= factor and order_idx_tmp < len(orders) - 1:
         max_val /= factor
-        order_idx += 1
+        order_idx_tmp += 1
 
     scaled_data = data.copy()
-    scaled_data[col] = scaled_data[col] / (factor ** order_idx)
-    return scaled_data, orders[order_idx] + unit
+    scaled_data[col] = scaled_data[col] / (factor ** (order_idx_tmp - order_idx))
+    return scaled_data, orders[order_idx_tmp] + unit
 
 
 def add_categorical_param(data, param, new_param):
@@ -289,7 +290,7 @@ if SLICE_ACCESSES:
     df['prediction_precision_2'] = df.apply(compute_prediction_precision_2, axis=1)
 
 # Sort by all hue values
-df = df.sort_values(by=['slice_store_type', 'query', 'timestamp_increment', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta', 'watermark_predictor_type'], ascending=[True, True, True, True, True, True, True])
+df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta', 'watermark_predictor_type'], ascending=[True, True, True, True, True, True, True])
 # queries = df['query'].drop_duplicates().tolist()
 # for query in queries:
 #     print(query)
@@ -518,7 +519,7 @@ def plot_shared_params(data, param, metric, hue, label, legend):
     if param == 'query':
         # Sort data by whether or not the query contained variable sized data
         data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
-        data_scaled = data_scaled.sort_values(by=['var_sized_data', 'query_id'], ascending=[True, True])
+        data_scaled = data_scaled.sort_values(by=['var_sized_data', 'query'], ascending=[True, True])
 
         data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
         legend = 'Slice Store | Time Increment'
