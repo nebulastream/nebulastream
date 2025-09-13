@@ -44,15 +44,15 @@ SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/n
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
-NUM_RUNS_PER_CONFIG = 2
-NUM_RETRIES_PER_RUN = 2
+NUM_RUNS_PER_CONFIG = 3
+NUM_RETRIES_PER_RUN = 3
 MEASURE_INTERVAL = 8
 WAIT_BEFORE_QUERY_STOP = 5
 WAIT_BETWEEN_COMMANDS = 2
 WAIT_BEFORE_SIGKILL = 5
 
 # Compilation for misc.
-LOG_SLICE_ACCESSES = True
+LOG_SLICE_ACCESSES = False
 DELETE_ENGINE_STATS = True
 DELETE_CSV_SINK = True
 SERVER_NAME = "amd"
@@ -78,7 +78,7 @@ CONFIG_FILES = {
     WORKER_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", WORKER_CONFIG_FILE_NAME),
     QUERY_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", QUERY_CONFIG_FILE_NAME),
 }
-ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_prediction_correctness_precision_configs()
+ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
 
 
 # Helper functions

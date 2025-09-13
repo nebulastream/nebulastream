@@ -20,7 +20,7 @@
 #include <SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-#define LOG_SLICE_ACCESS
+// #define LOG_SLICE_ACCESS
 
 namespace NES
 {
