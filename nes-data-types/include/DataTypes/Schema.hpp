@@ -134,7 +134,7 @@ struct SchemaDiff
 {
     struct SchemaMismatch
     {
-        size_t index;
+        size_t index{};
         Schema::Field expectedField;
         Schema::Field actualField;
     };
