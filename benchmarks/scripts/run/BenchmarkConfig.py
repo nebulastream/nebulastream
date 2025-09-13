@@ -19,7 +19,7 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [1000, 10000, 10, 100]
+BATCH_SIZES = [10000000, 10, 100, 1000, 10000]
 TIMESTAMP_INCREMENTS = [1, 100, 1000, 100000]
 INGESTION_RATES = [0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70, 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
@@ -142,8 +142,8 @@ def get_additional_default_values():
     for query in get_queries()[:len(WINDOW_SIZE_SLIDE)]:
         size_and_slide = re.search(window_pattern, query)
         size = int(size_and_slide.group(1))
-        # slide = int(size_and_slide.group(2))
-        if size != 10000 and size != 10000000:
+        slide = int(size_and_slide.group(2))
+        if size == 10000 and slide != 5000:
             default_queries.append(query)
     return default_timestamp_increments, default_queries
 
@@ -455,9 +455,7 @@ def create_prediction_correctness_precision_configs():
     default_params["slice_store_type"] = "FILE_BACKED"
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
-    default_timestamp_increments = TIMESTAMP_INCREMENTS[:2]
-    default_queries = [get_queries()[5], get_queries()[6]]
-    # print(default_queries)
+    default_timestamp_increments, default_queries = get_additional_default_values()
     for timestamp_increment in default_timestamp_increments:
         for query in default_queries:
             for max_num_watermark_gaps in [MAX_NUM_WATERMARK_GAPS[0], MAX_NUM_WATERMARK_GAPS[2]]:
