@@ -71,7 +71,7 @@ then
 fi
 
 rm -rf mutations
-python3 standalone_mutator.py -o mutations $(git ls-files -- "*.cpp" | grep -v test | grep -v fuzz)
+python3 standalone_mutator.py -o mutations $(git ls-files -- "*.cpp" | grep -v test | grep -v fuzz) | tee -a $out_log
 
 export AFL_SKIP_CPUFREQ=1
 export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
