@@ -129,6 +129,7 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
 }
 
 std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(
+    boost::asio::io_context&,
     const SliceEnd sliceEnd,
     Memory::AbstractBufferProvider*,
     const Memory::MemoryLayouts::MemoryLayout*,

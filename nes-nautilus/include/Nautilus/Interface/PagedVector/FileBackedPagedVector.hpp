@@ -37,7 +37,7 @@ public:
         FileLayout fileLayout);
 
     /// Reads the projected fields of all tuples from fileStorage.
-    void readFromFile(
+    boost::asio::awaitable<void> readFromFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         const std::shared_ptr<FileReader>& fileReader,
@@ -64,7 +64,7 @@ private:
         Memory::AbstractBufferProvider* bufferProvider,
         const std::shared_ptr<FileWriter>& fileWriter);
 
-    void readSeparatelyFromFiles(
+    boost::asio::awaitable<void> readSeparatelyFromFiles(
         const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
@@ -73,7 +73,7 @@ private:
 
     static boost::asio::awaitable<void>
     writeVarSizedAndStoreIdx(char* ptrOnPage, const Memory::TupleBuffer& page, const std::shared_ptr<FileWriter>& fileWriter);
-    static void readVarSizedAndStoreIdx(
+    static boost::asio::awaitable<void> readVarSizedAndStoreIdx(
         char* ptrOnPage,
         const Memory::TupleBuffer& page,
         Memory::AbstractBufferProvider* bufferProvider,

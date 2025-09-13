@@ -58,10 +58,10 @@ NLJSlice* getNLJSliceRefFromEndProxy(
     PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
     PRECONDITION(memoryLayout != nullptr, "memory layout should not be null!");
 
-    const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
+    auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    const auto slice
-        = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, workerThreadId, joinBuildSide);
+    const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(
+        opHandler->getIoContext(), sliceEnd, bufferProvider, memoryLayout, workerThreadId, joinBuildSide);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
     if (not slice.has_value())
     {

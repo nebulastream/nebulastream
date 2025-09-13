@@ -68,14 +68,8 @@ boost::asio::awaitable<void> FileWriter::writeKey(const void* data, const size_t
 boost::asio::awaitable<uint32_t> FileWriter::writeVarSized(const void* data)
 {
     const auto filePathStr = filePath + fmt::format("_{}.dat", varSizedCnt);
-    const auto fd = open(filePathStr.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    if (fd < 0)
-    {
-        throw std::runtime_error("Failed to open variable sized data file for writing");
-    }
-
     boost::asio::posix::stream_descriptor varSizedFile(ioCtx);
-    varSizedFile.assign(fd);
+    openFile(varSizedFile, filePathStr);
 
     auto varSizedDataSize = *static_cast<const uint32_t*>(data) + sizeof(uint32_t);
     co_await writeToFile(static_cast<const char*>(data), varSizedDataSize, varSizedFile);
@@ -224,8 +218,17 @@ void FileWriter::openFile(boost::asio::posix::stream_descriptor& stream, const s
     stream.assign(fd);
 }
 
-FileReader::FileReader(std::string filePath, char* readBuffer, char* readKeyBuffer, const size_t bufferSize, const bool withCleanup)
-    : readBuffer(readBuffer)
+FileReader::FileReader(
+    boost::asio::io_context& ioCtx,
+    std::string filePath,
+    char* readBuffer,
+    char* readKeyBuffer,
+    const size_t bufferSize,
+    const bool withCleanup)
+    : ioCtx(ioCtx)
+    , file(ioCtx)
+    , keyFile(ioCtx)
+    , readBuffer(readBuffer)
     , readKeyBuffer(readKeyBuffer)
     , readBufferPos(0)
     , readKeyBufferPos(0)
@@ -249,48 +252,37 @@ FileReader::~FileReader()
     }
 }
 
-size_t FileReader::read(void* dest, const size_t size)
+boost::asio::awaitable<size_t> FileReader::read(void* dest, const size_t size)
 {
     if (not file.is_open())
     {
         openFile(file, filePath + ".dat");
     }
-    return read(dest, size, file, readBuffer, readBufferPos, readBufferEnd);
+    co_return co_await read(dest, size, file, readBuffer, readBufferPos, readBufferEnd);
 }
 
-size_t FileReader::readKey(void* dest, const size_t size)
+boost::asio::awaitable<size_t> FileReader::readKey(void* dest, const size_t size)
 {
     if (not keyFile.is_open())
     {
         openFile(keyFile, filePath + "_key.dat");
     }
-    return read(dest, size, keyFile, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd);
+    co_return co_await read(dest, size, keyFile, readKeyBuffer, readKeyBufferPos, readKeyBufferEnd);
 }
 
-Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const
+boost::asio::awaitable<Memory::TupleBuffer> FileReader::readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const
 {
     const auto filePathStr = filePath + fmt::format("_{}.dat", idx);
-    std::ifstream varSizedFile(filePathStr, std::ios::in | std::ios::binary);
-    if (not varSizedFile.is_open())
-    {
-        throw std::runtime_error("Failed to open variable sized data file for reading");
-    }
+    boost::asio::posix::stream_descriptor varSizedFile(ioCtx);
+    openFile(varSizedFile, filePathStr);
 
     uint32_t varSizedDataSize;
-    varSizedFile.read(reinterpret_cast<char*>(&varSizedDataSize), sizeof(uint32_t));
-    if ((varSizedFile.fail() and not varSizedFile.eof()) or varSizedFile.gcount() != sizeof(uint32_t))
-    {
-        throw std::ios_base::failure("Failed to read variable sized data size from file");
-    }
+    co_await readFromFile(reinterpret_cast<char*>(&varSizedDataSize), sizeof(uint32_t), varSizedFile);
 
     if (auto buffer = bufferProvider->getUnpooledBuffer(varSizedDataSize + sizeof(uint32_t)); buffer.has_value())
     {
         *buffer.value().getBuffer<uint32_t>() = varSizedDataSize;
-        varSizedFile.read(buffer.value().getBuffer<char>() + sizeof(uint32_t), varSizedDataSize);
-        if ((varSizedFile.fail() and not varSizedFile.eof()) or varSizedFile.gcount() != varSizedDataSize)
-        {
-            throw std::ios_base::failure("Failed to read variable sized data from file");
-        }
+        co_await readFromFile(buffer.value().getBuffer<char>() + sizeof(uint32_t), varSizedDataSize, varSizedFile);
 
         varSizedFile.close();
         if (withCleanup)
@@ -298,7 +290,7 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
             std::filesystem::remove(filePathStr);
         }
 
-        return buffer.value();
+        co_return buffer.value();
     }
     else
     {
@@ -306,12 +298,14 @@ Memory::TupleBuffer FileReader::readVarSized(Memory::AbstractBufferProvider* buf
     }
 }
 
-size_t FileReader::read(void* dest, const size_t dataSize, std::ifstream& stream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const
+boost::asio::awaitable<size_t> FileReader::read(
+    void* dest, const size_t dataSize, boost::asio::posix::stream_descriptor& stream, char* buffer, size_t& bufferPos, size_t& bufferEnd)
+    const
 {
     auto* destPtr = static_cast<char*>(dest);
     if (bufferSize == 0)
     {
-        return readFromFile(destPtr, dataSize, stream);
+        co_return co_await readFromFile(destPtr, dataSize, stream);
     }
 
     auto totalRead = 0UL;
@@ -319,7 +313,7 @@ size_t FileReader::read(void* dest, const size_t dataSize, std::ifstream& stream
     {
         if (bufferPos == bufferEnd)
         {
-            bufferEnd = readFromFile(buffer, bufferSize, stream);
+            bufferEnd = co_await readFromFile(buffer, bufferSize, stream);
             bufferPos = 0;
             if (bufferEnd == 0)
             {
@@ -335,23 +329,26 @@ size_t FileReader::read(void* dest, const size_t dataSize, std::ifstream& stream
         totalRead += copySize;
     }
 
-    return totalRead;
+    co_return totalRead;
 }
 
-size_t FileReader::readFromFile(char* buffer, const size_t dataSize, std::ifstream& stream)
+boost::asio::awaitable<size_t> FileReader::readFromFile(char* buffer, const size_t dataSize, boost::asio::posix::stream_descriptor& stream)
 {
-    stream.read(buffer, dataSize);
-    if (stream.fail() and not stream.eof())
+    boost::system::error_code ec;
+    const auto buf = boost::asio::buffer(buffer, dataSize);
+    auto bytesRead = co_await stream.async_read_some(buf, boost::asio::redirect_error(boost::asio::use_awaitable, ec));
+    if (ec and ec != boost::asio::error::eof)
     {
-        throw std::ios_base::failure("Failed to read from file");
+        throw boost::system::system_error(ec);
+        //throw std::ios_base::failure("Failed to read from file");
     }
-    return stream.gcount();
+    co_return bytesRead;
 }
 
-void FileReader::openFile(std::ifstream& stream, const std::string& filePath)
+void FileReader::openFile(boost::asio::posix::stream_descriptor& stream, const std::string& filePath)
 {
-    stream.open(filePath, std::ios::in | std::ios::binary);
-    if (not stream.is_open())
+    const auto fd = open(filePath.c_str(), O_RDONLY, 0644);
+    if (fd < 0)
     {
         if (errno == EMFILE)
         {
@@ -362,6 +359,7 @@ void FileReader::openFile(std::ifstream& stream, const std::string& filePath)
             throw std::runtime_error(fmt::format("Failed to open file or key file for reading: {}", std::strerror(errno)));
         }
     }
+    stream.assign(fd);
 }
 
 }

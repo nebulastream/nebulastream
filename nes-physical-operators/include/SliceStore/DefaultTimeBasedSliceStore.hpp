@@ -53,6 +53,7 @@ public:
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
+        boost::asio::io_context& ioCtx,
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,

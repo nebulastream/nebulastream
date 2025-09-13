@@ -71,6 +71,7 @@ public:
         JoinBuildSideType joinBuildSide,
         const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
+        boost::asio::io_context& ioCtx,
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
@@ -113,7 +114,8 @@ private:
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         WorkerThreadId threadId,
         JoinBuildSideType joinBuildSide) const;
-    void readSliceFromFiles(
+    boost::asio::awaitable<void> readSliceFromFiles(
+        boost::asio::io_context& ioCtx,
         const std::shared_ptr<Slice>& slice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,

@@ -99,7 +99,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     co_return;
 }
 
-void FileBackedPagedVector::readFromFile(
+boost::asio::awaitable<void> FileBackedPagedVector::readFromFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const std::shared_ptr<FileReader>& fileReader,
@@ -127,7 +127,7 @@ void FileBackedPagedVector::readFromFile(
             auto* lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
 
-            while (const auto bytesRead = fileReader->read(lastPagePtr, tuplesToRead * tupleSize))
+            while (const auto bytesRead = co_await fileReader->read(lastPagePtr, tuplesToRead * tupleSize))
             {
                 const auto tuplesRead = bytesRead / tupleSize;
                 lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + tuplesRead);
@@ -141,7 +141,8 @@ void FileBackedPagedVector::readFromFile(
                             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
                                 or fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
                             {
-                                readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                                co_await readVarSizedAndStoreIdx(
+                                    reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
                             }
                             lastPagePtr += fieldSize;
                         }
@@ -159,7 +160,7 @@ void FileBackedPagedVector::readFromFile(
         /// Read payload and key field data from separate files first and then remaining designated pagedVectorKeys and payload from file
         case FileLayout::SEPARATE_PAYLOAD:
         case FileLayout::SEPARATE_KEYS: {
-            readSeparatelyFromFiles(groupedFieldTypeSizes, memoryLayout, bufferProvider, fileReader, fileLayout);
+            co_await readSeparatelyFromFiles(groupedFieldTypeSizes, memoryLayout, bufferProvider, fileReader, fileLayout);
             break;
         }
     }
@@ -317,7 +318,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
     co_return;
 }
 
-void FileBackedPagedVector::readSeparatelyFromFiles(
+boost::asio::awaitable<void> FileBackedPagedVector::readSeparatelyFromFiles(
     const std::vector<std::tuple<Memory::MemoryLayouts::MemoryLayout::FieldType, uint64_t>>& groupedFieldTypeSizes,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Memory::AbstractBufferProvider* bufferProvider,
@@ -355,7 +356,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
             {
                 case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED:
                 case Memory::MemoryLayouts::MemoryLayout::FieldType::KEY: {
-                    if (fileLayout == FileLayout::SEPARATE_PAYLOAD or fileReader->readKey(lastPagePtr, fieldSize) == 0)
+                    if (fileLayout == FileLayout::SEPARATE_PAYLOAD or co_await fileReader->readKey(lastPagePtr, fieldSize) == 0)
                     {
                         if (keyPagePtr != nullptr)
                         {
@@ -374,19 +375,19 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
                     }
                     else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED)
                     {
-                        readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                        co_await readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
                     }
                     break;
                 }
                 case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED:
                 case Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD: {
-                    if (fileReader->read(lastPagePtr, fieldSize) == 0)
+                    if (co_await fileReader->read(lastPagePtr, fieldSize) == 0)
                     {
-                        return;
+                        co_return;
                     }
                     if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
                     {
-                        readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                        co_await readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
                     }
                     break;
                 }
@@ -407,14 +408,14 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeVarSizedAndStoreIdx(
     memcpy(ptrOnPage, &fileIdx, sizeof(uint32_t));
 }
 
-void FileBackedPagedVector::readVarSizedAndStoreIdx(
+boost::asio::awaitable<void> FileBackedPagedVector::readVarSizedAndStoreIdx(
     char* ptrOnPage,
     const Memory::TupleBuffer& page,
     Memory::AbstractBufferProvider* bufferProvider,
     const std::shared_ptr<FileReader>& fileReader)
 {
     const auto* const varSizedDataIdx = reinterpret_cast<uint32_t*>(ptrOnPage);
-    auto varSizedData = fileReader->readVarSized(bufferProvider, *varSizedDataIdx);
+    auto varSizedData = co_await fileReader->readVarSized(bufferProvider, *varSizedDataIdx);
     const auto newIdx = page.storeChildBuffer(varSizedData);
     memcpy(ptrOnPage, &newIdx, sizeof(uint32_t));
 }

@@ -108,6 +108,7 @@ std::shared_ptr<FileWriter> FileDescriptorManager::getFileWriter(
 }
 
 std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
+    boost::asio::io_context& ioCtx,
     const SliceEnd sliceEnd,
     const WorkerThreadId threadToRead,
     const WorkerThreadId workerThread,
@@ -130,6 +131,7 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
         writers.erase(it);
 
         return std::make_shared<FileReader>(
+            ioCtx,
             constructFilePath(sliceEnd, threadToRead, joinBuildSide),
             memoryPool.getReadBufferForThread(workerThread, false),
             memoryPool.getReadBufferForThread(workerThread, true),
