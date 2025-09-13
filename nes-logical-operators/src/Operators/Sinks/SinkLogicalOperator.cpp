@@ -23,11 +23,13 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -43,21 +45,17 @@ SinkLogicalOperator::SinkLogicalOperator(SinkDescriptor sinkDescriptor)
 {
 }
 
-bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool SinkLogicalOperator::operator==(const SinkLogicalOperator& rhs) const
 {
-    if (const auto* rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
-    {
-        const bool descriptorsEqual = (not sinkDescriptor.has_value() && not rhsOperator->sinkDescriptor.has_value())
-            || (sinkDescriptor.has_value() && rhsOperator->sinkDescriptor.has_value() && *sinkDescriptor == *rhsOperator->sinkDescriptor);
+    const bool descriptorsEqual = (not sinkDescriptor.has_value() && not rhs.sinkDescriptor.has_value())
+        || (sinkDescriptor.has_value() && rhs.sinkDescriptor.has_value() && *sinkDescriptor == *rhs.sinkDescriptor);
 
-        return sinkName == rhsOperator->sinkName && descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
-            && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
+    return sinkName == rhs.sinkName && descriptorsEqual && getOutputSchema() == rhs.getOutputSchema()
+        && getInputSchemas() == rhs.getInputSchemas() && getInputOriginIds() == rhs.getInputOriginIds()
+        && getOutputOriginIds() == rhs.getOutputOriginIds() && getTraitSet() == rhs.getTraitSet();
 }
 
-std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
@@ -80,7 +78,7 @@ std::string_view SinkLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
     INVARIANT(!inputSchemas.empty(), "Sink should have at least one input");
@@ -133,10 +131,10 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     return copy;
 }
 
-LogicalOperator SinkLogicalOperator::withTraitSet(TraitSet traitSet) const
+SinkLogicalOperator SinkLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
@@ -145,10 +143,10 @@ TraitSet SinkLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-LogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+SinkLogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::move(children);
     return copy;
 }
 
@@ -175,14 +173,14 @@ std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-LogicalOperator SinkLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+SinkLogicalOperator SinkLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     auto copy = *this;
     copy.inputOriginIds = ids.at(0);
     return copy;
 }
 
-LogicalOperator SinkLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+SinkLogicalOperator SinkLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
     auto copy = *this;
     copy.outputOriginIds = ids;
@@ -237,7 +235,6 @@ void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     const DescriptorConfig::ConfigType timeVariant = sinkName;
     (*serializableOperator.mutable_config())[ConfigParameters::SINK_NAME] = descriptorConfigTypeToProto(timeVariant);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());

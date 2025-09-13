@@ -12,21 +12,21 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperator.hpp>
+#include <Traits/TraitSet.hpp>
 
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
-
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Traits/Trait.hpp>
-#include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <cstddef>
 
 namespace NES
 {
 
+bool operator==(const TraitSet& lhs, const TraitSet& rhs)
+{
+    return lhs.traitMap == rhs.traitMap;
+}
+
+std::size_t TraitSet::size() const
+{
+    return traitMap.size();
+}
 
 }

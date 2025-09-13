@@ -32,22 +32,22 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
 {
     for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
     {
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp.getLogicalSourceName());
+        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
-            throw UnknownSourceName("{}", sourceOp.getLogicalSourceName());
+            throw UnknownSourceName("{}", sourceOp->getLogicalSourceName());
         }
         const auto& logicalSource = logicalSourceOpt.value();
         const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
 
         if (not entriesOpt.has_value())
         {
-            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceOp.getLogicalSourceName());
+            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceOp->getLogicalSourceName());
         }
         const auto& entries = entriesOpt.value();
         if (entries.empty())
         {
-            throw UnknownSourceName("No physical sources present for logical source \"{}\"", sourceOp.getLogicalSourceName());
+            throw UnknownSourceName("No physical sources present for logical source \"{}\"", sourceOp->getLogicalSourceName());
         }
 
         auto expandedSourceOperators = entries

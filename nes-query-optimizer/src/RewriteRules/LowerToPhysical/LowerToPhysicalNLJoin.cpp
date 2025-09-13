@@ -69,12 +69,12 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto join = logicalOperator.get<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
-    auto leftInputSchema = join.getLeftSchema();
-    auto rightInputSchema = join.getRightSchema();
+    auto leftInputSchema = join->getLeftSchema();
+    auto rightInputSchema = join->getRightSchema();
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = join.getOutputOriginIds().at(0);
-    auto logicalJoinFunction = join.getJoinFunction();
-    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
+    auto logicalJoinFunction = join->getJoinFunction();
+    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join->getWindowType());
     const auto pageSize = conf.pageSize.getValue();
 
 
@@ -88,7 +88,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
-    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join, windowType);
+    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
 
     auto leftBuildOperator
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
@@ -98,7 +98,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator
-        = NLJProbePhysicalOperator(handlerId, joinFunction, join.getWindowMetaData(), joinSchema, leftMemoryProvider, rightMemoryProvider);
+        = NLJProbePhysicalOperator(handlerId, joinFunction, join->getWindowMetaData(), joinSchema, leftMemoryProvider, rightMemoryProvider);
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
