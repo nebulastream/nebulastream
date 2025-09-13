@@ -54,6 +54,7 @@ WAIT_BEFORE_SIGKILL = 5
 # Compilation for misc.
 LOG_SLICE_ACCESSES = False
 DELETE_ENGINE_STATS = True
+DELETE_CSV_SINK = True
 SERVER_NAME = "amd"
 DESTINATION_PATH = os.path.join("/home/ntantow/Downloads/ba-benchmark/", SERVER_NAME)
 DATETIME_NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -66,6 +67,7 @@ COMBINED_SLICE_ACCESSES_FILE = "combined_slice_accesses.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
 SLICE_ACCESSES_FILE = "SliceAccesses_"
+CSV_SINK_FILE = "csv_sink.csv"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -188,7 +190,7 @@ def copy_and_modify_configs(output_folder, working_dir, current_benchmark_config
     query_config_yaml["query"] = current_benchmark_config.query
 
     # Change the csv sink file
-    query_config_yaml["sink"]["config"]["filePath"] = os.path.abspath(os.path.join(output_folder, "csv_sink.csv"))
+    query_config_yaml["sink"]["config"]["filePath"] = os.path.abspath(os.path.join(output_folder, CSV_SINK_FILE))
 
     # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
     assert len(tcp_server_ports) % len(query_config_yaml["physical"]) == 0, \
@@ -379,6 +381,13 @@ def run_benchmark(current_benchmark_config):
                 if file_name.startswith(ENGINE_STATS_FILE):
                     engine_stats_file_path = os.path.join(output_folder, file_name)
                     os.remove(engine_stats_file_path)
+
+        if DELETE_CSV_SINK:
+            print("Deleting csv sink...")
+            for file_name in os.listdir(output_folder):
+                if file_name.startswith(CSV_SINK_FILE):
+                    csv_sink_file_path = os.path.join(output_folder, file_name)
+                    os.remove(csv_sink_file_path)
 
         return output_folder
 
