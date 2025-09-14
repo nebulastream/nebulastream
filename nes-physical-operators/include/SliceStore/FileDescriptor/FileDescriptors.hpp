@@ -77,25 +77,21 @@ private:
 class FileReader
 {
 public:
-    FileReader(
-        boost::asio::io_context& ioCtx, std::string filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool withCleanup);
+    FileReader(std::string filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool withCleanup);
     ~FileReader();
 
-    boost::asio::awaitable<size_t> read(void* dest, size_t size);
-    boost::asio::awaitable<size_t> readKey(void* dest, size_t size);
-    boost::asio::awaitable<Memory::TupleBuffer> readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
+    size_t read(void* dest, size_t size);
+    size_t readKey(void* dest, size_t size);
+    Memory::TupleBuffer readVarSized(Memory::AbstractBufferProvider* bufferProvider, uint32_t idx) const;
 
 private:
-    boost::asio::awaitable<size_t>
-    read(void* dest, size_t dataSize, boost::asio::posix::stream_descriptor& stream, char* buffer, size_t& bufferPos, size_t& bufferEnd)
-        const;
-    static boost::asio::awaitable<size_t> readFromFile(char* buffer, size_t dataSize, boost::asio::posix::stream_descriptor& stream);
+    size_t read(void* dest, size_t dataSize, std::ifstream& stream, char* buffer, size_t& bufferPos, size_t& bufferEnd) const;
+    static size_t readFromFile(char* buffer, size_t dataSize, std::ifstream& stream);
 
-    static void openFile(boost::asio::posix::stream_descriptor& stream, const std::string& filePath);
+    static void openFile(std::ifstream& stream, const std::string& filePath);
 
-    boost::asio::io_context& ioCtx;
-    boost::asio::posix::stream_descriptor file;
-    boost::asio::posix::stream_descriptor keyFile;
+    std::ifstream file;
+    std::ifstream keyFile;
 
     char* readBuffer;
     char* readKeyBuffer;

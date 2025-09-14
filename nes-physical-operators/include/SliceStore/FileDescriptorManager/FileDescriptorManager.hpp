@@ -75,12 +75,7 @@ public:
     std::shared_ptr<FileWriter>
     getFileWriter(boost::asio::io_context& ioCtx, SliceEnd sliceEnd, WorkerThreadId threadId, JoinBuildSideType joinBuildSide);
     std::optional<std::shared_ptr<FileReader>> getFileReader(
-        boost::asio::io_context& ioCtx,
-        SliceEnd sliceEnd,
-        WorkerThreadId threadToRead,
-        WorkerThreadId workerThread,
-        JoinBuildSideType joinBuildSide,
-        bool withCleanup);
+        SliceEnd sliceEnd, WorkerThreadId threadToRead, WorkerThreadId workerThread, JoinBuildSideType joinBuildSide, bool withCleanup);
 
     void deleteFileWriters(SliceEnd sliceEnd, bool withCleanup);
     void deleteAllSliceFiles();

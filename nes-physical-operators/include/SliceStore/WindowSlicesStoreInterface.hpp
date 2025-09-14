@@ -25,7 +25,6 @@
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
-#include <boost/asio.hpp>
 
 namespace NES
 {
@@ -73,7 +72,6 @@ public:
 
     /// Retrieves the slice by its end timestamp. If no slice exists for the given slice end, the optional return value is nullopt
     virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
-        boost::asio::io_context& ioCtx,
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,

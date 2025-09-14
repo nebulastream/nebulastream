@@ -17,8 +17,7 @@
 namespace NES
 {
 
-KalmanBasedWatermarkPredictor::KalmanBasedWatermarkPredictor(const uint64_t initial)
-    : AbstractWatermarkPredictor(initial), lastX(0), R(1e-2)
+KalmanBasedWatermarkPredictor::KalmanBasedWatermarkPredictor(const uint64_t initial) : AbstractWatermarkPredictor(initial), lastX(0), R(1e-2)
 {
     state << 0, 0;
     P = Eigen::Matrix2d::Identity();
