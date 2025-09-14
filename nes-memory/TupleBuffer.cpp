@@ -29,18 +29,6 @@
 namespace NES
 {
 
-TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
-{
-    PRECONDITION(bufferPointer != nullptr, "Buffer pointer must not be nullptr");
-    const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
-    auto* const buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto* const block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
-    auto* const memorySegment = block->getOwner();
-    auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
-    tb.retain();
-    return tb;
-}
-
 TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
 {
     if (controlBlock != nullptr)
@@ -130,17 +118,25 @@ uint64_t TupleBuffer::getBufferSize() const noexcept
     return size;
 }
 
-void TupleBuffer::setNumberOfTuples(const uint64_t numberOfTuples) const noexcept
-{
-    controlBlock->setNumberOfTuples(numberOfTuples);
-}
-
 Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
 
-void TupleBuffer::setWatermark(const Timestamp value) noexcept
+uint64_t TupleBuffer::getUsedMemorySize() const noexcept
+{
+    INVARIANT(controlBlock != nullptr, "Control block must NOT be null!");
+    return controlBlock->getUsedMemorySize();
+}
+
+void TupleBuffer::setUsedMemorySize(uint64_t usedMemorySize) const noexcept
+{
+    INVARIANT(controlBlock != nullptr, "Control block must NOT be null!");
+    INVARIANT(usedMemorySize <= size, "Total size of tuple buffer {} must be larger than the usedMemorySize {}", size, usedMemorySize);
+    controlBlock->setUsedMemorySize(usedMemorySize);
+}
+
+void TupleBuffer::setWatermark(const Timestamp value) const noexcept
 {
     controlBlock->setWatermark(value);
 }
@@ -150,7 +146,7 @@ Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
     return controlBlock->getCreationTimestamp();
 }
 
-void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) noexcept
+void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) const noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
 }
@@ -165,12 +161,12 @@ SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
     return controlBlock->getSequenceNumber();
 }
 
-void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept
+void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) const noexcept
 {
     controlBlock->setChunkNumber(chunkNumber);
 }
 
-void TupleBuffer::setLastChunk(const bool isLastChunk) noexcept
+void TupleBuffer::setLastChunk(const bool isLastChunk) const noexcept
 {
     controlBlock->setLastChunk(isLastChunk);
 }
@@ -180,12 +176,12 @@ bool TupleBuffer::isLastChunk() const noexcept
     return controlBlock->isLastChunk();
 }
 
-void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept
+void TupleBuffer::setCreationTimestampInMS(const Timestamp value) const noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }
 
-void TupleBuffer::setOriginId(const OriginId id) noexcept
+void TupleBuffer::setOriginId(const OriginId id) const noexcept
 {
     controlBlock->setOriginId(id);
 }
@@ -238,11 +234,6 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
 std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept
 {
     return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
-}
-
-uint64_t TupleBuffer::getNumberOfTuples() const noexcept
-{
-    return controlBlock->getNumberOfTuples();
 }
 
 OriginId TupleBuffer::getOriginId() const noexcept

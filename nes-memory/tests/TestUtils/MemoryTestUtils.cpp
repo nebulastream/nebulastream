@@ -42,7 +42,6 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
     copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
     copiedBuffer.setChunkNumber(buffer.getChunkNumber());
     copiedBuffer.setLastChunk(buffer.isLastChunk());
-    copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {

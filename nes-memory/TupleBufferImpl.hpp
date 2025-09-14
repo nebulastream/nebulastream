@@ -33,6 +33,7 @@
 namespace NES
 {
 class UnpooledChunksManager;
+struct ThreadLocalChunks;
 }
 
 namespace NES
@@ -94,8 +95,8 @@ public:
     /// Decrease the reference counter by one
     /// Returns true if 0 is reached and the buffer is recycled
     bool release();
-    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
-    void setNumberOfTuples(uint64_t);
+    [[nodiscard]] uint64_t getUsedMemorySize() const noexcept;
+    void setUsedMemorySize(uint64_t);
     [[nodiscard]] Timestamp getWatermark() const noexcept;
     void setWatermark(Timestamp watermark);
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
@@ -118,7 +119,7 @@ public:
 
 private:
     std::atomic<int32_t> referenceCounter = 0;
-    uint32_t numberOfTuples = 0;
+    uint64_t usedMemorySize = 0;
     Timestamp watermark = Timestamp(Timestamp::INITIAL_VALUE);
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
@@ -183,6 +184,7 @@ class MemorySegment
     friend class NES::FixedSizeBufferPool;
     friend class NES::BufferManager;
     friend class NES::UnpooledChunksManager;
+    friend struct NES::ThreadLocalChunks;
     friend class BufferControlBlock;
 
     enum class MemorySegmentType : uint8_t
