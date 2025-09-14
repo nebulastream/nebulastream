@@ -80,7 +80,7 @@ void NLJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(windowInfo.windowStart);
 
-    auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTrigger>();
+    auto* bufferMemory = tupleBuffer.getMemArea<EmittedNLJWindowTrigger>();
     bufferMemory->leftSliceEnd = sliceLeft.getSliceEnd();
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfo;

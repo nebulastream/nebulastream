@@ -69,7 +69,7 @@ RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<R
         fieldIndex);
 
     /// via pointer arithmetic gets the starting field address
-    auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);
+    auto* bufferBasePointer = &(buffer.getMemArea<uint8_t>()[0]);
     auto offSet = layout->getFieldOffset(0, fieldIndex);
     auto* basePointer = bufferBasePointer + offSet;
 

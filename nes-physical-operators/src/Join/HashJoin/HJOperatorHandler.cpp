@@ -121,7 +121,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setWatermark(windowInfo.windowStart);
 
     /// Writing all necessary information for the probe to the buffer
-    auto* bufferMemory = tupleBuffer.getBuffer<EmittedHJWindowTrigger>();
+    auto* bufferMemory = tupleBuffer.getMemArea<EmittedHJWindowTrigger>();
     bufferMemory->windowInfo = windowInfo;
     bufferMemory->leftNumberOfHashMaps = leftHashMaps.size();
     bufferMemory->rightNumberOfHashMaps = rightHashMaps.size();

@@ -43,7 +43,7 @@ public:
     explicit RawTupleBuffer(TupleBuffer rawTupleBuffer)
         : rawBuffer(std::move(rawTupleBuffer))
         , numberOfTuples(0)
-        , bufferView(rawBuffer.getBuffer<const char>(), rawBuffer.getUsedMemorySize()) { };
+        , bufferView(rawBuffer.getMemArea<const char>(), rawBuffer.getUsedMemorySize()) { };
 
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;

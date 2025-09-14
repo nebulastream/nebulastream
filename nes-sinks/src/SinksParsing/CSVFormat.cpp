@@ -70,7 +70,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
 {
     std::stringstream ss;
     const auto numberOfTuples = getNumberOfTuples(tbuffer, schema);
-    const auto buffer = std::span(tbuffer.getBuffer<char>(), tbuffer.getUsedMemorySize());
+    const auto buffer = std::span(tbuffer.getMemArea<char>(), tbuffer.getUsedMemorySize());
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);

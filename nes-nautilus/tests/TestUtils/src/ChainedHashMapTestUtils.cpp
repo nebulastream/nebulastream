@@ -369,7 +369,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();
-    std::memset(bufferOutput.getBuffer(), 0, bufferOutput.getBufferSize());
+    std::memset(bufferOutput.getMemArea(), 0, bufferOutput.getBufferSize());
 
     /// We are calling the function to find all entries and write them to the output buffer.
     auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBufferWithEntryIterator();
@@ -402,7 +402,7 @@ void ChainedHashMapTestUtils::checkEntryIterator(
             ASSERT_TRUE(false);
         }
         auto bufferOutput = bufferOutputOpt.value();
-        std::memset(bufferOutput.getBuffer(), 0, bufferOutput.getBufferSize());
+        std::memset(bufferOutput.getMemArea(), 0, bufferOutput.getBufferSize());
         auto inputTupleBuffer = inputBuffer.getBuffer();
         findAndWriteToOutputBuffer(
             std::addressof(inputTupleBuffer), std::addressof(bufferOutput), bufferManager.get(), std::addressof(hashMap));

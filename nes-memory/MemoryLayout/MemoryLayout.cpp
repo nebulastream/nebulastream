@@ -56,7 +56,7 @@ void copyVarSizedAndIncrementMetaData(
         "Offset {} must be smaller than the buffer size {}",
         childBufferOffset,
         childBuffer.getBufferSize());
-    const auto dstAddress = childBuffer.getBuffer<int8_t>() + childBufferOffset;
+    const auto dstAddress = childBuffer.getMemArea<int8_t>() + childBufferOffset;
     const auto srcAddress = varSizedValue;
     std::memcpy(dstAddress, srcAddress, varSizedValueLength);
     childBuffer.setUsedMemorySize(childBuffer.getUsedMemorySize() + varSizedValueLength);
@@ -100,7 +100,7 @@ const int8_t* MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tuple
     /// Loading the childbuffer containing the variable sized data
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
     /// We need to jump childOffset bytes to go to the correct pointer for the var sized
-    const auto varSizedPointer = childBuffer.getBuffer<int8_t>() + variableSizedAccess.getOffset();
+    const auto varSizedPointer = childBuffer.getMemArea<int8_t>() + variableSizedAccess.getOffset();
     return varSizedPointer;
 }
 

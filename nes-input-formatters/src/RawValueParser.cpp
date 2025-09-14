@@ -64,7 +64,7 @@ ParseFunctionSignature getBasicStringParseFunction()
     {
         auto tupleBuffer = rawTupleBufferFormatted.getUnformattedBuffer();
         auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBuffer.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            tupleBuffer.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
         const auto indexToChildBuffer = MemoryLayout::writeVarSizedData(tupleBuffer, inputString, bufferProvider);
         *childBufferIndexPointer = indexToChildBuffer.getCombinedIdxOffset();

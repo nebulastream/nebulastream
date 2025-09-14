@@ -67,7 +67,7 @@ public:
     {
         explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
 
-        int8_t* getMemArea() { return buffer.getBuffer(); }
+        int8_t* getMemArea() { return buffer.getMemArea(); }
 
         TupleBuffer buffer;
         uint64_t numberOfEntries{0};

@@ -23,7 +23,7 @@ namespace NES::Nautilus::ProxyFunctions
 {
 inline int8_t* NES_Memory_TupleBuffer_getBuffer(TupleBuffer* tupleBuffer)
 {
-    return tupleBuffer->getBuffer();
+    return tupleBuffer->getMemArea();
 };
 
 inline uint64_t NES_Memory_TupleBuffer_getBufferSize(const TupleBuffer* tupleBuffer)
