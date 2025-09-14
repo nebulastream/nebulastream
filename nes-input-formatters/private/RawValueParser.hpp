@@ -47,7 +47,7 @@ auto parseFieldString()
     {
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            tupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *valuePtr = parsedValue;
     };
 }
@@ -64,7 +64,7 @@ auto parseQuotedFieldString()
         const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            tupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *valuePtr = parsedValue;
     };
 }

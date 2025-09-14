@@ -91,7 +91,7 @@ void removeSequenceState(ExecutionContext& context, OperatorHandlerId operatorHa
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()) { }
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
 
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
@@ -116,7 +116,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
-        emitState->bufferMemoryArea = emitState->resultBuffer.getBuffer();
+        emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = 0_u64;
     }
 

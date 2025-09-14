@@ -60,7 +60,7 @@ void FileSource::close()
 
 size_t FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
-    this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
+    this->inputFile.read(tupleBuffer.getMemArea<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
     const auto numBytesRead = this->inputFile.gcount();
     this->totalNumBytesRead += numBytesRead;
     return numBytesRead;
