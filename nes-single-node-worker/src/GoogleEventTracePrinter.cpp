@@ -302,8 +302,6 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                     auto args = nlohmann::json::object();
                     args["pipeline_id"] = taskStart.pipelineId.getRawValue();
                     args["task_id"] = taskStart.taskId.getRawValue();
-                    args["tuples"] = taskStart.numberOfTuples;
-
                     auto traceEvent = createTraceEvent(
                         fmt::format("Task {} (Pipeline {}, Query {})", taskStart.taskId, taskStart.pipelineId, taskStart.queryId),
                         Category::Task,
@@ -349,7 +347,6 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                     args["from_pipeline"] = taskEmit.fromPipeline.getRawValue();
                     args["to_pipeline"] = taskEmit.toPipeline.getRawValue();
                     args["task_id"] = taskEmit.taskId.getRawValue();
-                    args["tuples"] = taskEmit.numberOfTuples;
 
                     auto traceEvent = createTraceEvent(
                         fmt::format(
