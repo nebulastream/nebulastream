@@ -229,7 +229,7 @@ void NautilusTestUtils::compileFillBufferFunction(
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
             memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider);
             recordBuffer.setUsedMemoryInBytes(
-                recordBuffer.getUsedMemoryInBytes() + memoryProviderInputBuffer->getMemoryLayout()->getTupleSize());
+                recordBuffer.getUsedMemoryInBytes() + memoryProviderInputBuffer->getTupleSize());
         }
     };
     /// NOLINTEND(performance-unnecessary-value-param)

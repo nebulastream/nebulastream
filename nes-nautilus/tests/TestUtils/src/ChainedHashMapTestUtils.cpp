@@ -209,7 +209,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
                 RecordBuffer recordBufferOutput(outputBufferForValues);
                 memoryProviderInputBuffer->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
                 recordBufferOutput.setUsedMemoryInBytes(
-                    recordBufferOutput.getUsedMemoryInBytes() + memoryProviderInputBuffer->getMemoryLayout()->getTupleSize());
+                    recordBufferOutput.getUsedMemoryInBytes() + memoryProviderInputBuffer->getTupleSize());
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
@@ -242,7 +242,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
                 memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
                 outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
                 recordBufferOutput.setUsedMemoryInBytes(
-                    recordBufferOutput.getUsedMemoryInBytes() + memoryProviderInputBuffer->getMemoryLayout()->getTupleSize());
+                    recordBufferOutput.getUsedMemoryInBytes() + memoryProviderInputBuffer->getTupleSize());
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)

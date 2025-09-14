@@ -13,10 +13,12 @@
 */
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -34,15 +36,11 @@ uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
     return pagedVector->getTotalNumberOfEntries();
 }
 
-const TupleBuffer* createNewEntryProxy(PagedVector* pagedVector, AbstractBufferProvider* bufferProvider, const MemoryLayout* memoryLayout)
+const static PagedVector::TupleBufferWithCumulativeSum*
+createNewEntryProxy(PagedVector* pagedVector, AbstractBufferProvider* bufferProvider, const MemoryLayout* memoryLayout)
 {
     pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
     return std::addressof(pagedVector->getLastPage());
-}
-
-const TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
-{
-    return std::addressof(pagedVector->getFirstPage());
 }
 
 const TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
@@ -68,10 +66,15 @@ PagedVectorRef::PagedVectorRef(
 
 void PagedVectorRef::writeRecord(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
-    auto numTuplesOnPage = recordBuffer.getNumRecords();
-    memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record, bufferProvider);
-    recordBuffer.setNumRecords(numTuplesOnPage + 1);
+    const auto bufferWithSumRef = invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout);
+    const auto bufferRef = Nautilus::Util::getMemberRef(bufferWithSumRef, offsetof(PagedVector::TupleBufferWithCumulativeSum, buffer));
+    const auto numberOfTuplesOnPageRef
+        = Nautilus::Util::getMemberRef(bufferWithSumRef, offsetof(PagedVector::TupleBufferWithCumulativeSum, numberOfTuplesInPage));
+    auto numberOfTuplesOnPage = Nautilus::Util::readValueFromMemRef<uint64_t>(numberOfTuplesOnPageRef);
+    const RecordBuffer recordBuffer{bufferRef};
+    memoryProvider->writeRecord(numberOfTuplesOnPage, recordBuffer, record, bufferProvider);
+    numberOfTuplesOnPage = numberOfTuplesOnPage + 1;
+    VarVal{numberOfTuplesOnPage}.writeToMemory(numberOfTuplesOnPageRef);
 }
 
 Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos, const std::vector<Record::RecordFieldIdentifier>& projections) const
@@ -139,7 +142,7 @@ PagedVectorRefIter& PagedVectorRefIter::operator++()
 {
     pos = pos + 1;
     posOnPage = posOnPage + 1;
-    const auto tuplesOnPage = RecordBuffer(curPage).getNumRecords();
+    const auto tuplesOnPage = memoryProvider->getNumberOfTuples(RecordBuffer{curPage});
     if (posOnPage >= tuplesOnPage)
     {
         /// Go to the next page

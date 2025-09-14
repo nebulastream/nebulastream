@@ -123,4 +123,17 @@ std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(con
     }
     throw NotImplemented("Currently only row and column layout are supported");
 }
+
+nautilus::val<uint64_t> TupleBufferMemoryProvider::getNumberOfTuples(const RecordBuffer& recordBuffer) const
+{
+    const auto usedMemory = recordBuffer.getUsedMemoryInBytes();
+    const auto tupleSize = this->getTupleSize();
+    return usedMemory / tupleSize;
+}
+
+nautilus::val<size_t> TupleBufferMemoryProvider::getTupleSize() const
+{
+    return this->getMemoryLayout()->getTupleSize();
+}
+
 }

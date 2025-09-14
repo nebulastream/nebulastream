@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 
 #include <cstdint>
 #include <ostream>
 #include <utility>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>

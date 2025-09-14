@@ -110,7 +110,6 @@ void AggregationOperatorHandler::triggerSlices(
         tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
-        tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
 
 
         /// Writing all necessary information for the aggregation probe to the buffer.

@@ -16,11 +16,14 @@
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {

@@ -119,7 +119,6 @@ void HJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(windowInfo.windowStart);
-    tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
 
     /// Writing all necessary information for the probe to the buffer
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedHJWindowTrigger>();

@@ -182,7 +182,9 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         "Invalid page index {} as it is greater than the number of pages {}",
         pageIndex,
         storageSpace.size());
-    auto* page = storageSpace[pageIndex].getBuffer();
+    auto& bufferStorage = storageSpace[pageIndex];
+    bufferStorage.numberOfEntries += 1;
+    auto* page = bufferStorage.getMemArea();
     const auto entryOffsetInBuffer = numberOfTuples - (pageIndex * entriesPerPage);
     auto* const newEntry = reinterpret_cast<ChainedHashMapEntry*>(page + (entryOffsetInBuffer * entrySize));
 
@@ -200,10 +202,15 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     return newEntry;
 }
 
-const ChainedHashMapEntry* ChainedHashMap::getPage(const uint64_t pageIndex) const
+const ChainedHashMap::Page& ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
     PRECONDITION(pageIndex < storageSpace.size(), "Page index {} is greater than the number of pages {}", pageIndex, storageSpace.size());
-    return storageSpace[pageIndex].getBuffer<ChainedHashMapEntry>();
+    return storageSpace[pageIndex];
+}
+
+uint64_t ChainedHashMap::getNumberOfPages() const
+{
+    return storageSpace.size();
 }
 
 ChainedHashMapEntry* ChainedHashMap::getStartOfChain(const uint64_t entryIdx) const

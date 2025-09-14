@@ -49,7 +49,7 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
     /// iterate over records in buffer
-    auto numberOfRecords = recordBuffer.getNumRecords();
+    auto numberOfRecords = memoryProvider->getNumberOfTuples(recordBuffer);
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);

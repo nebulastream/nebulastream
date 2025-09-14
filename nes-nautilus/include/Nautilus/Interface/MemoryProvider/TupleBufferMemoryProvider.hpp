@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <DataTypes/DataType.hpp>
@@ -60,6 +61,10 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
+
+    /// Calculates the number of tuples in the record buffer
+    [[nodiscard]] virtual nautilus::val<uint64_t> getNumberOfTuples(const RecordBuffer& recordBuffer) const;
+    [[nodiscard]] virtual nautilus::val<size_t> getTupleSize() const;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

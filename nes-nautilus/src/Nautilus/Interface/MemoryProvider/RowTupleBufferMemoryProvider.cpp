@@ -61,13 +61,12 @@ Record RowTupleBufferMemoryProvider::readRecord(
     for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
         const auto& fieldName = schema.getFieldAt(i).name;
-        if (!includesField(projections, fieldName))
+        if (includesField(projections, fieldName))
         {
-            continue;
+            auto fieldAddress = calculateFieldAddress(recordOffset, i);
+            auto value = loadValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
+            record.write(rowMemoryLayout->getSchema().getFieldAt(i).name, value);
         }
-        auto fieldAddress = calculateFieldAddress(recordOffset, i);
-        auto value = loadValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
-        record.write(rowMemoryLayout->getSchema().getFieldAt(i).name, value);
     }
     return record;
 }

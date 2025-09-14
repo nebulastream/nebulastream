@@ -36,6 +36,8 @@ nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T:
     return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
 }
 
+nautilus::val<int8_t*> getMemberRef(const nautilus::val<int8_t*>& objectReference, uint64_t memberOffset);
+
 template <typename T>
 nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
 {

@@ -111,7 +111,7 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
                 const auto record = *it;
                 memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
                 recordBufferIndex = recordBufferIndex + 1;
-                recordBufferOutput.setUsedMemoryInBytes(recordBufferIndex * memoryProviderInputBuffer->getMemoryLayout()->getTupleSize());
+                recordBufferOutput.setUsedMemoryInBytes(recordBufferIndex * memoryProviderInputBuffer->getTupleSize());
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)

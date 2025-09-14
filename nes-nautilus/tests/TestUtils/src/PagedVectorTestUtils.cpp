@@ -141,7 +141,7 @@ void runRetrieveTest(
                 auto record = *it;
                 memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record, bufferProviderVal);
                 numberOfTuples = numberOfTuples + 1;
-                recordBuffer.setUsedMemoryInBytes(numberOfTuples * memoryProviderActualBuffer->getMemoryLayout()->getTupleSize());
+                recordBuffer.setUsedMemoryInBytes(numberOfTuples * memoryProviderActualBuffer->getTupleSize());
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)

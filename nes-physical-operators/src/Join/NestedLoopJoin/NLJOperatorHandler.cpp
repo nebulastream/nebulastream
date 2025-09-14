@@ -70,8 +70,6 @@ void NLJOperatorHandler::emitSlicesToProbe(
 
     nljSliceLeft.combinePagedVectors();
     nljSliceRight.combinePagedVectors();
-    const auto totalNumberOfTuples = nljSliceLeft.getNumberOfTuplesLeft() + nljSliceRight.getNumberOfTuplesRight();
-
     auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
 
     /// As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
@@ -81,7 +79,6 @@ void NLJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(windowInfo.windowStart);
-    tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
 
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTrigger>();
     bufferMemory->leftSliceEnd = sliceLeft.getSliceEnd();

@@ -25,6 +25,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

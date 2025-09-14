@@ -61,13 +61,12 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
     for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
         const auto& fieldName = schema.getFieldAt(i).name;
-        if (!includesField(projections, fieldName))
+        if (includesField(projections, fieldName))
         {
-            continue;
+            auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
+            auto value = loadValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
+            record.write(fieldName, value);
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = loadValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
-        record.write(fieldName, value);
     }
     return record;
 }

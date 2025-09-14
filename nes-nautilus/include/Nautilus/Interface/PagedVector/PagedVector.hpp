@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -35,8 +36,9 @@ public:
     {
         explicit TupleBufferWithCumulativeSum(TupleBuffer buffer) : buffer(std::move(buffer)) { }
 
-        size_t cumulativeSum{0};
         TupleBuffer buffer;
+        size_t numberOfTuplesInPage{0};
+        size_t cumulativeSum{0};
     };
 
     PagedVector() = default;
@@ -57,9 +59,9 @@ public:
 
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
 
-    [[nodiscard]] const TupleBuffer& getLastPage() const { return pages.getLastPage(); }
+    [[nodiscard]] const TupleBufferWithCumulativeSum& getLastPage() const { return pages.getLastPage(); }
 
-    [[nodiscard]] const TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
+    [[nodiscard]] const TupleBufferWithCumulativeSum& getFirstPage() const { return pages.getFirstPage(); }
 
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
@@ -68,8 +70,8 @@ private:
     struct PagesWrapper
     {
         [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
-        [[nodiscard]] const TupleBuffer& getLastPage() const;
-        [[nodiscard]] const TupleBuffer& getFirstPage() const;
+        [[nodiscard]] const TupleBufferWithCumulativeSum& getLastPage() const;
+        [[nodiscard]] const TupleBufferWithCumulativeSum& getFirstPage() const;
         [[nodiscard]] uint64_t getNumberOfPages() const;
         const TupleBufferWithCumulativeSum& operator[](size_t index) const;
         [[nodiscard]] uint64_t getNumberOfTuplesLastPage() const;

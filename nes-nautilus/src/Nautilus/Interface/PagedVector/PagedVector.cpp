@@ -58,7 +58,7 @@ void PagedVector::PagesWrapper::updateCumulativeSumLastItem()
     }
     const auto penultimateCumulativeSum = (pages.size() >= 2) ? pages.rbegin()[1].cumulativeSum : 0;
     auto& lastItem = pages.back();
-    lastItem.cumulativeSum = lastItem.buffer.getNumberOfTuples() + penultimateCumulativeSum;
+    lastItem.cumulativeSum = lastItem.numberOfTuplesInPage + penultimateCumulativeSum;
 }
 
 void PagedVector::PagesWrapper::updateCumulativeSumAllPages()
@@ -66,7 +66,7 @@ void PagedVector::PagesWrapper::updateCumulativeSumAllPages()
     size_t curCumulativeSum = 0;
     for (auto& page : pages)
     {
-        page.cumulativeSum = page.buffer.getNumberOfTuples() + curCumulativeSum;
+        page.cumulativeSum = page.numberOfTuplesInPage + curCumulativeSum;
         curCumulativeSum = page.cumulativeSum;
     }
 }
@@ -108,7 +108,7 @@ std::optional<uint64_t> PagedVector::getBufferPosForEntry(const uint64_t entryPo
 
 uint64_t PagedVector::PagesWrapper::getNumberOfTuplesLastPage() const
 {
-    return getLastPage().getNumberOfTuples();
+    return getLastPage().numberOfTuplesInPage;
 }
 
 const PagedVector::TupleBufferWithCumulativeSum& PagedVector::PagesWrapper::operator[](const size_t index) const
@@ -151,7 +151,7 @@ std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos
         if (&bufferWithSum == &pages.back())
         {
             const auto penultimateCumulativeSum = (pages.size() > 1) ? std::prev(pages.end(), 2)->cumulativeSum : 0;
-            return penultimateCumulativeSum + bufferWithSum.buffer.getNumberOfTuples() - 1;
+            return penultimateCumulativeSum + bufferWithSum.numberOfTuplesInPage - 1;
         }
         return bufferWithSum.cumulativeSum - 1;
     };
@@ -168,20 +168,20 @@ uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
 {
     /// We can not ensure that the last cumulative sum is up-to-date. Therefore, we need to add the penultimate sum + no. tuples of last page
     const auto penultimateCumulativeSum = (pages.size() > 1) ? pages.rbegin()[1].cumulativeSum : 0;
-    const auto lastNumberOfTuples = (not pages.empty()) ? pages.rbegin()[0].buffer.getNumberOfTuples() : 0;
+    const auto lastNumberOfTuples = (not pages.empty()) ? pages.rbegin()[0].numberOfTuplesInPage : 0;
     return penultimateCumulativeSum + lastNumberOfTuples;
 }
 
-const TupleBuffer& PagedVector::PagesWrapper::getLastPage() const
+const PagedVector::TupleBufferWithCumulativeSum& PagedVector::PagesWrapper::getLastPage() const
 {
     PRECONDITION(not pages.empty(), "getLastPage() should be called after a page has been inserted!");
-    return pages.back().buffer;
+    return pages.back();
 }
 
-const TupleBuffer& PagedVector::PagesWrapper::getFirstPage() const
+const PagedVector::TupleBufferWithCumulativeSum& PagedVector::PagesWrapper::getFirstPage() const
 {
     PRECONDITION(not pages.empty(), "getFirstPage() should be called after a page has been inserted!");
-    return pages.front().buffer;
+    return pages.front();
 }
 
 uint64_t PagedVector::PagesWrapper::getNumberOfPages() const

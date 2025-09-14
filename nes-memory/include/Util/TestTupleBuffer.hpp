@@ -163,7 +163,7 @@ public:
 
     void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
 
-    std::string readVarSized(std::variant<const uint64_t, const std::string> field);
+    [[nodiscard]] std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
     [[nodiscard]] std::string toString(const Schema& schema) const;
 
@@ -237,13 +237,13 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
     void setNumberOfTuples(uint64_t value);
-    void setUsedMemorySize(uint64_t value) const;
+    void setUsedMemorySize(uint64_t value);
 
 
     /// @throws CannotAccessBuffer if index is larger than buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
-    TupleBuffer getBuffer() const;
+    [[nodiscard]] TupleBuffer getBuffer() const;
 
     /**
      * @brief Iterator to process the tuples in a TestTupleBuffer.

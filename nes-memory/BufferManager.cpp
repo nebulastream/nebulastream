@@ -27,6 +27,7 @@
 #include <utility>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>

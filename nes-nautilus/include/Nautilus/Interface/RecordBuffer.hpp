@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -34,9 +35,6 @@ public:
     /// @brief Creates a new record buffer with a reference to a tuple buffer
     /// @param tupleBufferRef
     explicit RecordBuffer(const nautilus::val<TupleBuffer*>& tupleBufferRef);
-
-    void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
-    [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
 
     /// Retrieve the reference to the underling memory area from the record buffer.
     nautilus::val<int8_t*> getBuffer() const;
@@ -67,6 +65,9 @@ public:
     /// Get the creation timestamp of the underlying tuple buffer. The creation timestamp is the point in time when the tuple buffer was created.
     nautilus::val<Timestamp> getCreatingTs();
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
+
+    [[nodiscard]] nautilus::val<size_t> getUsedMemoryInBytes() const;
+    void setUsedMemoryInBytes(const nautilus::val<size_t>& memUsed);
 
     ~RecordBuffer() = default;
 
