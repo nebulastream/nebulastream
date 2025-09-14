@@ -142,7 +142,7 @@ void HJOperatorHandler::emitSlicesToProbe(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
     /// Writing all necessary information for the probe to the buffer
-    auto* bufferMemory = tupleBuffer.getBuffer<EmittedHJWindowTrigger>();
+    auto* bufferMemory = tupleBuffer.getMemArea<EmittedHJWindowTrigger>();
     bufferMemory->windowInfo = windowInfo;
     bufferMemory->leftNumberOfHashMaps = leftHashMaps.size();
     bufferMemory->rightNumberOfHashMaps = rightHashMaps.size();

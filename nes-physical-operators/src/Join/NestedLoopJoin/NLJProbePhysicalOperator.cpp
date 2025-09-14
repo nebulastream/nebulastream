@@ -143,7 +143,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     openChild(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
-    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
+    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto sliceIdLeft
         = invoke(getNLJSliceEndProxy, nljWindowTriggerTaskRef, nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left));
     const auto sliceIdRight

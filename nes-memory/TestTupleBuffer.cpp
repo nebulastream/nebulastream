@@ -47,7 +47,7 @@ DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : addr
 
 DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
 {
-    const auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
+    const auto* bufferBasePointer = buffer.getMemArea<uint8_t>();
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
     return DynamicField{basePointer, memoryLayout->getPhysicalType(fieldIndex)};

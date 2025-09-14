@@ -60,7 +60,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     openChild(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
-    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
+    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getMemArea());
     const auto numberOfHashMaps = Nautilus::Util::readValueFromMemRef<uint64_t>(
         Nautilus::Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::numberOfHashMaps));
     const auto windowInfoRef = Nautilus::Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::windowInfo);
