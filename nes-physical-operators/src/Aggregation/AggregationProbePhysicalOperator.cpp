@@ -55,7 +55,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     openChild(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
-    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
+    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getMemArea());
     const auto windowStart = invoke(
         +[](const EmittedAggregationWindow* emittedAggregationWindow) { return emittedAggregationWindow->windowInfo.windowStart; },
         aggregationWindowRef);

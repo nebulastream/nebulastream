@@ -365,7 +365,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();
-    std::memset(bufferOutput.getBuffer(), 0, bufferOutput.getBufferSize());
+    std::memset(bufferOutput.getMemArea(), 0, bufferOutput.getBufferSize());
 
     /// We are calling the function to find all entries and write them to the output buffer.
     auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBufferWithEntryIterator();
@@ -397,7 +397,7 @@ void ChainedHashMapTestUtils::checkEntryIterator(
             ASSERT_TRUE(false);
         }
         auto bufferOutput = bufferOutputOpt.value();
-        std::memset(bufferOutput.getBuffer(), 0, bufferOutput.getBufferSize());
+        std::memset(bufferOutput.getMemArea(), 0, bufferOutput.getBufferSize());
         findAndWriteToOutputBuffer(std::addressof(inputBuffer), std::addressof(bufferOutput), bufferManager.get(), std::addressof(hashMap));
 
         /// Checking if the number of items are equal to the number of items in the exact map.

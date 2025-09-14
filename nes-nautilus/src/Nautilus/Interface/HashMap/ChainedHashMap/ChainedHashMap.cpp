@@ -164,7 +164,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
             throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
         }
         entrySpace = entryBuffer.value();
-        entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getBuffer());
+        entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getMemArea());
         std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
 
         /// Pointing the end of the entries to itself
@@ -179,7 +179,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         {
             throw CannotAllocateBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(pageSize));
         }
-        std::memset(newPage.value().getBuffer(), 0, pageSize);
+        std::memset(newPage.value().getMemArea(), 0, pageSize);
         storageSpace.emplace_back(newPage.value());
     }
 

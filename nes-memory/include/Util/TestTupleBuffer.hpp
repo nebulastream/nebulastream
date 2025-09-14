@@ -246,7 +246,7 @@ public:
     void setNumberOfTuples(uint64_t value);
 
 
-    /// @throws CannotAccessBuffer if index is larger then buffer capacity
+    /// @throws CannotAccessBuffer if index is larger than buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
     TupleBuffer getBuffer();

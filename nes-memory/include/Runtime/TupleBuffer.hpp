@@ -120,11 +120,11 @@ public:
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     void release() noexcept;
 
-    int8_t* getBuffer() noexcept;
+    int8_t* getMemArea() noexcept;
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
     template <typename T = int8_t>
-    T* getBuffer() noexcept
+    T* getMemArea() noexcept
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(std::has_single_bit(alignof(T)));
@@ -133,7 +133,7 @@ public:
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
     template <typename T = int8_t>
-    const T* getBuffer() const noexcept
+    const T* getMemArea() const noexcept
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(std::has_single_bit(alignof(T)));

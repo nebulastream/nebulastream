@@ -135,7 +135,7 @@ const int8_t* MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tuple
     /// Loading the childbuffer containing the variable sized data
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
     /// We need to jump childOffset bytes to go to the correct pointer for the var sized
-    auto* const varSizedPointer = childBuffer.getBuffer<int8_t>() + variableSizedAccess.getOffset();
+    auto* const varSizedPointer = childBuffer.getMemArea<int8_t>() + variableSizedAccess.getOffset();
     return varSizedPointer;
 }
 

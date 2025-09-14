@@ -54,7 +54,7 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
 {
     const auto& schema = columnMemoryLayout->getSchema();
     /// read all fields
-    const auto bufferAddress = recordBuffer.getBuffer();
+    const auto bufferAddress = recordBuffer.getMemArea();
     Record record;
     for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
@@ -77,7 +77,7 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     const auto& schema = columnMemoryLayout->getSchema();
-    const auto bufferAddress = recordBuffer.getBuffer();
+    const auto bufferAddress = recordBuffer.getMemArea();
 
     const nautilus::val<uint64_t> varSizedOffset = 0;
     for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
