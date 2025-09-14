@@ -81,7 +81,8 @@ TEST_P(ChainedHashMapTest, fixedDataTypesSingleInsert)
     auto findAndInsert = compileFindAndInsert();
     for (auto& buffer : inputBuffers)
     {
-        findAndInsert(std::addressof(buffer), bufferManager.get(), std::addressof(hashMap));
+        auto tupleBuffer = buffer.getBuffer();
+        findAndInsert(std::addressof(tupleBuffer), bufferManager.get(), std::addressof(hashMap));
     }
 
     /// Now we are searching for the entries and checking if the values are correct.
@@ -110,7 +111,8 @@ TEST_P(ChainedHashMapTest, fixedDataTypesUpdate)
     auto findAndUpdate = compileFindAndUpdate();
     for (auto& buffer : inputBuffers)
     {
-        findAndUpdate(std::addressof(buffer), std::addressof(buffer), bufferManager.get(), std::addressof(hashMap));
+        auto tupleBuffer = buffer.getBuffer();
+        findAndUpdate(std::addressof(tupleBuffer), std::addressof(tupleBuffer), bufferManager.get(), std::addressof(hashMap));
     }
 
     /// Now we are searching for the entries and checking if the values are correct.

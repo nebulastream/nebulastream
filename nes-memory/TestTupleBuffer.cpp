@@ -222,12 +222,17 @@ uint64_t TestTupleBuffer::getCapacity() const
 
 uint64_t TestTupleBuffer::getNumberOfTuples() const
 {
-    return buffer.getNumberOfTuples();
+    return numberOfRecords;
 }
 
 void TestTupleBuffer::setNumberOfTuples(const uint64_t value)
 {
-    buffer.setNumberOfTuples(value);
+    numberOfRecords = value;
+}
+
+void TestTupleBuffer::setUsedMemorySize(const uint64_t value) const
+{
+    buffer.setUsedMemorySize(value);
 }
 
 DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
@@ -247,9 +252,10 @@ TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayo
         "Buffer size must be the same compared to the size specified in the layout: {}, but was: {}",
         memoryLayout->getBufferSize(),
         buffer.getBufferSize());
+    numberOfRecords = buffer.getUsedMemorySize() / memoryLayout->getTupleSize();
 }
 
-TupleBuffer TestTupleBuffer::getBuffer()
+TupleBuffer TestTupleBuffer::getBuffer() const
 {
     return buffer;
 }
@@ -268,7 +274,7 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::begin() const
 
 TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
 {
-    return TupleIterator(*this, getNumberOfTuples());
+    return TupleIterator(*this, numberOfRecords);
 }
 
 std::string TestTupleBuffer::toString(const Schema& schema) const

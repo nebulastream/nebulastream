@@ -30,6 +30,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
@@ -177,7 +178,7 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
     constexpr auto numVectors = 2UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<TupleBuffer>> allRecords;
+    std::vector<std::vector<TestTupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -185,7 +186,7 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
         allRecords.emplace_back(records);
     }
 
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TestTupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
@@ -207,7 +208,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
     constexpr auto numVectors = 4UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<TupleBuffer>> allRecords;
+    std::vector<std::vector<TestTupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -215,7 +216,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
         allRecords.emplace_back(records);
     }
 
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TestTupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
@@ -237,7 +238,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
     constexpr auto numVectors = 4UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<TupleBuffer>> allRecords;
+    std::vector<std::vector<TestTupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -245,7 +246,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
         allRecords.emplace_back(records);
     }
 
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TestTupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
@@ -267,7 +268,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
     constexpr auto numVectors = 4UL;
     const auto projections = testSchema.getFieldNames();
 
-    std::vector<std::vector<TupleBuffer>> allRecords;
+    std::vector<std::vector<TestTupleBuffer>> allRecords;
     auto allFields = testSchema.getFieldNames();
     for (auto i = 0UL; i < numVectors; ++i)
     {
@@ -275,7 +276,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
         allRecords.emplace_back(records);
     }
 
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
+    std::vector<TestTupleBuffer> allRecordsAfterAppendAll;
     for (auto i = 0UL; i < numVectors; ++i)
     {
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());

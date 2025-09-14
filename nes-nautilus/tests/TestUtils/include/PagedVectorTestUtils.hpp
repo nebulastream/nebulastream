@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 
 namespace NES::Nautilus::TestUtils
@@ -32,7 +33,7 @@ void runStoreTest(
     const Schema& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<TupleBuffer>& allRecords,
+    const std::vector<TestTupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     AbstractBufferProvider& bufferManager);
 
@@ -41,7 +42,7 @@ void runRetrieveTest(
     const Schema& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<TupleBuffer>& allRecords,
+    const std::vector<TestTupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     AbstractBufferProvider& bufferManager);
 
@@ -50,8 +51,8 @@ void insertAndAppendAllPagesTest(
     const Schema& schema,
     uint64_t entrySize,
     uint64_t pageSize,
-    const std::vector<std::vector<TupleBuffer>>& allRecordsAndVectors,
-    const std::vector<TupleBuffer>& expectedRecordsAfterAppendAll,
+    const std::vector<std::vector<TestTupleBuffer>>& allRecordsAndVectors,
+    const std::vector<TestTupleBuffer>& expectedRecordsAfterAppendAll,
     uint64_t differentPageSizes,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     AbstractBufferProvider& bufferManager);

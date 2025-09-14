@@ -237,12 +237,13 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
     void setNumberOfTuples(uint64_t value);
+    void setUsedMemorySize(uint64_t value) const;
 
 
-    /// @throws CannotAccessBuffer if index is larger then buffer capacity
+    /// @throws CannotAccessBuffer if index is larger than buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
-    TupleBuffer getBuffer();
+    TupleBuffer getBuffer() const;
 
     /**
      * @brief Iterator to process the tuples in a TestTupleBuffer.
@@ -302,7 +303,7 @@ public:
     requires(!ContainsString<Types> && ...)
     void pushRecordToBuffer(std::tuple<Types...> record)
     {
-        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
+        pushRecordToBufferAtIndex(record, numberOfRecords);
     }
 
     /**
@@ -317,7 +318,7 @@ public:
     requires(ContainsString<Types> || ...)
     void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager)
     {
-        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
+        pushRecordToBufferAtIndex(record, numberOfRecords, bufferManager);
     }
 
     /**
@@ -334,7 +335,6 @@ public:
     template <typename... Types>
     void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, AbstractBufferProvider* bufferProvider = nullptr)
     {
-        uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
         if (recordIndex >= buffer.getBufferSize())
         {
@@ -367,6 +367,7 @@ public:
         if (recordIndex + 1 > numberOfRecords)
         {
             this->setNumberOfTuples(recordIndex + 1);
+            this->setUsedMemorySize(buffer.getUsedMemorySize() + this->getMemoryLayout().getTupleSize());
         }
     }
 
@@ -430,6 +431,7 @@ private:
 
     std::shared_ptr<MemoryLayout> memoryLayout;
     TupleBuffer buffer;
+    uint64_t numberOfRecords;
 };
 
 }

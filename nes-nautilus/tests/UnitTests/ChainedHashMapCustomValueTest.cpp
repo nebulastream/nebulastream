@@ -29,6 +29,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -121,7 +122,8 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         const auto keyPositionInBuffer = std::rand() % bufferKey.getNumberOfTuples();
 
         /// Writing the key and values to the exact map to compare the values later.
-        const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(bufferKey)));
+        auto bufferKeyTupleBuffer = bufferKey.getBuffer();
+        const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(bufferKeyTupleBuffer)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
         auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
@@ -129,13 +131,18 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         for (auto& bufferValue : inputBuffers)
         {
             /// We are writing the values to the paged vector
+            auto bufferValueTupleBuffer = bufferValue.getBuffer();
             findAndInsertIntoPagedVector(
-                std::addressof(bufferKey), std::addressof(bufferValue), keyPositionInBuffer, bufferManager.get(), std::addressof(hashMap));
+                std::addressof(bufferKeyTupleBuffer),
+                std::addressof(bufferValueTupleBuffer),
+                keyPositionInBuffer,
+                bufferManager.get(),
+                std::addressof(hashMap));
 
 
             /// Writing the values to the exact map
-            const RecordBuffer recordBufferValue(nautilus::val<const TupleBuffer*>(std::addressof(bufferValue)));
-            for (nautilus::val<uint64_t> i = 0; i < recordBufferValue.getNumRecords(); i = i + 1)
+            const RecordBuffer recordBufferValue(nautilus::val<const TupleBuffer*>(std::addressof(bufferValueTupleBuffer)));
+            for (nautilus::val<uint64_t> i = 0; i < memoryProviderInputBuffer->getNumberOfTuples(recordBufferValue); i = i + 1)
             {
                 auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, i);
                 exactMap.insert({{recordKey, projectionKeys}, recordValue});
@@ -160,7 +167,8 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     for (auto [buffer, keyPositionInBuffer] : std::views::zip(inputBuffers, allKeyPositions))
     {
         /// Getting the record key from the input buffer, so that we can compare the values with the exact map.
-        const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
+        auto tupleBuffer = buffer.getBuffer();
+        const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(tupleBuffer)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
         auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
@@ -180,11 +188,10 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
 
         /// Calling the compiled method to write all values of the hash map for a specific key position to the output buffer.
         writeAllRecordsIntoOutputBuffer(
-            std::addressof(buffer), keyPositionInBuffer, std::addressof(outputBuffer), bufferManager.get(), std::addressof(hashMap));
-        const auto writtenBytes
-            = outputBuffer.getNumberOfTuples() * memoryProviderInputBuffer->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
-        ASSERT_LE(writtenBytes, outputBuffer.getBufferSize());
-        ASSERT_EQ(outputBuffer.getNumberOfTuples(), std::distance(recordValueExactStart, recordValueExactEnd));
+            std::addressof(tupleBuffer), keyPositionInBuffer, std::addressof(outputBuffer), bufferManager.get(), std::addressof(hashMap));
+        auto outputTestTupleBuffer = TestTupleBuffer::createTestTupleBuffer(outputBuffer, buffer.getMemoryLayout().getSchema());
+        ASSERT_LE(outputBuffer.getUsedMemorySize(), outputBuffer.getBufferSize());
+        ASSERT_EQ(outputTestTupleBuffer.getNumberOfTuples(), std::distance(recordValueExactStart, recordValueExactEnd));
 
         /// Now we are comparing the values in the output buffer with the exact values from the map.
         nautilus::val<uint64_t> currentPosition = 0;

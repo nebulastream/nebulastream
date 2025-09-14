@@ -72,7 +72,8 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
             const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
             const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
             const RecordBuffer recordBufferValue(bufferValue);
-            for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
+            for (nautilus::val<uint64_t> idxValues = 0; idxValues < memoryProviderInputBuffer->getNumberOfTuples(recordBufferValue);
+                 idxValues = idxValues + 1)
             {
                 auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, idxValues);
                 pagedVectorRef.writeRecord(recordValue, bufferManagerVal);
@@ -110,7 +111,7 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
                 const auto record = *it;
                 memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
                 recordBufferIndex = recordBufferIndex + 1;
-                recordBufferOutput.setNumRecords(recordBufferIndex);
+                recordBufferOutput.setUsedMemoryInBytes(recordBufferIndex * memoryProviderInputBuffer->getMemoryLayout()->getTupleSize());
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
