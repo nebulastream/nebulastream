@@ -56,7 +56,7 @@ Record RowTupleBufferMemoryProvider::readRecord(
     const auto& schema = rowMemoryLayout->getSchema();
     Record record;
     const auto tupleSize = rowMemoryLayout->getTupleSize();
-    const auto bufferAddress = recordBuffer.getBuffer();
+    const auto bufferAddress = recordBuffer.getMemArea();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
@@ -79,7 +79,7 @@ void RowTupleBufferMemoryProvider::writeRecord(
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     auto tupleSize = rowMemoryLayout->getTupleSize();
-    const auto bufferAddress = recordBuffer.getBuffer();
+    const auto bufferAddress = recordBuffer.getMemArea();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     const auto schema = rowMemoryLayout->getSchema();
 

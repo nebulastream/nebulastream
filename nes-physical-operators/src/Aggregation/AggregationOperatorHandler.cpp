@@ -111,7 +111,7 @@ void AggregationOperatorHandler::triggerSlices(
         auto tupleBuffer = tupleBufferVal.value();
 
         /// It might be that the buffer is not zeroed out.
-        std::memset(tupleBuffer.getBuffer(), 0, neededBufferSize);
+        std::memset(tupleBuffer.getMemArea(), 0, neededBufferSize);
 
         /// As we are here "emitting" a buffer, we have to set the originId, the seq number, the watermark and the "number of tuples".
         /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
@@ -126,7 +126,7 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// Writing all necessary information for the aggregation probe to the buffer.
-        auto* bufferMemory = tupleBuffer.getBuffer<EmittedAggregationWindow>();
+        auto* bufferMemory = tupleBuffer.getMemArea<EmittedAggregationWindow>();
         bufferMemory->windowInfo = windowInfo.windowInfo;
         bufferMemory->numberOfHashMaps = allHashMaps.size();
         bufferMemory->finalHashMapPtr = finalHashMap.get();

@@ -70,7 +70,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
     /// Getting number of hash maps and return if there are no hashmaps
-    const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getBuffer());
+    const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto leftNumberOfHashMaps = Nautilus::Util::readValueFromMemRef<uint64_t>(
         Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
     const auto rightNumberOfHashMaps = Nautilus::Util::readValueFromMemRef<uint64_t>(

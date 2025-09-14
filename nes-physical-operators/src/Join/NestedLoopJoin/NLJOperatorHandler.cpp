@@ -86,7 +86,7 @@ void NLJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
-    auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTrigger>();
+    auto* bufferMemory = tupleBuffer.getMemArea<EmittedNLJWindowTrigger>();
     bufferMemory->leftSliceEnd = sliceLeft.getSliceEnd();
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfo;
