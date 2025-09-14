@@ -37,6 +37,7 @@
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <RawTupleBuffer.hpp>
 #include <RawValueParser.hpp>
 #include <SequenceShredder.hpp>
 
@@ -79,7 +80,7 @@ void processTuple(
     const std::string_view tupleView,
     const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
     const size_t numTuplesReadFromRawBuffer,
-    TupleBuffer& formattedBuffer,
+    RawTupleBuffer& formattedBuffer,
     const SchemaInfo& schemaInfo,
     const std::vector<ParseFunctionSignature>& parseFunctions,
     AbstractBufferProvider& bufferProvider /// for getting unpooled buffers for varsized data
@@ -114,7 +115,7 @@ template <InputFormatIndexerType FormatterType>
 void processSpanningTuple(
     const std::span<const StagedBuffer> stagedBuffersSpan,
     AbstractBufferProvider& bufferProvider,
-    TupleBuffer& formattedBuffer,
+    RawTupleBuffer& formattedBuffer,
     const SchemaInfo& schemaInfo,
     const typename FormatterType::IndexerMetaData& indexerMetaData,
     const FormatterType& inputFormatIndexer,
@@ -151,6 +152,7 @@ void processSpanningTuple(
         processTuple<typename FormatterType::FieldIndexFunctionType>(
             completeSpanningTuple, fieldIndexFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+        formattedBuffer.setUsedMemorySize(formattedBuffer.getUsedMemorySize() + schemaInfo.getSizeOfTupleInBytes());
     }
 }
 
@@ -223,7 +225,7 @@ public:
         /// the InputFormatterTask does not need to do anything.
         /// @Note: with a Nautilus implementation, we can skip the proxy function call that triggers formatting/indexing during tracing,
         /// leading to generated code that immediately operates on the data.
-        const auto [div, mod] = std::lldiv(static_cast<int64_t>(rawBuffer.getNumberOfTuples()), this->schemaInfo.getSizeOfTupleInBytes());
+        const auto [div, mod] = std::lldiv(static_cast<int64_t>(rawBuffer.getUsedMemorySize()), this->schemaInfo.getSizeOfTupleInBytes());
         PRECONDITION(
             mod == 0,
             "Raw buffer contained {} bytes, which is not a multiple of the tuple size {} bytes.",
@@ -231,7 +233,7 @@ public:
             this->schemaInfo.getSizeOfTupleInBytes());
         /// @Note: We assume that '.getNumberOfBytes()' ALWAYS returns the number of bytes at this point (set by source)
         const auto numberOfTuplesInFormattedBuffer = rawBuffer.getNumberOfBytes() / this->schemaInfo.getSizeOfTupleInBytes();
-        rawBuffer.setNumberOfTuples(numberOfTuplesInFormattedBuffer);
+        rawBuffer.setUsedMemorySize(numberOfTuplesInFormattedBuffer * this->schemaInfo.getSizeOfTupleInBytes());
         /// The 'rawBuffer' is already formatted, so we can use it without any formatting.
         rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -289,7 +291,7 @@ private:
         const RawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
         const FieldIndexFunction<typename FormatterType::FieldIndexFunctionType>& fieldIndexFunction,
-        TupleBuffer& formattedBuffer,
+        RawTupleBuffer& formattedBuffer,
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
@@ -315,10 +317,11 @@ private:
                 /// The current raw buffer produces more than one formatted buffer.
                 /// Each formatted buffer has the sequence number of the raw buffer and a chunk number that uniquely identifies it.
                 /// Only the last formatted buffer sets the 'isLastChunk' member to true.
-                setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, false);
-                pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                auto formattedTupleBuffer = formattedBuffer.getRawBuffer();
+                setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedTupleBuffer, runningChunkNumber, false);
+                pec.emitBuffer(formattedTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
                 /// The 'isLastChunk' member of a new buffer is true pre default. If we don't require another buffer, the flag stays true.
-                formattedBuffer = bufferProvider->getBufferBlocking();
+                formattedBuffer = RawTupleBuffer{bufferProvider->getBufferBlocking()};
             }
 
             /// Fill current buffer until either full, or we exhausted tuples in raw buffer
@@ -335,6 +338,7 @@ private:
                 formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
                 ++numTuplesReadFromRawBuffer;
             }
+            formattedBuffer.setUsedMemorySize(formattedBuffer.getNumberOfTuples() * this->schemaInfo.getSizeOfTupleInBytes());
             numberOfFormattedTuplesToProduce -= formattedBuffer.getNumberOfTuples();
         }
     }
@@ -359,7 +363,7 @@ private:
             rawBuffer.getSequenceNumber().getRawValue());
 
         /// 1. process leading spanning tuple if required
-        auto formattedBuffer = bufferProvider->getBufferBlocking();
+        RawTupleBuffer formattedBuffer{bufferProvider->getBufferBlocking()};
         if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
         {
             const auto spanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
@@ -385,9 +389,10 @@ private:
             const auto numBytesInFormattedBuffer = formattedBuffer.getNumberOfTuples() * this->schemaInfo.getSizeOfTupleInBytes();
             if (formattedBuffer.getBufferSize() - numBytesInFormattedBuffer < this->schemaInfo.getSizeOfTupleInBytes())
             {
-                setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, false);
-                pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-                formattedBuffer = bufferProvider->getBufferBlocking();
+                auto formattedTupleBuffer = formattedBuffer.getRawBuffer();
+                setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedTupleBuffer, runningChunkNumber, false);
+                pec.emitBuffer(formattedTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                formattedBuffer = RawTupleBuffer{bufferProvider->getBufferBlocking()};
             }
 
             const auto spanningTupleBuffers
@@ -405,8 +410,9 @@ private:
         /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
         if (formattedBuffer.getNumberOfTuples() != 0)
         {
-            setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, true);
-            pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+            auto formattedTupleBuffer = formattedBuffer.getRawBuffer();
+            setMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedTupleBuffer, runningChunkNumber, true);
+            pec.emitBuffer(formattedTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
         }
     }
 
@@ -431,7 +437,7 @@ private:
             return;
         }
         /// If there is a spanning tuple, get a new buffer for formatted data and process the spanning tuples
-        auto formattedBuffer = bufferProvider->getBufferBlocking();
+        RawTupleBuffer formattedBuffer{bufferProvider->getBufferBlocking()};
         processSpanningTuple<FormatterType>(
             stagedBuffers,
             *bufferProvider,
@@ -441,10 +447,10 @@ private:
             this->inputFormatIndexer,
             this->parseFunctions);
 
-        formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
-        formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
-        formattedBuffer.setOriginId(rawBuffer.getOriginId());
-        pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        formattedBuffer.getRawBuffer().setSequenceNumber(rawBuffer.getSequenceNumber());
+        formattedBuffer.getRawBuffer().setChunkNumber(ChunkNumber(runningChunkNumber++));
+        formattedBuffer.getRawBuffer().setOriginId(rawBuffer.getOriginId());
+        pec.emitBuffer(formattedBuffer.getRawBuffer(), PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 };
 

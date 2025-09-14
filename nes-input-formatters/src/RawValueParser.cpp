@@ -15,12 +15,13 @@
 #include <RawValueParser.hpp>
 
 #include <cstdint>
-#include <cstring>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include <RawTupleBuffer.hpp>
 
 namespace NES
 {
@@ -59,24 +60,13 @@ ParseFunctionSignature getBasicStringParseFunction()
     return [](const std::string_view inputString,
               const size_t writeOffsetInBytes,
               AbstractBufferProvider& bufferProvider,
-              TupleBuffer& tupleBufferFormatted)
+              const RawTupleBuffer& tupleBufferFormatted)
     {
-        const auto valueLength = inputString.length();
-        auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
-        if (not childBuffer.has_value())
-        {
-            throw CannotAllocateBuffer("Could not store string, because we cannot allocate a child buffer.");
-        }
+        auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            const_cast<signed char*>(tupleBufferFormatted.getRawBuffer().getBuffer())
+            + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-        auto& childBufferVal = childBuffer.value();
-        *childBufferVal.getBuffer<uint32_t>() = valueLength;
-        std::memcpy(
-            childBufferVal.getBuffer<char>() + sizeof(uint32_t), ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            inputString.data(),
-            valueLength);
-        const auto indexToChildBuffer = tupleBufferFormatted.storeChildBuffer(childBufferVal);
-        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        const auto indexToChildBuffer = Memory::MemoryLayouts::writeVarSizedData(tupleBufferFormatted.getRawBuffer(), inputString, bufferProvider);
         *childBufferIndexPointer = indexToChildBuffer;
     };
 }
