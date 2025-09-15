@@ -38,8 +38,11 @@ namespace NES
 AggregationOperatorHandler::AggregationOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    const uint64_t maxNumberOfBuckets)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
+    , maxNumberOfBuckets(maxNumberOfBuckets)
 {
 }
 
@@ -48,7 +51,8 @@ AggregationOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArgu
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
-    const auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
+    auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
+    newHashMapArgs.numberOfBuckets = std::clamp(rollingAverageNumberOfKeys.rlock()->getAverage(), 1UL, maxNumberOfBuckets);
     return std::function(
         [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
             SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
@@ -76,6 +80,9 @@ void AggregationOperatorHandler::triggerSlices(
                 if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
                     (hashMap != nullptr) and hashMap->getNumberOfTuples() > 0)
                 {
+                    /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
+                    rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
+
                     allHashMaps.emplace_back(hashMap);
                     totalNumberOfTuples += hashMap->getNumberOfTuples();
                     if (not finalHashMap)
@@ -111,15 +118,18 @@ void AggregationOperatorHandler::triggerSlices(
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
         tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
+        tupleBuffer.setCreationTimestampInMS(Timestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
 
         /// Writing all necessary information for the aggregation probe to the buffer.
         auto* bufferMemory = tupleBuffer.getBuffer<EmittedAggregationWindow>();
         bufferMemory->windowInfo = windowInfo.windowInfo;
         bufferMemory->numberOfHashMaps = allHashMaps.size();
+        bufferMemory->finalHashMapPtr = finalHashMap.get();
         bufferMemory->finalHashMap = std::move(finalHashMap);
-        auto* addressFirstHashMapPtr = reinterpret_cast<int8_t*>(bufferMemory) + sizeof(EmittedAggregationWindow);
-        bufferMemory->hashMaps = reinterpret_cast<Nautilus::Interface::HashMap**>(addressFirstHashMapPtr);
+        auto* addressFirstHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedAggregationWindow);
+        bufferMemory->hashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstHashMapPtr);
         std::memcpy(addressFirstHashMapPtr, allHashMaps.data(), allHashMaps.size() * sizeof(Nautilus::Interface::HashMap*));
 
 
