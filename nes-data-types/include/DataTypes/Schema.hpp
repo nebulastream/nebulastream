@@ -129,19 +129,24 @@ private:
 /// Returns a copy of the input schema without any source qualifier on the schema fields
 Schema withoutSourceQualifier(const Schema& input);
 
-/// Checks if two schemas are equal and keeps track of every mismatch and missing / unexpected fields
+/// Checks if two schemas are equal and keeps track of size / field mismatches
 struct SchemaDiff
 {
-    struct SchemaMismatch
+    struct FieldMismatch
     {
         size_t index{};
         Schema::Field expectedField;
         Schema::Field actualField;
     };
 
-    std::vector<Schema::Field> missingFields;
-    std::vector<Schema::Field> additionalFields;
-    std::vector<SchemaMismatch> schemaMismatches;
+    struct SizeMismatch
+    {
+        size_t expectedSize{};
+        size_t actualSize{};
+    };
+
+    std::optional<SizeMismatch> sizeMismatch;
+    std::vector<FieldMismatch> fieldMismatches;
 
     static SchemaDiff of(const Schema& expectedSchema, const Schema& actualSchema);
 

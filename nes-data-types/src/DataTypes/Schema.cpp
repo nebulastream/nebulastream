@@ -14,7 +14,6 @@
 
 #include <DataTypes/Schema.hpp>
 
-#include <algorithm>
 #include <cstddef>
 #include <iostream>
 #include <optional>
@@ -241,25 +240,23 @@ Schema withoutSourceQualifier(const Schema& input)
 SchemaDiff SchemaDiff::of(const Schema& expectedSchema, const Schema& actualSchema)
 {
     SchemaDiff diff;
-    const size_t sizeOfSmallerSchema = std::min(expectedSchema.getNumberOfFields(), actualSchema.getNumberOfFields());
 
-    /// Check schemas for mismatches
-    for (size_t i = 0; i < sizeOfSmallerSchema; ++i)
+    /// If the schemas do not contain the same number of fields, we do not check for field mismatches and report a size mismatch instead.
+    if (expectedSchema.getNumberOfFields() == actualSchema.getNumberOfFields())
     {
-        if (expectedSchema.getFieldAt(i) != actualSchema.getFieldAt(i))
+        /// Check schemas for field mismatches
+        for (size_t i = 0; i < expectedSchema.getNumberOfFields(); ++i)
         {
-            diff.schemaMismatches.push_back({i, expectedSchema.getFieldAt(i), actualSchema.getFieldAt(i)});
+            if (expectedSchema.getFieldAt(i) != actualSchema.getFieldAt(i))
+            {
+                diff.fieldMismatches.push_back(
+                    {.index = i, .expectedField = expectedSchema.getFieldAt(i), .actualField = actualSchema.getFieldAt(i)});
+            }
         }
     }
-
-    /// Determine missing or additional fields
-    if (expectedSchema.getNumberOfFields() > actualSchema.getNumberOfFields())
+    else
     {
-        diff.missingFields.assign(expectedSchema.begin() + sizeOfSmallerSchema, expectedSchema.end());
-    }
-    else if (actualSchema.getNumberOfFields() > expectedSchema.getNumberOfFields())
-    {
-        diff.additionalFields.assign(actualSchema.begin() + sizeOfSmallerSchema, actualSchema.end());
+        diff.sizeMismatch = {.expectedSize = expectedSchema.getNumberOfFields(), .actualSize = actualSchema.getNumberOfFields()};
     }
 
     return diff;
@@ -267,45 +264,30 @@ SchemaDiff SchemaDiff::of(const Schema& expectedSchema, const Schema& actualSche
 
 bool SchemaDiff::isDifferent() const
 {
-    return !missingFields.empty() || !additionalFields.empty() || !schemaMismatches.empty();
+    return sizeMismatch.has_value() || !fieldMismatches.empty();
 }
 
 std::ostream& operator<<(std::ostream& os, const SchemaDiff& diff)
 {
     os << "SchemaDiff {\n";
 
-    if (!diff.schemaMismatches.empty())
+    if (diff.sizeMismatch.has_value())
     {
-        os << "  Mismatching fields (" << diff.schemaMismatches.size() << "):\n";
-        for (const auto& [index, expected, actual] : diff.schemaMismatches)
+        const SchemaDiff::SizeMismatch mismatch = diff.sizeMismatch.value();
+        os << "  Mismatching schema size:\n  Expected " << mismatch.expectedSize << " fields, got " << mismatch.actualSize << " fields.\n";
+    }
+    else if (!diff.fieldMismatches.empty())
+    {
+        os << "  Mismatching fields (" << diff.fieldMismatches.size() << "):\n";
+        for (const auto& [index, expected, actual] : diff.fieldMismatches)
         {
-            os << "  For field " << index << ": Expected " << expected << ", got " << actual << "\n";
+            os << "  For field " << index << ": Expected " << expected << ", got " << actual << ".\n";
         }
         os << "\n";
     }
-
-    if (!diff.missingFields.empty())
+    else
     {
-        os << "  Actual schema misses fields (" << diff.missingFields.size() << "):\n";
-        for (const auto& field : diff.missingFields)
-        {
-            os << "  " << field << "\n";
-        }
-        os << "\n";
-    }
-
-    if (!diff.additionalFields.empty())
-    {
-        os << "  Actual schema contains additional fields (" << diff.additionalFields.size() << "):\n";
-        for (const auto& field : diff.additionalFields)
-        {
-            os << "  " << field << "\n";
-        }
-    }
-
-    if (!diff.isDifferent())
-    {
-        os << "  No differences found\n";
+        os << "  No differences found.\n";
     }
 
     os << "}";
