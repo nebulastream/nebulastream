@@ -26,6 +26,7 @@
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Util/RollingAverage.hpp>
 #include <HashMapSlice.hpp>
 
 namespace NES
@@ -48,11 +49,9 @@ class HJOperatorHandler final : public StreamJoinOperatorHandler
 public:
     HJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
-        const OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-        : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
-    {
-    }
+        OriginId outputOriginId,
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        uint64_t maxNumberOfBuckets);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -72,6 +71,9 @@ private:
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
+
+    folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
+    uint64_t maxNumberOfBuckets;
 };
 
 }
