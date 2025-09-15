@@ -46,7 +46,11 @@ protected:
         sourceOp = SourceNameLogicalOperator("Source");
         auto dummySchema = Schema{};
         auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value(); /// NOLINT
-        auto dummyParserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+        std::unordered_map<std::string, std::string> dummyParserConfig = {
+            {"parserType", "CSV"},
+            {"tupelDelemiter", "\n"},
+            {"fieldDelemiter", ","}
+        };
         auto dummySourceDescriptor = sourceCatalog /// NOLINT
                                          .addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig)
                                          .value();

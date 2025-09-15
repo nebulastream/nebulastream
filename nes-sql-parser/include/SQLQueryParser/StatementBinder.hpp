@@ -61,7 +61,7 @@ struct CreatePhysicalSourceStatement
     LogicalSource attachedTo;
     std::string sourceType;
     std::unordered_map<std::string, std::string> sourceConfig;
-    ParserConfig parserConfig;
+    std::unordered_map<std::string, std::string> parserConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 

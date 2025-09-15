@@ -69,7 +69,6 @@ public:
         sinkCatalog = std::make_shared<SinkCatalog>();
         binder = std::make_shared<StatementBinder>(
             sourceCatalog,
-            sinkCatalog,
             [](auto&& queryContext)
             { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
         sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog);

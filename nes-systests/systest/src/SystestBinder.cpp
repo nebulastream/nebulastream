@@ -370,8 +370,17 @@ struct SystestBinder::Impl
         }
         file.close();
 
-        auto s = statement.sourceConfig.find("file_path");
-        s->second = std::string{testFilePath};
+        auto [filePathConf, filePathSuccess] = statement.sourceConfig.try_emplace("file_path", testFilePath);
+        if (!filePathSuccess)
+        {
+            throw InvalidConfigParameter("file_path already exists in source.");
+        }
+
+        auto [typeConf, typeSuccess] = statement.parserConfig.try_emplace("type", "CSV");
+        if (! typeSuccess)
+        {
+            throw InvalidConfigParameter("type already exists in source.");
+        }
     }
 
     void createPhysicalSource(
@@ -647,7 +656,7 @@ struct SystestBinder::Impl
                 }
 
                 const auto physicalSource = sourceCatalog.get()->addPhysicalSource(
-                    logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
+                    logicalSource.value(), sourceType, sourceConfig, parserConfig);
                 if (not physicalSource.has_value())
                 {
                     NES_ERROR(

@@ -324,19 +324,32 @@ public:
         }
         /// TODO #764 use normal identifiers for types
         const std::string type = physicalSourceDefAST->type->getText();
-
-        auto configOptions = bindConfigOptions(physicalSourceDefAST->options->namedConfigExpression());
-        const auto parserConfigIter = configOptions.find("PARSER");
-        if (parserConfigIter == configOptions.end() || not parserConfigIter->second.contains("TYPE"))
+        auto configOptions = [&]()
         {
-            throw InvalidConfigParameter("Parser type not specified");
-        }
+            if (physicalSourceDefAST->options != nullptr)
+            {
+                return bindConfigOptions(physicalSourceDefAST->options->namedConfigExpression());
+            }
+            return std::unordered_map<std::string, std::unordered_map<std::string, Literal>>{};
+        }();
 
-        const ParserConfig parserConfig = ParserConfig::create(
-            parserConfigIter->second
+
+        auto configMap = [&]()
+        {
+            const auto parserConfigIter = configOptions.find("PARSER");
+
+            if (parserConfigIter != configOptions.end() && not parserConfigIter->second.contains("TYPE"))
+            {
+                return parserConfigIter->second;
+            }
+            return std::unordered_map<std::string, Literal>{};
+        }();
+
+        const auto parserConfig =
+            configMap
             | std::views::transform([this](const auto& pair)
                                     { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
-            | std::ranges::to<std::unordered_map<std::string, std::string>>());
+            | std::ranges::to<std::unordered_map<std::string, std::string>>();
 
         if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
         {
@@ -346,16 +359,6 @@ public:
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
 
-        /// Validate input formatter and source config and type. We don't attach it directly to the SourceDescriptor to avoid the dependencies
-        if (not contains(parserConfig.parserType))
-        {
-            throw InvalidConfigParameter("Invalid parser type {}", parserConfig.parserType);
-        }
-        if (not SourceValidationProvider::provide(type, sourceOptions).has_value())
-        {
-            /// We probably want to propagate the error from the descriptor validation up to here somehow, so that the user can receive a detailed error message.
-            throw InvalidConfigParameter("Invalid source configuration for type {} with arguments {}", type, sourceOptions);
-        }
         return CreatePhysicalSourceStatement{
             .attachedTo = logicalSourceOpt.value(), .sourceType = type, .sourceConfig = sourceOptions, .parserConfig = parserConfig};
     }
@@ -364,7 +367,14 @@ public:
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
         const auto sinkType = sinkDefAST->type->getText();
-        const auto configOptions = bindConfigOptions(sinkDefAST->options->namedConfigExpression());
+        const auto configOptions = [&]()
+        {
+            if (sinkDefAST->options != nullptr)
+            {
+                return bindConfigOptions(sinkDefAST->options->namedConfigExpression());
+            }
+            return std::unordered_map<std::string, std::unordered_map<std::string, Literal>>{};
+        }();
         std::unordered_map<std::string, std::string> sinkOptions{};
         if (const auto sinkConfigIter = configOptions.find("SINK"); sinkConfigIter != configOptions.end())
         {
@@ -372,10 +382,6 @@ public:
                 | std::views::transform([this](auto& pair)
                                         { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
-        }
-        if (not SinkDescriptor::validateAndFormatConfig(sinkType, sinkOptions).has_value())
-        {
-            throw InvalidConfigParameter("Invalid sink configuration");
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
         return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions};
