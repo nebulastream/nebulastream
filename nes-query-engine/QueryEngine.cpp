@@ -181,7 +181,6 @@ public:
         const std::shared_ptr<QueryEngineStatisticListener>& statistic,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
-    QueryId registerQuery(std::unique_ptr<ExecutableQueryPlan>);
     void stopQuery(QueryId queryId);
 
     void clear()
