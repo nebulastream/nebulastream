@@ -14,8 +14,7 @@
 
 #pragma once
 
-#include <chrono>
-#include <functional>
+#include <cstddef>
 #include <memory>
 #include <tuple>
 #include <utility>
@@ -23,9 +22,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TypeTraits.hpp>
 #include <absl/functional/any_invocable.h>
 #include <cpptrace/from_current.hpp>
-#include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
 
@@ -54,21 +54,21 @@ public:
     {
         onComplete callback;
 
-        explicit OnComplete(onComplete callback) : callback(std::move(callback)) { }
+        explicit OnComplete(onComplete callback);
     };
 
     struct OnSuccess
     {
         onSuccess callback;
 
-        explicit OnSuccess(onSuccess callback) : callback(std::move(callback)) { }
+        explicit OnSuccess(onSuccess callback);
     };
 
     struct OnFailure
     {
         onFailure callback;
 
-        explicit OnFailure(onFailure callback) : callback(std::move(callback)) { }
+        explicit OnFailure(onFailure callback);
     };
 
     TaskCallback() = default;
@@ -77,54 +77,27 @@ public:
     template <typename... Args>
     explicit TaskCallback(Args&&... args)
     {
+        static_assert(UniqueTypesIgnoringCVRef<Args...>, "Cannot use the same callback multiple times");
         (processArgs(std::forward<Args>(args)), ...);
     }
 
-    void callOnComplete()
-    {
-        if (onCompleteCallback)
-        {
-            ENGINE_LOG_DEBUG("TaskCallback::callOnComplete");
-            onCompleteCallback();
-        }
-    }
+    void callOnComplete();
 
-    void callOnSuccess()
-    {
-        if (onSuccessCallback)
-        {
-            ENGINE_LOG_DEBUG("TaskCallback::callOnSuccess");
-            onSuccessCallback();
-        }
-    }
+    void callOnSuccess();
 
-    void callOnFailure(Exception exception)
-    {
-        if (onFailureCallback)
-        {
-            ENGINE_LOG_ERROR("TaskCallback::callOnFailure");
-            onFailureCallback(std::move(exception));
-        }
-    }
+    void callOnFailure(Exception exception);
 
-    [[nodiscard]] std::tuple<onComplete, onFailure, onSuccess> take() &&
-    {
-        auto callbacks = std::make_tuple(std::move(onCompleteCallback), std::move(onFailureCallback), std::move(onSuccessCallback));
-        this->onCompleteCallback = {};
-        this->onSuccessCallback = {};
-        this->onFailureCallback = {};
-        return callbacks;
-    }
+    [[nodiscard]] std::tuple<onComplete, onFailure, onSuccess> take() &&;
 
 private:
     /// Process OnComplete tag and callback
-    void processArgs(OnComplete onComplete) { onCompleteCallback = std::move(onComplete.callback); }
+    void processArgs(OnComplete onComplete);
 
     /// Process OnSuccess tag and callback
-    void processArgs(OnSuccess onSuccess) { onSuccessCallback = std::move(onSuccess.callback); }
+    void processArgs(OnSuccess onSuccess);
 
     /// Process OnFailure tag and callback
-    void processArgs(OnFailure onFailure) { onFailureCallback = std::move(onFailure.callback); }
+    void processArgs(OnFailure onFailure);
 
     onComplete onCompleteCallback;
     onSuccess onSuccessCallback;
@@ -136,13 +109,13 @@ class BaseTask
 public:
     BaseTask() = default;
 
-    BaseTask(QueryId queryId, TaskCallback callback) : queryId(queryId), callback(std::move(callback)) { }
+    BaseTask(QueryId queryId, TaskCallback callback);
 
-    void complete() { callback.callOnComplete(); }
+    void complete();
 
-    void succeed() { callback.callOnSuccess(); }
+    void succeed();
 
-    void fail(Exception exception) { callback.callOnFailure(std::move(exception)); }
+    void fail(Exception exception);
 
     QueryId queryId = INVALID<QueryId>;
     TaskCallback callback;
@@ -153,10 +126,7 @@ private:
 
 struct WorkTask : BaseTask
 {
-    WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
-        : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline)), pipelineId(pipelineId), buf(std::move(buf))
-    {
-    }
+    WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback);
 
     WorkTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
@@ -166,10 +136,7 @@ struct WorkTask : BaseTask
 
 struct StartPipelineTask : BaseTask
 {
-    StartPipelineTask(QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline)
-        : BaseTask(std::move(queryId), std::move(callback)), pipeline(std::move(pipeline)), pipelineId(std::move(pipelineId))
-    {
-    }
+    StartPipelineTask(QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline);
 
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
@@ -185,22 +152,16 @@ struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
 
-    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, TaskCallback callback)
-        : BaseTask(queryId, std::move(callback)), target(std::move(target))
-    {
-    }
+    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, TaskCallback callback);
 
     std::weak_ptr<RunningSource> target;
 };
 
 struct FailSourceTask : BaseTask
 {
-    FailSourceTask() : exception("", 0) { }
+    FailSourceTask();
 
-    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, const Exception& exception, TaskCallback callback)
-        : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::move(exception))
-    {
-    }
+    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback);
 
     std::weak_ptr<RunningSource> target;
     Exception exception;
@@ -208,10 +169,7 @@ struct FailSourceTask : BaseTask
 
 struct StopQueryTask : BaseTask
 {
-    StopQueryTask(QueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
-        : BaseTask(std::move(queryId), std::move(callback)), catalog(std::move(catalog))
-    {
-    }
+    StopQueryTask(QueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
 
     std::weak_ptr<QueryCatalog> catalog;
 };
@@ -219,10 +177,7 @@ struct StopQueryTask : BaseTask
 struct StartQueryTask : BaseTask
 {
     StartQueryTask(
-        QueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
-        : BaseTask(std::move(queryId), std::move(callback)), queryPlan(std::move(queryPlan)), catalog(std::move(catalog))
-    {
-    }
+        QueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
 
     std::unique_ptr<ExecutableQueryPlan> queryPlan;
     std::weak_ptr<QueryCatalog> catalog;
@@ -230,10 +185,7 @@ struct StartQueryTask : BaseTask
 
 struct PendingPipelineStopTask : BaseTask
 {
-    PendingPipelineStopTask(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback)
-        : BaseTask(std::move(queryId), std::move(callback)), attempts(attempts), pipeline(std::move(pipeline))
-    {
-    }
+    PendingPipelineStopTask(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback);
 
     size_t attempts;
     std::shared_ptr<RunningQueryPlanNode> pipeline;
@@ -249,20 +201,11 @@ using Task = std::variant<
     StopPipelineTask,
     StartPipelineTask>;
 
-inline void succeedTask(Task& task)
-{
-    std::visit([](auto& specificTask) { return specificTask.succeed(); }, task);
-}
+void succeedTask(Task& task);
 
-inline void completeTask(Task& task)
-{
-    std::visit([](auto& specificTask) { return specificTask.complete(); }, task);
-}
+void completeTask(Task& task);
 
-inline void failTask(Task& task, Exception exception)
-{
-    std::visit([&](auto& specificTask) { return specificTask.fail(std::move(exception)); }, task);
-}
+void failTask(Task& task, Exception exception);
 
 void handleTask(const auto& handler, Task task)
 {
