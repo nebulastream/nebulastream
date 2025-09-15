@@ -59,15 +59,15 @@ namespace
 {
 
 /// This function is unsafe because it requires the lifetime of the RunningQueryPlanNode exceed the lifetime of the callback
-auto injectQueryFailureUnsafe(RunningQueryPlanNode* node, TaskCallback::onFailure failure)
+auto injectQueryFailureUnsafe(RunningQueryPlanNode& node, TaskCallback::onFailure failure)
 {
-    return [failure = std::move(failure), node](Exception exception) mutable
+    return [failure = std::move(failure), &node](Exception exception) mutable
     {
         if (failure)
         {
             failure(exception);
         }
-        node->fail(std::move(exception));
+        node.fail(std::move(exception));
     };
 }
 
@@ -307,7 +307,7 @@ public:
         auto wrappedCallback = TaskCallback{
             TaskCallback::OnComplete(std::move(complete)),
             TaskCallback::OnSuccess(std::move(success)),
-            TaskCallback::OnFailure(injectQueryFailureUnsafe(node.get(), std::move(failure))),
+            TaskCallback::OnFailure(injectQueryFailureUnsafe(*node, std::move(failure))),
         };
         /// Calling the Unsafe version of injectQueryFailure is required here because the RunningQueryPlan is a unique ptr.
         /// However the StopPipelineTask takes ownership of the Node and thus guarantees that it is alive when the callback is invoked.
