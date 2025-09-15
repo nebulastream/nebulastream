@@ -689,7 +689,7 @@ struct SystestBinder::Impl
                 }();
 
                 /// Replacing the sinkName with the created unique sink name
-                const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest.getRawValue());
+                const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
                 query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
                 /// Adding the sink to the sink config, such that we can create a fully specified query plan
@@ -697,7 +697,7 @@ struct SystestBinder::Impl
 
                 auto& currentTest = plans.emplace(currentQueryNumberInTest, currentQueryNumberInTest).first->second;
                 currentTest.setQueryDefinition(query);
-                if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
+                if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile); not sinkExpected.has_value())
                 {
                     currentTest.setException(sinkExpected.error());
                 }

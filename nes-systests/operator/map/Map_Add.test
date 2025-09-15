@@ -4,7 +4,6 @@
 
 CREATE LOGICAL SOURCE stream(ID UINT64, VALUE UINT64, TIMESTAMP UINT64);
 CREATE PHYSICAL SOURCE FOR stream TYPE File SET(
-    '/dev/null' AS `SOURCE`.FILE_PATH,
     'CSV' AS PARSER.`TYPE`
 );
 INLINE
@@ -18,7 +17,7 @@ INLINE
 
 #SINK streamSink UINT64 ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP
 CREATE SINK streamSink(id UINT64, stream.value UINT64, stream.timestamp UINT64)
-    TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+    TYPE File SET('CSV' as `SINK`.INPUT_FORMAT);
 
 #SINK streamSinkWithNew UINT64 STREAM$ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP UINT64 NEW
 CREATE SINK streamSinkWithNew(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, new UINT64)
@@ -33,7 +32,7 @@ CREATE SINK sinkOnlyIdAndNew2(new2 UINT64, id UINT64)
     TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
 
 # Map with add function touches one field
-SELECT ID + UINT64(1) AS ID, VALUE, TIMESTAMP FROM STREAM INTO STREAMSINK
+SELECT id + UINT64(1) AS id, value, timestamp FROM stream INTO streamSink
 ----
 2,1,1000
 3,1,1001
