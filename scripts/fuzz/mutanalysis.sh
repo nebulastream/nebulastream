@@ -17,6 +17,7 @@ set -u
 shopt -s nullglob
 
 export CCACHE_DIR=/ccache
+export MOLD_JOBS=1
 
 if [ ! -d /out ] || [ ! -d /wdir ] || [ ! -d /ccache ]
 then
