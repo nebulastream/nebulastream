@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-09-13_11-13-29'
+DATETIME = '2025-09-14_21-27-45'
 FILE = 'combined_benchmark_statistics.csv'
 # FILE = 'combined_slice_accesses.csv'
 SLICE_ACCESSES = False
@@ -35,7 +35,7 @@ def chunk_list(list, chunk_size):
 
 
 def filter_by_config(data, config):
-    mask = pd.Series([True] * len(data))
+    mask = pd.Series(True, index=data.index)
     for k, v in config.items():
         mask &= data[k] == v
     return data[mask]
@@ -49,11 +49,11 @@ def filter_by_default_values_except_params(data, params):
     return data[mask]
 
 
-def normalize_time_per_groups(data, param, group_cols, time_col):
+def normalize_time_per_groups(data, param, group_cols, time_col, param_factor=1.0):
     group_min = data.groupby(group_cols)[time_col].transform('min')
     group_max = data.groupby(group_cols)[time_col].transform('max')
     data_normalized = data.copy()
-    data_normalized[param] = (data_normalized[time_col] - group_min) / (group_max - group_min)
+    data_normalized[param] = ((data_normalized[time_col] - group_min) / (group_max - group_min)) * param_factor
     return data_normalized
 
 
@@ -62,6 +62,12 @@ def shift_time_per_groups(data, param, group_cols, time_col):
     data_shifted = data.copy()
     data_shifted[param] = data_shifted[time_col] - group_min
     return data_shifted
+
+
+def cut_param_max_min_per_groups(data, param, group_cols):
+    longest_start= max(group[param].min() for _, group in data.groupby(group_cols))
+    shortest_end = min(group[param].max() for _, group in data.groupby(group_cols))
+    return data[(data[param] >= longest_start) & (data[param] <= shortest_end)]
 
 
 def convert_units(data, col, unit='B', order_idx=3, factor=1000.0):
@@ -199,6 +205,37 @@ def find_default_values_for_params(data, min_support_ratio=0.9):
     return likely_defaults
 
 
+def interpolate_and_align_per_groups(data, param, metric, group_cols, output_points=100, fill_value='extrapolate', extrapolate_to=(0, 8000)):
+    interpolated_dfs = []
+
+    # Determine global range across all runs
+    all_min = extrapolate_to[0] or data[param].min()
+    all_max = extrapolate_to[1] or data[param].max()
+    x_new = np.linspace(all_min, all_max, output_points)
+
+    for _, group in data.groupby(group_cols):
+        group_sorted = group.sort_values(by=param)
+        x = group_sorted[param].values
+        y = group_sorted[metric].values
+
+        # Skip groups that can't be interpolated
+        if len(x) < 2 or np.any(np.isnan(y)):
+            continue
+
+        try:
+            f_interp = interp1d(x, y, kind='linear', bounds_error=False, fill_value=fill_value)
+            y_interp = f_interp(x_new)
+            df_interp = pd.DataFrame({param: x_new, metric: y_interp})
+            for col in group_cols:
+                df_interp[col] = group[col].unique()[0]
+            interpolated_dfs.append(df_interp)
+        except Exception as e:
+            print(f'Interpolation failed for a run: {e}')
+            continue
+
+    return pd.concat(interpolated_dfs, ignore_index=True) if interpolated_dfs else pd.DataFrame()
+
+
 def valid_row(row):
     return pd.notna(row["last_write_nopred_end"]) and pd.notna(row["first_read_nopred_start"])
 
@@ -308,6 +345,8 @@ df['correctness_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' |
 # %% Compare slice store types for different configs
 
 def plot_config_comparison(data, configs, metric, label, config_id):
+    data = data[data['page_size'] <= 131072]
+
     param = 'config_id'
     matching_rows = []
 
@@ -348,80 +387,26 @@ for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
 
 # %% Compare slice store types for different configs over time
 
-def interpolate_and_align_runs(data, param, metric, group_cols, output_points=100, extrapolate_to=(0, 8000)):
-    interpolated_dfs = []
-
-    # Determine global range across all runs
-    all_min = extrapolate_to[0]
-    all_max = extrapolate_to[1] or data[param].max()
-    x_new = np.linspace(all_min, all_max, output_points)
-
-    for _, group in data.groupby(group_cols):
-        group_sorted = group.sort_values(by=param)
-        x = group_sorted[param].values
-        y = group_sorted[metric].values
-
-        # Skip groups that can't be interpolated
-        if len(x) < 2 or np.any(np.isnan(y)):
-            continue
-
-        try:
-            f_interp = interp1d(x, y, kind='linear', bounds_error=False, fill_value='extrapolate')
-            y_interp = f_interp(x_new)
-            df_interp = pd.DataFrame({param: x_new, metric: y_interp})
-            df_interp['slice_store_type'] = group['slice_store_type'].iloc[0]
-            interpolated_dfs.append(df_interp)
-        except Exception as e:
-            print(f'Interpolation failed for a run: {e}')
-            continue
-
-    return pd.concat(interpolated_dfs, ignore_index=True) if interpolated_dfs else pd.DataFrame()
-
-
-def plot_time_comparison(data, config, metric, label, plot):
+def plot_time_comparison(data, config, metric, hue, label, legend, interpolate=False):
     param = 'window_start_normalized'
-    unit = ''
 
-    filtered_data = filter_by_config(data, config)
-    #filtered_data = filtered_data[filtered_data['slice_store_type'] == 'DEFAULT']
-    if filtered_data.empty:
-        print(f'No data available for config: {config}.')
-        return
+    data = filter_by_config(data, config)
+    data_scaled, metric_unit = convert_units(data, metric)
 
-    #if interpolated_data.empty:
-    #    print(f'No valid interpolated data for config: {config}')
-    #    return
-
-    if plot == 1:
-        normalized_data = normalize_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], 'window_start')
-        data, unit = convert_units(normalized_data, metric)
-        #data, unit = [normalized_data, 'B']
-    if plot == 2:
-        param = 'window_start'
-        min_val = filtered_data[param].min()
-        filtered_data[param] = filtered_data[param] - min_val
-        interpolated_data = interpolate_and_align_runs(filtered_data, param, metric, ['slice_store_type', 'dir_name'], extrapolate_to=(filtered_data[param].min(), filtered_data[param].max()))
-        #interpolated_data[param] = interpolated_data[param] / 1000
-        #shifted_data = shift_time_per_groups(interpolated_data, param, ['slice_store_type', 'dir_name'], 'window_start')
-        data, unit = convert_units(interpolated_data, metric)
-        #data, unit = [shifted_data, 'B']
-    if plot == 3:
-        interpolated_data = interpolate_and_align_runs(filtered_data, param, metric, ['slice_store_type', 'dir_name'])
-        normalized_data = normalize_time_per_groups(interpolated_data, param, 'slice_store_type', param)
-        data, unit = convert_units(normalized_data, metric)
-        #data, unit = [normalized_data, 'B']
-    if plot == 4:
-        interpolated_data = interpolate_and_align_runs(filtered_data, param, metric, ['slice_store_type', 'dir_name'], extrapolate_to=(filtered_data[param].min(), filtered_data[param].max()))
-        #interpolated_data[param] = interpolated_data[param] / 1000
-        #shifted_data = shift_time_per_groups(interpolated_data, param, ['slice_store_type', 'dir_name'], param)
-        data, unit = convert_units(interpolated_data, metric)
-        #data, unit = [shifted_data, 'B']
+    if interpolate:
+        normalized_data = normalize_time_per_groups(data_scaled, param, ['slice_store_type', 'dir_name'], param)
+        interpolated_data = interpolate_and_align_per_groups(normalized_data, param, metric, ['slice_store_type', 'dir_name'], extrapolate_to=(normalized_data[param].min(), normalized_data[param].max()))
+        data, param_unit = convert_units(interpolated_data, param, 'normalised')
+    else:
+        filtered_data = cut_param_max_min_per_groups(data_scaled, param, ['slice_store_type', 'dir_name'])
+        shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], param)
+        data, param_unit = convert_units(shifted_data, param, 's', 2)
 
     plt.figure(figsize=(14, 6))
-    ax = sns.lineplot(data=data, x=param, y=metric, hue='slice_store_type', errorbar=None, marker='o')  # TODO errorbar='sd'
+    ax = sns.lineplot(data=data, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
 
-    # Add labels for min and max values of metric for each slice store type
-    add_min_max_labels_per_group(data, 'slice_store_type', metric, ax, param)
+    # Add labels for min and max values of metric for this param for each value of hue
+    add_min_max_labels_per_group(data, hue, metric, ax, param)
 
     # Add config below
     mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
@@ -429,30 +414,33 @@ def plot_time_comparison(data, config, metric, label, plot):
     plt.subplots_adjust(bottom=0.15)
     plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
 
+    param = 'time'
     plt.title(f'Effect of {param} on {label}')
-    plt.xlabel(f'{param} (sec)')
-    plt.ylabel(f'{label} ({unit})')
-    plt.legend(title='Slice Store Type')
+    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
+    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+    plt.legend(title=legend)
     plt.show()
 
 
-def plot_test(data, config, metric, label):
+def plot_test(data, config, metric, hue, label, legend):
     param = 'window_start_normalized'
 
     filtered_data = filter_by_config(data, config)
+    filtered_data, metric_unit = convert_units(filtered_data, metric)
     #filtered_data = filtered_data[filtered_data['slice_store_type'] == 'DEFAULT']
     if filtered_data.empty:
         print(f'No data available for config: {config}.')
         return
 
     for _, data in filtered_data.groupby('dir_name'):
+        print(data['dir_name'].unique()[0])
         data, unit = convert_units(data, metric)
 
         plt.figure(figsize=(14, 6))
-        ax = sns.lineplot(data=data, x=param, y=metric, hue='slice_store_type', errorbar=None, marker='o')
+        ax = sns.lineplot(data=data, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
 
-        # Add labels for min and max values of metric for each slice store type
-        add_min_max_labels_per_group(data, 'slice_store_type', metric, ax, param)
+        # Add labels for min and max values of metric for this param for each value of hue
+        add_min_max_labels_per_group(data, hue, metric, ax, param)
 
         # Add config below
         mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
@@ -461,9 +449,9 @@ def plot_test(data, config, metric, label):
         plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
 
         plt.title(f'Effect of {param} on {label}')
-        plt.xlabel(f'{param} (sec)')
-        plt.ylabel(f'{label} ({unit})')
-        plt.legend(title='Slice Store Type')
+        plt.xlabel(f'{param} (s)')  # ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
+        plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+        plt.legend(title=legend)
         plt.show()
 
 
@@ -486,22 +474,37 @@ specific_config = {
     'watermark_predictor_type': 'KALMAN'
 }
 
-specific_rows = df[df['dir_name'] == '.cache/benchmarks/2025-06-05_10-15-06/SpillingBenchmarks_1749125641']
+specific_rows = df[df['dir_name'] == '.cache/benchmarks/2025-09-14_21-27-45/SpillingSystests_1757885314']
 specific_values = specific_rows[all_config_params].drop_duplicates()
 configs = specific_values.to_dict('records')
 
-filtered_data = filter_by_config(df, configs[0]).sort_values(by='window_start')
+#filtered_data = filter_by_config(df, configs[0]).sort_values(by='window_start')
 
-#configs = [specific_config]
+#configs = common_config_dicts[7:8]
 #configs = [d for d in common_config_dicts if d['query'] == specific_query]
 
-plots = [1, 2, 3, 4]
-print(f'number of common configs: {len(configs)}')
-for config in configs:
-    #plot_test(df, config, 'throughput_data', 'Throughput / sec')
-    for plot in plots:
-        plot_time_comparison(df, config, 'throughput_data', 'Throughput / sec', plot)
-        #plot_time_comparison(df, config, 'memory', 'Memory', plot)
+#print(f'number of common configs: {len(configs)}')
+#for config in configs:
+
+#chunk_size = 25
+#for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
+#    
+#    param = 'config_id'
+#    matching_rows = []
+
+#    for i, config in enumerate(config_chunk, start=i * chunk_size + 1):
+#        # Collect all rows for each config and map to short codes
+#        subset = filter_by_config(df, config).copy()
+#        subset[param] = f'C{i}'
+#        matching_rows.append(subset)
+
+#    combined = pd.concat(matching_rows, ignore_index=True)
+
+    #plot_test(df, config, 'throughput_data', 'slice_store_type', 'Throughput / sec', 'Slice Store')
+    #plot_test(df, config, 'memory', 'slice_store_type', 'Memory', 'Slice Store')
+for config in common_config_dicts:
+    plot_time_comparison(df, config, 'throughput_data', 'slice_store_type', 'Throughput / sec', 'Slice Store Type', True)
+    plot_time_comparison(df, config, 'memory', 'slice_store_type', 'Memory', 'Slice Store Type', True)
 
 
 # %% Shared parameter plots
@@ -568,8 +571,8 @@ def plot_file_backed_params(data, param, metric, hue, label, legend): #, color):
     # data = data[data['max_num_watermark_gaps'] <= 100]
     #if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
     #    data = data[data['max_memory_consumption'] <= 4294967296]
-    #if param == 'max_num_sequence_numbers':
-    #    data = data[data['max_num_sequence_numbers'] <= 1000]
+    if param == 'max_num_sequence_numbers':
+        data = data[data['max_num_sequence_numbers'] <= 1000]
 
     data = filter_by_default_values_except_params(data, [param])
     data_scaled, metric_unit = convert_units(data, metric)
