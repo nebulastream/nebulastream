@@ -14,26 +14,48 @@
 
 #pragma once
 
+#include <atomic>
 #include <concepts>
 #include <cstdint>
 #include <numeric>
 #include <vector>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 /// Calculates and stores a rolling average over the last n items
-/// IMPORTANT: This class is NOT thread-safe
+/// IMPORTANT: This class is NOT thread-safe, as there is no synchronization between a call to add() and getAverage().
 template <typename T>
 requires(std::integral<T> || std::floating_point<T>)
 class RollingAverage
 {
     std::vector<T> buffer;
     uint64_t windowSize;
-    uint64_t index{0};
-    uint64_t rollingCount{0};
+    size_t index;
+    size_t rollingCount;
+    T average;
+
+    void updateAverage()
+    {
+        if (rollingCount == 0)
+        {
+            average = 0;
+        }
+
+        const double sum = std::accumulate(buffer.begin(), buffer.end(), 0.0);
+        average = sum / rollingCount;
+    }
 
 public:
-    explicit RollingAverage(uint64_t windowSize) : buffer(windowSize, 0), windowSize(windowSize) { }
+    explicit RollingAverage(size_t windowSize) : buffer(windowSize, 0), windowSize(windowSize), index(0), rollingCount(0)
+    {
+        PRECONDITION(windowSize > 0, "Window size {} must be greater than 0", windowSize);
+    }
+
+    RollingAverage(const RollingAverage& rhs) = default;
+    RollingAverage(RollingAverage&& rhs) noexcept = default;
+    RollingAverage& operator=(const RollingAverage& rhs) = default;
+    RollingAverage& operator=(RollingAverage&& rhs) noexcept = default;
 
     double add(T val)
     {
@@ -45,19 +67,11 @@ public:
         buffer[index] = val;
         index = (index + 1) % windowSize;
 
+        updateAverage();
         return getAverage();
     }
 
-    double getAverage()
-    {
-        if (rollingCount == 0)
-        {
-            return T(0);
-        }
-
-        const double sum = std::accumulate(buffer.begin(), buffer.end(), 0.0);
-        return sum / rollingCount;
-    }
+    [[nodiscard]] T getAverage() const { return average; }
 };
 
 }
