@@ -79,14 +79,14 @@ Interface::HashMap* getAggHashMapProxy(
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy,
-        ctx.getGlobalOperatorHandler(operatorHandlerId),
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     Interface::ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
@@ -139,7 +139,7 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     , hashMapOptions(std::move(hashMapOptions))
 {
     nautilus::engine::Options options;
-    options.setOption("engine.Compilation", false);
+    options.setOption("engine.Compilation", true);
     const nautilus::engine::NautilusEngine nautilusEngine(options);
 
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
