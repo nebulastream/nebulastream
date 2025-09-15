@@ -38,6 +38,7 @@
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -61,19 +62,15 @@ std::string_view JoinLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 {
-    if (const auto* const rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs))
-    {
-        return *getWindowType() == *rhsOperator->getWindowType() and getJoinFunction() == rhsOperator->getJoinFunction()
-            and getOutputSchema() == rhsOperator->outputSchema and getRightSchema() == rhsOperator->getRightSchema()
-            and getLeftSchema() == rhsOperator->getLeftSchema() and getInputOriginIds() == rhsOperator->getInputOriginIds()
-            and getOutputOriginIds() == rhsOperator->getOutputOriginIds() and getTraitSet() == rhsOperator->getTraitSet();
-    }
-    return false;
+    return *getWindowType() == *rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and getOutputSchema() == rhs.outputSchema
+        and getRightSchema() == rhs.getRightSchema() and getLeftSchema() == rhs.getLeftSchema()
+        and getInputOriginIds() == rhs.getInputOriginIds() and getOutputOriginIds() == rhs.getOutputOriginIds()
+        and getTraitSet() == rhs.getTraitSet();
 }
 
-std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
@@ -89,7 +86,7 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
     return fmt::format("Join({})", getJoinFunction().explain(verbosity));
 }
 
-LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     const auto& leftInputSchema = inputSchemas[0];
     const auto& rightInputSchema = inputSchemas[1];
@@ -131,7 +128,7 @@ LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     return copy;
 }
 
-LogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
+JoinLogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
     copy.traitSet = traitSet;
@@ -140,12 +137,10 @@ LogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
 
 TraitSet JoinLogicalOperator::getTraitSet() const
 {
-    TraitSet result = traitSet;
-    result.insert(originIdTrait);
-    return result;
+    return traitSet;
 }
 
-LogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+JoinLogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
     copy.children = children;
@@ -172,18 +167,18 @@ std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-LogicalOperator JoinLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+JoinLogicalOperator JoinLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     if (ids.size() != 2)
     {
         throw CannotDeserialize("Join should have only two inputs");
     }
     auto copy = *this;
-    copy.inputOriginIds = ids;
+    copy.inputOriginIds = std::move(ids);
     return copy;
 }
 
-LogicalOperator JoinLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+JoinLogicalOperator JoinLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
     auto copy = *this;
     copy.outputOriginIds = ids;
@@ -238,7 +233,7 @@ void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     auto* traitSetProto = proto.mutable_trait_set();
     for (const auto& trait : getTraitSet())
     {
-        *traitSetProto->add_traits() = trait.serialize();
+        *traitSetProto->add_traits() = trait.second.serialize();
     }
 
     for (const auto& inputSchema : getInputSchemas())
@@ -264,7 +259,6 @@ void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (const auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());
@@ -367,10 +361,6 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
         }
 
         auto logicalOperator = JoinLogicalOperator(function, windowType, joinType.asEnum<JoinLogicalOperator::JoinType>().value());
-        if (auto& id = arguments.id)
-        {
-            logicalOperator.id = *id;
-        }
         return logicalOperator.withInferredSchema(arguments.inputSchemas)
             .withInputOriginIds(arguments.inputOriginIds)
             .withOutputOriginIds(arguments.outputOriginIds);

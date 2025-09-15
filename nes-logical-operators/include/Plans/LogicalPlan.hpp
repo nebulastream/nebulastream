@@ -77,10 +77,10 @@ private:
 
 [[nodiscard]] LogicalPlan addRootOperators(const LogicalPlan& plan, const std::vector<LogicalOperator>& rootsToAdd);
 
-template <class T>
-[[nodiscard]] std::vector<T> getOperatorByType(const LogicalPlan& plan)
+template <LogicalOperatorConcept T>
+[[nodiscard]] std::vector<LogicalOperatorBase<T>> getOperatorByType(const LogicalPlan& plan)
 {
-    std::vector<T> operators;
+    std::vector<LogicalOperatorBase<T>> operators;
     std::ranges::for_each(
         plan.getRootOperators(),
         [&operators](const auto& rootOperator)
@@ -94,22 +94,6 @@ template <class T>
 }
 
 [[nodiscard]] std::optional<LogicalOperator> getOperatorById(const LogicalPlan& plan, OperatorId operatorId);
-
-template <typename... TraitTypes>
-[[nodiscard]] std::vector<LogicalOperator> getOperatorsByTraits(const LogicalPlan& plan)
-{
-    std::vector<LogicalOperator> matchingOperators;
-    std::ranges::for_each(
-        plan.getRootOperators(),
-        [&matchingOperators](const auto& rootOperator)
-        {
-            auto ops = BFSRange(rootOperator);
-            auto filtered = ops | std::views::filter([&](const LogicalOperator& op) { return hasTraits<TraitTypes...>(op.getTraitSet()); });
-
-            std::ranges::copy(filtered, std::back_inserter(matchingOperators));
-        });
-    return matchingOperators;
-}
 
 /// Returns a string representation of the logical query plan
 [[nodiscard]] std::string explain(const LogicalPlan& plan, ExplainVerbosity verbosity);

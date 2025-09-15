@@ -14,14 +14,9 @@
 
 #pragma once
 
-#include <Traits/Trait.hpp>
-
 namespace NES
 {
-
-/// Marks an operator as creator of new origin ids
-struct OriginIdAssignerTrait final : DefaultTrait<OriginIdAssignerTrait>
+class OriginIdAssigner : public Castable<OriginIdAssigner>
 {
 };
-
 }

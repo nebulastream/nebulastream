@@ -12,9 +12,17 @@
     limitations under the License.
 */
 
-#include <Traits/OriginIdAssignerTrait.hpp>
+#pragma once
+
+#include <Traits/TraitSet.hpp>
+#include <SerializableTrait.pb.h>
 
 namespace NES
 {
-/// Required for plugin registration, no implementation necessary
+class TraitSetSerializationUtil
+{
+public:
+    static SerializableTraitSet* serialize(const NES::TraitSet& traitSet, SerializableTraitSet* traitSetPtr);
+    static TraitSet deserialize(const SerializableTraitSet* traitSetPtr);
+};
 }
