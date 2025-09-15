@@ -173,8 +173,7 @@ std::unique_ptr<SourceHandle> createFileSource(
         {"file_path", filePath}, {"max_inflight_buffers", std::to_string(numberOfRequiredSourceBuffers)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
-    const auto sourceDescriptor
-        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), {});
+    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), {});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
 
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));

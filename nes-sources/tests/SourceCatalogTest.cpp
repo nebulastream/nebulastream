@@ -182,8 +182,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
             }
             if (logicalSourceOpt.has_value())
             {
-                auto physicalSourceOpt
-                    = sourceCatalog.addPhysicalSource(*logicalSourceOpt, "File", {{"file_path", "/dev/null"}}, {});
+                auto physicalSourceOpt = sourceCatalog.addPhysicalSource(*logicalSourceOpt, "File", {{"file_path", "/dev/null"}}, {});
                 if (physicalSourceOpt.has_value())
                 {
                     successfulPhysicalAdds.fetch_add(1);

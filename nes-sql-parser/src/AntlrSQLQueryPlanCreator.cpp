@@ -66,24 +66,24 @@
 #include <ErrorHandling.hpp>
 #include <ParserUtil.hpp>
 
- static std::string parseIdentifier(AntlrSQLParser::IdentifierContext* identifier)
+static std::string parseIdentifier(AntlrSQLParser::IdentifierContext* identifier)
 {
-     if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(identifier->strictIdentifier()))
-     {
-         std::string text = unquotedIdentifier->getText();
-         return text | std::ranges::views::transform([](const char character) { return std::toupper(character); })
-             | std::ranges::to<std::string>();
-     }
-     if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(identifier->strictIdentifier()))
-     {
-         const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
-         return withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
-     }
-     INVARIANT(
-         false,
-         "Unknown identifier type, was neither valid quoted or unquoted, is the grammar out of sync with the binder or was a nullptr "
-         "passed?");
-     std::unreachable();
+    if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(identifier->strictIdentifier()))
+    {
+        std::string text = unquotedIdentifier->getText();
+        return text | std::ranges::views::transform([](const char character) { return std::toupper(character); })
+            | std::ranges::to<std::string>();
+    }
+    if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(identifier->strictIdentifier()))
+    {
+        const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
+        return withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
+    }
+    INVARIANT(
+        false,
+        "Unknown identifier type, was neither valid quoted or unquoted, is the grammar out of sync with the binder or was a nullptr "
+        "passed?");
+    std::unreachable();
 }
 
 namespace NES::Parsers
@@ -400,10 +400,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             /// (we handle cases where the user did not specify a name via 'AS' in 'exitNamedExpression')
             const auto attribute = std::move(helpers.top().functionBuilder.back());
             helpers.top().functionBuilder.pop_back();
-            helpers.top().addProjection(
-                FieldIdentifier(parseIdentifier(context)),
-                attribute
-            );
+            helpers.top().addProjection(FieldIdentifier(parseIdentifier(context)), attribute);
         }
     }
     else if (helpers.top().isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)

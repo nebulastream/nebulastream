@@ -345,8 +345,7 @@ public:
             return std::unordered_map<std::string, Literal>{};
         }();
 
-        const auto parserConfig =
-            configMap
+        const auto parserConfig = configMap
             | std::views::transform([this](const auto& pair)
                                     { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();

@@ -377,7 +377,7 @@ struct SystestBinder::Impl
         }
 
         auto [typeConf, typeSuccess] = statement.parserConfig.try_emplace("type", "CSV");
-        if (! typeSuccess)
+        if (!typeSuccess)
         {
             throw InvalidConfigParameter("type already exists in source.");
         }
@@ -655,8 +655,8 @@ struct SystestBinder::Impl
                     throw UnknownSourceName("{}", attachSource.logicalSourceName);
                 }
 
-                const auto physicalSource = sourceCatalog.get()->addPhysicalSource(
-                    logicalSource.value(), sourceType, sourceConfig, parserConfig);
+                const auto physicalSource
+                    = sourceCatalog.get()->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, parserConfig);
                 if (not physicalSource.has_value())
                 {
                     NES_ERROR(
@@ -706,7 +706,8 @@ struct SystestBinder::Impl
 
                 auto& currentTest = plans.emplace(currentQueryNumberInTest, currentQueryNumberInTest).first->second;
                 currentTest.setQueryDefinition(query);
-                if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile); not sinkExpected.has_value())
+                if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
+                    not sinkExpected.has_value())
                 {
                     currentTest.setException(sinkExpected.error());
                 }
