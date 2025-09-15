@@ -201,7 +201,7 @@ def run_benchmark(current_benchmark_config):
         # Move logs and statistics to output folder
         for file_name in os.listdir(os.getcwd()):
             if file_name.startswith(ENGINE_STATS_FILE) or file_name.startswith(
-                    ENGINE_STATS_FILE) or file_name.startswith(SLICE_ACCESSES_FILE) or file_name.endswith(".log"):
+                    BENCHMARK_STATS_FILE) or file_name.startswith(SLICE_ACCESSES_FILE) or file_name.endswith(".log"):
                 source_file = os.path.join(os.getcwd(), file_name)
                 shutil.move(source_file, output_folder)
 
