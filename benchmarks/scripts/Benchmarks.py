@@ -240,7 +240,7 @@ def valid_row(row):
     return pd.notna(row["last_write_nopred_end"]) and pd.notna(row["first_read_nopred_start"])
 
 
-def compute_prediction_correctness(row):
+def compute_prediction_accuracy(row):
     if pd.notna(row['last_read_pred_end']) and row['last_read_pred_end'] >= row['first_read_nopred_start']:
         return False
     if pd.notna(row['last_write_pred_end']) and row['last_write_pred_end'] >= row['first_read_nopred_start']:
@@ -252,7 +252,7 @@ def compute_prediction_correctness(row):
     return True
 
 
-def compute_prediction_correctness_2(row):
+def compute_prediction_accuracy_2(row):
     if pd.notna(row['last_write_pred_end']) and pd.notna(row['first_read_pred_start']):
         if row['last_write_pred_end'] >= row['first_read_pred_start']:
             return False
@@ -318,9 +318,9 @@ if SLICE_ACCESSES:
     df = df[df.apply(valid_row, axis=1)]
     default_param_values_2 = find_default_values_for_params(df)
     
-    # Compute correctness of predictors
-    df['prediction_correctness'] = df.apply(compute_prediction_correctness, axis=1)
-    df['prediction_correctness_2'] = df.apply(compute_prediction_correctness_2, axis=1)
+    # Compute accuracy of predictors
+    df['prediction_accuracy'] = df.apply(compute_prediction_accuracy, axis=1)
+    df['prediction_accuracy_2'] = df.apply(compute_prediction_accuracy_2, axis=1)
     
     # Compute precision of predictors
     df['prediction_precision'] = df.apply(compute_prediction_precision, axis=1)
@@ -340,7 +340,7 @@ df['query_id'] = df['query'].map(query_mapping)
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
-df['correctness_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
+df['accuracy_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
 
 # %% Compare slice store types for different configs
 
@@ -387,10 +387,10 @@ for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
 
 # %% Compare slice store types for different configs over time
 
-def plot_time_comparison(data, config, metric, hue, label, legend, interpolate=False):
+def plot_time_comparison(data, metric, hue, label, legend, interpolate=False):
     param = 'window_start_normalized'
 
-    data = filter_by_config(data, config)
+    #data = filter_by_config(data, config)
     data_scaled, metric_unit = convert_units(data, metric)
 
     if interpolate:
@@ -409,10 +409,10 @@ def plot_time_comparison(data, config, metric, hue, label, legend, interpolate=F
     add_min_max_labels_per_group(data, hue, metric, ax, param)
 
     # Add config below
-    mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.15)
-    plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
+    #mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
+    #plt.tight_layout()
+    #plt.subplots_adjust(bottom=0.15)
+    #plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
 
     param = 'time'
     plt.title(f'Effect of {param} on {label}')
@@ -420,39 +420,6 @@ def plot_time_comparison(data, config, metric, hue, label, legend, interpolate=F
     plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
     plt.legend(title=legend)
     plt.show()
-
-
-def plot_test(data, config, metric, hue, label, legend):
-    param = 'window_start_normalized'
-
-    filtered_data = filter_by_config(data, config)
-    filtered_data, metric_unit = convert_units(filtered_data, metric)
-    #filtered_data = filtered_data[filtered_data['slice_store_type'] == 'DEFAULT']
-    if filtered_data.empty:
-        print(f'No data available for config: {config}.')
-        return
-
-    for _, data in filtered_data.groupby('dir_name'):
-        print(data['dir_name'].unique()[0])
-        data, unit = convert_units(data, metric)
-
-        plt.figure(figsize=(14, 6))
-        ax = sns.lineplot(data=data, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
-
-        # Add labels for min and max values of metric for this param for each value of hue
-        add_min_max_labels_per_group(data, hue, metric, ax, param)
-
-        # Add config below
-        mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in shared_config_params])
-        plt.tight_layout()
-        plt.subplots_adjust(bottom=0.15)
-        plt.figtext(0.0, -0.1, mapping_text, wrap=True, ha='left', fontsize=9)
-
-        plt.title(f'Effect of {param} on {label}')
-        plt.xlabel(f'{param} (s)')  # ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
-        plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
-        plt.legend(title=legend)
-        plt.show()
 
 
 specific_query = 'SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 ' \
@@ -502,19 +469,28 @@ configs = specific_values.to_dict('records')
 
     #plot_test(df, config, 'throughput_data', 'slice_store_type', 'Throughput / sec', 'Slice Store')
     #plot_test(df, config, 'memory', 'slice_store_type', 'Memory', 'Slice Store')
-for config in common_config_dicts:
-    plot_time_comparison(df, config, 'throughput_data', 'slice_store_type', 'Throughput / sec', 'Slice Store Type', True)
-    plot_time_comparison(df, config, 'memory', 'slice_store_type', 'Memory', 'Slice Store Type', True)
+
+#configs = common_config_dicts[5:6]
+
+data_default = filter_by_default_values_except_params(df, [])
+data_default = data_default[data_default['slice_store_type'] == 'DEFAULT']
+data_memory_bound = filter_by_default_values_except_params(df, ['upper_memory_bound'])
+data_memory_bound = data_memory_bound[data_memory_bound['upper_memory_bound'] == 1048576]
+data = pd.concat([data_memory_bound], ignore_index=True)
+
+#for config in common_config_dicts:
+plot_time_comparison(data, 'throughput_data', 'slice_store_type', 'Throughput / sec', 'Slice Store Type', False)
+plot_time_comparison(data, 'memory', 'slice_store_type', 'Memory', 'Slice Store Type', False)
 
 
 # %% Shared parameter plots
 
 def plot_shared_params(data, param, metric, hue, label, legend):
-    data = data[data['buffer_size_in_bytes'] <= 131072]
-    data = data[data['page_size'] <= 131072]
-    data = data[data['ingestion_rate'] <= 10000]
-    data = data[data['timestamp_increment'] <= 10000]
-    data = data[data['batch_size'] < 10000]
+    #data = data[data['buffer_size_in_bytes'] <= 131072]
+    #data = data[data['page_size'] <= 131072]
+    #data = data[data['ingestion_rate'] <= 10000]
+    #data = data[data['timestamp_increment'] <= 10000]
+    #data = data[data['batch_size'] < 10000]
 
     data = filter_by_default_values_except_params(data, [param])
     data_scaled, metric_unit = convert_units(data, metric)
@@ -664,7 +640,7 @@ for param in watermark_predictor_config_params:
 
 def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label, legend):
     data = filter_by_default_values_except_params(data, [param, 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'])
-    if metric == 'prediction_correctness':
+    if metric == 'prediction_accuracy':
         data_scaled, metric_unit = convert_units(data, metric, '%')
     if metric == 'prediction_precision':
         data_scaled, metric_unit = convert_units(data, metric, 's', 0)
@@ -686,7 +662,7 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
 
 #df = df.head(4)
 #accuracy = (
-#    df.groupby("watermark_predictor_type")["prediction_correctness"]
+#    df.groupby("watermark_predictor_type")["prediction_accuracy"]
 #      .mean()
 #      .reset_index()
 #)
@@ -695,8 +671,8 @@ file_backed_data = df[df['slice_store_type'] == 'FILE_BACKED']
 for hue_value in df['file_backed_hue'].unique():
     data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
     # if data_per_hue['query_id'].unique()[0] == 'Q3':
-    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_correctness', 'correctness_precision_hue', 'Prediction Correctness', 'Watermark Gaps | Sequence Numbers | Time Delta')
-    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_precision', 'correctness_precision_hue', 'Prediction Presicion', 'Watermark Gaps | Sequence Numbers | Time Delta')
+    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'accuracy_precision_hue', 'Prediction Accuracy', 'Watermark Gaps | Sequence Numbers | Time Delta')
+    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_precision', 'accuracy_precision_hue', 'Prediction Presicion', 'Watermark Gaps | Sequence Numbers | Time Delta')
 
 
 # %% Memory-Model parameter plots for different memory budgets over time
