@@ -34,13 +34,25 @@
 
 namespace NES
 {
+HJOperatorHandler::HJOperatorHandler(
+    const std::vector<OriginId>& inputOrigins,
+    const OriginId outputOriginId,
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    const uint64_t maxNumberOfBuckets)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
+    , maxNumberOfBuckets(maxNumberOfBuckets)
+{
+}
+
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
 HJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Has setWorkerThreads() being called?");
 
-    const auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
+    auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
+    newHashMapArgs.numberOfBuckets = std::clamp(rollingAverageNumberOfKeys.rlock()->getAverage(), 1UL, maxNumberOfBuckets);
     return std::function(
         [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
             SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
@@ -91,6 +103,9 @@ void HJOperatorHandler::emitSlicesToProbe(
             if (auto* hashMap = hashJoinSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), buildSide);
                 hashMap and hashMap->getNumberOfTuples() > 0)
             {
+                /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
+                rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
+
                 allHashMaps.emplace_back(hashMap);
                 totalNumberOfTuples += hashMap->getNumberOfTuples();
             }
@@ -120,6 +135,8 @@ void HJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(windowInfo.windowStart);
     tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
+    tupleBuffer.setCreationTimestampInMS(Timestamp(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
     /// Writing all necessary information for the probe to the buffer
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedHJWindowTrigger>();
