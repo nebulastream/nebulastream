@@ -28,7 +28,7 @@ class QueryEngineConfiguration final : public BaseConfiguration
 {
     /// validators to prevent nonsensical values for the number of threads and task queue size
     static std::shared_ptr<ConfigurationValidation> numberOfThreadsValidator();
-    static std::shared_ptr<ConfigurationValidation> taskQueueSizeValidator();
+    static std::shared_ptr<ConfigurationValidation> queueSizeValidator();
 
 public:
     QueryEngineConfiguration() = default;
@@ -37,12 +37,10 @@ public:
 
     UIntOption numberOfWorkerThreads
         = {"number_of_worker_threads", "4", "Number of worker threads used within the QueryEngine", {numberOfThreadsValidator()}};
-    UIntOption taskQueueSize
-        = {"task_queue_size", "10000", "Size of the bounded task queue used within the QueryEngine", {taskQueueSizeValidator()}};
     UIntOption admissionQueueSize
-        = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {taskQueueSizeValidator()}};
+        = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {queueSizeValidator()}};
 
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&numberOfWorkerThreads, &taskQueueSize, &admissionQueueSize}; }
+    std::vector<BaseOption*> getOptions() override { return {&numberOfWorkerThreads, &admissionQueueSize}; }
 };
 }
