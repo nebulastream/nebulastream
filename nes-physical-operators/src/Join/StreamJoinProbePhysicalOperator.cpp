@@ -66,12 +66,6 @@ Record StreamJoinProbePhysicalOperator::createJoinedRecord(
         joinedRecord.write(fieldName, innerRecord.read(fieldName));
     }
 
-    /// Writing the outerSchema fields, expect the join schema to have the fields in the same order then the outer schema
-    for (const auto& fieldName : nautilus::static_iterable(projectionsOuter))
-    {
-        joinedRecord.write(fieldName, outerRecord.read(fieldName));
-    }
-
     return joinedRecord;
 }
 }

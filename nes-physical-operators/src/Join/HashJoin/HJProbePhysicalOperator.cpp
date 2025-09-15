@@ -54,48 +54,44 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
 {
 }
 
-namespace
-{
-Interface::HashMap* getHashMapPtrProxy(Interface::HashMap** hashMaps, const uint64_t hashMapIndex)
-{
-    PRECONDITION(hashMaps != nullptr, "HashMaps MUST NOT be null");
-    auto* const hashMapPtr = hashMaps[hashMapIndex];
-    return hashMapPtr;
-}
-}
-
 void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+    executionCtx.currentTs = recordBuffer.getCreatingTs();
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
-    /// Getting necessary values from the record buffer
+    /// Getting number of hash maps and return if there are no hashmaps
     const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getBuffer());
-    const auto leftNumberOfHashMaps = nautilus::invoke(
-        +[](const EmittedHJWindowTrigger* emittedHjWindowTrigger) { return emittedHjWindowTrigger->leftNumberOfHashMaps; },
-        hashJoinWindowRef);
-    const auto rightNumberOfHashMaps = nautilus::invoke(
-        +[](const EmittedHJWindowTrigger* emittedHjWindowTrigger) { return emittedHjWindowTrigger->rightNumberOfHashMaps; },
-        hashJoinWindowRef);
-    const auto windowStart = nautilus::invoke(
-        +[](const EmittedHJWindowTrigger* emittedJoinWindow) { return emittedJoinWindow->windowInfo.windowStart; }, hashJoinWindowRef);
-    const auto windowEnd = nautilus::invoke(
-        +[](const EmittedHJWindowTrigger* emittedJoinWindow) { return emittedJoinWindow->windowInfo.windowEnd; }, hashJoinWindowRef);
-    const auto leftHashMapRefs = nautilus::invoke(
-        +[](const EmittedHJWindowTrigger* emittedJoinWindow) { return emittedJoinWindow->leftHashMaps; }, hashJoinWindowRef);
-    const auto rightHashMapRefs = nautilus::invoke(
-        +[](const EmittedHJWindowTrigger* emittedJoinWindow) { return emittedJoinWindow->rightHashMaps; }, hashJoinWindowRef);
+    const auto leftNumberOfHashMaps = Nautilus::Util::readValueFromMemRef<uint64_t>(
+        Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
+    const auto rightNumberOfHashMaps = Nautilus::Util::readValueFromMemRef<uint64_t>(
+        Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightNumberOfHashMaps));
+    if (leftNumberOfHashMaps == 0 and rightNumberOfHashMaps == 0)
+    {
+        return;
+    }
+
+    /// Getting necessary values from the record buffer
+    const auto windowInfoRef = Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
+    const nautilus::val<Timestamp> windowStart{
+        Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
+    const nautilus::val<Timestamp> windowEnd{
+        Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
+    auto leftHashMapRefs = Nautilus::Util::readValueFromMemRef<Interface::HashMap**>(
+        Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
+    auto rightHashMapRefs = Nautilus::Util::readValueFromMemRef<Interface::HashMap**>(
+        Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
 
 
     /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps
     for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
     {
-        const auto leftHashMapPtr = nautilus::invoke(getHashMapPtrProxy, leftHashMapRefs, leftHashMapIndex);
+        const nautilus::val<Interface::HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
         Interface::ChainedHashMapRef leftHashMap{
             leftHashMapPtr,
             leftHashMapOptions.fieldKeys,
@@ -104,7 +100,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
             leftHashMapOptions.entrySize};
         for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
         {
-            const auto rightHashMapPtr = nautilus::invoke(getHashMapPtrProxy, rightHashMapRefs, rightHashMapIndex);
+            const nautilus::val<Interface::HashMap*> rightHashMapPtr = rightHashMapRefs[rightHashMapIndex];
             const Interface::ChainedHashMapRef rightHashMap{
                 rightHashMapPtr,
                 rightHashMapOptions.fieldKeys,
@@ -115,6 +111,11 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
             {
                 const Interface::ChainedHashMapRef::ChainedEntryRef rightEntryRef{
                     rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
+                auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
+                const Interface::PagedVectorRef rightPagedVector{rightPagedVectorMem, rightMemoryProvider};
+                const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
+                auto rightItStart = rightPagedVector.begin(rightFields);
+                auto rightItEnd = rightPagedVector.end(rightFields);
 
                 /// We use here findEntry as the other methods would insert a new entry, which is unnecessary
                 if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
@@ -123,14 +124,12 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                     const Interface::ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
-                    auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
                     const Interface::PagedVectorRef leftPagedVector{leftPagedVectorMem, leftMemoryProvider};
-                    const Interface::PagedVectorRef rightPagedVector{rightPagedVectorMem, rightMemoryProvider};
                     const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
-                    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
+
                     for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)
                     {
-                        for (auto rightIt = rightPagedVector.begin(rightFields); rightIt != rightPagedVector.end(rightFields); ++rightIt)
+                        for (auto rightIt = rightItStart; rightIt != rightItEnd; ++rightIt)
                         {
                             const auto leftRecord = *leftIt;
                             const auto rightRecord = *rightIt;
