@@ -59,6 +59,14 @@ namespace NES
 namespace
 {
 
+/// Graceful pipeline shutdown can only happen if no task depends on the pipeline anymore.
+/// It could happen that tasks are waiting within the admission queue and do not get a chance to execute as long as the
+/// PendingPipelineStop task is repeatedly added to the internal queue.
+/// This backoff interval is used when a pending pipeline stop has repeatedly (PIPELINE_STOP_BACKOFF_THRESHOLD) failed to allow pending
+/// tasks to make progress.
+constexpr auto PIPELINE_STOP_BACKOFF_INTERVAL = std::chrono::milliseconds(25);
+constexpr auto PIPELINE_STOP_BACKOFF_THRESHOLD = 2;
+
 /// This function is unsafe because it requires the lifetime of the RunningQueryPlanNode exceed the lifetime of the callback
 auto injectQueryFailureUnsafe(RunningQueryPlanNode& node, TaskCallback::onFailure failure)
 {
@@ -564,20 +572,23 @@ bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask& pendingPipeli
             pendingPipelineStop.pipeline->id,
             pendingPipelineStop.pipeline->pendingTasks,
             pendingPipelineStop.attempts);
-        pendingPipelineStop.attempts += 1;
 
+        PendingPipelineStopTask repeatTask(
+            pendingPipelineStop.queryId,
+            pendingPipelineStop.pipeline,
+            pendingPipelineStop.attempts + 1,
+            std::move(pendingPipelineStop.callback));
         /// If we have seen this pipeline for the third time, we will add some work from the admission queue to the internal queue.
         /// We need to do this, as the pipeline might be stuck in a deadlock as it is waiting for data from a source which has not been moved into the internal queue.
-        if (pendingPipelineStop.attempts >= 2)
+        if (pendingPipelineStop.attempts >= PIPELINE_STOP_BACKOFF_THRESHOLD)
         {
-            Task admissionTask;
-            if (pool.admissionQueue.read(admissionTask))
-            {
-                pool.addTaskOrDoItInPlace(std::move(admissionTask));
-            }
+            pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatTask), PIPELINE_STOP_BACKOFF_INTERVAL);
         }
-
-        pool.addTaskOrDoNextTask(std::move(pendingPipelineStop));
+        else
+        {
+            pool.addTaskOrDoNextTask(std::move(repeatTask));
+        }
+        return false;
     }
 
     return true;
