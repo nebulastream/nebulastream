@@ -303,6 +303,7 @@ do
         # done
 
         log_out running $harness honggfuzz
+        rm -rf hfz_out
         if ! honggfuzz --run_time 600 -i /nes-corpora/$harness/corpus -o hfz_out --crashdir hf-crashes --exit_upon_crash --exit_code_upon_crash 1 -- $(find cmake-build-hfz -name $harness) 2> hf.log
         then
             true
