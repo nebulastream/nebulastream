@@ -44,7 +44,7 @@ GRPCQueryManager::GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel
 {
 }
 
-std::expected<QueryId, Exception> GRPCQueryManager::registerQuery(const NES::LogicalPlan& plan) noexcept
+std::expected<LocalQueryId, Exception> GRPCQueryManager::registerQuery(const NES::LogicalPlan& plan) noexcept
 {
     try
     {
@@ -56,7 +56,7 @@ std::expected<QueryId, Exception> GRPCQueryManager::registerQuery(const NES::Log
         if (status.ok())
         {
             NES_DEBUG("Registration was successful.");
-            return QueryId{reply.queryid()};
+            return LocalQueryId{reply.queryid()};
         }
         return std::unexpected{QueryRegistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
@@ -70,7 +70,7 @@ std::expected<QueryId, Exception> GRPCQueryManager::registerQuery(const NES::Log
     }
 }
 
-std::expected<void, Exception> GRPCQueryManager::start(const QueryId queryId) noexcept
+std::expected<void, Exception> GRPCQueryManager::start(const LocalQueryId queryId) noexcept
 {
     try
     {
@@ -97,7 +97,7 @@ std::expected<void, Exception> GRPCQueryManager::start(const QueryId queryId) no
     }
 }
 
-std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const LocalQueryId queryId) const noexcept
 {
     try
     {
@@ -163,7 +163,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const QueryI
     }
 }
 
-std::expected<void, Exception> GRPCQueryManager::unregister(const QueryId queryId) noexcept
+std::expected<void, Exception> GRPCQueryManager::unregister(const LocalQueryId queryId) noexcept
 {
     try
     {
@@ -190,7 +190,7 @@ std::expected<void, Exception> GRPCQueryManager::unregister(const QueryId queryI
     }
 }
 
-std::expected<void, Exception> GRPCQueryManager::stop(const QueryId queryId) noexcept
+std::expected<void, Exception> GRPCQueryManager::stop(const LocalQueryId queryId) noexcept
 {
     try
     {

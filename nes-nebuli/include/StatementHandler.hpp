@@ -83,17 +83,17 @@ struct DropSinkStatementResult
 
 struct QueryStatementResult
 {
-    QueryId id;
+    LocalQueryId id;
 };
 
 struct ShowQueriesStatementResult
 {
-    std::unordered_map<QueryId, LocalQueryStatus> queries;
+    std::unordered_map<LocalQueryId, LocalQueryStatus> queries;
 };
 
 struct DropQueryStatementResult
 {
-    QueryId id;
+    LocalQueryId id;
 };
 
 using StatementResult = std::variant<
@@ -163,7 +163,7 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
 {
     mutable std::mutex mutex;
     SharedPtr<QueryManager> queryManager;
-    std::vector<QueryId> runningQueries;
+    std::vector<LocalQueryId> runningQueries;
     std::shared_ptr<const LegacyOptimizer> optimizer;
 
 public:
@@ -172,7 +172,7 @@ public:
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
 
-    [[nodiscard]] std::vector<QueryId> getRunningQueries() const;
+    [[nodiscard]] std::vector<LocalQueryId> getRunningQueries() const;
 };
 
 }

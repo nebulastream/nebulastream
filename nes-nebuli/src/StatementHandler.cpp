@@ -214,16 +214,16 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
         return ShowQueriesStatementResult{
             allQueryState
             | std::views::transform([](const auto& querySummary) { return std::make_pair(querySummary.queryId, querySummary); })
-            | std::ranges::to<std::unordered_map<QueryId, LocalQueryStatus>>()};
+            | std::ranges::to<std::unordered_map<LocalQueryId, LocalQueryStatus>>()};
     }
     if (const auto statusOpt = queryManager->status(statement.id.value()); statusOpt.has_value())
     {
-        return ShowQueriesStatementResult{std::unordered_map<QueryId, LocalQueryStatus>{{statement.id.value(), statusOpt.value()}}};
+        return ShowQueriesStatementResult{std::unordered_map<LocalQueryId, LocalQueryStatus>{{statement.id.value(), statusOpt.value()}}};
     }
     return ShowQueriesStatementResult{.queries = {}};
 }
 
-std::vector<QueryId> QueryStatementHandler::getRunningQueries() const
+std::vector<LocalQueryId> QueryStatementHandler::getRunningQueries() const
 {
     return runningQueries;
 }

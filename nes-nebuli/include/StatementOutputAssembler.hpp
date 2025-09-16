@@ -68,10 +68,10 @@ constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
 using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
-using QueryIdOutputRowType = std::tuple<QueryId>;
+using QueryIdOutputRowType = std::tuple<LocalQueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
-using QueryStatusOutputRowType = std::tuple<QueryId, std::string>;
+using QueryStatusOutputRowType = std::tuple<LocalQueryId, std::string>;
 constexpr std::array<std::string_view, 2> queryStatusOutputColumns{"query_id", "query_status"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)

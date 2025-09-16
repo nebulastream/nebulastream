@@ -192,7 +192,8 @@ std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector
     {
         auto schema = bindSchema(schemaFields);
         NES_DEBUG("Adding sink: {} of type {}", sinkName, sinkType);
-        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, "localhost", sinkConfig); sinkDescriptor.has_value())
+        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, "localhost", sinkConfig);
+            sinkDescriptor.has_value())
         {
             boundSinks.push_back(sinkDescriptor.value());
         }
