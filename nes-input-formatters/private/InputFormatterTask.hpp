@@ -208,6 +208,7 @@ void processSpanningTuple(
 template <InputFormatIndexerType FormatterType>
 class InputFormatterTask
 {
+// Todo: fix broken state
 public:
     static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
 
