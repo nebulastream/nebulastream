@@ -38,17 +38,6 @@ MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLo
 {
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
-{
-    return std::make_shared<MaxAggregationLogicalFunction>(onField);
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction>
-MaxAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
-{
-    return std::make_shared<MaxAggregationLogicalFunction>(onField, asField);
-}
-
 std::string_view MaxAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -106,6 +95,6 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMaxAggregationLogicalFunct
     {
         throw CannotDeserialize("MaxAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return MaxAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<MaxAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
 }
 }

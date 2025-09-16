@@ -50,17 +50,6 @@ MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
 {
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction>
-MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
-{
-    return std::make_shared<MedianAggregationLogicalFunction>(onField, asField);
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
-{
-    return std::make_shared<MedianAggregationLogicalFunction>(onField);
-}
-
 std::string_view MedianAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -118,6 +107,6 @@ AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGenerated
     {
         throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return MedianAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<MedianAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
 }
 }
