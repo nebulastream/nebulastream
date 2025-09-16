@@ -483,7 +483,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be an unsigned integer");
             }
-            return ShowQueriesStatement{.id = QueryId{std::get<uint64_t>(value)}, .format = format};
+            return ShowQueriesStatement{.id = LocalQueryId{std::get<uint64_t>(value)}, .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -537,7 +537,7 @@ public:
         }
         else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
         {
-            const auto id = QueryId{std::stoul(dropQueryAst->id->getText())};
+            const auto id = LocalQueryId{std::stoul(dropQueryAst->id->getText())};
             return DropQueryStatement{id};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)

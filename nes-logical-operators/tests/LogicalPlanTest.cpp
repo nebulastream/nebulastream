@@ -79,7 +79,7 @@ TEST_F(LogicalPlanTest, SingleRootConstructor)
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 {
     const std::vector roots = {sourceOp, selectionOp};
-    const auto queryId = QueryId(1);
+    const auto queryId = LocalQueryId(1);
     LogicalPlan plan(queryId, roots);
     EXPECT_EQ(plan.getRootOperators().size(), 2);
     EXPECT_EQ(plan.getQueryId(), queryId);
