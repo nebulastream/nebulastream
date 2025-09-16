@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <optional>
 #include <ostream>
@@ -43,6 +44,50 @@ struct LocalQueryStatus
     LocalQueryId queryId = INVALID_QUERY_ID;
     QueryState state = QueryState::Registered;
     QueryMetrics metrics{};
+};
+
+struct DistributedQueryStatus
+{
+    std::vector<LocalQueryStatus> localStatusSnapshots;
+
+    QueryState getGlobalQueryState() const
+    {
+        /// Query if considered failed if any local query failed
+        if (std::ranges::any_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Failed; }))
+        {
+            return QueryState::Failed;
+        }
+        /// Query is not failed, stopped if all local queries have stopped
+        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Stopped; }))
+        {
+            return QueryState::Stopped;
+        }
+        /// Query is neither failed nor stopped. Running, if all local queries are running
+        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Running; }))
+        {
+            return QueryState::Running;
+        }
+        /// Query is neither failed nor stopped, nor running. Started, if all local queries have started
+        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Started; }))
+        {
+            return QueryState::Started;
+        }
+        /// Some local queries might be stopped, running, or started, but at least one local query has not been started
+        return QueryState::Registered;
+    }
+
+    std::vector<Exception> getExceptions()
+    {
+        std::vector<Exception> exceptions;
+        for (const auto& localStatus : localStatusSnapshots)
+        {
+            if (auto err = localStatus.metrics.error)
+            {
+                exceptions.push_back(*err);
+            }
+        }
+        return exceptions;
+    }
 };
 
 /// Struct to store the status change of a query. Initialized either with a status or an exception.

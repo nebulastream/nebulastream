@@ -155,6 +155,7 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
 {
     SerializableSourceDescriptor serializableSourceDescriptor;
     SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
+    serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
     serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
     serializableSourceDescriptor.set_sourcetype(sourceType);
     serializableSourceDescriptor.set_workerid(workerId);

@@ -36,26 +36,17 @@ public:
     [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(const LocalQuery&) const = 0;
 };
 
-struct QueryManagerState
-{
-    std::unordered_map<DistributedQueryId, Query> queries;
-};
-
 class QueryManager
 {
     UniquePtr<QuerySubmissionBackend> backend;
-    QueryManagerState state;
-    std::expected<Query, Exception> getQuery(DistributedQueryId query) const;
 
 public:
     QueryManager(UniquePtr<QuerySubmissionBackend> backend);
-    [[nodiscard]] std::expected<DistributedQueryId, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
-    std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
-    std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
-    std::expected<void, std::vector<Exception>> unregister(DistributedQueryId query);
-    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(DistributedQueryId query) const;
-    [[nodiscard]] std::vector<DistributedQueryId> queries() const;
-    std::vector<DistributedQueryId> getRunningQueries() const;
+    [[nodiscard]] std::expected<Query, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
+    std::expected<void, Exception> start(const Query& query);
+    std::expected<void, std::vector<Exception>> stop(const Query& query);
+    std::expected<void, std::vector<Exception>> unregister(const Query& query);
+    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const Query& query) const;
 };
 
 }

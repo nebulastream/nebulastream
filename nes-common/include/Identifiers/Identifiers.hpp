@@ -65,6 +65,11 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
     return id.getRawValue() % containerSize;
 }
 
+/// Distributed
+using DistributedQueryId = NESStrongType<uint64_t, struct DistributedQueryId_, 0, 1>;
+static constexpr DistributedQueryId INVALID_DISTRIBUTED_QUERY_ID = INVALID<DistributedQueryId>;
+static constexpr DistributedQueryId INITIAL_DISTRIBUTED_QUERY_ID = INITIAL<DistributedQueryId>;
+
 class WorkerId
 {
     std::string value;

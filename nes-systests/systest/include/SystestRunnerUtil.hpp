@@ -14,23 +14,19 @@
 
 #pragma once
 
-#include <cstddef>
-#include <string>
 #include <vector>
 
-namespace NES
+#include <Listeners/QueryLog.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <ErrorHandling.hpp>
+
+namespace NES::Systest
 {
 
-using HostAddr = std::string;
-using GrpcAddr = std::string;
-using ChannelId = std::string;
+/// Extract exceptions from query status
+std::vector<Exception> getExceptions(const QueryStatus& status);
 
-struct WorkerConfig
-{
-    HostAddr host;
-    GrpcAddr grpc;
-    size_t capacity;
-    std::vector<HostAddr> downstream;
-};
+/// Determine global query state from local status snapshots
+QueryState getGlobalQueryState(const QueryStatus& status);
 
 }

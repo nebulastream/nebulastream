@@ -81,8 +81,7 @@ struct DecomposedLogicalPlan
 
 struct DistributedLogicalPlan
 {
-    DistributedLogicalPlan(DecomposedLogicalPlan&& plan, OptimizedLogicalPlan globalPlan)
-        : plan(std::move(plan)), globalPlan(std::move(globalPlan))
+    explicit DistributedLogicalPlan(DecomposedLogicalPlan&& plan) : plan(std::move(plan))
     {
         PRECONDITION(not this->plan.localPlans.empty(), "Input plan should not be empty");
     }
@@ -114,15 +113,12 @@ struct DistributedLogicalPlan
 
     auto view() const { return plan; }
 
-    const LogicalPlan& getGlobalPlan() const { return globalPlan.plan; }
-
     auto begin() const { return plan.localPlans.cbegin(); }
 
     auto end() const { return plan.localPlans.cend(); }
 
 private:
     DecomposedLogicalPlan plan;
-    OptimizedLogicalPlan globalPlan;
 };
 }
 

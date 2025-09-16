@@ -46,7 +46,7 @@ public:
 
 TEST_F(SystestParserTest, testEmptyFile)
 {
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     const std::string str;
 
     ASSERT_EQ(true, parser.loadString(str));
@@ -55,7 +55,7 @@ TEST_F(SystestParserTest, testEmptyFile)
 
 TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
 {
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     /// Comment, new line in Unix/Linux, Windows, Older Mac systems
     const std::string str = std::string("#\n") + "\n" + "\r\n" + "\r";
 
@@ -65,7 +65,7 @@ TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
 
 TEST_F(SystestParserTest, testAttachSourceCallbackSource)
 {
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp\n"
                                  "Attach File CSV window INLINE";
 
@@ -94,7 +94,7 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
 
 TEST_F(SystestParserTest, testCallbackQuery)
 {
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
 
     static constexpr std::string_view TestFileName = "testCallbackQuery";
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
@@ -129,7 +129,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
 
 TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
 {
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp INLINE";
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
@@ -159,7 +159,7 @@ TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
 
 TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 {
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
@@ -181,7 +181,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 
 TEST_F(SystestParserTest, testSubstitutionRule)
 {
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     const std::string delim = "----";
     const std::string result = "1 1 1";
@@ -218,7 +218,7 @@ TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
     const SystestParser::SubstitutionRule rule1{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "TestSink()"; }};
     const SystestParser::SubstitutionRule rule2{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "AnotherTestSink()"; }};
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     parser.registerSubstitutionRule(rule1);
     ASSERT_DEATH_DEBUG(parser.registerSubstitutionRule(rule2), "");
 }

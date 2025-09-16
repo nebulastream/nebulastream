@@ -16,21 +16,11 @@
 
 namespace NES
 {
-std::expected<Query, Exception> QueryManager::getQuery(DistributedQueryId query) const
-{
-    const auto it = state.queries.find(query);
-    if (it == state.queries.end())
-    {
-        return std::unexpected(QueryNotFound("Query {} is not known to the QueryManager", query));
-    }
-    return it->second;
-}
-
 QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend) : backend(std::move(backend))
 {
 }
 
-std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
+std::expected<Query, Exception> QueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
 {
     std::vector<LocalQuery> localQueries;
     localQueries.reserve(plan.size());
@@ -56,22 +46,11 @@ std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const P
             }
         }
     }
-
-    auto id = getNextDistributedQueryId();
-    state.queries.emplace(id, localQueries);
-    return id;
+    return Query{localQueries};
 }
 
-std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQueryId queryId)
+std::expected<void, Exception> QueryManager::start(const Query& query)
 {
-    auto queryResult = getQuery(queryId);
-    if (!queryResult.has_value())
-    {
-        return std::unexpected(std::vector{queryResult.error()});
-    }
-    auto query = queryResult.value();
-    std::vector<Exception> exceptions;
-
     for (const auto& localQuery : query)
     {
         try
@@ -83,30 +62,18 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
                 continue;
             }
 
-            exceptions.emplace_back(result.error());
+            return std::unexpected{result.error()};
         }
         catch (std::exception& e)
         {
-            exceptions.emplace_back(QueryStartFailed("Message from external exception: {} ", e.what()));
+            return std::unexpected{QueryStartFailed("Message from external exception: {} ", e.what())};
         }
-    }
-
-    if (not exceptions.empty())
-    {
-        return std::unexpected{exceptions};
     }
     return {};
 }
 
-std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::status(DistributedQueryId queryId) const
+std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::status(const Query& query) const
 {
-    auto queryResult = getQuery(queryId);
-    if (!queryResult.has_value())
-    {
-        return std::unexpected(std::vector{queryResult.error()});
-    }
-    auto query = queryResult.value();
-
     std::vector<LocalQueryStatus> localStatusResults;
     std::vector<Exception> exceptions;
 
@@ -134,46 +101,11 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
     {
         return std::unexpected{exceptions};
     }
-    return DistributedQueryStatus{.localStatusSnapshots = localStatusResults, .queryId = queryId};
+    return DistributedQueryStatus{.localStatusSnapshots = localStatusResults};
 }
 
-std::vector<DistributedQueryId> QueryManager::queries() const
+std::expected<void, std::vector<Exception>> QueryManager::stop(const Query& query)
 {
-    return state.queries | std::views::keys | std::ranges::to<std::vector>();
-}
-
-std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
-{
-    return state.queries | std::views::keys
-        | std::views::transform(
-               [this](const auto& id) -> std::optional<std::pair<DistributedQueryId, DistributedQueryStatus>>
-               {
-                   auto result = status(id);
-                   if (result)
-                   {
-                       return std::optional<std::pair<DistributedQueryId, DistributedQueryStatus>>{{id, *result}};
-                   }
-                   return std::nullopt;
-               })
-        | std::views::filter([](auto idAndStatus) { return idAndStatus.has_value(); })
-        | std::views::filter(
-               [](auto idAndStatus)
-               {
-                   return idAndStatus->second.getGlobalQueryState() == QueryState::Started
-                       || idAndStatus->second.getGlobalQueryState() == QueryState::Running;
-               })
-        | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
-}
-
-std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryId queryId)
-{
-    auto queryResult = getQuery(queryId);
-    if (!queryResult.has_value())
-    {
-        return std::unexpected(std::vector{queryResult.error()});
-    }
-    auto query = queryResult.value();
-
     std::vector<Exception> exceptions{};
 
     for (const auto& localQuery : query)
@@ -201,14 +133,8 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
     return {};
 }
 
-std::expected<void, std::vector<Exception>> QueryManager::unregister(DistributedQueryId queryId)
+std::expected<void, std::vector<Exception>> QueryManager::unregister(const Query& query)
 {
-    auto queryResult = getQuery(queryId);
-    if (!queryResult.has_value())
-    {
-        return std::unexpected(std::vector{queryResult.error()});
-    }
-    auto query = queryResult.value();
     std::vector<Exception> exceptions{};
 
     for (const auto& localQuery : query)

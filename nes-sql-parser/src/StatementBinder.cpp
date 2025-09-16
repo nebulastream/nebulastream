@@ -59,7 +59,6 @@
 namespace NES
 {
 
-
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 class StatementBinder::Impl
 {

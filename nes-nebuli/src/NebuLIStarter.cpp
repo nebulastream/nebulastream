@@ -32,13 +32,12 @@
 #include <unistd.h>
 
 #include <Plans/LogicalPlan.hpp>
-#include <QueryManager/QueryManager.hpp>
+#include <QueryManager/GRPCQueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -47,7 +46,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <YAML/YAMLBinder.hpp>
+#include <YAML/YamlBinder.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -64,7 +63,7 @@
 
 #ifdef EMBED_ENGINE
     #include <Configurations/Util.hpp>
-    #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+    #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
     #include <SingleNodeWorkerConfiguration.hpp>
 #endif
 
@@ -110,6 +109,7 @@ int main(int argc, char** argv)
         unregisterQuery.add_argument("queryId").scan<'i', size_t>();
 
         ArgumentParser dump("dump");
+        dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
         dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
 
         program.add_subparser(registerQuery);
@@ -159,8 +159,8 @@ int main(int argc, char** argv)
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog, workerCatalog};
+        auto yamlBinder = NES::CLI::YamlBinder{sourceCatalog, sinkCatalog};
+        auto optimizer = std::make_shared<NES::GlobalOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
             sourceCatalog,
@@ -169,8 +169,8 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager
-                = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(std::vector<NES::WorkerConfig>{}));
+            queryManager = std::make_shared<NES::GrpcQueryManager>(
+                CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
         }
         else
         {
@@ -192,8 +192,7 @@ int main(int argc, char** argv)
             auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
                                               .value_or(NES::SingleNodeWorkerConfiguration{});
 
-            queryManager = std::make_shared<NES::QueryManager>(
-                std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(std::vector<NES::WorkerConfig>{}, singleNodeWorkerConfig));
+            queryManager = std::make_shared<NES::EmbeddedWorkerQueryManager>(singleNodeWorkerConfig);
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
                       "single node worker.")
@@ -207,10 +206,13 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
-            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog, sinkCatalog);
+            auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
+            NES::WorkerStatementHandler workerStatementHandler{workerCatalog};
+            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
+                std::move(workerStatementHandler),
                 queryStatementHandler,
                 std::move(binder),
                 errorBehaviour,
@@ -220,9 +222,15 @@ int main(int argc, char** argv)
 
             if (program.is_used("-w"))
             {
-                while (!queryManager->getRunningQueries().empty())
+                for (const auto& query : queryStatementHandler->getRunningQueries())
                 {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    auto status = queryManager->status(query);
+                    while (status.has_value() && status.value().state != NES::QueryState::Stopped
+                           && status.value().state != NES::QueryState::Failed)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                        status = queryManager->status(query);
+                    }
                 }
             }
             return 0;
@@ -230,15 +238,14 @@ int main(int argc, char** argv)
 
 
         bool handled = false;
-        for (const auto& [name, fn] : std::initializer_list<std::pair<
-                 std::string_view,
-                 std::expected<void, std::vector<NES::Exception>> (NES::QueryManager::*)(NES::DistributedQueryId)>>{
+        for (const auto& [name, fn] : std::initializer_list<
+                 std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::LocalQueryId)>>{
                  {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
         {
             if (program.is_subcommand_used(name))
             {
                 auto& parser = program.at<ArgumentParser>(name);
-                auto queryId = NES::DistributedQueryId{parser.get<size_t>("queryId")};
+                auto queryId = NES::LocalQueryId{parser.get<size_t>("queryId")};
                 ((*queryManager).*fn)(queryId);
                 handled = true;
                 break;
@@ -268,43 +275,51 @@ int main(int argc, char** argv)
             boundPlan = yamlBinder.parseAndBind(file);
         }
 
-        NES::QueryPlanningContext context{
-            .id = NES::INVALID<NES::LocalQueryId>,
-            .sqlString = boundPlan.getOriginalSql(),
-            .sourceCatalog = sourceCatalog,
-            .sinkCatalog = sinkCatalog,
-            .workerCatalog = workerCatalog};
+        const NES::LogicalPlan optimizedQueryPlan = optimizer->optimize(boundPlan);
 
-        auto distributedPlan = NES::QueryPlanner::with(context).plan(NES::PlanStage::BoundLogicalPlan(boundPlan));
-
+        std::string output;
+        auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(optimizedQueryPlan);
+        google::protobuf::TextFormat::PrintToString(serialized, &output);
+        NES_INFO("GRPC QueryPlan: {}", output);
         if (program.is_subcommand_used("dump"))
         {
-            for (const auto& [worker, plans] : distributedPlan)
+            auto& dumpArgs = program.at<ArgumentParser>("dump");
+            auto outputPath = dumpArgs.get<std::string>("-o");
+            std::ostream* output = nullptr;
+            std::ofstream file;
+            if (outputPath == "-")
             {
-                fmt::println("{:#>{}}", "", 80);
-                fmt::println("{} plans at {}:", plans.size(), worker);
-                for (const auto& plan : plans)
-                {
-                    fmt::println("{}", plan);
-                }
+                output = &std::cout;
             }
-            return 0;
+            else
+            {
+                file = std::ofstream(outputPath);
+                if (!file)
+                {
+                    throw NES::UnknownException("Could not open output file: {}", outputPath);
+                }
+                output = &file;
+            }
+            *output << serialized.DebugString() << '\n';
+
+            if (outputPath == "-")
+            {
+                NES_INFO("Wrote protobuf to {}", outputPath);
+            }
         }
 
-        std::optional<NES::DistributedQueryId> startedQuery;
+        std::optional<NES::LocalQueryId> startedQuery;
         if (program.is_subcommand_used("register"))
         {
             auto& registerArgs = program.at<ArgumentParser>("register");
-            const auto queryId = queryManager->registerQuery(distributedPlan);
+            const auto queryId = queryManager->registerQuery(optimizedQueryPlan);
             if (queryId.has_value())
             {
                 if (registerArgs.is_used("-x"))
                 {
                     if (auto started = queryManager->start(queryId.value()); not started.has_value())
                     {
-                        std::cerr << fmt::format(
-                            "Could not start query with error {}\n",
-                            fmt::join(std::views::transform(started.error(), [](auto ex) { return ex.what(); }), ", "));
+                        std::cerr << fmt::format("Could not start query with error {}\n", started.error().what());
                         return 1;
                     }
                     std::cout << queryId.value().getRawValue();
@@ -320,9 +335,15 @@ int main(int argc, char** argv)
 
         if (program.is_used("-w"))
         {
-            while (!queryManager->getRunningQueries().empty())
+            if (startedQuery.has_value())
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                auto status = queryManager->status(startedQuery.value());
+                while (status.has_value() && status.value().state != NES::QueryState::Stopped
+                       && status.value().state != NES::QueryState::Failed)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    status = queryManager->status(startedQuery.value());
+                }
             }
         }
 

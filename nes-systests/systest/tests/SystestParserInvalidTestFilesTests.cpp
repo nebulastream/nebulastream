@@ -42,7 +42,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     parser.registerOnSystestAttachSourceCallback(
         [&](const SystestAttachSource&)
         {
@@ -58,7 +58,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
 
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
@@ -77,7 +77,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
 
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
@@ -94,7 +94,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
 {
     const auto* const filename = SYSTEST_DATA_DIR "invalid_token.dummy";
 
-    SystestParser parser{};
+    SystestParser parser{std::filesystem::path(DEFAULT_TEST_CONFIGURATION_DIR)};
     parser.registerOnSystestLogicalSourceCallback(
         [](const SystestParser::SystestLogicalSource&)
         {

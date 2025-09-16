@@ -62,33 +62,6 @@ QueryDecomposer QueryDecomposer::with(QueryPlanningContext& context)
     return QueryDecomposer{context};
 }
 
-LogicalOperator stripOfPlacementTrait(const LogicalOperator& logicalOperator)
-{
-    return logicalOperator
-        .withChildren(
-            logicalOperator.getChildren() | std::views::transform([](const auto& child) { return stripOfPlacementTrait(child); })
-            | std::ranges::to<std::vector<LogicalOperator>>())
-        .withTraitSet(
-            logicalOperator.getTraitSet()
-            | std::views::filter([](const auto& trait) { return !trait.template tryGet<PlacementTrait>().has_value(); })
-            | std::ranges::to<TraitSet>());
-}
-
-std::unordered_map<Topology::NodeId, std::vector<LogicalPlan>>
-stripOfPlacementTrait(std::unordered_map<Topology::NodeId, std::vector<LogicalPlan>> plansByNode)
-{
-    std::unordered_map<Topology::NodeId, std::vector<LogicalPlan>> plansByNodeWithoutPlacement;
-    for (const auto& [node, plans] : plansByNode)
-    {
-        for (const auto& plan : plans)
-        {
-            INVARIANT(plan.getRootOperators().size() == 1, "We assume single sink query plans");
-            plansByNodeWithoutPlacement[node].emplace_back(LogicalPlan{stripOfPlacementTrait(plan.getRootOperators().at(0))});
-        }
-    }
-    return plansByNodeWithoutPlacement;
-}
-
 PlanStage::DecomposedLogicalPlan QueryDecomposer::decompose(PlanStage::PlacedLogicalPlan&& placedPlan) &&
 {
     PRECONDITION(placedPlan.plan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
@@ -108,9 +81,7 @@ PlanStage::DecomposedLogicalPlan QueryDecomposer::decompose(PlanStage::PlacedLog
             NES_DEBUG("Plan fragment on node [{}]: {}", node, plan);
         }
     }
-
-
-    return PlanStage::DecomposedLogicalPlan{stripOfPlacementTrait(plansByNode)};
+    return PlanStage::DecomposedLogicalPlan{plansByNode};
 }
 
 LogicalOperator QueryDecomposer::decomposePlanRecursive(const LogicalOperator& op)
@@ -169,7 +140,10 @@ QueryDecomposer::createNetworkChannel(const LogicalOperator& op, const Topology:
 
 QueryDecomposer::Bridge QueryDecomposer::connect(NetworkChannel channel)
 {
-    const auto logicalSource = context.sourceCatalog->addLogicalSource(channel.id, channel.upstreamOp.getOutputSchema()).value();
+    const auto logicalSource
+        = context.sourceCatalog
+              ->addLogicalSource(channel.id, channel.upstreamOp.getOutputSchema(), SourceCatalog::SourceIngestionType::Forward)
+              .value();
 
     auto networkSourceDescriptor = context.sourceCatalog
                                        ->addPhysicalSource(

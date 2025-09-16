@@ -28,7 +28,7 @@ namespace NES
 PlanStage::DistributedLogicalPlan QueryPlanner::plan(PlanStage::BoundLogicalPlan&& boundPlan) &&
 {
     PlanStage::OptimizedLogicalPlan optimized = GlobalOptimizer::with(context).optimize(std::move(boundPlan));
-    PlanStage::PlacedLogicalPlan placed = BottomUpOperatorPlacer::with(context).place(PlanStage::OptimizedLogicalPlan(optimized));
+    PlanStage::PlacedLogicalPlan placed = BottomUpOperatorPlacer::with(context).place(std::move(optimized));
     PlanStage::DecomposedLogicalPlan decomposed = QueryDecomposer::with(context).decompose(std::move(placed));
 
     /// Swap out host addr to grpc to identify workers
@@ -39,7 +39,7 @@ PlanStage::DistributedLogicalPlan QueryPlanner::plan(PlanStage::BoundLogicalPlan
         INVARIANT(conf.has_value(), "Worker with hostname {} not present in the worker catalog", host);
         swapped.emplace(conf->grpc, std::move(plans));
     }
-    return PlanStage::DistributedLogicalPlan{PlanStage::DecomposedLogicalPlan{std::move(swapped)}, optimized};
+    return PlanStage::DistributedLogicalPlan{PlanStage::DecomposedLogicalPlan{std::move(swapped)}};
 }
 
 }

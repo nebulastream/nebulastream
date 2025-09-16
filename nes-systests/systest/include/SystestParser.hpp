@@ -106,6 +106,8 @@ struct SystestField
 class SystestParser
 {
 public:
+    explicit SystestParser(const std::filesystem::path& configDir) : configDir{configDir} { }
+
     struct SubstitutionRule
     {
         std::string keyword;
@@ -166,6 +168,7 @@ public:
 private:
     /// Substitution rules ///
     std::vector<SubstitutionRule> substitutionRules;
+
     void applySubstitutionRules(std::string& line);
 
     /// Parsing utils ///
@@ -194,6 +197,7 @@ private:
     SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
 
+    std::filesystem::path configDir;
     bool firstToken = true;
     size_t currentLine = 0;
     std::vector<std::string> lines;

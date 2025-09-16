@@ -25,12 +25,11 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <SQLQueryParser/StatementBinder.hpp>
-#include <YAML/YAMLBinder.hpp>
-#include <yaml-cpp/node/parse.h>
-#include <yaml-cpp/yaml.h>
+#include <YAML/YamlBinder.hpp>
+#include <YAML/YamlLoader.hpp>
 
 #include <BaseUnitTest.hpp>
+#include <QueryConfig.hpp>
 #include <QueryPlanning.hpp>
 
 namespace NES
@@ -49,32 +48,11 @@ public:
     static void TearDownTestSuite() { NES_INFO("Tear down DistributedPlanning class."); }
 };
 
-std::pair<QueryPlanningContext, PlanStage::BoundLogicalPlan> loadAndBind(std::string_view testFileName)
-{
-    auto sources = std::make_shared<SourceCatalog>();
-    auto sinks = std::make_shared<SinkCatalog>();
-    auto workers = std::make_shared<WorkerCatalog>();
-
-    std::ifstream file(std::filesystem::path{NEBULI_TEST_DATA_DIR} / testFileName);
-    if (!file)
-    {
-        throw TestException("Could not open topology file");
-    }
-    auto plan = CLI::YAMLBinder{sources, sinks, workers}.parseAndBind(file);
-    renderTopology(workers->getTopology(), std::cout);
-    return {
-        QueryPlanningContext{
-            .id = INVALID<LocalQueryId>,
-            .sqlString = plan.getOriginalSql(),
-            .sourceCatalog = sources,
-            .sinkCatalog = sinks,
-            .workerCatalog = workers},
-        PlanStage::BoundLogicalPlan{std::move(plan)}};
-}
-
 TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
 {
-    auto [ctx, boundPlan] = loadAndBind("basic_single_node.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "basic_single_node.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(queryConfig).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const LogicalPlan localPlan = plan["localhost:8080"].front();
@@ -92,7 +70,9 @@ TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
 
 TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
 {
-    auto [ctx, boundPlan] = loadAndBind("basic_two_nodes.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "basic_two_nodes.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto sourceNodePlan = plan["source-node:8080"].front();
@@ -115,7 +95,10 @@ TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
 {
-    auto [ctx, boundPlan] = loadAndBind("join_with_one_selection.yaml");
+    auto queryConfig
+        = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "join_with_one_selection.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto sourceNode0Plan = plan["source-node0:8080"].front();
@@ -159,7 +142,9 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
 
 TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
 {
-    auto [ctx, boundPlan] = loadAndBind("three_nodes.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "three_nodes.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto plan0 = plan["sink-node:8080"].front();
@@ -190,7 +175,10 @@ TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
 {
-    auto [ctx, boundPlan] = loadAndBind("join_with_limited_capacity.yaml");
+    auto queryConfig
+        = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "join_with_limited_capacity.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto plan0 = plan["sink-node:8080"].front();
@@ -218,7 +206,10 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
 {
-    auto [ctx, boundPlan] = loadAndBind("join_with_limited_capacity_on_two_nodes.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(
+        std::filesystem::path{NEBULI_TEST_DATA_DIR} / "join_with_limited_capacity_on_two_nodes.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto sinkPlan = plan["sink-node:8080"].front();
@@ -248,7 +239,9 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
 
 TEST_F(DistributedPlanningTest, FourWayJoin)
 {
-    auto [ctx, boundPlan] = loadAndBind("four_way_join.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "four_way_join.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     for (const auto& [node, plans] : plan)
@@ -262,7 +255,9 @@ TEST_F(DistributedPlanningTest, FourWayJoin)
 
 TEST_F(DistributedPlanningTest, BridgePlacement)
 {
-    auto [ctx, boundPlan] = loadAndBind("bridge.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "bridge.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto sourcePlan = plan["source-node:8080"].front();
@@ -289,7 +284,9 @@ TEST_F(DistributedPlanningTest, BridgePlacement)
 
 TEST_F(DistributedPlanningTest, LongBridgePlacement)
 {
-    auto [ctx, boundPlan] = loadAndBind("long_bridge.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "long_bridge.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto sourcePlan = plan["source-node:8080"].front();
@@ -323,7 +320,9 @@ TEST_F(DistributedPlanningTest, LongBridgePlacement)
 
 TEST_F(DistributedPlanningTest, BridgePlacementJoin)
 {
-    auto [ctx, boundPlan] = loadAndBind("bridge_join.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "bridge_join.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto sourcePlan1 = plan["source-node:8080"][0];
@@ -369,7 +368,9 @@ TEST_F(DistributedPlanningTest, BridgePlacementJoin)
 
 TEST_F(DistributedPlanningTest, ComplexJoinQuery)
 {
-    auto [ctx, boundPlan] = loadAndBind("complex_join.yaml");
+    auto queryConfig = CLI::YamlLoader<CLI::QueryConfig>::load(std::filesystem::path{NEBULI_TEST_DATA_DIR} / "complex_join.yaml");
+    auto parsedPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryConfig.query);
+    auto [boundPlan, ctx] = CLI::YamlBinder::from(std::move(queryConfig)).bind(std::move(parsedPlan));
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     for (const auto& [node, localPlans] : plan)

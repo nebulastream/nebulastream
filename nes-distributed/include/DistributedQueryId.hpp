@@ -24,7 +24,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 #include <nlohmann/json.hpp>
@@ -37,130 +36,19 @@
 
 namespace NES
 {
-using DistributedQueryId = NESStrongType<uint64_t, struct DistributedQueryId_, 0, 1>;
-
 inline DistributedQueryId getNextDistributedQueryId()
 {
-    static std::atomic_uint64_t id = DistributedQueryId::INITIAL;
+    static std::atomic_uint64_t id = INITIAL_DISTRIBUTED_QUERY_ID.getRawValue();
     return DistributedQueryId(id++);
 }
-
-struct DistributedQueryStatus
-{
-    std::vector<LocalQueryStatus> localStatusSnapshots;
-    DistributedQueryId queryId = INVALID<DistributedQueryId>;
-
-    QueryState getGlobalQueryState() const
-    {
-        /// Query if considered failed if any local query failed
-        if (std::ranges::any_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Failed; }))
-        {
-            return QueryState::Failed;
-        }
-        /// Query is not failed, stopped if all local queries have stopped
-        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Stopped; }))
-        {
-            return QueryState::Stopped;
-        }
-        /// Query is neither failed nor stopped. Running, if all local queries are running
-        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Running; }))
-        {
-            return QueryState::Running;
-        }
-        /// Query is neither failed nor stopped, nor running. Started, if all local queries have started
-        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.state == QueryState::Started; }))
-        {
-            return QueryState::Started;
-        }
-        /// Some local queries might be stopped, running, or started, but at least one local query has not been started
-        return QueryState::Registered;
-    }
-
-    std::vector<Exception> getExceptions() const
-    {
-        std::vector<Exception> exceptions;
-        for (const auto& localStatus : localStatusSnapshots)
-        {
-            if (auto err = localStatus.metrics.error)
-            {
-                exceptions.push_back(*err);
-            }
-        }
-        return exceptions;
-    }
-
-    Exception coalesceException() const
-    {
-        return QueryStatusFailed(fmt::format(
-            "Bad Distributed Query State: {}",
-            fmt::join(getExceptions() | std::views::transform([](const auto& exception) { return exception.what(); }), ". ")));
-    }
-
-    /// Returns the a combined query metrics object:
-    /// start: minimum of all local start timestamps
-    /// running: minimum of all local running timestamps
-    /// stop: maximum of all local stop timestamps
-    /// errors: coalesceException
-    QueryMetrics coalesceQueryMetrics() const
-    {
-        QueryMetrics metrics;
-        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.metrics.start.has_value(); }))
-        {
-            for (const auto& localStatus : localStatusSnapshots)
-            {
-                if (!metrics.start.has_value())
-                {
-                    metrics.start = localStatus.metrics.start.value();
-                }
-
-                if (*metrics.start > localStatus.metrics.start.value())
-                {
-                    metrics.start = localStatus.metrics.start.value();
-                }
-            }
-        }
-
-        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.metrics.running.has_value(); }))
-        {
-            for (const auto& localStatus : localStatusSnapshots)
-            {
-                if (!metrics.running.has_value())
-                {
-                    metrics.running = localStatus.metrics.running.value();
-                }
-
-                if (*metrics.running > localStatus.metrics.running.value())
-                {
-                    metrics.running = localStatus.metrics.running.value();
-                }
-            }
-        }
-
-        if (std::ranges::all_of(localStatusSnapshots, [](const LocalQueryStatus& local) { return local.metrics.stop.has_value(); }))
-        {
-            for (const auto& localStatus : localStatusSnapshots)
-            {
-                if (!metrics.stop.has_value())
-                {
-                    metrics.stop = localStatus.metrics.stop.value();
-                }
-
-                if (*metrics.stop < localStatus.metrics.stop.value())
-                {
-                    metrics.stop = localStatus.metrics.stop.value();
-                }
-            }
-        }
-
-        metrics.error = coalesceException();
-        return metrics;
-    }
-};
 
 struct LocalQuery
 {
     LocalQueryId id;
     GrpcAddr grpcAddr;
+
+    /// Default constructor for YAML deserialization
+    LocalQuery() : id{0} { }
 
     LocalQuery(const LocalQueryId id, const GrpcAddr& addr) : id{id}, grpcAddr{addr} { }
 
@@ -169,40 +57,133 @@ struct LocalQuery
 
 class Query
 {
-    std::vector<LocalQuery> localQueries;
+    /// id that we expose to the outside at coordinator scope
+    DistributedQueryId id;
+
+    struct Backend
+    {
+        using Embedded = LocalQueryId;
+        using Cluster = std::vector<LocalQuery>;
+        std::variant<Embedded, Cluster> embeddedOrCluster;
+    } backend;
 
 public:
-    [[nodiscard]] const std::vector<LocalQuery>& getLocalQueries() const { return localQueries; }
+    /// Friend declarations for YAML serialization
+    template <typename T>
+    friend struct YAML::convert;
+
+    /// Default constructor for YAML deserialization
+    Query() : id{getNextDistributedQueryId()}, backend{std::vector<LocalQuery>{}} { }
+
+    /// Embedded worker constructor
+    Query(const LocalQueryId queryId) : id{getNextDistributedQueryId()}, backend{queryId} { }
+
+    /// Cluster constructor
+    explicit Query(std::vector<LocalQuery> queries) : id{getNextDistributedQueryId()}, backend{std::move(queries)}
+    {
+        PRECONDITION(
+            not std::get<std::vector<LocalQuery>>(backend.embeddedOrCluster).empty(),
+            "Cannot construct a distributed query without any local queries");
+    }
+
+    ~Query() = default;
+    /// A query should only have one owner - move-only semantics
+    Query(const Query& other) = delete;
+    Query& operator=(const Query& other) = delete;
+    Query(Query&& other) = default;
+    Query& operator=(Query&& other) = default;
+
+    [[nodiscard]] bool backendIsEmbedded() const { return std::holds_alternative<Backend::Embedded>(backend.embeddedOrCluster); }
+
+    [[nodiscard]] bool backendIsCluster() const { return std::holds_alternative<Backend::Cluster>(backend.embeddedOrCluster); }
+
+    [[nodiscard]] LocalQueryId getEmbeddedId() const
+    {
+        PRECONDITION(backendIsEmbedded(), "Query is not embedded");
+        return std::get<LocalQueryId>(backend.embeddedOrCluster);
+    }
+
+    [[nodiscard]] const std::vector<LocalQuery>& getLocalQueries() const
+    {
+        PRECONDITION(backendIsCluster(), "Query is not deployed on a cluster");
+        return std::get<std::vector<LocalQuery>>(backend.embeddedOrCluster);
+    }
+
+    [[nodiscard]] DistributedQueryId getId() const { return id; }
+
+    /// Internal dispatch based on deployment
+    template <typename EmbeddedFunc, typename ClusterFunc>
+    auto dispatch(EmbeddedFunc&& onEmbedded, ClusterFunc&& onCluster) const
+    {
+        return std::visit(
+            [&](const auto& value)
+            {
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, LocalQueryId>)
+                {
+                    return onEmbedded(value);
+                }
+                else
+                {
+                    return onCluster(value);
+                }
+            },
+            backend.embeddedOrCluster);
+    }
 
     /// Iteration support - only works in cluster mode
-    [[nodiscard]] auto begin() const { return localQueries.begin(); }
+    [[nodiscard]] auto begin() const
+    {
+        PRECONDITION(backendIsCluster(), "Iteration only supported for cluster queries");
+        return getLocalQueries().cbegin();
+    }
 
-    [[nodiscard]] auto end() const { return localQueries.end(); }
+    [[nodiscard]] auto end() const
+    {
+        PRECONDITION(backendIsCluster(), "Iteration only supported for cluster queries");
+        return getLocalQueries().cend();
+    }
 
-    bool operator==(const Query& other) const = default;
+    bool operator==(const Query& other) const { return backend.embeddedOrCluster == other.backend.embeddedOrCluster; }
 
     /// Serialization
     static Query load(const std::string& identifier);
     static std::string save(const Query& query);
 
     friend std::ostream& operator<<(std::ostream& os, const Query& query);
-    Query() = default;
-
-    explicit Query(std::vector<LocalQuery> localQueries) : localQueries(std::move(localQueries)) { }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Query& query)
 {
-    fmt::print(
-        os,
-        "Query [{}]",
-        fmt::join(
-            query.localQueries
-                | std::views::transform([](const auto& localQuery) { return fmt::format("{}@{}", localQuery.id, localQuery.grpcAddr); }),
-            ", "));
+    os << "Query" << query.id.getRawValue() << "[";
+
+    query.dispatch(
+        [&os](const LocalQueryId& embeddedId) { os << embeddedId.getRawValue() << "@embedded"; },
+        [&os](const std::vector<LocalQuery>& queries)
+        {
+            for (size_t i = 0; i < queries.size(); ++i)
+            {
+                if (i > 0)
+                    os << ", ";
+                const auto& localQuery = queries[i];
+                os << localQuery.id.getRawValue();
+                if (!localQuery.grpcAddr.empty())
+                {
+                    os << "@" << localQuery.grpcAddr;
+                }
+            }
+        });
+
+    os << "]";
     return os;
 }
 
 }
 
 FMT_OSTREAM(NES::Query);
+
+template <>
+struct std::hash<NES::Query>
+{
+    size_t operator()(const NES::Query& query) const noexcept { return std::hash<uint64_t>{}(query.getId().getRawValue()); }
+};
