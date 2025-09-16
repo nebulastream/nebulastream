@@ -57,3 +57,4 @@ run_systest.sh
 wdir/
 cot/
 ccache/
+cov/
