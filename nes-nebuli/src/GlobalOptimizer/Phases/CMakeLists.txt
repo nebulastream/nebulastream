@@ -10,13 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-legacy-optimizer
+add_source_files(nes-global-optimizer
         SourceInferencePhase.cpp
-        LogicalSourceExpansionRule.cpp
-        RedundantUnionRemovalRule.cpp
-        RedundantProjectionRemovalRule.cpp
+        LogicalSourceExpansionPhase.cpp
+        RedundantUnionRemovalPhase.cpp
+        RedundantProjectionRemovalPhase.cpp
         OriginIdInferencePhase.cpp
         TypeInferencePhase.cpp
-        SinkBindingRule.cpp
-        LegacyOptimizer.cpp
+        SinkBindingPhase.cpp
 )

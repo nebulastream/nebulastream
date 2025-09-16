@@ -14,17 +14,21 @@
 
 #pragma once
 
-#include <Plans/LogicalPlan.hpp>
+#include <QueryPlanning.hpp>
 
 namespace NES
 {
 
-/**
- * @brief This rule removes redundant unions with only a single child.
- */
-class RedundantUnionRemovalRule
+class GlobalOptimizer
 {
+    QueryPlanningContext& ctx;
+
+    explicit GlobalOptimizer(QueryPlanningContext& ctx) : ctx{ctx} { }
+
 public:
-    void apply(LogicalPlan& queryPlan) const; ///NOLINT(readability-convert-member-functions-to-static)
+    static GlobalOptimizer with(QueryPlanningContext& ctx) { return GlobalOptimizer{ctx}; }
+
+    PlanStage::OptimizedLogicalPlan optimize(PlanStage::BoundLogicalPlan&& inputPlan) &&;
 };
+
 }

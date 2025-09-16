@@ -26,10 +26,11 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <ErrorHandling.hpp>
 
+#include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Util/Common.hpp>
 #include <cpptrace/from_current.hpp>
-#include <LegacyOptimizer.hpp>
 
 namespace NES
 {
@@ -164,8 +165,8 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
 }
 
 QueryStatementHandler::QueryStatementHandler(
-    const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<LegacyOptimizer>& optimizer)
-    : queryManager(queryManager), optimizer(optimizer)
+    const std::shared_ptr<QueryManager>& queryManager, SharedPtr<SourceCatalog> sourceCatalog, SharedPtr<SinkCatalog> sinkCatalog)
+    : queryManager(queryManager), sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
 {
 }
 
@@ -183,8 +184,10 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     const std::unique_lock lock(mutex);
     CPPTRACE_TRY
     {
-        const auto optimizedPlan = optimizer->optimize(statement);
-        const auto id = queryManager->registerQuery(optimizedPlan);
+        auto boundPlan = PlanStage::BoundLogicalPlan{statement};
+        QueryPlanningContext context{.sourceCatalog = Util::copyPtr(sourceCatalog), .sinkCatalog = Util::copyPtr(sinkCatalog)};
+        const auto optimizedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
+        const auto id = queryManager->registerQuery(optimizedPlan.plan);
         return id.and_then([this](const auto& queryId) { return queryManager->start(queryId); })
             .transform(
                 [&id, this]

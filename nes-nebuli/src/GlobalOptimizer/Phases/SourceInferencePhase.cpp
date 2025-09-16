@@ -12,30 +12,35 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/SourceInferencePhase.hpp>
+#include <GlobalOptimizer/Phases/SourceInferencePhase.hpp>
 
 #include <algorithm>
+#include <memory>
 #include <ranges>
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Util/Pointers.hpp>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
+LogicalPlan SourceInferencePhase::apply(const LogicalPlan& inputPlan, SharedPtr<const SourceCatalog> sourceCatalog)
 {
-    auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
+    LogicalPlan plan = inputPlan;
+    auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(inputPlan);
 
     PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
 
     for (auto& source : sourceOperators)
     {
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
-        /// source descriptor form the catalog.
+        /// source descriptor from the catalog.
         auto schema = Schema();
         auto logicalSourceOpt = sourceCatalog->getLogicalSource(source.getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
@@ -57,9 +62,9 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
                     throw CannotInferSchema("Could not rename non-existing field: {}", field.name);
                 }
             });
-        auto result = replaceOperator(queryPlan, source.id, source.withSchema(schema));
-        INVARIANT(result.has_value(), "replaceOperator failed");
-        queryPlan = std::move(*result);
+        plan = *replaceOperator(plan, source.id, source.withSchema(schema));
     }
+    return plan;
 }
+
 }
