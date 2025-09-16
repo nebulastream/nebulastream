@@ -25,6 +25,7 @@
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -36,6 +37,7 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -148,6 +150,56 @@ std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(Quer
         return std::unexpected(wrapExternalException());
     }
     std::unreachable();
+}
+
+WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
+{
+    const std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
+    const auto summaries = nodeEngine->getQueryLog()->getStatus();
+    WorkerStatus status;
+    status.after = after;
+    status.until = until;
+    for (const auto& [queryId, state, metrics] : summaries)
+    {
+        switch (state)
+        {
+            case QueryState::Registered:
+                /// Ignore these for the worker status
+                break;
+            case QueryState::Started:
+                INVARIANT(metrics.start.has_value(), "If query is started, it should have a start timestamp");
+                if (metrics.start.value() >= after)
+                {
+                    status.activeQueries.emplace_back(queryId, std::nullopt);
+                }
+                break;
+            case QueryState::Running: {
+                INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
+                if (metrics.running.value() >= after)
+                {
+                    status.activeQueries.emplace_back(queryId, metrics.running.value());
+                }
+                break;
+            }
+            case QueryState::Stopped: {
+                INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+                INVARIANT(metrics.stop.has_value(), "If query is stopped, it should have a stopped timestamp");
+                if (metrics.stop.value() >= after)
+                {
+                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
+                }
+                break;
+            }
+            case QueryState::Failed: {
+                INVARIANT(metrics.stop.has_value(), "If query has failed, it should have a stopped timestamp");
+                if (metrics.stop.value() >= after)
+                {
+                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
+                }
+            }
+        }
+    }
+    return status;
 }
 
 std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
