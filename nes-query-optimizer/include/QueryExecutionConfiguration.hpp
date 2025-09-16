@@ -22,8 +22,8 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/Validation/FloatValidation.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
 
 namespace NES
