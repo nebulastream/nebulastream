@@ -25,6 +25,7 @@ service WorkerRPCService {
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
   rpc RequestQueryLog (QueryLogRequest) returns (QueryLogReply) {}
+  rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
 }
 
 message RegisterQueryRequest {
@@ -93,4 +94,27 @@ message QueryLogEntry {
 
 message QueryLogReply {
     repeated QueryLogEntry entries = 1;
+}
+
+message WorkerStatusRequest {
+  uint64 after_unix_timestamp_in_milli_seconds = 1;
+}
+
+message WorkerStatusResponse {
+  message ActiveQuery {
+    uint64 query_id = 1;
+    optional uint64 started_unix_timestamp_in_milli_seconds = 2;
+  }
+
+  message TerminatedQuery {
+    uint64 query_id = 1;
+    optional uint64 started_unix_timestamp_in_milli_seconds = 2;
+    uint64 terminated_unix_timestamp_in_milli_seconds = 3;
+    optional Error error = 4;
+  }
+
+  uint64 after_unix_timestamp_in_milli_seconds = 3;
+  uint64 until_unix_timestamp_in_milli_seconds = 4;
+  repeated ActiveQuery active_queries = 1;
+  repeated TerminatedQuery terminated_queries = 2;
 }
