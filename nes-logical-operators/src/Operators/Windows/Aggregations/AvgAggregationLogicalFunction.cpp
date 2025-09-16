@@ -48,17 +48,6 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
 {
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction>
-AvgAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
-{
-    return std::make_shared<AvgAggregationLogicalFunction>(onField, asField);
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
-{
-    return std::make_shared<AvgAggregationLogicalFunction>(onField);
-}
-
 std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -136,6 +125,6 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunct
     {
         throw CannotDeserialize("AvgAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return AvgAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<AvgAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
 }
 }

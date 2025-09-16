@@ -38,17 +38,6 @@ MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLo
 {
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction>
-MinAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField)
-{
-    return std::make_shared<MinAggregationLogicalFunction>(onField, std::move(asField));
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
-{
-    return std::make_shared<MinAggregationLogicalFunction>(onField);
-}
-
 std::string_view MinAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -106,6 +95,6 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMinAggregationLogicalFunct
     {
         throw CannotDeserialize("MinAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return MinAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<MinAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
 }
 }
