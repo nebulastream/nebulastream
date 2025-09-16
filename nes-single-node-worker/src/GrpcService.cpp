@@ -278,4 +278,26 @@ grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const Worke
     return {grpc::INTERNAL, "unknown exception"};
 }
 
+grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response)
+{
+    CPPTRACE_TRY
+    {
+        const auto status = delegate.getWorkerStatus(
+            std::chrono::system_clock::time_point(std::chrono::milliseconds(request->after_unix_timestamp_in_milli_seconds())));
+
+        serializeWorkerStatus(status, response);
+
+        return grpc::Status::OK;
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
+}
+
 }
