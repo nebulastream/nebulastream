@@ -11,11 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-global-optimizer
-        SourceInferencePhase.cpp
         LogicalSourceExpansionPhase.cpp
-        RedundantUnionRemovalPhase.cpp
-        RedundantProjectionRemovalPhase.cpp
         OriginIdInferencePhase.cpp
+        RedundantProjectionRemovalPhase.cpp
+        RedundantUnionRemovalPhase.cpp
+        SourceInferencePhase.cpp
         TypeInferencePhase.cpp
         SinkBindingPhase.cpp
 )

@@ -14,79 +14,99 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <filesystem>
-#include <functional>
-#include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
-#include <unordered_map>
-#include <vector>
-#include <DataTypes/Schema.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <utility>
+#include <variant>
+
+#include <QueryManager/QueryManager.hpp>
+#include <ErrorHandling.hpp>
+#include <QueryResultReporter.hpp>
+#include <QueryTracker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
 {
-/// Forward declarations
-struct SystestQuery;
-struct RunningQuery;
-class QuerySubmitter;
 
-/// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
-static constexpr auto padSizeSuccess = 120;
-/// We pad to a maximum of 3 digits ---> maximum value that is correctly padded is 99 queries per file
-static constexpr auto padSizeQueryNumber = 2;
-/// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
-static constexpr auto padSizeQueryCounter = 3;
-
-/// Runs queries
-/// @return returns a collection of failed queries
-using QueryPerformanceMessageBuilder = std::function<std::string(RunningQuery&)>;
-
-inline std::string discardPerformanceMessage(RunningQuery&)
+class SystestRunner
 {
-    return "";
-}
+public:
+    struct LocalExecution
+    {
+        std::optional<std::filesystem::path> topologyPath;
+        SingleNodeWorkerConfiguration singleNodeWorkerConfig;
+    };
 
-[[nodiscard]] std::vector<RunningQuery> runQueries(
-    const std::vector<SystestQuery>& queries,
-    uint64_t numConcurrentQueries,
-    QuerySubmitter& querySubmitter,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+    struct DistributedExecution
+    {
+        std::optional<std::filesystem::path> topologyPath;
+    };
 
-/// Run queries locally ie not on single-node-worker in a separate process
-/// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration);
+    using ExecutionMode = std::variant<LocalExecution, DistributedExecution>;
 
-/// Run queries remote on the single-node-worker specified by the URI
-/// @return returns a collection of failed queries
-[[nodiscard]] std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const std::string& serverURI);
+private:
+    QueryTracker queryTracker;
+    ExecutionMode executionMode;
+    QueryManager queryManager;
+    std::unique_ptr<QueryResultReporter> reporter;
+    std::vector<FailedQuery> reportedFailures;
+    std::vector<FinishedQuery> finishedQueries;
 
-/// Run queries sequentially locally and benchmark the run time of each query.
-/// @return vector containing failed queries
-[[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
+    SystestRunner(std::vector<PlannedQuery> inputQueries, ExecutionMode executionMode, uint64_t queryConcurrency);
 
-/// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
-/// function/arithmetical/FunctionDiv:4..................................Passed
-/// function/arithmetical/FunctionMul:5..................................Failed
-/// SELECT * FROM s....
-/// Expected ............ | Actual 1, 2,3
-void printQueryResultToStdOut(
-    const RunningQuery& runningQuery,
-    const std::string& errorMessage,
-    size_t queryCounter,
-    size_t totalQueries,
-    const std::string_view queryPerformanceMessage);
+public:
+    static SystestRunner from(std::vector<PlannedQuery> queries, ExecutionMode executionMode, uint64_t queryConcurrency);
+
+    SystestRunner() = delete;
+    ~SystestRunner() = default;
+    SystestRunner(const SystestRunner&) = delete;
+    SystestRunner(SystestRunner&&) = delete;
+    SystestRunner operator=(const SystestRunner&) = delete;
+    SystestRunner operator=(SystestRunner&&) = delete;
+
+    std::vector<FailedQuery> run(nlohmann::json* _Nullable benchmarkResults) &&;
+
+private:
+    void submit();
+    void handle();
+    void onStopped(SubmittedQuery&& submitted, const DistributedQueryStatus& queryStatus);
+
+    template <typename QueryT>
+    requires requires(QueryT q) { q.ctx; }
+    void onFailure(QueryT&& query, std::vector<Exception>&& exceptions)
+    {
+        /// Check if test is negative test
+        if (std::holds_alternative<ExpectedError>(query.ctx.expectedResultsOrError))
+        {
+            const auto& [code, message] = std::get<ExpectedError>(query.ctx.expectedResultsOrError);
+            INVARIANT(not exceptions.empty(), "Query status indicated failure, but no exceptions were stored");
+
+            /// Check if the actual error matches the expected error
+            if (code == exceptions.front().code())
+            {
+                reporter->reportSuccess(query.ctx);
+                queryTracker.moveToFinished(FinishedQuery{std::move(query)});
+                return;
+            }
+
+            const auto errorMessage = fmt::format("expected error {} but got {}", code, exceptions.front().code());
+            auto failed = FailedQuery{std::move(query.ctx), std::move(exceptions)};
+            reporter->reportFailure(failed.ctx, std::move(errorMessage));
+            reportedFailures.push_back(failed);
+            queryTracker.moveToFailed(std::move(failed));
+            return;
+        }
+
+        auto failed = FailedQuery{std::move(query.ctx), std::move(exceptions)};
+        const auto errorMessage
+            = failed.exceptions.empty() ? "Query failed without error details" : fmt::format("{}", failed.exceptions.front());
+        reporter->reportFailure(failed.ctx, std::move(errorMessage));
+        reportedFailures.push_back(failed);
+        queryTracker.moveToFailed(std::move(failed));
+    }
+};
 
 }

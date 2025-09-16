@@ -46,7 +46,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <YAML/YAMLBinder.hpp>
+#include <YAML/YamlBinder.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -159,7 +159,8 @@ int main(int argc, char** argv)
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
+        auto yamlBinder = NES::CLI::YamlBinder{sourceCatalog, sinkCatalog};
+        auto optimizer = std::make_shared<NES::GlobalOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
             sourceCatalog,
@@ -168,7 +169,7 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::GRPCQueryManager>(
+            queryManager = std::make_shared<NES::GrpcQueryManager>(
                 CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
         }
         else
@@ -205,10 +206,13 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
-            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog, sinkCatalog);
+            auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
+            NES::WorkerStatementHandler workerStatementHandler{workerCatalog};
+            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
+                std::move(workerStatementHandler),
                 queryStatementHandler,
                 std::move(binder),
                 errorBehaviour,
@@ -271,9 +275,7 @@ int main(int argc, char** argv)
             boundPlan = yamlBinder.parseAndBind(file);
         }
 
-        NES::QueryPlanningContext context{.sourceCatalog = sourceCatalog, .sinkCatalog = sinkCatalog};
-        const NES::LogicalPlan optimizedQueryPlan
-            = NES::GlobalOptimizer::with(context).optimize(NES::PlanStage::BoundLogicalPlan(boundPlan)).plan;
+        const NES::LogicalPlan optimizedQueryPlan = optimizer->optimize(boundPlan);
 
         std::string output;
         auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(optimizedQueryPlan);

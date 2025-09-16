@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-
 #pragma once
+
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <functional>
@@ -26,18 +27,19 @@
 #include <variant>
 #include <vector>
 
-#include <Plans/LogicalPlan.hpp>
+#include <fmt/base.h>
 
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <fmt/base.h>
 #include <ErrorHandling.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
@@ -117,13 +119,13 @@ using QueryStatement = LogicalPlan;
 
 struct ShowQueriesStatement
 {
-    std::optional<LocalQueryId> id;
+    std::optional<DistributedQueryId> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    LocalQueryId id;
+    DistributedQueryId id;
 };
 
 using Statement = std::variant<
@@ -184,10 +186,8 @@ public:
 };
 }
 
-namespace fmt
-{
 template <>
-struct formatter<std::unordered_map<std::string, std::string>>
+struct fmt::formatter<std::unordered_map<std::string, std::string>>
 {
     [[nodiscard]] static constexpr auto parse(const format_parse_context& ctx) noexcept -> decltype(ctx.begin()) { return ctx.begin(); }
 
@@ -211,8 +211,6 @@ struct formatter<std::unordered_map<std::string, std::string>>
         return out;
     }
 };
-
-}
 
 FMT_OSTREAM(NES::CreateLogicalSourceStatement);
 FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
