@@ -29,6 +29,7 @@
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -223,6 +224,28 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             return grpc::Status::OK;
         }
         return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
+}
+
+grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response)
+{
+    CPPTRACE_TRY
+    {
+        const auto status
+            = delegate.getWorkerStatus(std::chrono::system_clock::time_point(std::chrono::milliseconds(request->afterunixtimestampinms())));
+
+        serializeWorkerStatus(status, response);
+
+        return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)
     {
