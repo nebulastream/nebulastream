@@ -143,4 +143,12 @@ std::vector<T> splitWithStringDelimiter(std::string_view inputString, std::strin
         | std::views::transform([](auto optional) { return *optional; }) | std::ranges::to<std::vector>();
 }
 
+/// Splitting on multiple spaces by splitting on ' ' and then skipping empty
+template <typename T>
+std::vector<T> splitStringOnMultipleSpaces(std::string_view inputString)
+{
+    return inputString | std::ranges::views::split(' ')
+        | std::ranges::views::filter([](auto&& range) { return not std::ranges::empty(range); }) | std::ranges::to<std::vector<T>>();
+}
+
 }
