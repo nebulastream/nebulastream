@@ -44,25 +44,27 @@ namespace
 constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(10000);
 constexpr std::chrono::milliseconds IMMEDIATELY = std::chrono::milliseconds(0);
 constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
-}
 
 template <typename QueueType, typename Args>
-bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> condition)
+bool tryIngestionUntil(QueueType& queue, Args&& args, const std::function<bool()>& condition)
 {
-    constexpr auto attempts = 10;
+    constexpr auto attempts = 100;
     for (size_t i = 0; i < attempts; ++i)
     {
         if (condition())
         {
             return true;
         }
-        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), args))
+        if (queue.tryWriteUntil(
+                std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(NES::TestSourceControl::RETRY_MULTIPLIER_MS * i),
+                args))
         {
             return true;
         }
     }
     NES_WARNING("Failed to inject data after {} attempts", attempts);
     return false;
+}
 }
 
 bool NES::TestSourceControl::injectEoS()

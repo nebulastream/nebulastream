@@ -74,8 +74,7 @@ SourceReturnType::EmitFunction emitFunction(
                             queryId,
                             successor,
                             data.buffer,
-                            [availableBuffer] { availableBuffer->release(); },
-                            {},
+                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
                             PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                             if (stopToken.stop_requested())
