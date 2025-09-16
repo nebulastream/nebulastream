@@ -23,6 +23,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -145,8 +146,13 @@ struct SchemaDiff
         size_t actualSize{};
     };
 
-    std::optional<SizeMismatch> sizeMismatch;
-    std::vector<FieldMismatch> fieldMismatches;
+    struct NoMismatch
+    {
+    };
+
+    /// Variant to hold all possible diff outcomes: No mismatches, a size mismatch, or field mismatches.
+    /// Will be default constructed as NoMismatch.
+    std::variant<NoMismatch, SizeMismatch, std::vector<FieldMismatch>> result;
 
     static SchemaDiff of(const Schema& expectedSchema, const Schema& actualSchema);
 
