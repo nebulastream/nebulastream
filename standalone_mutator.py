@@ -553,7 +553,7 @@ if __name__ == "__main__":
             print(f"Output directory: {output_path}")
             print()
         
-        total_patches = 0
+        total_patches = []
         
         # Process each file
         for file_path in validated_files:
@@ -571,20 +571,25 @@ if __name__ == "__main__":
                 )
                 
                 patches = source_file.generate_patches(str(file_output_dir))
-                file_patch_count = len(patches)
-                total_patches += file_patch_count
+                total_patches += [(f"{str(file_output_dir)}/{p["patch_file"]} {p["kind"]} {p["file_path"]} {p["line"]}") for p in patches]
                 
                 if arguments.verbose:
-                    print(f"  Generated {file_patch_count} patches in '{file_output_dir.name}/'")
+                    print(f"  Generated {len(patches)} patches in '{file_output_dir.name}/'")
                 else:
-                    print(f"Generated {file_patch_count} patches for '{file_path.name}'")
+                    print(f"Generated {len(patches)} patches for '{file_path.name}'")
                     
             except Exception as e:
                 print(f"Error processing '{file_path}': {e}", file=sys.stderr)
                 sys.exit(1)
         
         print()
-        print(f"Successfully generated {total_patches} patches total.")
+        print(f"Successfully generated {len(total_patches)} patches total.")
         print(f"Patches written to: {output_path}")
+
+        patch_types = "patch_types.txt"
+        with open(patch_types, "w", encoding="utf-8") as f:
+            f.write("mutant kind file line\n")
+            f.write("\n".join(total_patches) + "\n")
+            print(f"{patch_types} written")
     
     main()
