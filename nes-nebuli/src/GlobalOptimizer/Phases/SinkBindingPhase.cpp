@@ -12,23 +12,26 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/SinkBindingRule.hpp>
+#include <GlobalOptimizer/Phases/SinkBindingPhase.hpp>
 
+#include <memory>
 #include <ranges>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <ErrorHandling.hpp>
 
-void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
+NES::LogicalPlan NES::SinkBindingPhase::apply(const LogicalPlan& inputPlan, SharedPtr<const SinkCatalog> sinkCatalog)
 {
-    queryPlan = queryPlan.withRootOperators(
-        queryPlan.getRootOperators()
+    return inputPlan.withRootOperators(
+        inputPlan.getRootOperators()
         | std::ranges::views::transform(
-            [this](const LogicalOperator& rootOperator) -> LogicalOperator
+            [&sinkCatalog](const LogicalOperator& rootOperator) -> LogicalOperator
             {
-                auto sinkOperator = rootOperator.tryGetAs<SinkLogicalOperator>();
+                const auto sinkOperator = rootOperator.tryGetAs<SinkLogicalOperator>();
                 PRECONDITION(sinkOperator.has_value(), "Root operator must be sink");
                 /// Check to centralize the sink binding logic
                 /// TODO #897 move sink binding to new query binder

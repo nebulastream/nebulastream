@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <GlobalOptimizer/Phases/OriginIdInferencePhase.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -70,7 +70,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
 }
 }
 
-void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+LogicalPlan OriginIdInferencePhase::apply(const LogicalPlan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
@@ -81,6 +81,7 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(read
     {
         newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
     }
-    queryPlan = queryPlan.withRootOperators(newSinks);
+    return queryPlan.withRootOperators(newSinks);
 }
+
 }
