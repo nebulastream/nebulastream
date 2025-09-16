@@ -29,6 +29,7 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -81,5 +82,6 @@ public:
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(LocalQueryId queryId) const;
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> getQueryStatus(LocalQueryId queryId) const noexcept;
+    [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
 };
 }
