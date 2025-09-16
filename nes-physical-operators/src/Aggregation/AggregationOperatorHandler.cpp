@@ -13,6 +13,9 @@
 */
 #include <Aggregation/AggregationOperatorHandler.hpp>
 
+#include <algorithm>
+#include <bit>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <functional>

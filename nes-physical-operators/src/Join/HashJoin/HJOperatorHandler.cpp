@@ -15,6 +15,8 @@
 
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 
+#include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -23,6 +25,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Sequencing/SequenceData.hpp>
