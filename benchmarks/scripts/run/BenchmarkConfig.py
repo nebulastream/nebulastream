@@ -19,9 +19,9 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [10000000, 10, 100, 1000, 10000]
+BATCH_SIZES = [10000, 10, 100, 1000]
 TIMESTAMP_INCREMENTS = [1, 100, 1000, 100000]
-INGESTION_RATES = [0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
+INGESTION_RATES = [100000000, 0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70, 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
 
 # Shared worker configuration parameters
@@ -30,34 +30,36 @@ BUFFER_SIZES = [4096, 16384, 524288, 1024]
 PAGE_SIZES = [4096, 16384, 524288, 1024]
 WINDOW_SIZE_SLIDE = [
     # Representing a tumbling window of 277.78h, resulting in 1 concurrent window
-    (1000 * 1000 * 1000, 1000 * 1000 * 1000),
+    # (1000 * 1000 * 1000, 1000 * 1000 * 1000),
     # Representing a tumbling window of 2.78h, resulting in 1 concurrent window
     # (10 * 1000 * 1000, 10 * 1000 * 1000),
+    # Representing a tumbling window of 16.67min, resulting in 1 concurrent window
+    (1000 * 1000, 1000 * 1000),
     # Representing a tumbling window of 10s, resulting in 1 concurrent window
     (10 * 1000, 10 * 1000),
     # Representing a sliding window of 277.78h with slide of 16.67min, resulting in 1000 concurrent windows
     # (1000 * 1000 * 1000, 1000 * 1000),
     # Representing a sliding window of 2.78h with slide of 1s, resulting in 10000 concurrent windows
-    (10 * 1000 * 1000, 1000),
+    # (10 * 1000 * 1000, 1000),
     # Representing a sliding window of 10s with slide of 5s, resulting in 2 concurrent windows
-    (10 * 1000, 5 * 1000),
+    # (10 * 1000, 5 * 1000),
     # Representing a sliding window of 10s with slide of 100ms, resulting in 100 concurrent windows
     (10 * 1000, 100)
 ]
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 
 # File-backed worker configuration parameters
-LOWER_MEMORY_BOUNDS = [0, 1024 * 1024, 256 * 1024 * 1024, np.iinfo(np.uint64).max]
-UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 1024 * 1024, 256 * 1024 * 1024]
+LOWER_MEMORY_BOUNDS = [0, 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
+UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024]
 MAX_NUM_WATERMARK_GAPS = [10, 100, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
-MIN_WRITE_STATE_SIZES = [4096, 16384, 0, 512]
+MIN_WRITE_STATE_SIZES = [0, 512, 4096, 16384]
 PREDICTION_TIME_DELTAS = [500, 5000, 100000, 0]
 WITH_CLEANUPS = ["true", "false"]
 WITH_PREDICTIONS = ["true", "false"]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
-WATERMARK_PREDICTOR_TYPES = ["REGRESSION", "RLS", "KALMAN"]
+WATERMARK_PREDICTOR_TYPES = ["KALMAN", "REGRESSION", "RLS"]
 MAX_NUM_FILE_DESCRIPTORS = [0, 512, 4096, 16384]  # 0 means no limit (will fail if system's hard limit is exceeded)
 FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 16384, 524288, 1024]
 NUM_BUFFERS_PER_WORKER = [16384, 0, 512, 4096]
@@ -74,12 +76,12 @@ def get_queries():
             f"INTO csv_sink;"
         )
     # Join with two streams and multiple keys
-    for window_size, slide in WINDOW_SIZE_SLIDE:
-        queries.append(
-            f"SELECT * FROM (SELECT * FROM tcp_source) "
-            f"INNER JOIN (SELECT * FROM tcp_source2) ON (id = id2 AND value = value2) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INTO csv_sink;"
-        )
+    # for window_size, slide in WINDOW_SIZE_SLIDE:
+    #     queries.append(
+    #         f"SELECT * FROM (SELECT * FROM tcp_source) "
+    #         f"INNER JOIN (SELECT * FROM tcp_source2) ON (id = id2 AND value = value2) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+    #         f"INTO csv_sink;"
+    #     )
 
     # Join with two streams and variable sized data as payload
     for window_size, slide in WINDOW_SIZE_SLIDE:
@@ -96,13 +98,13 @@ def get_queries():
             f"INTO csv_sink;"
         )
     # Join with three streams
-    for window_size, slide in WINDOW_SIZE_SLIDE:
-        queries.append(
-            f"SELECT * FROM (SELECT * FROM tcp_source) "
-            f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INTO csv_sink;"
-        )
+    # for window_size, slide in WINDOW_SIZE_SLIDE:
+    #     queries.append(
+    #         f"SELECT * FROM (SELECT * FROM tcp_source) "
+    #         f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+    #         f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+    #         f"INTO csv_sink;"
+    #     )
 
     return queries
 
@@ -217,7 +219,7 @@ class BenchmarkConfig:
         ## General run configurations
         self.num_tuples_to_generate = 0  # 0 means the source will run indefinitely
         self.no_physical_sources_per_logical_source = 1
-        self.throughput_listener_time_interval = 500  # output interval in ms
+        self.throughput_listener_time_interval = 100  # output interval in ms
 
     # Return a dictionary representation of the configuration
     def to_dict(self):
@@ -448,7 +450,7 @@ def create_watermark_prediction_benchmark_configs():
     return configs
 
 
-def create_prediction_correctness_precision_configs():
+def create_prediction_accuracy_precision_configs():
     # Generate configurations where only one parameter varies from the default value
     configs = []
     default_params = get_default_params_dict()
@@ -577,6 +579,30 @@ def create_batch_size_benchmark_configs():
         for timestamp_increment in default_timestamp_increments
         for slice_store_type in SLICE_STORE_TYPES
         for query in default_queries
+    ]
+
+
+def create_memory_bounds_benchmark_configs():
+    # Generate all possible configurations for memory bounds where lower is smaller than or equal to upper
+    default_params = get_default_params_dict()
+    del default_params["lower_memory_bound"]
+    del default_params["upper_memory_bound"]
+    del default_params["timestamp_increment"]
+    del default_params["query"]
+
+    return [
+        BenchmarkConfig(**default_params,
+                        slice_store_type=slice_store_type,
+                        lower_memory_bound=lower_memory_bound,
+                        upper_memory_bound=upper_memory_bound,
+                        timestamp_increment=timestamp_increment,
+                        query=query)
+        for slice_store_type in SLICE_STORE_TYPES
+        for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
+        for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
+        for timestamp_increment in TIMESTAMP_INCREMENTS[:2]
+        for query in get_queries()
+        if lower_memory_bound <= upper_memory_bound
     ]
 
 

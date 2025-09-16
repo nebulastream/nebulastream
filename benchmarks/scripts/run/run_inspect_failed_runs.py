@@ -36,7 +36,8 @@ if __name__ == "__main__":
                              in ALL_FAILED_RUNS]
     # Find keys where all values are the same
     identical_keys = {key for key in all_failed_runs_dicts[0] if all(d[key] == all_failed_runs_dicts[0][key] for d in all_failed_runs_dicts)}
-    print(f"Identical keys:\n{identical_keys}\n")
+    identical_keys_values = {key: Counter(d[key] for d in all_failed_runs_dicts) for key in all_failed_runs_dicts[0] if key in identical_keys}
+    print(f"Identical keys and values:\n{identical_keys_values}")
 
     # Collect unique values for keys that vary between dictionaries
     varying_keys_values = {key: Counter(d[key] for d in all_failed_runs_dicts) for key in all_failed_runs_dicts[0] if key not in identical_keys}

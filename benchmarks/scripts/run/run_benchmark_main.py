@@ -44,8 +44,8 @@ SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/n
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
-NUM_RUNS_PER_CONFIG = 3
-NUM_RETRIES_PER_RUN = 3
+NUM_RUNS_PER_CONFIG = 1
+NUM_RETRIES_PER_RUN = 2
 MEASURE_INTERVAL = 8
 WAIT_BEFORE_QUERY_STOP = 5
 WAIT_BETWEEN_COMMANDS = 2
@@ -78,7 +78,7 @@ CONFIG_FILES = {
     WORKER_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", WORKER_CONFIG_FILE_NAME),
     QUERY_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", QUERY_CONFIG_FILE_NAME),
 }
-ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_benchmark_configs()
+ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_memory_bounds_benchmark_configs()
 
 
 # Helper functions
@@ -241,9 +241,12 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
                     cmd += " -d"
                 # Add variable sized data flag to last two tcp servers
                 if port == starting_ports[-1] or port == starting_ports[-2]:
-                    cmd += " -v"
+                    if "payload" in current_benchmark_config.query:
+                        cmd += " -v 1"  # Generate short variable sized data as it is a join key
+                    else:
+                        cmd += " -v 2"  # Generate long variable sized data as it is only payload
                 # print(f"Trying to start tcp server with {cmd}")
-                process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
+                process = subprocess.Popen(cmd.split(" "), cwd=SOURCE_DIR, stdout=subprocess.DEVNULL)
                 time.sleep(WAIT_BETWEEN_COMMANDS)  # Allow server to start
                 if process.poll() is not None and process.poll() != 0:
                     # print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
@@ -425,6 +428,13 @@ def main():
         print("Could not remove /tmp/dump. Restart after executing\nsudo rm -rf /tmp/dump")
         return
 
+    # We use pwd to create file paths which will only work from nes root directory
+    process = subprocess.Popen("cat benchmarks/scripts/run/run_benchmark_main.py", shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.PIPE, text=True)
+    _, stderr = process.communicate()
+    if stderr != '':
+        print("Execute from nebulastream root directory")
+        return
+
     print("################################################################")
     print("Running benchmark main")
     print("################################################################\n")
@@ -474,7 +484,7 @@ def main():
         # Calling the postprocessing main
         start_time = time.time()
         measurement_time = MEASURE_INTERVAL * 1000
-        startup_time = WAIT_BETWEEN_COMMANDS * 1000
+        startup_time = 0
         post_processing = PostProcessing.PostProcessing(output_folders,
                                                         measurement_time,
                                                         startup_time,

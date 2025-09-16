@@ -15,6 +15,8 @@
 #include <chrono>
 #include <csignal>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <random>
 #include <string>
@@ -26,6 +28,8 @@
 class ClientHandler
 {
 public:
+    static constexpr auto VARIABLE_SIZED_DATA_SIZE = 1048576;
+
     ClientHandler(
         const int clientSocket,
         const sockaddr_in address,
@@ -37,7 +41,7 @@ public:
         const uint64_t idUpperBound,
         const uint64_t generatorSeed,
         const bool deterministicIds,
-        const bool varSized)
+        const int varSized)
         : clientSocket(clientSocket)
         , address(address)
         , timeoutSeconds(timeoutSeconds)
@@ -62,10 +66,32 @@ public:
 
         try
         {
+            std::string variableSizedData;
+            if (varSized == 2)
+            {
+                const auto filePath = std::filesystem::current_path().string() + "/benchmarks/data/VariableSizedData1MB.bin";
+                std::cout << "TCPServer: FilePath is " << filePath << '\n';
+                if (std::ifstream file(filePath, std::ios::binary); file)
+                {
+                    variableSizedData.assign(std::istreambuf_iterator(file), std::istreambuf_iterator<char>());
+                }
+                else
+                {
+                    throw std::runtime_error("TCPServer: File not found");
+                }
+                if (variableSizedData.size() != VARIABLE_SIZED_DATA_SIZE)
+                {
+                    std::cout << "TCPServer: File Size is " << std::to_string(variableSizedData.size()) << '\n';
+                    throw std::runtime_error("TCPServer: File does not have the correct size");
+                }
+            }
+
             //std::random_device rd;
             std::mt19937 gen(generatorSeed);
             std::uniform_int_distribution idDistrib(0UL, idUpperBound);
             std::uniform_int_distribution valueDistrib(0, 10000);
+
+            const auto maxMessageSizeInBytes = variableSizedData.empty() ? 58 : 48 + VARIABLE_SIZED_DATA_SIZE;
 
             const auto interval
                 = std::chrono::microseconds(static_cast<int64_t>(std::round(ingestionRate != 0 ? 1000000 * batchSize / ingestionRate : 0)));
@@ -94,14 +120,26 @@ public:
 
                 uint64_t allMessagesSize = 0;
                 std::vector<char> messages;
-                constexpr auto maxMessageSizeInBytes = 88;
                 messages.reserve(batchSize * maxMessageSizeInBytes);
                 for (auto idx = 0UL; idx < batchSize; ++idx)
                 {
                     const auto value = valueDistrib(gen);
                     const auto id = deterministicIds ? counter : idDistrib(gen);
-                    std::string message = std::to_string(id) + "," + std::to_string(value) + "," + std::to_string(timestamp)
-                        + (varSized ? ",str:" + std::to_string(value) : "") + '\n';
+                    std::string message = std::to_string(id) + "," + std::to_string(value) + "," + std::to_string(timestamp);
+                    if (varSized > 0)
+                    {
+                        message += ",";
+                        if (not variableSizedData.empty())
+                        {
+                            message.append(variableSizedData);
+                        }
+                        else
+                        {
+                            message += "str:" + std::to_string(value);
+                        }
+                    }
+                    message += '\n';
+
                     std::memcpy(&messages[allMessagesSize], message.c_str(), message.size());
                     allMessagesSize += message.size();
                 }
@@ -151,7 +189,7 @@ private:
     uint64_t idUpperBound;
     uint64_t generatorSeed;
     bool deterministicIds;
-    bool varSized;
+    int varSized;
     uint64_t counter = 0;
     uint64_t timestamp = 0;
     bool running = true;
@@ -171,7 +209,7 @@ public:
         const uint64_t idUpperBound,
         const uint64_t generatorSeed,
         const bool deterministicIds,
-        const bool varSized)
+        const int varSized)
         : host(host)
         , port(port)
         , timeoutSeconds(timeoutSeconds)
@@ -299,7 +337,7 @@ private:
     uint64_t idUpperBound = 0;
     uint64_t generatorSeed = 0;
     bool deterministicIds = false;
-    bool varSized = false;
+    int varSized = 0;
     int serverSocket;
     sockaddr_in serverAddress;
     std::vector<ClientHandler> clients;
@@ -318,7 +356,7 @@ int main(const int argc, char* argv[])
     uint64_t idUpperBound = 0;
     uint64_t generatorSeed = 0;
     bool deterministicIds = false;
-    bool varSized = false;
+    int varSized = 0;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -364,7 +402,7 @@ int main(const int argc, char* argv[])
         }
         else if (std::strcmp(argv[i], "-v") == 0 || std::strcmp(argv[i], "--var-sized") == 0)
         {
-            varSized = true;
+            varSized = std::stoi(argv[++i]);
         }
     }
 

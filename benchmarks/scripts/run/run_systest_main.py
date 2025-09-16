@@ -247,7 +247,7 @@ def main():
         return
 
     # We use pwd to create file paths which will only work from nes root directory
-    process = subprocess.Popen(f"cat {TEST_FILE_PATH.split(":")[0]}", shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.PIPE, text=True)
+    process = subprocess.Popen("cat benchmarks/scripts/run/run_systest_main.py", shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.PIPE, text=True)
     _, stderr = process.communicate()
     if stderr != '':
         print("Execute from nebulastream root directory")
