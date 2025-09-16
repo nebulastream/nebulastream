@@ -466,12 +466,18 @@ if __name__ == "__main__":
         'accessed_columns': [1, 2, 5, 10],
         'function_types': ['add', 'exp'],
         'selectivities': [5, 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+        'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
+        'window_sizes': [10000, 100000],
 
         'operator_chains': [
             ['map'],                  # Single map
             ['filter'],               # Single filter
+            ['agg'],                 # Single aggregation
             ['map', 'filter'],        # Map followed by filter
             ['filter', 'map'],        # Filter followed by map
+            ['filter', 'agg'],
+            ['agg', 'map'],
+            #['filter', 'map', 'agg'],
             #['map', 'map'],           # Two map operators
             #['filter', 'filter']      # Two filter operators
         ],
