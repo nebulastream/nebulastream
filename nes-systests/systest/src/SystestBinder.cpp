@@ -325,6 +325,10 @@ struct SystestBinder::Impl
         uint64_t loadedFiles = 0;
 
         SystestTopology systestTopology{clusterConfig.nodes};
+        fmt::println("=================================================");
+        fmt::print("Using topology from:");
+        renderTopology(systestTopology.getTopologyGraph(), std::cout);
+        fmt::println("=================================================");
         for (auto& testFile : discoveredTestFiles | std::views::values)
         {
             std::cout << "Loading queries from test file: file://" << testFile.getLogFilePath() << '\n' << std::flush;
