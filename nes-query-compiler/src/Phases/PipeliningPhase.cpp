@@ -85,8 +85,8 @@ void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     auto schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    const auto memoryProvider = NES::Util::as<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(
-        Interface::MemoryProvider::TupleBufferMemoryProvider::create(configuredBufferSize, schema.value()));
+    const auto memoryProvider =
+        Interface::MemoryProvider::TupleBufferMemoryProvider::create(configuredBufferSize, schema.value());
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->getOperatorHandlers().emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
