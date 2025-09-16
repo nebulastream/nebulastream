@@ -27,10 +27,6 @@ namespace NES
 class MinAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField);
-    static std::shared_ptr<WindowAggregationLogicalFunction>
-    create(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
-
     MinAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
     explicit MinAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
     ~MinAggregationLogicalFunction() override = default;

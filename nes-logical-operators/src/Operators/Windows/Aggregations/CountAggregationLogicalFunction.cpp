@@ -49,17 +49,6 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogi
 {
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction>
-CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
-{
-    return std::make_shared<CountAggregationLogicalFunction>(onField, asField);
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
-{
-    return std::make_shared<CountAggregationLogicalFunction>(onField);
-}
-
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -116,6 +105,6 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFun
     {
         throw CannotDeserialize("CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return CountAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<CountAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
 }
 }
