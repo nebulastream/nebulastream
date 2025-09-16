@@ -301,9 +301,13 @@ bool DataType::isNumeric() const
 
 std::optional<DataType> DataType::join(const DataType& otherDataType) const
 {
-    if (this->type == Type::UNDEFINED or this->type == Type::VARSIZED)
+    if (this->type == Type::UNDEFINED)
     {
         return {DataTypeProvider::provideDataType(Type::UNDEFINED)};
+    }
+    if (this->type == Type::VARSIZED)
+    {
+        return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED)} : std::nullopt;
     }
 
     if (this->isNumeric())
