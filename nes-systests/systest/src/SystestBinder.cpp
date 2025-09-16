@@ -38,6 +38,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -57,7 +58,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
-#include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -209,7 +209,7 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
-    void optimizeQueries(const NES::LegacyOptimizer& optimizer)
+    void optimizeQueries(QueryPlanningContext& planningContext)
     {
         if (!boundPlan.has_value())
         {
@@ -217,7 +217,7 @@ public:
         }
         try
         {
-            setOptimizedPlan(optimizer.optimize(boundPlan.value()));
+            setOptimizedPlan(GlobalOptimizer::with(planningContext).optimize(PlanStage::BoundLogicalPlan{*std::move(boundPlan)}).plan);
         }
         catch (Exception& e)
         {
@@ -230,8 +230,8 @@ public:
         {
             try
             {
-                auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
-                setDifferentialQueryPlan(std::move(optimizedDiff));
+                setDifferentialQueryPlan(
+                    GlobalOptimizer::with(planningContext).optimize(PlanStage::BoundLogicalPlan{std::move(*differentialQueryPlan)}).plan);
             }
             catch (Exception& e)
             {
@@ -348,22 +348,22 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
-
-        auto buildSystests = loadedSystests
+        auto buildSystests
+            = loadedSystests
             | std::views::filter(
-                                 [&testfile](const auto& loadedQueryPlan)
-                                 {
-                                     return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                                         or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
-                                 })
+                  [&testfile](const auto& loadedQueryPlan)
+                  {
+                      return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
+                          or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
+                  })
             | std::ranges::views::transform(
-                                 [&optimizer, &foundQueries](auto& systest)
-                                 {
-                                     foundQueries.insert(systest.getSystemTestQueryId());
-                                     systest.optimizeQueries(optimizer);
-                                     return std::move(systest).build();
-                                 })
+                  [&testfile, &foundQueries](auto& systest)
+                  {
+                      foundQueries.insert(systest.getSystemTestQueryId());
+                      QueryPlanningContext context{.sourceCatalog = testfile.sourceCatalog, .sinkCatalog = testfile.sinkCatalog};
+                      systest.optimizeQueries(context);
+                      return std::move(systest).build();
+                  })
             | std::ranges::to<std::vector>();
 
         /// Warn about queries specified via the command line that were not found in the test file

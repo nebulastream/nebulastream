@@ -19,12 +19,18 @@
 namespace NES
 {
 
-/**
- * @brief This rule removes redundant projection, which project everything
- */
-class RedundantProjectionRemovalRule
+/// The type inference phase receives and query plan and infers all input and output schemata for all operators.
+class TypeInferencePhase
 {
 public:
-    void apply(LogicalPlan& queryPlan) const;
+    TypeInferencePhase() = delete;
+    ~TypeInferencePhase() = delete;
+    TypeInferencePhase(const TypeInferencePhase&) = delete;
+    TypeInferencePhase(TypeInferencePhase&&) = delete;
+    TypeInferencePhase& operator=(const TypeInferencePhase&) = delete;
+    TypeInferencePhase& operator=(TypeInferencePhase&&) = delete;
+
+    static LogicalPlan apply(const LogicalPlan& inputPlan);
 };
+
 }
