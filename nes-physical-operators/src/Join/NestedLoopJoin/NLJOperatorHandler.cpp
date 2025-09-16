@@ -15,6 +15,7 @@
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <utility>

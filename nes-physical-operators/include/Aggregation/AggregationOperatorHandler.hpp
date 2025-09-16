@@ -24,6 +24,7 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/RollingAverage.hpp>
+#include <HashMapSlice.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -54,6 +55,8 @@ public:
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
 
+    /// shared_ptr as multiple slices need access to it
+    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
 
 protected:
     void triggerSlices(

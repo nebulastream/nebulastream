@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <WindowProbePhysicalOperator.hpp>
 
 #include <optional>
 #include <utility>
@@ -21,11 +22,11 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <WindowBasedOperatorHandler.hpp>
-#include <WindowProbePhysicalOperator.hpp>
 #include <function.hpp>
 
 namespace NES
@@ -74,10 +75,10 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 {
 }
 
-void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx) const
+void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     /// Giving child operators the change to setup
-    setupChild(executionCtx);
+    setupChild(executionCtx, compilationContext);
     invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
 }
 
