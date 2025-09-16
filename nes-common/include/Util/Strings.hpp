@@ -142,5 +142,4 @@ std::vector<T> splitWithStringDelimiter(std::string_view inputString, std::strin
         | std::views::filter([](auto optional) { return optional.has_value(); })
         | std::views::transform([](auto optional) { return *optional; }) | std::ranges::to<std::vector>();
 }
-
 }

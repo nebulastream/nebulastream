@@ -108,6 +108,21 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice)
     EXPECT_TRUE(tokens == test);
 }
 
+TEST(UtilFunctionTest, splitStringOnMultipleSpaces)
+{
+    std::vector<std::string> test;
+    test.emplace_back("This");
+    test.emplace_back("is");
+    test.emplace_back("a");
+    test.emplace_back("random");
+    test.emplace_back("line");
+    test.emplace_back("with");
+    test.emplace_back("delimiter.");
+    const std::string line = "This is a random   line with    delimiter.";
+    const auto tokens = Util::splitWithStringDelimiter<std::string>(line, " ");
+    EXPECT_TRUE(tokens == test);
+}
+
 TEST(UtilFunctionTest, splitIntegersWithWhiteSpaces)
 {
     const std::string line = "123,43,123,532, 12, 432,12,43   ,2341,321";
