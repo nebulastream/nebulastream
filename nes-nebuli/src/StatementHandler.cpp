@@ -51,8 +51,8 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
 std::expected<CreatePhysicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement)
 {
-    if (const auto created
-        = sourceCatalog->addPhysicalSource(statement.attachedTo, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+    if (const auto created = sourceCatalog->addPhysicalSource(
+            statement.attachedTo, statement.sourceType, statement.workerId, statement.sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -133,7 +133,8 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, statement.sinkConfig))
+    if (const auto created
+        = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, statement.workerId, statement.sinkConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }

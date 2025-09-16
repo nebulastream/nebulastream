@@ -359,7 +359,11 @@ public:
             throw InvalidConfigParameter("Invalid source configuration for type {} with arguments {}", type, sourceOptions);
         }
         return CreatePhysicalSourceStatement{
-            .attachedTo = logicalSourceOpt.value(), .sourceType = type, .sourceConfig = sourceOptions, .parserConfig = parserConfig};
+            .attachedTo = logicalSourceOpt.value(),
+            .sourceType = type,
+            .workerId = "",
+            .sourceConfig = sourceOptions,
+            .parserConfig = parserConfig};
     }
 
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
@@ -380,7 +384,7 @@ public:
             throw InvalidConfigParameter("Invalid sink configuration");
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
-        return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions};
+        return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .workerId = "", .schema = schema, .sinkConfig = sinkOptions};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

@@ -47,9 +47,10 @@ protected:
         auto dummySchema = Schema{};
         auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value(); /// NOLINT
         auto dummyParserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
-        auto dummySourceDescriptor = sourceCatalog /// NOLINT
-                                         .addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig)
-                                         .value();
+        auto dummySourceDescriptor
+            = sourceCatalog /// NOLINT
+                  .addPhysicalSource(logicalSource, "File", "localhost", {{"file_path", "/dev/null"}}, dummyParserConfig)
+                  .value();
         sourceOp2 = SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor));
         selectionOp = SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"));
         sinkOp = SinkLogicalOperator();
