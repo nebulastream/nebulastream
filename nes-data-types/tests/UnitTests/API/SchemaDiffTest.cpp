@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -23,6 +24,8 @@
 
 namespace NES
 {
+using FieldMismatches = std::vector<SchemaDiff::FieldMismatch>;
+
 class SchemaDiffTest : public Testing::BaseUnitTest
 {
 public:
@@ -147,8 +150,7 @@ TEST_F(SchemaDiffTest, identicalSchemasTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
-    EXPECT_TRUE(diff.fieldMismatches.empty());
+    EXPECT_TRUE(std::holds_alternative<SchemaDiff::NoMismatch>(diff.result));
 }
 
 TEST_F(SchemaDiffTest, missingActualFieldsTest)
@@ -166,11 +168,10 @@ TEST_F(SchemaDiffTest, missingActualFieldsTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    ASSERT_TRUE(diff.sizeMismatch.has_value());
     /// We do not check for field mismatches if a size mismatch is detected.
-    EXPECT_TRUE(diff.fieldMismatches.empty());
+    ASSERT_TRUE(std::holds_alternative<SchemaDiff::SizeMismatch>(diff.result));
 
-    auto sizeMismatch = diff.sizeMismatch.value();
+    auto sizeMismatch = std::get<1>(diff.result);
     EXPECT_EQ(sizeMismatch.expectedSize, 3);
     EXPECT_EQ(sizeMismatch.actualSize, 2);
 }
@@ -189,10 +190,9 @@ TEST_F(SchemaDiffTest, additionalActualFieldsTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    ASSERT_TRUE(diff.sizeMismatch.has_value());
-    EXPECT_TRUE(diff.fieldMismatches.empty());
+    ASSERT_TRUE(std::holds_alternative<SchemaDiff::SizeMismatch>(diff.result));
 
-    auto sizeMismatch = diff.sizeMismatch.value();
+    auto sizeMismatch = std::get<1>(diff.result);
     EXPECT_EQ(sizeMismatch.expectedSize, 2);
     EXPECT_EQ(sizeMismatch.actualSize, 3);
 }
@@ -210,14 +210,15 @@ TEST_F(SchemaDiffTest, typeMismatchesTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
+    ASSERT_TRUE(std::holds_alternative<FieldMismatches>(diff.result));
 
-    EXPECT_EQ(diff.fieldMismatches.size(), 1);
-    EXPECT_EQ(diff.fieldMismatches[0].index, 0);
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.dataType.type, DataType::Type::INT32);
+    auto fieldMismatches = std::get<2>(diff.result);
+    EXPECT_EQ(fieldMismatches.size(), 1);
+    EXPECT_EQ(fieldMismatches[0].index, 0);
+    EXPECT_EQ(fieldMismatches[0].expectedField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+    EXPECT_EQ(fieldMismatches[0].actualField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].actualField.dataType.type, DataType::Type::INT32);
 }
 
 TEST_F(SchemaDiffTest, identicalSchemasWithDuplicateFieldsTest)
@@ -235,8 +236,7 @@ TEST_F(SchemaDiffTest, identicalSchemasWithDuplicateFieldsTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
-    EXPECT_TRUE(diff.fieldMismatches.empty());
+    EXPECT_TRUE(std::holds_alternative<SchemaDiff::NoMismatch>(diff.result));
 }
 
 TEST_F(SchemaDiffTest, schemasWithDuplicateFieldsAndDifferentSizeTest)
@@ -251,10 +251,9 @@ TEST_F(SchemaDiffTest, schemasWithDuplicateFieldsAndDifferentSizeTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    EXPECT_TRUE(diff.sizeMismatch.has_value());
-    ASSERT_TRUE(diff.fieldMismatches.empty());
+    ASSERT_TRUE(std::holds_alternative<SchemaDiff::SizeMismatch>(diff.result));
 
-    auto sizeMismatch = diff.sizeMismatch.value();
+    auto sizeMismatch = std::get<1>(diff.result);
     EXPECT_EQ(sizeMismatch.expectedSize, 2);
     EXPECT_EQ(sizeMismatch.actualSize, 1);
 }
@@ -272,13 +271,15 @@ TEST_F(SchemaDiffTest, schemasWithDuplicateFieldsAndTypeMismatchTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
-    EXPECT_EQ(diff.fieldMismatches.size(), 1);
-    EXPECT_EQ(diff.fieldMismatches[0].index, 0);
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.dataType.type, DataType::Type::INT32);
+    ASSERT_TRUE(std::holds_alternative<FieldMismatches>(diff.result));
+
+    auto fieldMismatches = std::get<2>(diff.result);
+    EXPECT_EQ(fieldMismatches.size(), 1);
+    EXPECT_EQ(fieldMismatches[0].index, 0);
+    EXPECT_EQ(fieldMismatches[0].expectedField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+    EXPECT_EQ(fieldMismatches[0].actualField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].actualField.dataType.type, DataType::Type::INT32);
 }
 
 TEST_F(SchemaDiffTest, emptySchemasTest)
@@ -289,8 +290,7 @@ TEST_F(SchemaDiffTest, emptySchemasTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
-    EXPECT_TRUE(diff.fieldMismatches.empty());
+    EXPECT_TRUE(std::holds_alternative<SchemaDiff::NoMismatch>(diff.result));
 }
 
 TEST_F(SchemaDiffTest, emptyActualSchemaTest)
@@ -303,10 +303,9 @@ TEST_F(SchemaDiffTest, emptyActualSchemaTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    ASSERT_TRUE(diff.sizeMismatch.has_value());
-    EXPECT_TRUE(diff.fieldMismatches.empty());
+    ASSERT_TRUE(std::holds_alternative<SchemaDiff::SizeMismatch>(diff.result));
 
-    auto sizeMismatch = diff.sizeMismatch.value();
+    auto sizeMismatch = std::get<1>(diff.result);
     EXPECT_EQ(sizeMismatch.expectedSize, 1);
     EXPECT_EQ(sizeMismatch.actualSize, 0);
 }
@@ -328,20 +327,21 @@ TEST_F(SchemaDiffTest, multipleMismatchesTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
+    ASSERT_TRUE(std::holds_alternative<FieldMismatches>(diff.result));
 
-    EXPECT_EQ(diff.fieldMismatches.size(), 2);
-    EXPECT_EQ(diff.fieldMismatches[0].index, 0);
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.dataType.type, DataType::Type::INT32);
+    auto fieldMismatches = std::get<2>(diff.result);
+    EXPECT_EQ(fieldMismatches.size(), 2);
+    EXPECT_EQ(fieldMismatches[0].index, 0);
+    EXPECT_EQ(fieldMismatches[0].expectedField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+    EXPECT_EQ(fieldMismatches[0].actualField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].actualField.dataType.type, DataType::Type::INT32);
 
-    EXPECT_EQ(diff.fieldMismatches[1].index, 2);
-    EXPECT_EQ(diff.fieldMismatches[1].expectedField.name, "field3");
-    EXPECT_EQ(diff.fieldMismatches[1].expectedField.dataType.type, DataType::Type::BOOLEAN);
-    EXPECT_EQ(diff.fieldMismatches[1].actualField.name, "field4");
-    EXPECT_EQ(diff.fieldMismatches[1].actualField.dataType.type, DataType::Type::VARSIZED);
+    EXPECT_EQ(fieldMismatches[1].index, 2);
+    EXPECT_EQ(fieldMismatches[1].expectedField.name, "field3");
+    EXPECT_EQ(fieldMismatches[1].expectedField.dataType.type, DataType::Type::BOOLEAN);
+    EXPECT_EQ(fieldMismatches[1].actualField.name, "field4");
+    EXPECT_EQ(fieldMismatches[1].actualField.dataType.type, DataType::Type::VARSIZED);
 }
 
 TEST_F(SchemaDiffTest, sameFieldsDifferentOrderTest)
@@ -359,27 +359,27 @@ TEST_F(SchemaDiffTest, sameFieldsDifferentOrderTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    /// Since order doesn't matter, these schemas should be considered identical
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
+    ASSERT_TRUE(std::holds_alternative<FieldMismatches>(diff.result));
 
-    EXPECT_EQ(diff.fieldMismatches.size(), 3);
-    EXPECT_EQ(diff.fieldMismatches[0].index, 0);
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.name, "field3");
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.dataType.type, DataType::Type::BOOLEAN);
+    auto fieldMismatches = std::get<2>(diff.result);
+    EXPECT_EQ(fieldMismatches.size(), 3);
+    EXPECT_EQ(fieldMismatches[0].index, 0);
+    EXPECT_EQ(fieldMismatches[0].expectedField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+    EXPECT_EQ(fieldMismatches[0].actualField.name, "field3");
+    EXPECT_EQ(fieldMismatches[0].actualField.dataType.type, DataType::Type::BOOLEAN);
 
-    EXPECT_EQ(diff.fieldMismatches[1].index, 1);
-    EXPECT_EQ(diff.fieldMismatches[1].expectedField.name, "field2");
-    EXPECT_EQ(diff.fieldMismatches[1].expectedField.dataType.type, DataType::Type::FLOAT32);
-    EXPECT_EQ(diff.fieldMismatches[1].actualField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[1].actualField.dataType.type, DataType::Type::INT64);
+    EXPECT_EQ(fieldMismatches[1].index, 1);
+    EXPECT_EQ(fieldMismatches[1].expectedField.name, "field2");
+    EXPECT_EQ(fieldMismatches[1].expectedField.dataType.type, DataType::Type::FLOAT32);
+    EXPECT_EQ(fieldMismatches[1].actualField.name, "field1");
+    EXPECT_EQ(fieldMismatches[1].actualField.dataType.type, DataType::Type::INT64);
 
-    EXPECT_EQ(diff.fieldMismatches[2].index, 2);
-    EXPECT_EQ(diff.fieldMismatches[2].expectedField.name, "field3");
-    EXPECT_EQ(diff.fieldMismatches[2].expectedField.dataType.type, DataType::Type::BOOLEAN);
-    EXPECT_EQ(diff.fieldMismatches[2].actualField.name, "field2");
-    EXPECT_EQ(diff.fieldMismatches[2].actualField.dataType.type, DataType::Type::FLOAT32);
+    EXPECT_EQ(fieldMismatches[2].index, 2);
+    EXPECT_EQ(fieldMismatches[2].expectedField.name, "field3");
+    EXPECT_EQ(fieldMismatches[2].expectedField.dataType.type, DataType::Type::BOOLEAN);
+    EXPECT_EQ(fieldMismatches[2].actualField.name, "field2");
+    EXPECT_EQ(fieldMismatches[2].actualField.dataType.type, DataType::Type::FLOAT32);
 }
 
 TEST_F(SchemaDiffTest, sameFieldsDifferentOrderWithDuplicatesTest)
@@ -397,20 +397,20 @@ TEST_F(SchemaDiffTest, sameFieldsDifferentOrderWithDuplicatesTest)
 
     auto diff = SchemaDiff::of(expectedSchema, actualSchema);
 
-    /// Since order doesn't matter and duplicates are handled correctly
-    EXPECT_FALSE(diff.sizeMismatch.has_value());
+    ASSERT_TRUE(std::holds_alternative<FieldMismatches>(diff.result));
 
-    EXPECT_EQ(diff.fieldMismatches.size(), 2);
-    EXPECT_EQ(diff.fieldMismatches[0].index, 0);
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.name, "field2");
-    EXPECT_EQ(diff.fieldMismatches[0].actualField.dataType.type, DataType::Type::FLOAT32);
+    auto fieldMismatches = std::get<2>(diff.result);
+    EXPECT_EQ(fieldMismatches.size(), 2);
+    EXPECT_EQ(fieldMismatches[0].index, 0);
+    EXPECT_EQ(fieldMismatches[0].expectedField.name, "field1");
+    EXPECT_EQ(fieldMismatches[0].expectedField.dataType.type, DataType::Type::INT64);
+    EXPECT_EQ(fieldMismatches[0].actualField.name, "field2");
+    EXPECT_EQ(fieldMismatches[0].actualField.dataType.type, DataType::Type::FLOAT32);
 
-    EXPECT_EQ(diff.fieldMismatches[1].index, 2);
-    EXPECT_EQ(diff.fieldMismatches[1].expectedField.name, "field2");
-    EXPECT_EQ(diff.fieldMismatches[1].expectedField.dataType.type, DataType::Type::FLOAT32);
-    EXPECT_EQ(diff.fieldMismatches[1].actualField.name, "field1");
-    EXPECT_EQ(diff.fieldMismatches[1].actualField.dataType.type, DataType::Type::INT64);
+    EXPECT_EQ(fieldMismatches[1].index, 2);
+    EXPECT_EQ(fieldMismatches[1].expectedField.name, "field2");
+    EXPECT_EQ(fieldMismatches[1].expectedField.dataType.type, DataType::Type::FLOAT32);
+    EXPECT_EQ(fieldMismatches[1].actualField.name, "field1");
+    EXPECT_EQ(fieldMismatches[1].actualField.dataType.type, DataType::Type::INT64);
 }
 }
