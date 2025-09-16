@@ -32,10 +32,6 @@ public:
     explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
     ~SumAggregationLogicalFunction() override = default;
 
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(const LogicalFunction& onField);
-    static std::shared_ptr<WindowAggregationLogicalFunction>
-    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
-
     void inferStamp(const Schema& schema) override;
     [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
