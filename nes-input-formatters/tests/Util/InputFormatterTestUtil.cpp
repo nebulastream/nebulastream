@@ -175,7 +175,7 @@ std::pair<Valve, std::unique_ptr<SourceHandle>> createFileSource(
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor
-        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), ParserConfig{});
+        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", "localhost", std::move(fileSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [valve, ingestion] = Backpressure();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));

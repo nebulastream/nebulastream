@@ -175,7 +175,7 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
 
         const auto validInputFormatterConfig = ParserConfig::create(parserConfig);
         const auto sourceDescriptorOpt
-            = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, validInputFormatterConfig);
+            = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, "localhost", sourceConfig, validInputFormatterConfig);
         if (not sourceDescriptorOpt.has_value())
         {
             throw UnknownSourceName("{}", logicalSource.value().getLogicalSourceName());
@@ -192,7 +192,7 @@ std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector
     {
         auto schema = bindSchema(schemaFields);
         NES_DEBUG("Adding sink: {} of type {}", sinkName, sinkType);
-        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, sinkConfig); sinkDescriptor.has_value())
+        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, "localhost", sinkConfig); sinkDescriptor.has_value())
         {
             boundSinks.push_back(sinkDescriptor.value());
         }

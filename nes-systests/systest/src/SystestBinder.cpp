@@ -83,7 +83,7 @@ public:
                 {
                     config["input_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, "localhost", std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -274,6 +274,7 @@ struct SystestBinder::Impl
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<SystestQuery> queries;
         uint64_t loadedFiles = 0;
+
         for (const auto& testfile : discoveredTestFiles | std::views::values)
         {
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
@@ -512,7 +513,7 @@ struct SystestBinder::Impl
         }
 
         const auto physicalSource
-            = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
+            = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, "localhost", sourceConfig, ParserConfig::create(parserConfig));
         if (not physicalSource.has_value())
         {
             NES_ERROR(
