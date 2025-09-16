@@ -544,7 +544,7 @@ void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyP
 
 void AntlrSQLQueryPlanCreator::exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context)
 {
-    helpers.top().timestamp = context->getText();
+    helpers.top().timestamp = parseIdentifier(context->name);
 }
 
 /// WINDOWS
