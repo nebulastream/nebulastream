@@ -13,21 +13,23 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
+
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
-class SinkBindingRule
+
+/// @brief This rule removes redundant unions with only a single child.
+class RedundantUnionRemovalPhase
 {
 public:
-    explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    RedundantUnionRemovalPhase() = delete;
+    ~RedundantUnionRemovalPhase() = delete;
+    RedundantUnionRemovalPhase(const RedundantUnionRemovalPhase&) = delete;
+    RedundantUnionRemovalPhase(RedundantUnionRemovalPhase&&) = delete;
+    RedundantUnionRemovalPhase& operator=(const RedundantUnionRemovalPhase&) = delete;
+    RedundantUnionRemovalPhase& operator=(RedundantUnionRemovalPhase&&) = delete;
 
-    void apply(LogicalPlan& queryPlan) const;
-
-private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    static LogicalPlan apply(const LogicalPlan& inputPlan);
 };
 }

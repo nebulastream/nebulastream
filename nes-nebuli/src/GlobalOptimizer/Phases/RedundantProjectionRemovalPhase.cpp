@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
+#include <GlobalOptimizer/Phases/RedundantProjectionRemovalPhase.hpp>
 
 #include <ranges>
 #include <utility>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -25,10 +26,12 @@
 namespace NES
 {
 
-void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(readability-convert-member-functions-to-static)
+LogicalPlan RedundantProjectionRemovalPhase::apply(const LogicalPlan& inputPlan)
 {
+    LogicalPlan plan = inputPlan;
+
     for (const auto& projectionOp :
-         getOperatorByType<ProjectionLogicalOperator>(queryPlan)
+         getOperatorByType<ProjectionLogicalOperator>(inputPlan)
              | std::views::filter(
                  [](const auto& op)
                  {
@@ -38,10 +41,12 @@ void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLI
                  }))
     {
         auto child = projectionOp.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, projectionOp.id, child);
+        auto replaceResult = replaceSubtree(plan, projectionOp.id, child);
         INVARIANT(replaceResult.has_value(), "Failed to replace projection with its child");
-        queryPlan = std::move(replaceResult.value());
+        plan = std::move(replaceResult.value());
     }
+
+    return plan;
 }
 
 }

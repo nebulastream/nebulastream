@@ -36,7 +36,6 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>

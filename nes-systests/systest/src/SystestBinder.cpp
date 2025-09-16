@@ -38,6 +38,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -57,7 +58,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
-#include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -305,32 +305,35 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        auto buildSystests = loadedSystests
+        auto buildSystests
+            = loadedSystests
             | std::views::filter(
-                                 [&testfile](const auto& loadedQueryPlan)
-                                 {
-                                     return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                                         or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
-                                 })
+                  [&testfile](const auto& loadedQueryPlan)
+                  {
+                      return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
+                          or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
+                  })
             | std::ranges::views::transform(
-                                 [&testfile, &foundQueries](auto& systest)
-                                 {
-                                     foundQueries.insert(systest.getSystemTestQueryId());
+                  [&testfile, &foundQueries](auto& systest)
+                  {
+                      foundQueries.insert(systest.getSystemTestQueryId());
 
-                                     if (systest.getBoundPlan().has_value())
-                                     {
-                                         const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
-                                         try
-                                         {
-                                             systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()));
-                                         }
-                                         catch (const Exception& exception)
-                                         {
-                                             systest.setException(exception);
-                                         }
-                                     }
-                                     return std::move(systest).build();
-                                 })
+                      if (systest.getBoundPlan().has_value())
+                      {
+                          QueryPlanningContext context{.sourceCatalog = testfile.sourceCatalog, .sinkCatalog = testfile.sinkCatalog};
+                          try
+                          {
+                              systest.setOptimizedPlan(GlobalOptimizer::with(context)
+                                                           .optimize(PlanStage::BoundLogicalPlan(systest.getBoundPlan().value()))
+                                                           .plan);
+                          }
+                          catch (const Exception& exception)
+                          {
+                              systest.setException(exception);
+                          }
+                      }
+                      return std::move(systest).build();
+                  })
             | std::ranges::to<std::vector>();
 
         /// Warn about queries specified via the command line that were not found in the test file
