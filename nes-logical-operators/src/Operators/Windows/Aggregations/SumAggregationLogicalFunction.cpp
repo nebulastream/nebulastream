@@ -43,17 +43,6 @@ std::string_view SumAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction>
-SumAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
-{
-    return std::make_shared<SumAggregationLogicalFunction>(onField, asField);
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::create(const LogicalFunction& onField)
-{
-    return std::make_shared<SumAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>());
-}
-
 void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
@@ -106,6 +95,6 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunct
     {
         throw CannotDeserialize("SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return SumAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<SumAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
 }
 }
