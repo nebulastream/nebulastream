@@ -27,27 +27,27 @@ EmbeddedWorkerQueryManager::EmbeddedWorkerQueryManager(const SingleNodeWorkerCon
 {
 }
 
-std::expected<QueryId, Exception> EmbeddedWorkerQueryManager::registerQuery(const LogicalPlan& plan) noexcept
+std::expected<LocalQueryId, Exception> EmbeddedWorkerQueryManager::registerQuery(const LogicalPlan& plan) noexcept
 {
     return worker.registerQuery(plan);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQueryManager::start(const QueryId queryId) noexcept
+std::expected<void, Exception> EmbeddedWorkerQueryManager::start(const LocalQueryId queryId) noexcept
 {
     return worker.startQuery(queryId);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQueryManager::stop(const QueryId queryId) noexcept
+std::expected<void, Exception> EmbeddedWorkerQueryManager::stop(const LocalQueryId queryId) noexcept
 {
     return worker.stopQuery(queryId, QueryTerminationType::Graceful);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQueryManager::unregister(const QueryId queryId) noexcept
+std::expected<void, Exception> EmbeddedWorkerQueryManager::unregister(const LocalQueryId queryId) noexcept
 {
     return worker.unregisterQuery(queryId);
 }
 
-std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQueryManager::status(QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQueryManager::status(LocalQueryId queryId) const noexcept
 {
     return worker.getQueryStatus(queryId);
 }

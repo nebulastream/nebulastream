@@ -117,13 +117,13 @@ using QueryStatement = LogicalPlan;
 
 struct ShowQueriesStatement
 {
-    std::optional<QueryId> id;
+    std::optional<LocalQueryId> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    QueryId id;
+    LocalQueryId id;
 };
 
 using Statement = std::variant<

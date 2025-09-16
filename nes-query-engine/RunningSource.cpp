@@ -40,7 +40,7 @@ namespace NES
 namespace
 {
 SourceReturnType::EmitFunction emitFunction(
-    QueryId queryId,
+    LocalQueryId queryId,
     size_t numberOfInflightBuffers,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
@@ -120,7 +120,7 @@ RunningSource::RunningSource(
 }
 
 std::shared_ptr<RunningSource> RunningSource::create(
-    QueryId queryId,
+    LocalQueryId queryId,
     std::unique_ptr<SourceHandle> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,

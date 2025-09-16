@@ -82,7 +82,8 @@ public:
                 {
                     config["input_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, "localhost", std::move(config));
+                const auto sink
+                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, "localhost", std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -538,8 +539,8 @@ struct SystestBinder::Impl
                     throw UnknownSourceName("{}", attachSource.logicalSourceName);
                 }
 
-                const auto physicalSource
-                    = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, "localhost", sourceConfig, ParserConfig::create(parserConfig));
+                const auto physicalSource = sourceCatalog.addPhysicalSource(
+                    logicalSource.value(), sourceType, "localhost", sourceConfig, ParserConfig::create(parserConfig));
                 if (not physicalSource.has_value())
                 {
                     NES_ERROR(

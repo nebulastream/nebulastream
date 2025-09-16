@@ -81,13 +81,13 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
 /// We might want to move this to the engine.
-static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
+static std::atomic queryIdCounter = INITIAL<LocalQueryId>.getRawValue();
 
-std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
+std::expected<LocalQueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        plan.setQueryId(QueryId(queryIdCounter++));
+        plan.setQueryId(LocalQueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
@@ -103,7 +103,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::startQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
@@ -118,7 +118,7 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
+std::expected<void, Exception> SingleNodeWorker::stopQuery(LocalQueryId queryId, QueryTerminationType type) noexcept
 {
     CPPTRACE_TRY
     {
@@ -133,7 +133,7 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::unregisterQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
@@ -148,7 +148,7 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     std::unreachable();
 }
 
-std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(LocalQueryId queryId) const noexcept
 {
     CPPTRACE_TRY
     {
@@ -166,7 +166,7 @@ std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(Quer
     std::unreachable();
 }
 
-std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
+std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(LocalQueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }

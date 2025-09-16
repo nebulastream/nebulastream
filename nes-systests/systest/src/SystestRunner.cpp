@@ -133,7 +133,7 @@ std::vector<RunningQuery> runQueries(
         pending.push(*it);
     }
 
-    std::unordered_map<QueryId, std::shared_ptr<RunningQuery>> active;
+    std::unordered_map<LocalQueryId, std::shared_ptr<RunningQuery>> active;
     std::vector<std::shared_ptr<RunningQuery>> failed;
     std::size_t finished = 0;
 
