@@ -14,17 +14,23 @@
 
 #pragma once
 
-#include <Plans/LogicalPlan.hpp>
+#include <cstddef>
+#include <string>
+#include <vector>
 
 namespace NES
 {
 
-/**
- * @brief This rule removes redundant projection, which project everything
- */
-class RedundantProjectionRemovalRule
+using HostAddr = std::string;
+using GrpcAddr = std::string;
+using ChannelId = std::string;
+
+struct WorkerConfig
 {
-public:
-    void apply(LogicalPlan& queryPlan) const;
+    HostAddr host;
+    GrpcAddr grpc;
+    size_t capacity;
+    std::vector<HostAddr> downstream;
 };
+
 }
