@@ -36,10 +36,10 @@ class QueryManager
 {
 public:
     virtual ~QueryManager() = default;
-    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) = 0;
-    virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
-    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryId, Exception> registerQuery(const LogicalPlan& plan) = 0;
+    virtual std::expected<void, Exception> start(LocalQueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> stop(LocalQueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> unregister(LocalQueryId queryId) noexcept = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(LocalQueryId queryId) const noexcept = 0;
 };
 }

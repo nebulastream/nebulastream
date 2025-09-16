@@ -235,14 +235,14 @@ int main(int argc, char** argv)
 
 
         bool handled = false;
-        for (const auto& [name, fn] :
-             std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::QueryId)>>{
+        for (const auto& [name, fn] : std::initializer_list<
+                 std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::LocalQueryId)>>{
                  {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
         {
             if (program.is_subcommand_used(name))
             {
                 auto& parser = program.at<ArgumentParser>(name);
-                auto queryId = NES::QueryId{parser.get<size_t>("queryId")};
+                auto queryId = NES::LocalQueryId{parser.get<size_t>("queryId")};
                 ((*queryManager).*fn)(queryId);
                 handled = true;
                 break;
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
             }
         }
 
-        std::optional<NES::QueryId> startedQuery;
+        std::optional<NES::LocalQueryId> startedQuery;
         if (program.is_subcommand_used("register"))
         {
             auto& registerArgs = program.at<ArgumentParser>("register");
