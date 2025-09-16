@@ -20,12 +20,16 @@
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>

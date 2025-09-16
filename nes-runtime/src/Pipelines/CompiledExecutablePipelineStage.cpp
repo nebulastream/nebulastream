@@ -24,6 +24,7 @@
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
+#include <CompilationContext.hpp>
 #include <Engine.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -37,7 +38,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
-    : options(std::move(options))
+    : engine(std::move(options))
     , compiledPipelineFunction(nullptr)
     , operatorHandlers(std::move(operatorHandlers))
     , pipeline(std::move(pipeline))
@@ -71,8 +72,6 @@ CompiledExecutablePipelineStage::compilePipeline() const
             pipeline->getRootOperator().close(ctx, recordBuffer);
         };
         /// NOLINTEND(performance-unnecessary-value-param)
-
-        const nautilus::engine::NautilusEngine engine(options);
         return engine.registerFunction(compiledFunction);
     }
     CPPTRACE_CATCH(...)
@@ -100,7 +99,8 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    pipeline->getRootOperator().setup(ctx);
+    CompilationContext compilationCtx{engine};
+    pipeline->getRootOperator().setup(ctx, compilationCtx);
     compiledPipelineFunction = this->compilePipeline();
 }
 

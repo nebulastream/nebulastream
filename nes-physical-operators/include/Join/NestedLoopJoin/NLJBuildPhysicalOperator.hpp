@@ -37,9 +37,6 @@ public:
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
-    ~NLJBuildPhysicalOperator() override = default;
-
-    NLJBuildPhysicalOperator(const NLJBuildPhysicalOperator& other) = default;
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 };
