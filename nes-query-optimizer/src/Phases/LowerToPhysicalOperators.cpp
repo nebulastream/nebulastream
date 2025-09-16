@@ -31,14 +31,6 @@
 #include <PhysicalPlanBuilder.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include "Operators/Sinks/SinkLogicalOperator.hpp"
-
-#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
-
 
 namespace NES::LowerToPhysicalOperators
 {
