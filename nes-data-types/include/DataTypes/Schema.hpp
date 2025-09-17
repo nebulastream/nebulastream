@@ -23,6 +23,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -49,7 +50,7 @@ public:
         Field(std::string name, DataType dataType);
 
         friend std::ostream& operator<<(std::ostream& os, const Field& field);
-        bool operator==(const Field&) const = default;
+        auto operator<=>(const Field&) const = default;
 
         std::string name;
         DataType dataType{};
@@ -128,6 +129,37 @@ private:
 /// Returns a copy of the input schema without any source qualifier on the schema fields
 Schema withoutSourceQualifier(const Schema& input);
 
+/// Checks if two schemas are equal and keeps track of size / field mismatches
+struct SchemaDiff
+{
+    struct FieldMismatch
+    {
+        size_t index{};
+        Schema::Field expectedField;
+        Schema::Field actualField;
+    };
+
+    struct SizeMismatch
+    {
+        size_t expectedSize{};
+        size_t actualSize{};
+    };
+
+    struct NoMismatch
+    {
+    };
+
+    /// Variant to hold all possible diff outcomes: No mismatches, a size mismatch, or field mismatches.
+    /// Will be default constructed as NoMismatch.
+    std::variant<NoMismatch, SizeMismatch, std::vector<FieldMismatch>> result;
+
+    static SchemaDiff of(const Schema& expectedSchema, const Schema& actualSchema);
+
+    [[nodiscard]] bool isDifferent() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const SchemaDiff& diff);
+};
+
 }
 
 template <>
@@ -138,3 +170,4 @@ struct std::hash<NES::Schema::Field>
 
 FMT_OSTREAM(NES::Schema);
 FMT_OSTREAM(NES::Schema::Field);
+FMT_OSTREAM(NES::SchemaDiff);
