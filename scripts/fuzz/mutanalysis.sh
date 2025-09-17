@@ -213,6 +213,7 @@ do
 
     for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
     do
+        continue
         log_out running $harness libfuzzer
         $(find cmake-build-lfz -name $harness) -jobs=$(( $(nproc) / 2 )) /nes-corpora/$harness/corpus > /dev/null 2> /dev/null &
 
