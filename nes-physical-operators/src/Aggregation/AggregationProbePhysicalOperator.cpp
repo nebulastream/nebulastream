@@ -48,6 +48,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+    executionCtx.currentTs = recordBuffer.getCreatingTs();
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
@@ -56,26 +57,24 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
-    const auto windowStart = invoke(
-        +[](const EmittedAggregationWindow* emittedAggregationWindow) { return emittedAggregationWindow->windowInfo.windowStart; },
-        aggregationWindowRef);
-    const auto windowEnd = invoke(
-        +[](const EmittedAggregationWindow* emittedAggregationWindow) { return emittedAggregationWindow->windowInfo.windowEnd; },
-        aggregationWindowRef);
-    const auto numberOfHashMaps = invoke(
-        +[](const EmittedAggregationWindow* emittedAggregationWindow) { return emittedAggregationWindow->numberOfHashMaps; },
-        aggregationWindowRef);
-    auto finalHashMapPtr = invoke(
-        +[](const EmittedAggregationWindow* emittedAggregationWindow) { return emittedAggregationWindow->finalHashMap.get(); },
-        aggregationWindowRef);
-
+    const auto numberOfHashMaps = Nautilus::Util::readValueFromMemRef<uint64_t>(
+        Nautilus::Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::numberOfHashMaps));
+    const auto windowInfoRef = Nautilus::Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::windowInfo);
+    const nautilus::val<Timestamp> windowStart{
+        Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
+    const nautilus::val<Timestamp> windowEnd{
+        Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
+    auto hashMapRefs = Nautilus::Util::readValueFromMemRef<Interface::HashMap**>(
+        Nautilus::Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::hashMaps));
+    auto finalHashMapPtr = Nautilus::Util::readValueFromMemRef<Interface::HashMap*>(
+        Nautilus::Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::finalHashMapPtr));
 
     /// Combining all keys from all hash maps in the final hash map, and then iterating over the final hash map once to lower the aggregation states
     Interface::ChainedHashMapRef finalHashMap(
         finalHashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
     for (nautilus::val<uint64_t> curHashMap = 0; curHashMap < numberOfHashMaps; ++curHashMap)
     {
-        const auto hashMapPtr = nautilus::invoke(getHashMapPtrProxy, aggregationWindowRef, curHashMap);
+        const nautilus::val<Interface::HashMap*> hashMapPtr = hashMapRefs[curHashMap];
         const Interface::ChainedHashMapRef currentMap(
             hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
         for (const auto entry : currentMap)

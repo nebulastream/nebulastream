@@ -23,7 +23,9 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
-#include <nautilus/Engine.hpp>
+#include <Util/RollingAverage.hpp>
+#include <CompilationContext.hpp>
+#include <HashMapSlice.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -35,6 +37,7 @@ namespace NES
 struct EmittedAggregationWindow
 {
     WindowInfo windowInfo;
+    Nautilus::Interface::HashMap* finalHashMapPtr;
     std::unique_ptr<Nautilus::Interface::HashMap>
         finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
     uint64_t numberOfHashMaps;
@@ -47,16 +50,21 @@ public:
     AggregationOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        double maxNumberOfBuckets);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
 
+    /// shared_ptr as multiple slices need access to it
+    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
 
 protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
+    RollingAverage<uint64_t> rollingAverageNumberOfKeys;
+    double maxNumberOfBuckets;
 };
 
 }

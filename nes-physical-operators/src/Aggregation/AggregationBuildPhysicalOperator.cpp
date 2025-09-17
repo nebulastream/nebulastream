@@ -28,7 +28,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
-#include <Engine.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapSlice.hpp>
@@ -51,14 +51,14 @@ Interface::HashMap* getAggHashMapProxy(
 
     /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        {buildOperator->cleanupStateNautilusFunction},
+        {operatorHandler->cleanupStateNautilusFunction},
         buildOperator->hashMapOptions.keySize,
         buildOperator->hashMapOptions.valueSize,
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
-         cleanupStateNautilusFunction = buildOperator->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
+         cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
             const auto createdSlices = createFunction(sliceStart, sliceEnd);
             return createdSlices;
@@ -77,16 +77,50 @@ Interface::HashMap* getAggHashMapProxy(
     return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
 }
 
+void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    WindowBuildPhysicalOperator::setup(executionCtx, compilationContext);
+
+    /// Creating the cleanup function for the slice of current stream
+    /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
+    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
+    /// ReSharper disable once CppPassValueParameterByConstReference
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    const auto operatorHandler = dynamic_cast<AggregationOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
+    operatorHandler->cleanupStateNautilusFunction
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+            [copyOfFieldKeys = hashMapOptions.fieldKeys,
+             copyOfFieldValues = hashMapOptions.fieldValues,
+             copyOfEntriesPerPage = hashMapOptions.entriesPerPage,
+             copyOfEntrySize = hashMapOptions.entrySize,
+             copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+            {
+                const Interface::ChainedHashMapRef hashMapRef(
+                    hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                for (const auto entry : hashMapRef)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
+                    auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                    {
+                        aggFunction->cleanup(state);
+                        state = state + aggFunction->getSizeOfStateInBytes();
+                    }
+                }
+            })));
+    /// NOLINTEND(performance-unnecessary-value-param)
+}
+
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy,
-        ctx.getGlobalOperatorHandler(operatorHandlerId),
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     Interface::ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
@@ -138,34 +172,6 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapOptions(std::move(hashMapOptions))
 {
-    nautilus::engine::Options options;
-    options.setOption("engine.Compilation", false);
-    const nautilus::engine::NautilusEngine nautilusEngine(options);
-
-    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-    /// ReSharper disable once CppPassValueParameterByConstReference
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
-    cleanupStateNautilusFunction = std::make_shared<NautilusCleanupExec>(nautilusEngine.registerFunction(std::function(
-        [copyOfFieldKeys = this->hashMapOptions.fieldKeys,
-         copyOfFieldValues = this->hashMapOptions.fieldValues,
-         copyOfEntriesPerPage = this->hashMapOptions.entriesPerPage,
-         copyOfEntrySize = this->hashMapOptions.entrySize,
-         copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
-        {
-            const Interface::ChainedHashMapRef hashMapRef(
-                hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-            for (const auto entry : hashMapRef)
-            {
-                const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMap, copyOfFieldKeys, copyOfFieldValues);
-                auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                {
-                    aggFunction->cleanup(state);
-                    state = state + aggFunction->getSizeOfStateInBytes();
-                }
-            }
-        })));
-    ///NOLINTEND(performance-unnecessary-value-param)
 }
 
 }

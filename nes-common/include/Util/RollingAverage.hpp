@@ -48,7 +48,7 @@ public:
         return getAverage();
     }
 
-    double getAverage()
+    double getAverage() const
     {
         if (rollingCount == 0)
         {
