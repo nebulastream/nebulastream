@@ -336,8 +336,7 @@ public:
 
         auto configMap = [&]()
         {
-
-            if (const auto parserConfigIter = configOptions.find("PARSER");parserConfigIter != configOptions.end())
+            if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
             {
                 return parserConfigIter->second;
             }
