@@ -13,10 +13,13 @@
 */
 
 #pragma once
+#include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -35,6 +38,18 @@ namespace NES
 /// is large enough to store all slices of the window to be triggered.
 struct EmittedAggregationWindow
 {
+    EmittedAggregationWindow(
+        const WindowInfo windowInfo,
+        std::unique_ptr<Nautilus::Interface::HashMap> finalHashMap,
+        const std::vector<Nautilus::Interface::HashMap*>& allHashMaps)
+        : windowInfo(windowInfo), finalHashMap(std::move(finalHashMap)), numberOfHashMaps(allHashMaps.size())
+    {
+        finalHashMapPtr = this->finalHashMap.get();
+        /// Copying the hashmap pointers after this object, hence this + 1
+        hashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(this + 1);
+        std::ranges::copy(allHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(hashMaps));
+    }
+
     WindowInfo windowInfo;
     Nautilus::Interface::HashMap* finalHashMapPtr;
     std::unique_ptr<Nautilus::Interface::HashMap>

@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,6 +28,7 @@
 #include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Time/Timestamp.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -120,24 +122,20 @@ public:
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     void release() noexcept;
 
-    int8_t* getMemArea() noexcept;
-
-    /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = int8_t>
-    T* getMemArea() noexcept
+    template <typename T = std::byte>
+    requires(std::is_trivially_copyable_v<T>)
+    std::span<T> getAvailableMemoryArea() noexcept
     {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(std::has_single_bit(alignof(T)));
-        return reinterpret_cast<T*>(ptr);
+        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(T) == 0, "Bad alignment for type: {}", typeid(T).name());
+        return std::span<T>{std::bit_cast<T*>(ptr), size / sizeof(T)};
     }
 
-    /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = int8_t>
-    const T* getMemArea() const noexcept
+    template <typename T = std::byte>
+    requires(std::is_trivially_copyable_v<T>)
+    std::span<const T> getAvailableMemoryArea() const noexcept
     {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(std::has_single_bit(alignof(T)));
-        return reinterpret_cast<const T*>(ptr);
+        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(const T) == 0, "Bad alignment for type: {}", typeid(T).name());
+        return std::span<const T>{std::bit_cast<const T*>(ptr), size / sizeof(const T)};
     }
 
     [[nodiscard]] uint32_t getReferenceCounter() const noexcept;
