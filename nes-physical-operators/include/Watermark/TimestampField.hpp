@@ -78,14 +78,9 @@ public:
         auto timeStampFieldName = windowType->getTimeCharacteristic().field.name;
         auto seperatorPosition = timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
 
-        std::string timeStampFieldNameWithoutSourceName = [&]()
-        {
-            if (seperatorPosition == std::string::npos)
-            {
-                return timeStampFieldName;
-            }
-            return timeStampFieldName.substr(seperatorPosition + 1);
-        }();
+        INVARIANT(seperatorPosition != std::string::npos, "timeStampFieldName must have a seperator at this point.");
+
+        std::string timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(seperatorPosition + 1);
 
         /// Extracting the left and right timestamp
         const auto timeStampFieldNameLeft = joinOperator.getInputSchemas().at(0).getFieldByName(timeStampFieldNameWithoutSourceName);
