@@ -275,7 +275,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
         +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
         {
             const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
-            return page.getMemArea<ChainedHashMapEntry>() + indexOnPageVal;
+            return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
         },
         hashMapRef,
         pageIndex,
@@ -407,7 +407,7 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
             +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
             {
                 const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
-                return page.getMemArea<ChainedHashMapEntry>() + indexOnPageVal;
+                return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
             },
             hashMapRef,
             pageIndex,

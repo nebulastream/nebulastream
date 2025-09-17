@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <memory>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -76,6 +76,8 @@ public:
     /// @return number of tuples a tuple buffer can occupy.
     [[nodiscard]] uint64_t getCapacity() const;
 
+    /// Returns the number of tuples taken the used memory size into account
+    [[nodiscard]] virtual uint64_t getNumberOfTuples(uint64_t usedMemorySize) const;
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     void setBufferSize(uint64_t bufferSize);

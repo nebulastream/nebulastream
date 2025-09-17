@@ -63,10 +63,8 @@ ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_pt
         layout->getSchema().getNumberOfFields(),
         fieldIndex);
 
-    auto* bufferBasePointer = &(buffer.getMemArea<uint8_t>()[0]);
-    auto fieldOffset = layout->getFieldOffset(0, fieldIndex);
-
-    T* basePointer = reinterpret_cast<T*>(bufferBasePointer + fieldOffset);
+    const auto fieldOffset = layout->getFieldOffset(0, fieldIndex);
+    auto* basePointer = reinterpret_cast<T*>(buffer.getAvailableMemoryArea().data() + fieldOffset);
     return ColumnLayoutField<T, boundaryChecks>(basePointer, layout);
 }
 

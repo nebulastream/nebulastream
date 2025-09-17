@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <bit>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -112,7 +113,7 @@ void AggregationOperatorHandler::triggerSlices(
         auto tupleBuffer = tupleBufferVal.value();
 
         /// It might be that the buffer is not zeroed out.
-        std::memset(tupleBuffer.getMemArea(), 0, neededBufferSize);
+        std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
 
         /// As we are here "emitting" a buffer, we have to set the originId, the seq number, the watermark and the "number of tuples".
         /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
@@ -126,15 +127,9 @@ void AggregationOperatorHandler::triggerSlices(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
 
-        /// Writing all necessary information for the aggregation probe to the buffer.
-        auto* bufferMemory = tupleBuffer.getMemArea<EmittedAggregationWindow>();
-        bufferMemory->windowInfo = windowInfo.windowInfo;
-        bufferMemory->numberOfHashMaps = allHashMaps.size();
-        bufferMemory->finalHashMapPtr = finalHashMap.get();
-        bufferMemory->finalHashMap = std::move(finalHashMap);
-        auto* addressFirstHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedAggregationWindow);
-        bufferMemory->hashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstHashMapPtr);
-        std::memcpy(addressFirstHashMapPtr, allHashMaps.data(), allHashMaps.size() * sizeof(Nautilus::Interface::HashMap*));
+        /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
+        auto tmp = tupleBuffer.getAvailableMemoryArea();
+        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, std::move(finalHashMap), allHashMaps};
 
 
         /// Dispatching the buffer to the probe operator via the task queue.

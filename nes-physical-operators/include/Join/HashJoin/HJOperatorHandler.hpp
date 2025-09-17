@@ -13,6 +13,8 @@
 */
 
 #pragma once
+#include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -35,6 +37,22 @@ namespace NES
 /// This task models the information for a hash join based window trigger
 struct EmittedHJWindowTrigger
 {
+    EmittedHJWindowTrigger(
+        const WindowInfo windowInfo,
+        const std::vector<Nautilus::Interface::HashMap*>& leftHashMaps,
+        const std::vector<Nautilus::Interface::HashMap*>& rightHashMaps)
+        : windowInfo(windowInfo), leftNumberOfHashMaps(leftHashMaps.size()), rightNumberOfHashMaps(rightHashMaps.size())
+    {
+        /// Copying the left and right hashmap pointer pointers after this object, hence this + 1
+        const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(Nautilus::Interface::HashMap*);
+        auto* addressFirstLeftHashMapPtr = std::bit_cast<int8_t*>(this + 1);
+        auto* addressFirstRightHashMapPtr = std::bit_cast<int8_t*>(this + 1) + leftHashMapPtrSizeInByte;
+        this->leftHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr);
+        this->rightHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr);
+        std::ranges::copy(leftHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr));
+        std::ranges::copy(rightHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr));
+    }
+
     WindowInfo windowInfo;
     uint64_t leftNumberOfHashMaps;
     uint64_t rightNumberOfHashMaps;
