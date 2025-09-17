@@ -179,13 +179,9 @@ TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
     const auto fieldByName3NotExistent = schemaUnderTest.getFieldByName("bc");
 
     EXPECT_TRUE(fieldByName1.has_value()) << "FieldByName1 should find a Field";
-    EXPECT_EQ(field1, fieldByName1.value()) << "Field 1 " << field1 << " and field by name 1 "
-                                            << fieldByName1.value()
-                                            << " are not equal";
+    EXPECT_EQ(field1, fieldByName1.value()) << "Field 1 " << field1 << " and field by name 1 " << fieldByName1.value() << " are not equal";
     EXPECT_TRUE(fieldByName2.has_value()) << "FieldByName2 should find a Field";
-    EXPECT_EQ(field2, fieldByName2.value()) << "Field 2 " << field2 << " and field by name 2 "
-                                            << fieldByName2.value()
-                                            << " are not equal";
+    EXPECT_EQ(field2, fieldByName2.value()) << "Field 2 " << field2 << " and field by name 2 " << fieldByName2.value() << " are not equal";
     EXPECT_FALSE(fieldByName3NotExistent.has_value())
         << "Searched for nonexistent field with name \"bc\" but found " << fieldByName3NotExistent.value();
 }
