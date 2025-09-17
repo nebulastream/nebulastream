@@ -116,7 +116,7 @@ TEST(UtilFunctionTest, splitStringOnMultipleSpaces)
     test.emplace_back("with");
     test.emplace_back("delimiter.");
     const std::string line = "This is a random   line with    delimiter.";
-    const auto tokens = Util::splitStringOnMultipleSpaces<std::string>(line);
+    const auto tokens = Util::splitWithStringDelimiter<std::string>(line, " ");
     EXPECT_TRUE(tokens == test);
 }
 

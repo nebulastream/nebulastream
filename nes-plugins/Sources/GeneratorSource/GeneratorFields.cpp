@@ -50,7 +50,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
             throw InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
         }
     };
-    const auto parameters = Util::splitStringOnMultipleSpaces<std::string>(rawSchemaLine);
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() != NUM_PARAMETERS_SEQUENCE_FIELD)
     {
         throw InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
@@ -162,7 +162,7 @@ void SequenceField::parse(std::string_view start, std::string_view end, std::str
 
 SequenceField::SequenceField(std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitStringOnMultipleSpaces<std::string>(rawSchemaLine);
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     const auto type = parameters[1];
     const auto start = parameters[2];
     const auto end = parameters[3];
@@ -262,7 +262,7 @@ std::ostream& SequenceField::generate(std::ostream& os, std::default_random_engi
 
 NormalDistributionField::NormalDistributionField(const std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitStringOnMultipleSpaces<std::string>(rawSchemaLine);
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     const auto type = parameters[1];
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
@@ -330,7 +330,7 @@ std::ostream& NormalDistributionField::generate(std::ostream& os, std::default_r
 
 void NormalDistributionField::validate(std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitStringOnMultipleSpaces<std::string>(rawSchemaLine);
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() < NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD)
     {
         throw InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);

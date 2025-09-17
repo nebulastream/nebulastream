@@ -2,7 +2,7 @@ type: Generator
 stop_generator_when_sequence_finishes: ALL
 max_runtime_ms: 1000000
 generator_rate_type: FIXED
-generator_rate_config: emitRate 1000
+generator_rate_config: emit_rate 1000
 seed: 1
 generator_schema: |
   SEQUENCE UINT64 0 10000 1

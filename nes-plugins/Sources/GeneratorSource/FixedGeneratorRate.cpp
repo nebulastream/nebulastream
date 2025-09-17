@@ -19,6 +19,7 @@
 #include <ratio>
 #include <string_view>
 #include <thread>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
 
 namespace NES
@@ -32,20 +33,25 @@ FixedGeneratorRate::FixedGeneratorRate(const std::string_view configString)
 
 std::optional<double> FixedGeneratorRate::parseAndValidateConfigString(std::string_view configString)
 {
-    if (const auto spacePos = configString.find(' '); spacePos != std::string_view::npos)
+    const auto parameterAndValue = Util::splitWithStringDelimiter<std::string_view>(configString, " ");
+    if (parameterAndValue.size() != 2)
     {
-        auto key = configString.substr(0, spacePos);
-        const auto value = configString.substr(spacePos + 1);
-
-        std::string keyLower;
-        std::ranges::transform(key, std::back_inserter(keyLower), [](unsigned char c) { return std::tolower(c); });
-
-        if (keyLower == "emitrate")
-        {
-            return std::stod(std::string(value));
-        }
+        throw InvalidConfigParameter("bad number of arguments for Fixed Generator Rate. Expected `emit_rate <TuplesPerSecond>`");
     }
-    return {};
+    if (Util::toLowerCase(parameterAndValue[0]) != "emit_rate")
+    {
+        throw InvalidConfigParameter(
+            "bad argument '{}'. Expected `emit_rate <TuplesPerSecond>`", Util::escapeSpecialCharacters(parameterAndValue[0]));
+    }
+
+    auto emitRate = Util::from_chars<double>(parameterAndValue[1]);
+    if (!emitRate)
+    {
+        throw InvalidConfigParameter(
+            "bad value '{}' for `emit_rate`. Expected floating point value", Util::escapeSpecialCharacters(parameterAndValue[1]));
+    }
+
+    return *emitRate;
 }
 
 uint64_t FixedGeneratorRate::calcNumberOfTuplesForInterval(

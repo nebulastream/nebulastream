@@ -139,7 +139,7 @@ struct ConfigParametersGenerator
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_RATE_CONFIG{
         "generator_rate_config",
-        "emitRate 1000",
+        "emit_rate 1000",
         [](const std::unordered_map<std::string, std::string>& config)
         {
             const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
