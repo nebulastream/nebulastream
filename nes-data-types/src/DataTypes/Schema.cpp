@@ -84,7 +84,7 @@ std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName
     {
         if (auto fullyQualifiedFieldName = field.name; fieldName.length() <= fullyQualifiedFieldName.length())
         {
-            const std::string::size_type separatorPos = fullyQualifiedFieldName.find("$");
+            const std::string::size_type separatorPos = fullyQualifiedFieldName.find('$');
             if (separatorPos == std::string::npos)
             {
                 continue;
