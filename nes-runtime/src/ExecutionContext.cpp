@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
@@ -51,7 +52,7 @@ WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 }
 }
 
-int8_t* Arena::allocateMemory(const size_t sizeInBytes)
+std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
 {
     /// Case 1
     if (bufferProvider->getBufferSize() < sizeInBytes)
@@ -63,7 +64,7 @@ int8_t* Arena::allocateMemory(const size_t sizeInBytes)
         }
         unpooledBuffers.emplace_back(unpooledBufferOpt.value());
         lastAllocationSize = sizeInBytes;
-        return unpooledBuffers.back().getMemArea<int8_t>();
+        return unpooledBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
     }
 
     if (fixedSizeBuffers.empty())
@@ -71,7 +72,7 @@ int8_t* Arena::allocateMemory(const size_t sizeInBytes)
         fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
         lastAllocationSize = bufferProvider->getBufferSize();
         currentOffset += sizeInBytes;
-        return fixedSizeBuffers.back().getMemArea();
+        return fixedSizeBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
     }
 
     /// Case 2
@@ -84,7 +85,7 @@ int8_t* Arena::allocateMemory(const size_t sizeInBytes)
     /// Case 3
     auto& lastBuffer = fixedSizeBuffers.back();
     lastAllocationSize = lastBuffer.getBufferSize();
-    auto* const result = lastBuffer.getMemArea() + currentOffset;
+    const auto result = lastBuffer.getAvailableMemoryArea().subspan(currentOffset, sizeInBytes);
     currentOffset += sizeInBytes;
     return result;
 }
@@ -95,7 +96,10 @@ nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& siz
     /// We use the arena's allocateMemory function to allocate a new buffer and set the available space for the pointer to the last allocation size.
     /// Further, we set the space pointer to the beginning of the new buffer.
     const auto currentArenaPtr = nautilus::invoke(
-        +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal); }, arenaRef, sizeInBytes);
+        +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t*
+        { return reinterpret_cast<int8_t*>(arena->allocateMemory(sizeInBytesVal).data()); },
+        arenaRef,
+        sizeInBytes);
     return currentArenaPtr;
 }
 

@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <span>
 #include <utility>
 #include <vector>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -63,11 +64,21 @@ public:
 class ChainedHashMap final : public HashMap
 {
 public:
+    struct Page
+    {
+        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+
+        std::span<std::byte> getMemArea() { return buffer.getAvailableMemoryArea(); }
+
+        TupleBuffer buffer;
+        uint64_t numberOfEntries{0};
+    };
+
     ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
     ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     ~ChainedHashMap() override;
     [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
-    int8_t* allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
+    std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
     [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
