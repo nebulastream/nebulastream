@@ -165,6 +165,28 @@ TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
                                             << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
 }
 
+TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
+{
+    const auto field1 = Schema::Field{"stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field2 = Schema::Field{"stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+
+    const auto schemaUnderTest = Schema{}
+                                     .addField("stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+
+    const auto fieldByName1 = schemaUnderTest.getFieldByName("PREFIXabc");
+    const auto fieldByName2 = schemaUnderTest.getFieldByName("abc");
+    const auto fieldByName3NotExistent = schemaUnderTest.getFieldByName("bc");
+
+
+    EXPECT_EQ(field1, fieldByName1.value()) << "Field 1 " << field1 << " and field by name 1 " << fieldByName1.value()
+                                            << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(field2, fieldByName2.value()) << "Field 2 " << field2 << " and field by name 2 " << fieldByName2.value()
+                                            << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_FALSE(fieldByName3NotExistent.has_value())
+        << "Searched for nonexistent field with name \"bc\" but found " << fieldByName3NotExistent.value();
+}
+
 TEST_F(SchemaTest, replaceFieldTest)
 {
     {
