@@ -17,7 +17,9 @@ macro(add_query_engine_test)
     target_include_directories(${TARGET_NAME} PRIVATE ..)
 endmacro()
 
+add_query_engine_test(delayed-task-submitter-test DelayedTaskSubmitterTest.cpp)
 add_query_engine_test(query-engine-test QueryEngineTest.cpp)
+add_query_engine_test(query-engine-task-queue-test TaskQueueTest.cpp)
 add_query_engine_test(running-query-plan-test QueryPlanTest.cpp)
 add_query_engine_test(query-engine-configuration-test QueryEngineConfigurationTest.cpp)
 

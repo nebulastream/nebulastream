@@ -64,7 +64,7 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThrea
     return std::make_shared<Validator>();
 }
 
-std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::taskQueueSizeValidator()
+std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::queueSizeValidator()
 {
     struct Validator : ConfigurationValidation
     {

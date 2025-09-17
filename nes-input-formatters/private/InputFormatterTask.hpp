@@ -244,7 +244,7 @@ public:
         /// After enough out-of-range requests, the SequenceShredder increases the size of its ring buffer.
         if (not sequenceShredder->isInRange(rawBuffer.getSequenceNumber().getRawValue()))
         {
-            rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            rawBuffer.repeat(pec);
             return;
         }
 
