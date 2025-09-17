@@ -1,3 +1,18 @@
+---
+title: "How to add a Sink"
+description: ""
+lead: ""
+date: 2020-10-06T08:49:31+00:00
+lastmod: 2020-10-06T08:49:31+00:00
+draft: false
+images: []
+menu:
+  docs:
+    parent: "dev"
+    identifier: "Sink"
+weight: 560
+toc: true
+---
 # How to add a `Sink`
 
 Sinks in NebulaStream serve the purpose of exporting intermediate and final query results.
