@@ -336,9 +336,8 @@ public:
 
         auto configMap = [&]()
         {
-            const auto parserConfigIter = configOptions.find("PARSER");
 
-            if (parserConfigIter != configOptions.end() && not parserConfigIter->second.contains("TYPE"))
+            if (const auto parserConfigIter = configOptions.find("PARSER");parserConfigIter != configOptions.end())
             {
                 return parserConfigIter->second;
             }
