@@ -65,11 +65,9 @@ public:
 
     /// Retrieves all window identifiers that correspond to this slice
     /// It might happen that for a particular slice no windows are getting returned.
-    /// For example, size of 10 and slide of 20 would mean that there do not exist a window from [10-20]
+    /// For example, size of 10 and slide of 20 would mean that there does not exist a window from [10-20]
     [[nodiscard]] std::vector<WindowInfo> getAllWindowsForSlice(const Slice& slice) const
     {
-        std::vector<WindowInfo> allWindows;
-
         const auto sliceStart = slice.getSliceStart().getRawValue();
         const auto sliceEnd = slice.getSliceEnd().getRawValue();
 
@@ -86,6 +84,7 @@ public:
             firstWindowEnd = sliceStart + windowSlide;
         }
 
+        std::vector<WindowInfo> allWindows;
         for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
         {
             allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);

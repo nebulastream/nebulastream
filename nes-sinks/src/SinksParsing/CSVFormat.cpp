@@ -23,6 +23,7 @@
 #include <string>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
@@ -55,11 +56,21 @@ std::string CSVFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const
     return tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
 }
 
+namespace
+{
+uint64_t getNumberOfTuples(const TupleBuffer& buffer, const Schema& schema)
+{
+    const auto usedMemorySize = buffer.getUsedMemorySize();
+    const auto tupleSize = schema.getSizeOfSchemaInBytes();
+    return usedMemorySize / tupleSize;
+}
+}
+
 std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const
 {
     std::stringstream ss;
-    const auto numberOfTuples = tbuffer.getNumberOfTuples();
-    const auto buffer = std::span(tbuffer.getBuffer<char>(), numberOfTuples * formattingContext.schemaSizeInBytes);
+    const auto numberOfTuples = getNumberOfTuples(tbuffer, schema);
+    const auto buffer = tbuffer.getUsedMemoryArea();
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
@@ -70,12 +81,16 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
                               const auto physicalType = formattingContext.physicalTypes[index];
                               if (physicalType.type == DataType::Type::VARSIZED)
                               {
-                                  auto childIdx = *reinterpret_cast<const uint32_t*>(&tuple[formattingContext.offsets[index]]);
+                                  const VariableSizedAccess variableSizedAccess{
+                                      *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
+                                  const auto varSizedData = MemoryLayout::readVarSizedValue(tbuffer, variableSizedAccess);
+                                  auto varSizedDataAsString
+                                      = std::string{reinterpret_cast<const char*>(varSizedData.data()), varSizedData.size()};
                                   if (copyOfEscapeStrings)
                                   {
-                                      return "\"" + readVarSizedData(tbuffer, childIdx) + "\"";
+                                      return "\"" + varSizedDataAsString + "\"";
                                   }
-                                  return readVarSizedData(tbuffer, childIdx);
+                                  return varSizedDataAsString;
                               }
                               return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
                           });

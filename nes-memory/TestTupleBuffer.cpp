@@ -15,10 +15,12 @@
 #include <include/Util/TestTupleBuffer.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -47,9 +49,9 @@ DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : addr
 
 DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
 {
-    auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
+    const auto* bufferBasePointer = reinterpret_cast<const uint8_t*>(buffer.getAvailableMemoryArea().data());
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
-    auto* basePointer = bufferBasePointer + offset;
+    const auto* basePointer = bufferBasePointer + offset;
     return DynamicField{basePointer, memoryLayout->getPhysicalType(fieldIndex)};
 }
 
@@ -71,38 +73,28 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 void DynamicTuple::writeVarSized(
     std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider)
 {
-    const auto valueLength = value.length();
-    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
-    if (childBuffer.has_value())
-    {
-        auto& childBufferVal = childBuffer.value();
-        *childBufferVal.getBuffer<uint32_t>() = valueLength;
-        std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
-        auto index = buffer.storeChildBuffer(childBufferVal);
-        std::visit(
-            [this, index](const auto& key)
+    const std::span<std::byte> valueAsSpan = std::as_writable_bytes(std::span{value});
+    auto combinedIdxOffset = MemoryLayout::writeVarSizedData(buffer, valueAsSpan, bufferProvider);
+    std::visit(
+        [this, combinedIdxOffset](const auto& key)
+        {
+            if constexpr (
+                std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
+                || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                if constexpr (
-                    std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
-                    || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
-                {
-                    (*this)[key].write(index);
-                }
-                else
-                {
-                    PRECONDITION(
-                        false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
-                }
-            },
-            field);
-    }
-    else
-    {
-        NES_ERROR("Could not store string {}", value);
-    }
+                *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[key].getAddressPointer()))
+                    = combinedIdxOffset.getCombinedIdxOffset();
+            }
+            else
+            {
+                PRECONDITION(
+                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
+            }
+        },
+        field);
 }
 
-std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::string> field)
+std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::string> field) const
 {
     return std::visit(
         [this](const auto& key)
@@ -111,8 +103,10 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                auto index = (*this)[key].template read<TupleBuffer::NestedTupleBufferKey>();
-                return readVarSizedData(this->buffer, index);
+                const VariableSizedAccess index{(*this)[key].template read<uint64_t>()};
+                const auto varSizedAsSpan = MemoryLayout::readVarSizedValue(this->buffer, index);
+                std::string varSizedAsStr{reinterpret_cast<const char*>(varSizedAsSpan.data()), varSizedAsSpan.size()};
+                return varSizedAsStr;
             }
             else
             {
@@ -133,8 +127,7 @@ std::string DynamicTuple::toString(const Schema& schema) const
         DynamicField currentField = this->operator[](i);
         if (dataType.isType(DataType::Type::VARSIZED))
         {
-            const auto index = currentField.read<TupleBuffer::NestedTupleBufferKey>();
-            const auto string = readVarSizedData(buffer, index);
+            const auto string = readVarSized(i);
             ss << string << fieldEnding;
         }
         else if (dataType.isFloat())
@@ -179,10 +172,11 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
             if (field.dataType.isType(DataType::Type::VARSIZED))
             {
-                const auto thisString = readVarSizedData(buffer, thisDynamicField.template read<TupleBuffer::NestedTupleBufferKey>());
-                const auto otherString
-                    = readVarSizedData(other.buffer, otherDynamicField.template read<TupleBuffer::NestedTupleBufferKey>());
-                return thisString == otherString;
+                const VariableSizedAccess thisVarSizedAccess{thisDynamicField.template read<TupleBuffer::NestedTupleBufferKey>()};
+                const VariableSizedAccess otherVarSizedAccess{otherDynamicField.template read<TupleBuffer::NestedTupleBufferKey>()};
+                const auto thisSpan = MemoryLayout::readVarSizedValue(buffer, thisVarSizedAccess);
+                const auto otherSpan = MemoryLayout::readVarSizedValue(other.buffer, otherVarSizedAccess);
+                return std::ranges::equal(thisSpan, otherSpan);
             }
             return thisDynamicField == otherDynamicField;
         });
@@ -222,12 +216,17 @@ uint64_t TestTupleBuffer::getCapacity() const
 
 uint64_t TestTupleBuffer::getNumberOfTuples() const
 {
-    return buffer.getNumberOfTuples();
+    return numberOfRecords;
 }
 
 void TestTupleBuffer::setNumberOfTuples(const uint64_t value)
 {
-    buffer.setNumberOfTuples(value);
+    numberOfRecords = value;
+}
+
+void TestTupleBuffer::setUsedMemorySize(const uint64_t value)
+{
+    buffer.setUsedMemorySize(value);
 }
 
 DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
@@ -247,9 +246,10 @@ TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayo
         "Buffer size must be the same compared to the size specified in the layout: {}, but was: {}",
         memoryLayout->getBufferSize(),
         buffer.getBufferSize());
+    numberOfRecords = memoryLayout->getNumberOfTuples(buffer.getUsedMemorySize());
 }
 
-TupleBuffer TestTupleBuffer::getBuffer()
+TupleBuffer TestTupleBuffer::getBuffer() const
 {
     return buffer;
 }
@@ -268,7 +268,7 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::begin() const
 
 TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
 {
-    return TupleIterator(*this, getNumberOfTuples());
+    return TupleIterator(*this, numberOfRecords);
 }
 
 std::string TestTupleBuffer::toString(const Schema& schema) const

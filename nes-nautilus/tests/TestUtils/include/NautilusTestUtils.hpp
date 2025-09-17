@@ -30,6 +30,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <options.hpp>
@@ -141,16 +142,16 @@ public:
     static Schema createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
-    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+    std::vector<TestTupleBuffer> createMonotonicallyIncreasingValues(
         const Schema& schema,
         uint64_t numberOfTuples,
         BufferManager& bufferManager,
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
-    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+    std::vector<TestTupleBuffer> createMonotonicallyIncreasingValues(
         const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager, uint64_t minSizeVarSizedData);
-    std::vector<TupleBuffer>
+    std::vector<TestTupleBuffer>
     createMonotonicallyIncreasingValues(const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager);
 
     void compileFillBufferFunction(

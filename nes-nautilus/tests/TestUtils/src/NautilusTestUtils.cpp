@@ -21,6 +21,7 @@
 #include <memory>
 #include <numeric>
 #include <random>
+#include <span>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -41,6 +42,7 @@
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/options.hpp>
@@ -48,6 +50,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <std/sstream.h>
+
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::TestUtils
@@ -58,25 +61,25 @@ std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunctio
     return std::make_unique<Interface::MurMur3HashFunction>();
 }
 
-std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+std::vector<TestTupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
 {
     /// We log the seed to gain reproducibility of the test
     const auto seed = std::random_device()();
     NES_INFO("Seed for creating values: {}", seed);
 
-    constexpr auto maxSizeVarSizedData = 20;
+    const auto maxSizeVarSizedData = std::max(20UL, minSizeVarSizedData + 1);
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
-std::vector<TupleBuffer>
+std::vector<TestTupleBuffer>
 NautilusTestUtils::createMonotonicallyIncreasingValues(const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
-std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+std::vector<TestTupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema& schema,
     const uint64_t numberOfTuples,
     BufferManager& bufferManager,
@@ -115,7 +118,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     /// Now, we have to call the compiled function to fill the buffer with the values.
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
-    std::vector<TupleBuffer> buffers;
+    std::vector<TestTupleBuffer> buffers;
     const auto capacity = memoryProviderInputBuffer->getMemoryLayout()->getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
@@ -134,7 +137,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
             i + 1,
             sizeVarSizedData,
             outputBufferIndex.data());
-        buffers.push_back(buffer);
+        buffers.push_back(TestTupleBuffer::createTestTupleBuffer(buffer, schema));
     }
 
     /// Returning the buffers with the values but before that shuffle the buffers to have a random order
@@ -196,8 +199,9 @@ void NautilusTestUtils::compileFillBufferFunction(
                 else if (field.dataType.isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
-                        +[](const TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
+                        +[](TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
                         {
+                            INVARIANT(inputBuffer != nullptr, "InputTuplebuffer MUST NOT be null at this point");
                             /// Creating a random string of the given size
                             auto randchar = []() -> char
                             {
@@ -209,9 +213,10 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::generate_n(randomString.begin(), size, randchar);
 
                             /// Adding the random string to the buffer and returning the pointer to the data
-                            const auto varSizedPosition = writeVarSizedData(*inputBuffer, randomString, *bufferProviderVal).value();
-                            const auto varSizedDataBuffer = inputBuffer->loadChildBuffer(varSizedPosition);
-                            return varSizedDataBuffer.getBuffer();
+                            const auto randomStringSpan = std::span{reinterpret_cast<std::byte*>(randomString.data()), randomString.size()};
+                            const auto combinedIdxOffset
+                                = MemoryLayout::writeVarSizedData(*inputBuffer, randomStringSpan, *bufferProviderVal);
+                            return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, combinedIdxOffset).data();
                         },
                         recordBuffer.getReference(),
                         bufferProvider,
@@ -226,7 +231,7 @@ void NautilusTestUtils::compileFillBufferFunction(
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
             memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider);
-            recordBuffer.setNumRecords(i + 1);
+            recordBuffer.setUsedMemoryInBytes(recordBuffer.getUsedMemoryInBytes() + memoryProviderInputBuffer->getTupleSize());
         }
     };
     /// NOLINTEND(performance-unnecessary-value-param)

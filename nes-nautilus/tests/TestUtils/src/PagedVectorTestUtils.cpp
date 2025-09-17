@@ -27,6 +27,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <Engine.hpp>
 #include <NautilusTestUtils.hpp>
@@ -42,7 +43,7 @@ void runStoreTest(
     const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<TupleBuffer>& allRecords,
+    const std::vector<TestTupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     AbstractBufferProvider& bufferManager)
 {
@@ -52,7 +53,7 @@ void runStoreTest(
 
     /// Compiling the function that inserts the records into the PagedVector, if it is not already compiled.
     const auto memoryProviderInputBuffer
-        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
+        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBuffer().getBufferSize(), testSchema);
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -63,8 +64,8 @@ void runStoreTest(
         {
             const RecordBuffer recordBuffer(inputBufferRef);
             const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider);
-
-            for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
+            const auto numberOfTuples = memoryProvider->getNumberOfTuples(recordBuffer);
+            for (nautilus::val<uint64_t> i = 0; i < numberOfTuples; i = i + 1)
             {
                 const auto record = memoryProviderInputBuffer->readRecord(projections, recordBuffer, i);
                 pagedVectorRef.writeRecord(record, bufferProviderVal);
@@ -75,13 +76,17 @@ void runStoreTest(
     /// Inserting each tuple by iterating over all tuple buffers
     for (auto buf : allRecords)
     {
-        insertIntoPagedVector(std::addressof(buf), std::addressof(bufferManager), std::addressof(pagedVector));
+        auto tupleBuffer = buf.getBuffer();
+        insertIntoPagedVector(std::addressof(tupleBuffer), std::addressof(bufferManager), std::addressof(pagedVector));
     }
 
 
     /// Calculating the expected number of entries and pages
     const uint64_t expectedNumberOfEntries = std::accumulate(
-        allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
+        allRecords.begin(),
+        allRecords.end(),
+        0UL,
+        [](const auto& sum, const TestTupleBuffer& buffer) { return sum + buffer.getNumberOfTuples(); });
     const uint64_t capacityPerPage = memoryProvider->getMemoryLayout()->getCapacity();
     const uint64_t numberOfPages = std::ceil(static_cast<double>(expectedNumberOfEntries) / capacityPerPage);
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
@@ -90,7 +95,7 @@ void runStoreTest(
     /// As we do lazy allocation, we do not create a new page if the last tuple fit on the page
     const bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
     const uint64_t numTuplesLastPage = lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
-    ASSERT_EQ(pagedVector.getLastPage().getNumberOfTuples(), numTuplesLastPage);
+    ASSERT_EQ(pagedVector.getLastPage().numberOfTuplesInPage, numTuplesLastPage);
 }
 
 void runRetrieveTest(
@@ -98,13 +103,16 @@ void runRetrieveTest(
     const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::vector<TupleBuffer>& allRecords,
+    const std::vector<TestTupleBuffer>& allRecords,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     AbstractBufferProvider& bufferManager)
 {
     /// Creating a buffer to store the retrieved records and then calling the compiled method to retrieve the records
     const uint64_t numberOfExpectedTuples = std::accumulate(
-        allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
+        allRecords.begin(),
+        allRecords.end(),
+        0UL,
+        [](const auto& sum, const TestTupleBuffer& buffer) { return sum + buffer.getNumberOfTuples(); });
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), numberOfExpectedTuples);
     auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema.getSizeOfSchemaInBytes());
     ASSERT_TRUE(outputBufferVal.has_value());
@@ -133,7 +141,7 @@ void runRetrieveTest(
                 auto record = *it;
                 memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record, bufferProviderVal);
                 numberOfTuples = numberOfTuples + 1;
-                recordBuffer.setNumRecords(numberOfTuples);
+                recordBuffer.setUsedMemoryInBytes(numberOfTuples * memoryProviderActualBuffer->getTupleSize());
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
@@ -146,10 +154,11 @@ void runRetrieveTest(
     const RecordBuffer recordBufferActual(nautilus::val<TupleBuffer*>(std::addressof(outputBuffer)));
     nautilus::val<uint64_t> recordBufferIndexActual = 0;
     const auto memoryProviderInputBuffer
-        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
+        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBuffer().getBufferSize(), testSchema);
     for (auto inputBuf : allRecords)
     {
-        const RecordBuffer recordBufferInput(nautilus::val<TupleBuffer*>(std::addressof(inputBuf)));
+        auto inputTupleBuffer = inputBuf.getBuffer();
+        const RecordBuffer recordBufferInput(nautilus::val<TupleBuffer*>(std::addressof(inputTupleBuffer)));
         for (nautilus::val<uint64_t> i = 0; i < inputBuf.getNumberOfTuples(); ++i)
         {
             auto recordActual = memoryProviderActualBuffer->readRecord(projections, recordBufferActual, recordBufferIndexActual);
@@ -175,8 +184,8 @@ void insertAndAppendAllPagesTest(
     const Schema& schema,
     const uint64_t entrySize,
     const uint64_t pageSize,
-    const std::vector<std::vector<TupleBuffer>>& allRecordsAndVectors,
-    const std::vector<TupleBuffer>& expectedRecordsAfterAppendAll,
+    const std::vector<std::vector<TestTupleBuffer>>& allRecordsAndVectors,
+    const std::vector<TestTupleBuffer>& expectedRecordsAfterAppendAll,
     uint64_t differentPageSizes,
     const nautilus::engine::NautilusEngine& nautilusEngine,
     AbstractBufferProvider& bufferManager)

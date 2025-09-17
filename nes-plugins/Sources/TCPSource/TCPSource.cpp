@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <netdb.h>
+#include <stdio.h>
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
 #include <DataServer/TCPDataServer.hpp>
@@ -229,7 +230,8 @@ bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
     const size_t rawTBSize = tupleBuffer.getBufferSize();
     while (not flushIntervalPassed and numReceivedBytes < rawTBSize)
     {
-        const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getBuffer() + numReceivedBytes, rawTBSize - numReceivedBytes);
+        const ssize_t bufferSizeReceived
+            = read(sockfd, tupleBuffer.getAvailableMemoryArea().data() + numReceivedBytes, rawTBSize - numReceivedBytes);
         numReceivedBytes += bufferSizeReceived;
         if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
         {

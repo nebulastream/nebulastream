@@ -30,6 +30,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <nautilus/Engine.hpp>
 #include <NautilusTestUtils.hpp>
@@ -66,7 +67,7 @@ public:
     Schema inputSchema;
     std::vector<Interface::MemoryProvider::FieldOffsets> fieldKeys, fieldValues;
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
-    std::vector<TupleBuffer> inputBuffers;
+    std::vector<TestTupleBuffer> inputBuffers;
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProviderInputBuffer;
     uint64_t keySize, valueSize, entriesPerPage, entrySize;
     TestParams params;
@@ -81,7 +82,7 @@ public:
         const std::vector<DataType::Type>& keyTypes, const std::vector<DataType::Type>& valueTypes, ExecutionMode backend);
 
     std::string compareExpectedWithActual(
-        const TupleBuffer& inputBufferKeys, const TupleBuffer& bufferActual, const std::map<RecordWithFields, Record>& exactMap);
+        const TestTupleBuffer& inputBufferKeys, const TestTupleBuffer& bufferActual, const std::map<RecordWithFields, Record>& exactMap);
 
     std::string compareExpectedWithActual(
         const TupleBuffer& bufferActual,

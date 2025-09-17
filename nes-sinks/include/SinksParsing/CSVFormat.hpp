@@ -45,6 +45,7 @@ public:
 
     explicit CSVFormat(const Schema& schema);
     explicit CSVFormat(const Schema& schema, bool escapeStrings);
+    ~CSVFormat() noexcept override = default;
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;

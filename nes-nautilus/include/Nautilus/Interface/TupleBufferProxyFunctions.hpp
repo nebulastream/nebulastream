@@ -23,23 +23,13 @@ namespace NES::Nautilus::ProxyFunctions
 {
 inline int8_t* NES_Memory_TupleBuffer_getBuffer(TupleBuffer* tupleBuffer)
 {
-    return tupleBuffer->getBuffer();
+    return reinterpret_cast<int8_t*>(tupleBuffer->getAvailableMemoryArea().data());
 };
 
 inline uint64_t NES_Memory_TupleBuffer_getBufferSize(const TupleBuffer* tupleBuffer)
 {
     return tupleBuffer->getBufferSize();
 };
-
-inline uint64_t NES_Memory_TupleBuffer_getNumberOfTuples(const TupleBuffer* tupleBuffer)
-{
-    return tupleBuffer->getNumberOfTuples();
-};
-
-void inline NES_Memory_TupleBuffer_setNumberOfTuples(TupleBuffer* tupleBuffer, const uint64_t numberOfTuples)
-{
-    tupleBuffer->setNumberOfTuples(numberOfTuples);
-}
 
 inline OriginId NES_Memory_TupleBuffer_getOriginId(const TupleBuffer* tupleBuffer)
 {
@@ -79,6 +69,16 @@ inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer
 inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(TupleBuffer* tupleBuffer, const Timestamp value)
 {
     tupleBuffer->setCreationTimestampInMS(Timestamp(value));
+}
+
+inline uint64_t NES_Memory_TupleBuffer_getUsedMemoryInBytes(const TupleBuffer* tupleBuffer)
+{
+    return tupleBuffer->getUsedMemorySize();
+}
+
+inline void NES_Memory_TupleBuffer_setUsedMemoryInBytes(TupleBuffer* tupleBuffer, const uint64_t usedMemory)
+{
+    tupleBuffer->setUsedMemorySize(usedMemory);
 }
 
 inline void NES_Memory_TupleBuffer_setChunkNumber(TupleBuffer* tupleBuffer, const ChunkNumber chunkNumber)

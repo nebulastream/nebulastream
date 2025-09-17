@@ -69,10 +69,8 @@ RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<R
         fieldIndex);
 
     /// via pointer arithmetic gets the starting field address
-    auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);
-    auto offSet = layout->getFieldOffset(0, fieldIndex);
-    auto* basePointer = bufferBasePointer + offSet;
-
+    const auto offSet = layout->getFieldOffset(0, fieldIndex);
+    auto* basePointer = reinterpret_cast<uint8_t*>(buffer.getAvailableMemoryArea().data() + offSet);
     return RowLayoutField<T, boundaryChecks>(layout, basePointer, fieldIndex, layout->getTupleSize());
 }
 

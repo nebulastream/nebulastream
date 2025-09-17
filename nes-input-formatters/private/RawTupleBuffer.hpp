@@ -34,20 +34,23 @@ namespace NES
 class RawTupleBuffer
 {
     TupleBuffer rawBuffer;
+    uint64_t numberOfTuples;
     std::string_view bufferView;
 
 public:
     RawTupleBuffer() = default;
     ~RawTupleBuffer() = default;
     explicit RawTupleBuffer(TupleBuffer rawTupleBuffer)
-        : rawBuffer(std::move(rawTupleBuffer)), bufferView(rawBuffer.getBuffer<const char>(), rawBuffer.getNumberOfTuples()) { };
+        : rawBuffer(std::move(rawTupleBuffer))
+        , numberOfTuples(0)
+        , bufferView(reinterpret_cast<char*>(rawBuffer.getUsedMemoryArea().data()), rawBuffer.getUsedMemoryArea().size()) { };
 
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer(const RawTupleBuffer& other) = default;
     RawTupleBuffer& operator=(const RawTupleBuffer& other) = default;
 
-    [[nodiscard]] size_t getNumberOfBytes() const noexcept { return rawBuffer.getNumberOfTuples(); }
+    [[nodiscard]] size_t getNumberOfBytes() const noexcept { return rawBuffer.getUsedMemorySize(); }
 
     [[nodiscard]] size_t getBufferSize() const noexcept { return rawBuffer.getBufferSize(); }
 
@@ -59,9 +62,13 @@ public:
 
     [[nodiscard]] std::string_view getBufferView() const noexcept { return bufferView; }
 
-    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return rawBuffer.getNumberOfTuples(); }
+    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return numberOfTuples; }
 
-    void setNumberOfTuples(const uint64_t numberOfTuples) const noexcept { rawBuffer.setNumberOfTuples(numberOfTuples); }
+    [[nodiscard]] uint64_t getUsedMemorySize() const noexcept { return rawBuffer.getUsedMemorySize(); }
+
+    void setNumberOfTuples(const uint64_t numberOfTuples) noexcept { this->numberOfTuples = numberOfTuples; }
+
+    void setUsedMemorySize(const uint64_t usedMemorySize) noexcept { rawBuffer.setUsedMemorySize(usedMemorySize); }
 
     /// Allows to emit the underlying buffer without exposing it to the outside
     void emit(PipelineExecutionContext& pec, const PipelineExecutionContext::ContinuationPolicy continuationPolicy) const
@@ -69,7 +76,9 @@ public:
         pec.emitBuffer(rawBuffer, continuationPolicy);
     }
 
-    [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
+    [[nodiscard]] const TupleBuffer& getUnformattedBuffer() const noexcept { return rawBuffer; }
+
+    [[nodiscard]] TupleBuffer& getUnformattedBuffer() noexcept { return rawBuffer; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
 };

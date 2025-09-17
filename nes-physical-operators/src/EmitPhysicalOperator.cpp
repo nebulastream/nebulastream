@@ -94,6 +94,7 @@ public:
     explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()) { }
 
     nautilus::val<uint64_t> outputIndex = 0;
+    nautilus::val<uint64_t> usedBytes = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
 };
@@ -113,11 +114,12 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= getMaxRecordsPerBuffer())
     {
-        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->usedBytes, false);
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getBuffer();
-        emitState->outputIndex = 0_u64;
+        emitState->outputIndex = 0;
+        emitState->usedBytes = 0;
     }
 
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
@@ -125,22 +127,23 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// to the brim, i.e., have no more space left.
     memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     emitState->outputIndex = emitState->outputIndex + 1;
+    emitState->usedBytes = emitState->usedBytes + memoryProvider->getTupleSize();
 }
 
 void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
+    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->usedBytes, true);
 }
 
 void EmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
-    const nautilus::val<uint64_t>& numRecords,
+    const nautilus::val<uint64_t>& usedBytes,
     const nautilus::val<bool>& potentialLastChunk) const
 {
-    recordBuffer.setNumRecords(numRecords);
+    recordBuffer.setUsedMemoryInBytes(usedBytes);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);

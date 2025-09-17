@@ -457,7 +457,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
     const auto taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
-        ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
+        ENGINE_LOG_DEBUG("Handle Task for {}-{}.", task.queryId, pipeline->id);
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -465,13 +465,11 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, auto continuationPolicy)
             {
-                ENGINE_LOG_DEBUG(
-                    "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                ENGINE_LOG_DEBUG("Task emitted tuple buffer {}-{}.", task.queryId, task.pipelineId);
                 /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
                 if (continuationPolicy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
                 {
-                    pool.statistic->onEvent(
-                        TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+                    pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId});
                     return pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {}, continuationPolicy);
                 }
                 /// Otherwise, get the successor of the pipeline, and emit a work task for it.
@@ -479,12 +477,11 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                     pipeline->successors,
                     [&](const auto& successor)
                     {
-                        pool.statistic->onEvent(
-                            TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                        pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId});
                         return pool.emitWork(task.queryId, successor, tupleBuffer, {}, {}, continuationPolicy);
                     });
             });
-        pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+        pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId});
         pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;

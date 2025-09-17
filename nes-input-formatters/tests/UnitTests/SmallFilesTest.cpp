@@ -19,7 +19,9 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <iterator>
 #include <memory>
+#include <ostream>
 #include <ranges>
 #include <span>
 #include <string>
@@ -128,7 +130,7 @@ public:
 
     void TearDown() override { BaseUnitTest::TearDown(); }
 
-    static bool writeBinaryToFile(std::span<const char> data, const std::filesystem::path& filepath, bool append)
+    static bool writeBinaryToFile(const std::span<const std::byte> data, const std::filesystem::path& filepath, bool append)
     {
         if (const auto parentPath = filepath.parent_path(); !parentPath.empty())
         {
@@ -144,7 +146,7 @@ public:
             throw InvalidConfigParameter("Could not open file: {}", filepath.string());
         }
 
-        file.write(data.data(), static_cast<std::streamsize>(data.size_bytes()));
+        file.write(reinterpret_cast<const std::ostream::char_type*>(data.data()), static_cast<std::streamsize>(data.size_bytes()));
 
         return true;
     }
@@ -233,24 +235,21 @@ public:
 
     template <bool WriteExpectedResultsFile>
     bool compareResults(
-        const std::vector<std::vector<TupleBuffer>>& resultBuffers,
+        std::vector<TestTupleBuffer>& resultBuffers,
         const SetupResult& setupResult,
         const std::vector<size_t>& varSizedFieldOffsets,
         BufferManager& testBufferManager)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
-        auto combinedThreadResults = std::ranges::views::join(resultBuffers);
-        std::vector<TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
         std::ranges::sort(
-            resultBufferVec.begin(),
-            resultBufferVec.end(),
-            [](const TupleBuffer& left, const TupleBuffer& right)
+            resultBuffers,
+            [](const TestTupleBuffer& left, const TestTupleBuffer& right)
             {
-                if (left.getSequenceNumber() == right.getSequenceNumber())
+                if (left.getBuffer().getSequenceNumber() == right.getBuffer().getSequenceNumber())
                 {
-                    return left.getChunkNumber() < right.getChunkNumber();
+                    return left.getBuffer().getChunkNumber() < right.getBuffer().getChunkNumber();
                 }
-                return left.getSequenceNumber() < right.getSequenceNumber();
+                return left.getBuffer().getSequenceNumber() < right.getBuffer().getSequenceNumber();
             });
 
 
@@ -259,13 +258,15 @@ public:
         {
             const auto tmpExpectedResultsPath
                 = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-            Util::writeTupleBuffersToFile(resultBufferVec, setupResult.schema, tmpExpectedResultsPath, varSizedFieldOffsets);
+            Util::writeTupleBuffersToFile(resultBuffers, setupResult.schema, tmpExpectedResultsPath, varSizedFieldOffsets);
         }
         const auto expectedResultsPath
             = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
         auto expectedBuffers
             = Util::loadTupleBuffersFromFile(testBufferManager, setupResult.schema, expectedResultsPath, varSizedFieldOffsets);
-        return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultBufferVec, expectedBuffers, setupResult.schema);
+        auto resultTupleBuffers
+            = resultBuffers | std::views::transform([](auto& buffer) { return buffer.getBuffer(); }) | std::ranges::to<std::vector>();
+        return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultTupleBuffers, expectedBuffers, setupResult.schema);
     }
 
     template <bool WriteExpectedResultsFile = false>
@@ -307,13 +308,25 @@ public:
             taskQueue->startProcessing();
             taskQueue->waitForCompletion();
 
+            /// Transform result buffers to test tuple buffers, as they are required for compareResult
+            std::vector<TestTupleBuffer> resultTestTupleBuffers;
+            for (const auto& innerResultBuffers : *resultBuffers)
+            {
+                std::ranges::transform(
+                    innerResultBuffers,
+                    std::back_inserter(resultTestTupleBuffers),
+                    [schema = setupResult.schema](const TupleBuffer& buffer)
+                    { return TestTupleBuffer::createTestTupleBuffer(buffer, schema); });
+            }
             /// Check results
             const auto isCorrectResult
-                = compareResults<WriteExpectedResultsFile>(*resultBuffers, setupResult, varSizedFieldOffsets, *testBufferManager);
+                = compareResults<WriteExpectedResultsFile>(resultTestTupleBuffers, setupResult, varSizedFieldOffsets, *testBufferManager);
             ASSERT_TRUE(isCorrectResult);
 
             /// Cleanup
             resultBuffers->clear();
+            resultTestTupleBuffers.clear();
+            pipelineTasks.clear();
             testBufferManager->destroy();
             NES_DEBUG("Destroyed result buffer");
         }

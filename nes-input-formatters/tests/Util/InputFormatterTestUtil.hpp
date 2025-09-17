@@ -136,6 +136,12 @@ public:
 
         condition.wait(lock, [this, size]() { return vector.size() >= size; });
     }
+
+    void clear()
+    {
+        std::scoped_lock lock(mtx);
+        vector.clear();
+    }
 };
 
 /// Generates field names (for field N: Field_N)
@@ -279,29 +285,32 @@ compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, st
     return allTuplesMatch;
 }
 
-inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
+inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuffer& rightBuffer, const Schema& schema)
 {
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
-    if (leftBuffer.getNumberOfTuples() != rightBuffer.getNumberOfTuples())
+    const auto leftTestBuffer = TestTupleBuffer::createTestTupleBuffer(leftBuffer, schema);
+    const auto rightTestBuffer = TestTupleBuffer::createTestTupleBuffer(rightBuffer, schema);
+    const auto schemaSizeInByte = schema.getSizeOfSchemaInBytes();
+    if (leftTestBuffer.getNumberOfTuples() != rightTestBuffer.getNumberOfTuples())
     {
         NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
     std::set<uint64_t> sameTupleIndices;
-    for (auto idxBuffer1 = 0UL; idxBuffer1 < leftBuffer.getNumberOfTuples(); ++idxBuffer1)
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < leftTestBuffer.getNumberOfTuples(); ++idxBuffer1)
     {
         bool idxFoundInBuffer2 = false;
-        for (auto idxBuffer2 = 0UL; idxBuffer2 < rightBuffer.getNumberOfTuples(); ++idxBuffer2)
+        for (auto idxBuffer2 = 0UL; idxBuffer2 < rightTestBuffer.getNumberOfTuples(); ++idxBuffer2)
         {
             if (sameTupleIndices.contains(idxBuffer2))
             {
                 continue;
             }
 
-            const auto* const startPosBuffer1 = leftBuffer.getBuffer() + (schemaSizeInByte * idxBuffer1);
-            const auto* const startPosBuffer2 = rightBuffer.getBuffer() + (schemaSizeInByte * idxBuffer2);
-            if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
+            const auto leftFieldSpan = leftTestBuffer.getBuffer().getUsedMemoryArea().subspan(schemaSizeInByte * idxBuffer1);
+            const auto rightFieldSpan = rightTestBuffer.getBuffer().getUsedMemoryArea().subspan(schemaSizeInByte * idxBuffer2);
+            if (std::ranges::equal(leftFieldSpan, rightFieldSpan))
             {
                 sameTupleIndices.insert(idxBuffer2);
                 idxFoundInBuffer2 = true;
@@ -316,7 +325,7 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
         }
     }
 
-    return (sameTupleIndices.size() == leftBuffer.getNumberOfTuples());
+    return (sameTupleIndices.size() == leftTestBuffer.getNumberOfTuples());
 }
 
 inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, TupleBuffer tupleBuffer)
@@ -326,8 +335,8 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
         "{} < {}, size of TupleBuffer is not sufficient to contain string",
         tupleBuffer.getBufferSize(),
         rawData.size());
-    std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
-    tupleBuffer.setNumberOfTuples(rawData.size());
+    std::ranges::copy(rawData, reinterpret_cast<char*>(tupleBuffer.getAvailableMemoryArea().data()));
+    tupleBuffer.setUsedMemorySize(rawData.size());
     return tupleBuffer;
 }
 
@@ -387,7 +396,8 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
             {
                 /// If specified, print the contents of the buffers.
                 auto actualResultTestBuffer = TestTupleBuffer::createTestTupleBuffer(actualResultBuffer, testHandle.schema);
-                actualResultTestBuffer.setNumberOfTuples(actualResultBuffer.getNumberOfTuples());
+                actualResultTestBuffer.setNumberOfTuples(
+                    actualResultBuffer.getUsedMemorySize() / testHandle.schema.getSizeOfSchemaInBytes());
                 auto expectedTestBuffer
                     = TestTupleBuffer::createTestTupleBuffer(testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
                 expectedTestBuffer.setNumberOfTuples(expectedTestBuffer.getNumberOfTuples());
@@ -396,8 +406,8 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
                     actualResultTestBuffer.toString(testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE),
                     expectedTestBuffer.toString(testHandle.schema, TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
             }
-            isValid &= checkIfBuffersAreEqual(
-                actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema.getSizeOfSchemaInBytes());
+            isValid
+                &= checkIfBuffersAreEqual(actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema);
             ++bufferIndex;
         }
         ++taskIndex;
@@ -429,7 +439,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
     std::shared_ptr<BufferManager> formattedBufferManager
         = BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
 
-    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
+    auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
     auto schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
@@ -485,7 +495,7 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// create expected results from supplied in test config
     testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate, PrintDebug>(testHandle);
     /// validate: actual results vs expected results
-    const auto validationResult = validateResult<TupleSchemaTemplate, PrintDebug>(testHandle);
+    const auto validationResult = validateResult<TupleSchemaTemplate, true>(testHandle);
     ASSERT_TRUE(validationResult);
     /// clean up
     testHandle.destroy();

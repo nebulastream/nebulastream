@@ -31,8 +31,8 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
         "Attempt to copy buffer of size: {} into smaller buffer of size: {}",
         copiedBuffer.getBufferSize(),
         buffer.getBufferSize());
-    auto bufferData = std::span(buffer.getBuffer(), buffer.getBufferSize());
-    std::ranges::copy(bufferData, copiedBuffer.getBuffer());
+    auto bufferData = buffer.getAvailableMemoryArea<std::byte>();
+    std::ranges::copy(bufferData, copiedBuffer.getAvailableMemoryArea().begin());
     copiedBuffer.setWatermark(buffer.getWatermark());
     copiedBuffer.setChunkNumber(buffer.getChunkNumber());
     copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
@@ -42,7 +42,6 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
     copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
     copiedBuffer.setChunkNumber(buffer.getChunkNumber());
     copiedBuffer.setLastChunk(buffer.isLastChunk());
-    copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {

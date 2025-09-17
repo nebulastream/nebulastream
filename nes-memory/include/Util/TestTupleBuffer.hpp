@@ -25,7 +25,9 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -72,10 +74,12 @@ public:
     /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     /// @return Value of the field.
     template <class Type>
-    requires(IsNesType<Type> && not std::is_pointer<Type>::value)
+    requires(IsNesType<Type> && not std::is_pointer_v<Type>)
     [[nodiscard]] Type& read() const
     {
-        if (not physicalType.isSameDataType<Type>())
+        /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
+        if (not physicalType.isSameDataType<Type>()
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -87,10 +91,12 @@ public:
     /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     /// @return Value of the field.
     template <class Type>
-    requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
+    requires(NESIdentifier<Type> && not std::is_pointer_v<Type>)
     inline Type read() const
     {
-        if (not physicalType.isSameDataType<typename Type::Underlying>())
+        /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
+        if (not physicalType.isSameDataType<Type>()
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
@@ -163,7 +169,7 @@ public:
 
     void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
 
-    std::string readVarSized(std::variant<const uint64_t, const std::string> field);
+    [[nodiscard]] std::string readVarSized(std::variant<const uint64_t, const std::string> field) const;
 
     [[nodiscard]] std::string toString(const Schema& schema) const;
 
@@ -237,12 +243,13 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
     void setNumberOfTuples(uint64_t value);
+    void setUsedMemorySize(uint64_t value);
 
 
-    /// @throws CannotAccessBuffer if index is larger then buffer capacity
+    /// @throws CannotAccessBuffer if index is larger than buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
-    TupleBuffer getBuffer();
+    [[nodiscard]] TupleBuffer getBuffer() const;
 
     /**
      * @brief Iterator to process the tuples in a TestTupleBuffer.
@@ -302,7 +309,7 @@ public:
     requires(!ContainsString<Types> && ...)
     void pushRecordToBuffer(std::tuple<Types...> record)
     {
-        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
+        pushRecordToBufferAtIndex(record, numberOfRecords);
     }
 
     /**
@@ -317,7 +324,7 @@ public:
     requires(ContainsString<Types> || ...)
     void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager)
     {
-        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
+        pushRecordToBufferAtIndex(record, numberOfRecords, bufferManager);
     }
 
     /**
@@ -334,7 +341,6 @@ public:
     template <typename... Types>
     void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, AbstractBufferProvider* bufferProvider = nullptr)
     {
-        uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
         if (recordIndex >= buffer.getBufferSize())
         {
@@ -367,6 +373,7 @@ public:
         if (recordIndex + 1 > numberOfRecords)
         {
             this->setNumberOfTuples(recordIndex + 1);
+            this->setUsedMemorySize(buffer.getUsedMemorySize() + this->getMemoryLayout().getTupleSize());
         }
     }
 
@@ -414,8 +421,9 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                auto childBufferIdx = (*this)[recordIndex][I].read<TupleBuffer::NestedTupleBufferKey>();
-                std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
+                const VariableSizedAccess childBufferIdx{*reinterpret_cast<const uint64_t*>((*this)[recordIndex][I].getAddressPointer())};
+                const auto varSizedSpan = MemoryLayout::readVarSizedValue(this->buffer, childBufferIdx);
+                std::get<I>(record) = std::string{reinterpret_cast<const char*>(varSizedSpan.data()), varSizedSpan.size()};
             }
             else
             {
@@ -430,6 +438,7 @@ private:
 
     std::shared_ptr<MemoryLayout> memoryLayout;
     TupleBuffer buffer;
+    uint64_t numberOfRecords;
 };
 
 }

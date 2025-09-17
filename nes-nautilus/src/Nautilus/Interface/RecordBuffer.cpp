@@ -13,6 +13,7 @@
 */
 #include <Nautilus/Interface/RecordBuffer.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
@@ -29,16 +30,6 @@ namespace NES::Nautilus
 
 RecordBuffer::RecordBuffer(const nautilus::val<TupleBuffer*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef)
 {
-}
-
-nautilus::val<uint64_t> RecordBuffer::getNumRecords() const
-{
-    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getNumberOfTuples, tupleBufferRef);
-}
-
-void RecordBuffer::setNumRecords(const nautilus::val<uint64_t>& numRecordsValue)
-{
-    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setNumberOfTuples, tupleBufferRef, numRecordsValue);
 }
 
 nautilus::val<int8_t*> RecordBuffer::getBuffer() const
@@ -109,6 +100,16 @@ nautilus::val<Timestamp> RecordBuffer::getCreatingTs()
 void RecordBuffer::setCreationTs(const nautilus::val<Timestamp>& creationTs)
 {
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setCreationTimestampInMS, tupleBufferRef, creationTs);
+}
+
+nautilus::val<size_t> RecordBuffer::getUsedMemoryInBytes() const
+{
+    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getUsedMemoryInBytes, tupleBufferRef)};
+}
+
+void RecordBuffer::setUsedMemoryInBytes(const nautilus::val<size_t>& memUsed)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setUsedMemoryInBytes, tupleBufferRef, memUsed);
 }
 
 }

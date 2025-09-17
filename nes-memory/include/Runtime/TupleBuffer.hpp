@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -85,14 +86,6 @@ public:
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
 
-    /**
-     * @brief Interprets the void* as a pointer to the content of tuple buffer
-     * @note if bufferPointer is not pointing to the begin of an data buffer the behavior of this function is undefined.
-     * @param bufferPointer
-     * @return TupleBuffer
-     */
-    [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
-
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
@@ -131,24 +124,28 @@ public:
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     void release() noexcept;
 
-    int8_t* getBuffer() noexcept;
-
-    /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = int8_t>
-    T* getBuffer() noexcept
+    template <typename T = std::byte>
+    std::span<T> getAvailableMemoryArea() noexcept
     {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(std::has_single_bit(alignof(T)));
-        return reinterpret_cast<T*>(ptr);
+        return std::span<T>{reinterpret_cast<T*>(ptr), size};
     }
 
-    /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = int8_t>
-    const T* getBuffer() const noexcept
+    template <typename T = std::byte>
+    std::span<const T> getAvailableMemoryArea() const noexcept
     {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(std::has_single_bit(alignof(T)));
-        return reinterpret_cast<const T*>(ptr);
+        return std::span<const T>{reinterpret_cast<T*>(ptr), size};
+    }
+
+    template <typename T = std::byte>
+    std::span<T> getUsedMemoryArea() noexcept
+    {
+        return std::span<T>{reinterpret_cast<T*>(ptr), getUsedMemorySize()};
+    }
+
+    template <typename T = std::byte>
+    std::span<const T> getUsedMemoryArea() const noexcept
+    {
+        return std::span<const T>{reinterpret_cast<T*>(ptr), getUsedMemorySize()};
     }
 
     [[nodiscard]] uint32_t getReferenceCounter() const noexcept;
@@ -159,10 +156,16 @@ public:
 
     [[nodiscard]] uint64_t getBufferSize() const noexcept;
 
-    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
-    void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
+    /// @brief gets the used memory in byte
+    [[nodiscard]] uint64_t getUsedMemorySize() const noexcept;
 
+    /// @brief sets the used memory in bytes
+    void setUsedMemorySize(uint64_t) noexcept;
+
+    /// @brief get the watermark as a timestamp
     [[nodiscard]] Timestamp getWatermark() const noexcept;
+
+    /// @brief set the watermark from a timestamp
     void setWatermark(Timestamp value) noexcept;
 
     [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
@@ -187,14 +190,12 @@ public:
     void setOriginId(OriginId id) noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;
+    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) noexcept;
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
-
-    bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 
 private:
     /**
@@ -212,20 +213,4 @@ private:
  * @param bufferPointer pointer to the data region of an buffer.
  */
 [[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);
-
-/**
- * @brief Allocates an object of T in the tuple buffer.
- * Set the number of tuples to one.
- * @tparam T
- * @param buffer
- * @return T+
- */
-template <typename T>
-T* allocateWithin(TupleBuffer& buffer)
-{
-    auto ptr = new (buffer.getBuffer()) T();
-    buffer.setNumberOfTuples(1);
-    return ptr;
-};
-
 }

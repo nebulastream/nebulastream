@@ -46,7 +46,7 @@ public:
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to JSON. Returns result as a string.
-    static std::string tupleBufferToFormattedJSONString(TupleBuffer tbuffer, const FormattingContext& formattingContext);
+    [[nodiscard]] std::string tupleBufferToFormattedJSONString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
