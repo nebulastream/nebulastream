@@ -13,9 +13,12 @@
 */
 #include <MemoryLayout/MemoryLayout.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -186,6 +189,11 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
 uint64_t MemoryLayout::getCapacity() const
 {
     return capacity;
+}
+
+uint64_t MemoryLayout::getNumberOfTuples(const uint64_t usedMemorySize) const
+{
+    return usedMemorySize / getTupleSize();
 }
 
 const Schema& MemoryLayout::getSchema() const

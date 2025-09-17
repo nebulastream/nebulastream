@@ -133,7 +133,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
             writtenBytes += insertedBytes;
             ++curTupleCount;
         }
-        tuplesStream.read(tupleBuffer.getMemArea<char>(), writtenBytes);
+        tuplesStream.read(tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
         NES_DEBUG("Wrote {} bytes", writtenBytes);

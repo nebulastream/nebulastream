@@ -20,6 +20,7 @@
 #include <fstream>
 #include <ios>
 #include <memory>
+#include <ostream>
 #include <ranges>
 #include <span>
 #include <string>
@@ -128,7 +129,7 @@ public:
 
     void TearDown() override { BaseUnitTest::TearDown(); }
 
-    static bool writeBinaryToFile(std::span<const char> data, const std::filesystem::path& filepath, bool append)
+    static bool writeBinaryToFile(const std::span<const std::ostream::char_type> data, const std::filesystem::path& filepath, bool append)
     {
         if (const auto parentPath = filepath.parent_path(); !parentPath.empty())
         {
