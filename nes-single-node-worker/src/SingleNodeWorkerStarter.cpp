@@ -71,6 +71,7 @@ int main(const int argc, const char* argv[])
             return 0;
         }
         {
+            NES::Logger::getInstance()->changeLogLevel(configuration->logLevel.getValue());
             NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
 
             grpc::ServerBuilder builder;

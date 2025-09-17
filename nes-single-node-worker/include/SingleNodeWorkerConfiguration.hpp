@@ -40,8 +40,15 @@ connections.  Valid values include dns:///localhost:1234,
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
+    EnumOption<LogLevel> logLevel
+        = {"log_level",
+           LogLevel::LOG_DEBUG,
+           fmt::format(
+               "Change the log level. Note that compilation options can potentially remove logs. Options: {}", enumPipeList<LogLevel>())};
+
+
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &enableGoogleEventTrace}; }
+    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &logLevel, &grpcAddressUri, &enableGoogleEventTrace}; }
 
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
