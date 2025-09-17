@@ -13,7 +13,9 @@
 */
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
+#include <algorithm>
 #include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -130,19 +132,19 @@ int8_t* ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferP
 {
     if (varSizedSpace.empty() or varSizedSpace.back().getUsedMemorySize() + neededSize >= varSizedSpace.back().getBufferSize())
     {
-        static constexpr auto numberOfPreAllocatedSpaces = 100;
-        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * numberOfPreAllocatedSpaces);
+        static constexpr auto NumberOfPreAllocatedSpaces = 100;
+        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * NumberOfPreAllocatedSpaces);
         if (not varSizedBuffer)
         {
             throw CannotAllocateBuffer(
-                "Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize * numberOfPreAllocatedSpaces));
+                "Could not allocate memory for ChainedHashMap of size {}", std::to_string(neededSize * NumberOfPreAllocatedSpaces));
         }
         varSizedSpace.emplace_back(varSizedBuffer.value());
     }
 
     auto& varSizedBuffer = varSizedSpace.back();
     varSizedBuffer.setUsedMemorySize(varSizedBuffer.getUsedMemorySize() + neededSize);
-    return varSizedBuffer.getMemArea<int8_t>() + varSizedBuffer.getUsedMemorySize() - neededSize;
+    return reinterpret_cast<int8_t*>(varSizedBuffer.getAvailableMemoryArea().data()) + varSizedBuffer.getUsedMemorySize() - neededSize;
 }
 
 uint64_t ChainedHashMap::getNumberOfTuples() const
@@ -164,7 +166,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
             throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
         }
         entrySpace = entryBuffer.value();
-        entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getMemArea());
+        entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
         std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
 
         /// Pointing the end of the entries to itself
@@ -179,7 +181,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         {
             throw CannotAllocateBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(pageSize));
         }
-        std::memset(newPage.value().getMemArea(), 0, pageSize);
+        std::ranges::fill(newPage.value().getAvailableMemoryArea(), std::byte{0});
         storageSpace.emplace_back(newPage.value());
     }
 

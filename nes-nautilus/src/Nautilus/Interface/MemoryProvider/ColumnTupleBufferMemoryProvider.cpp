@@ -78,7 +78,7 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
     const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getBuffer();
 
-    nautilus::val<uint64_t> varSizedOffset = 0;
+    const nautilus::val<uint64_t> varSizedOffset = 0;
     for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);

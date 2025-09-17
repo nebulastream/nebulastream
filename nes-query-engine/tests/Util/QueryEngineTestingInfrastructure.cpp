@@ -77,7 +77,7 @@ bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier)
     bool allMatch = true;
     for (size_t index = 0; index < buffer.getBufferSize() / stepSize; index += stepSize)
     {
-        allMatch |= *std::bit_cast<size_t*>(&buffer.getMemArea<std::byte>()[stepSize]) == identifier;
+        allMatch |= *std::bit_cast<size_t*>(&buffer.getAvailableMemoryArea<std::byte>()[stepSize]) == identifier;
     }
 
     return allMatch;

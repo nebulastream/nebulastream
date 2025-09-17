@@ -15,10 +15,12 @@
 #include <include/Util/TestTupleBuffer.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -241,7 +243,7 @@ TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayo
         "Buffer size must be the same compared to the size specified in the layout: {}, but was: {}",
         memoryLayout->getBufferSize(),
         buffer.getBufferSize());
-    numberOfRecords = buffer.getUsedMemorySize() / memoryLayout->getTupleSize();
+    numberOfRecords = memoryLayout->getNumberOfTuples(buffer.getUsedMemorySize());
 }
 
 TupleBuffer TestTupleBuffer::getBuffer() const

@@ -14,6 +14,7 @@
 #include <ChainedHashMapTestUtils.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -369,7 +370,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();
-    std::memset(bufferOutput.getMemArea(), 0, bufferOutput.getBufferSize());
+    std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
 
     /// We are calling the function to find all entries and write them to the output buffer.
     auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBufferWithEntryIterator();
@@ -402,7 +403,7 @@ void ChainedHashMapTestUtils::checkEntryIterator(
             ASSERT_TRUE(false);
         }
         auto bufferOutput = bufferOutputOpt.value();
-        std::memset(bufferOutput.getMemArea(), 0, bufferOutput.getBufferSize());
+        std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
         auto inputTupleBuffer = inputBuffer.getBuffer();
         findAndWriteToOutputBuffer(
             std::addressof(inputTupleBuffer), std::addressof(bufferOutput), bufferManager.get(), std::addressof(hashMap));

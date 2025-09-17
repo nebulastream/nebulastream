@@ -67,7 +67,7 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
 {
     std::stringstream ss;
     const auto numberOfTuples = getNumberOfTuples(tbuffer, schema);
-    const auto buffer = std::span(tbuffer.getMemArea<char>(), tbuffer.getUsedMemorySize());
+    const auto buffer = tbuffer.getUsedMemoryArea();
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);

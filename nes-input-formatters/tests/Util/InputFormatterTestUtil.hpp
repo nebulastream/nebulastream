@@ -308,9 +308,9 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
                 continue;
             }
 
-            const auto* const startPosBuffer1 = leftTestBuffer.getBuffer().getMemArea() + (schemaSizeInByte * idxBuffer1);
-            const auto* const startPosBuffer2 = rightTestBuffer.getBuffer().getMemArea() + (schemaSizeInByte * idxBuffer2);
-            if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
+            const auto leftFieldSpan = leftTestBuffer.getBuffer().getUsedMemoryArea().subspan(schemaSizeInByte * idxBuffer1);
+            const auto rightFieldSpan = rightTestBuffer.getBuffer().getUsedMemoryArea().subspan(schemaSizeInByte * idxBuffer2);
+            if (std::ranges::equal(leftFieldSpan, rightFieldSpan))
             {
                 sameTupleIndices.insert(idxBuffer2);
                 idxFoundInBuffer2 = true;
@@ -335,7 +335,7 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
         "{} < {}, size of TupleBuffer is not sufficient to contain string",
         tupleBuffer.getBufferSize(),
         rawData.size());
-    std::memcpy(tupleBuffer.getMemArea(), rawData.data(), rawData.size());
+    std::ranges::copy(rawData, reinterpret_cast<char*>(tupleBuffer.getAvailableMemoryArea().data()));
     tupleBuffer.setUsedMemorySize(rawData.size());
     return tupleBuffer;
 }

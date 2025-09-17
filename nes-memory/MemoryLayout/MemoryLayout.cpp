@@ -13,9 +13,12 @@
 */
 #include <MemoryLayout/MemoryLayout.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -49,77 +52,77 @@ TupleBuffer getNewBuffer(AbstractBufferProvider& tupleBufferProvider, const uint
 /// @brief Copies the varsized to the specified location and then increments the number of tuples and used memory
 /// @return the new childBufferOffset
 void copyVarSizedAndIncrementMetaData(
-    TupleBuffer& childBuffer, const uint64_t childBufferOffset, const int8_t* varSizedValue, const uint32_t varSizedValueLength)
+    TupleBuffer& childBuffer, const uint64_t childBufferOffset, const std::span<const std::byte> varSizedValue)
 {
     PRECONDITION(
         childBufferOffset < childBuffer.getBufferSize(),
         "Offset {} must be smaller than the buffer size {}",
         childBufferOffset,
         childBuffer.getBufferSize());
-    const auto dstAddress = childBuffer.getMemArea<int8_t>() + childBufferOffset;
+    const auto dstAddress = childBuffer.getAvailableMemoryArea().subspan(childBufferOffset, varSizedValue.size());
     const auto srcAddress = varSizedValue;
-    std::memcpy(dstAddress, srcAddress, varSizedValueLength);
-    childBuffer.setUsedMemorySize(childBuffer.getUsedMemorySize() + varSizedValueLength);
+    std::ranges::copy(srcAddress, dstAddress.begin());
+    childBuffer.setUsedMemorySize(childBuffer.getUsedMemorySize() + varSizedValue.size());
 }
 }
 
 VariableSizedAccess MemoryLayout::storeAssociatedVarSizedValue(
-    TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const int8_t* varSizedValue, const uint32_t varSizedValueLength)
+    TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
 {
     /// If there are no child buffers, we get a new buffer and copy the var sized into the newly acquired
     const auto numberOfChildBuffers = tupleBuffer.getNumberOfChildBuffers();
     VariableSizedAccess variableSizedAccess;
     if (numberOfChildBuffers == 0)
     {
-        auto newChildBuffer = getNewBuffer(bufferProvider, varSizedValueLength);
-        copyVarSizedAndIncrementMetaData(newChildBuffer, 0, varSizedValue, varSizedValueLength);
+        auto newChildBuffer = getNewBuffer(bufferProvider, varSizedValue.size());
+        copyVarSizedAndIncrementMetaData(newChildBuffer, 0, varSizedValue);
         const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
         return variableSizedAccess.setIndex(childBufferIndex);
     }
 
     /// If there is no space in the lastChildBuffer, we get a new buffer and copy the var sized into the newly acquired
     auto lastChildBuffer = tupleBuffer.loadChildBuffer(numberOfChildBuffers - 1);
-    if (lastChildBuffer.getUsedMemorySize() + varSizedValueLength > lastChildBuffer.getBufferSize())
+    if (lastChildBuffer.getUsedMemorySize() + varSizedValue.size() > lastChildBuffer.getBufferSize())
     {
-        auto newChildBuffer = getNewBuffer(bufferProvider, varSizedValueLength);
-        copyVarSizedAndIncrementMetaData(newChildBuffer, 0, varSizedValue, varSizedValueLength);
+        auto newChildBuffer = getNewBuffer(bufferProvider, varSizedValue.size());
+        copyVarSizedAndIncrementMetaData(newChildBuffer, 0, varSizedValue);
         const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
         return variableSizedAccess.setIndex(childBufferIndex);
     }
 
     /// There is enough space in the lastChildBuffer, thus, we copy the var sized into it
     const auto childOffset = lastChildBuffer.getUsedMemorySize();
-    copyVarSizedAndIncrementMetaData(lastChildBuffer, childOffset, varSizedValue, varSizedValueLength);
+    copyVarSizedAndIncrementMetaData(lastChildBuffer, childOffset, varSizedValue);
     const auto childBufferIndex = numberOfChildBuffers - 1;
     variableSizedAccess.setIndex(childBufferIndex).setOffset(childOffset);
     return variableSizedAccess;
 }
 
-const int8_t* MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
+std::span<const std::byte>
+MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
 {
     /// Loading the childbuffer containing the variable sized data
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
     /// We need to jump childOffset bytes to go to the correct pointer for the var sized
-    const auto varSizedPointer = childBuffer.getMemArea<int8_t>() + variableSizedAccess.getOffset();
-    return varSizedPointer;
-}
-
-std::string MemoryLayout::readVarSizedDataAsString(const TupleBuffer& tupleBuffer, const VariableSizedAccess combinedIdxOffset)
-{
-    /// Getting the pointer to the @class VariableSizedData with the first 32-bit storing the size.
-    const auto strWithSizePtr = loadAssociatedVarSizedValue(tupleBuffer, combinedIdxOffset);
-    const auto stringSize = *reinterpret_cast<const uint32_t*>(strWithSizePtr);
-    const auto strPtrContent = reinterpret_cast<const char*>(strWithSizePtr) + sizeof(uint32_t);
-    return std::string{strPtrContent, stringSize};
+    const auto offset = variableSizedAccess.getOffset();
+    const auto varSizedSpan = childBuffer.getAvailableMemoryArea();
+    const auto varSizedLength = *reinterpret_cast<uint32_t*>(varSizedSpan.subspan(offset).data());
+    return varSizedSpan.subspan(offset, varSizedLength + sizeof(uint32_t));
 }
 
 VariableSizedAccess
-MemoryLayout::writeVarSizedData(TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider)
+MemoryLayout::writeVarSizedData(TupleBuffer& buffer, const std::span<const std::byte> varSizedValue, AbstractBufferProvider& bufferProvider)
 {
-    std::string str(value.length() + sizeof(uint32_t), '\0');
-    *reinterpret_cast<uint32_t*>(str.data()) = value.length();
-    std::memcpy(str.data() + sizeof(uint32_t), value.data(), value.length());
-    return MemoryLayout::storeAssociatedVarSizedValue(buffer, bufferProvider, reinterpret_cast<const int8_t*>(str.c_str()), str.length());
+    std::vector<std::byte> varSizedValuePlusItsSize{varSizedValue.size() + sizeof(uint32_t)};
+    *reinterpret_cast<uint32_t*>(varSizedValuePlusItsSize.data()) = varSizedValue.size();
+    std::ranges::copy(varSizedValue, varSizedValuePlusItsSize.begin() + sizeof(uint32_t));
+    return MemoryLayout::storeAssociatedVarSizedValue(buffer, bufferProvider, varSizedValuePlusItsSize);
+}
+
+std::span<const std::byte> MemoryLayout::readVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
+{
+    const auto spanWithSize = MemoryLayout::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
+    return spanWithSize.subspan(sizeof(uint32_t), spanWithSize.size() - sizeof(uint32_t));
 }
 
 uint64_t MemoryLayout::getTupleSize() const
@@ -160,6 +163,11 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
 uint64_t MemoryLayout::getCapacity() const
 {
     return capacity;
+}
+
+uint64_t MemoryLayout::getNumberOfTuples(const uint64_t usedMemorySize) const
+{
+    return usedMemorySize / getTupleSize();
 }
 
 const Schema& MemoryLayout::getSchema() const

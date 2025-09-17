@@ -82,7 +82,7 @@ void RowTupleBufferMemoryProvider::writeRecord(
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     const auto schema = rowMemoryLayout->getSchema();
 
-    nautilus::val<uint64_t> varSizedOffset = 0;
+    const nautilus::val<uint64_t> varSizedOffset = 0;
     for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(recordOffset, i);

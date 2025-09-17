@@ -63,14 +63,14 @@ int8_t* Arena::allocateMemory(const size_t sizeInBytes)
         }
         unpooledBuffers.emplace_back(unpooledBufferOpt.value());
         lastAllocationSize = sizeInBytes;
-        return unpooledBuffers.back().getMemArea<int8_t>();
+        return reinterpret_cast<int8_t*>(unpooledBuffers.back().getAvailableMemoryArea().data());
     }
 
     if (fixedSizeBuffers.empty())
     {
         fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
         lastAllocationSize = bufferProvider->getBufferSize();
-        return fixedSizeBuffers.back().getMemArea();
+        return reinterpret_cast<int8_t*>(fixedSizeBuffers.back().getAvailableMemoryArea().data());
     }
 
     /// Case 2
@@ -82,7 +82,7 @@ int8_t* Arena::allocateMemory(const size_t sizeInBytes)
     /// Case 3
     auto& lastBuffer = fixedSizeBuffers.back();
     lastAllocationSize = lastBuffer.getBufferSize();
-    auto* const result = lastBuffer.getMemArea() + currentOffset;
+    auto* const result = reinterpret_cast<int8_t*>(lastBuffer.getAvailableMemoryArea().data()) + currentOffset;
     currentOffset += sizeInBytes;
     return result;
 }

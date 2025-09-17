@@ -363,7 +363,7 @@ private:
         RawTupleBuffer formattedBuffer{bufferProvider->getBufferBlocking()};
         if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
         {
-            const auto spanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
+            const auto spanningTupleBuffers = std::span{stagedBuffers}.subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
             processSpanningTuple<FormatterType>(
                 spanningTupleBuffers,
                 *bufferProvider,

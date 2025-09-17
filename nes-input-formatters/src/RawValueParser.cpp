@@ -31,27 +31,20 @@ ParseFunctionSignature getQuotedStringParseFunction()
     return [](const std::string_view inputString,
               const size_t writeOffsetInBytes,
               AbstractBufferProvider& bufferProvider,
-              TupleBuffer& tupleBufferFormatted)
+              RawTupleBuffer& rawTupleBufferFormatted)
     {
         INVARIANT(inputString.length() >= 2, "Input string must be at least 2 characters long.");
         const auto inputStringWithoutQuotes = inputString.substr(1, inputString.length() - 2);
-        const auto valueLength = inputStringWithoutQuotes.length();
-        auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
-        if (not childBuffer.has_value())
-        {
-            throw CannotAllocateBuffer("Could not store string, because we cannot allocate a child buffer.");
-        }
+        auto tupleBuffer = rawTupleBufferFormatted.getUnformattedBuffer();
+        auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            tupleBuffer.getAvailableMemoryArea()
+                .subspan(writeOffsetInBytes)
+                .data()); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-        auto& childBufferVal = childBuffer.value();
-        *childBufferVal.getBuffer<uint32_t>() = valueLength;
-        std::memcpy(
-            childBufferVal.getBuffer<char>() + sizeof(uint32_t), ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            inputStringWithoutQuotes.data(),
-            valueLength);
-        const auto indexToChildBuffer = tupleBufferFormatted.storeChildBuffer(childBufferVal);
-        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        *childBufferIndexPointer = indexToChildBuffer;
+        const auto inputVarSizedSpan
+            = std::span{reinterpret_cast<const std::byte*>(inputStringWithoutQuotes.data()), inputStringWithoutQuotes.size()};
+        const auto indexToChildBuffer = MemoryLayout::writeVarSizedData(tupleBuffer, inputVarSizedSpan, bufferProvider);
+        *childBufferIndexPointer = indexToChildBuffer.getCombinedIdxOffset();
     };
 }
 
@@ -64,9 +57,12 @@ ParseFunctionSignature getBasicStringParseFunction()
     {
         auto tupleBuffer = rawTupleBufferFormatted.getUnformattedBuffer();
         auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBuffer.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            tupleBuffer.getAvailableMemoryArea()
+                .subspan(writeOffsetInBytes)
+                .data()); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-        const auto indexToChildBuffer = MemoryLayout::writeVarSizedData(tupleBuffer, inputString, bufferProvider);
+        const auto inputVarSizedSpan = std::span{reinterpret_cast<const std::byte*>(inputString.data()), inputString.size()};
+        const auto indexToChildBuffer = MemoryLayout::writeVarSizedData(tupleBuffer, inputVarSizedSpan, bufferProvider);
         *childBufferIndexPointer = indexToChildBuffer.getCombinedIdxOffset();
     };
 }

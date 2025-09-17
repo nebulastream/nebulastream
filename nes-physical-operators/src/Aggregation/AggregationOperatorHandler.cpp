@@ -13,6 +13,8 @@
 */
 #include <Aggregation/AggregationOperatorHandler.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -101,7 +103,7 @@ void AggregationOperatorHandler::triggerSlices(
         auto tupleBuffer = tupleBufferVal.value();
 
         /// It might be that the buffer is not zeroed out.
-        std::memset(tupleBuffer.getMemArea(), 0, neededBufferSize);
+        std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
 
         /// As we are here "emitting" a buffer, we have to set the originId, the seq number, the watermark and the "number of tuples".
         /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
@@ -113,12 +115,13 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// Writing all necessary information for the aggregation probe to the buffer.
-        auto* bufferMemory = tupleBuffer.getMemArea<EmittedAggregationWindow>();
-        bufferMemory->windowInfo = windowInfo.windowInfo;
-        bufferMemory->numberOfHashMaps = allHashMaps.size();
-        bufferMemory->finalHashMap = std::move(finalHashMap);
-        auto* addressFirstHashMapPtr = reinterpret_cast<int8_t*>(bufferMemory) + sizeof(EmittedAggregationWindow);
-        bufferMemory->hashMaps = reinterpret_cast<Nautilus::Interface::HashMap**>(addressFirstHashMapPtr);
+        auto* const emittedAggregationWindowTrigger
+            = reinterpret_cast<EmittedAggregationWindow*>(tupleBuffer.getAvailableMemoryArea().data());
+        emittedAggregationWindowTrigger->windowInfo = windowInfo.windowInfo;
+        emittedAggregationWindowTrigger->numberOfHashMaps = allHashMaps.size();
+        emittedAggregationWindowTrigger->finalHashMap = std::move(finalHashMap);
+        auto* addressFirstHashMapPtr = reinterpret_cast<int8_t*>(emittedAggregationWindowTrigger) + sizeof(EmittedAggregationWindow);
+        emittedAggregationWindowTrigger->hashMaps = reinterpret_cast<Nautilus::Interface::HashMap**>(addressFirstHashMapPtr);
         std::memcpy(addressFirstHashMapPtr, allHashMaps.data(), allHashMaps.size() * sizeof(Nautilus::Interface::HashMap*));
 
 

@@ -21,6 +21,7 @@
 #include <ios>
 #include <iterator>
 #include <memory>
+#include <ostream>
 #include <ranges>
 #include <span>
 #include <string>
@@ -129,7 +130,7 @@ public:
 
     void TearDown() override { BaseUnitTest::TearDown(); }
 
-    static bool writeBinaryToFile(std::span<const char> data, const std::filesystem::path& filepath, bool append)
+    static bool writeBinaryToFile(const std::span<const std::byte> data, const std::filesystem::path& filepath, bool append)
     {
         if (const auto parentPath = filepath.parent_path(); !parentPath.empty())
         {
@@ -145,7 +146,7 @@ public:
             throw InvalidConfigParameter("Could not open file: {}", filepath.string());
         }
 
-        file.write(data.data(), static_cast<std::streamsize>(data.size_bytes()));
+        file.write(reinterpret_cast<const std::ostream::char_type*>(data.data()), static_cast<std::streamsize>(data.size_bytes()));
 
         return true;
     }

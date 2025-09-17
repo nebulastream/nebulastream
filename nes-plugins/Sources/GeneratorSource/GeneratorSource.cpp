@@ -86,7 +86,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
             insertedBytes = tuplesStream.tellp() - insertedBytes;
             if (writtenBytes + insertedBytes > rawTBSize)
             {
-                tuplesStream.read(tupleBuffer.getMemArea<char>(), writtenBytes);
+                tuplesStream.read(reinterpret_cast<std::istream::char_type*>(tupleBuffer.getAvailableMemoryArea().data()), writtenBytes);
                 generatedBuffers++;
                 this->orphanTuples = tuplesStream.str().substr(writtenBytes, tuplesStream.str().length() - writtenBytes);
                 tuplesStream.str("");
@@ -94,7 +94,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
             }
             writtenBytes += insertedBytes;
         }
-        tuplesStream.read(tupleBuffer.getMemArea<char>(), writtenBytes);
+        tuplesStream.read(reinterpret_cast<std::istream::char_type*>(tupleBuffer.getAvailableMemoryArea().data()), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
         NES_INFO("Wrote {} bytes", writtenBytes);
