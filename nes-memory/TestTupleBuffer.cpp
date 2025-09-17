@@ -15,10 +15,12 @@
 #include <include/Util/TestTupleBuffer.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <string>
 #include <type_traits>

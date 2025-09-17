@@ -74,7 +74,7 @@ public:
 
     [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
 
-    [[nodiscard]] bool isValidRawBuffer() const { return rawBuffer.getRawBuffer().getMemArea() != nullptr; }
+    [[nodiscard]] bool isValidRawBuffer() const { return not rawBuffer.getRawBuffer().getAvailableMemoryArea<std::byte>().empty(); }
 
     void setSpanningTuple(const std::string_view spanningTuple) { rawBuffer.setSpanningTuple(spanningTuple); }
 

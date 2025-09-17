@@ -16,6 +16,7 @@
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 
 #include <algorithm>
+#include <bit>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -161,17 +162,18 @@ void HJOperatorHandler::emitSlicesToProbe(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
     /// Writing all necessary information for the probe to the buffer
-    auto* bufferMemory = tupleBuffer.getMemArea<EmittedHJWindowTrigger>();
-    bufferMemory->windowInfo = windowInfo;
-    bufferMemory->leftNumberOfHashMaps = leftHashMaps.size();
-    bufferMemory->rightNumberOfHashMaps = rightHashMaps.size();
+    auto* const emittedHJWindowTrigger = reinterpret_cast<EmittedHJWindowTrigger*>(tupleBuffer.getAvailableMemoryArea().data());
+    emittedHJWindowTrigger->windowInfo = windowInfo;
+    emittedHJWindowTrigger->leftNumberOfHashMaps = leftHashMaps.size();
+    emittedHJWindowTrigger->rightNumberOfHashMaps = rightHashMaps.size();
 
     /// Copying the left and right hashmap pointer to the buffer
     const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(Nautilus::Interface::HashMap*);
-    auto* addressFirstLeftHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger);
-    auto* addressFirstRightHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger) + leftHashMapPtrSizeInByte;
-    bufferMemory->leftHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr);
-    bufferMemory->rightHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr);
+    auto* addressFirstLeftHashMapPtr = std::bit_cast<int8_t*>(emittedHJWindowTrigger) + sizeof(EmittedHJWindowTrigger);
+    auto* addressFirstRightHashMapPtr
+        = std::bit_cast<int8_t*>(emittedHJWindowTrigger) + sizeof(EmittedHJWindowTrigger) + leftHashMapPtrSizeInByte;
+    emittedHJWindowTrigger->leftHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr);
+    emittedHJWindowTrigger->rightHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr);
     std::ranges::copy(leftHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr));
     std::ranges::copy(rightHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr));
 

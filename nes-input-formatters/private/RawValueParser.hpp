@@ -46,9 +46,8 @@ auto parseFieldString()
               TupleBuffer& tupleBufferFormatted)
     {
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
-        auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        *valuePtr = parsedValue;
+        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
+        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
     };
 }
 
@@ -63,9 +62,8 @@ auto parseQuotedFieldString()
         INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
         const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
-        auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        *valuePtr = parsedValue;
+        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
+        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
     };
 }
 

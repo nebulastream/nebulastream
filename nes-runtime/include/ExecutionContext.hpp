@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -54,7 +55,7 @@ struct Arena
     /// 1. The required size is larger than the buffer provider's buffer size. In this case, we allocate an unpooled buffer.
     /// 2. The required size is larger than the last buffer size. In this case, we allocate a new buffer of fixed size.
     /// 3. The required size is smaller than the last buffer size. In this case, we return the pointer to the address in the last buffer.
-    int8_t* allocateMemory(size_t sizeInBytes);
+    std::span<std::byte> allocateMemory(size_t sizeInBytes);
 
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::vector<TupleBuffer> fixedSizeBuffers;
