@@ -23,6 +23,7 @@
 #include <regex>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -356,6 +357,107 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     if (parsedStdDev < 0.0)
     {
         throw InvalidConfigParameter("Stddev must be non-negative");
+    }
+}
+
+using namespace std::literals;
+static std::unordered_map<std::string_view, size_t> knownTimeUnits{
+    {"ns"sv, 1'000'000'000},
+    {"nanos"sv, 1'000'000'000},
+    {"nano"sv, 1'000'000'000},
+    {"nanoseconds"sv, 1'000'000'000},
+    {"nanosecond"sv, 1'000'000'000},
+    {"us"sv, 1'000'000},
+    {"micros"sv, 1'000'000},
+    {"micro"sv, 1'000'000},
+    {"microseconds"sv, 1'000'000},
+    {"microsecond"sv, 1'000'000},
+    {"ms"sv, 1'000},
+    {"millis"sv, 1'000},
+    {"milli"sv, 1'000},
+    {"milliseconds"sv, 1'000},
+    {"millisecond"sv, 1'000},
+    {"s"sv, 1},
+    {"seconds"sv, 1},
+    {"second"sv, 1},
+};
+
+TimestampField::TimestampField(std::string_view rawSchemaLine)
+{
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    PRECONDITION(parameters.size() == NUM_PARAMETERS_TIMESTAMP_FIELD, "This should have been checked");
+
+    const auto typeParam = parameters[1];
+    const auto unit = Util::toLowerCase(parameters[2]);
+
+    this->outputType = DataType(magic_enum::enum_cast<NES::DataType::Type>(typeParam).value());
+    this->multiplier = knownTimeUnits.at(unit);
+}
+
+std::ostream& TimestampField::generate(std::ostream& os, std::default_random_engine&)
+{
+    const auto now = std::chrono::system_clock::now();
+    const auto nowInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+    const auto timestamp = nowInNanos / (1'000'000'000 / this->multiplier);
+    os << timestamp;
+    return os;
+}
+
+void TimestampField::validate(std::string_view rawSchemaLine)
+{
+    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    if (parameters.size() != NUM_PARAMETERS_TIMESTAMP_FIELD)
+    {
+        throw InvalidConfigParameter("Invalid TIMESTAMP schema line: {}", rawSchemaLine);
+    }
+
+    const auto typeParam = parameters[1];
+    const auto unit = Util::toLowerCase(parameters[2]);
+
+    std::array acceptedTypes = std::to_array({
+        DataType::Type::UINT32,
+        DataType::Type::UINT64,
+        DataType::Type::INT32,
+        DataType::Type::INT64,
+    });
+    if (const auto type = magic_enum::enum_cast<DataType::Type>(typeParam);
+        !type || std::ranges::find(acceptedTypes, type.value()) == acceptedTypes.end())
+    {
+        NES_ERROR(
+            "Invalid Type in TIMESTAMP, supported are only {} {}",
+            fmt::join(acceptedTypes | std::views::transform([](auto enumValue) { return magic_enum::enum_name(enumValue); }), ","),
+            rawSchemaLine);
+        throw InvalidConfigParameter(
+            "Invalid Type in TIMESTAMP, supported are only {} {}",
+            fmt::join(acceptedTypes | std::views::transform([](auto enumValue) { return magic_enum::enum_name(enumValue); }), ","),
+            rawSchemaLine);
+    }
+
+    using namespace std::literals;
+    static std::unordered_map<std::string_view, size_t> knownUnits{
+        {"ns"sv, 1'000'000'000},
+        {"nanos"sv, 1'000'000'000},
+        {"nano"sv, 1'000'000'000},
+        {"nanoseconds"sv, 1'000'000'000},
+        {"nanosecond"sv, 1'000'000'000},
+        {"us"sv, 1'000'000},
+        {"micros"sv, 1'000'000},
+        {"micro"sv, 1'000'000},
+        {"microseconds"sv, 1'000'000},
+        {"microsecond"sv, 1'000'000},
+        {"ms"sv, 1'000},
+        {"millis"sv, 1'000},
+        {"milli"sv, 1'000},
+        {"milliseconds"sv, 1'000},
+        {"millisecond"sv, 1'000},
+        {"s"sv, 1},
+        {"seconds"sv, 1},
+        {"second"sv, 1},
+    };
+
+    if (!knownUnits.contains(unit))
+    {
+        throw InvalidConfigParameter("Invalid Unit in TIMESTAMP, supported are only ", fmt::join(knownUnits | std::views::keys, ","), unit);
     }
 }
 

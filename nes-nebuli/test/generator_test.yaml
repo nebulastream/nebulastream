@@ -1,0 +1,34 @@
+query: |
+  SELECT * FROM gen INTO sink;
+logical:
+  - name: gen
+    schema:
+      - name: id
+        type: UINT64
+      - name: id2
+        type: UINT64
+physical:
+  - logical: gen
+    type: Generator
+    parser_config:
+      type: CSV
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      max_runtime_ms: 1000000
+      flush_interval_ms: 9999
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 0.1
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 1000 1
+        SEQUENCE UINT64 0 1000 1
+sinks:
+  - name: sink
+    type: print
+    config:
+      input_format: CSV
+    schema:
+      - name: gen$id
+        type: UINT64
+      - name: gen$id2
+        type: UINT64

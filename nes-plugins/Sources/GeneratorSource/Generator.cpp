@@ -81,6 +81,10 @@ void Generator::parseRawSchemaLine(std::string_view line)
     {
         this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::NormalDistributionField(line)));
     }
+    else if (firstWord == GeneratorFields::TIMESTAMP_IDENTIFIER)
+    {
+        this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::TimestampField(line)));
+    }
     else
     {
         throw InvalidConfigParameter("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);

@@ -30,6 +30,7 @@ namespace NES::GeneratorFields
 {
 
 static constexpr std::string_view SEQUENCE_IDENTIFIER = "SEQUENCE";
+static constexpr std::string_view TIMESTAMP_IDENTIFIER = "TIMESTAMP";
 static constexpr std::string_view NORMAL_DISTRIBUTION_IDENTIFIER = "NORMAL_DISTRIBUTION";
 
 /// @brief Variant containing the types that a field can generate
@@ -86,9 +87,23 @@ private:
     std::normal_distribution<double> distribution;
     DataType outputType;
 };
+constexpr auto NUM_PARAMETERS_TIMESTAMP_FIELD = 3;
+
+/// @brief generates normally distríbuted floating point records
+class TimestampField final : public BaseGeneratorField
+{
+public:
+    explicit TimestampField(std::string_view rawSchemaLine);
+    std::ostream& generate(std::ostream& os, std::default_random_engine& randEng) override;
+    static void validate(std::string_view rawSchemaLine);
+
+private:
+    size_t multiplier;
+    DataType outputType;
+};
 
 /// @brief Variant containing the types of base generator fields
-using GeneratorFieldType = std::variant<SequenceField, NormalDistributionField>;
+using GeneratorFieldType = std::variant<SequenceField, NormalDistributionField, TimestampField>;
 
 struct FieldValidator
 {
@@ -97,9 +112,10 @@ struct FieldValidator
 };
 
 /// @brief Array containing functions paired with the fields identifier used to validate the fields syntax
-static const std::array<FieldValidator, 2> Validators
-    = {{{.identifier = SEQUENCE_IDENTIFIER, .validator = SequenceField::validate},
-        {.identifier = NORMAL_DISTRIBUTION_IDENTIFIER, .validator = NormalDistributionField::validate}}};
+static const std::array Validators = std::to_array<FieldValidator>(
+    {{.identifier = SEQUENCE_IDENTIFIER, .validator = SequenceField::validate},
+     {.identifier = NORMAL_DISTRIBUTION_IDENTIFIER, .validator = NormalDistributionField::validate},
+     {.identifier = TIMESTAMP_IDENTIFIER, .validator = TimestampField::validate}});
 
 /// @brief Multimap containing key-value pairs of the existing generator fields and which types they accept
 /// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration

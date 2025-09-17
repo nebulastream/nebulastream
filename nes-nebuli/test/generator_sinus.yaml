@@ -1,0 +1,37 @@
+query: |
+  SELECT COUNT(id) as c FROM gen WINDOW TUMBLING(timestamp, size 1000ms) INTO sink;
+logical:
+  - name: gen
+    schema:
+      - name: id
+        type: UINT64
+      - name: id2
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+physical:
+  - logical: gen
+    type: Generator
+    parser_config:
+      type: CSV
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      max_runtime_ms: 1000000
+      flush_interval_ms: 10
+      generator_rate_type: SINUS
+      generator_rate_config: |
+        amplitude 1000
+        frequency 0.1
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 1000000 1
+        SEQUENCE UINT64 0 1000000 1
+        TIMESTAMP UINT64 MS
+sinks:
+  - name: sink
+    type: print
+    config:
+      input_format: CSV
+    schema:
+      - name: gen$c
+        type: UINT64
