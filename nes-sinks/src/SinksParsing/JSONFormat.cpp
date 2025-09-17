@@ -82,8 +82,9 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
                       {
                           const VariableSizedAccess variableSizedAccess{
                               *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                          const auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
-                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedData);
+                          const auto varSizedData = MemoryLayout::readVarSizedValue(tbuffer, variableSizedAccess);
+                          auto varSizedDataAsString = std::string{reinterpret_cast<const char*>(varSizedData.data()), varSizedData.size()};
+                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedDataAsString);
                       }
                       return fmt::format("\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(&tuple[offset]));
                   });

@@ -49,9 +49,9 @@ DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : addr
 
 DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
 {
-    auto* bufferBasePointer = buffer.getMemArea<uint8_t>();
+    const auto* bufferBasePointer = reinterpret_cast<const uint8_t*>(buffer.getAvailableMemoryArea().data());
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
-    auto* basePointer = bufferBasePointer + offset;
+    const auto* basePointer = bufferBasePointer + offset;
     return DynamicField{basePointer, memoryLayout->getPhysicalType(fieldIndex)};
 }
 
@@ -73,7 +73,8 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 void DynamicTuple::writeVarSized(
     std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider)
 {
-    auto combinedIdxOffset = MemoryLayout::writeVarSizedData(buffer, value, bufferProvider);
+    const std::span<std::byte> valueAsSpan = std::as_writable_bytes(std::span{value});
+    auto combinedIdxOffset = MemoryLayout::writeVarSizedData(buffer, valueAsSpan, bufferProvider);
     std::visit(
         [this, combinedIdxOffset](const auto& key)
         {
@@ -103,7 +104,9 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
                 const VariableSizedAccess index{(*this)[key].template read<uint64_t>()};
-                return MemoryLayout::readVarSizedDataAsString(this->buffer, index);
+                const auto varSizedAsSpan = MemoryLayout::readVarSizedValue(this->buffer, index);
+                std::string varSizedAsStr{reinterpret_cast<const char*>(varSizedAsSpan.data()), varSizedAsSpan.size()};
+                return varSizedAsStr;
             }
             else
             {
@@ -171,9 +174,9 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
             {
                 const VariableSizedAccess thisVarSizedAccess{thisDynamicField.template read<TupleBuffer::NestedTupleBufferKey>()};
                 const VariableSizedAccess otherVarSizedAccess{otherDynamicField.template read<TupleBuffer::NestedTupleBufferKey>()};
-                const auto thisString = MemoryLayout::readVarSizedDataAsString(buffer, thisVarSizedAccess);
-                const auto otherString = MemoryLayout::readVarSizedDataAsString(other.buffer, otherVarSizedAccess);
-                return thisString == otherString;
+                const auto thisSpan = MemoryLayout::readVarSizedValue(buffer, thisVarSizedAccess);
+                const auto otherSpan = MemoryLayout::readVarSizedValue(other.buffer, otherVarSizedAccess);
+                return std::ranges::equal(thisSpan, otherSpan);
             }
             return thisDynamicField == otherDynamicField;
         });

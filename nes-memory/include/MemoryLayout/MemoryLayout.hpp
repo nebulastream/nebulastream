@@ -16,13 +16,14 @@
 
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/VariableSizedAccess.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -48,18 +49,18 @@ public:
     /// @brief Writes the varSizedValue to the tupleBuffer. Similar to writeVarSizedData, but this method expects the varSizedValue containing
     /// the length of varSizedValue as its first 32-bits
     static VariableSizedAccess storeAssociatedVarSizedValue(
-        TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const int8_t* varSizedValue, uint32_t varSizedValueLength);
+        TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 
-    /// @brief Writes the variable sized data to the buffer
-    static VariableSizedAccess writeVarSizedData(TupleBuffer& buffer, std::string_view value, AbstractBufferProvider& bufferProvider);
+    /// @brief Writes the variable sized data to the buffer. This method expects that the varSizedValue DOES NOT contain its length in the first 32-bits
+    static VariableSizedAccess
+    writeVarSizedData(TupleBuffer& buffer, const std::span<const std::byte> varSizedValue, AbstractBufferProvider& bufferProvider);
 
-    /// @brief Reads the variable sized data and returns the pointer to the var sized data
-    /// @return Pointer to variable sized data
-    static const int8_t* loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
+    /// @brief Reads the variable sized data and returns the span of the var sized data
+    static std::span<const std::byte> loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
 
-    /// @brief Reads the variable sized data. Similar as loadAssociatedVarSizedValue, but returns a string
-    /// @return Variable sized data as a string
-    static std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess VariableSizedAccess);
+    /// @brief Reads the variable sized data and returns the span of the var sized data. Similar to loadAssociatedVarSizedValue, but
+    /// the returned span DOES NOT contain the first 4B
+    static std::span<const std::byte> readVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
 
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
