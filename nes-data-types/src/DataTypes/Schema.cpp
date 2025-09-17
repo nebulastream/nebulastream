@@ -41,6 +41,16 @@ std::ostream& operator<<(std::ostream& os, const Schema::Field& field)
     return os << fmt::format("Field(name: {}, DataType: {})", field.name, field.dataType);
 }
 
+std::string Schema::Field::getUnqualifiedName() const
+{
+    const auto separatorPosition = name.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+    if (separatorPosition == std::string::npos)
+    {
+        return name;
+    }
+    return name.substr(separatorPosition + 1);
+}
+
 Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memoryLayoutType) { };
 
 Schema Schema::addField(std::string name, const DataType& dataType)

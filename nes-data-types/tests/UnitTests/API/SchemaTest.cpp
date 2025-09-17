@@ -186,6 +186,15 @@ TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
         << "Searched for nonexistent field with name \"bc\" but found " << fieldByName3NotExistent.value();
 }
 
+TEST_F(SchemaTest, getUnqualifiedNameFromField)
+{
+    const auto field1 = Schema::Field{"stream$field1", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
+    const auto field2 = Schema::Field{"field2", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
+
+    EXPECT_EQ("field1", field1.getUnqualifiedName());
+    EXPECT_EQ("field2", field2.getUnqualifiedName());
+}
+
 TEST_F(SchemaTest, replaceFieldTest)
 {
     {
