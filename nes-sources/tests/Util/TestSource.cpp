@@ -228,13 +228,13 @@ NES::TestSource::~TestSource()
 }
 
 std::pair<std::unique_ptr<NES::SourceHandle>, std::shared_ptr<NES::TestSourceControl>>
-NES::getTestSource(OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool)
+NES::getTestSource(Ingestion ingestion, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
     SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
 
-    auto sourceHandle
-        = std::make_unique<SourceHandle>(std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
+    auto sourceHandle = std::make_unique<SourceHandle>(
+        std::move(ingestion), std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
     return {std::move(sourceHandle), ctrl};
 }
