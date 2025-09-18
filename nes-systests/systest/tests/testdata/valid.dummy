@@ -1,3 +1,7 @@
+# name: valid.test
+# description: Simple valid, failing test
+# groups: [valid]
+
 ## used in SystestParserValidTestFileTest
 #
 #
@@ -14,16 +18,18 @@ Source e123 UINT32 id INLINE
 
 Source e124 INT8 i UINT8 i INT16 i UINT16 i INT32 i UINT32 i INT64 i FLOAT32 i UINT64 i FLOAT64 i BOOLEAN i CHAR i INLINE
 
+SINK sink123 UINT32 e123$id
+SINK sink124 INT8 e124$i UINT8 e124$i INT16 e124$i UINT16 e124$i INT32 e124$i UINT32 e124$i INT64 e124$i FLOAT32 e124$i UINT64 e124$i FLOAT64 e124$i BOOLEAN e124$i CHAR e124$i
 
 SELECT * FROM
 # Commenting parts of the query
-e123 WHERE id >= UINT32(10) INTO sink
+e123 WHERE id >= UINT32(10) INTO sink123
 ----
 1,1,1
 1,1,1
 1,1,1
 
-SELECT * FROM e124 WHERE i >= INT8(10) INTO sink
+SELECT * FROM e124 WHERE i >= INT8(10) INTO sink124
 ----
 # Result, comma-separated
 2,2,2

@@ -1,6 +1,6 @@
 # name: map/Map_Add.test
 # description: Simple map tests with an add function
-# groups: [Map]
+# groups: [Map, invalid]
 
 Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
 1,1,1000
