@@ -44,15 +44,15 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
     return recordFields.at(recordFieldIdentifier);
 }
 
-void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType)
+void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal)
 {
     /// We can not use the insert_or_assign method, as we otherwise run into a tracing exception, as this might result in incorrect code.
-    if (const auto [hashMapIterator, inserted] = recordFields.insert({recordFieldIdentifier, dataType}); not inserted)
+    if (const auto [hashMapIterator, inserted] = recordFields.insert({recordFieldIdentifier, varVal}); not inserted)
     {
         /// We need to first erase the old value, as we are overwriting an existing field with a potential new data type
         /// This inefficiency is fine, as this code solely gets executed during tracing.
         recordFields.erase(recordFieldIdentifier);
-        recordFields.insert_or_assign(recordFieldIdentifier, dataType);
+        recordFields.insert_or_assign(recordFieldIdentifier, varVal);
     }
 }
 
