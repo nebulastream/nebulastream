@@ -152,7 +152,7 @@ public:
     using SystestAttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
-    using CreateCallback = std::function<void(std::string, std::vector<std::string>)>;
+    using CreateCallback = std::function<void(std::string, std::optional<std::vector<std::string>>)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -186,7 +186,7 @@ private:
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
-    [[nodiscard]] std::pair<std::string, std::vector<std::string>> expectCreateQuery();
+    [[nodiscard]] std::pair<std::string, std::optional<std::vector<std::string>>> expectCreateQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
     [[nodiscard]] std::pair<SystestLogicalSource, std::optional<SystestAttachSource>>
     expectInlineGeneratorSource(SystestLogicalSource& source, const std::vector<std::string>& attachSourceTokens);

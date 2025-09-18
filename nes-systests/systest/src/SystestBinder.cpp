@@ -376,21 +376,20 @@ struct SystestBinder::Impl
             throw InvalidConfigParameter("file_path already exists in source.");
         }
 
-        auto [typeConf, typeSuccess] = statement.parserConfig.try_emplace("type", "CSV");
-        if (!typeSuccess)
+        if (! statement.parserConfig.contains("type"))
         {
-            throw InvalidConfigParameter("type already exists in source.");
+            statement.parserConfig.emplace("type", "CSV");
         }
     }
 
     void createPhysicalSource(
-        std::shared_ptr<SourceCatalog>& sourceCatalog, CreatePhysicalSourceStatement statement, const std::vector<std::string>& input)
+        std::shared_ptr<SourceCatalog>& sourceCatalog, CreatePhysicalSourceStatement statement, const std::optional<std::vector<std::string>>& input)
     {
-        if (!input.empty())
+        if (input.has_value())
         {
             if (statement.sourceType == "File")
             {
-                addInlineDataToFileSource(statement, input);
+                addInlineDataToFileSource(statement, input.value());
             }
             else
             {
@@ -424,7 +423,7 @@ struct SystestBinder::Impl
         std::shared_ptr<SourceCatalog>& sourceCatalog,
         SLTSinkFactory& sltSinkProvider,
         const std::string& query,
-        const std::vector<std::string>& input)
+        const std::optional<std::vector<std::string>>& input)
     {
         const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
         const auto parseResult = managedParser->parseSingle();
@@ -495,7 +494,7 @@ struct SystestBinder::Impl
                 sltSinkProvider.registerSink(sinkParsed.type, sinkParsed.name, schema);
             });
 
-        parser.registerOnCreateCallback([&](const std::string& query, const std::vector<std::string>& input)
+        parser.registerOnCreateCallback([&](const std::string& query, const std::optional<std::vector<std::string>>& input)
                                         { createCallback(binder, sourceCatalog, sltSinkProvider, query, input); });
 
 
