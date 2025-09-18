@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -49,7 +50,7 @@ GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
     NES_TRACE("Init GeneratorSource.")
 }
 
-void GeneratorSource::open()
+void GeneratorSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     this->generatorStartTime = std::chrono::system_clock::now();
     NES_TRACE("Opening GeneratorSource.");
@@ -60,7 +61,7 @@ void GeneratorSource::close()
     NES_TRACE("Closing GeneratorSource.");
 }
 
-size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     NES_INFO("Filling buffer in GeneratorSource.");
     try
@@ -71,7 +72,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
         if (maxRuntime >= 0 && elapsedTime >= maxRuntime)
         {
             NES_INFO("Reached max runtime! Stopping Source");
-            return 0;
+            return FillTupleBufferResult();
         }
         const size_t rawTBSize = tupleBuffer.getBufferSize();
         while (writtenBytes < rawTBSize and not this->generator.shouldStop() and not stopToken.stop_requested())
@@ -90,15 +91,19 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
                 generatedBuffers++;
                 this->orphanTuples = tuplesStream.str().substr(writtenBytes, tuplesStream.str().length() - writtenBytes);
                 tuplesStream.str("");
-                return writtenBytes;
+                return FillTupleBufferResult(writtenBytes);
             }
             writtenBytes += insertedBytes;
         }
         tuplesStream.read(tupleBuffer.getBuffer<char>(), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
-        NES_INFO("Wrote {} bytes", writtenBytes);
-        return writtenBytes;
+        NES_TRACE("Wrote {} bytes", writtenBytes);
+        if (writtenBytes == 0)
+        {
+            return FillTupleBufferResult(); /// End of Stream
+        }
+        return FillTupleBufferResult(writtenBytes);
     }
     catch (const std::exception& e)
     {
