@@ -14,28 +14,14 @@
 
 #include <filesystem>
 #include <SliceStore/FileDescriptor/FileDescriptors.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-inline std::string constructFilePath(const FileDescriptorInfo& fileDescriptorInfo)
-{
-    return (fileDescriptorInfo.workingDir
-            / std::filesystem::path(fmt::format(
-                "memory_controller_{}_{}_{}_{}_{}",
-                fileDescriptorInfo.queryId.getRawValue(),
-                fileDescriptorInfo.outputOriginId.getRawValue(),
-                magic_enum::enum_name(fileDescriptorInfo.joinBuildSide),
-                fileDescriptorInfo.sliceEnd.getRawValue(),
-                fileDescriptorInfo.threadId.getRawValue())))
-        .string();
-}
-
 FileWriter::FileWriter(
     boost::asio::io_context& ioCtx,
-    const FileDescriptorInfo& fileDescriptorInfo,
+    std::string filePath,
     const std::function<char*(const FileWriter* writer)>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
@@ -48,7 +34,7 @@ FileWriter::FileWriter(
     , writeKeyBufferPos(0)
     , bufferSize(bufferSize)
     , varSizedCnt(0)
-    , filePath(constructFilePath(fileDescriptorInfo))
+    , filePath(std::move(filePath))
     , allocate(allocate)
     , deallocate(deallocate)
 {
@@ -238,8 +224,7 @@ void FileWriter::openFile(boost::asio::posix::stream_descriptor& stream, const s
     stream.assign(fd);
 }
 
-FileReader::FileReader(
-    const FileDescriptorInfo& fileDescriptorInfo, char* readBuffer, char* readKeyBuffer, const size_t bufferSize, const bool withCleanup)
+FileReader::FileReader(std::string filePath, char* readBuffer, char* readKeyBuffer, const size_t bufferSize, const bool withCleanup)
     : readBuffer(readBuffer)
     , readKeyBuffer(readKeyBuffer)
     , readBufferPos(0)
@@ -248,7 +233,7 @@ FileReader::FileReader(
     , readKeyBufferEnd(0)
     , bufferSize(bufferSize)
     , withCleanup(withCleanup)
-    , filePath(constructFilePath(fileDescriptorInfo))
+    , filePath(std::move(filePath))
 {
 }
 

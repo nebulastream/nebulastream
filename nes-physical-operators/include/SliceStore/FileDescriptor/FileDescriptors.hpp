@@ -17,8 +17,6 @@
 #include <fstream>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <boost/asio.hpp>
-#include "../../Join/StreamJoinUtil.hpp"
-#include "../Slice.hpp"
 
 namespace NES
 {
@@ -31,22 +29,12 @@ enum class FileLayout : uint8_t
     SEPARATE_KEYS
 };
 
-struct FileDescriptorInfo
-{
-    std::filesystem::path workingDir;
-    QueryId queryId;
-    OriginId outputOriginId;
-    JoinBuildSideType joinBuildSide;
-    SliceEnd sliceEnd;
-    WorkerThreadId threadId;
-};
-
 class FileWriter
 {
 public:
     FileWriter(
         boost::asio::io_context& ioCtx,
-        const FileDescriptorInfo& fileDescriptorInfo,
+        std::string filePath,
         const std::function<char*(const FileWriter* writer)>& allocate,
         const std::function<void(char*)>& deallocate,
         size_t bufferSize);
@@ -89,7 +77,7 @@ private:
 class FileReader
 {
 public:
-    FileReader(const FileDescriptorInfo& fileDescriptorInfo, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool withCleanup);
+    FileReader(std::string filePath, char* readBuffer, char* readKeyBuffer, size_t bufferSize, bool withCleanup);
     ~FileReader();
 
     size_t read(void* dest, size_t size);

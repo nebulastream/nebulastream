@@ -96,13 +96,7 @@ std::shared_ptr<FileWriter> FileDescriptorManager::getFileWriter(
     /// Create new file descriptor as the needed file is not currently open
     const auto writer = std::make_shared<FileWriter>(
         ioCtx,
-        FileDescriptorInfo(
-            fileDescriptorManagerInfo.workingDir,
-            fileDescriptorManagerInfo.queryId,
-            fileDescriptorManagerInfo.outputOriginId,
-            joinBuildSide,
-            sliceEnd,
-            threadId),
+        constructFilePath(sliceEnd, threadId, joinBuildSide),
         [this, threadId](const FileWriter* fw)
         { return memoryPool.allocateWriteBuffer(threadId, threadWriters[threadId.getRawValue()], fw); },
         [this, threadId](char* buf) { memoryPool.deallocateWriteBuffer(threadId, buf); },
@@ -136,13 +130,7 @@ std::optional<std::shared_ptr<FileReader>> FileDescriptorManager::getFileReader(
         writers.erase(it);
 
         return std::make_shared<FileReader>(
-            FileDescriptorInfo(
-                fileDescriptorManagerInfo.workingDir,
-                fileDescriptorManagerInfo.queryId,
-                fileDescriptorManagerInfo.outputOriginId,
-                joinBuildSide,
-                sliceEnd,
-                threadToRead),
+            constructFilePath(sliceEnd, threadToRead, joinBuildSide),
             memoryPool.getReadBufferForThread(workerThread, false),
             memoryPool.getReadBufferForThread(workerThread, true),
             fileDescriptorManagerInfo.fileDescriptorBufferSize,
@@ -186,6 +174,20 @@ void FileDescriptorManager::deleteAllSliceFiles()
             writer->deleteAllFiles();
         }
     }
+}
+
+std::string FileDescriptorManager::constructFilePath(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide) const
+{
+    return (fileDescriptorManagerInfo.workingDir
+            / std::filesystem::path(fmt::format(
+                "memory_controller_{}_{}_{}_{}_{}",
+                fileDescriptorManagerInfo.queryId.getRawValue(),
+                fileDescriptorManagerInfo.outputOriginId.getRawValue(),
+                magic_enum::enum_name(joinBuildSide),
+                sliceEnd.getRawValue(),
+                threadId.getRawValue())))
+        .string();
 }
 
 std::optional<std::shared_ptr<FileWriter>>
