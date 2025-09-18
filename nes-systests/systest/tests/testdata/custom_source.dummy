@@ -1,0 +1,21 @@
+# name: custom_source.test
+# description: Test with a custom source
+# groups: [Source]
+
+Source generatorDefault UINT64 id UINT64 field2 GENERATOR
+CONFIG/sources/gen_10_tuples.yaml
+
+SINK generator_sink UINT64 generatorDefault$id UINT64 generatorDefault$field2
+
+SELECT * FROM generatorDefault INTO generator_sink
+----
+0 0
+1 1
+2 2
+3 3
+4 4
+5 5
+6 5
+7 5
+8 5
+9 5

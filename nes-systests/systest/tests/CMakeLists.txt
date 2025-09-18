@@ -27,3 +27,15 @@ add_nes_test_systest(slt-parser-test
 
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")
+
+find_program(BATS bats)
+
+if (${BATS} STREQUAL "BATS-NOTFOUND")
+    message(WARNING "Bats is not installed skipping Systest E2E Test suite")
+else ()
+    add_test(NAME "systest-e2e-test"
+            COMMAND
+            env SYSTEST=$<TARGET_FILE:systest> SYSTEST_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/testdata
+            ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/systest_invocation_test.bats
+    )
+endif ()
