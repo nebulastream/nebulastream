@@ -59,6 +59,7 @@ INGORED_ENDINGS = {
     "dummy",
     "env",
     "gitignore",
+    "mailmap",
     "json",
     "kts",
     "md",
