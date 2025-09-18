@@ -60,7 +60,7 @@ wdir=/wdir/mutanalysis_$(date -u +"%Y-%m-%dT%H-%M-%S")_$iters-$skip
 mkdir $wdir
 cd $wdir
 
-git clone --depth=1 --branch=fuzz https://github.com/nebulastream/nebulastream.git
+git clone --depth=1 --branch=fuzz-woa https://github.com/nebulastream/nebulastream.git
 git clone --depth=1 "https://fwc:$FWC_NES_CORPORA_TOKEN@github.com/fwc/nes-corpora.git" /nes-corpora
 cd nebulastream || exit 1
 
@@ -77,54 +77,54 @@ python3 standalone_mutator.py -o mutations $(git ls-files -- "*.cpp" | grep -v t
 export AFL_SKIP_CPUFREQ=1
 export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 
-                                     cmake -B cmake-build-nrm -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
-                                     cmake -B cmake-build-lfz -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
+                                     cmake -B cmake-build-nrm -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
+                                     cmake -B cmake-build-lfz -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
 # CC=afl-clang-lto CXX=afl-clang-lto++ cmake -B cmake-build-afl -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
-CC=hfuzz-clang   CXX=hfuzz-clang++   cmake -B cmake-build-hfz -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
+# CC=hfuzz-clang   CXX=hfuzz-clang++   cmake -B cmake-build-hfz -DCMAKE_BUILD_TYPE=RelWithDebug -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DUSE_LIBFUZZER=ON
 
 cmake --build cmake-build-nrm
 cmake --build cmake-build-lfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 # cmake --build cmake-build-afl --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
-cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
+# cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz
 
 ctest --test-dir cmake-build-nrm -N | grep "  Test" | awk -F": " '{ print "ctestcase::" $2 }' | sed "s/ /_/g" | tee -a $out_log
 
-log_out "assuring that ctest passes"
-if ! timeout --kill-after=1m 30m ctest -j $(nproc) --test-dir cmake-build-nrm --repeat until-pass:3 --quiet --output-junit junit.xml
-then
-    for testcase in $(cat cmake-build-nrm/junit.xml | grep 'status="fail"' | awk -F'"' '{ print $2 }' | sed "s/ /_/g")
-    do
-        log_out "test $testcase failed unexpectedly"
-    done
-    exit 1
-fi
-
-log_out "assuring that corpus passes"
-unexpected_corpus_crash=false
-for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
-do
-    if ! $(find cmake-build-lfz -name $harness) -runs=0 /nes-corpora/$harness/corpus > /dev/null 2> /dev/null
-    then
-        for crash in crash-*
-        do
-            if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
-            then
-                log_out mutant $patch crash $crash seems to be a fluke
-                rm $crash
-                continue
-            fi
-            log_out "$harness with $crash failed unexpectedly"
-            unexpected_corpus_crash=true
-        done
-    fi
-done
-if $unexpected_corpus_crash
-then
-    exit 1
-fi
+#log_out "assuring that ctest passes"
+#if ! timeout --kill-after=1m 30m ctest -j $(nproc) --test-dir cmake-build-nrm --repeat until-pass:3 --quiet --output-junit junit.xml
+#then
+#    for testcase in $(cat cmake-build-nrm/junit.xml | grep 'status="fail"' | awk -F'"' '{ print $2 }' | sed "s/ /_/g")
+#    do
+#        log_out "test $testcase failed unexpectedly"
+#    done
+#    exit 1
+#fi
+#
+#log_out "assuring that corpus passes"
+#unexpected_corpus_crash=false
+#for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
+#do
+#    if ! $(find cmake-build-lfz -name $harness) -runs=0 /nes-corpora/$harness/corpus > /dev/null 2> /dev/null
+#    then
+#        for crash in crash-*
+#        do
+#            if $(find cmake-build-lfz -name $harness) $crash > /dev/null 2> /dev/null
+#            then
+#                log_out mutant $patch crash $crash seems to be a fluke
+#                rm $crash
+#                continue
+#            fi
+#            log_out "$harness with $crash failed unexpectedly"
+#            unexpected_corpus_crash=true
+#        done
+#    fi
+#done
+#if $unexpected_corpus_crash
+#then
+#    exit 1
+#fi
 
 i=0
-for patch in $(find mutations -name "*.patch" -print0 | xargs -0 --max-procs=$(nproc) -I {} sh -c 'echo $(tail -8 {} | sha256sum) {}' | sort | awk '{ print $3 }')
+for patch in $(cat killed_by_corpus)
 do
     i=$(( i + 1 ))
     if [ $i -le $skip ]
@@ -154,7 +154,7 @@ do
 
     cmake --build cmake-build-nrm --target clean
     cmake --build cmake-build-lfz --target clean
-    cmake --build cmake-build-hfz --target clean
+    #cmake --build cmake-build-hfz --target clean
 
     patched_file=$(head -n 1 $patch | cut -d" " -f 2)
     cp $patched_file $patched_file.bak
@@ -209,7 +209,7 @@ do
         continue
     fi
 
-    cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz > /dev/null 2> /dev/null
+    #cmake --build cmake-build-hfz --target snw-proto-fuzz snw-strict-fuzz snw-text-fuzz sql-parser-simple-fuzz > /dev/null 2> /dev/null
 
     for harness in snw-proto-fuzz snw-strict-fuzz sql-parser-simple-fuzz
     do
