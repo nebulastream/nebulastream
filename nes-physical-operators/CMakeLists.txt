@@ -27,3 +27,4 @@ target_include_directories(nes-physical-operators PUBLIC
 create_registries_for_component(PhysicalFunction AggregationPhysicalFunction)
 
 add_tests_if_enabled(tests)
+nautilus_inline(nes-physical-operators)
