@@ -23,12 +23,12 @@ namespace NES::Nautilus::Interface::BufferRef
 {
 
 /// Implements BufferRef. Provides columnar memory access.
-class ColumnTupleBufferMemoryProvider final : public TupleBufferRef
+class ColumnTupleBufferRef final : public TupleBufferRef
 {
 public:
     /// Creates a column memory provider based on a valid column memory layout pointer.
-    ColumnTupleBufferMemoryProvider(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
-    ~ColumnTupleBufferMemoryProvider() override = default;
+    explicit ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
+    ~ColumnTupleBufferRef() override = default;
 
     [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
 
