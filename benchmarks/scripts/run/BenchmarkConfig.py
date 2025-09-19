@@ -49,8 +49,8 @@ WINDOW_SIZE_SLIDE = [
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 
 # File-backed worker configuration parameters
-LOWER_MEMORY_BOUNDS = [0, 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
-UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024]
+LOWER_MEMORY_BOUNDS = [0, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
+UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024]
 MAX_NUM_WATERMARK_GAPS = [10, 100, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
@@ -150,10 +150,6 @@ def get_additional_default_values():
     return default_timestamp_increments, default_queries
 
 
-def get_memory_bounds_default_values():
-    return
-
-
 # This class stores all information needed to run a single benchmark
 class BenchmarkConfig:
     def __init__(self,
@@ -182,7 +178,6 @@ class BenchmarkConfig:
                  query,
                  task_queue_size=10000000,
                  buffers_in_global_buffer_manager=200000,
-                 buffers_per_worker=20000,
                  buffers_in_source_local_buffer_pool=1000,
                  execution_mode="COMPILER"):
         self.batch_size = batch_size
@@ -212,14 +207,13 @@ class BenchmarkConfig:
         ## Values for configuring the single node worker such that the query showcases the bottleneck
         self.task_queue_size = task_queue_size
         self.buffers_in_global_buffer_manager = buffers_in_global_buffer_manager
-        self.buffers_per_worker = buffers_per_worker
         self.buffers_in_source_local_buffer_pool = buffers_in_source_local_buffer_pool
         self.execution_mode = execution_mode  # COMPILER or INTERPRETER
 
         ## General run configurations
         self.num_tuples_to_generate = 0  # 0 means the source will run indefinitely
         self.no_physical_sources_per_logical_source = 1
-        self.throughput_listener_time_interval = 100  # output interval in ms
+        self.throughput_listener_time_interval = 10  # output interval in ms
 
     # Return a dictionary representation of the configuration
     def to_dict(self):
@@ -249,7 +243,6 @@ class BenchmarkConfig:
             "query": self.query,
             "task_queue_size": self.task_queue_size,
             "buffers_in_global_buffer_manager": self.buffers_in_global_buffer_manager,
-            "buffers_per_worker": self.buffers_per_worker,
             "buffers_in_source_local_buffer_pool": self.buffers_in_source_local_buffer_pool,
             "execution_mode": self.execution_mode
         }
@@ -587,22 +580,28 @@ def create_memory_bounds_benchmark_configs():
     default_params = get_default_params_dict()
     del default_params["lower_memory_bound"]
     del default_params["upper_memory_bound"]
+    del default_params["with_prediction"]
+    del default_params["min_write_state_size"]
     del default_params["timestamp_increment"]
     del default_params["query"]
 
     return [
         BenchmarkConfig(**default_params,
+                        timestamp_increment=timestamp_increment,
+                        query=query,
                         slice_store_type=slice_store_type,
                         lower_memory_bound=lower_memory_bound,
                         upper_memory_bound=upper_memory_bound,
-                        timestamp_increment=timestamp_increment,
-                        query=query)
+                        with_prediction=with_prediction,
+                        min_write_state_size=min_write_state_size)
+        for timestamp_increment in TIMESTAMP_INCREMENTS[:2]
+        for query in get_queries()
         for slice_store_type in SLICE_STORE_TYPES
         for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
         for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
-        for timestamp_increment in TIMESTAMP_INCREMENTS[:2]
-        for query in get_queries()
-        if lower_memory_bound <= upper_memory_bound
+        for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [WITH_PREDICTIONS[0]])
+        for min_write_state_size in ([0, 4096] if slice_store_type == "FILE_BACKED" and "payload" not in query and with_prediction == "true" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [0])
+        if lower_memory_bound < upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max])
     ]
 
 

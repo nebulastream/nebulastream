@@ -44,9 +44,9 @@ SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/n
 TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
-NUM_RUNS_PER_CONFIG = 1
-NUM_RETRIES_PER_RUN = 2
-MEASURE_INTERVAL = 8
+NUM_RUNS_PER_CONFIG = 5
+NUM_RETRIES_PER_RUN = 3
+MEASURE_INTERVAL = 5
 WAIT_BEFORE_QUERY_STOP = 5
 WAIT_BETWEEN_COMMANDS = 2
 WAIT_BEFORE_SIGKILL = 5
@@ -444,6 +444,7 @@ def main():
     with open(ERROR_FILE_PATH, "w") as f:
         f.write("Errors in Benchmarks: \n")
 
+    successful_runs = []
     for attempt in range(NUM_RETRIES_PER_RUN):
         num_runs_per_config = NUM_RUNS_PER_CONFIG if attempt == 0 else 1
 
@@ -484,8 +485,8 @@ def main():
         # Calling the postprocessing main
         start_time = time.time()
         measurement_time = MEASURE_INTERVAL * 1000
-        startup_time = 0
-        post_processing = PostProcessing.PostProcessing(output_folders,
+        startup_time = WAIT_BETWEEN_COMMANDS * 1000
+        post_processing = PostProcessing.PostProcessing(output_folders + successful_runs,
                                                         measurement_time,
                                                         startup_time,
                                                         BENCHMARK_CONFIG_FILE,
@@ -502,6 +503,7 @@ def main():
                                                         TEST_NAME,
                                                         LOG_SLICE_ACCESSES)
         failed_run_folders = post_processing.main()
+        successful_runs += [folder for folder in output_folders if folder not in failed_run_folders]
         end_time = time.time()
         print(f"Post Processing completed in {datetime.timedelta(seconds=int(end_time - start_time))}\n")
 
