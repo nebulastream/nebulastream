@@ -123,12 +123,12 @@ def expand_constant_params_for_groups(data, param, group, exclude_group_val=[]):
     return data
 
 
-def add_query_fig_text(labels, adjust_bottom, text_y):
+def add_query_fig_text(labels, adjust_bottom, text_y, text_x=0.0):
     query_ids = [lbl.split(' | ')[1] for lbl in labels]
     mapping_text = '\n'.join([f'{v}: {k}' for k, v in query_mapping.items() if v in query_ids])
     plt.tight_layout()
     plt.subplots_adjust(bottom=adjust_bottom)
-    plt.figtext(0.0, text_y, mapping_text, wrap=True, ha='left', fontsize=9)
+    plt.figtext(text_x, text_y, mapping_text, wrap=True, ha='left', fontsize=9)
 
 
 def add_min_max_labels(data, metric, ax, param, y_offset, color):
@@ -327,7 +327,7 @@ if SLICE_ACCESSES:
     df['prediction_precision_2'] = df.apply(compute_prediction_precision_2, axis=1)
 
 # Sort by all hue values
-df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta', 'watermark_predictor_type'], ascending=[True, True, True, True, True, True, True])
+df = df.sort_values(by=['slice_store_type', 'timestamp_increment', 'query', 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta', 'watermark_predictor_type', 'lower_memory_bound', 'upper_memory_bound'], ascending=[True, True, True, True, True, True, True, True, True])
 # queries = df['query'].drop_duplicates().tolist()
 # for query in queries:
 #     print(query)
@@ -341,6 +341,7 @@ df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df[
 df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
 df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
 df['accuracy_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
+df['memory_bounds_hue'] = df['lower_memory_bound'].astype(str) + ' | ' + df['upper_memory_bound'].astype(str)
 
 # %% Compare slice store types for different configs
 
@@ -371,7 +372,7 @@ def plot_config_comparison(data, configs, metric, label, config_id):
     plt.figtext(0.0, -0.9, config_text, wrap=True, ha='left', fontsize=9)
 
     plt.title(f'Effect of Configs on {label}')
-    plt.ylabel(f'{label} ({unit})')
+    plt.ylabel(f'{label} [{unit}]')
     plt.xlabel('config')
     plt.legend(title='Slice Store Type')
     plt.show()
@@ -394,35 +395,57 @@ def plot_time_comparison(data, config, metric, hue, label, legend, interpolate=F
     data_scaled, metric_unit = convert_units(data, metric)
 
     if interpolate:
-        normalized_data = normalize_time_per_groups(data_scaled, param, ['slice_store_type', 'dir_name'], param)
+        normalized_data = normalize_time_per_groups(data_scaled, param, ['dir_name'], param)
         interpolated_data = interpolate_and_align_per_groups(normalized_data, param, metric, ['slice_store_type', 'dir_name'], extrapolate_to=(normalized_data[param].min(), normalized_data[param].max()))
         data, param_unit = convert_units(interpolated_data, param, 'normalised')
     else:
-        filtered_data = cut_param_max_min_per_groups(data_scaled, param, ['slice_store_type', 'dir_name'])
-        shifted_data = shift_time_per_groups(filtered_data, param, ['slice_store_type', 'dir_name'], param)
+        filtered_data = cut_param_max_min_per_groups(data_scaled, param, ['dir_name'])
+        shifted_data = shift_time_per_groups(filtered_data, param, ['dir_name'], param)
         data, param_unit = convert_units(shifted_data, param, 's', 2)
 
-    plt.figure(figsize=(14, 9))
+    #plt.figure(figsize=(14, 9))
+    plt.figure(figsize=(14, 6))
     ax = sns.lineplot(data=data, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
 
     # Add labels for min and max values of metric for this param for each value of hue
     add_min_max_labels_per_group(data, hue, metric, ax, param)
 
     # Add config below
-    mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in all_config_params])
-    plt.figtext(0.01, 0.015, mapping_text, wrap=True, ha='left', fontsize=9)
+    #mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in all_config_params])
+    #plt.figtext(0.01, 0.015, mapping_text, wrap=True, ha='left', fontsize=9)
+    add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.02, 0.01)
 
     param = 'time'
     plt.yscale("log")
-    plt.subplots_adjust(left=0.05, right=0.99, top=0.95, bottom=0.45)
+    #plt.subplots_adjust(left=0.05, right=0.99, top=0.95, bottom=0.45)
+    plt.subplots_adjust(left=0.05, right=0.99, top=0.9, bottom=0.15)
 
-    plt.title(f'Effect of {param} on {label}')
-    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
-    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+    #plt.title(f'Effect of {param} on {label}')
+    plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
+    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
     plt.legend(title=legend)
     plt.show()
 
 
+for timestamp_increment in default_param_values['timestamp_increment']:
+    for query in default_param_values['query']:
+        data = df[(df['lower_memory_bound'] <= df['upper_memory_bound']) & (df['slice_store_type'] == 'FILE_BACKED') & 
+                  (df['timestamp_increment'] == timestamp_increment) & (df['query'] == query)]
+        data = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound'])
+
+        if data['query_id'].unique()[0] != 'Q5' or timestamp_increment != 1:
+            continue
+        data = data[(data['lower_memory_bound'] > 1048576)] # & (data['lower_memory_bound'] < data['upper_memory_bound'].unique().max())]
+
+        #print(f"Data Rows: {len(data['dir_name'].unique())}")
+        #print(config)
+
+        plot_time_comparison(data, {}, 'throughput_data', 'memory_bounds_hue', 'Throughput / sec', 'Lower Memory Bound | Upper Memory Bound', False)
+        plot_time_comparison(data, {}, 'memory', 'memory_bounds_hue', 'Memory', 'Lower Memory Bound | Upper Memory Bound', False)
+
+
+# %%
 for lower_memory_bound in df['lower_memory_bound'].unique():
     for upper_memory_bound in df['upper_memory_bound'].unique():
         if lower_memory_bound > upper_memory_bound:
@@ -499,8 +522,8 @@ def plot_shared_params(data, param, metric, hue, label, legend):
         add_query_fig_text(ax.get_legend_handles_labels()[1], 0.2, 0.0)
 
     plt.title(f'Effect of {param} on {label}')
-    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
-    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+    plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
+    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
     plt.show()
 
 
@@ -542,8 +565,8 @@ def plot_file_backed_params(data, param, metric, hue, label, legend): #, color):
     add_query_fig_text([' | ' + lbl for lbl in ax.get_legend_handles_labels()[1]], 0.2, 0.0)
 
     plt.title(f'Effect of {param} on {label} (File-Backed Only)')
-    plt.xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
-    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+    plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
+    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
     plt.legend(title=legend)
     plt.show()
 
@@ -586,8 +609,8 @@ def plot_watermark_predictor_params(data, param, metric, hue, label, legend):
             sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
 
         ax.set_title(f'watermark_predictor_type={data_scaled["watermark_predictor_type"].unique()[0]}')
-        ax.set_xlabel(f'{param} ({param_unit})' if 'param_unit' in locals() and param_unit != '' else param)
-        ax.set_ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+        ax.set_xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
+        ax.set_ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
         ax.legend(title=legend)
 
     # Add legend below
@@ -627,7 +650,7 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
 
     plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
     plt.xlabel(param)
-    plt.ylabel(f'{label} ({metric_unit})' if metric_unit != '' else label)
+    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
     plt.show()
 
 
