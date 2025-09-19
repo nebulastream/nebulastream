@@ -23,7 +23,7 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -88,8 +88,8 @@ NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
     const JoinSchema& joinSchema,
-    std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
-    std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider)
+    std::shared_ptr<TupleBufferRef> leftMemoryProvider,
+    std::shared_ptr<TupleBufferRef> rightMemoryProvider)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), WindowMetaData(std::move(windowMetaData)), joinSchema)
     , leftMemoryProvider(std::move(leftMemoryProvider))
     , rightMemoryProvider(std::move(rightMemoryProvider))
@@ -99,8 +99,8 @@ NLJProbePhysicalOperator::NLJProbePhysicalOperator(
 void NLJProbePhysicalOperator::performNLJ(
     const Interface::PagedVectorRef& outerPagedVector,
     const Interface::PagedVectorRef& innerPagedVector,
-    Interface::MemoryProvider::TupleBufferMemoryProvider& outerMemoryProvider,
-    Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
+    Interface::BufferRef::TupleBufferRef& outerMemoryProvider,
+    Interface::BufferRef::TupleBufferRef& innerMemoryProvider,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd) const

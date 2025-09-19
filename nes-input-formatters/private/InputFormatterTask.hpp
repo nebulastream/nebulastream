@@ -91,7 +91,7 @@ void processTuple(
 
     /// Currently, we still allow only row-wise writing to the formatted buffer
     /// This will will change with #496, which implements the InputFormatterTask in Nautilus
-    /// The InputFormatterTask then becomes part of a pipeline with a scan/emit phase and has access to the MemoryProvider
+    /// The InputFormatterTask then becomes part of a pipeline with a scan/emit phase and has access to the BufferRef
     for (size_t fieldIndex = 0; fieldIndex < schemaInfo.getFieldSizesInBytes().size(); ++fieldIndex)
     {
         /// Get the current field, parse it, and write it to the correct position in the formatted buffer
