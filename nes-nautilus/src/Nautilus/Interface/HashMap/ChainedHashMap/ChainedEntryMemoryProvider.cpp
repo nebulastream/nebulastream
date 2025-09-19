@@ -29,11 +29,10 @@
 #include <static.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
-std::pair<std::vector<MemoryProvider::FieldOffsets>, std::vector<MemoryProvider::FieldOffsets>>
-ChainedEntryMemoryProvider::createFieldOffsets(
+std::pair<std::vector<BufferRef::FieldOffsets>, std::vector<BufferRef::FieldOffsets>> ChainedEntryMemoryProvider::createFieldOffsets(
     const Schema& schema,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameValues)
@@ -41,8 +40,8 @@ ChainedEntryMemoryProvider::createFieldOffsets(
     /// For now, we assume that we the fields lie consecutively in the memory like in a row layout.
     /// First, the key fields and then the value fields.
     /// The key and values start after the ChainedHashMapEntry and its hash, see @ref ChainedHashMapEntry
-    std::vector<MemoryProvider::FieldOffsets> fieldsKey;
-    std::vector<MemoryProvider::FieldOffsets> fieldsValue;
+    std::vector<BufferRef::FieldOffsets> fieldsKey;
+    std::vector<BufferRef::FieldOffsets> fieldsValue;
     uint64_t offset = sizeof(ChainedHashMapEntry);
     for (const auto& fieldName : fieldNameKeys)
     {
@@ -50,7 +49,7 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsKey.emplace_back(
-            MemoryProvider::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
+            BufferRef::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
         offset += fieldValue.dataType.getSizeInBytes();
     }
 
@@ -60,7 +59,7 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsValue.emplace_back(
-            MemoryProvider::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
+            BufferRef::FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
         offset += fieldValue.dataType.getSizeInBytes();
     }
     return {fieldsKey, fieldsValue};
