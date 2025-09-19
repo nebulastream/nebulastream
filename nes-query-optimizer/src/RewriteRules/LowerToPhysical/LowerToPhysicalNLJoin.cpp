@@ -31,7 +31,7 @@
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -83,9 +83,9 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     const std::vector inputOriginIds(flatView.begin(), flatView.end());
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
-    auto leftMemoryProvider = TupleBufferMemoryProvider::create(pageSize, leftInputSchema);
+    auto leftMemoryProvider = TupleBufferRef::create(pageSize, leftInputSchema);
     leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(leftInputSchema, logicalJoinFunction));
-    auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
+    auto rightMemoryProvider = TupleBufferRef::create(pageSize, rightInputSchema);
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join, windowType);

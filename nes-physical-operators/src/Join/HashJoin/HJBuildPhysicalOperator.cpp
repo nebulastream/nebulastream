@@ -25,7 +25,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -182,7 +182,7 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
+    const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& memoryProvider,
     HashMapOptions hashMapOptions)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), memoryProvider)
     , hashMapOptions(std::move(hashMapOptions))

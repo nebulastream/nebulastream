@@ -24,18 +24,18 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
-/// A TupleBufferMemoryProvider is closely coupled with a memory layout and we support row and column layouts, currently.
-class TupleBufferMemoryProvider
+/// A TupleBufferRef is closely coupled with a memory layout and we support row and column layouts, currently.
+class TupleBufferRef
 {
 public:
-    virtual ~TupleBufferMemoryProvider();
+    virtual ~TupleBufferRef();
 
-    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const Schema& schema);
+    static std::shared_ptr<TupleBufferRef> create(uint64_t bufferSize, const Schema& schema);
 
     [[nodiscard]] virtual std::shared_ptr<MemoryLayout> getMemoryLayout() const = 0;
 

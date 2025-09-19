@@ -20,7 +20,7 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -165,7 +165,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(
-    OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider)
     : memoryProvider(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
 {
 }

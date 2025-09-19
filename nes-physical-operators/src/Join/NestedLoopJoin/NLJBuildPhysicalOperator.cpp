@@ -19,7 +19,7 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -50,7 +50,7 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(memoryProvider))
 {
 }

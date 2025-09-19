@@ -17,18 +17,18 @@
 #include <memory>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
-/// Implements MemoryProvider. Provides columnar memory access.
-class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
+/// Implements BufferRef. Provides columnar memory access.
+class ColumnTupleBufferRef final : public TupleBufferRef
 {
 public:
     /// Creates a column memory provider based on a valid column memory layout pointer.
-    ColumnTupleBufferMemoryProvider(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
-    ~ColumnTupleBufferMemoryProvider() override = default;
+    ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
+    ~ColumnTupleBufferRef() override = default;
 
     [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
 

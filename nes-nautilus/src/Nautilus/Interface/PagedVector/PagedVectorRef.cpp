@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -61,7 +61,7 @@ nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
 }
 
 PagedVectorRef::PagedVectorRef(
-    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
+    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<BufferRef::TupleBufferRef>& memoryProvider)
     : pagedVectorRef(pagedVectorRef), memoryProvider(memoryProvider), memoryLayout(memoryProvider->getMemoryLayout().get())
 {
 }
@@ -112,7 +112,7 @@ nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) cons
 
 PagedVectorRefIter::PagedVectorRefIter(
     PagedVectorRef pagedVector,
-    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
+    const std::shared_ptr<BufferRef::TupleBufferRef>& memoryProvider,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<TupleBuffer*>& curPage,
     const nautilus::val<uint64_t>& posOnPage,
