@@ -31,7 +31,7 @@
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/BufferRef/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
@@ -116,7 +116,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
         const auto resultFieldIdentifier = descriptor->asField.getFieldName();
         auto layout = std::make_shared<ColumnLayout>(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
-        auto memoryProvider = std::make_shared<Interface::BufferRef::ColumnTupleBufferMemoryProvider>(layout);
+        auto memoryProvider = std::make_shared<Interface::BufferRef::ColumnTupleBufferRef>(layout);
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
