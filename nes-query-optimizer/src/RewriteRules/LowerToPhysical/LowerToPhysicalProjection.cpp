@@ -20,7 +20,7 @@
 #include <vector>
 #include <Functions/FunctionProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -41,9 +41,9 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto bufferSize = conf.pageSize.getValue();
 
     auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema);
-    auto scanMemoryProvider = std::make_shared<Interface::BufferRef::RowTupleBufferMemoryProvider>(scanLayout);
+    auto scanBufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(scanLayout);
     auto accessedFields = projection.getAccessedFields();
-    auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
+    auto scan = ScanPhysicalOperator(scanBufferRef, accessedFields);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 

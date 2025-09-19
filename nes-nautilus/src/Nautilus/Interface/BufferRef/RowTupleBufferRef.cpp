@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/BufferRef/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -31,23 +31,21 @@
 namespace NES::Nautilus::Interface::BufferRef
 {
 
-RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<RowLayout> rowMemoryLayout)
-    : rowMemoryLayout(std::move(rowMemoryLayout)) { };
+RowTupleBufferRef::RowTupleBufferRef(std::shared_ptr<RowLayout> rowMemoryLayout) : rowMemoryLayout(std::move(rowMemoryLayout)) { };
 
-std::shared_ptr<MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout() const
+std::shared_ptr<MemoryLayout> RowTupleBufferRef::getMemoryLayout() const
 {
     return rowMemoryLayout;
 }
 
-nautilus::val<int8_t*>
-RowTupleBufferMemoryProvider::calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const
+nautilus::val<int8_t*> RowTupleBufferRef::calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const
 {
     auto fieldOffset = rowMemoryLayout->getFieldOffset(fieldIndex);
     auto fieldAddress = recordOffset + nautilus::val<uint64_t>(fieldOffset);
     return fieldAddress;
 }
 
-Record RowTupleBufferMemoryProvider::readRecord(
+Record RowTupleBufferRef::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
@@ -72,7 +70,7 @@ Record RowTupleBufferMemoryProvider::readRecord(
     return record;
 }
 
-void RowTupleBufferMemoryProvider::writeRecord(
+void RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
