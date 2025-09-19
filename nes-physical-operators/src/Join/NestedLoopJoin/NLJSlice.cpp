@@ -24,6 +24,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/Slice.hpp>
+#include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -95,19 +96,20 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
         });
 }
 
-const TupleBuffer* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
+NAUTILUS_INLINE const TupleBuffer* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % leftPagedVectorBuffers.size();
     return &leftPagedVectorBuffers[pos];
 }
 
-const TupleBuffer* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
+NAUTILUS_INLINE const TupleBuffer* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % rightPagedVectorBuffers.size();
     return &rightPagedVectorBuffers[pos];
 }
 
-const TupleBuffer* NLJSlice::getPagedVectorTupleBufferRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+NAUTILUS_INLINE const TupleBuffer*
+NLJSlice::getPagedVectorTupleBufferRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {
@@ -117,6 +119,13 @@ const TupleBuffer* NLJSlice::getPagedVectorTupleBufferRef(const WorkerThreadId w
             return getPagedVectorRefLeft(workerThreadId);
     }
     std::unreachable();
+}
+
+NAUTILUS_INLINE const TupleBuffer*
+getPagedVectorTupleBufferRefProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide)
+{
+    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
+    return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);
 }
 
 void NLJSlice::combinePagedVectors()
