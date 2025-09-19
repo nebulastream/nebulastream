@@ -34,7 +34,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -113,7 +113,7 @@ public:
     {
         auto schema = Schema{}.addField("A_FIELD", DataType::Type::UINT32);
         auto layout = std::make_shared<RowLayout>(512, schema);
-        EmitPhysicalOperator emit{OperatorHandlerId(0), std::make_shared<Interface::BufferRef::RowTupleBufferMemoryProvider>(layout)};
+        EmitPhysicalOperator emit{OperatorHandlerId(0), std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout)};
         handlers.emplace(OperatorHandlerId(0), std::make_shared<EmitOperatorHandler>());
         return emit;
     }
