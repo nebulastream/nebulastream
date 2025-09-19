@@ -31,7 +31,7 @@
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -83,22 +83,22 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     const std::vector inputOriginIds(flatView.begin(), flatView.end());
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
-    auto leftMemoryProvider = TupleBufferMemoryProvider::create(pageSize, leftInputSchema);
-    leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(leftInputSchema, logicalJoinFunction));
-    auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
-    rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
+    auto leftBufferRef = TupleBufferRef::create(pageSize, leftInputSchema);
+    leftBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(leftInputSchema, logicalJoinFunction));
+    auto rightBufferRef = TupleBufferRef::create(pageSize, rightInputSchema);
+    rightBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef);
 
     auto rightBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightMemoryProvider);
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator
-        = NLJProbePhysicalOperator(handlerId, joinFunction, join.getWindowMetaData(), joinSchema, leftMemoryProvider, rightMemoryProvider);
+        = NLJProbePhysicalOperator(handlerId, joinFunction, join.getWindowMetaData(), joinSchema, leftBufferRef, rightBufferRef);
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());

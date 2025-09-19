@@ -18,7 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
@@ -37,8 +37,8 @@ public:
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         JoinSchema joinSchema,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider,
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> leftBufferRef,
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> rightBufferRef,
         HashMapOptions leftHashMapBasedOptions,
         HashMapOptions rightHashMapBasedOptions);
 
@@ -47,7 +47,7 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider, rightMemoryProvider;
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> leftBufferRef, rightBufferRef;
     HashMapOptions leftHashMapOptions, rightHashMapOptions;
 };
 

@@ -123,7 +123,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         /// Writing the key and values to the exact map to compare the values later.
         const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(bufferKey)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
-        auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
+        auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
         /// Writing all values to the paged vector and the exact map
         for (auto& bufferValue : inputBuffers)
@@ -137,7 +137,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
             const RecordBuffer recordBufferValue(nautilus::val<const TupleBuffer*>(std::addressof(bufferValue)));
             for (nautilus::val<uint64_t> i = 0; i < recordBufferValue.getNumRecords(); i = i + 1)
             {
-                auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, i);
+                auto recordValue = inputBufferRef->readRecord(projectionAllFields, recordBufferValue, i);
                 exactMap.insert({{recordKey, projectionKeys}, recordValue});
             }
         }
@@ -162,14 +162,14 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         /// Getting the record key from the input buffer, so that we can compare the values with the exact map.
         const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
-        auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
+        auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
         /// Getting the iterator for the exact map to compare the values.
         auto [recordValueExactStart, recordValueExactEnd] = exactMap.equal_range({recordKey, projectionKeys});
         const auto numberOfRecordsExact = std::distance(recordValueExactStart, recordValueExactEnd);
 
         /// Acquiring a buffer to write the values to that has the needed size
-        const auto neededBytes = memoryProviderInputBuffer->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes() * numberOfRecordsExact;
+        const auto neededBytes = inputBufferRef->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes() * numberOfRecordsExact;
         auto outputBufferOpt = bufferManager->getUnpooledBuffer(neededBytes);
         if (not outputBufferOpt)
         {
@@ -182,7 +182,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         writeAllRecordsIntoOutputBuffer(
             std::addressof(buffer), keyPositionInBuffer, std::addressof(outputBuffer), bufferManager.get(), std::addressof(hashMap));
         const auto writtenBytes
-            = outputBuffer.getNumberOfTuples() * memoryProviderInputBuffer->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
+            = outputBuffer.getNumberOfTuples() * inputBufferRef->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
         ASSERT_LE(writtenBytes, outputBuffer.getBufferSize());
         ASSERT_EQ(outputBuffer.getNumberOfTuples(), std::distance(recordValueExactStart, recordValueExactEnd));
 
@@ -192,7 +192,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         {
             /// Printing an error message, if the values are not equal.
             const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(outputBuffer)));
-            auto recordValueActual = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferOutput, currentPosition);
+            auto recordValueActual = inputBufferRef->readRecord(projectionAllFields, recordBufferOutput, currentPosition);
             std::stringstream ss;
             ss << compareRecords(recordValueActual, exactIt->second, projectionAllFields);
             if (not ss.str().empty())

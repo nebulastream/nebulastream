@@ -21,10 +21,10 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -64,10 +64,10 @@ public:
     std::shared_ptr<BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     Schema inputSchema;
-    std::vector<Interface::MemoryProvider::FieldOffsets> fieldKeys, fieldValues;
+    std::vector<Interface::BufferRef::FieldOffsets> fieldKeys, fieldValues;
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
     std::vector<TupleBuffer> inputBuffers;
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProviderInputBuffer;
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> inputBufferRef;
     uint64_t keySize, valueSize, entriesPerPage, entrySize;
     TestParams params;
 
@@ -85,7 +85,7 @@ public:
 
     std::string compareExpectedWithActual(
         const TupleBuffer& bufferActual,
-        const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderInputBuffer,
+        const Interface::BufferRef::TupleBufferRef& memoryProviderInputBuffer,
         const std::map<RecordWithFields, Record>& exactMap);
 
     /// Compiles the query that writes the values for all keys in keyBufferRef to outputBufferForKeys.

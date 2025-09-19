@@ -21,9 +21,9 @@
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
@@ -46,13 +46,13 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
     PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
     JoinSchema joinSchema,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider,
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> leftBufferRef,
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> rightBufferRef,
     HashMapOptions leftHashMapBasedOptions,
     HashMapOptions rightHashMapBasedOptions)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), std::move(windowMetaData), std::move(joinSchema))
-    , leftMemoryProvider(std::move(leftMemoryProvider))
-    , rightMemoryProvider(std::move(rightMemoryProvider))
+    , leftBufferRef(std::move(leftBufferRef))
+    , rightBufferRef(std::move(rightBufferRef))
     , leftHashMapOptions(std::move(leftHashMapBasedOptions))
     , rightHashMapOptions(std::move(rightHashMapBasedOptions))
 {
@@ -116,8 +116,8 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 const Interface::ChainedHashMapRef::ChainedEntryRef rightEntryRef{
                     rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
                 auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
-                const Interface::PagedVectorRef rightPagedVector{rightPagedVectorMem, rightMemoryProvider};
-                const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
+                const Interface::PagedVectorRef rightPagedVector{rightPagedVectorMem, rightBufferRef};
+                const auto rightFields = rightBufferRef->getMemoryLayout()->getSchema().getFieldNames();
                 auto rightItStart = rightPagedVector.begin(rightFields);
                 auto rightItEnd = rightPagedVector.end(rightFields);
 
@@ -128,8 +128,8 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                     const Interface::ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
-                    const Interface::PagedVectorRef leftPagedVector{leftPagedVectorMem, leftMemoryProvider};
-                    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
+                    const Interface::PagedVectorRef leftPagedVector{leftPagedVectorMem, leftBufferRef};
+                    const auto leftFields = leftBufferRef->getMemoryLayout()->getSchema().getFieldNames();
 
                     for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)
                     {

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -30,8 +30,8 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/VariableSizedAccessRef.hpp>
@@ -42,11 +42,11 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
-VarVal TupleBufferMemoryProvider::loadValue(
-    const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+VarVal
+TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     if (physicalType.type != DataType::Type::VARSIZED)
     {
@@ -65,7 +65,7 @@ VarVal TupleBufferMemoryProvider::loadValue(
     return VariableSizedData(varSizedPtr);
 }
 
-VarVal TupleBufferMemoryProvider::storeValue(
+VarVal TupleBufferRef::storeValue(
     const DataType& physicalType,
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
@@ -101,15 +101,15 @@ VarVal TupleBufferMemoryProvider::storeValue(
     return value;
 }
 
-bool TupleBufferMemoryProvider::includesField(
+bool TupleBufferRef::includesField(
     const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)
 {
     return std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
-TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
+TupleBufferRef::~TupleBufferRef() = default;
 
-std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, const Schema& schema)
+std::shared_ptr<TupleBufferRef> TupleBufferRef::create(const uint64_t bufferSize, const Schema& schema)
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
