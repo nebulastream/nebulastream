@@ -20,7 +20,7 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -123,7 +123,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+    bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 
@@ -165,14 +165,14 @@ void EmitPhysicalOperator::emitRecordBuffer(
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(
-    OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
-    : memoryProvider(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
+    OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider)
+    : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
 {
 }
 
 [[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const
 {
-    return memoryProvider->getMemoryLayout()->getCapacity();
+    return bufferRef->getMemoryLayout()->getCapacity();
 }
 
 std::optional<PhysicalOperator> EmitPhysicalOperator::getChild() const

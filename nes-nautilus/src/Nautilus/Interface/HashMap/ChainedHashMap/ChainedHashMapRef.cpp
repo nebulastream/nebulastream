@@ -141,8 +141,8 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext(
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    std::vector<MemoryProvider::FieldOffsets> fieldsKey,
-    std::vector<MemoryProvider::FieldOffsets> fieldsValue)
+    std::vector<BufferRef::FieldOffsets> fieldsKey,
+    std::vector<BufferRef::FieldOffsets> fieldsValue)
     : entryRef(entryRef), hashMapRef(hashMapRef), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
 {
 }
@@ -150,8 +150,8 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys,
-    MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues)
+    BufferRef::ChainedEntryMemoryProvider memoryProviderKeys,
+    BufferRef::ChainedEntryMemoryProvider memoryProviderValues)
     : entryRef(entryRef)
     , hashMapRef(hashMapRef)
     , memoryProviderKeys(std::move(memoryProviderKeys))
@@ -343,8 +343,8 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
 
 ChainedHashMapRef::ChainedHashMapRef(
     const nautilus::val<HashMap*>& hashMapRef,
-    std::vector<MemoryProvider::FieldOffsets> fieldsKey,
-    std::vector<MemoryProvider::FieldOffsets> fieldsValue,
+    std::vector<BufferRef::FieldOffsets> fieldsKey,
+    std::vector<BufferRef::FieldOffsets> fieldsValue,
     const nautilus::val<uint64_t>& entriesPerPage,
     const nautilus::val<uint64_t>& entrySize)
     : HashMapRef(hashMapRef)

@@ -17,13 +17,13 @@
 #include <memory>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
-/// Implements MemoryProvider. Provides row-wise memory access.
-class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
+/// Implements BufferRef. Provides row-wise memory access.
+class RowTupleBufferMemoryProvider final : public TupleBufferRef
 {
 public:
     /// Creates a row memory provider based on a valid row memory layout pointer.

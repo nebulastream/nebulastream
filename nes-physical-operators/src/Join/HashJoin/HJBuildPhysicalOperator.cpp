@@ -23,9 +23,9 @@
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -171,7 +171,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef{
         hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
     auto entryMemArea = entryRef.getValueMemArea();
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
 }
 
@@ -179,9 +179,9 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
+    const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& bufferRef,
     HashMapOptions hashMapOptions)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), memoryProvider)
+    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
     , hashMapOptions(std::move(hashMapOptions))
 {
 }

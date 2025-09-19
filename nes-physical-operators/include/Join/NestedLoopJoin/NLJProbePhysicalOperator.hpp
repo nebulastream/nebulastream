@@ -19,7 +19,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -27,7 +27,7 @@
 
 namespace NES
 {
-using namespace Interface::MemoryProvider;
+using namespace Interface::BufferRef;
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops.
 class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
@@ -38,8 +38,8 @@ public:
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         const JoinSchema& joinSchema,
-        std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
-        std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
+        std::shared_ptr<TupleBufferRef> leftMemoryProvider,
+        std::shared_ptr<TupleBufferRef> rightMemoryProvider);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
@@ -47,12 +47,12 @@ protected:
     void performNLJ(
         const Interface::PagedVectorRef& outerPagedVector,
         const Interface::PagedVectorRef& innerPagedVector,
-        Interface::MemoryProvider::TupleBufferMemoryProvider& outerMemoryProvider,
-        Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
+        Interface::BufferRef::TupleBufferRef& outerMemoryProvider,
+        Interface::BufferRef::TupleBufferRef& innerMemoryProvider,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
-    std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
-    std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
+    std::shared_ptr<TupleBufferRef> leftMemoryProvider;
+    std::shared_ptr<TupleBufferRef> rightMemoryProvider;
 };
 }

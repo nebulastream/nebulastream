@@ -20,7 +20,7 @@
 #include <optional>
 #include <utility>
 #include <vector>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
@@ -31,9 +31,8 @@ namespace NES
 {
 
 ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
-    std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
+    : bufferRef(std::move(bufferRef)), projections(std::move(projections))
 {
 }
 
@@ -52,7 +51,7 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        auto record = memoryProvider->readRecord(projections, recordBuffer, i);
+        auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
 }

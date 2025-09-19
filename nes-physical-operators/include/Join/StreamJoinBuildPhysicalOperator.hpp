@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
@@ -32,14 +32,14 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;
 
 protected:
     const JoinBuildSideType joinBuildSide;
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    const std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef;
 };
 
 }
