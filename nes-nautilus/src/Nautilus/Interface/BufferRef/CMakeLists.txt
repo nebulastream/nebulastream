@@ -12,6 +12,6 @@
 
 add_source_files(nes-nautilus
         TupleBufferRef.cpp
-        ColumnTupleBufferMemoryProvider.cpp
+        ColumnTupleBufferRef.cpp
         RowTupleBufferRef.cpp
         )
