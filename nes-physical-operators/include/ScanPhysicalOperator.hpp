@@ -17,7 +17,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <PhysicalOperator.hpp>
@@ -34,7 +34,7 @@ public:
     /// @param memoryLayout memory layout that describes the tuple buffer.
     /// @param projections projection vector
     ScanPhysicalOperator(
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider,
         std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -42,7 +42,7 @@ public:
     void setChild(PhysicalOperator child) override;
 
 private:
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::optional<PhysicalOperator> child;
 };

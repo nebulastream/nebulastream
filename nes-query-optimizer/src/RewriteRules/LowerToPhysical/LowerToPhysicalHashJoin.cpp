@@ -39,7 +39,7 @@
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -208,7 +208,7 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
 
     /// As we are using a paged vector for the value, we do not need to set the fieldNameValues for the chained hashmap
     const auto& [fieldKeys, fieldValues]
-        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
+        = Interface::BufferRef::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
     HashMapOptions hashMapOptions{
         std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
         std::move(keyFunctions),
@@ -249,9 +249,9 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         = getJoinFieldExtensionsLeftRight(join.getLeftSchema(), join.getRightSchema(), logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join.getLeftSchema(), leftJoinFields);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(join.getRightSchema(), rightJoinFields);
-    auto leftMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+    auto leftMemoryProvider = Interface::BufferRef::TupleBufferRef::create(
         conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
-    auto rightMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+    auto rightMemoryProvider = Interface::BufferRef::TupleBufferRef::create(
         conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);

@@ -16,7 +16,7 @@
 #include <utility>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
@@ -28,7 +28,7 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction))
     , joinBuildSide(joinBuildSide)
     , memoryProvider(std::move(std::move(memoryProvider)))

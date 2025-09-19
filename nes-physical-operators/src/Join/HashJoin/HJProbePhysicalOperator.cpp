@@ -22,7 +22,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -42,8 +42,8 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
     PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
     JoinSchema joinSchema,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider,
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> leftMemoryProvider,
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> rightMemoryProvider,
     HashMapOptions leftHashMapBasedOptions,
     HashMapOptions rightHashMapBasedOptions)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), std::move(windowMetaData), std::move(joinSchema))

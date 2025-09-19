@@ -31,7 +31,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -104,11 +104,11 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
-    memoryProviderInputBuffer = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferManager->getBufferSize(), inputSchema);
+    memoryProviderInputBuffer = Interface::BufferRef::TupleBufferRef::create(bufferManager->getBufferSize(), inputSchema);
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues)
-        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
+        = Interface::BufferRef::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
     projectionKeys = inputSchemaKey.getFieldNames();
@@ -148,7 +148,7 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
 
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     const TupleBuffer& bufferActual,
-    const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderInputBuffer,
+    const Interface::BufferRef::TupleBufferRef& memoryProviderInputBuffer,
     const std::map<TestUtils::RecordWithFields, Record>& exactMap)
 {
     PRECONDITION(

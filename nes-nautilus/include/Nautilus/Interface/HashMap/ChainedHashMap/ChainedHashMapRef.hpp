@@ -55,14 +55,14 @@ public:
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
             const nautilus::val<ChainedHashMap*>& hashMapRef,
-            std::vector<MemoryProvider::FieldOffsets> fieldsKey,
-            std::vector<MemoryProvider::FieldOffsets> fieldsValue);
+            std::vector<BufferRef::FieldOffsets> fieldsKey,
+            std::vector<BufferRef::FieldOffsets> fieldsValue);
 
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
             const nautilus::val<ChainedHashMap*>& hashMapRef,
-            MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys,
-            MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues);
+            BufferRef::ChainedEntryMemoryProvider memoryProviderKeys,
+            BufferRef::ChainedEntryMemoryProvider memoryProviderValues);
 
         ChainedEntryRef(const ChainedEntryRef& other);
         ChainedEntryRef& operator=(const ChainedEntryRef& other);
@@ -72,8 +72,8 @@ public:
 
         nautilus::val<ChainedHashMapEntry*> entryRef;
         nautilus::val<ChainedHashMap*> hashMapRef;
-        MemoryProvider::ChainedEntryMemoryProvider memoryProviderKeys;
-        MemoryProvider::ChainedEntryMemoryProvider memoryProviderValues;
+        BufferRef::ChainedEntryMemoryProvider memoryProviderKeys;
+        BufferRef::ChainedEntryMemoryProvider memoryProviderValues;
     };
 
     /// Iterator for iterating over all entries in the hash map.
@@ -85,8 +85,8 @@ public:
         EntryIterator(
             const nautilus::val<HashMap*>& hashMapRef,
             const nautilus::val<uint64_t>& tupleIndex,
-            const std::vector<MemoryProvider::FieldOffsets>& fieldKeys,
-            const std::vector<MemoryProvider::FieldOffsets>& fieldValues);
+            const std::vector<BufferRef::FieldOffsets>& fieldKeys,
+            const std::vector<BufferRef::FieldOffsets>& fieldValues);
         EntryIterator& operator++();
         nautilus::val<bool> operator==(const EntryIterator& other) const;
         nautilus::val<bool> operator!=(const EntryIterator& other) const;
@@ -102,8 +102,8 @@ public:
 
     ChainedHashMapRef(
         const nautilus::val<HashMap*>& hashMapRef,
-        std::vector<MemoryProvider::FieldOffsets> fieldsKey,
-        std::vector<MemoryProvider::FieldOffsets> fieldsValue,
+        std::vector<BufferRef::FieldOffsets> fieldsKey,
+        std::vector<BufferRef::FieldOffsets> fieldsValue,
         const nautilus::val<uint64_t>& entriesPerPage,
         const nautilus::val<uint64_t>& entrySize);
     ChainedHashMapRef(const ChainedHashMapRef& other);
@@ -134,8 +134,8 @@ private:
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findKey(const Record& recordKey, const HashFunction::HashValue& hash) const;
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findEntry(const ChainedEntryRef& otherEntryRef) const;
 
-    std::vector<MemoryProvider::FieldOffsets> fieldKeys;
-    std::vector<MemoryProvider::FieldOffsets> fieldValues;
+    std::vector<BufferRef::FieldOffsets> fieldKeys;
+    std::vector<BufferRef::FieldOffsets> fieldValues;
     nautilus::val<uint64_t> entriesPerPage;
     nautilus::val<uint64_t> entrySize;
 };

@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferMemoryProvider.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -28,7 +28,7 @@
 #include <static.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<RowLayout> rowMemoryLayout)

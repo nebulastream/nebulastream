@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -39,7 +39,7 @@ public:
     friend class PagedVectorRefIter;
     PagedVectorRef(
         const nautilus::val<PagedVector*>& pagedVectorRef,
-        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
+        const std::shared_ptr<BufferRef::TupleBufferRef>& memoryProvider);
 
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
@@ -59,7 +59,7 @@ public:
 
 private:
     nautilus::val<PagedVector*> pagedVectorRef;
-    std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<BufferRef::TupleBufferRef> memoryProvider;
     nautilus::val<MemoryLayout*> memoryLayout;
 };
 
@@ -68,7 +68,7 @@ class PagedVectorRefIter
 public:
     explicit PagedVectorRefIter(
         PagedVectorRef pagedVector,
-        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
+        const std::shared_ptr<BufferRef::TupleBufferRef>& memoryProvider,
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<TupleBuffer*>& curPage,
         const nautilus::val<uint64_t>& posOnPage,
@@ -88,7 +88,7 @@ private:
     nautilus::val<uint64_t> numberOfTuplesInPagedVector;
     nautilus::val<uint64_t> posOnPage;
     nautilus::val<TupleBuffer*> curPage;
-    std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<BufferRef::TupleBufferRef> memoryProvider;
 };
 
 }
