@@ -31,7 +31,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/VariableSizedAccessRef.hpp>
@@ -114,7 +114,7 @@ std::shared_ptr<TupleBufferRef> TupleBufferRef::create(const uint64_t bufferSize
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto rowMemoryLayout = std::make_shared<RowLayout>(bufferSize, schema);
-        return std::make_shared<RowTupleBufferMemoryProvider>(std::move(rowMemoryLayout));
+        return std::make_shared<RowTupleBufferRef>(std::move(rowMemoryLayout));
     }
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
