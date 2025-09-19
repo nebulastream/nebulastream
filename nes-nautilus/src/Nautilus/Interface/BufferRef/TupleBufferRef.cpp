@@ -30,7 +30,7 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/BufferRef/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -119,7 +119,7 @@ std::shared_ptr<TupleBufferRef> TupleBufferRef::create(const uint64_t bufferSize
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = std::make_shared<ColumnLayout>(bufferSize, schema);
-        return std::make_shared<ColumnTupleBufferMemoryProvider>(std::move(columnMemoryLayout));
+        return std::make_shared<ColumnTupleBufferRef>(std::move(columnMemoryLayout));
     }
     throw NotImplemented("Currently only row and column layout are supported");
 }

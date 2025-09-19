@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/BufferRef/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 
 #include <memory>
 #include <utility>
@@ -29,15 +29,15 @@
 namespace NES::Nautilus::Interface::BufferRef
 {
 
-ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr)
+ColumnTupleBufferRef::ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr)
     : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) { };
 
-std::shared_ptr<MemoryLayout> ColumnTupleBufferMemoryProvider::getMemoryLayout() const
+std::shared_ptr<MemoryLayout> ColumnTupleBufferRef::getMemoryLayout() const
 {
     return columnMemoryLayout;
 }
 
-nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
+nautilus::val<int8_t*> ColumnTupleBufferRef::calculateFieldAddress(
     const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, const uint64_t fieldIndex) const
 {
     auto fieldSize = columnMemoryLayout->getFieldSize(fieldIndex);
@@ -47,7 +47,7 @@ nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
     return fieldAddress;
 }
 
-Record ColumnTupleBufferMemoryProvider::readRecord(
+Record ColumnTupleBufferRef::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
@@ -70,7 +70,7 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
     return record;
 }
 
-void ColumnTupleBufferMemoryProvider::writeRecord(
+void ColumnTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
