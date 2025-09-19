@@ -175,7 +175,8 @@ do
     log_out running ctest
     if ! timeout --kill-after=1m 30m ctest -j $(nproc) --test-dir cmake-build-nrm --stop-on-failure --repeat until-pass:3 --quiet -O ctest.log
     then
-        for testcase in $(cat ctest.log | grep Failed | awk '$2 == "-" { print $3 }')
+        log_out mutant $patch cause non-zero retcode for ctest
+        for testcase in $(cat ctest.log | grep "Failed\|Subprocess aborted" | awk '$2 == "-" { print $3 }')
         do
             log_out mutant $patch killed by ctest with $testcase
         done
