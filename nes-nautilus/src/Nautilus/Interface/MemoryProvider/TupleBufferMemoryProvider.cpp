@@ -72,7 +72,7 @@ VarVal TupleBufferMemoryProvider::loadValue(
 }
 
 
-VarVal TupleBufferMemoryProvider::storeValue(
+nautilus::val<size_t> TupleBufferMemoryProvider::storeValue(
     const DataType& physicalType,
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
@@ -98,7 +98,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
             storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
-        return value;
+        return textValue.getTotalSize() + nautilus::val<size_t>(sizeof(uint32_t));
     }
     throw UnknownDataType("Physical Type: type {} is currently not supported", physicalType);
 }

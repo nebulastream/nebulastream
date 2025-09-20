@@ -59,6 +59,8 @@ public:
     [[nodiscard]] const Memory::TupleBuffer& getLastPage() const { return pages.getLastPage(); }
     [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
+    [[nodiscard]] size_t getAllRecordsSize() const { return pages.getAllRecordsSize(); }
+    void addToAllRecordsSize(const size_t recordSize) { pages.addToAllRecordsSize(recordSize); }
 
 protected:
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
@@ -70,6 +72,8 @@ protected:
         [[nodiscard]] uint64_t getNumberOfPages() const;
         const TupleBufferWithCumulativeSum& operator[](size_t index) const;
         [[nodiscard]] uint64_t getNumberOfTuplesLastPage() const;
+        [[nodiscard]] size_t getAllRecordsSize() const { return allRecordsSize; }
+        void addToAllRecordsSize(size_t recordSize);
 
         [[nodiscard]] std::vector<TupleBufferWithCumulativeSum>::iterator begin();
         [[nodiscard]] std::vector<TupleBufferWithCumulativeSum>::iterator end();
@@ -86,6 +90,7 @@ protected:
         void updateCumulativeSumAllPages();
 
         std::vector<TupleBufferWithCumulativeSum> pages;
+        size_t allRecordsSize = 0;
     };
     PagesWrapper pages;
 };

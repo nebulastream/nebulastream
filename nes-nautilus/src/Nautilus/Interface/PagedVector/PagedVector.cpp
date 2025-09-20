@@ -80,6 +80,7 @@ void PagedVector::moveAllPages(PagedVector& other)
 void PagedVector::copyFrom(const PagedVector& other)
 {
     pages.addPages(other.pages);
+    pages.addToAllRecordsSize(other.pages.getAllRecordsSize());
 }
 
 
@@ -112,6 +113,11 @@ uint64_t PagedVector::PagesWrapper::getNumberOfTuplesLastPage() const
     return getLastPage().getNumberOfTuples();
 }
 
+void PagedVector::PagesWrapper::addToAllRecordsSize(const size_t recordSize)
+{
+    allRecordsSize += recordSize;
+}
+
 std::vector<PagedVector::TupleBufferWithCumulativeSum>::iterator PagedVector::PagesWrapper::begin()
 {
     return pages.begin();
@@ -142,6 +148,7 @@ void PagedVector::PagesWrapper::addPages(const PagesWrapper& other)
 void PagedVector::PagesWrapper::clearPages()
 {
     pages.clear();
+    allRecordsSize = 0;
 }
 
 std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos) const

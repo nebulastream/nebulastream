@@ -242,7 +242,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     /// Write and read all selected slices to and from disk
     const auto workerThreadId = WorkerThreadId(threadId % numberOfWorkerThreads);
     //std::cout << fmt::format("Updating slices for thread {}\n", threadId.getRawValue());
-    for (const auto& [slice, operation] : getSlicesToUpdate(bufferProvider, memoryLayout, watermark, workerThreadId, joinBuildSide))
+    for (const auto& [slice, operation] : getSlicesToUpdate(bufferProvider, watermark, workerThreadId, joinBuildSide))
     {
         switch (operation)
         {
@@ -272,7 +272,6 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 
 std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
     const Memory::AbstractBufferProvider* bufferProvider,
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const Timestamp watermark,
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
@@ -291,7 +290,7 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
     }
     if (totalSizeOfUsedBuffers >= sliceStoreInfo.lowerMemoryBound)
     {
-        return sliceStoreInfo.withPrediction ? updateSlicesProactiveWithPrediction(memoryLayout, threadId, joinBuildSide)
+        return sliceStoreInfo.withPrediction ? updateSlicesProactiveWithPrediction(threadId, joinBuildSide)
                                              : updateSlicesProactiveWithoutPrediction(watermark, threadId, joinBuildSide);
     }
 
@@ -337,19 +336,13 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
     return slicesToUpdate;
 }
 
-std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBasedSliceStore::updateSlicesProactiveWithPrediction(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
+std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>>
+FileBackedTimeBasedSliceStore::updateSlicesProactiveWithPrediction(const WorkerThreadId threadId, const JoinBuildSideType joinBuildSide)
 {
     /// Reserve space for every altered slice as we might update all of them
     std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> slicesToUpdate;
     auto& alteredSlicesVec = alteredSlices[{threadId, joinBuildSide}];
     slicesToUpdate.reserve(alteredSlicesVec.size());
-
-    auto tupleSize = memoryLayout->getTupleSize();
-    if (sliceStoreInfo.fileLayout == FileLayout::SEPARATE_PAYLOAD)
-    {
-        tupleSize -= memoryLayout->createKeyFieldsOnlySchema().getSizeOfSchemaInBytes();
-    }
 
     for (const auto& slice : alteredSlicesVec)
     {
@@ -363,12 +356,10 @@ std::vector<std::pair<std::shared_ptr<Slice>, FileOperation>> FileBackedTimeBase
         nljSlice->acquireCombinePagedVectorsLock();
         if (not nljSlice->pagedVectorsCombined())
         {
-            stateSizeOnDisk = pagedVector->getNumberOfTuplesOnDisk();
-            stateSizeInMemory = pagedVector->getNumberOfEntries();
+            stateSizeOnDisk = pagedVector->getAllRecordsSizeOnDisk();
+            stateSizeInMemory = pagedVector->getAllRecordsSize();
         }
         nljSlice->releaseCombinePagedVectorsLock();
-        stateSizeOnDisk *= tupleSize;
-        stateSizeInMemory *= tupleSize;
 
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
@@ -424,7 +415,7 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     nljSlice->acquireCombinePagedVectorsLock();
 
     /// Check if there are tuples to offload
-    if (not nljSlice->pagedVectorsCombined() and pagedVector->getNumberOfPages() > 0)
+    if (not nljSlice->pagedVectorsCombined() and pagedVector->getAllRecordsSize() > 0)
     {
         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, sliceStoreInfo.fileLayout);
         pagedVector->truncate(sliceStoreInfo.fileLayout);
@@ -457,7 +448,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         {
             auto* const pagedVector = nljSlice->getPagedVectorRef(threadToRead, joinBuildSide);
             nljSlice->acquireCombinePagedVectorsLock();
-            if (pagedVector->getNumberOfTuplesOnDisk() > 0)
+            if (pagedVector->getAllRecordsSizeOnDisk() > 0)
             {
                 pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader.value(), sliceStoreInfo.fileLayout);
             }

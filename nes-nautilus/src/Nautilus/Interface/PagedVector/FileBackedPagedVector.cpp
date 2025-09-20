@@ -24,7 +24,10 @@ void FileBackedPagedVector::moveAllPages(PagedVector& other)
     PagedVector::moveAllPages(other);
     if (Util::instanceOfConst<FileBackedPagedVector>(other))
     {
-        Util::asConst<FileBackedPagedVector>(other).keyPages.clear();
+        auto fbOther = Util::asConst<FileBackedPagedVector>(other);
+        fbOther.keyPages.clear();
+        fbOther.numTuplesOnDisk = 0;
+        fbOther.allRecordsSizeOnDisk = 0;
     }
 }
 
@@ -36,6 +39,7 @@ void FileBackedPagedVector::copyFrom(const PagedVector& other)
         const auto fbOther = Util::asConst<FileBackedPagedVector>(other);
         keyPages.insert(keyPages.end(), fbOther.keyPages.begin(), fbOther.keyPages.end());
         numTuplesOnDisk += fbOther.numTuplesOnDisk;
+        allRecordsSizeOnDisk += fbOther.allRecordsSizeOnDisk;
     }
 }
 
@@ -60,6 +64,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     {
         /// Write all tuples consecutivley to file
         case FileLayout::NO_SEPARATION: {
+            const auto tupleSize = memoryLayout->getTupleSize();
             for (auto [_, page] : pages)
             {
                 const auto numTuplesOnPage = page.getNumberOfTuples();
@@ -80,8 +85,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
                     }
                 }
 
-                co_await fileWriter->write(page.getBuffer(), numTuplesOnPage * memoryLayout->getTupleSize());
-                numTuplesOnDisk += numTuplesOnPage;
+                co_await fileWriter->write(page.getBuffer(), numTuplesOnPage * tupleSize);
             }
             break;
         }
@@ -96,6 +100,8 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
             break;
         }
     }
+    numTuplesOnDisk += getNumberOfEntries();
+    allRecordsSizeOnDisk += getAllRecordsSize();
     co_return;
 }
 
@@ -130,10 +136,10 @@ void FileBackedPagedVector::readFromFile(
             while (const auto bytesRead = fileReader->read(lastPagePtr, tuplesToRead * tupleSize))
             {
                 const auto tuplesRead = bytesRead / tupleSize;
-                lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + tuplesRead);
-
+                const auto numTuplesLastPage = lastPage.getNumberOfTuples();
                 if (containsVarSizedData)
                 {
+                    lastPagePtr += numTuplesLastPage * tupleSize;
                     for (auto tupleIdx = 0UL; tupleIdx < tuplesRead; ++tupleIdx)
                     {
                         for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
@@ -141,18 +147,21 @@ void FileBackedPagedVector::readFromFile(
                             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED
                                 or fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
                             {
-                                readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                                allRecordsSizeOnDisk
+                                    -= readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
                             }
                             lastPagePtr += fieldSize;
                         }
                     }
                 }
 
+                lastPage.setNumberOfTuples(numTuplesLastPage + tuplesRead);
                 appendPageIfFull(bufferProvider, memoryLayout);
                 lastPage = pages.getLastPage();
                 lastPagePtr = lastPage.getBuffer();
                 tuplesToRead = memoryLayout->getCapacity();
                 numTuplesOnDisk -= tuplesRead;
+                allRecordsSizeOnDisk -= bytesRead;
             }
             break;
         }
@@ -190,9 +199,9 @@ uint64_t FileBackedPagedVector::getTotalNumberOfEntries() const
     return getNumberOfEntries() + numTuplesOnDisk;
 }
 
-uint64_t FileBackedPagedVector::getNumberOfTuplesOnDisk() const
+size_t FileBackedPagedVector::getAllRecordsSizeOnDisk() const
 {
-    return numTuplesOnDisk;
+    return allRecordsSizeOnDisk;
 }
 
 void FileBackedPagedVector::appendKeyPageIfFull(
@@ -233,8 +242,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
     for (auto [_, page] : pages)
     {
         auto* pagePtr = page.getBuffer();
-        const auto numTuplesOnPage = page.getNumberOfTuples();
-        for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
+        for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
             for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
@@ -258,7 +266,6 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
                 pagePtr += fieldSize;
             }
         }
-        numTuplesOnDisk += numTuplesOnPage;
     }
     co_return;
 }
@@ -276,8 +283,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
     for (auto [_, page] : pages)
     {
         auto* pagePtr = page.getBuffer();
-        const auto numTuplesOnPage = page.getNumberOfTuples();
-        for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
+        for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
             // TODO appendPageIfFull only when page is full not for each tuple
             appendKeyPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
@@ -312,7 +318,6 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
             }
             lastKeyPage.setNumberOfTuples(numTuplesLastKeyPage + 1);
         }
-        numTuplesOnDisk += numTuplesOnPage;
     }
     co_return;
 }
@@ -374,7 +379,8 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
                     }
                     else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY_VARSIZED)
                     {
-                        readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                        allRecordsSizeOnDisk
+                            -= readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
                     }
                     break;
                 }
@@ -386,7 +392,8 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
                     }
                     if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD_VARSIZED)
                     {
-                        readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
+                        allRecordsSizeOnDisk
+                            -= readVarSizedAndStoreIdx(reinterpret_cast<char*>(lastPagePtr), lastPage, bufferProvider, fileReader);
                     }
                     break;
                 }
@@ -395,6 +402,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
         }
         lastPage.setNumberOfTuples(numTuplesLastPage + 1);
         --numTuplesOnDisk;
+        allRecordsSizeOnDisk -= memoryLayout->getTupleSize();
     }
 }
 
@@ -407,7 +415,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeVarSizedAndStoreIdx(
     memcpy(ptrOnPage, &fileIdx, sizeof(uint32_t));
 }
 
-void FileBackedPagedVector::readVarSizedAndStoreIdx(
+size_t FileBackedPagedVector::readVarSizedAndStoreIdx(
     char* ptrOnPage,
     const Memory::TupleBuffer& page,
     Memory::AbstractBufferProvider* bufferProvider,
@@ -417,6 +425,7 @@ void FileBackedPagedVector::readVarSizedAndStoreIdx(
     auto varSizedData = fileReader->readVarSized(bufferProvider, *varSizedDataIdx);
     const auto newIdx = page.storeChildBuffer(varSizedData);
     memcpy(ptrOnPage, &newIdx, sizeof(uint32_t));
+    return varSizedData.getBufferSize();
 }
 
 }

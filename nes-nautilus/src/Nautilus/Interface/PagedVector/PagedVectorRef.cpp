@@ -29,6 +29,11 @@
 namespace NES::Nautilus::Interface
 {
 
+void inline addToAllRecordsSize(PagedVector* pagedVector, const size_t recordSize)
+{
+    pagedVector->addToAllRecordsSize(recordSize);
+}
+
 uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
 {
     return pagedVector->getNumberOfEntries();
@@ -71,7 +76,8 @@ void PagedVectorRef::writeRecord(const Record& record, const nautilus::val<Memor
 {
     auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
-    memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record, bufferProvider);
+    const auto recordSize = memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record, bufferProvider);
+    invoke(addToAllRecordsSize, pagedVectorRef, recordSize);
     recordBuffer.setNumRecords(numTuplesOnPage + 1);
 }
 

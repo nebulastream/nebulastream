@@ -54,7 +54,7 @@ public:
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
     /// @param context: ExecutionContext to be used for the write operation
-    virtual void writeRecord(
+    virtual nautilus::val<size_t> writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
@@ -70,7 +70,7 @@ protected:
     /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static VarVal storeValue(
+    static nautilus::val<size_t> storeValue(
         const DataType& type,
         const RecordBuffer& recordBuffer,
         const nautilus::val<int8_t*>& fieldReference,

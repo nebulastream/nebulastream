@@ -43,91 +43,91 @@ nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
 }
 
 
-inline const std::unordered_map<DataType::Type, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>> storeValueFunctionMap
-    = {
+inline const std::unordered_map<DataType::Type, std::function<nautilus::val<size_t>(const VarVal&, const nautilus::val<int8_t*>&)>>
+    storeValueFunctionMap = {
         {DataType::Type::BOOLEAN,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal booleanValue = value.cast<nautilus::val<bool>>();
              booleanValue.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(bool));
          }},
         {DataType::Type::INT8,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal int8Value = value.cast<nautilus::val<int8_t>>();
              int8Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(int8_t));
          }},
         {DataType::Type::INT16,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal int16Value = value.cast<nautilus::val<int16_t>>();
              int16Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(int16_t));
          }},
         {DataType::Type::INT32,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal int32Value = value.cast<nautilus::val<int32_t>>();
              int32Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(int32_t));
          }},
         {DataType::Type::INT64,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal int64Value = value.cast<nautilus::val<int64_t>>();
              int64Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(int64_t));
          }},
         {DataType::Type::CHAR,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal uint8Value = value.cast<nautilus::val<char>>();
              uint8Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(char));
          }},
         {DataType::Type::UINT8,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal uint8Value = value.cast<nautilus::val<uint8_t>>();
              uint8Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(uint8_t));
          }},
         {DataType::Type::UINT16,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal uint16Value = value.cast<nautilus::val<uint16_t>>();
              uint16Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(uint16_t));
          }},
         {DataType::Type::UINT32,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal uint32Value = value.cast<nautilus::val<uint32_t>>();
              uint32Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(uint32_t));
          }},
         {DataType::Type::UINT64,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal uint64Value = value.cast<nautilus::val<uint64_t>>();
              uint64Value.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(uint64_t));
          }},
         {DataType::Type::FLOAT32,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal floatValue = value.cast<nautilus::val<float>>();
              floatValue.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(float_t));
          }},
         {DataType::Type::FLOAT64,
          [](const VarVal& value, const nautilus::val<int8_t*>& memoryReference)
          {
              const VarVal doubleValue = value.cast<nautilus::val<double>>();
              doubleValue.writeToMemory(memoryReference);
-             return value;
+             return nautilus::val<size_t>(sizeof(double_t));
          }},
         {DataType::Type::UNDEFINED, nullptr},
 };

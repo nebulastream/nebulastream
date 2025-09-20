@@ -47,7 +47,7 @@ public:
     void truncate(FileLayout fileLayout);
 
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
-    [[nodiscard]] uint64_t getNumberOfTuplesOnDisk() const;
+    [[nodiscard]] size_t getAllRecordsSizeOnDisk() const;
 
 private:
     /// Appends a new page to the keyPages vector if the last page is full.
@@ -73,7 +73,7 @@ private:
 
     static boost::asio::awaitable<void>
     writeVarSizedAndStoreIdx(char* ptrOnPage, const Memory::TupleBuffer& page, const std::shared_ptr<FileWriter>& fileWriter);
-    static void readVarSizedAndStoreIdx(
+    static size_t readVarSizedAndStoreIdx(
         char* ptrOnPage,
         const Memory::TupleBuffer& page,
         Memory::AbstractBufferProvider* bufferProvider,
@@ -84,6 +84,7 @@ private:
     std::vector<Memory::TupleBuffer> keyPages;
 
     uint64_t numTuplesOnDisk = 0;
+    size_t allRecordsSizeOnDisk = 0;
 };
 
 }
