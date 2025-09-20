@@ -19,7 +19,7 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [10000, 10, 100, 1000]
+BATCH_SIZES = [100000, 10, 100, 1000]
 TIMESTAMP_INCREMENTS = [1, 100, 1000, 100000]
 INGESTION_RATES = [100000000, 0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70, 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
@@ -600,8 +600,8 @@ def create_memory_bounds_benchmark_configs():
         for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
         for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [WITH_PREDICTIONS[0]])
-        for min_write_state_size in ([0, 4096] if slice_store_type == "FILE_BACKED" and "payload" not in query and with_prediction == "true" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [0])
-        if lower_memory_bound < upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max])
+        for min_write_state_size in ([0, 4096, 8388608] if slice_store_type == "FILE_BACKED" and "payload" not in query and with_prediction == "true" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [0])
+        if 2 * lower_memory_bound == upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max]) or (lower_memory_bound == LOWER_MEMORY_BOUNDS[0] and upper_memory_bound == UPPER_MEMORY_BOUNDS[0])
     ]
 
 
