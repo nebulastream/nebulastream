@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-09-16_12-39-34'
+DATETIME = '2025-09-20_10-59-12'
 FILE = 'combined_benchmark_statistics.csv'
 # FILE = 'combined_slice_accesses.csv'
 SLICE_ACCESSES = False
@@ -187,7 +187,7 @@ def add_numeric_labels_per_hue(ax, data, hue, param, legend, spacing=0.0725):
     ax.legend(handles, new_labels, title='ID: ' + legend)
 
 
-def find_default_values_for_params(data, min_support_ratio=0.99):
+def find_default_values_for_params(data, min_support_ratio=0.9):
     likely_defaults = {}
 
     for param in all_config_params:
@@ -403,31 +403,32 @@ def plot_time_comparison(data, config, metric, hue, label, legend, interpolate=F
         shifted_data = shift_time_per_groups(filtered_data, param, ['dir_name'], param)
         data, param_unit = convert_units(shifted_data, param, 's', 2)
 
-    #plt.figure(figsize=(14, 9))
-    plt.figure(figsize=(14, 6))
+    plt.figure(figsize=(14, 9))
+    #plt.figure(figsize=(14, 6))
     ax = sns.lineplot(data=data, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
 
     # Add labels for min and max values of metric for this param for each value of hue
     add_min_max_labels_per_group(data, hue, metric, ax, param)
 
     # Add config below
-    #mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in all_config_params])
-    #plt.figtext(0.01, 0.015, mapping_text, wrap=True, ha='left', fontsize=9)
-    add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.02, 0.01)
+    mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in all_config_params])
+    plt.figtext(0.01, 0.015, mapping_text, wrap=True, ha='left', fontsize=9)
+    #add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.02, 0.01)
 
     param = 'time'
     plt.yscale("log")
-    #plt.subplots_adjust(left=0.05, right=0.99, top=0.95, bottom=0.45)
-    plt.subplots_adjust(left=0.05, right=0.99, top=0.9, bottom=0.15)
+    plt.subplots_adjust(left=0.05, right=0.99, top=0.95, bottom=0.45)
+    #plt.subplots_adjust(left=0.05, right=0.99, top=0.9, bottom=0.15)
 
-    #plt.title(f'Effect of {param} on {label}')
-    plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    plt.title(f'Effect of {param} on {label}')
+    #plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
     plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
     plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
     plt.legend(title=legend)
     plt.show()
 
 
+# %%
 for timestamp_increment in default_param_values['timestamp_increment']:
     for query in default_param_values['query']:
         data = df[(df['lower_memory_bound'] <= df['upper_memory_bound']) & (df['slice_store_type'] == 'FILE_BACKED') & 
@@ -446,6 +447,8 @@ for timestamp_increment in default_param_values['timestamp_increment']:
 
 
 # %%
+default_param_values['lower_memory_bound'] = [0]
+default_param_values['upper_memory_bound'] = [np.iinfo(np.uint64).max]
 for lower_memory_bound in df['lower_memory_bound'].unique():
     for upper_memory_bound in df['upper_memory_bound'].unique():
         if lower_memory_bound > upper_memory_bound:
@@ -460,18 +463,22 @@ for lower_memory_bound in df['lower_memory_bound'].unique():
 
         data_default = filter_by_default_values_except_params(data, [])
         data_default = data_default[data_default['slice_store_type'] == 'DEFAULT']
-        data_memory_bound = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound'])
+        data_memory_bound = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound', 'min_write_state_size'])
         data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE_BACKED']
         data_memory_bound = data_memory_bound[data_memory_bound['lower_memory_bound'] == lower_memory_bound]
         data_memory_bound = data_memory_bound[data_memory_bound['upper_memory_bound'] == upper_memory_bound]
+        data_memory_bound = data_memory_bound[data_memory_bound['min_write_state_size'] == 8388608]
         data = pd.concat([data_default, data_memory_bound], ignore_index=True)
 
         config = {param: ", ".join(map(str, data[param].unique().tolist())) for param in all_config_params}
         config['lower_memory_bound'] = lower_memory_bound
         config['upper_memory_bound'] = upper_memory_bound
+        config['min_write_state_size'] = 8388608
 
-        #print(f"Data Rows: {len(data['dir_name'].unique())}")
-        #print(config)
+        if len(data['dir_name'].unique()) < 2 or len(data['slice_store_type'].unique()) < 2:
+            print(f"Data Rows: {len(data['dir_name'].unique())}")
+            print(config)
+            continue
 
         plot_time_comparison(data, config, 'throughput_data', 'shared_hue', 'Throughput / sec', 'Slice Store | Query | Time Increment', False)
         plot_time_comparison(data, config, 'memory', 'shared_hue', 'Memory', 'Slice Store | Query | Time Increment', False)
