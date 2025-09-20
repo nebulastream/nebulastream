@@ -54,7 +54,7 @@ class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 {
 public:
     //static constexpr std::array<size_t, 10> TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
-    static constexpr std::array<size_t, 8> TEST_DATA_SIZES = {64, 256, 1024, 4096, 16384, 65536, 262144, 1048576};
+    static constexpr std::array<size_t, 10> TEST_DATA_SIZES = {64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 134217728, 536870912};
 
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,

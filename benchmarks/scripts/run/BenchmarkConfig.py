@@ -55,7 +55,7 @@ MAX_NUM_WATERMARK_GAPS = [10, 100, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [0, 512, 4096, 16384]
-PREDICTION_TIME_DELTAS = [500, 5000, 100000, 0]
+PREDICTION_TIME_DELTAS = [0, 500, 5000, 100000]
 WITH_CLEANUPS = ["true", "false"]
 WITH_PREDICTIONS = ["true", "false"]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
@@ -600,7 +600,7 @@ def create_memory_bounds_benchmark_configs():
         for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
         for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [WITH_PREDICTIONS[0]])
-        for min_write_state_size in ([0, 4096, 8388608] if slice_store_type == "FILE_BACKED" and "payload" not in query and with_prediction == "true" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [0])
+        for min_write_state_size in ([0, 4096, 8388608] if slice_store_type == "FILE_BACKED" and with_prediction == "true" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [0])
         if 2 * lower_memory_bound == upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max]) or (lower_memory_bound == LOWER_MEMORY_BOUNDS[0] and upper_memory_bound == UPPER_MEMORY_BOUNDS[0])
     ]
 
