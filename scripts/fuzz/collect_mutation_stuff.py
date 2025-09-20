@@ -76,6 +76,11 @@ def collect_file(inp):
         if len(words) == 1 and words[0].startswith("ctestcase::"):
             ct_tests.add(words[0].split("::")[1])
 
+        elif words[1] == "mutant" and words[4] == "non-zero" and words[-1] == "ctest":
+            mutant = words[2]
+            if mutant_killed_by_ctest[mutant]: # access inserts!
+                raise RuntimeError("huh?!")
+
         elif words[1] == "mutant" and words[3] == "killed" and words[5] == "ctest":
             mutant = words[2]
             cttest = words[7]
@@ -128,6 +133,11 @@ def collect_file(inp):
         all_mutations.discard(last_checked)
         cannot_build.discard(last_checked)
         cannot_apply.discard(last_checked)
+
+    for mutant, killers in mutant_killed_by_ctest.items():
+        if not killers:
+            print(f"warning: killer unknown for mutant {mutant}")
+            killers.add("gardener")
 
     return patches_per_file, ct_tests, mutant_killed_by_ctest, mutant_killed_by, all_mutations, cannot_build, cannot_apply
 
