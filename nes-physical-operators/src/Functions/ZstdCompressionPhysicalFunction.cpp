@@ -53,7 +53,6 @@ VarVal ZstdCompressionPhysicalFunction::execute(const Record& record, ArenaRef& 
             size_t compressedSize = ZSTD_compress(compressedData, compressedMaxSize,
                                           inputData, inputSize, 3);
             //TODO: error handling?
-
         },
         varSizedValue.getContentSize(),
         varSizedValue.getContent(),
