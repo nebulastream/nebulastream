@@ -712,7 +712,7 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     }
     if (!helpers.top().windowType)
     {
-        throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
+        throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
     }
     const auto queryPlan = LogicalPlanBuilder::addJoin(
         leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), helpers.top().windowType, helpers.top().joinType);
