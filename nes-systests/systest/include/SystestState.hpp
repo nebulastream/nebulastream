@@ -95,6 +95,7 @@ struct SystestQuery
 
     static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t sourceId);
     [[nodiscard]] std::filesystem::path resultFile() const;
+    [[nodiscard]] std::filesystem::path resultFileForDifferentialQuery() const;
 
     TestName testName;
     SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
@@ -114,13 +115,15 @@ struct SystestQuery
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    std::optional<LogicalPlan> differentialQueryPlan;
 };
 
 struct RunningQuery
 {
     SystestQuery systestQuery;
     QueryId queryId = INVALID_QUERY_ID;
-    LocalQueryStatus queryStatus;
+    std::optional<QueryId> differentialQueryPair;
+    LocalQueryStatus queryStatus{};
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;

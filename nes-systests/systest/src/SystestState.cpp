@@ -84,6 +84,11 @@ std::filesystem::path SystestQuery::resultFile() const
     return resultFile(workingDir, testName, queryIdInFile);
 }
 
+std::filesystem::path SystestQuery::resultFileForDifferentialQuery() const
+{
+    return resultFile(workingDir, testName + "differential", queryIdInFile);
+}
+
 TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
 {
     TestFileMap testFiles;
@@ -281,7 +286,7 @@ std::chrono::duration<double> RunningQuery::getElapsedTime() const
     INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
 
     const auto stop = queryStatus.metrics.stop;
-    const auto running = queryStatus.metrics.stop;
+    const auto running = queryStatus.metrics.running;
     INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps attached", queryId);
     return std::chrono::duration_cast<std::chrono::duration<double>>(stop.value() - running.value());
 }
