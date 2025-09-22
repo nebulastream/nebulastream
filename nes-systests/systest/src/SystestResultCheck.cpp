@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <optional>
@@ -269,21 +270,20 @@ struct QueryResult
     std::vector<std::string> result;
 };
 
-std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query)
+std::optional<QueryResult> loadQueryResult(const std::filesystem::path& resultFilePath)
 {
-    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
-    std::ifstream resultFile(query.resultFile());
+    NES_DEBUG("Loading query result from: {}", resultFilePath);
+    std::ifstream resultFile(resultFilePath);
     if (!resultFile)
     {
-        throw NES::UnknownException("Failed to open result file: {}", query.resultFile());
+        NES_ERROR("Failed to open result file: {}", resultFilePath);
+        return std::nullopt;
     }
 
     QueryResult result;
     std::string firstLine;
-    if (!std::getline(resultFile, firstLine))
-    {
-        return result;
-    }
+    auto isNotEmpty = std::getline(resultFile, firstLine) ? true : false;
+    INVARIANT(isNotEmpty, "Result file is empty: {}", resultFilePath);
 
     result.schema = parseFieldNames(firstLine);
 
@@ -292,6 +292,12 @@ std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& que
         result.result.push_back(firstLine);
     }
     return result;
+}
+
+[[maybe_unused]] std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query)
+{
+    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
+    return loadQueryResult(query.resultFile());
 }
 
 struct ExpectedToActualFieldMap
@@ -690,27 +696,95 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
                                                               "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
                                                               "-------------------------------------------------";
 
-    switch (const auto checkQueryResult = checkQuery(runningQuery); checkQueryResult.type)
+    const auto annotateDifferentialError = [&](std::string message) -> std::string
+    {
+        if (runningQuery.systestQuery.differentialQueryPlan.has_value())
+        {
+            if (not message.empty())
+            {
+                message.append("\n");
+            }
+            message.append("\nThis error happend during differential query execution.");
+        }
+        return message;
+    };
+
+    QueryCheckResult checkQueryResult{""};
+
+    if (runningQuery.systestQuery.differentialQueryPlan.has_value())
+    {
+        const auto result1 = loadQueryResult(runningQuery.systestQuery.resultFile());
+        const auto result2 = loadQueryResult(runningQuery.systestQuery.resultFileForDifferentialQuery());
+
+        if (not result1)
+        {
+            return annotateDifferentialError(fmt::format(
+                "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
+        }
+
+        if (not result2)
+        {
+            return annotateDifferentialError(fmt::format(
+                "Failed to load second result file for differential query comparison: {}",
+                runningQuery.systestQuery.resultFileForDifferentialQuery()));
+        }
+
+        if (result1->schema.getNumberOfFields() == 0)
+        {
+            return annotateDifferentialError(
+                fmt::format("First result file is empty or has no schema: {}", runningQuery.systestQuery.resultFile()));
+        }
+
+        if (result2->schema.getNumberOfFields() == 0)
+        {
+            return annotateDifferentialError(fmt::format(
+                "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
+        }
+
+        const QuerySchemasAndResults querySchemasAndResults = [&]()
+        {
+            auto [schema1, result1Data] = result1.value();
+            auto [schema2, result2Data] = result2.value();
+
+            return QuerySchemasAndResults(
+                ExpectedResultSchema(schema1), ActualResultSchema(schema2), std::move(result1Data), std::move(result2Data));
+        }();
+
+        /// Compare the schemas and results using the normal result check logic
+        const auto resultComparisonErrorStream = compareResults(
+            querySchemasAndResults.getExpectedResultTuples(),
+            querySchemasAndResults.getActualResultTuples(),
+            querySchemasAndResults.getExpectedToActualResultMap());
+
+        checkQueryResult = QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream};
+    }
+    else
+    {
+        checkQueryResult = checkQuery(runningQuery);
+    }
+
+    switch (checkQueryResult.type)
     {
         case QueryCheckResult::Type::QUERY_NOT_FOUND: {
-            return checkQueryResult.queryError;
+            return annotateDifferentialError(checkQueryResult.queryError);
         }
         case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MATCH: {
             return std::nullopt;
         }
         case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MISMATCH: {
-            return fmt::format("{}{}", ResultMismatchMessage, checkQueryResult.resultErrorStream);
+            return annotateDifferentialError(fmt::format("{}{}", ResultMismatchMessage, checkQueryResult.resultErrorStream));
         }
         case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MATCH: {
-            return fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream);
+            return annotateDifferentialError(
+                fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream));
         }
         case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH: {
-            return fmt::format(
+            return annotateDifferentialError(fmt::format(
                 "{}{}{}{}",
                 SchemaMismatchMessage,
                 checkQueryResult.schemaErrorStream,
                 ResultMismatchMessage,
-                checkQueryResult.resultErrorStream);
+                checkQueryResult.resultErrorStream));
         }
     }
     std::unreachable();
