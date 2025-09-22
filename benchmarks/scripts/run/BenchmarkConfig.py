@@ -49,8 +49,8 @@ WINDOW_SIZE_SLIDE = [
 SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 
 # File-backed worker configuration parameters
-LOWER_MEMORY_BOUNDS = [0, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
-UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024]
+LOWER_MEMORY_BOUNDS = [0, 8 * 1024 * 1024, 16 * 1024 * 1024, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
+UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 8 * 1024 * 1024, 16 * 1024 * 1024, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024]
 MAX_NUM_WATERMARK_GAPS = [10, 100, 1000, 1]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
@@ -94,7 +94,7 @@ def get_queries():
     for window_size, slide in WINDOW_SIZE_SLIDE:
         queries.append(
             f"SELECT * FROM (SELECT * FROM tcp_source4) "
-            f"INNER JOIN (SELECT * FROM tcp_source5) ON (id4 = id5 AND payload4 = payload5) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INNER JOIN (SELECT * FROM tcp_source5) ON payload4 = payload5 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
             f"INTO csv_sink;"
         )
     # Join with three streams
@@ -594,13 +594,13 @@ def create_memory_bounds_benchmark_configs():
                         upper_memory_bound=upper_memory_bound,
                         with_prediction=with_prediction,
                         min_write_state_size=min_write_state_size)
-        for timestamp_increment in TIMESTAMP_INCREMENTS[:2]
+        for timestamp_increment in TIMESTAMP_INCREMENTS[:1]
         for query in get_queries()
         for slice_store_type in SLICE_STORE_TYPES
         for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
         for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [WITH_PREDICTIONS[0]])
-        for min_write_state_size in ([0, 4096, 8388608] if slice_store_type == "FILE_BACKED" and with_prediction == "true" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [0])
+        for min_write_state_size in ([0, 4096, 8388608] if slice_store_type == "FILE_BACKED" and with_prediction == "true" else [0])
         if 2 * lower_memory_bound == upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max]) or (lower_memory_bound == LOWER_MEMORY_BOUNDS[0] and upper_memory_bound == UPPER_MEMORY_BOUNDS[0])
     ]
 
