@@ -52,6 +52,7 @@ VarVal ZstdCompressionPhysicalFunction::execute(const Record& record, ArenaRef& 
         {
             size_t compressedSize = ZSTD_compress(compressedData, compressedMaxSize,
                                           inputData, inputSize, 3);
+            //TODO: error handling?
 
         },
         varSizedValue.getContentSize(),
@@ -60,7 +61,6 @@ VarVal ZstdCompressionPhysicalFunction::execute(const Record& record, ArenaRef& 
         compressedData.getContent()
         );
 
-
         return compressedData;
 }
 
@@ -68,10 +68,11 @@ ZstdCompressionPhysicalFunction::ZstdCompressionPhysicalFunction(PhysicalFunctio
 {
 }
 
-// PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterCompressionPhysicalFunction(
-//     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
-// {
-//     return CompressionPhysicalFunction();
-// }
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterZstdCompressionPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+{
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Zstd compression function must have exactly onet  sub-function");
+    return ZstdCompressionPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+}
 
 }
