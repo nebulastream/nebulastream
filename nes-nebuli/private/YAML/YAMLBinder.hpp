@@ -28,7 +28,9 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Pointers.hpp>
 #include <experimental/propagate_const>
+#include <WorkerCatalog.hpp>
 
 namespace NES::CLI
 {
@@ -50,6 +52,7 @@ struct Sink
     std::string name;
     std::vector<SchemaField> schema;
     std::string type;
+    std::string host;
     std::unordered_map<std::string, std::string> config;
 };
 
@@ -63,8 +66,17 @@ struct PhysicalSource
 {
     std::string logical;
     std::string type;
+    std::string host;
     std::unordered_map<std::string, std::string> parserConfig;
     std::unordered_map<std::string, std::string> sourceConfig;
+};
+
+struct WorkerConfig
+{
+    std::string host;
+    std::string grpc;
+    size_t capacity;
+    std::vector<std::string> downstream;
 };
 
 struct QueryConfig
@@ -73,16 +85,19 @@ struct QueryConfig
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
+    std::vector<WorkerConfig> workers;
 };
 
 class YAMLBinder
 {
     std::experimental::propagate_const<std::shared_ptr<SourceCatalog>> sourceCatalog;
     std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
+    std::experimental::propagate_const<std::shared_ptr<WorkerCatalog>> workerCatalog;
 
 public:
-    explicit YAMLBinder(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    explicit YAMLBinder(
+        std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog, SharedPtr<WorkerCatalog> workerCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), workerCatalog(std::move(workerCatalog))
     {
     }
 
@@ -94,6 +109,7 @@ public:
     bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources); /// required since it's not using CLI::LogicalSource
     std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
     std::vector<SinkDescriptor> bindRegisterSinks(const std::vector<Sink>& unboundSinks);
+    void bindRegisterWorkers(const std::vector<WorkerConfig>& workers);
 };
 
 }

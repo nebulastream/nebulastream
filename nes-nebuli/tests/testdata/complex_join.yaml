@@ -1,0 +1,124 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream2) ON id1 = id2 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream3) ON id2 = id3 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    type: Print
+    schema:
+      - name: stream0stream1stream2stream3$start
+        type: UINT64
+      - name: stream0stream1stream2stream3$end
+        type: UINT64
+      - name: stream0stream1stream2$start
+        type: UINT64
+      - name: stream0stream1stream2$end
+        type: UINT64
+      - name: stream0stream1$start
+        type: UINT64
+      - name: stream0stream1$end
+        type: UINT64
+      - name: stream0$ts
+        type: UINT64
+      - name: stream0$id0
+        type: INT32
+      - name: stream1$ts
+        type: UINT64
+      - name: stream1$id1
+        type: INT32
+      - name: stream2$ts
+        type: UINT64
+      - name: stream2$id2
+        type: INT32
+      - name: stream3$ts
+        type: UINT64
+      - name: stream3$id3
+        type: INT32
+    host: "sink-node-host:9090"
+    config:
+      input_format: CSV
+
+logical:
+  - name: stream0
+    schema:
+      - name: ts
+        type: UINT64
+      - name: id0
+        type: INT32
+  - name: stream1
+    schema:
+      - name: ts
+        type: UINT64
+      - name: id1
+        type: INT32
+  - name: stream2
+    schema:
+      - name: ts
+        type: UINT64
+      - name: id2
+        type: INT32
+  - name: stream3
+    schema:
+      - name: ts
+        type: UINT64
+      - name: id3
+        type: INT32
+
+physical:
+  - logical: stream0
+    type: File
+    host: "source-node0-host:9090"
+    parser_config:
+      type: CSV
+    source_config:
+      file_path: "[MOCKED]"
+  - logical: stream1
+    type: File
+    host: "source-node0-host:9090"
+    parser_config:
+      type: CSV
+    source_config:
+      file_path: "[MOCKED]"
+  - logical: stream2
+    type: File
+    host: "source-node1-host:9090"
+    parser_config:
+      type: CSV
+    source_config:
+      file_path: "[MOCKED]"
+  - logical: stream3
+    type: File
+    host: "source-node2-host:9090"
+    parser_config:
+      type: CSV
+    source_config:
+      file_path: "[MOCKED]"
+
+workers:
+  - host: "source-node0-host:9090"
+    grpc: "source-node0:8080"
+    capacity: 3
+    downstream:
+      - "sink-node-host:9090"
+  - host: "source-node1-host:9090"
+    grpc: "source-node1:8080"
+    capacity: 1
+    downstream:
+      - "intermediate-node0-host:9090"
+  - host: "source-node2-host:9090"
+    grpc: "source-node2:8080"
+    capacity: 0
+    downstream:
+      - "intermediate-node1-host:9090"
+  - host: "intermediate-node0-host:9090"
+    grpc: "intermediate-node0:8080"
+    capacity: 0
+    downstream:
+      - "sink-node-host:9090"
+  - host: "intermediate-node1-host:9090"
+    grpc: "intermediate-node1:8080"
+    capacity: 1
+    downstream:
+      - "sink-node-host:9090"
+  - host: "sink-node-host:9090"
+    grpc: "sink-node:8080"
+    capacity: 2

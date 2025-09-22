@@ -21,17 +21,20 @@ get_source(nes-query-manager-embedded QUERY_MANAGER_EMBEDDED_SOURCE_FILES)
 add_library(nes-nebuli-lib STATIC ${COORDINATOR_SOURCE_FILES} ${QUERY_MANAGER_GRPC_SOURCE_FILES} ${GLOBAL_OPTIMIZER_SOURCE_FILES} ${YAML_BINDER_SOURCE_FILES})
 add_library(nes-nebuli-embedded-lib STATIC ${COORDINATOR_SOURCE_FILES} ${QUERY_MANAGER_GRPC_SOURCE_FILES} ${GLOBAL_OPTIMIZER_SOURCE_FILES} ${YAML_BINDER_SOURCE_FILES} ${QUERY_MANAGER_EMBEDDED_SOURCE_FILES})
 
+find_package(PkgConfig)
+pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
 find_package(replxx CONFIG REQUIRED)
+find_package(ortools CONFIG REQUIRED)
 
 target_include_directories(nes-nebuli-lib
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-nebuli-lib
-        PUBLIC nes-logical-operators nes-sql-parser
-        PRIVATE yaml-cpp::yaml-cpp
+        PUBLIC nes-logical-operators nes-sql-parser nes-distributed
+        PRIVATE yaml-cpp::yaml-cpp PkgConfig::uuid ortools::ortools
 )
 
 target_compile_definitions(nes-nebuli-embedded-lib PUBLIC
@@ -43,13 +46,14 @@ target_include_directories(nes-nebuli-embedded-lib
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-nebuli-embedded-lib
-        PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser
-        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp
+        PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser nes-distributed
+        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp PkgConfig::uuid ortools::ortools
 )
 
 add_executable(nes-nebuli src/NebuLIStarter.cpp src/Repl.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
+
 target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
 
 target_include_directories(nes-nebuli
@@ -59,10 +63,12 @@ target_include_directories(nes-nebuli
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
+
 add_executable(nes-nebuli-embedded src/NebuLIStarter.cpp src/Repl.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nes-nebuli-embedded PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(nes-nebuli-embedded PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
+
 
 target_include_directories(nes-nebuli-embedded
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
@@ -71,13 +77,8 @@ target_include_directories(nes-nebuli-embedded
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
-function(add_nes_test_nebuli)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-nebuli-lib)
-    target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
-endfunction()
+
+add_tests_if_enabled(tests)
 
 add_test(
         NAME "repl-test"

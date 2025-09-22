@@ -31,6 +31,7 @@
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Common.hpp>
 #include <cpptrace/from_current.hpp>
+#include <oneapi/tbb/partitioner.h>
 
 namespace NES
 {
@@ -172,29 +173,47 @@ QueryStatementHandler::QueryStatementHandler(
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
-    const std::unique_lock lock(mutex);
-    std::erase(runningQueries, statement.id);
     return queryManager->stop(statement.id)
         .and_then([&statement, this] { return queryManager->unregister(statement.id); })
+        .transform_error(
+            [](auto vecOfErrors)
+            {
+                return QueryStopFailed(
+                    "Could not stop query: {}",
+                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+            })
         .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
 {
-    const std::unique_lock lock(mutex);
     CPPTRACE_TRY
     {
         auto boundPlan = PlanStage::BoundLogicalPlan{statement};
-        QueryPlanningContext context{.sourceCatalog = Util::copyPtr(sourceCatalog), .sinkCatalog = Util::copyPtr(sinkCatalog)};
-        const auto optimizedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
-        const auto id = queryManager->registerQuery(optimizedPlan.plan);
-        return id.and_then([this](const auto& queryId) { return queryManager->start(queryId); })
-            .transform(
-                [&id, this]
+        QueryPlanningContext context{
+            .id = INVALID<LocalQueryId>,
+            .sqlString = statement.getOriginalSql(),
+            .sourceCatalog = Util::copyPtr(sourceCatalog),
+            .sinkCatalog = Util::copyPtr(sinkCatalog),
+            .workerCatalog = Util::copyPtr(workerCatalog)};
+
+        const auto distributedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
+        const auto queryResult = queryManager->registerQuery(distributedPlan);
+        return queryResult
+            .and_then(
+                [this](const auto& query)
                 {
-                    runningQueries.push_back(id.value());
-                    return QueryStatementResult{id.value()};
-                });
+                    return queryManager->start(query)
+                        .transform([&query] { return query; })
+                        .transform_error(
+                            [](auto vecOfErrors)
+                            {
+                                return QueryStopFailed(
+                                    "Could not stop query: {}",
+                                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+                            });
+                })
+            .transform([](auto query) { return QueryStatementResult{query}; });
     }
     CPPTRACE_CATCH(...)
     {
@@ -205,30 +224,49 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
 {
-    const std::unique_lock lock(mutex);
     if (not statement.id.has_value())
     {
-        auto allQueryState = runningQueries | std::views::transform([this](auto queryId) { return queryManager->status(queryId); })
-            | std::views::filter([](const std::expected<LocalQueryStatus, Exception>& statusResult) { return statusResult.has_value(); })
-            | std::views::transform([](const auto& statusResult) { return statusResult.value(); }) | std::ranges::to<std::vector>();
-        auto newRunningQueries = allQueryState | std::views::transform([](const auto& querySummary) { return querySummary.queryId; })
+        auto statusResults
+            = queryManager->queries()
+            | std::views::transform(
+                  [&](const auto& queryId) -> std::pair<DistributedQueryId, std::expected<DistributedQueryStatus, Exception>>
+                  {
+                      auto statusResult = queryManager->status(queryId).transform_error(
+                          [](auto vecOfErrors)
+                          {
+                              return QueryStopFailed(
+                                  "Could not stop query: {}",
+                                  fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+                          });
+                      return {queryId, statusResult};
+                  })
             | std::ranges::to<std::vector>();
-        runningQueries = newRunningQueries;
+
+        auto failedStatusResults = statusResults
+            | std::views::filter([](const auto& idAndStatusResult) { return !idAndStatusResult.second.has_value(); })
+            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, Exception>
+                                    { return {idAndStatusResult.first, idAndStatusResult.second.error()}; });
+
+        auto goodQueryStatusResults = statusResults
+            | std::views::filter([](const auto& idAndStatusResult) { return idAndStatusResult.second.has_value(); })
+            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, DistributedQueryStatus>
+                                    { return {idAndStatusResult.first, idAndStatusResult.second.value()}; });
+        if (!failedStatusResults.empty())
+        {
+            return std::unexpected(
+                QueryStatusFailed("Could not retrieve query status for some queries: ", fmt::join(failedStatusResults, "\n")));
+        }
+
         return ShowQueriesStatementResult{
-            allQueryState
-            | std::views::transform([](const auto& querySummary) { return std::make_pair(querySummary.queryId, querySummary); })
-            | std::ranges::to<std::unordered_map<LocalQueryId, LocalQueryStatus>>()};
+            goodQueryStatusResults | std::ranges::to<std::unordered_map<DistributedQueryId, DistributedQueryStatus>>()};
     }
+
     if (const auto statusOpt = queryManager->status(statement.id.value()); statusOpt.has_value())
     {
-        return ShowQueriesStatementResult{std::unordered_map<LocalQueryId, LocalQueryStatus>{{statement.id.value(), statusOpt.value()}}};
+        return ShowQueriesStatementResult{
+            std::unordered_map<DistributedQueryId, DistributedQueryStatus>{{statement.id.value(), statusOpt.value()}}};
     }
     return ShowQueriesStatementResult{.queries = {}};
-}
-
-std::vector<LocalQueryId> QueryStatementHandler::getRunningQueries() const
-{
-    return runningQueries;
 }
 
 }

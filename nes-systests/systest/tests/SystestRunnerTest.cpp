@@ -100,20 +100,20 @@ public:
         = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", "localhost", {{"input_format", "CSV"}}).value();
 };
 
-class MockQueryManager final : public QueryManager
+class MockQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    MOCK_METHOD((std::expected<LocalQueryId, Exception>), registerQuery, (const LogicalPlan&), (override));
-    MOCK_METHOD((std::expected<void, Exception>), start, (LocalQueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<void, Exception>), stop, (LocalQueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<void, Exception>), unregister, (LocalQueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (LocalQueryId), (const, noexcept, override));
+    MOCK_METHOD((std::expected<LocalQueryId, Exception>), registerQuery, (const GrpcAddr&, LogicalPlan), (override));
+    MOCK_METHOD((std::expected<void, Exception>), start, (const LocalQuery&), (override));
+    MOCK_METHOD((std::expected<void, Exception>), stop, (const LocalQuery&), (override));
+    MOCK_METHOD((std::expected<void, Exception>), unregister, (const LocalQuery&), (override));
+    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (const LocalQuery&), (const, override));
 };
 
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
-    QuerySubmitter submitter{std::make_unique<MockQueryManager>()};
+    QuerySubmitter submitter{QueryManager{std::make_unique<MockQuerySubmissionBackend>()}};
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
@@ -126,27 +126,32 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
-    constexpr LocalQueryId id{7};
+    LocalQuery id{LocalQueryId(7), "localhost"};
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
 
-    auto mockManager = std::make_unique<MockQueryManager>();
-    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
+    auto mockManager = std::make_unique<MockQuerySubmissionBackend>();
+    EXPECT_CALL(*mockManager, registerQuery("localhost", ::testing::_))
+        .WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id.id}));
     EXPECT_CALL(*mockManager, start(id));
     EXPECT_CALL(*mockManager, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)))
+        .WillOnce(testing::Return(makeSummary(id.id, QueryState::Failed, runtimeErr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
 
-    QuerySubmitter submitter{std::move(mockManager)};
+    QuerySubmitter submitter{QueryManager{std::move(mockManager)}};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, ParserConfig{});
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    PlanStage::DecomposedLogicalPlan decomposedPlan{
+        std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost"), std::vector{plan}}}};
+    PlanStage::DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), PlanStage::OptimizedLogicalPlan{plan}};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
+        {makeQuery(
+            SystestQuery::PlanInfo{.queryPlan = distributedPlan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
         1,
         submitter,
         discardPerformanceMessage);
@@ -159,26 +164,30 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
-    constexpr LocalQueryId id{11};
+    const LocalQuery id{LocalQueryId(11), "localhost"};
 
-    auto mockManager = std::make_unique<MockQueryManager>();
-    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
+    auto mockManager = std::make_unique<MockQuerySubmissionBackend>();
+    EXPECT_CALL(*mockManager, registerQuery("localhost", ::testing::_))
+        .WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id.id}));
     EXPECT_CALL(*mockManager, start(id));
     EXPECT_CALL(*mockManager, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)))
+        .WillOnce(testing::Return(makeSummary(id.id, QueryState::Stopped, nullptr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
 
-    QuerySubmitter submitter{std::move(mockManager)};
+    QuerySubmitter submitter{QueryManager{std::move(mockManager)}};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, ParserConfig{});
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    PlanStage::DecomposedLogicalPlan decomposedPlan{
+        std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost"), std::vector{plan}}}};
+    PlanStage::DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), PlanStage::OptimizedLogicalPlan{plan}};
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
+            SystestQuery::PlanInfo{.queryPlan = distributedPlan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,

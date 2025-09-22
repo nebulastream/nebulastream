@@ -40,17 +40,15 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <SystestSources/SourceTypes.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <magic_enum/magic_enum.hpp>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
 #include <SystestConfiguration.hpp>
-
-#include <Identifiers/NESStrongType.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace NES::Systest
 {
@@ -106,7 +104,7 @@ struct SystestQuery
 
     struct PlanInfo
     {
-        LogicalPlan queryPlan;
+        PlanStage::DistributedLogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
     };
@@ -119,8 +117,8 @@ struct SystestQuery
 struct RunningQuery
 {
     SystestQuery systestQuery;
-    LocalQueryId queryId = INVALID_QUERY_ID;
-    LocalQueryStatus queryStatus;
+    DistributedQueryId queryId = INVALID<DistributedQueryId>;
+    DistributedQueryStatus queryStatus;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;

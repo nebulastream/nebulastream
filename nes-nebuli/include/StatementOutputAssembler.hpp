@@ -68,10 +68,10 @@ constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
 using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
-using QueryIdOutputRowType = std::tuple<LocalQueryId>;
+using QueryIdOutputRowType = std::tuple<DistributedQueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
-using QueryStatusOutputRowType = std::tuple<LocalQueryId, std::string>;
+using QueryStatusOutputRowType = std::tuple<DistributedQueryId, std::string>;
 constexpr std::array<std::string_view, 2> queryStatusOutputColumns{"query_id", "query_status"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
@@ -244,7 +244,7 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
         output.reserve(result.queries.size());
         for (const auto& [id, query] : result.queries)
         {
-            output.emplace_back(id, magic_enum::enum_name(query.state));
+            output.emplace_back(id, magic_enum::enum_name(query.getGlobalQueryState()));
         }
         return std::make_pair(queryStatusOutputColumns, output);
     }

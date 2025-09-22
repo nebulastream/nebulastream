@@ -74,6 +74,7 @@ struct convert<NES::CLI::Sink>
         rhs.name = node["name"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
+        rhs.host = node["host"].as<std::string>();
         rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
@@ -97,8 +98,26 @@ struct convert<NES::CLI::PhysicalSource>
     {
         rhs.logical = node["logical"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
+        rhs.host = node["host"].as<std::string>();
         rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
+        return true;
+    }
+};
+
+template <>
+struct convert<NES::CLI::WorkerConfig>
+{
+    static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
+    {
+        rhs.capacity = node["capacity"].as<size_t>();
+        if (node["downstream"].IsDefined())
+        {
+            rhs.downstream = node["downstream"].as<std::vector<std::string>>();
+        }
+        rhs.grpc = node["grpc"].as<std::string>();
+        rhs.host = node["host"].as<std::string>();
+
         return true;
     }
 };
@@ -112,6 +131,7 @@ struct convert<NES::CLI::QueryConfig>
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
         rhs.query = node["query"].as<std::string>();
+        rhs.workers = node["workers"].as<std::vector<NES::CLI::WorkerConfig>>();
         return true;
     }
 };
@@ -164,7 +184,7 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
 {
     std::vector<SourceDescriptor> boundSources{};
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, sourceType, parserConfig, sourceConfig] : unboundSources)
+    for (auto [logicalSourceName, sourceType, host, parserConfig, sourceConfig] : unboundSources)
     {
         auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
         if (not logicalSource.has_value())
@@ -175,7 +195,7 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
 
         const auto validInputFormatterConfig = ParserConfig::create(parserConfig);
         const auto sourceDescriptorOpt
-            = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, "localhost", sourceConfig, validInputFormatterConfig);
+            = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, host, sourceConfig, validInputFormatterConfig);
         if (not sourceDescriptorOpt.has_value())
         {
             throw UnknownSourceName("{}", logicalSource.value().getLogicalSourceName());
@@ -188,12 +208,11 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
 std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
 {
     std::vector<SinkDescriptor> boundSinks{};
-    for (const auto& [sinkName, schemaFields, sinkType, sinkConfig] : unboundSinks)
+    for (const auto& [sinkName, schemaFields, sinkType, host, sinkConfig] : unboundSinks)
     {
         auto schema = bindSchema(schemaFields);
         NES_DEBUG("Adding sink: {} of type {}", sinkName, sinkType);
-        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, "localhost", sinkConfig);
-            sinkDescriptor.has_value())
+        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, host, sinkConfig); sinkDescriptor.has_value())
         {
             boundSinks.push_back(sinkDescriptor.value());
         }
@@ -201,14 +220,24 @@ std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector
     return boundSinks;
 }
 
+void YAMLBinder::bindRegisterWorkers(const std::vector<WorkerConfig>& workers)
+{
+    for (const auto& worker : workers)
+    {
+        workerCatalog->addWorker(worker.host, worker.grpc, worker.capacity, worker.downstream);
+    }
+}
+
 LogicalPlan CLI::YAMLBinder::parseAndBind(std::istream& inputStream)
 {
     try
     {
-        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources] = YAML::Load(inputStream).as<QueryConfig>();
+        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources, workers]
+            = YAML::Load(inputStream).as<QueryConfig>();
         bindRegisterLogicalSources(unboundLogicalSources);
         bindRegisterPhysicalSources(unboundPhysicalSources);
         bindRegisterSinks(unboundSinks);
+        bindRegisterWorkers(workers);
         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryString);
         return plan;
     }

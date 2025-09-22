@@ -35,8 +35,8 @@
 #include <unistd.h>
 
 #include <Configurations/Util.hpp>
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -389,15 +389,15 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     const auto grpcURI = config.grpcAddressUri.getValue();
     const auto runRemote = not grpcURI.empty();
 
-    auto queryManager = [&]() -> std::unique_ptr<QueryManager>
+    auto querySubmissionBackend = [&]() -> std::unique_ptr<QuerySubmissionBackend>
     {
         if (runRemote)
         {
-            return std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
+            return std::make_unique<GRPCQuerySubmissionBackend>(std::vector<WorkerConfig>{});
         }
-        return std::make_unique<EmbeddedWorkerQueryManager>(singleNodeWorkerConfiguration);
+        return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(std::vector<WorkerConfig>{}, singleNodeWorkerConfiguration);
     }();
-    Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+    Systest::QuerySubmitter querySubmitter(QueryManager{std::move(querySubmissionBackend)});
 
     while (true)
     {

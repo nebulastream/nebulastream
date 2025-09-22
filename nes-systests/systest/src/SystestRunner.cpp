@@ -38,7 +38,13 @@
 #include <variant>
 #include <vector>
 
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
+#include <QueryManager/QueryManager.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -48,13 +54,6 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp>
-
-#include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -63,6 +62,10 @@
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
+
+/// If systest is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
+/// via an in-memory channel.
+extern void enable_memcom();
 
 namespace NES::Systest
 {
@@ -133,7 +136,7 @@ std::vector<RunningQuery> runQueries(
         pending.push(*it);
     }
 
-    std::unordered_map<LocalQueryId, std::shared_ptr<RunningQuery>> active;
+    std::unordered_map<DistributedQueryId, std::shared_ptr<RunningQuery>> active;
     std::vector<std::shared_ptr<RunningQuery>> failed;
     std::size_t finished = 0;
 
@@ -181,10 +184,9 @@ std::vector<RunningQuery> runQueries(
 
             auto& runningQuery = it->second;
 
-            if (queryStatus.state == QueryState::Failed)
+            if (queryStatus.getGlobalQueryState() == QueryState::Failed)
             {
-                INVARIANT(queryStatus.metrics.error.has_value(), "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, finished, queries.size(), failed, queryStatus.metrics.error);
+                processQueryWithError(it->second, finished, queries.size(), failed, queryStatus.coalesceException());
             }
             else
             {
@@ -245,8 +247,11 @@ void serializeExecutionResults(const RunningQuery& queryRan, nlohmann::json& res
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
 {
-    auto worker = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
-    QuerySubmitter submitter(std::move(worker));
+    enable_memcom();
+    QueryManager queryManager{std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        std::vector{WorkerConfig{.host = "localhost:9090", .grpc = "localhost:8080", .capacity = 100000, .downstream = {}}},
+        configuration)};
+    QuerySubmitter submitter(std::move(queryManager));
     constexpr auto numConcurrentQueries = 1;
 
     auto queryPerformanceMessage = [&resultJson](RunningQuery& runningQuery)
@@ -318,16 +323,20 @@ void printQueryResultToStdOut(
 std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
 {
-    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
-    QuerySubmitter submitter(std::move(embeddedQueryManager));
+    enable_memcom();
+    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        std::vector{std::vector{WorkerConfig{.host = "localhost:9090", .grpc = "localhost:8080", .capacity = 100000, .downstream = {}}}},
+        configuration);
+    QuerySubmitter submitter(QueryManager{std::move(embeddedQueryManager)});
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
 
 std::vector<RunningQuery>
 runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {
-    auto remoteQueryManager = std::make_unique<GRPCQueryManager>(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
-    QuerySubmitter submitter(std::move(remoteQueryManager));
+    auto remoteQueryManager = std::make_unique<GRPCQuerySubmissionBackend>(
+        std::vector{WorkerConfig{.host = "localhost:9090", .grpc = serverURI, .capacity = 100000, .downstream = {}}});
+    QuerySubmitter submitter(QueryManager{std::move(remoteQueryManager)});
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
 

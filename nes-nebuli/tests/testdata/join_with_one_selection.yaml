@@ -1,0 +1,75 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    type: Print
+    schema:
+      - name: stream0stream1$start
+        type: UINT64
+      - name: stream0stream1$end
+        type: UINT64
+      - name: stream0$ts
+        type: UINT64
+      - name: stream0$id0
+        type: INT32
+      - name: stream1$ts
+        type: UINT64
+      - name: stream1$id1
+        type: INT32
+      - name: stream1$a
+        type: INT32
+      - name: stream1$b
+        type: INT32
+    host: "sink-node-host:9090"
+    config:
+      input_format: CSV
+
+logical:
+  - name: stream0
+    schema:
+      - name: ts
+        type: UINT64
+      - name: id0
+        type: INT32
+  - name: stream1
+    schema:
+      - name: ts
+        type: UINT64
+      - name: id1
+        type: INT32
+      - name: a
+        type: INT32
+      - name: b
+        type: INT32
+
+physical:
+  - logical: stream0
+    type: File
+    host: "source-node0-host:9090"
+    parser_config:
+      type: CSV
+    source_config:
+      file_path: "[MOCKED]"
+  - logical: stream1
+    type: File
+    host: "source-node1-host:9090"
+    parser_config:
+      type: CSV
+    source_config:
+      file_path: "[MOCKED]"
+
+workers:
+  - host: "sink-node-host:9090"
+    grpc: "sink-node:8080"
+    capacity: 10
+  - host: "source-node0-host:9090"
+    grpc: "source-node0:8080"
+    capacity: 10
+    downstream:
+      - "sink-node-host:9090"
+  - host: "source-node1-host:9090"
+    grpc: "source-node1:8080"
+    capacity: 10
+    downstream:
+      - "sink-node-host:9090"

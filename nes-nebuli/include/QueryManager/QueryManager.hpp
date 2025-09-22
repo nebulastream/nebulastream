@@ -14,32 +14,48 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <unordered_map>
+#include <expected>
 #include <vector>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Util/Pointers.hpp>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryPlanning.hpp>
 
 namespace NES
 {
-class LogicalPlan;
-}
 
-namespace NES
+class QuerySubmissionBackend
 {
+public:
+    virtual ~QuerySubmissionBackend() = default;
+    [[nodiscard]] virtual std::expected<LocalQueryId, Exception> registerQuery(const GrpcAddr& grpc, LogicalPlan) = 0;
+    virtual std::expected<void, Exception> start(const LocalQuery&) = 0;
+    virtual std::expected<void, Exception> stop(const LocalQuery&) = 0;
+    virtual std::expected<void, Exception> unregister(const LocalQuery&) = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(const LocalQuery&) const = 0;
+};
+
+struct QueryManagerState
+{
+    std::unordered_map<DistributedQueryId, Query> queries;
+};
 
 class QueryManager
 {
+    UniquePtr<QuerySubmissionBackend> backend;
+    QueryManagerState state;
+    std::expected<Query, Exception> getQuery(DistributedQueryId query) const;
+
 public:
-    virtual ~QueryManager() = default;
-    [[nodiscard]] virtual std::expected<LocalQueryId, Exception> registerQuery(const LogicalPlan& plan) = 0;
-    virtual std::expected<void, Exception> start(LocalQueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> stop(LocalQueryId queryId) noexcept = 0;
-    virtual std::expected<void, Exception> unregister(LocalQueryId queryId) noexcept = 0;
-    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(LocalQueryId queryId) const noexcept = 0;
+    QueryManager(UniquePtr<QuerySubmissionBackend> backend);
+    [[nodiscard]] std::expected<DistributedQueryId, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
+    std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>> unregister(DistributedQueryId query);
+    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(DistributedQueryId query) const;
+    [[nodiscard]] std::vector<DistributedQueryId> queries() const;
+    std::vector<DistributedQueryId> getRunningQueries() const;
 };
+
 }
