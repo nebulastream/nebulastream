@@ -11,6 +11,10 @@
 # limitations under the License.
 
 add_subdirectory(Phases)
+
 add_source_files(nes-global-optimizer
+        BottomUpPlacement.cpp
         GlobalOptimizer.cpp
+        OperatorPlacement.cpp
+        QueryDecomposition.cpp
 )

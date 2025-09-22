@@ -42,6 +42,7 @@
 namespace NES
 {
 
+using DistributedQueryId = NESStrongType<uint64_t, struct DistributedQueryId_, 0, 1>;
 enum class StatementOutputFormat : uint8_t
 {
     JSON,
@@ -117,13 +118,13 @@ using QueryStatement = LogicalPlan;
 
 struct ShowQueriesStatement
 {
-    std::optional<LocalQueryId> id;
+    std::optional<DistributedQueryId> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    LocalQueryId id;
+    DistributedQueryId id;
 };
 
 using Statement = std::variant<

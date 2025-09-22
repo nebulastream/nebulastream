@@ -19,202 +19,261 @@
 #include <exception>
 #include <memory>
 #include <optional>
+#include <unordered_map>
+#include <utility>
 #include <vector>
-
+#include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/support/status.h>
 #include <magic_enum/magic_enum.hpp>
-
-#include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 /// Both are needed, clang-tidy complains otherwise
+#include <grpcpp/create_channel.h>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <grpcpp/security/credentials.h>
+#include <DistributedQueryId.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES
 {
-GRPCQueryManager::GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel) : stub(WorkerRPCService::NewStub(channel))
+GrpcQueryManager::GrpcQueryManager(std::vector<WorkerConfig> configs)
+    : cluster{
+          configs
+          | std::views::transform(
+              [](const WorkerConfig& config)
+              {
+                  const auto channel = grpc::CreateChannel(config.grpc, grpc::InsecureChannelCredentials());
+                  return std::make_pair(config.grpc, ClusterNode{.stub = WorkerRPCService::NewStub(channel), .workerConfig = config});
+              })
+          | std::ranges::to<std::unordered_map>()}
 {
 }
 
-std::expected<LocalQueryId, Exception> GRPCQueryManager::registerQuery(const NES::LogicalPlan& plan) noexcept
+std::expected<Query, Exception> GrpcQueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
 {
-    try
-    {
-        grpc::ClientContext context;
-        RegisterQueryReply reply;
-        RegisterQueryRequest request;
-        request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(plan));
-        auto status = stub->RegisterQuery(&context, request, &reply);
-        if (status.ok())
-        {
-            NES_DEBUG("Registration was successful.");
-            return LocalQueryId{reply.queryid()};
-        }
-        return std::unexpected{QueryRegistrationFailed(
-            "Status: {}\nMessage: {}\nDetail: {}",
-            magic_enum::enum_name(status.error_code()),
-            status.error_message(),
-            status.error_details())};
-    }
-    catch (std::exception& e)
-    {
-        return std::unexpected{QueryRegistrationFailed("Message from external exception: {} ", e.what())};
-    }
-}
+    std::vector<LocalQuery> localQueries;
+    localQueries.reserve(plan.size());
 
-std::expected<void, Exception> GRPCQueryManager::start(const LocalQueryId queryId) noexcept
-{
-    try
+    for (const auto& [grpcAddr, localPlans] : plan)
     {
-        grpc::ClientContext context;
-        StartQueryRequest request;
-        google::protobuf::Empty response;
-        request.set_queryid(queryId.getRawValue());
-        const auto status = stub->StartQuery(&context, request, &response);
-        if (status.ok())
+        for (const auto& localPlan : localPlans)
         {
-            NES_DEBUG("Starting was successful.");
-            return {};
-        }
-
-        return std::unexpected{NES::QueryStartFailed(
-            "Status: {}\nMessage: {}\nDetail: {}",
-            magic_enum::enum_name(status.error_code()),
-            status.error_message(),
-            status.error_details())};
-    }
-    catch (std::exception& e)
-    {
-        return std::unexpected{QueryStartFailed("Message from external exception: {} ", e.what())};
-    }
-}
-
-std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const LocalQueryId queryId) const noexcept
-{
-    try
-    {
-        grpc::ClientContext context;
-        QueryStatusRequest request;
-        request.set_queryid(queryId.getRawValue());
-        QueryStatusReply response;
-        if (const auto status = stub->RequestQueryStatus(&context, request, &response); status.ok())
-        {
-            NES_DEBUG("Status was successful.");
-        }
-        else
-        {
-            if (status.error_code() == grpc::StatusCode::NOT_FOUND)
+            try
             {
-                /// separate exception so that the embedded worker query manager can give back the same exception
-                return std::unexpected{NES::QueryNotFound("{}", queryId)};
+                grpc::ClientContext context;
+                RegisterQueryReply reply;
+                RegisterQueryRequest request;
+                INVARIANT(cluster.contains(grpcAddr), "Plan was assigned to a node ({}) that is not part of the cluster", grpcAddr);
+                request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(localPlan));
+                const auto status = cluster.at(grpcAddr).stub->RegisterQuery(&context, request, &reply);
+                if (status.ok())
+                {
+                    NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), grpcAddr);
+                    localQueries.emplace_back(reply.queryid(), grpcAddr);
+                    continue;
+                }
+                return std::unexpected{QueryRegistrationFailed(
+                    "Status: {}\nMessage: {}\nDetail: {}",
+                    magic_enum::enum_name(status.error_code()),
+                    status.error_message(),
+                    status.error_details())};
             }
-            return std::unexpected{NES::QueryStatusFailed(
-                "Could not request status for query {}.\nStatus: {}\nMessage: {}\nDetail: {}",
-                queryId,
+            catch (const std::exception& e)
+            {
+                return std::unexpected{QueryRegistrationFailed("Message from external exception: {}", e.what())};
+            }
+        }
+    }
+    return Query{localQueries};
+}
+
+std::expected<void, Exception> GrpcQueryManager::start(const Query& query)
+{
+    for (const auto& [localQueryId, grpcAddr] : query)
+    {
+        try
+        {
+            grpc::ClientContext context;
+            StartQueryRequest request;
+            google::protobuf::Empty response;
+            request.set_queryid(localQueryId.getRawValue());
+            INVARIANT(cluster.contains(grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", grpcAddr);
+            const auto status = cluster.at(grpcAddr).stub->StartQuery(&context, request, &response);
+            if (status.ok())
+            {
+                NES_DEBUG("Starting query {} on node {} was successful.", localQueryId.getRawValue(), grpcAddr);
+                continue;
+            }
+
+            return std::unexpected{QueryStartFailed(
+                "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
                 status.error_details())};
         }
-
-        /// Convert the gRPC object to a C++ one
-        /// Creating a new local query status
-        LocalQueryStatus queryStatus;
-
-        const auto responseMetrics = response.metrics();
-        if (responseMetrics.has_startunixtimeinms())
+        catch (std::exception& e)
         {
-            const std::chrono::system_clock::time_point startTimePoint{std::chrono::milliseconds{response.metrics().startunixtimeinms()}};
-            queryStatus.metrics.start = startTimePoint;
+            return std::unexpected{QueryStartFailed("Message from external exception: {} ", e.what())};
         }
-
-        if (responseMetrics.has_runningunixtimeinms())
-        {
-            const std::chrono::system_clock::time_point runningTimePoint{std::chrono::milliseconds{responseMetrics.runningunixtimeinms()}};
-            queryStatus.metrics.running = runningTimePoint;
-        }
-
-        if (responseMetrics.has_stopunixtimeinms())
-        {
-            const std::chrono::system_clock::time_point stopTimePoint{std::chrono::milliseconds{responseMetrics.stopunixtimeinms()}};
-            queryStatus.metrics.running = stopTimePoint;
-        }
-
-        if (responseMetrics.has_error())
-        {
-            const auto err = response.metrics().error();
-            const Exception exception{err.message(), err.code()};
-            queryStatus.metrics.error = exception;
-        }
-
-        queryStatus.state = magic_enum::enum_cast<QueryState>(response.state()).value(); /// Invalid state will throw
-        return queryStatus;
     }
-    catch (std::exception& e)
-    {
-        return std::unexpected{QueryStatusFailed("Message from external exception: {} ", e.what())};
-    }
+    return {};
 }
 
-std::expected<void, Exception> GRPCQueryManager::unregister(const LocalQueryId queryId) noexcept
+std::expected<DistributedQueryStatus, std::vector<Exception>> GrpcQueryManager::status(const Query& query) const
 {
-    try
-    {
-        grpc::ClientContext context;
-        UnregisterQueryRequest request;
-        google::protobuf::Empty response;
-        request.set_queryid(queryId.getRawValue());
-        const auto status = stub->UnregisterQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Unregister was successful.");
-            return {};
-        }
+    std::vector<LocalQueryStatus> localStatusResults;
+    std::vector<Exception> exceptions;
 
-        return std::unexpected{NES::QueryUnregistrationFailed(
-            "Status: {}\nMessage: {}\nDetail: {}",
-            magic_enum::enum_name(status.error_code()),
-            status.error_message(),
-            status.error_details())};
-    }
-    catch (std::exception& e)
+    for (const auto& [id, grpcAddr] : query)
     {
-        return std::unexpected{QueryUnregistrationFailed("Message from external exception: {} ", e.what())};
+        try
+        {
+            grpc::ClientContext context;
+            QuerySummaryRequest request;
+            request.set_queryid(id.getRawValue());
+            QuerySummaryReply response;
+
+            INVARIANT(cluster.contains(grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", grpcAddr);
+            if (const auto status = cluster.at(grpcAddr).stub->RequestQuerySummary(&context, request, &response); status.ok())
+            {
+                NES_DEBUG("Status of query {} on node {} was successful.", id, grpcAddr);
+            }
+            else
+            {
+                if (status.error_code() == grpc::StatusCode::NOT_FOUND)
+                {
+                    /// separate exception so that the embedded worker query manager can give back the same exception
+                    exceptions.push_back(QueryNotFound("{}", id));
+                    continue;
+                }
+                exceptions.push_back(QueryStatusFailed(
+                    "Could not request status for query {}.\nStatus: {}\nMessage: {}\nDetail: {}",
+                    id,
+                    magic_enum::enum_name(status.error_code()),
+                    status.error_message(),
+                    status.error_details()));
+                continue;
+            }
+
+            QueryMetrics metrics;
+            const std::chrono::system_clock::time_point startTimePoint(std::chrono::milliseconds(response.metrics().startunixtimeinms()));
+            const std::chrono::system_clock::time_point runningTimePoint(
+                std::chrono::milliseconds(response.metrics().runningunixtimeinms()));
+            const std::chrono::system_clock::time_point stopTimePoint(std::chrono::milliseconds(response.metrics().stopunixtimeinms()));
+            metrics.start = startTimePoint;
+            metrics.running = runningTimePoint;
+            metrics.stop = stopTimePoint;
+
+            if (response.metrics().has_error())
+            {
+                const auto& runError = response.metrics().error();
+                const Exception exception(runError.message(), runError.code());
+                metrics.error = exception;
+            }
+
+            localStatusResults.emplace_back(
+                LocalQueryId{response.queryid()}, static_cast<QueryState>(static_cast<uint8_t>(response.state())), metrics);
+        }
+        catch (std::exception& e)
+        {
+            exceptions.push_back(QueryStatusFailed("Message from external exception: {} ", e.what()));
+        }
     }
+
+    if (not exceptions.empty())
+    {
+        return std::unexpected{exceptions};
+    }
+    return DistributedQueryStatus{.localStatusSnapshots = localStatusResults};
 }
 
-std::expected<void, Exception> GRPCQueryManager::stop(const LocalQueryId queryId) noexcept
+std::expected<void, std::vector<Exception>> GrpcQueryManager::stop(const Query& query)
 {
-    try
-    {
-        grpc::ClientContext context;
-        StopQueryRequest request;
-        request.set_queryid(queryId.getRawValue());
-        request.set_terminationtype(StopQueryRequest::Graceful);
-        google::protobuf::Empty response;
-        const auto status = stub->StopQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Stopping was successful.");
-            return {};
-        }
+    std::vector<Exception> exceptions{};
 
-        return std::unexpected{NES::QueryStopFailed(
-            "Status: {}\nMessage: {}\nDetail: {}",
-            magic_enum::enum_name(status.error_code()),
-            status.error_message(),
-            status.error_details())};
-    }
-    catch (std::exception& e)
+    for (const auto& [id, grpcAddr] : query)
     {
-        return std::unexpected{QueryStopFailed("Message from external exception: {} ", e.what())};
+        try
+        {
+            grpc::ClientContext context;
+            StopQueryRequest request;
+            request.set_queryid(id.getRawValue());
+            request.set_terminationtype(StopQueryRequest::Graceful);
+            google::protobuf::Empty response;
+
+            INVARIANT(cluster.contains(grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", grpcAddr);
+            const auto status = cluster.at(grpcAddr).stub->StopQuery(&context, request, &response);
+            if (status.ok())
+            {
+                NES_DEBUG("Stopping query {} on node {} was successful.", id, grpcAddr);
+                continue;
+            }
+
+            exceptions.push_back(NES::QueryStopFailed(
+                "Status: {}\nMessage: {}\nDetail: {}",
+                magic_enum::enum_name(status.error_code()),
+                status.error_message(),
+                status.error_details()));
+        }
+        catch (std::exception& e)
+        {
+            exceptions.push_back(QueryStopFailed("Message from external exception: {} ", e.what()));
+        }
     }
+
+    if (not exceptions.empty())
+    {
+        return std::unexpected{exceptions};
+    }
+    return {};
 }
+
+std::expected<void, std::vector<Exception>> GrpcQueryManager::unregister(const Query& query)
+{
+    std::vector<Exception> exceptions{};
+
+    for (const auto& [id, grpcAddr] : query)
+    {
+        try
+        {
+            grpc::ClientContext context;
+            UnregisterQueryRequest request;
+            google::protobuf::Empty response;
+            request.set_queryid(id.getRawValue());
+
+            INVARIANT(cluster.contains(grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", grpcAddr);
+            const auto status = cluster.at(grpcAddr).stub->UnregisterQuery(&context, request, &response);
+            if (status.ok())
+            {
+                NES_DEBUG("Unregister of query {} on node {} was successful.", id, grpcAddr);
+                continue;
+            }
+
+            exceptions.push_back(QueryUnregistrationFailed(
+                "Status: {}\nMessage: {}\nDetail: {}",
+                magic_enum::enum_name(status.error_code()),
+                status.error_message(),
+                status.error_details()));
+        }
+        catch (std::exception& e)
+        {
+            exceptions.push_back(QueryUnregistrationFailed("Message from external exception: {} ", e.what()));
+        }
+    }
+
+    if (not exceptions.empty())
+    {
+        return std::unexpected{exceptions};
+    }
+    return {};
+}
+
 }
