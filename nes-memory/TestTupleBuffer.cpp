@@ -26,6 +26,7 @@
 #include <variant>
 #include <vector>
 
+#include <span>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
@@ -41,7 +42,7 @@
 namespace NES
 {
 
-DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : address(address), physicalType(std::move(physicalType))
+DynamicField::DynamicField(std::span<const uint8_t> memory, DataType physicalType) : memory(memory), physicalType(std::move(physicalType))
 {
 }
 
@@ -50,7 +51,9 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
     const auto* bufferBasePointer = buffer.getMemArea<uint8_t>();
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
-    return DynamicField{basePointer, memoryLayout->getPhysicalType(fieldIndex)};
+    return DynamicField{
+        std::span<const uint8_t>(basePointer, memoryLayout->getPhysicalType(fieldIndex).getSizeInBytes()),
+        memoryLayout->getPhysicalType(fieldIndex)};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) const
@@ -79,7 +82,7 @@ void DynamicTuple::writeVarSized(
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[key].getAddressPointer()))
+                *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[key].getMemory().data()))
                     = combinedIdxOffset.getCombinedIdxOffset();
             }
             else
@@ -179,14 +182,14 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
 std::string DynamicField::toString() const
 {
-    return this->physicalType.formattedBytesToString(this->address);
+    return this->physicalType.formattedBytesToString(this->memory.data());
 }
 
 bool DynamicField::operator==(const DynamicField& rhs) const
 {
     PRECONDITION(physicalType == rhs.physicalType, "Physical types have to be the same but are {} and {}", physicalType, rhs.physicalType);
 
-    return std::memcmp(address, rhs.address, physicalType.getSizeInBytes()) == 0;
+    return std::ranges::equal(memory, rhs.memory);
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
@@ -199,9 +202,9 @@ const DataType& DynamicField::getPhysicalType() const
     return physicalType;
 }
 
-const uint8_t* DynamicField::getAddressPointer() const
+std::span<const uint8_t> DynamicField::getMemory() const
 {
-    return address;
+    return memory;
 }
 
 uint64_t TestTupleBuffer::getCapacity() const
