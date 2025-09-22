@@ -1,17 +1,3 @@
-/*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        https://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-
 #include <include/Util/TestTupleBuffer.hpp>
 
 #include <algorithm>
@@ -37,11 +23,13 @@
 #include <include/Runtime/TupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <span>
 
 namespace NES
 {
 
-DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : address(address), physicalType(std::move(physicalType))
+DynamicField::DynamicField(std::span<const uint8_t> addressSpan, DataType physicalType)
+    : addressSpan(addressSpan), physicalType(std::move(physicalType))
 {
 }
 
@@ -50,7 +38,8 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
-    return DynamicField{basePointer, memoryLayout->getPhysicalType(fieldIndex)};
+    return DynamicField{std::span<const uint8_t>(basePointer, memoryLayout->getPhysicalType(fieldIndex).getSizeInBytes()),
+                        memoryLayout->getPhysicalType(fieldIndex)};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) const
@@ -190,14 +179,14 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
 std::string DynamicField::toString() const
 {
-    return this->physicalType.formattedBytesToString(this->address);
+    return this->physicalType.formattedBytesToString(this->addressSpan.data());
 }
 
 bool DynamicField::operator==(const DynamicField& rhs) const
 {
     PRECONDITION(physicalType == rhs.physicalType, "Physical types have to be the same but are {} and {}", physicalType, rhs.physicalType);
 
-    return std::memcmp(address, rhs.address, physicalType.getSizeInBytes()) == 0;
+    return std::memcmp(addressSpan.data(), rhs.addressSpan.data(), physicalType.getSizeInBytes()) == 0;
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
@@ -210,9 +199,9 @@ const DataType& DynamicField::getPhysicalType() const
     return physicalType;
 }
 
-const uint8_t* DynamicField::getAddressPointer() const
+std::span<const uint8_t> DynamicField::getAddressSpan() const
 {
-    return address;
+    return addressSpan;
 }
 
 uint64_t TestTupleBuffer::getCapacity() const

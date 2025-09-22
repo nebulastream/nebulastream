@@ -29,6 +29,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <span>
 
 namespace NES
 {
@@ -51,7 +52,7 @@ concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 class DynamicField
 {
 public:
-    explicit DynamicField(const uint8_t* address, DataType physicalType);
+    explicit DynamicField(std::span<const uint8_t> addressSpan, DataType physicalType);
 
     /// Read a pointer type and return the value as a pointer.
     /// @tparam Type of the field requires to be a NesType.
@@ -64,7 +65,7 @@ public:
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
-        return reinterpret_cast<Type>(const_cast<uint8_t*>(address));
+        return reinterpret_cast<Type>(const_cast<uint8_t*>(addressSpan.data()));
     };
 
     /// @brief Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
@@ -79,7 +80,7 @@ public:
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
-        return *reinterpret_cast<Type*>(const_cast<uint8_t*>(address));
+        return *reinterpret_cast<Type*>(const_cast<uint8_t*>(addressSpan.data()));
     };
 
     /// @brief Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
@@ -94,7 +95,7 @@ public:
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
-        return Type(*reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)));
+        return Type(*reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(addressSpan.data())));
     };
 
     /// @brief Writes a value to a specific field address.
@@ -109,7 +110,7 @@ public:
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
-        *reinterpret_cast<Type*>(const_cast<uint8_t*>(address)) = value;
+        *reinterpret_cast<Type*>(const_cast<uint8_t*>(addressSpan.data())) = value;
     };
 
     /// @brief Writes a value to a specific field address.
@@ -124,7 +125,7 @@ public:
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }
-        *reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)) = value.getRawValue();
+        *reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(addressSpan.data())) = value.getRawValue();
     };
 
     [[nodiscard]] std::string toString() const;
@@ -139,10 +140,10 @@ public:
 
     [[nodiscard]] const DataType& getPhysicalType() const;
 
-    [[nodiscard]] const uint8_t* getAddressPointer() const;
+    [[nodiscard]] std::span<const uint8_t> getAddressSpan() const;
 
 private:
-    const uint8_t* address;
+    std::span<const uint8_t> addressSpan;
     DataType physicalType;
 };
 
