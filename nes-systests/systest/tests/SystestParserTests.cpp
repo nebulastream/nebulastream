@@ -223,4 +223,103 @@ TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
     ASSERT_DEATH_DEBUG(parser.registerSubstitutionRule(rule2), "");
 }
 
+TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
+{
+    SystestParser parser{};
+
+    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink";
+    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink";
+
+    bool mainQueryCallbackCalled = false;
+    bool differentialQueryCallbackCalled = false;
+
+    parser.registerOnQueryCallback(
+        [&](const std::string& queryOut, SystestQueryId)
+        {
+            ASSERT_FALSE(differentialQueryCallbackCalled) << "Main query callback was called after the differential one.";
+            ASSERT_FALSE(mainQueryCallbackCalled) << "Main query callback should only be called once.";
+            ASSERT_EQ(expectedMainQuery, queryOut);
+            mainQueryCallbackCalled = true;
+        });
+
+    parser.registerOnDifferentialQueryBlockCallback(
+        [&](std::string leftQuery, std::string rightQuery, SystestQueryId mainId, SystestQueryId differentialId)
+        {
+            ASSERT_EQ(mainId, differentialId) << "Differential block should reuse the last parsed query id.";
+            ASSERT_TRUE(mainQueryCallbackCalled) << "Differential callback was called before the main query callback.";
+            ASSERT_FALSE(differentialQueryCallbackCalled) << "Differential query callback should only be called once.";
+            ASSERT_EQ(expectedMainQuery, leftQuery);
+            ASSERT_EQ(expectedDifferentialQuery, rightQuery);
+            differentialQueryCallbackCalled = true;
+        });
+
+    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
+                                          { FAIL() << "Result tuple callback should not be called for a differential query test."; });
+    parser.registerOnErrorExpectationCallback(
+        [](const SystestParser::ErrorExpectation&, SystestQueryId)
+        { FAIL() << "Error expectation callback should not be called for a differential query test."; });
+
+    static constexpr std::string_view Filename = SYSTEST_DATA_DIR "differential.dummy";
+    ASSERT_TRUE(parser.loadFile(Filename)) << "Failed to load file: " << Filename;
+
+    EXPECT_NO_THROW(parser.parse());
+
+    ASSERT_TRUE(mainQueryCallbackCalled) << "The main query callback was never called.";
+    ASSERT_TRUE(differentialQueryCallbackCalled) << "The differential query callback was never called.";
+}
+
+TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
+{
+    SystestParser parser{};
+
+    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink";
+    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink";
+
+    bool mainQueryCallbackCalled = false;
+    bool differentialQueryCallbackCalled = false;
+
+    parser.registerOnQueryCallback(
+        [&](const std::string& queryOut, SystestQueryId)
+        {
+            ASSERT_FALSE(differentialQueryCallbackCalled) << "Main query callback was called after the differential one.";
+            ASSERT_FALSE(mainQueryCallbackCalled) << "Main query callback should only be called once.";
+            ASSERT_EQ(expectedMainQuery, queryOut);
+            mainQueryCallbackCalled = true;
+        });
+
+    parser.registerOnDifferentialQueryBlockCallback(
+        [&](std::string leftQuery, std::string rightQuery, SystestQueryId mainId, SystestQueryId differentialId)
+        {
+            ASSERT_EQ(mainId, differentialId) << "Differential block should reuse the last parsed query id.";
+            ASSERT_TRUE(mainQueryCallbackCalled) << "Differential callback was called before the main query callback.";
+            ASSERT_FALSE(differentialQueryCallbackCalled) << "Differential query callback should only be called once.";
+            ASSERT_EQ(expectedMainQuery, leftQuery);
+            ASSERT_EQ(expectedDifferentialQuery, rightQuery);
+            differentialQueryCallbackCalled = true;
+        });
+
+    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
+                                          { FAIL() << "Result tuple callback should not be called for a differential query test."; });
+    parser.registerOnErrorExpectationCallback(
+        [](const SystestParser::ErrorExpectation&, SystestQueryId)
+        { FAIL() << "Error expectation callback should not be called for a differential query test."; });
+
+    static constexpr std::string_view TestContent = R"(Source stream INT64 id INT64 value INT64 timestamp INLINE
+5,1,1000
+
+SINK streamSink INT64 id INT64 stream$value INT64 stream$timestamp
+
+SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink
+====
+SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink
+)";
+
+    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+
+    EXPECT_NO_THROW(parser.parse());
+
+    ASSERT_TRUE(mainQueryCallbackCalled) << "The main query callback was never called.";
+    ASSERT_TRUE(differentialQueryCallbackCalled) << "The differential query callback was never called.";
+}
+
 }
