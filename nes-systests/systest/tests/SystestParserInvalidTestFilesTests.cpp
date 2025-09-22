@@ -106,4 +106,22 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
+TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "invalid_differential.dummy";
+
+    SystestParser parser{};
+    parser.registerOnSystestLogicalSourceCallback(
+        [](const SystestParser::SystestLogicalSource&)
+        {
+            /// nop
+        });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+    parser.registerOnDifferentialQueryBlockCallback(
+        [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
 }
