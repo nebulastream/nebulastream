@@ -20,7 +20,6 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/PipelineBuilder/PipelineBuilder.hpp>
-#include "Phases/PipeliningPhase.hpp"
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -35,10 +34,6 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
 {
     auto requestQueryPlanCopy = request->queryPlan;
 
-    /// TODO: remove old pipelining
-    // First, run the old, stable pipelining to get the "correct" output
-    auto pipelinedQueryPlanCopy = PipeliningPhase::apply(requestQueryPlanCopy);
-
     auto pipelineBuilder = std::make_unique<PipelineBuilder>();
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
 
@@ -46,25 +41,11 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     {
         // build the query plan using the new FSM
         auto pipelinedQueryPlan = pipelineBuilder->build(request->queryPlan);
-
-        if (*pipelinedQueryPlanCopy != *pipelinedQueryPlan)
-        {
-            std::cout << "--- FSM TRANSITION HISTORY ---" << std::endl;
-            std::cout << pipelineBuilder->getHistoryAsString() << std::endl;
-            std::cout << "PipelinedQueryPLans strings not equal" << std::endl;
-            std::cout << "--- OLD (CORRECT) PIPELINING ---" << std::endl;
-            std::cout << *pipelinedQueryPlanCopy << std::endl;
-            std::cout << "--- NEW (FSM) PIPELINING ---" << std::endl;
-            std::cout << *pipelinedQueryPlan << std::endl;
-        }
         return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
     }
     catch (const std::exception& e)
     {
         std::cerr << "Caught an exception from the FSM PipelineBuilder: " << e.what() << std::endl;
-        std::cout << "--- NEW (FSM) PIPELINING FAILED TO GENERATE A PLAN ---" << std::endl;
-        std::cout << "--- DISPLAYING OLD (CORRECT) PIPELINING FOR DEBUGGING ---" << std::endl;
-        std::cout << *pipelinedQueryPlanCopy << std::endl;
         throw;
     }
 }
