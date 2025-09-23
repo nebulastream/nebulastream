@@ -96,4 +96,5 @@ public:
     bool contains(const NodeId& id) const { return dag.contains(id); }
 };
 
+void renderTopology(const Topology& graph, std::ostream& os);
 }
