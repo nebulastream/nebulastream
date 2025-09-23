@@ -19,7 +19,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <../../../../nes-systests/systest/include/FSMTransitionMonitor.hpp>
 #include <fmt/base.h>
 #include <magic_enum/magic_enum.hpp>
 
@@ -97,8 +96,8 @@ public:
         result += "============================\n";
         for (const auto& [from, event, to] : stepHistory)
         {
-            result += "From: " + std::string(stateToString(from))
-                + " -> On Event: " + std::string(eventToString(event)) + " -> To: " + std::string(stateToString(to)) + "\n";
+            result += "From: " + std::string(stateToString(from)) + " -> On Event: " + std::string(eventToString(event))
+                + " -> To: " + std::string(stateToString(to)) + "\n";
         }
         return result;
     }
@@ -125,10 +124,6 @@ protected:
         /// Record the transition in the history
         stepHistory.emplace_back(fromState, event, toState);
 
-        if constexpr (std::is_same_v<StateT, State> && std::is_same_v<EventT, Event>) {
-            getUsedTransitionsSet().insert({fromState, event, toState});
-        }
-
         currentState = toState;
         for (auto& act : it->second.actions)
         {
@@ -142,7 +137,9 @@ protected:
     [[nodiscard]] StateT getState() const { return currentState; }
 
     const std::vector<std::tuple<StateT, EventT, StateT>>& getStepHistory() const { return stepHistory; }
+
     void clearStepHistory() { stepHistory.clear(); }
+
 private:
     StateT currentState;
     const StateT invalidState;

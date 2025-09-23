@@ -93,7 +93,6 @@ CheckPipelineTransitions(const PhysicalPlan& physicalPlan, const std::vector<Tra
     }
 }
 
-
 static PhysicalPlan createSimplePhysicalPlan()
 {
     Schema schema(Schema::MemoryLayoutType::ROW_LAYOUT);

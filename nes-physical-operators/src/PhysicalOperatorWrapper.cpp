@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#pragma once
+
+#include <PhysicalOperatorWrapper.hpp>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,7 +30,6 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ExecutionContext.hpp>
-#include <PhysicalOperatorWrapper.hpp>
 
 namespace NES
 {

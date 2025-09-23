@@ -23,8 +23,6 @@
 
 namespace NES
 {
-/// TODO max steps 10.000
-
 
 /// NOTE: think twice before changing this file to extend the builders' functionality.
 /// Most extensions should be possible by extending @link PipeliningBuildingDefintion.cpp
@@ -35,70 +33,73 @@ public:
 
     std::shared_ptr<PipelinedQueryPlan> build(const PhysicalPlan& plan)
     {
-        try {
-
-        /// Init context
-        BuilderContext ctx{
-            plan,
-            plan.getRootOperators().front(),
-            nullptr,
-            nullptr,
-            {},
-            std::make_shared<PipelinedQueryPlan>(plan.getQueryId(), plan.getExecutionMode()),
-            plan.getOperatorBufferSize(),
-            {}};
-
-        /// Add for each root operator a frame
-        for (auto it = plan.getRootOperators().rbegin(); it != plan.getRootOperators().rend(); ++it)
+        try
         {
-            ctx.contextStack.push_back(Frame{*it, nullptr, nullptr, 0});
-        }
+            /// Init context
+            BuilderContext ctx{
+                plan,
+                plan.getRootOperators().front(),
+                nullptr,
+                nullptr,
+                {},
+                std::make_shared<PipelinedQueryPlan>(plan.getQueryId(), plan.getExecutionMode()),
+                plan.getOperatorBufferSize(),
+                {}};
 
-        /// while there are frames to process
-            while (!ctx.contextStack.empty()) {
-                // Load frame into current context
+            /// Add for each root operator a frame
+            for (auto it = plan.getRootOperators().rbegin(); it != plan.getRootOperators().rend(); ++it)
+            {
+                ctx.contextStack.push_back(Frame{*it, nullptr, nullptr, 0});
+            }
+
+            /// while there are frames to process
+            while (!ctx.contextStack.empty())
+            {
+                /// Load frame into current context
                 Frame& frame = ctx.contextStack.back();
-                ctx.currentOp       = frame.op;
-                ctx.prevOp          = frame.prev;
+                ctx.currentOp = frame.op;
+                ctx.prevOp = frame.prev;
                 ctx.currentPipeline = frame.pipeline;
 
-                // 1) First visit: process the operator exactly once
-                if (frame.nextChildIdx == 0) {
+                /// 1) First visit: process the operator exactly once
+                if (frame.nextChildIdx == 0)
+                {
                     const Event event = deriveEvent(ctx, getState());
                     this->step(event, ctx);
                 }
 
-                // 2) If there are still children to visit, descend into the next one
-                if (frame.nextChildIdx < ctx.currentOp->getChildren().size()) {
+                /// 2) If there are still children to visit, descend into the next one
+                if (frame.nextChildIdx < ctx.currentOp->getChildren().size())
+                {
                     this->step(Event::DescendChild, ctx);
                     continue;
                 }
 
-                // 3) No children left: finish this node (bubble up or finish root)
-                if (frame.prev) {
+                /// 3) No children left: finish this node (bubble up or finish root)
+                if (frame.prev)
+                {
                     this->step(Event::ChildDone, ctx);
                     continue;
                 }
 
-                // 4) Root finished: close FSM and drop the root frame
+                /// 4) Root finished: close FSM and drop the root frame
                 this->step(Event::EncounterEnd, ctx);
                 ctx.contextStack.pop_back();
 
-                // If we just finished processing a root operator's tree,
-                // but there are more roots on the stack, we must reset the FSM.
-                if (!ctx.contextStack.empty()) {
+                /// If we just finished processing a root operator's tree,
+                /// but there are more roots on the stack, we must reset the FSM.
+                if (!ctx.contextStack.empty())
+                {
                     this->reset();
                 }
             }
-            std::cout << "END" << std::endl;
-            INVARIANT(getState() == State::Success,
-                      "did not reach success state after all operators were processed");
+            INVARIANT(getState() == State::Success, "did not reach success state after all operators were processed");
 
             return ctx.outPlan;
-
-        /// TODO check if we reached the final state
-        } catch (const std::exception& e) {
-            std::cerr << "Exception: " << e.what()  << std::endl;
+        }
+        catch (const std::exception& e)
+        {
+            NES_ERROR("Failed to build PipelinedQueryPlan: . Error: {}.", e.what());
             throw;
         }
     }
@@ -126,8 +127,11 @@ private:
         NES_ERROR("  History: {}", getHistoryAsString());
 
 
-        throw InvalidQuerySyntax("Invalid state transition in PipelineBuilder State Machine. Trace log: {}From: {}, Event: {}", getHistoryAsString(), magic_enum::enum_name(fromState), magic_enum::enum_name(event));
-        // TODO
+        throw InvalidQuerySyntax(
+            "Invalid state transition in PipelineBuilder State Machine. Trace log: {}From: {}, Event: {}",
+            getHistoryAsString(),
+            magic_enum::enum_name(fromState),
+            magic_enum::enum_name(event));
     }
 
     /// derives for the current operator the event

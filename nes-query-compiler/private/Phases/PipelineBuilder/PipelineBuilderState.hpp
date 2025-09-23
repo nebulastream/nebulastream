@@ -51,39 +51,66 @@ enum class Event : uint8_t
     ForceNewFlag,
     EncounterEnd,
 };
-/// TODO: Remove this badly made toString()
 
-inline const char* toString(Event e) {
-    switch (e) {
-        case Event::DescendChild:           return "DescendChild";
-        case Event::ChildDone:              return "ChildDone";
-        case Event::RootComplete:           return "RootComplete";
-        case Event::EncounterSource:        return "EncounterSource";
-        case Event::EncounterCustomScan:    return "EncounterCustomScan";
-        case Event::EncounterCustomEmit:    return "EncounterCustomEmit";
-        case Event::EncounterSink:          return "EncounterSink";
-        case Event::EncounterFusibleOperator:return "EncounterFusibleOperator";
-        case Event::NeedDefaultEmit:        return "NeedDefaultEmit";
-        case Event::EncounterKnownOperator: return "EncounterKnownOperator";
-        case Event::ForceNewFlag:           return "ForceNewFlag";
-        case Event::EncounterEnd:           return "EncounterEnd";
-        default:                            return "Unknown";
+inline const char* toString(Event e)
+{
+    switch (e)
+    {
+        case Event::DescendChild:
+            return "DescendChild";
+        case Event::ChildDone:
+            return "ChildDone";
+        case Event::RootComplete:
+            return "RootComplete";
+        case Event::EncounterSource:
+            return "EncounterSource";
+        case Event::EncounterCustomScan:
+            return "EncounterCustomScan";
+        case Event::EncounterCustomEmit:
+            return "EncounterCustomEmit";
+        case Event::EncounterSink:
+            return "EncounterSink";
+        case Event::EncounterFusibleOperator:
+            return "EncounterFusibleOperator";
+        case Event::NeedDefaultEmit:
+            return "NeedDefaultEmit";
+        case Event::EncounterKnownOperator:
+            return "EncounterKnownOperator";
+        case Event::ForceNewFlag:
+            return "ForceNewFlag";
+        case Event::EncounterEnd:
+            return "EncounterEnd";
+        default:
+            return "Unknown";
     }
 }
 
-inline const char* toString(State s) {
-    switch (s) {
-        case State::Start:               return "Start";
-        case State::BuildingPipeline:    return "BuildingPipeline";
-        case State::PendingEmit:         return "PendingEmit";
-        case State::AfterEmit:           return "AfterEmit";
-        case State::RevisitOperator:     return "RevisitOperator";
-        case State::SourceCreated:       return "SourceCreated";
-        case State::SinkCreated:         return "SinkCreated";
-        case State::ForcePipelineBreak:  return "ForcePipelineBreak";
-        case State::Success:             return "Success";
-        case State::Invalid:             return "Invalid";
-        default:                         return "Unknown";
+inline const char* toString(State s)
+{
+    switch (s)
+    {
+        case State::Start:
+            return "Start";
+        case State::BuildingPipeline:
+            return "BuildingPipeline";
+        case State::PendingEmit:
+            return "PendingEmit";
+        case State::AfterEmit:
+            return "AfterEmit";
+        case State::RevisitOperator:
+            return "RevisitOperator";
+        case State::SourceCreated:
+            return "SourceCreated";
+        case State::SinkCreated:
+            return "SinkCreated";
+        case State::ForcePipelineBreak:
+            return "ForcePipelineBreak";
+        case State::Success:
+            return "Success";
+        case State::Invalid:
+            return "Invalid";
+        default:
+            return "Unknown";
     }
 }
 
