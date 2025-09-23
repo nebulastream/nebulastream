@@ -1,0 +1,63 @@
+Index: nautilus/include/nautilus/Executable.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/Executable.hpp b/nautilus/include/nautilus/Executable.hpp
+--- a/nautilus/include/nautilus/Executable.hpp	(revision 598041b59644088ed431bb27a35e77f48c1e8bad)
++++ b/nautilus/include/nautilus/Executable.hpp	(date 1758642056172)
+@@ -4,6 +4,7 @@
+ #include <memory>
+ #include <string>
+ #include <variant>
++#include <type_traits>
+ #include <vector>
+
+ namespace nautilus::compiler {
+@@ -35,13 +36,14 @@
+ 	 */
+ 	template <typename R, typename... Args>
+ 	class Invocable {
+-	public:
+ 		using FunctionType = R(Args...);
++		std::variant<FunctionType*, std::unique_ptr<GenericInvocable>> func;
+
+-		explicit Invocable(void* fptr) : function(reinterpret_cast<FunctionType*>(fptr)) {
++	public:
++		explicit Invocable(void* fptr) : func(reinterpret_cast<FunctionType*>(fptr)) {
+ 		}
+
+-		explicit Invocable(std::unique_ptr<GenericInvocable> generic) : function(std::move(generic)) {
++		explicit Invocable(std::unique_ptr<GenericInvocable> generic) : func(std::move(generic)) {
+ 		}
+
+ 		template <typename T>
+@@ -67,15 +69,15 @@
+ 		 * @return returns the result of the function if any
+ 		 */
+ 		__attribute__((no_sanitize("function"))) R operator()(Args... arguments) {
+-			if (std::holds_alternative<FunctionType*>(function)) {
+-				auto fptr = std::get<FunctionType*>(function);
++			if (std::holds_alternative<FunctionType*>(func)) {
++				auto fptr = std::get<FunctionType*>(func);
+ 				if constexpr (!std::is_void_v<R>) {
+ 					return fptr(std::forward<Args>(arguments)...);
+ 				} else {
+ 					fptr(std::forward<Args>(arguments)...);
+ 				}
+ 			} else {
+-				auto& genericFunction = std::get<std::unique_ptr<GenericInvocable>>(function);
++				auto& genericFunction = std::get<std::unique_ptr<GenericInvocable>>(func);
+ 				if constexpr (!std::is_void_v<R>) {
+ 					std::vector<std::any> inputs_ = {getGenericArg(arguments)...};
+ 					auto res = genericFunction->invokeGeneric(inputs_);
+@@ -92,9 +94,6 @@
+ 				}
+ 			}
+ 		}
+-
+-	private:
+-		std::variant<FunctionType*, std::unique_ptr<GenericInvocable>> function;
+ 	};
+
+ 	/**
