@@ -14,9 +14,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <ranges>
-#include <iostream>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Phases/PipelineBuilder/PipelineBuilderState.hpp>
@@ -134,15 +134,15 @@ void appendSink(BuilderContext& ctx) noexcept
         }
     }
 
-    const bool alreadyLinked = std::ranges::any_of(ctx.currentPipeline->getSuccessors(),
-                                                   [&](const auto& s) { return s.get() == sinkPipeline.get(); });
-    if (!alreadyLinked) {
+    const bool alreadyLinked
+        = std::ranges::any_of(ctx.currentPipeline->getSuccessors(), [&](const auto& s) { return s.get() == sinkPipeline.get(); });
+    if (!alreadyLinked)
+    {
         ctx.currentPipeline->addSuccessor(sinkPipeline, ctx.currentPipeline);
     }
 
     ctx.currentPipeline = sinkPipeline;
 }
-
 
 void appendOperator(NES::BuilderContext& ctx) noexcept
 {
@@ -174,7 +174,6 @@ void appendDefaultEmitIfNeeded(NES::BuilderContext& ctx) noexcept
     }
 }
 
-
 void registerHandler(NES::BuilderContext& ctx) noexcept
 {
     if (!ctx.currentPipeline)
@@ -205,7 +204,8 @@ void addSuccessor(BuilderContext& ctx) noexcept
     }
 
     // avoid duplicate edges
-    const bool exists = std::ranges::any_of(ctx.currentPipeline->getSuccessors(), [&](const auto& s) { return s.get() == successor.get(); });
+    const bool exists
+        = std::ranges::any_of(ctx.currentPipeline->getSuccessors(), [&](const auto& s) { return s.get() == successor.get(); });
     if (exists)
     {
         return;
@@ -217,10 +217,9 @@ void addSuccessor(BuilderContext& ctx) noexcept
 void pushContext(BuilderContext& ctx) noexcept
 {
     auto& parentFrame = ctx.contextStack.back();
-    auto nextIdx      = parentFrame.nextChildIdx++;
+    auto nextIdx = parentFrame.nextChildIdx++;
 
-    PRECONDITION(nextIdx < parentFrame.op->getChildren().size(),
-                 "pushContext called but no remaining child");
+    PRECONDITION(nextIdx < parentFrame.op->getChildren().size(), "pushContext called but no remaining child");
 
     auto child = parentFrame.op->getChildren()[nextIdx];
     ctx.contextStack.push_back(Frame{child, parentFrame.op, ctx.currentPipeline, 0});
@@ -234,12 +233,15 @@ void popContext(BuilderContext& ctx) noexcept
 
     ctx.contextStack.pop_back();
 
-    if (!ctx.contextStack.empty()) {
+    if (!ctx.contextStack.empty())
+    {
         const Frame& parent = ctx.contextStack.back();
-        ctx.currentOp       = parent.op;
-        ctx.prevOp          = parent.prev;
+        ctx.currentOp = parent.op;
+        ctx.prevOp = parent.prev;
         ctx.currentPipeline = childPipeline;
-    } else {
+    }
+    else
+    {
         ctx.currentOp.reset();
         ctx.prevOp.reset();
         ctx.currentPipeline.reset();
