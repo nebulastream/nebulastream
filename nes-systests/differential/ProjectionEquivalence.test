@@ -1,0 +1,14 @@
+# name: differential/ProjectionEquivalence.test
+# description: Validate differential queries produce the same results for equivalent projections.
+# groups: [Differential, Projection]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp GENERATOR seed 1, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
+id SEQUENCE UINT64 1 3 1
+value SEQUENCE UINT64 10 30 10
+timestamp SEQUENCE UINT64 1000 1002 1
+
+SINK projectionSink UINT64 out_id UINT64 out_value UINT64 out_timestamp
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream INTO projectionSink;
+====
+SELECT stream.id AS out_id, stream.value AS out_value, stream.timestamp AS out_timestamp FROM stream INTO projectionSink;

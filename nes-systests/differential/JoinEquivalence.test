@@ -1,0 +1,64 @@
+# name: differential/JoinEquivalence.test
+# description: Ensure differential queries agree for logically equivalent joins
+# groups: [Differential, Join]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp GENERATOR seed 3, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
+id SEQUENCE UINT64 1 5 1
+value SEQUENCE UINT64 50 90 10
+timestamp SEQUENCE UINT64 1000 1800 200
+
+Source stream4 UINT64 id4 UINT64 value4 UINT64 timestamp GENERATOR seed 4, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
+id4 SEQUENCE UINT64 1 5 1
+value4 SEQUENCE UINT64 200 240 10
+timestamp SEQUENCE UINT64 1000 1800 200
+
+Source stream4_1 UINT64 id4_1 UINT64 value4_1 UINT64 timestamp GENERATOR seed 5, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
+id4_1 SEQUENCE UINT64 1 5 1
+value4_1 SEQUENCE UINT64 300 340 10
+timestamp SEQUENCE UINT64 1000 1800 200
+
+SINK sinkStreamStream2Stream4Stream4_1 UINT64 streamstream2stream4stream4_1$start UINT64 streamstream2stream4stream4_1$end UINT64 streamstream2stream4$start UINT64 streamstream2stream4$end UINT64 streamstream2$start UINT64 streamstream2$end UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp UINT64 stream2$key1_s2 UINT64 stream2$key2_s2 UINT64 stream2$id2 UINT64 stream2$value2 UINT64 stream2$ts UINT64 stream2$timestamp UINT64 stream4$id4 UINT64 stream4$value4 UINT64 stream4$timestamp UINT64 stream4_1$id4_1 UINT64 stream4_1$value4_1 UINT64 stream4_1$timestamp
+
+SELECT * FROM (SELECT * FROM stream)
+  INNER JOIN (SELECT * FROM stream2)
+    ON id = id2
+    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+  INNER JOIN (SELECT * FROM stream4)
+    ON id = id4
+    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+  INNER JOIN (SELECT * FROM stream4_1)
+    ON id = id4_1
+    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+INTO sinkStreamStream2Stream4Stream4_1;
+====
+SELECT * FROM (SELECT * FROM stream)
+  INNER JOIN (SELECT * FROM stream2)
+    ON NOT (id != id2)
+    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+  INNER JOIN (SELECT * FROM stream4)
+    ON NOT (id != id4)
+    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+  INNER JOIN (SELECT * FROM stream4_1)
+    ON NOT (id != id4_1)
+    WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+INTO sinkStreamStream2Stream4Stream4_1;
+
+
+Source streamCSV UINT64 id UINT64 value UINT64 timestamp FILE
+TESTDATA/small/stream.csv
+
+Source streamCSV2 UINT64 id2 UINT64 value2 UINT64 timestamp FILE
+TESTDATA/small/stream2.csv
+
+SINK sinkStreamStream2 UINT64 streamCSVstreamCSV2$start UINT64 streamCSVstreamCSV2$end UINT64 streamCSV$id UINT64 streamCSV$value UINT64 streamCSV$timestamp UINT64 streamCSV2$id2 UINT64 streamCSV2$value2 UINT64 streamCSV2$timestamp
+
+SELECT *
+FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec)
+WHERE value < UINT64(15)
+INTO sinkStreamStream2;
+====
+SELECT *
+FROM
+    (SELECT * FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec))
+WHERE value < UINT64(15)
+INTO sinkStreamStream2;

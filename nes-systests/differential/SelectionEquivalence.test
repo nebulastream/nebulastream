@@ -1,0 +1,171 @@
+# name: differential/SelectionEquivalence.test
+# description: Ensure differential queries agree for logically equivalent selections
+# groups: [Differential, Selection]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp GENERATOR seed 1, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
+id SEQUENCE UINT64 1 2001 10
+value SEQUENCE UINT64 0 1200 6
+timestamp SEQUENCE UINT64 0 1000000 5000
+
+SINK selectionSink UINT64 out_id UINT64 out_value UINT64 out_timestamp
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE value >= UINT64(10) INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE NOT (value < UINT64(10)) INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value >= UINT64(10) AND value <= UINT64(100)
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE NOT (value < UINT64(10) OR value > UINT64(100))
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value <= UINT64(20) OR value >= UINT64(80)
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE NOT (value > UINT64(20) AND value < UINT64(80))
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value != UINT64(42)
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value < UINT64(42) OR value > UINT64(42)
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value >= UINT64(10) AND (id >= UINT64(1000) OR timestamp >= UINT64(1000000000))
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= UINT64(10) AND id >= UINT64(1000))
+   OR (value >= UINT64(10) AND timestamp >= UINT64(1000000000))
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= UINT64(10) AND value <= UINT64(50))
+  AND (id >= UINT64(100) OR timestamp >= UINT64(1000000))
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE NOT (
+    (value < UINT64(10) OR value > UINT64(50))
+    OR (id < UINT64(100) AND timestamp < UINT64(1000000))
+)
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value >= UINT64(90) OR (id >= UINT64(5) AND timestamp >= UINT64(100))
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= UINT64(90) OR id >= UINT64(5))
+  AND (value >= UINT64(90) OR timestamp >= UINT64(100))
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value >= UINT64(10)
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= UINT64(10) AND id >= UINT64(100))
+   OR (value >= UINT64(10) AND NOT (id >= UINT64(100)))
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value <= UINT64(50)
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value <= UINT64(50) OR (value <= UINT64(50) AND id >= UINT64(1))
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= UINT64(10) AND id >= UINT64(100))
+   OR (value < UINT64(10) AND timestamp >= UINT64(1000))
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= UINT64(10) AND id >= UINT64(100))
+   OR (value < UINT64(10) AND timestamp >= UINT64(1000))
+   OR (id >= UINT64(100) AND timestamp >= UINT64(1000))
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE id <= timestamp
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE NOT (id > timestamp)
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE id != value
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE id < value OR id > value
+INTO selectionSink;
+
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= UINT64(100) AND value <= UINT64(200))
+   OR (id >= UINT64(1000) AND id <= UINT64(2000))
+   OR (timestamp >= UINT64(10000) AND timestamp <= UINT64(20000))
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE NOT (
+    (value < UINT64(100) OR value > UINT64(200)) AND
+    (id < UINT64(1000) OR id > UINT64(2000)) AND
+    (timestamp < UINT64(10000) OR timestamp > UINT64(20000))
+)
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value < UINT64(10) AND value >= UINT64(10)
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE id != id
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE id = id
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE value >= UINT64(0)
+INTO selectionSink;
