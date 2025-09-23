@@ -137,4 +137,5 @@ private:
     }
 };
 
+void renderTopology(const Topology& graph, std::ostream& os);
 }

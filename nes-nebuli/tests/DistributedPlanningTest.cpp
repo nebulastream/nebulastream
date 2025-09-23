@@ -219,6 +219,7 @@ std::pair<NES::QueryPlanningContext, NES::PlanStage::BoundLogicalPlan> loadAndBi
     NES::SourceStatementHandler sourceStatementHandler{sources};
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
+    renderTopology(workers->getTopology(), std::cout);
     return {
         NES::QueryPlanningContext{
             .sqlString = std::get<NES::ExplainQueryStatement>(statements.back()).plan.getOriginalSql(),
