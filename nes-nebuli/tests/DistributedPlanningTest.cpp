@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -47,6 +48,7 @@
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <BaseUnitTest.hpp>
+#include <NetworkTopology.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -225,6 +227,7 @@ std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::LogicalPlan> loadAndBind(s
     NES::SourceStatementHandler sourceStatementHandler{sources, NES::RequireHostConfig{}};
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
+    renderTopology(workers->getTopology(), std::cout);
     return {std::make_unique<NES::LegacyOptimizer>(sources, sinks, workers), std::get<NES::ExplainQueryStatement>(statements.back()).plan};
 }
 
