@@ -29,6 +29,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -264,5 +265,50 @@ bool Topology::isValidDAG() const
     }
 
     return true;
+}
+
+struct TopologyNodeWrapper
+{
+    const Topology* graph;
+    Topology::NodeId id;
+};
+
+template <>
+struct GetRootOperator<Topology>
+{
+    auto operator()(const Topology& op) const
+    {
+        return std::views::filter(op, [&op](const auto& node) { return op.getDownstreamNodesOf(node.first).empty(); })
+            | std::views::transform([&op](const auto& node) { return TopologyNodeWrapper{&op, node.first}; })
+            | std::ranges::to<std::vector>();
+    }
+};
+
+template <>
+struct Explain<TopologyNodeWrapper>
+{
+    auto operator()(const TopologyNodeWrapper& op, const ExplainVerbosity) const { return op.id.getRawValue(); }
+};
+
+template <>
+struct GetId<TopologyNodeWrapper>
+{
+    auto operator()(const TopologyNodeWrapper& op) const { return op.id.getRawValue(); }
+};
+
+template <>
+struct GetChildren<TopologyNodeWrapper>
+{
+    auto operator()(const TopologyNodeWrapper& op) const
+    {
+        return op.graph->getUpstreamNodesOf(op.id)
+            | std::views::transform([&op](const auto& child) { return TopologyNodeWrapper{op.graph, child}; })
+            | std::ranges::to<std::vector>();
+    }
+};
+
+void renderTopology(const Topology& graph, std::ostream& os)
+{
+    PlanRenderer<Topology, TopologyNodeWrapper>(os, ExplainVerbosity::Short).dump(graph);
 }
 }
