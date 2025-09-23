@@ -165,6 +165,49 @@ TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
                                             << " are not equal"; ///NOLINT(bugprone-unchecked-optional-access)
 }
 
+TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
+{
+    const auto field1 = Schema::Field{"stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field2 = Schema::Field{"stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+
+    const auto schemaUnderTest = Schema{}
+                                     .addField("stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+
+    const auto fieldByName1 = schemaUnderTest.getFieldByName("PREFIXabc");
+    const auto fieldByName2 = schemaUnderTest.getFieldByName("abc");
+    const auto fieldByName3NotExistent = schemaUnderTest.getFieldByName("bc");
+
+    EXPECT_TRUE(fieldByName1.has_value()) << "FieldByName1 should find a Field";
+    EXPECT_EQ(field1, fieldByName1.value()) << "Field 1 " << field1 << " and field by name 1 " << fieldByName1.value() << " are not equal";
+    EXPECT_TRUE(fieldByName2.has_value()) << "FieldByName2 should find a Field";
+    EXPECT_EQ(field2, fieldByName2.value()) << "Field 2 " << field2 << " and field by name 2 " << fieldByName2.value() << " are not equal";
+    EXPECT_FALSE(fieldByName3NotExistent.has_value())
+        << "Searched for nonexistent field with name \"bc\" but found " << fieldByName3NotExistent.value();
+}
+
+TEST_F(SchemaTest, getFieldByNameWithSameName)
+{
+    const auto field = Schema::Field{"stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+
+    const auto schemaUnderTest = Schema{}
+                                     .addField("stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("stream2$name", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+
+    const auto fieldByAmbiguousName = schemaUnderTest.getFieldByName("name");
+    EXPECT_TRUE(fieldByAmbiguousName.has_value());
+    EXPECT_EQ(field, fieldByAmbiguousName.value());
+}
+
+TEST_F(SchemaTest, getUnqualifiedNameFromField)
+{
+    const auto field1 = Schema::Field{"stream$field1", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
+    const auto field2 = Schema::Field{"field2", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
+
+    EXPECT_EQ("field1", field1.getUnqualifiedName());
+    EXPECT_EQ("field2", field2.getUnqualifiedName());
+}
+
 TEST_F(SchemaTest, replaceFieldTest)
 {
     {

@@ -41,6 +41,16 @@ std::ostream& operator<<(std::ostream& os, const Schema::Field& field)
     return os << fmt::format("Field(name: {}, DataType: {})", field.name, field.dataType);
 }
 
+std::string Schema::Field::getUnqualifiedName() const
+{
+    const auto separatorPosition = name.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+    if (separatorPosition == std::string::npos)
+    {
+        return name;
+    }
+    return name.substr(separatorPosition + 1);
+}
+
 Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memoryLayoutType) { };
 
 Schema Schema::addField(std::string name, const DataType& dataType)
@@ -79,28 +89,36 @@ std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName
         return fields.at(field->second);
     }
 
-    ///Iterate over all fields and look for field which fully qualified name
-    std::vector<Field> matchedFields;
+    ///Iterate over all fields and look for fields with fully qualified name
+    std::vector<Field> matchingFields;
+
     for (const auto& field : fields)
     {
         if (auto fullyQualifiedFieldName = field.name; fieldName.length() <= fullyQualifiedFieldName.length())
         {
-            ///Check if the field name ends with the input field name
-            const auto startingPos = fullyQualifiedFieldName.length() - fieldName.length();
-            const auto fieldWithoutQualifier = fullyQualifiedFieldName.substr(startingPos, fieldName.length());
-            if (fieldWithoutQualifier == fieldName)
+            const auto separatorPos = fullyQualifiedFieldName.find(ATTRIBUTE_NAME_SEPARATOR);
+            if (separatorPos == std::string::npos)
             {
-                matchedFields.emplace_back(field);
+                continue;
+            }
+
+            if (const auto fieldWithoutQualifier = fullyQualifiedFieldName.substr(separatorPos + 1); fieldWithoutQualifier == fieldName)
+            {
+                matchingFields.emplace_back(field);
             }
         }
     }
-    ///Check how many matching fields were found log an ERROR
-    if (not matchedFields.empty())
+
+    if (matchingFields.empty())
     {
-        return matchedFields.front();
+        NES_WARNING("Schema: field with name {} does not exist", fieldName);
+        return std::nullopt;
     }
-    NES_WARNING("Schema: field with name {} does not exist", fieldName);
-    return std::nullopt;
+    if (matchingFields.size() > 1)
+    {
+        NES_WARNING("Ambiguous field name {}. Returning first found field {}", fieldName, matchingFields.front());
+    }
+    return matchingFields.front();
 }
 
 Schema::Field Schema::getFieldAt(const size_t index) const
