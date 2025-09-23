@@ -215,6 +215,7 @@ std::pair<QueryPlanningContext, PlanStage::BoundLogicalPlan> loadAndBind(std::st
     SourceStatementHandler sourceStatementHandler{sources};
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
+    renderTopology(workers->getTopology(), std::cout);
     return {
         QueryPlanningContext{
             .sqlString = std::get<ExplainQueryStatement>(statements.back()).plan.getOriginalSql(),
