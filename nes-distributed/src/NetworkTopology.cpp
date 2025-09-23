@@ -21,10 +21,9 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -188,4 +187,52 @@ std::vector<NetworkTopology::Path> NetworkTopology::findPaths(const NodeId& src,
     return paths;
 }
 
+struct TopologyNodeWrapper
+{
+    /// Non-owning view into NetworkTopology for PlanRenderer.
+    /// Uses pointer instead of reference to allow copy assignment (required by std::deque in PlanRenderer).
+    /// Pointer is safe because TopologyNodeWrapper only exists during renderTopology()
+    /// where the NetworkTopology is guaranteed to outlive the wrapper.
+    const NetworkTopology* graph;
+    NetworkTopology::NodeId id;
+};
+
+template <>
+struct GetRootOperator<NetworkTopology>
+{
+    auto operator()(const NetworkTopology& op) const
+    {
+        return std::views::filter(op, [&op](const auto& node) { return op.getDownstreamNodesOf(node.first).empty(); })
+            | std::views::transform([&op](const auto& node) { return TopologyNodeWrapper{&op, node.first}; })
+            | std::ranges::to<std::vector>();
+    }
+};
+
+template <>
+struct Explain<TopologyNodeWrapper>
+{
+    auto operator()(const TopologyNodeWrapper& op, const ExplainVerbosity) const { return op.id.getRawValue(); }
+};
+
+template <>
+struct GetId<TopologyNodeWrapper>
+{
+    auto operator()(const TopologyNodeWrapper& op) const { return op.id.getRawValue(); }
+};
+
+template <>
+struct GetChildren<TopologyNodeWrapper>
+{
+    auto operator()(const TopologyNodeWrapper& op) const
+    {
+        return op.graph->getUpstreamNodesOf(op.id)
+            | std::views::transform([&op](const auto& child) { return TopologyNodeWrapper{op.graph, child}; })
+            | std::ranges::to<std::vector>();
+    }
+};
+
+void renderTopology(const NetworkTopology& graph, std::ostream& os)
+{
+    PlanRenderer<NetworkTopology, TopologyNodeWrapper>(os, ExplainVerbosity::Short).dump(graph);
+}
 }
