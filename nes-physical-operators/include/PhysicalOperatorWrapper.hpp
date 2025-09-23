@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#pragma once
+
 #include <DataTypes/Schema.hpp>
 #include <PhysicalOperator.hpp>
-
-#pragma once
 
 namespace NES
 {
