@@ -39,7 +39,7 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
 
     try
     {
-        // build the query plan using the new FSM
+        /// build the query plan using the new FSM
         auto pipelinedQueryPlan = pipelineBuilder->build(request->queryPlan);
         return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
     }

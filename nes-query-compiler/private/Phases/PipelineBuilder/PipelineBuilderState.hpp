@@ -52,8 +52,6 @@ enum class Event : uint8_t
     EncounterEnd,
 };
 
-/// TODO: Remove this badly made toString()
-
 inline const char* toString(Event e)
 {
     switch (e)

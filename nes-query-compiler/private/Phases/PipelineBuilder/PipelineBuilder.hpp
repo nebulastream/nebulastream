@@ -23,8 +23,6 @@
 
 namespace NES
 {
-/// TODO max steps 10.000
-
 
 /// NOTE: think twice before changing this file to extend the builders' functionality.
 /// Most extensions should be possible by extending @link PipeliningBuildingDefintion.cpp
@@ -57,39 +55,39 @@ public:
             /// while there are frames to process
             while (!ctx.contextStack.empty())
             {
-                // Load frame into current context
+                /// Load frame into current context
                 Frame& frame = ctx.contextStack.back();
                 ctx.currentOp = frame.op;
                 ctx.prevOp = frame.prev;
                 ctx.currentPipeline = frame.pipeline;
 
-                // 1) First visit: process the operator exactly once
+                /// 1) First visit: process the operator exactly once
                 if (frame.nextChildIdx == 0)
                 {
                     const Event event = deriveEvent(ctx, getState());
                     this->step(event, ctx);
                 }
 
-                // 2) If there are still children to visit, descend into the next one
+                /// 2) If there are still children to visit, descend into the next one
                 if (frame.nextChildIdx < ctx.currentOp->getChildren().size())
                 {
                     this->step(Event::DescendChild, ctx);
                     continue;
                 }
 
-                // 3) No children left: finish this node (bubble up or finish root)
+                /// 3) No children left: finish this node (bubble up or finish root)
                 if (frame.prev)
                 {
                     this->step(Event::ChildDone, ctx);
                     continue;
                 }
 
-                // 4) Root finished: close FSM and drop the root frame
+                /// 4) Root finished: close FSM and drop the root frame
                 this->step(Event::EncounterEnd, ctx);
                 ctx.contextStack.pop_back();
 
-                // If we just finished processing a root operator's tree,
-                // but there are more roots on the stack, we must reset the FSM.
+                /// If we just finished processing a root operator's tree,
+                /// but there are more roots on the stack, we must reset the FSM.
                 if (!ctx.contextStack.empty())
                 {
                     this->reset();
@@ -99,8 +97,6 @@ public:
             INVARIANT(getState() == State::Success, "did not reach success state after all operators were processed");
 
             return ctx.outPlan;
-
-            /// TODO check if we reached the final state
         }
         catch (const std::exception& e)
         {
@@ -137,7 +133,6 @@ private:
             getHistoryAsString(),
             magic_enum::enum_name(fromState),
             magic_enum::enum_name(event));
-        // TODO
     }
 
     /// derives for the current operator the event

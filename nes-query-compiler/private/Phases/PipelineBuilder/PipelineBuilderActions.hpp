@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -42,7 +42,7 @@ void addDefaultScan(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedO
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ctx.bufferSize, schema.value());
+    auto layout = std::make_shared<RowLayout>(ctx.bufferSize, schema.value());
     auto memProv = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
     ctx.currentPipeline->prependOperator(ScanPhysicalOperator(memProv, schema->getFieldNames()));
@@ -56,7 +56,7 @@ void addDefaultEmit(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedO
     auto schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ctx.bufferSize, schema.value());
+    auto layout = std::make_shared<RowLayout>(ctx.bufferSize, schema.value());
     auto memProv = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
     const OperatorHandlerId handlerId = getNextOperatorHandlerId();
@@ -68,24 +68,24 @@ void createPipeline(BuilderContext& ctx) noexcept
 {
     auto newPipe = std::make_shared<Pipeline>(ctx.currentOp->getPhysicalOperator());
 
-    // Copy handler, if any, from the operator wrapper
+    /// Copy handler, if any, from the operator wrapper
     if (ctx.currentOp->getHandler() and ctx.currentOp->getHandlerId())
     {
         newPipe->getOperatorHandlers().emplace(ctx.currentOp->getHandlerId().value(), ctx.currentOp->getHandler().value());
     }
 
-    // Register the pipeline under the operator id
+    /// Register the pipeline under the operator id
     ctx.op2Pipeline.emplace(ctx.currentOp->getPhysicalOperator().getId(), newPipe);
 
-    // If we were already in a pipeline, link it as successor,
-    // otherwise this is a root pipeline and must be added to the plan.
+    /// If we were already in a pipeline, link it as successor,
+    /// otherwise this is a root pipeline and must be added to the plan.
     if (ctx.currentPipeline)
     {
         ctx.currentPipeline->addSuccessor(newPipe, ctx.currentPipeline);
     }
     else
     {
-        ctx.outPlan->addPipeline(newPipe); // root
+        ctx.outPlan->addPipeline(newPipe);
     }
 
     ctx.currentPipeline = std::move(newPipe);
@@ -197,13 +197,13 @@ void addSuccessor(BuilderContext& ctx) noexcept
 
     const auto& successor = it->second;
 
-    // prevent self-loop
+    /// prevent self-loop
     if (successor.get() == ctx.currentPipeline.get())
     {
         return;
     }
 
-    // avoid duplicate edges
+    /// avoid duplicate edges
     const bool exists
         = std::ranges::any_of(ctx.currentPipeline->getSuccessors(), [&](const auto& s) { return s.get() == successor.get(); });
     if (exists)
