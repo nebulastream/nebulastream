@@ -215,6 +215,7 @@ std::pair<QueryPlanningContext, PlanStage::BoundLogicalPlan> loadAndBind(std::st
     SourceStatementHandler sourceStatementHandler{sources};
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
+    renderTopology(workers->getTopology(), std::cout);
     return {
         QueryPlanningContext{
             .id = INVALID<LocalQueryId>,
