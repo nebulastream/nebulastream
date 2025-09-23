@@ -17,6 +17,7 @@ vcpkg_from_github(
         SHA512 d458eb6d966d7d1885160f91fa0daae3c2bc9091ba3b8000d3166791d902b13b017e19489dcbc87705ac431946973b35aa5ca9ec7c6ad09f5ee259d68be6c572
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		0002_clang-tidy-fix-function.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
