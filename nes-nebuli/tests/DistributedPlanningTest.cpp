@@ -61,6 +61,7 @@ std::pair<QueryPlanningContext, PlanStage::BoundLogicalPlan> loadAndBind(std::st
         throw TestException("Could not open topology file");
     }
     auto plan = CLI::YAMLBinder{sources, sinks, workers}.parseAndBind(file);
+    renderTopology(workers->getTopology(), std::cout);
     return {
         QueryPlanningContext{
             .id = INVALID<LocalQueryId>,
