@@ -40,6 +40,8 @@ def find_latest_benchmark_dir(base_dir):
 def main():
     parser = argparse.ArgumentParser(description='NebulaBenchmark: Complete Benchmark System')
     parser.add_argument('--columns', type=parse_int_list, default=[1, 2, 5, 10], help='List of number of columns to use (comma-separated)')
+    parser.add_argument('--window-sizes', type=parse_int_list, default=[10], help='Number of windows')
+    parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--repeats', type=int, default=2, help='Number of benchmark repetitions')
     parser.add_argument('--output-dir', default='benchmark_results', help='Base output directory')
@@ -112,7 +114,8 @@ def main():
                 "python3", str(src_dir / "generate_data.py"),
                 "--output", str(data_file),
                 "--rows", str(args.rows),
-                "--columns", ','.join(map(str, args.columns))
+                "--columns", ','.join(map(str, args.columns)),
+                "--groups", ','.join(map(str, args.groups))
 
             ], check=True)
     #elif not data_file:
@@ -131,6 +134,9 @@ def main():
                 "--output", str(test_file),
                 "--result-dir", str(benchmark_dir),
                 "--columns", ','.join(map(str, args.columns)),
+                "--rows", str(args.rows),
+                "--window-sizes", ','.join(map(str, args.window_sizes)),
+                "--groups", ','.join(map(str, args.groups)),
                 "--run-options", args.run_options
             ], check=False, capture_output=True, text=True)
 

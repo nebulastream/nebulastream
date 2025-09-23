@@ -139,6 +139,7 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
     accessed_columns_list = params.get('accessed_columns', [1, 2])
     function_types = params.get('function_types', ['add', 'exp'])
     selectivities = params.get('selectivities', [5, 50, 95])
+    agg_functions = params.get('agg_functions', ['count', 'sum', 'avg', 'min', 'max'])
 
     docker_base_path= "/tmp/nebulastream/Testing/benchmark/benchmark_results/data"
 
@@ -217,6 +218,7 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
     double_operator_dir = result_dir / "double_operator"
     filter_dir = result_dir / "filter"
     map_dir = result_dir / "map"
+    agg_dir = result_dir / "aggregation"
 
 
 
@@ -230,20 +232,25 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
         for buffer_size in buffer_sizes:
             filter_buffer_dir = filter_dir / f"bufferSize{buffer_size}"
             map_buffer_dir = map_dir / f"bufferSize{buffer_size}"
+            agg_buffer_dir = agg_dir / f"bufferSize{buffer_size}"
             filter_buffer_dir.mkdir(exist_ok=True)
             map_buffer_dir.mkdir(exist_ok=True)
+            agg_dir.mkdir(exist_ok=True)
 
             # Create buffer-specific test files
             filter_test_path = filter_buffer_dir / f"filter_queries_buffer{buffer_size}.test"
             map_test_path = map_buffer_dir / f"map_queries_buffer{buffer_size}.test"
+            agg_test_path = agg_dir / f"agg_queries_buffer{buffer_size}.test"
 
             # Copy header content from main test file
             shutil.copy(output_path, filter_test_path)
             shutil.copy(output_path, map_test_path)
+            shutil.copy(output_path, agg_test_path)
             map_queries=0
             filter_queries=0
+            agg_queries=0
             # Open files for appending queries
-            with open(filter_test_path, 'a') as filter_f, open(map_test_path, 'a') as map_f:
+            with open(filter_test_path, 'a') as filter_f, open(map_test_path, 'a') as map_f, open(agg_test_path, 'a') as agg_f:
                 # Generate queries for all parameter combinations for this buffer size
                 for num_col in [n for n in num_columns_list if n <= len(column_names)]:
                     cols_to_use = column_names[:num_col]
@@ -349,6 +356,48 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
                             map_f.write(query)
 
                             query_id += 1
+
+                        # Aggregation queries
+                        for agg_func in agg_functions:
+                            for window_size in params['window_sizes']:
+                                for num_groups in params['num_groups']:
+                                    agg_queries+=1
+                                    # Create query directory
+                                    query_dir = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}"
+                                    query_dir.mkdir(exist_ok=True)
+
+                                    # Write query config
+                                    config = {
+                                        "query_id": query_id,
+                                        "test_id": agg_queries,
+                                        "buffer_size": buffer_size,
+                                        "num_columns": num_col,
+                                        "accessed_columns": access_col,
+                                        "operator_chain": "agg",
+                                        "swap_strategy": "USE_SINGLE_LAYOUT",
+                                        "aggregation_function": agg_func,
+                                        "window_size": window_size,
+                                        "num_groups": num_groups,
+                                    }
+                                    with open(query_dir / "config.txt", 'w') as config_f:
+                                        for k, v in config.items():
+                                            config_f.write(f"{k}: {v}\n")
+
+                                    # Store config in dictionary for later use
+                                    query_configs[query_id] = config
+
+                                    # Write query to buffer-specific test file
+                                    query = f"# Query {query_id}: Aggregation with {agg_func} function\n"
+                                    query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: agg, AggregationFunction: {agg_func}\n"
+
+                                    query += f"SELECT {agg_func}(col_0) AS result FROM bench_data{num_cols} "
+                                    query += f"GROUP BY col_0 WINDOW TUMBLING(col_0, SIZE {window_size} MS) INTO AllSink{num_cols};\n----\n1, 1\n\n"
+                                    #TODO: use params acc_cols, add proper sink defs, test queries, try double
+                                    agg_f.write(query)
+                                    #TODO: decrease window size inside nested windows?
+
+                                    query_id += 1
+
 
 
     if run_options == 'all' or run_options == 'double':
@@ -456,27 +505,36 @@ if __name__ == "__main__":
     parser.add_argument('--output', required=True, help='Output test file path')
     parser.add_argument('--result-dir', required=True, help='Result directory for organized structure')
     parser.add_argument('--columns', type=parse_int_list, default=[10], help='List of number of columns to use')
+
+    parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
+    parser.add_argument('--window-sizes', type=parse_int_list, default=[10], help='Number of windows')
+    parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
     parser.add_argument('--run-options', default='all', help='options: all, single or double')
     args = parser.parse_args()
 
     # Customizable parameters
     params = {
         'buffer_sizes': [4000, 40000, 400000, 4000000, 10000000, 20000000],
-        'num_columns': args.columns, #, 5, 10], TODO: correctly use more than 2 columns
+        'num_columns': args.columns, #, 5, 10],
+        'num_rows': args.rows,
         'accessed_columns': [1, 2, 5, 10],
         'function_types': ['add', 'exp'],
         'selectivities': [5, 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
         'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
-        'window_sizes': [10000, 100000],
+        'window_sizes': args.window_sizes, #[10000, 100000],
+        'num_groups': args.groups, #[10, 100, 1000],
+
 
         'operator_chains': [
-            ['map'],                  # Single map
-            ['filter'],               # Single filter
+            #['map'],                  # Single map
+            #['filter'],               # Single filter
             ['agg'],                 # Single aggregation
             ['map', 'filter'],        # Map followed by filter
             ['filter', 'map'],        # Filter followed by map
-            ['filter', 'agg'],
-            ['agg', 'map'],
+            #['filter', 'agg'],
+            #['agg', 'map'],
+
+
             #['filter', 'map', 'agg'],
             #['map', 'map'],           # Two map operators
             #['filter', 'filter']      # Two filter operators
@@ -490,6 +548,23 @@ if __name__ == "__main__":
 
         ]
     }
+
+    num_rows = args.rows
+
+    num_windows = []
+    window_sizes = params['window_sizes']
+    for window_size in window_sizes:
+        num_windows.append(num_rows / window_size)
+
+    params['num_windows'] = num_windows
+
+    #window_sizes = []
+    #num_windows = params['num_windows']
+    #for windows in params['num_windows']:
+
+        #num_windows.append(num_rows / windows)
+    #params['window_size'] = window_sizes
+
 
     #TODO: save params to benchmark dir
     generate_test_file(args.data, args.output, args.result_dir, params, args.run_options)
