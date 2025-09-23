@@ -35,7 +35,7 @@ public:
 
     std::shared_ptr<PipelinedQueryPlan> build(const PhysicalPlan& plan)
     {
-        PipelineBuilder fsm{};
+        try {
 
         /// Init context
         BuilderContext ctx{
@@ -55,62 +55,52 @@ public:
         }
 
         /// while there are frames to process
-        while (!ctx.contextStack.empty())
-        {
-            /// load frame into current context
-            Frame& frame = ctx.contextStack.back();
-            ctx.currentOp = frame.op;
-            ctx.prevOp = frame.prev;
-            ctx.currentPipeline = frame.pipeline;
+            while (!ctx.contextStack.empty()) {
+                // Load frame into current context
+                Frame& frame = ctx.contextStack.back();
+                ctx.currentOp       = frame.op;
+                ctx.prevOp          = frame.prev;
+                ctx.currentPipeline = frame.pipeline;
 
-            /// 1. process current operator
-            const Event event = deriveEvent(ctx, this->getState());
-            // DEBUG: Print derived event
-            std::cout << "[DEBUG] Derived event: " << static_cast<int>(event) << std::endl;
-            const auto state = fsm.step(event, ctx);
-            // DEBUG: Print new state after step
-            std::cout << "[DEBUG] New state after step: " << static_cast<int>(state) << std::endl;
+                // 1) First visit: process the operator exactly once
+                if (frame.nextChildIdx == 0) {
+                    const Event event = deriveEvent(ctx, getState());
+                    this->step(event, ctx);
+                }
 
-            // DEBUG: Print current operator ID and state
-            std::cout << "[DEBUG] Processing operator ID: " << ctx.currentOp->explain(ExplainVerbosity::Short) << std::endl;
-            /// Add children to context stack
-            if (frame.nextChildIdx < ctx.currentOp->getChildren().size())
-            {
-                // auto child = ctx.currentOp->getChildren()[frame.nextChildIdx++];
-                // ctx.contextStack.push_back(Frame{child, ctx.currentOp, ctx.currentPipeline, 0});
-            }
-            else
-            {
-                /// No children left: remove from stack
+                // 2) If there are still children to visit, descend into the next one
+                if (frame.nextChildIdx < ctx.currentOp->getChildren().size()) {
+                    this->step(Event::DescendChild, ctx);
+                    continue;
+                }
+
+                // 3) No children left: finish this node (bubble up or finish root)
+                if (frame.prev) {
+                    this->step(Event::ChildDone, ctx);
+                    continue;
+                }
+
+                // 4) Root finished: close FSM and drop the root frame
+                this->step(Event::EncounterEnd, ctx);
                 ctx.contextStack.pop_back();
-            }
 
-            /// 2. descend into first child if any
-            if (not ctx.currentOp->getChildren().empty() and (ctx.contextStack.empty() or ctx.contextStack.back().nextChildIdx == 0))
-            {
-                std::cout << "[DEBUG] DescendChild event triggered for operator ID:" << ctx.currentOp->explain(ExplainVerbosity::Short) << std::endl;
-                fsm.step(Event::DescendChild, ctx);
-                continue;
+                // If we just finished processing a root operator's tree,
+                // but there are more roots on the stack, we must reset the FSM.
+                if (!ctx.contextStack.empty()) {
+                    this->reset();
+                }
             }
+            std::cout << "END" << std::endl;
+            INVARIANT(getState() == State::Success,
+                      "did not reach success state after all operators were processed");
 
-            /// 3. if we just finished a child, bubble up with ChildDone
-            while (not ctx.contextStack.empty()
-                   and ctx.contextStack.back().nextChildIdx >= ctx.contextStack.back().prev->getChildren().size())
-            {
-                std::cout << "[DEBUG] ChildDone event triggered for operator ID:"  << ctx.currentOp->explain(ExplainVerbosity::Short) << std::endl;
-                fsm.step(Event::ChildDone, ctx);
-            }
-
-            /// 4. root finished --> exit
-            if (ctx.contextStack.empty())
-            {
-                INVARIANT(state == State::Success, "did not reach success state after all operators where processed");
-                break;
-            }
-        }
+            return ctx.outPlan;
 
         /// TODO check if we reached the final state
-        return ctx.outPlan;
+        } catch (const std::exception& e) {
+            std::cerr << "Exception: " << e.what()  << std::endl;
+            throw;
+        }
     }
 
 private:
@@ -118,7 +108,6 @@ private:
     {
         State currentState = this->getState();
         State newState = AbstractStateMachine::step(event, ctx);
-
         if (newState == State::Invalid)
         {
             handleInvalidState(currentState, event, ctx);
@@ -144,23 +133,14 @@ private:
     /// derives for the current operator the event
     static Event deriveEvent(const BuilderContext& ctx, State curState)
     {
-        /// E6 – revisit
-        if (ctx.op2Pipeline.count(ctx.currentOp->getPhysicalOperator().getId()))
+        if (ctx.currentOp->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
         {
-            return Event::EncounterKnownOperator;
+            return Event::EncounterSink;
         }
 
-        /// E5 – need default emit (leaf & *not* already an EMIT)
-        if (ctx.currentOp->getChildren().empty() && ctx.currentOp->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT
-            && curState == State::BuildingPipeline)
+        if (ctx.currentOp->getPhysicalOperator().tryGet<SourcePhysicalOperator>())
         {
-            return Event::NeedDefaultEmit;
-        }
-
-        /// E7 – force-new requested by state machine
-        if (curState == State::ForcePipelineBreak)
-        {
-            return Event::ForceNewFlag;
+            return Event::EncounterSource;
         }
 
         /// Operator-kind events
@@ -174,14 +154,23 @@ private:
                 break;
         }
 
-        if (ctx.currentOp->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+        /// E6 – revisit
+        if (ctx.op2Pipeline.count(ctx.currentOp->getPhysicalOperator().getId()))
         {
-            return Event::EncounterSink;
+            return Event::EncounterKnownOperator;
         }
 
-        if (ctx.currentOp->getPhysicalOperator().tryGet<SourcePhysicalOperator>())
+        /// E7 – force-new requested by state machine
+        if (curState == State::ForcePipelineBreak)
         {
-            return Event::EncounterSource;
+            return Event::ForceNewFlag;
+        }
+
+        /// E5 – need default emit (leaf & *not* already an EMIT)
+        if (ctx.currentOp->getChildren().empty() && ctx.currentOp->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT
+            && curState == State::BuildingPipeline)
+        {
+            return Event::NeedDefaultEmit;
         }
 
         /// Default
