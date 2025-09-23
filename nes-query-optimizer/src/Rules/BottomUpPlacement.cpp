@@ -20,6 +20,7 @@
 #include <map>
 #include <optional>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -152,6 +153,9 @@ void validatePlan(const NetworkTopology& topology, const LogicalPlan& plan)
     {
         throw PlacementFailure(fmt::format("Found errors in query plan:\n{}", fmt::join(errors, "\n")));
     }
+    std::stringstream os;
+    renderTopology(topology, os);
+    NES_DEBUG("Performing Operator Placement on: {}", os.str());
 }
 
 /// Shared state for the ILP placement model

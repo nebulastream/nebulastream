@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -49,6 +50,7 @@
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <BaseUnitTest.hpp>
+#include <NetworkTopology.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES::Test
@@ -234,6 +236,7 @@ OptimizerAndPlan loadAndBind(std::string_view testFileName)
     NES::SourceStatementHandler sourceStatementHandler{sources, NES::RequireHostConfig{}};
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
+    renderTopology(workers->getTopology(), std::cout);
     return {
         .semanticAnalyzer = std::make_unique<NES::SemanticAnalyzer>(sources, sinks),
         .queryOptimizer = std::make_unique<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{}, sources, sinks, workers),
