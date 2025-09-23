@@ -15,9 +15,11 @@
 #pragma once
 
 #include <functional>
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <../../../../nes-systests/systest/include/FSMTransitionMonitor.hpp>
 #include <fmt/base.h>
 #include <magic_enum/magic_enum.hpp>
 
@@ -122,6 +124,11 @@ protected:
         StateT toState = it->second.to;
         /// Record the transition in the history
         stepHistory.emplace_back(fromState, event, toState);
+
+        if constexpr (std::is_same_v<StateT, State> && std::is_same_v<EventT, Event>) {
+            getUsedTransitionsSet().insert({fromState, event, toState});
+        }
+
         currentState = toState;
         for (auto& act : it->second.actions)
         {

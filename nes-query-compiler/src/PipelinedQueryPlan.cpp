@@ -37,7 +37,6 @@ static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indent
 
 std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& plan)
 {
-    os << "PipelinedQueryPlan for Query: " << plan.getQueryId() << "\n";
     os << "Number of root pipelines: " << plan.getPipelines().size() << "\n";
     for (size_t i = 0; i < plan.getPipelines().size(); ++i)
     {
@@ -80,6 +79,15 @@ void PipelinedQueryPlan::addPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
     pipeline->setExecutionMode(executionMode);
     pipelines.push_back(pipeline);
+}
+
+bool PipelinedQueryPlan::operator==(const PipelinedQueryPlan& other) const
+{
+    std::stringstream ostream1;
+    std::stringstream ostream2;
+    ostream1 << *this;
+    ostream2 << other;
+    return ostream1.str() == ostream2.str();
 }
 
 }
