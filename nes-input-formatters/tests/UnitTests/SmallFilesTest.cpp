@@ -392,7 +392,7 @@ TEST_F(SmallFilesTest, testFoodData)
         .testFileName = "Food",
         .formatterType = "CSV",
         .hasSpanningTuples = true,
-        .numberOfIterations = 1,
+        .numberOfIterations = 10,
         .numberOfThreads = 1,
         .sizeOfRawBuffers = 16});
 }
@@ -403,7 +403,7 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
         {.testFileName = "Spacecraft_Telemetry",
          .formatterType = "CSV",
          .hasSpanningTuples = true,
-         .numberOfIterations = 1,
+         .numberOfIterations = 10,
          .numberOfThreads = 8,
          .sizeOfRawBuffers = 16});
 }
