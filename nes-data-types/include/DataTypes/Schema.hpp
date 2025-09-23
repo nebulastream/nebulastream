@@ -50,6 +50,7 @@ public:
 
         friend std::ostream& operator<<(std::ostream& os, const Field& field);
         bool operator==(const Field&) const = default;
+        [[nodiscard]] std::string getUnqualifiedName() const;
 
         std::string name;
         DataType dataType{};
