@@ -93,59 +93,6 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
             throw CannotInferSchema("All input schemas must be equal for Sink operator");
         }
     }
-
-    if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
-    {
-        if (copy.sinkDescriptor->getSchema()->getFields().size() > firstSchema.getFields().size())
-        {
-            NES_DEBUG("SinkDescriptor has {} fields, but new input schema has only {} fields", copy.sinkDescriptor->getSchema()->getFields().size(), firstSchema.getFields().size());
-
-            for (const auto& fieldName : copy.sinkDescriptor->getSchema()->getFieldNames())
-            {
-
-                if (auto field = firstSchema.getFieldByName(fieldName); not field.has_value())
-                {
-                    NES_DEBUG("Field {} not found in input schema with fields {}", field, firstSchema);
-                    throw CannotInferSchema("Field {} not found in input schema with fields {}", field, firstSchema);
-                }
-
-            }
-            return copy.withSchema(inputSchemas);
-        }
-        std::vector expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
-        std::vector actualFields(firstSchema.begin(), firstSchema.end());
-
-        std::stringstream expectedFieldsString;
-        std::stringstream actualFieldsString;
-
-        for (unsigned int i = 0; i < expectedFields.size(); ++i)
-        {
-            const auto& field = expectedFields.at(i);
-            auto foundIndex = std::ranges::find(actualFields, field);
-
-            if (foundIndex == actualFields.end())
-            {
-                expectedFieldsString << field << ", ";
-            }
-            else if (auto foundOffset = foundIndex - std::ranges::begin(actualFields); foundOffset != i)
-            {
-                expectedFieldsString << fmt::format("Field {} at {}, but was at {},", field, i, foundOffset);
-            }
-        }
-        for (const auto& field : actualFields)
-        {
-            if (std::ranges::find(expectedFields, field) == expectedFields.end())
-            {
-                actualFieldsString << field << ", ";
-            }
-        }
-
-        throw CannotInferSchema(
-            "The schema of the sink must be equal to the schema of the input operator. \n Expected fields: \n{} \n where not found, and found \n"
-            "unexpected fields: \n{}",
-            expectedFieldsString.str(),
-            actualFieldsString.str().substr(0, actualFieldsString.str().size() - 2));
-    }
     return copy; /// TODO: copy.withSchema(inputSchemas); ?
 }
 
