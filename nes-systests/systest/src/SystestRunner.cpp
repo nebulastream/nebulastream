@@ -36,6 +36,13 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Identifiers/NESStrongType.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
+#include <QueryManager/QueryManager.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -43,17 +50,6 @@
 #include <fmt/ranges.h>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
-
-
-#include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
-#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
-#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -347,11 +343,19 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
 }
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
+    const std::vector<SystestQuery>& queries,
+    const SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson,
+    const SystestClusterConfiguration& clusterConfig)
 {
     enable_memcom();
+
     auto catalog = std::make_shared<WorkerCatalog>();
-    catalog->addWorker(HostAddr("localhost:9090"), GrpcAddr("localhost:8080"), 1000000, {});
+    for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+    {
+        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
+    }
+
     auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
@@ -466,23 +470,33 @@ void printQueryResultToStdOut(
 }
 
 std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
+    const SingleNodeWorkerConfiguration& configuration)
 {
     enable_memcom();
+
     auto catalog = std::make_shared<WorkerCatalog>();
-    catalog->addWorker(HostAddr("localhost:9090"), GrpcAddr("localhost:8080"), 1000000, {});
-    auto embeddedQueryManager = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
-    QuerySubmitter submitter(std::move(embeddedQueryManager));
+    for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+    {
+        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
+    }
+
+    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
 
-std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
+std::vector<RunningQuery> runQueriesAtRemoteWorker(
+    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SystestClusterConfiguration& clusterConfig)
 {
     auto catalog = std::make_shared<WorkerCatalog>();
-    catalog->addWorker(HostAddr("localhost:9090"), GrpcAddr(serverURI), 1000000, {});
-    auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
-    QuerySubmitter submitter(std::move(remoteQueryManager));
+    for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+    {
+        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
+    }
+
+    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend()));
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
 

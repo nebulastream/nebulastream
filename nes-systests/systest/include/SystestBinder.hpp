@@ -31,7 +31,10 @@ class SystestBinder
 public:
     /// In the future we might need to inject a factory for the LegacyOptimizer when it requires more setup than the catalogs
     explicit SystestBinder(
-        const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, const std::filesystem::path& configDir);
+        const std::filesystem::path& workingDir,
+        const std::filesystem::path& testDataDir,
+        const std::filesystem::path& configDir,
+        SystestClusterConfiguration clusterConfig);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles);
