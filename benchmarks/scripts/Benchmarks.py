@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 
 
 SERVER = 'amd'
-DATETIME = '2025-09-22_16-33-48'
+DATETIME = ['2025-09-22_16-33-48']
 FILE = 'combined_benchmark_statistics.csv'
 # FILE = 'combined_slice_accesses.csv'
 SLICE_ACCESSES = False
@@ -35,6 +35,8 @@ def chunk_list(list, chunk_size):
 
 
 def filter_by_config(data, config):
+    if len(config) == 0:
+        return data
     mask = pd.Series(True, index=data.index)
     for k, v in config.items():
         mask &= data[k] == v
@@ -214,8 +216,9 @@ def convert_and_get_memory_bounds(data, max_bound, max_scaled_bound, metric):
     vals = []
     for col in ['lower_memory_bound', 'upper_memory_bound']:
         data_filtered = data[(data[col] <= max_bound) & (data[col] > 0)]
-        data_filtered = convert_units_to_match_value(data_filtered, col, max_scaled_bound)
-        vals += data_filtered[col].unique().tolist()
+        if len(data_filtered) > 0:
+            data_filtered = convert_units_to_match_value(data_filtered, col, max_scaled_bound)
+            vals += data_filtered[col].unique().tolist()
     return sorted(set(vals))
 
 
@@ -331,7 +334,11 @@ dtypes = {
     'with_cleanup': 'str',
     'with_prediction': 'str'
 }
-df = pd.read_csv(os.path.join('data', SERVER, DATETIME, FILE), dtype=dtypes)
+
+dfs = []
+for datetime in DATETIME:
+    dfs.append(pd.read_csv(os.path.join('data', SERVER, datetime, FILE), dtype=dtypes))
+df = pd.concat(dfs, ignore_index=True)
 
 # Define configuration parameters
 shared_config_params = [
@@ -383,8 +390,8 @@ query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)
 df['query_id'] = df['query'].map(query_mapping)
 
 # Add a hue column with default params
-df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
-df['file_backed_hue'] = df['query_id'] + ' | ' + df['timestamp_increment'].astype(str)
+df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
+df['file_backed_hue'] = df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
 df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
 df['accuracy_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
 df['memory_bounds_hue'] = df['lower_memory_bound'].astype(str) + ' | ' + df['upper_memory_bound'].astype(str)
@@ -439,39 +446,65 @@ for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
 def plot_time_comparison(data, config, metric, hue, label, legend, interpolate=False):
     param = 'window_start_normalized'
 
-    #data = filter_by_config(data, config)
+    # TODO fix for multiple queries: data = filter_by_config(data, config)
+    if data[metric].max() - data[metric].min() >= 1000000000:
+        yscale = "log"
     data_scaled, metric_unit = convert_units(data, metric)
 
     if interpolate:
         normalized_data = normalize_time_per_groups(data_scaled, param, ['dir_name'], param)
         interpolated_data = interpolate_and_align_per_groups(normalized_data, param, metric, ['slice_store_type', 'dir_name'], extrapolate_to=(normalized_data[param].min(), normalized_data[param].max()))
-        data, param_unit = convert_units(interpolated_data, param, 'normalised')
+        data_scaled, param_unit = convert_units(interpolated_data, param, 'normalised')
     else:
         filtered_data = cut_param_max_min_per_groups(data_scaled, param, ['dir_name'])
         shifted_data = shift_time_per_groups(filtered_data, param, ['dir_name'], param)
-        data, param_unit = convert_units(shifted_data, param, 's', 2)
+        data_scaled, param_unit = convert_units(shifted_data, param, 's', 2)
+
+    # Set estimator based on metric
+    if metric == 'memory':
+        estimator = np.max
+        vals = convert_and_get_memory_bounds(data_scaled, 2 * data[metric].max(), 2 * data_scaled[metric].max(), metric)
+    else:
+        estimator = np.mean
+        metric_unit += ' / sec'
 
     plt.figure(figsize=(14, 9))
     #plt.figure(figsize=(14, 6))
-    ax = sns.lineplot(data=data, x=param, y=metric, hue=hue, errorbar=None, marker=None)
+    ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar=None, marker=None, estimator=estimator)
 
     # Add labels for min and max values of metric for this param for each value of hue
-    add_min_max_labels_per_group(data, hue, metric, ax, param)
+    add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
+
+    # Plot horizontal lines for lower and upper bounds
+    #for val in vals if 'vals' in locals() else []:
+        #plt.axhline(y=val, color='red', linestyle='-', linewidth=1, alpha=1, zorder=1, label=f'{val:.3f} {metric_unit}')
+    if 'vals' in locals():
+        if len(vals) == 2:
+            ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[0], y2=vals[1], alpha=0.15, label=f'({vals[0]:.3f} {metric_unit}, {vals[1]:.3f} {metric_unit})')
+        elif len(vals) == 1:
+            plt.axhline(y=vals[0], linestyle='-', linewidth=1, alpha=0.5, zorder=1, label=f'{vals[0]:.3f} {metric_unit}')
+            #plt.plot([data_scaled[param].min(), data_scaled[param].max()], [vals[0], vals[0]], linestyle='-', linewidth=2, alpha=0.5, zorder=1, label=f'{vals[0]:.3f} {metric_unit}')
 
     # Add config below
     mapping_text = '\n'.join([f'{k}: {v}' for k, v in config.items() if k in all_config_params])
     plt.figtext(0.01, 0.015, mapping_text, wrap=True, ha='left', fontsize=9)
-    #add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.02, 0.01)
+    #add_query_fig_text([' | ' + lbl for lbl in data_scaled['file_backed_hue'].unique()], 0.2, 0.02, 0.01)
 
-    param = 'Time'
-    plt.yscale("log")
     plt.subplots_adjust(left=0.05, right=0.99, top=0.95, bottom=0.45)
     #plt.subplots_adjust(left=0.05, right=0.99, top=0.9, bottom=0.15)
 
-    plt.title(f'Effect of {param} on {label}')
+    if 'yscale' in locals():    
+        plt.yscale(yscale)
+    else:
+        plt.ylim(0, data_scaled[metric].max() * 1.1)
+
+    param = 'Time'
+    #plt.title(f'Effect of {param} on {label}')
+    plt.title(f'{label} over {param}')
     #plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
     plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
     plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+    plt.grid(axis='y', which='major', linestyle='-', linewidth=1)
     plt.legend(title=legend)
     plt.show()
 
@@ -481,6 +514,7 @@ default_param_values['upper_memory_bound'] = [np.iinfo(np.uint64).max]
 
 
 # %%
+
 for timestamp_increment in default_param_values['timestamp_increment']:
     for query in default_param_values['query']:
         data = df[(df['lower_memory_bound'] <= df['upper_memory_bound']) & (df['slice_store_type'] == 'FILE_BACKED') & 
@@ -489,50 +523,53 @@ for timestamp_increment in default_param_values['timestamp_increment']:
 
         if len(data) == 0 or data['query_id'].unique()[0] != 'Q2' or timestamp_increment != 1:
             continue
-        data = data[(data['lower_memory_bound'] > 1048576)] # & (data['lower_memory_bound'] < data['upper_memory_bound'].unique().max())]
+        data = data[(data['lower_memory_bound'] > 1048576) & (data['lower_memory_bound'] < data['upper_memory_bound'].unique().max())]
 
         #print(f"Data Rows: {len(data['dir_name'].unique())}")
         #print(config)
 
-        plot_time_comparison(data, {}, 'throughput_data', 'memory_bounds_hue', 'Throughput / sec', 'Lower Memory Bound | Upper Memory Bound', False)
-        plot_time_comparison(data, {}, 'memory', 'memory_bounds_hue', 'Memory', 'Lower Memory Bound | Upper Memory Bound', False)
+        plot_time_comparison(data, {}, 'throughput_data', 'memory_bounds_hue', 'Throughput', 'Lower Memory Bound | Upper Memory Bound', False)
+        plot_time_comparison(data, {}, 'memory', 'memory_bounds_hue', 'Memory Consumption', 'Lower Memory Bound | Upper Memory Bound', False)
 
 
 # %%
-for lower_memory_bound in df['lower_memory_bound'].unique():
-    for upper_memory_bound in df['upper_memory_bound'].unique():
-        if lower_memory_bound > upper_memory_bound:
-            continue
-        #data = df[((df['query_id'] == 'Q2') & (df['timestamp_increment'] == 1)) |
-                  #((df['query_id'] == 'Q2') & (df['timestamp_increment'] == 1)) |
-                  #((df['query_id'] == 'Q4') & (df['timestamp_increment'] == 1)) |
-                  #((df['query_id'] == 'Q5') & (df['timestamp_increment'] == 1)) |
-        #          ((df['query_id'] == 'Q5') & (df['timestamp_increment'] == 1)) |
-                  #((df['query_id'] == 'Q8') & (df['timestamp_increment'] == 1)) |
-        #          ((df['query_id'] == 'Q8') & (df['timestamp_increment'] == 1))]
-        data = df[(df['query_id'] == 'Q2') | (df['query_id'] == 'Q5') | (df['query_id'] == 'Q8')]
 
-        data_default = filter_by_default_values_except_params(data, [])
-        data_default = data_default[data_default['slice_store_type'] == 'DEFAULT']
-        data_memory_bound = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound', 'min_write_state_size'])
-        data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE_BACKED']
-        data_memory_bound = data_memory_bound[data_memory_bound['lower_memory_bound'] == lower_memory_bound]
-        data_memory_bound = data_memory_bound[data_memory_bound['upper_memory_bound'] == upper_memory_bound]
-        data_memory_bound = data_memory_bound[data_memory_bound['min_write_state_size'] == 0] # 8388608]
-        data = pd.concat([data_default, data_memory_bound], ignore_index=True)
-
-        config = {param: ", ".join(map(str, data[param].unique().tolist())) for param in all_config_params}
-        config['lower_memory_bound'] = lower_memory_bound
-        config['upper_memory_bound'] = upper_memory_bound
-        config['min_write_state_size'] = 0
-
-        if len(data['dir_name'].unique()) < 2 or len(data['slice_store_type'].unique()) < 2:
-            print(f"Data Rows: {len(data['dir_name'].unique())}")
-            print(config)
-            continue
-
-        plot_time_comparison(data, config, 'throughput_data', 'shared_hue', 'Throughput / sec', 'Slice Store | Query | Time Increment', False)
-        plot_time_comparison(data, config, 'memory', 'shared_hue', 'Memory', 'Slice Store | Query | Time Increment', False)
+memory_bounds = [(67108864, 134217728)]
+for min_write_state_size in df['min_write_state_size'].unique():
+    for lower_memory_bound in df['lower_memory_bound'].unique():
+        for upper_memory_bound in df['upper_memory_bound'].unique():
+            if lower_memory_bound > upper_memory_bound or (lower_memory_bound, upper_memory_bound) not in memory_bounds:
+                continue
+            #data = df[((df['query_id'] == 'Q2') & (df['timestamp_increment'] == 1)) |
+                      #((df['query_id'] == 'Q2') & (df['timestamp_increment'] == 1)) |
+                      #((df['query_id'] == 'Q4') & (df['timestamp_increment'] == 1)) |
+                      #((df['query_id'] == 'Q5') & (df['timestamp_increment'] == 1)) |
+            #          ((df['query_id'] == 'Q5') & (df['timestamp_increment'] == 1)) |
+                      #((df['query_id'] == 'Q8') & (df['timestamp_increment'] == 1)) |
+            #          ((df['query_id'] == 'Q8') & (df['timestamp_increment'] == 1))]
+            data = df[(df['query_id'] == 'Q2') | (df['query_id'] == 'Q5') | (df['query_id'] == 'Q8')]
+    
+            data_default = filter_by_default_values_except_params(data, [])
+            data_default = data_default[data_default['slice_store_type'] == 'DEFAULT']
+            data_memory_bound = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound', 'min_write_state_size'])
+            data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE_BACKED']
+            data_memory_bound = data_memory_bound[data_memory_bound['lower_memory_bound'] == lower_memory_bound]
+            data_memory_bound = data_memory_bound[data_memory_bound['upper_memory_bound'] == upper_memory_bound]
+            data_memory_bound = data_memory_bound[data_memory_bound['min_write_state_size'] == min_write_state_size]
+            data = pd.concat([data_memory_bound], ignore_index=True)
+    
+            config = {param: ', '.join(map(str, data_default[param].unique().tolist())) for param in all_config_params}
+            config['lower_memory_bound'] = lower_memory_bound
+            config['upper_memory_bound'] = upper_memory_bound
+            config['min_write_state_size'] = min_write_state_size
+    
+            if len(data) == 0 or len(data['dir_name'].unique()) < 2: # or len(data['slice_store_type'].unique()) < 2:
+                #print(f"Data Rows: {len(data['dir_name'].unique())}")
+                #print(config)
+                continue
+    
+            plot_time_comparison(data, config, 'throughput_data', 'shared_hue', 'Throughput', 'Slice Store | Query', False)
+            plot_time_comparison(data, config, 'memory', 'shared_hue', 'Memory Consumption', 'Slice Store | Query', False)
 
 
 # %% Shared parameter plots
@@ -729,40 +766,51 @@ for hue_value in df['file_backed_hue'].unique():
 
 # %% Memory-Bounds plots for different memory models
 
-def plot_memory_bounds_comparison(data, param, metric, hue, label, legend):
-    data = filter_by_default_values_except_params(data, [param, 'lower_memory_bound', 'upper_memory_bound'])
-    if data[metric].max() - data[metric].min() >= 1000000000:
-        yscale = "log"
-    data_scaled, metric_unit = convert_units(data, metric)
+def plot_memory_bounds_comparison(data, param, metrics, hue, labels, legend):
+    cols = [0] # data['min_write_state_size'].unique()
+    fig, axes = plt.subplots(len(metrics), len(cols), figsize=(len(cols) * 8, len(metrics) * 5), sharex=True)
+    axes = axes.ravel()
+    for i, metric in enumerate(metrics):
+        label = labels[i]
+        for j, min_write_state_size in enumerate(cols, start=i*len(cols)):
+            ax = axes[j]
+            default_param_values['min_write_state_size'] = [min_write_state_size]
+            filtered_data = filter_by_default_values_except_params(data, [param, 'lower_memory_bound', 'upper_memory_bound'])
+            if filtered_data[metric].max() - filtered_data[metric].min() >= 1000000000:
+                yscale = "log"
+            data_scaled, metric_unit = convert_units(filtered_data, metric)
 
-    plt.figure(figsize=(8, 5))
-    ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+            sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
 
-    if label == 'Memory Consumption':
-        # Plot horizontal lines for lower and upper bounds
-        #vals = convert_and_get_memory_bounds(data_scaled, data[metric].max(), data_scaled[metric].max(), metric)
-        #for val in vals:
-        #    plt.axhline(y=val, color='red', linestyle='-', linewidth=1, alpha=1, zorder=1, label=f'{val:.3f} {metric_unit}')
+            if metric == 'memory':
+                # Add shaded regions for bounds
+                for k, (group_name, group_data) in enumerate(filtered_data.groupby(param, sort=False)):
+                    #if 0 < group_data['lower_memory_bound'].unique()[0] : # <= filtered_data[metric].max():
+                    vals = convert_and_get_memory_bounds(group_data, 2 * filtered_data[metric].max(), 2 * data_scaled[metric].max(), metric)
+                    if len(vals) == 2:
+                        ax.fill_between(x=[k-0.4, k+0.4], y1=vals[0], y2=vals[1], alpha=0.15, label=group_name.replace('\n', ' '))
+            else:
+                metric_unit += ' / sec'
 
-        # Add shaded regions for bounds
-        for i, (group_name, group_data) in enumerate(data.groupby(param, sort=False)):
-            if 0 < group_data['lower_memory_bound'].unique()[0] : # <= data[metric].max():
-                vals = convert_and_get_memory_bounds(group_data, 2 * data[metric].max(), 2 * data_scaled[metric].max(), metric)
-                ax.fill_between(x=[i-0.4, i+0.4], y1=vals[0], y2=vals[1], alpha=0.15, label=group_name.replace('\n', ' '))
-    else:
-        metric_unit += ' / sec'
+            # Add legend below
+            #add_query_fig_text([' | ' + lbl for lbl in filtered_data[hue].unique()], 0.25, 0.0)
 
-    # Add legend below
-    #add_query_fig_text([' | ' + lbl for lbl in data[hue].unique()], 0.25, 0.0)
+            if 'yscale' in locals():
+                ax.set_yscale(yscale)
+            else:
+                ax.set_ylim(0, data_scaled[metric].max() * 1.1)
 
-    if 'yscale' in locals():    
-        plt.yscale(yscale)
-    plt.ylim(0, data_scaled[metric].max() * 1.05)
-    plt.grid(axis='y', which='major', linestyle='-', linewidth=1)
-    plt.title(f'Effect of Memory Bounds on {label}')
-    plt.xlabel('(LowerMemoryBound, UpperMemoryBound)')
-    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
-    plt.legend(title=None) #legend)
+            #if i == 0:
+            #    ax.set_title(f'MinWriteStateSize = {convert_unit(filtered_data["min_write_state_size"].iloc[0])}')
+            #el
+            if i == len(metrics) - 1:
+                ax.set_xlabel('Prediction Range (Lower Threshold, Upper Threshold)')
+            ax.set_ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+            ax.grid(axis='y', which='major', linestyle='-', linewidth=1)
+            ax.legend(title=None) #legend)
+
+    fig.suptitle(f'Effect of Prediction Ranges on {" and ".join(map(str, labels))}') #, fontsize=16)
+    plt.tight_layout()
     plt.show()
 
 
@@ -780,7 +828,8 @@ memory_bounds = [(0, 0), (0, np.iinfo(np.uint64).max), (8388608, 16777216), (167
 file_backed_data = file_backed_data[file_backed_data.apply(lambda row: (row['lower_memory_bound'], row['upper_memory_bound']) in memory_bounds, axis=1)]
 file_backed_data['memory_bounds'] = file_backed_data.apply(lambda row: f"({convert_unit(row['lower_memory_bound'])},\n{convert_unit(row['upper_memory_bound'])})", axis=1)
 
-for min_write_state_size in [0]: #, 4096, 8388608]:
-    default_param_values['min_write_state_size'] = [min_write_state_size]
-    plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', 'throughput_data', 'query_id', 'Throughput', 'Query')
-    plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', 'memory', 'query_id', 'Memory Consumption', 'Query')
+#for min_write_state_size in [0, 4096, 8388608]:
+#    default_param_values['min_write_state_size'] = [min_write_state_size]
+#plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['throughput_data'], 'query_id', ['Throughput'], 'Query')
+#plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['memory'], 'query_id', ['Memory Consumption'], 'Query')
+plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['throughput_data', 'memory'], 'query_id', ['Throughput', 'Memory Consumption'], 'Query')
