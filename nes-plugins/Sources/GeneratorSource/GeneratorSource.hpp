@@ -20,6 +20,7 @@
 #include <optional>
 #include <ostream>
 #include <ranges>
+#include <regex>
 #include <sstream>
 #include <stop_token>
 #include <string>
@@ -120,9 +121,20 @@ struct ConfigParametersGenerator
                 NES_ERROR("Generator schema cannot be empty!")
                 throw InvalidConfigParameter("Generator schema cannot be empty!");
             }
-            auto lines = schema | std::ranges::views::split('\n')
-                | std::views::transform([](const auto& subView) { return std::string_view(subView); })
-                | std::views::filter([](const auto& subView) { return !subView.empty(); });
+
+            std::vector<std::string> lines;
+            for (const auto& line : schema | std::ranges::views::split(','))
+            {
+                for (const auto& subLine : line | std::ranges::views::split('\n'))
+                {
+                    if (subLine.empty())
+                    {
+                        continue;
+                    }
+                    lines.emplace_back(Util::trimWhiteSpaces(std::string_view(subLine)));
+                }
+            }
+
             for (auto line : lines)
             {
                 const auto foundIdentifer = line.substr(0, line.find_first_of(' '));
