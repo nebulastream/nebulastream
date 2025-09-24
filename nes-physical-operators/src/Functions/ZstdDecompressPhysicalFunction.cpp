@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/ZstdDecompressionPhysicalFunction.hpp>
+#include <Functions/ZstdDecompressPhysicalFunction.hpp>
 
 #include <utility>
 #include <vector>
@@ -28,7 +28,7 @@
 namespace NES
 {
 
-VarVal ZstdDecompressionPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal ZstdDecompressPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childPhysicalFunction.execute(record, arena);
     auto varSizedValue = value.cast<VariableSizedData>();
@@ -63,15 +63,15 @@ VarVal ZstdDecompressionPhysicalFunction::execute(const Record& record, ArenaRef
         return decompressedData;
 }
 
-ZstdDecompressionPhysicalFunction::ZstdDecompressionPhysicalFunction(PhysicalFunction childPhysicalFunction) : childPhysicalFunction(childPhysicalFunction)
+ZstdDecompressPhysicalFunction::ZstdDecompressPhysicalFunction(PhysicalFunction childPhysicalFunction) : childPhysicalFunction(childPhysicalFunction)
 {
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterZstdDecompressionPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterZstdDecompressPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Zstd compression function must have exactly onet  sub-function");
-    return ZstdDecompressionPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+    return ZstdDecompressPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 
 }
