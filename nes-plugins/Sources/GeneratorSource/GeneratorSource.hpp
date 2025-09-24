@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <ranges>
@@ -25,7 +26,6 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -33,8 +33,11 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
+#include <GeneratorRate.hpp>
+#include <SinusGeneratorRate.hpp>
 
 namespace NES
 {
@@ -42,7 +45,7 @@ namespace NES
 class GeneratorSource : public Source
 {
 public:
-    constexpr static std::string_view NAME = "GENERATOR";
+    constexpr static std::string_view NAME = "Generator";
 
     explicit GeneratorSource(const SourceDescriptor& sourceDescriptor);
     ~GeneratorSource() override = default;
@@ -64,11 +67,16 @@ public:
 private:
     uint32_t seed;
     int32_t maxRuntime;
+    uint64_t generatedTuplesCounter{0};
     uint64_t generatedBuffers{0};
     std::string generatorSchemaRaw;
     std::chrono::time_point<std::chrono::system_clock> generatorStartTime;
     Generator generator;
     std::stringstream tuplesStream;
+    std::chrono::time_point<std::chrono::system_clock> startOfInterval;
+    std::chrono::milliseconds flushInterval;
+    std::unique_ptr<GeneratorRate> generatorRate;
+
     /// if inserting a set of generated tuples into the buffer would overflow it, this string saves them so it can be inserted into the next buffer
     std::string orphanTuples;
 };
@@ -81,7 +89,7 @@ struct ConfigParametersGenerator
         [](const std::unordered_map<std::string, std::string>& config)
         {
             const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
-            if (!optToken.has_value() || !optToken.value().asEnum<GeneratorStop>().has_value())
+            if (not optToken.has_value() || not optToken.value().asEnum<GeneratorStop>().has_value())
             {
                 NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
                 throw InvalidConfigParameter(
@@ -109,6 +117,44 @@ struct ConfigParametersGenerator
         std::chrono::high_resolution_clock::now().time_since_epoch().count(),
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEED, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorRate::Type> GENERATOR_RATE_TYPE{
+        "generator_rate_type",
+        EnumWrapper{GeneratorRate::Type::FIXED},
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_TYPE, config);
+            if (not optToken.has_value() || not optToken.value().asEnum<GeneratorRate::Type>().has_value())
+            {
+                return std::optional<EnumWrapper>();
+            }
+            switch (optToken.value().asEnum<GeneratorRate::Type>().value())
+            {
+                case GeneratorRate::Type::FIXED:
+                    return std::optional(EnumWrapper(GeneratorRate::Type::FIXED));
+                case GeneratorRate::Type::SINUS:
+                    return std::optional(EnumWrapper(GeneratorRate::Type::SINUS));
+            }
+            return std::optional<EnumWrapper>();
+        }};
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_RATE_CONFIG{
+        "generator_rate_config",
+        "emit_rate 1000",
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
+            if (not optToken.has_value())
+            {
+                return std::optional<std::string>();
+            }
+            if (SinusGeneratorRate::parseAndValidateConfigString(optToken.value()).has_value()
+                or FixedGeneratorRate::parseAndValidateConfigString(optToken.value()).has_value())
+            {
+                return DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
+            }
+            return std::optional<std::string>();
+        }};
+
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{
         "generator_schema",
         {},
@@ -125,18 +171,18 @@ struct ConfigParametersGenerator
                 | std::views::filter([](const auto& subView) { return !subView.empty(); });
             for (auto line : lines)
             {
-                const auto foundIdentifer = line.substr(0, line.find_first_of(' '));
+                const auto foundIdentifier = line.substr(0, line.find_first_of(' '));
                 bool validatorExists = false;
                 for (const auto& [identifier, validator] : GeneratorFields::Validators)
                 {
-                    if (identifier == foundIdentifer)
+                    if (identifier == foundIdentifier)
                     {
                         validator(line);
                         validatorExists = true;
                         break;
                     }
                 }
-                if (!validatorExists)
+                if (not validatorExists)
                 {
                     NES_ERROR("Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
                     throw InvalidConfigParameter(
@@ -144,6 +190,15 @@ struct ConfigParametersGenerator
                 }
             }
             return DescriptorConfig::tryGet(GENERATOR_SCHEMA, config);
+        }};
+
+    static inline const NES::DescriptorConfig::ConfigParameter<uint64_t> FLUSH_INTERVAL_MS{
+        "flush_interval_ms",
+        10,
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            const auto value = DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config);
+            return value;
         }};
 
     /// @brief config option for setting the max runtime in ms, if set to -1 the source will run till stopped by another thread
@@ -154,7 +209,13 @@ struct ConfigParametersGenerator
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, SEED, GENERATOR_SCHEMA, MAX_RUNTIME_MS, SEQUENCE_STOPS_GENERATOR);
+            SourceDescriptor::parameterMap,
+            SEED,
+            GENERATOR_SCHEMA,
+            MAX_RUNTIME_MS,
+            SEQUENCE_STOPS_GENERATOR,
+            GENERATOR_RATE_TYPE,
+            GENERATOR_RATE_CONFIG,
+            FLUSH_INTERVAL_MS);
 };
-
 }
