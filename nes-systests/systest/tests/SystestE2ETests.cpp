@@ -26,6 +26,7 @@
 #include <BaseUnitTest.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
+#include <WorkerConfig.hpp>
 
 namespace
 {
@@ -69,6 +70,11 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     const auto testFileName = fmt::format("MultipleCorrectAndIncorrect{}", EXTENSION);
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
+    config.clusterConfig = SystestClusterConfiguration{
+        .workers
+        = {WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}}},
+        .allowSourcePlacement = {HostAddr("localhost:9090")},
+        .allowSinkPlacement = {HostAddr("localhost:9090")}};
 
     const auto systestResult = executeSystests(config);
     ASSERT_TRUE(systestResult.returnType == SystestExecutorResult::ReturnType::FAILED) << " Return type not as expected.";
@@ -94,6 +100,10 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
+    config.clusterConfig = SystestClusterConfiguration{
+        .workers = {WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}}},
+        .allowSourcePlacement = {HostAddr("")},
+        .allowSinkPlacement = {HostAddr("")}};
 
     const auto systestResult = executeSystests(config);
     ASSERT_TRUE(systestResult.returnType == SystestExecutorResult::ReturnType::FAILED) << " Return type not as expected.";
