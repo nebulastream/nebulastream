@@ -640,15 +640,99 @@ struct SystestBinder::Impl
             { attachSourceCallback(sourceThreads, sourceCatalog, testFileName, sourceIndex, attachSource); });
 
         /// We create a new query plan from our config when finding a query
-        parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId currentQueryNumberInTest)
-                                       { queryCallback(testFileName, plans, sltSinkProvider, query, currentQueryNumberInTest); });
+        SystestQueryId lastParsedQueryId = INVALID_SYSTEST_QUERY_ID;
+        parser.registerOnQueryCallback(
+            [&](std::string query, const SystestQueryId currentQueryNumberInTest)
+            {
+                lastParsedQueryId = currentQueryNumberInTest;
+                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest);
+            });
 
         parser.registerOnErrorExpectationCallback(
             [&](const SystestParser::ErrorExpectation& errorExpectation, const SystestQueryId correspondingQueryId)
             { errorExpectationCallback(plans, errorExpectation, correspondingQueryId); });
 
-        parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-                                              { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
+        parser.registerOnResultTuplesCallback(
+            [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+            { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
+
+        parser.registerOnDifferentialQueryBlockCallback(
+            [&](std::string leftQuery,
+                std::string rightQuery,
+                const SystestQueryId currentQueryNumberInTest,
+                const SystestQueryId)
+            {
+                const auto extractSinkName = [](const std::string& query) -> std::string
+                {
+                    std::istringstream stream(query);
+                    std::string token;
+                    while (stream >> token)
+                    {
+                        if (Util::toLowerCase(token) == "into")
+                        {
+                            std::string sink;
+                            if (!(stream >> sink))
+                            {
+                                NES_ERROR("INTO clause not followed by sink name in query: {}", query);
+                                return "";
+                            }
+                            if (!sink.empty() && sink.back() == ';')
+                            {
+                                sink.pop_back();
+                            }
+                            return sink;
+                        }
+                    }
+                    NES_ERROR("INTO clause not found in query: {}", query);
+                    return "";
+                };
+
+                const auto leftSinkName = extractSinkName(leftQuery);
+                const auto rightSinkName = extractSinkName(rightQuery);
+
+                const auto leftSinkForQuery = leftSinkName + std::to_string(lastParsedQueryId.getRawValue());
+                const auto rightSinkForQuery
+                    = rightSinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
+
+                leftQuery = std::regex_replace(leftQuery, std::regex(leftSinkName), leftSinkForQuery);
+                rightQuery = std::regex_replace(rightQuery, std::regex(rightSinkName), rightSinkForQuery);
+
+                const auto differentialTestResultFileName = std::string(testFileName) + "differential";
+                const auto leftResultFile = SystestQuery::resultFile(workingDir, testFileName, lastParsedQueryId);
+                const auto rightResultFile
+                    = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
+
+                auto& currentTest
+                    = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
+
+                if (auto leftSinkExpected = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
+                    not leftSinkExpected.has_value())
+                {
+                    currentTest.setException(leftSinkExpected.error());
+                    return;
+                }
+                if (auto rightSinkExpected
+                    = sltSinkProvider.createActualSink(rightSinkName, rightSinkForQuery, rightResultFile);
+                    not rightSinkExpected.has_value())
+                {
+                    currentTest.setException(rightSinkExpected.error());
+                    return;
+                }
+
+                try
+                {
+                    auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
+                    auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
+
+                    currentTest.setQueryDefinition(std::move(leftQuery));
+                    currentTest.setBoundPlan(std::move(leftPlan));
+                    currentTest.setDifferentialQueryPlan(std::move(rightPlan));
+                }
+                catch (Exception& e)
+                {
+                    currentTest.setException(e);
+                }
+            });
         try
         {
             parser.parse();
