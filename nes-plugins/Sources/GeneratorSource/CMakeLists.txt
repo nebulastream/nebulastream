@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(Generator Source nes-sources-registry generator_source_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp)
-add_plugin_as_library(Generator SourceValidation nes-sources-registry generator_validation_plugin_library GeneratorSource.cpp)
-add_plugin_as_library(Generator GeneratorData nes-sources-registry generator_inline_data_plugin_library GeneratorSource.cpp)
+add_plugin_as_library(Generator Source nes-sources-registry generator_source_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
+add_plugin_as_library(Generator SourceValidation nes-sources-registry generator_validation_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
+add_plugin_as_library(Generator GeneratorData nes-sources-registry generator_inline_data_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
 
 target_include_directories(generator_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
