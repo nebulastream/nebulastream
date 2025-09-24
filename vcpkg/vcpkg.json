@@ -40,6 +40,7 @@
     "nautilus",
     "replxx",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "ortools"
   ]
 }
