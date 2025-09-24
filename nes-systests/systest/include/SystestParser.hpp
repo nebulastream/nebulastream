@@ -46,9 +46,7 @@ enum class TokenType : uint8_t
     QUERY,
     RESULT_DELIMITER,
     ERROR_EXPECTATION,
-    DIFF_LEFT,
-    DIFF_RIGHT,
-    DIFF_END
+    DIFFERENTIAL
 };
 
 /// Assures that the number of parsed queries matches the number of parsed results
@@ -203,7 +201,10 @@ private:
     ErrorExpectationCallback onErrorExpectationCallback;
     DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;
 
+    std::optional<std::string> lastParsedQuery;
+    std::optional<SystestQueryId> lastParsedQueryId;
     bool firstToken = true;
+    bool shouldRevisitCurrentLine = false;
     size_t currentLine = 0;
     std::vector<std::string> lines;
 };
