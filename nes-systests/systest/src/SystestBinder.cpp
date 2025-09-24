@@ -44,6 +44,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
@@ -300,7 +301,7 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         auto buildSystests = loadedSystests
@@ -346,6 +347,118 @@ struct SystestBinder::Impl
         return buildSystests;
     }
 
+    static void createLogicalSource(std::shared_ptr<SourceCatalog>& sourceCatalog, const CreateLogicalSourceStatement& statement)
+    {
+        const auto created = sourceCatalog->addLogicalSource(statement.name, statement.schema);
+        if (not created.has_value())
+        {
+            throw InvalidQuerySyntax();
+        }
+    }
+
+    void addInlineDataToFileSource(CreatePhysicalSourceStatement& statement, const std::vector<std::string>& input) const
+    {
+        std::ofstream file;
+        auto testFilePath = tempnam((workingDir / "testfile").c_str(), "source");
+        file.open(testFilePath);
+        if (!file.is_open())
+        {
+            throw UnknownException();
+        }
+        for (size_t i = 0; i < input.size(); i++)
+        {
+            file << input[i] << '\n';
+        }
+        file.close();
+
+        auto [filePathConf, filePathSuccess] = statement.sourceConfig.try_emplace("file_path", testFilePath);
+        if (!filePathSuccess)
+        {
+            throw InvalidConfigParameter("file_path already exists in source.");
+        }
+
+        if (!statement.parserConfig.contains("type"))
+        {
+            statement.parserConfig.emplace("type", "CSV");
+        }
+    }
+
+    void createPhysicalSource(
+        std::shared_ptr<SourceCatalog>& sourceCatalog,
+        CreatePhysicalSourceStatement statement,
+        const std::optional<std::vector<std::string>>& input)
+    {
+        if (statement.sourceType == "File")
+        {
+            if (input.has_value())
+            {
+                addInlineDataToFileSource(statement, input.value());
+            }
+        }
+        else if (statement.sourceType == "Generator")
+        {
+            std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
+            statement.parserConfig.merge(defaultParserConfig);
+        }
+
+
+        if (const auto created
+            = sourceCatalog->addPhysicalSource(statement.attachedTo, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+        {
+            return;
+        }
+
+        throw InvalidQuerySyntax();
+    }
+
+    void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
+    {
+        Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        for (const auto& field : statement.schema.getFields())
+        {
+            schema.addField(field.name, field.dataType);
+        }
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
+    }
+
+    void createCallback(
+        const StatementBinder& binder,
+        std::shared_ptr<SourceCatalog>& sourceCatalog,
+        SLTSinkFactory& sltSinkProvider,
+        const std::string& query,
+        const std::optional<std::vector<std::string>>& input)
+    {
+        const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
+        const auto parseResult = managedParser->parseSingle();
+        if (not parseResult.has_value())
+            throw InvalidQuerySyntax();
+
+        const auto binding = binder.bind(parseResult.value().get());
+        if (not binding.has_value())
+        {
+            throw InvalidQuerySyntax();
+        }
+
+        const auto& statement = binding.value();
+
+        if (std::holds_alternative<CreateLogicalSourceStatement>(statement))
+        {
+            createLogicalSource(sourceCatalog, std::get<CreateLogicalSourceStatement>(statement));
+        }
+        else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
+        {
+            createPhysicalSource(sourceCatalog, std::get<CreatePhysicalSourceStatement>(statement), input);
+        }
+        else if (std::holds_alternative<CreateSinkStatement>(statement))
+        {
+            createSink(sltSinkProvider, std::get<CreateSinkStatement>(statement));
+        }
+        else
+        {
+            throw UnsupportedQuery();
+        }
+    };
+
     static void sinkCallback(SLTSinkFactory& sltSinkProvider, const SystestParser::SystestSink& sinkParsed)
     {
         Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
@@ -356,14 +469,14 @@ struct SystestBinder::Impl
         sltSinkProvider.registerSink(sinkParsed.type, sinkParsed.name, schema);
     }
 
-    static void logicalSourceCallback(SourceCatalog& sourceCatalog, const SystestParser::SystestLogicalSource& source)
+    static void logicalSourceCallback(std::shared_ptr<NES::SourceCatalog> sourceCatalog, const SystestParser::SystestLogicalSource& source)
     {
         Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
         for (const auto& [type, name] : source.fields)
         {
             schema.addField(name, type);
         }
-        if (const auto logicalSource = sourceCatalog.addLogicalSource(source.name, schema); not logicalSource.has_value())
+        if (const auto logicalSource = sourceCatalog.get()->addLogicalSource(source.name, schema); not logicalSource.has_value())
         {
             throw SourceAlreadyExists("{}", source.name);
         }
@@ -372,7 +485,7 @@ struct SystestBinder::Impl
     /// NOLINTBEGIN(readability-function-cognitive-complexity)
     void attachSourceCallback(
         std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
-        SourceCatalog& sourceCatalog,
+        std::shared_ptr<NES::SourceCatalog> sourceCatalog,
         const std::string_view& testFileName,
         uint64_t& sourceIndex,
         SystestAttachSource& attachSource)
@@ -407,7 +520,7 @@ struct SystestBinder::Impl
             physicalSource.logical = logicalSourceName;
             physicalSource.parserConfig["type"] = "CSV";
             physicalSource.parserConfig["field_delimiter"] = ",";
-            auto logicalSourceMapping = sourceCatalog.getLogicalSource(logicalSourceName);
+            auto logicalSourceMapping = sourceCatalog.get()->getLogicalSource(logicalSourceName);
             if (!logicalSourceMapping.has_value())
             {
                 throw InvalidConfigParameter("{} does not exist in the same catalog!", logicalSourceName);
@@ -505,14 +618,14 @@ struct SystestBinder::Impl
             std::unreachable();
         }();
 
-        const auto logicalSource = sourceCatalog.getLogicalSource(attachSource.logicalSourceName);
+        const auto logicalSource = sourceCatalog.get()->getLogicalSource(attachSource.logicalSourceName);
         if (not logicalSource.has_value())
         {
             throw UnknownSourceName("{}", attachSource.logicalSourceName);
         }
 
         const auto physicalSource
-            = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
+            = sourceCatalog.get()->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, parserConfig);
         if (not physicalSource.has_value())
         {
             NES_ERROR(
@@ -559,15 +672,14 @@ struct SystestBinder::Impl
         }();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest.getRawValue());
-        query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
+        const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));        query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
-        if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
+        if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile); not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
         }
@@ -607,7 +719,7 @@ struct SystestBinder::Impl
     std::vector<SystestQueryBuilder> loadFromSLTFile(
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
-        SourceCatalog& sourceCatalog,
+        std::shared_ptr<NES::SourceCatalog> sourceCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -617,6 +729,8 @@ struct SystestBinder::Impl
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
         SystestParser parser{};
+        const auto binder = NES::StatementBinder{
+            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
         parser.registerSubstitutionRule(
             {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
@@ -649,6 +763,10 @@ struct SystestBinder::Impl
 
         parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                               { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
+
+        parser.registerOnCreateCallback([&](const std::string& query, const std::optional<std::vector<std::string>>& input)
+                                        { createCallback(binder, sourceCatalog, sltSinkProvider, query, input); });
+
         try
         {
             parser.parse();
