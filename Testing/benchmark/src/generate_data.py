@@ -7,11 +7,12 @@ import json
 from pathlib import Path
 from benchmark_system import parse_int_list
 
-def generate_data(num_rows=10000000, num_columns=10, num_groups=100, file_path="benchmark_data.csv"):
+def generate_data(num_rows=10000000, num_columns=10, num_groups=None, file_path="benchmark_data.csv"):
     """Generate test data with configurable columns, windows, and groups for different selectivities."""
-    # Adjust for timestamp column
-    num_columns -= 1
-    file_path += f"_cols{num_columns + 1}.csv"
+
+    file_path += f"_cols{num_columns}"
+    if num_groups is not None:
+        file_path += f"_groups{num_groups}.csv"
     meta_file_path = str(file_path) + ".meta"
 
     # Check if file already exists
@@ -23,16 +24,19 @@ def generate_data(num_rows=10000000, num_columns=10, num_groups=100, file_path="
 
     # Generate data
     data = {}
-    columns = ["timestamp"]
+    columns = []
+    if num_groups is not None:
+        columns = ["timestamp"]
 
-    # Generate timestamp column
-    data["timestamp"] = np.arange(num_rows)
+        # Generate timestamp column
+        data["timestamp"] = np.arange(num_rows)
+        data["id"] = np.random.randint(0, num_groups, size=num_rows, dtype=np.uint64)
 
     # Generate other columns with up to num_groups unique values
     for i in range(num_columns):
         column_name = f"col_{i}"
         columns.append(column_name)
-        data[column_name] = np.random.randint(0, num_groups, size=num_rows, dtype=np.uint64)
+        data[column_name] = np.random.randint(0, 2 ^ 32 - 1, size=num_rows, dtype=np.uint64)
 
     # Create DataFrame and save to CSV
     df = pd.DataFrame(data)
@@ -63,3 +67,5 @@ if __name__ == "__main__":
     for col_count in args.columns:
         for groups in args.groups:
             generate_data(args.rows, col_count, groups, args.output)
+        generate_data(args.rows, col_count, None, file_path= args.output)
+
