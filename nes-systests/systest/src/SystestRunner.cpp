@@ -245,12 +245,13 @@ void serializeExecutionResults(const RunningQuery& queryRan, nlohmann::json& res
 }
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
+    const std::vector<SystestQuery>& queries,
+    const SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson,
+    const SystestClusterConfiguration& clusterConfig)
 {
     enable_memcom();
-    QueryManager queryManager{std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-        std::vector{WorkerConfig{.host = "localhost:9090", .grpc = "localhost:8080", .capacity = 100000, .downstream = {}}},
-        configuration)};
+    QueryManager queryManager{std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(clusterConfig.workers, configuration)};
     QuerySubmitter submitter(std::move(queryManager));
     constexpr auto numConcurrentQueries = 1;
 
@@ -321,21 +322,21 @@ void printQueryResultToStdOut(
 }
 
 std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
+    const SingleNodeWorkerConfiguration& configuration)
 {
     enable_memcom();
-    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-        std::vector{std::vector{WorkerConfig{.host = "localhost:9090", .grpc = "localhost:8080", .capacity = 100000, .downstream = {}}}},
-        configuration);
+    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(clusterConfig.workers, configuration);
     QuerySubmitter submitter(QueryManager{std::move(embeddedQueryManager)});
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
 
-std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
+std::vector<RunningQuery> runQueriesAtRemoteWorker(
+    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SystestClusterConfiguration& clusterConfig)
 {
-    auto remoteQueryManager = std::make_unique<GRPCQuerySubmissionBackend>(
-        std::vector{WorkerConfig{.host = "localhost:9090", .grpc = serverURI, .capacity = 100000, .downstream = {}}});
+    auto remoteQueryManager = std::make_unique<GRPCQuerySubmissionBackend>(clusterConfig.workers);
     QuerySubmitter submitter(QueryManager{std::move(remoteQueryManager)});
     return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
 }
