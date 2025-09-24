@@ -7,6 +7,14 @@ id SEQUENCE UINT64 1 5 1
 value SEQUENCE UINT64 50 90 10
 timestamp SEQUENCE UINT64 1000 1800 200
 
+Source stream2 UINT64 key1_s2 UINT64 key2_s2 UINT64 id2 UINT64 value2 UINT64 ts UINT64 timestamp GENERATOR seed 2, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
+key1_s2 SEQUENCE UINT64 1 5 1
+key2_s2 SEQUENCE UINT64 10 14 1
+id2 SEQUENCE UINT64 1 5 1
+value2 SEQUENCE UINT64 100 140 10
+ts SEQUENCE UINT64 1000 1800 200
+timestamp SEQUENCE UINT64 1000 1800 200
+
 Source stream4 UINT64 id4 UINT64 value4 UINT64 timestamp GENERATOR seed 4, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
 id4 SEQUENCE UINT64 1 5 1
 value4 SEQUENCE UINT64 200 240 10
