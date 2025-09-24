@@ -534,60 +534,8 @@ struct SystestBinder::Impl
                     inlineConfig.fieldSchema.size());
             }
 
-            std::string generatorSchema;
-            for (const auto& fieldSchema : inlineConfig.fieldSchema)
-            {
-                auto fieldSchemaTokens = fieldSchema | std::views::split(' ') | std::views::filter([](auto val) { return !val.empty(); })
-                    | std::views::transform([](auto val) { return std::string_view(&*val.begin(), std::ranges::distance(val)); })
-                    | std::ranges::to<std::vector<std::string>>();
-                auto fieldName = fieldSchemaTokens[0];
-                auto schemaFieldType = fieldSchemaTokens[2];
-                auto definedLogicalField = definedLogicalSchema->getFieldByName(fieldName);
-                if (!definedLogicalField.has_value())
-                {
-                    throw InvalidConfigParameter(
-                        "Field {} is defined in the generatorSchema, but does not exist in the sources logical schema!", fieldName);
-                }
-                if (magic_enum::enum_cast<DataType::Type>(schemaFieldType) != definedLogicalField.value().dataType.type)
-                {
-                    throw InvalidConfigParameter(
-                        "Field \"{}\" type in generator Schema does not match declared type ({}) in Source Schema ({})",
-                        fieldName,
-                        schemaFieldType,
-                        magic_enum::enum_name<DataType::Type>(definedLogicalField.value().dataType.type));
-                }
-                auto generatorFieldIdentifier = fieldSchemaTokens[1];
-                auto [acceptedTypesBegin, acceptedTypesEnd]
-                    = GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
-                bool isAcceptedType = false;
-                for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
-                {
-                    if (definedLogicalField->dataType.type == it->second)
-                    {
-                        isAcceptedType = true;
-                        break;
-                    }
-                }
-                if (!isAcceptedType)
-                {
-                    throw InvalidConfigParameter(
-                        "Field {} is of {} type, which does not allow {}!",
-                        fieldName,
-                        generatorFieldIdentifier,
-                        magic_enum::enum_name(definedLogicalField.value().dataType.type));
-                }
-
-                for (const auto& token : fieldSchemaTokens | std::views::drop(1))
-                {
-                    generatorSchema.append(token);
-                    generatorSchema.append(" "sv);
-                }
-                generatorSchema.back() = '\n';
-            }
 
             physicalSource.sourceConfig = inlineConfig.options;
-            physicalSource.type = "Generator";
-            physicalSource.sourceConfig["generator_schema"] = generatorSchema;
             return physicalSource;
         };
 
