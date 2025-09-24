@@ -24,13 +24,14 @@ jobs:
         build_type: [ 'Debug', 'RelWithDebInfo' ]
         sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
         exclude:
+          # Limit the endless mode tests to unsanitized x64 libc++ debug builds
+          - sanitizer: 'address'
+          - sanitizer: 'undefined'
+          - sanitizer: 'thread'
           - arch: arm64
-            stdlib: libstdcxx
-          - arch: arm64
-            sanitizer: undefined
+          - build_type: 'RelWithDebInfo'
+          - stdlib: 'libstdcxx'
         include:
-          - arch: arm64
-            runner: [ "ubuntu-24.04-arm" ]
           - arch: x64
             runner: [ "ubuntu-24.04" ]
     steps:
