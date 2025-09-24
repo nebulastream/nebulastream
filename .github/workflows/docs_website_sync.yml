@@ -1,0 +1,89 @@
+name: Sync website docs to documentation repo
+
+on:
+  # allow to call this workflow 
+  workflow_call: {}
+  # Nightly at 00:00 UTC (~02:00 Berlin in summer, ~01:00 in winter)
+  schedule:
+    - cron: "0 0 * * *"
+  # Manual trigger from Actions tab
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-22.04
+    # We only need read on this repo; pushing to the other repo uses the PAT below
+    permissions:
+      contents: read
+
+    steps:
+      # 1) Checkout source repo: nebulastream/nebulastream
+      - name: Checkout nebulastream
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so we can include the short SHA in commit message
+
+      # 2) Sanity check that the source folder exists
+      - name: Verify source folder
+        run: |
+          set -e
+          SRC="docs/website"
+          if [ ! -d "$SRC" ]; then
+            echo " Source folder not found: $SRC"
+            exit 1
+          fi
+          echo " Found source: $SRC"
+
+      # 3) Checkout destination repo: nebulastream/documentation (branch: master)
+      - name: Checkout documentation repo (target)
+        uses: actions/checkout@v4
+        with:
+          repository: nebulastream/documentation
+          ref: master
+          path: docs-repo
+          fetch-depth: 0
+          token: ${{ secrets.ACCESS_TOKEN_DOCUMENTATION }}
+
+
+      # 4) Sync Markdown/content (exclude resources/)
+      - name: Sync docs → content/en/docs (excluding resources/)
+        run: |
+          set -euxo pipefail
+          SRC="docs/website/"
+          DST="docs-repo/content/en/docs/"
+          mkdir -p "$DST"
+          rsync -av --delete \
+            --exclude 'resources/' \
+            "$SRC" "$DST"
+          git -C docs-repo status --porcelain || true
+
+      # 4b) Sync static resources → static/nes/
+      - name: Sync static resources → docs-repo/static/nes
+        run: |
+          set -euxo pipefail
+          if [ -d docs/website/resources ]; then
+            mkdir -p docs-repo/static/nes
+            rsync -av --delete docs/website/resources/ docs-repo/static/nes/
+            # quick listing for visibility
+            find docs-repo/static/nes -maxdepth 2 -type f | sed 's#^#  static: #'
+          else
+            echo "No docs/website/resources directory found; skipping."
+          fi
+
+      # 5) rebuild website
+      - uses: actions/setup-node@v4
+      - name: Install dependencies
+        working-directory: docs-repo
+        continue-on-error: true
+        run: npm install
+      - name: Build production website
+        working-directory: docs-repo
+        run: npm run build
+#        continue-on-error: true
+
+      #- name: Deploy to GitHub Pages
+       # continue-on-error: true
+        #uses: peaceiris/actions-gh-pages@v4
+        #with:
+         # github_token: ${{ secrets.GITHUB_TOKEN }}
+          #publish_dir: ./public
