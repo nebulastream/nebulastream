@@ -42,6 +42,7 @@
     "spdlog",
     "yaml-cpp",
     "nameof",
-    "scope-guard"
+    "scope-guard",
+    "ortools"
   ]
 }
