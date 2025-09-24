@@ -27,6 +27,7 @@ class ZstdCompressPhysicalFunction final : public PhysicalFunctionConcept
 public:
     ZstdCompressPhysicalFunction(PhysicalFunction childPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+
 private:
     PhysicalFunction childPhysicalFunction;
 };

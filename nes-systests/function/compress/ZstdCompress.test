@@ -1,0 +1,16 @@
+# name: compress/ZstdCompress.test
+# description: Test compression and decompression
+# groups: [Compress]
+
+Source stream VARSIZED data INLINE
+abcdef
+
+Sink sinkStream VARSIZED data
+SELECT ZstdCompress(data) AS data FROM stream INTO sinkStream
+----
+abcdef
+
+Sink sinkStream VARSIZED data
+SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM stream INTO sinkStream
+----
+abcdef

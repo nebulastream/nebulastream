@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/ZstdCompressLogicalFunction.hpp>
+#include <Functions/ZstdDecompressLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -31,37 +31,37 @@
 namespace NES
 {
 
-ZstdCompressLogicalFunction::ZstdCompressLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
+ZstdDecompressLogicalFunction::ZstdDecompressLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
 {
 }
 
-bool ZstdCompressLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool ZstdDecompressLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (const auto* other = dynamic_cast<const ZstdCompressLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const ZstdDecompressLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }
     return false;
 }
 
-std::string ZstdCompressLogicalFunction::explain(ExplainVerbosity verbosity) const
+std::string ZstdDecompressLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("ZSTD_COMPRESS({})", child.explain(verbosity));
+    return fmt::format("ZSTD_DECOMPRESS({})", child.explain(verbosity));
 }
 
-DataType ZstdCompressLogicalFunction::getDataType() const
+DataType ZstdDecompressLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction ZstdCompressLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction ZstdDecompressLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction ZstdCompressLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ZstdDecompressLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -71,12 +71,12 @@ LogicalFunction ZstdCompressLogicalFunction::withInferredDataType(const Schema& 
     return withChildren(newChildren);
 };
 
-std::vector<LogicalFunction> ZstdCompressLogicalFunction::getChildren() const
+std::vector<LogicalFunction> ZstdDecompressLogicalFunction::getChildren() const
 {
     return {child};
 };
 
-LogicalFunction ZstdCompressLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+LogicalFunction ZstdDecompressLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.child = children[0];
@@ -84,12 +84,12 @@ LogicalFunction ZstdCompressLogicalFunction::withChildren(const std::vector<Logi
     return copy;
 };
 
-std::string_view ZstdCompressLogicalFunction::getType() const
+std::string_view ZstdDecompressLogicalFunction::getType() const
 {
     return NAME;
 }
 
-SerializableFunction ZstdCompressLogicalFunction::serialize() const
+SerializableFunction ZstdDecompressLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
@@ -99,13 +99,13 @@ SerializableFunction ZstdCompressLogicalFunction::serialize() const
 }
 
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterZstdCompressLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionGeneratedRegistrar::RegisterZstdDecompressLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("ZstdCompressLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw CannotDeserialize("ZstdDecompressLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return ZstdCompressLogicalFunction(arguments.children[0]);
+    return ZstdDecompressLogicalFunction(arguments.children[0]);
 }
 
 }
