@@ -26,3 +26,4 @@ add_plugin(Rename LogicalFunction nes-logical-operators RenameLogicalFunction.cp
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
 add_plugin(ZstdCompress LogicalFunction nes-logical-operators ZstdCompressLogicalFunction.cpp)
+add_plugin(ZstdDecompress LogicalFunction nes-logical-operators ZstdDecompressLogicalFunction.cpp)
