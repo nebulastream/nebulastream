@@ -206,6 +206,39 @@ public:
         }
     }
 
+    void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
+
+    void optimizeQueries(const NES::LegacyOptimizer& optimizer)
+    {
+        if (!boundPlan.has_value())
+        {
+            return;
+        }
+        try
+        {
+            setOptimizedPlan(optimizer.optimize(boundPlan.value()));
+        }
+        catch (Exception& e)
+        {
+            setException(e);
+            return;
+        }
+
+        /// Optimize differential query if it exists
+        if (differentialQueryPlan.has_value())
+        {
+            try
+            {
+                auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
+                setDifferentialQueryPlan(std::move(optimizedDiff));
+            }
+            catch (Exception& e)
+            {
+                setException(e);
+            }
+        }
+    }
+
     /// NOLINTBEGIN(bugprone-unchecked-optional-access)
     SystestQuery build() &&
     {
@@ -215,7 +248,12 @@ public:
         PRECONDITION(testFilePath.has_value(), "Test file path has not been set");
         PRECONDITION(workingDir.has_value(), "Working directory has not been set");
         PRECONDITION(queryDefinition.has_value(), "Query definition has not been set");
-        PRECONDITION(expectedResultsOrError.has_value(), "Expected results or error has not been set");
+        if (not exception.has_value())
+        {
+            PRECONDITION(
+                expectedResultsOrError.has_value() || differentialQueryPlan.has_value(),
+                "Differential query plan or error has not been set");
+        }
         const auto createPlanInfoOrException = [this]() -> std::expected<SystestQuery::PlanInfo, Exception>
         {
             if (not exception.has_value())
@@ -232,6 +270,10 @@ public:
             }
             return std::unexpected{exception.value()};
         };
+        auto expectedResultsValue = expectedResultsOrError.has_value()
+            ? std::move(expectedResultsOrError.value())
+            : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}};
+
         return SystestQuery{
             .testName = std::move(testName.value()),
             .queryIdInFile = queryIdInFile,
@@ -239,8 +281,9 @@ public:
             .workingDir = std::move(workingDir.value()),
             .queryDefinition = std::move(queryDefinition.value()),
             .planInfoOrException = createPlanInfoOrException(),
-            .expectedResultsOrExpectedError = std::move(expectedResultsOrError.value()),
-            .additionalSourceThreads = std::move(additionalSourceThreads.value())};
+            .expectedResultsOrExpectedError = std::move(expectedResultsValue),
+            .additionalSourceThreads = std::move(additionalSourceThreads.value()),
+            .differentialQueryPlan = std::move(differentialQueryPlan)};
     }
 
     /// NOLINTEND(bugprone-unchecked-optional-access)
@@ -259,6 +302,7 @@ private:
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
+    std::optional<LogicalPlan> differentialQueryPlan;
     bool built = false;
 };
 
@@ -303,6 +347,8 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
+        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+
         auto buildSystests = loadedSystests
             | std::views::filter(
                                  [&testfile](const auto& loadedQueryPlan)
@@ -311,22 +357,10 @@ struct SystestBinder::Impl
                                          or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.getSystemTestQueryId());
                                  })
             | std::ranges::views::transform(
-                                 [&testfile, &foundQueries](auto& systest)
+                                 [&optimizer, &foundQueries](auto& systest)
                                  {
                                      foundQueries.insert(systest.getSystemTestQueryId());
-
-                                     if (systest.getBoundPlan().has_value())
-                                     {
-                                         const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
-                                         try
-                                         {
-                                             systest.setOptimizedPlan(optimizer.optimize(systest.getBoundPlan().value()));
-                                         }
-                                         catch (const Exception& exception)
-                                         {
-                                             systest.setException(exception);
-                                         }
-                                     }
+                                     systest.optimizeQueries(optimizer);
                                      return std::move(systest).build();
                                  })
             | std::ranges::to<std::vector>();
@@ -652,15 +686,11 @@ struct SystestBinder::Impl
             [&](const SystestParser::ErrorExpectation& errorExpectation, const SystestQueryId correspondingQueryId)
             { errorExpectationCallback(plans, errorExpectation, correspondingQueryId); });
 
-        parser.registerOnResultTuplesCallback(
-            [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-            { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
+        parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                              { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
 
         parser.registerOnDifferentialQueryBlockCallback(
-            [&](std::string leftQuery,
-                std::string rightQuery,
-                const SystestQueryId currentQueryNumberInTest,
-                const SystestQueryId)
+            [&](std::string leftQuery, std::string rightQuery, const SystestQueryId currentQueryNumberInTest, const SystestQueryId)
             {
                 const auto extractSinkName = [](const std::string& query) -> std::string
                 {
@@ -691,19 +721,16 @@ struct SystestBinder::Impl
                 const auto rightSinkName = extractSinkName(rightQuery);
 
                 const auto leftSinkForQuery = leftSinkName + std::to_string(lastParsedQueryId.getRawValue());
-                const auto rightSinkForQuery
-                    = rightSinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
+                const auto rightSinkForQuery = rightSinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
 
                 leftQuery = std::regex_replace(leftQuery, std::regex(leftSinkName), leftSinkForQuery);
                 rightQuery = std::regex_replace(rightQuery, std::regex(rightSinkName), rightSinkForQuery);
 
                 const auto differentialTestResultFileName = std::string(testFileName) + "differential";
                 const auto leftResultFile = SystestQuery::resultFile(workingDir, testFileName, lastParsedQueryId);
-                const auto rightResultFile
-                    = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
+                const auto rightResultFile = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
 
-                auto& currentTest
-                    = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
+                auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
 
                 if (auto leftSinkExpected = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
                     not leftSinkExpected.has_value())
@@ -711,8 +738,7 @@ struct SystestBinder::Impl
                     currentTest.setException(leftSinkExpected.error());
                     return;
                 }
-                if (auto rightSinkExpected
-                    = sltSinkProvider.createActualSink(rightSinkName, rightSinkForQuery, rightResultFile);
+                if (auto rightSinkExpected = sltSinkProvider.createActualSink(rightSinkName, rightSinkForQuery, rightResultFile);
                     not rightSinkExpected.has_value())
                 {
                     currentTest.setException(rightSinkExpected.error());

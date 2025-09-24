@@ -184,7 +184,7 @@ static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 static constexpr auto ErrorToken = "ERROR"s;
-static constexpr auto DifferentialToken = "DIFFERENTIAL"s;
+static constexpr auto DifferentialToken = "===="s;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{SystestLogicalSourceToken, TokenType::LOGICAL_SOURCE},
@@ -333,8 +333,8 @@ void SystestParser::parse()
                 break;
             }
             case TokenType::RESULT_DELIMITER: {
-                /// Look ahead for error expectation
-                if (const auto optionalToken = peekToken(); optionalToken == TokenType::ERROR_EXPECTATION)
+                const auto optionalToken = peekToken();
+                if (optionalToken == TokenType::ERROR_EXPECTATION)
                 {
                     ++currentLine;
                     auto expectation = expectError();
@@ -342,11 +342,6 @@ void SystestParser::parse()
                     {
                         onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
                     }
-                }
-                else if (optionalToken == TokenType::DIFFERENTIAL)
-                {
-                    ++currentLine;
-                    shouldRevisitCurrentLine = true;
                 }
                 else
                 {
@@ -805,6 +800,15 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
                     break;
                 }
             }
+            else
+            {
+                const auto trimmedLineView = Util::trimWhiteSpaces(std::string_view(line));
+                if (!trimmedLineView.empty() && Util::toLowerCase(trimmedLineView) == "differential")
+                {
+                    throw SLTUnexpectedToken(
+                        "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
+                }
+            }
         }
 
         if (!queryString.empty())
@@ -833,16 +837,16 @@ std::pair<std::string, std::string> SystestParser::expectDifferentialBlock()
     std::istringstream stream(lines[currentLine]);
     if (!(stream >> potentialToken))
     {
-        throw SLTUnexpectedToken("Expected DIFFERENTIAL token at current line");
+        throw SLTUnexpectedToken("Expected differential delimiter at current line");
     }
 
     auto tokenOpt = getTokenIfValid(potentialToken);
     if (!tokenOpt.has_value() || tokenOpt.value() != TokenType::DIFFERENTIAL)
     {
-        throw SLTUnexpectedToken("Expected DIFFERENTIAL token at current line");
+        throw SLTUnexpectedToken("Expected differential delimiter at current line");
     }
 
-    /// Skip the DIFFERENTIAL line
+    /// Skip the differential delimiter line
     ++currentLine;
     shouldRevisitCurrentLine = false;
 
