@@ -15,13 +15,13 @@ add_source_files(nes-physical-operators
         FieldAccessPhysicalFunction.cpp
         ConstantValueVariableSizePhysicalFunction.cpp
         CastFieldPhysicalFunction.cpp
-        ZstdCompressionPhysicalFunction.cpp
-        ZstdDecompressionPhysicalFunction.cpp
+        ZstdCompressPhysicalFunction.cpp
+        ZstdDecompressPhysicalFunction.cpp
         )
 
 add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction.cpp)
-add_plugin(ZstdCompression PhysicalFunction nes-physical-operators ZstdCompressionPhysicalFunction.cpp)
-add_plugin(ZstdDecompression PhysicalFunction nes-physical-operators ZstdDecompressionPhysicalFunction.cpp)
+add_plugin(ZstdCompress PhysicalFunction nes-physical-operators ZstdCompressPhysicalFunction.cpp)
+add_plugin(ZstdDecompress PhysicalFunction nes-physical-operators ZstdDecompressPhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)

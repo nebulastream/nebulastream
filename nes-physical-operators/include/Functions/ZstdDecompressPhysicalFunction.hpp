@@ -22,10 +22,10 @@
 namespace NES
 {
 
-class ZstdCompressionPhysicalFunction final : public PhysicalFunctionConcept
+class ZstdDecompressPhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    ZstdCompressionPhysicalFunction(PhysicalFunction childPhysicalFunction);
+    ZstdDecompressPhysicalFunction(PhysicalFunction childPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 private:
     PhysicalFunction childPhysicalFunction;
