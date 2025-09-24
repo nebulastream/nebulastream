@@ -78,7 +78,8 @@ NES::Systest::SystestQuery makeQuery(
         .queryDefinition = "SELECT * FROM test",
         .planInfoOrException = planInfoOrException,
         .expectedResultsOrExpectedError = std::move(expected),
-        .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>()};
+        .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
+        .differentialQueryPlan = std::nullopt};
 }
 }
 
