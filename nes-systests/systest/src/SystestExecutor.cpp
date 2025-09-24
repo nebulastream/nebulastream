@@ -35,18 +35,16 @@
 #include <unistd.h>
 
 #include <Configurations/Util.hpp>
+#include <Identifiers/NESStrongTypeYaml.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -98,7 +96,8 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
               "/nes-systests/");
 
     /// server/remote mode
-    program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
+    program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
+    program.add_argument("-c", "--clusterConfig").nargs(1).help("path to the cluster topology file");
 
     /// test query order
     program.add_argument("--shuffle").flag().help("run queries in random order");
@@ -292,9 +291,36 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         config.randomQueryOrder = true;
     }
 
-    if (program.is_used("-s"))
+    if (program.is_used("--remote"))
     {
-        config.grpcAddressUri = program.get<std::string>("-s");
+        config.remoteWorker = program.get<bool>("--remote");
+    }
+
+    try
+    {
+        if (program.is_used("--clusterConfig"))
+        {
+            config.clusterConfigPath = program.get<std::string>("--clusterConfig");
+        }
+        auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath.getValue());
+        SystestClusterConfiguration clusterConfig;
+        clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<HostAddr>>();
+        clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<HostAddr>>();
+        for (const auto& worker : clusterConfigYAML["workers"])
+        {
+            clusterConfig.workers.push_back(WorkerConfig{
+                .host = worker["host"].as<HostAddr>(),
+                .grpc = worker["grpc"].as<GrpcAddr>(),
+                .capacity = worker["capacity"].as<size_t>(),
+                .downstream = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<HostAddr>>() : std::vector<HostAddr>{},
+            });
+        }
+        config.clusterConfig = clusterConfig;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Error loading cluster config: " << e.what() << '\n';
+        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
     if (program.is_used("-n"))
@@ -386,20 +412,20 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
 
     std::mt19937 rng(std::random_device{}());
 
-    const auto grpcURI = config.grpcAddressUri.getValue();
-    const auto runRemote = not grpcURI.empty();
+    const auto runRemote = config.remoteWorker.getValue();
+
+    auto catalog = std::make_shared<WorkerCatalog>();
+    for (const auto& [host, grpc, capacity, downstream] : config.clusterConfig.workers)
+    {
+        catalog->addWorker(host, grpc, capacity, downstream);
+    }
 
     auto queryManager = [&]() -> std::unique_ptr<QueryManager>
     {
         if (runRemote)
         {
-            auto catalog = std::make_shared<WorkerCatalog>();
-            catalog->addWorker(HostAddr("localhost:9090"), GrpcAddr(grpcURI), 1000000, {});
             return std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
         }
-
-        auto catalog = std::make_shared<WorkerCatalog>();
-        catalog->addWorker(HostAddr("localhost:9090"), GrpcAddr("localhost:8080"), 1000000, {});
         return std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(singleNodeWorkerConfiguration));
     }();
     Systest::QuerySubmitter querySubmitter(std::move(queryManager));
@@ -502,7 +528,8 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
-        Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
+        Systest::SystestBinder binder{
+            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(), config.clusterConfig};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
@@ -536,9 +563,9 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
-        if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
+        if (config.remoteWorker.getValue())
         {
-            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI);
+            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig);
         }
         else
         {
@@ -554,7 +581,8 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
+                failedQueries
+                    = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults, config.clusterConfig);
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
@@ -563,7 +591,8 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             }
             else
             {
-                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+                failedQueries
+                    = runQueriesAtLocalWorker(queries, numberConcurrentQueries, config.clusterConfig, singleNodeWorkerConfiguration);
             }
         }
         if (not failedQueries.empty())
