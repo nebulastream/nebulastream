@@ -93,24 +93,26 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
     if (systestAdaptorArguments.tuples)
     {
 
-        // SET file path
-        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
-            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(std::string(SYSTEST_FILE_PATH_PARAMETER)))
         {
-            filePath->second = systestAdaptorArguments.testFilePath;
-            if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
-            {
-                /// Write inline tuples to test file.
-                for (const auto& tuple : systestAdaptorArguments.tuples.value())
-                {
-                    testFile << tuple << "\n";
-                }
-                testFile.flush();
-                return systestAdaptorArguments.physicalSourceConfig;
-            }
-            throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+            throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
         }
-        throw InvalidConfigParameter("A FileSource config must contain file_path parameter");
+
+        systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(std::string(SYSTEST_FILE_PATH_PARAMETER), systestAdaptorArguments.testFilePath.string());
+
+
+        if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+        {
+            /// Write inline tuples to test file.
+            for (const auto& tuple : systestAdaptorArguments.tuples.value())
+            {
+                testFile << tuple << "\n";
+            }
+            testFile.flush();
+            return systestAdaptorArguments.physicalSourceConfig;
+        }
+        throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+
     }
     throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
 }

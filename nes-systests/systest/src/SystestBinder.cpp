@@ -412,9 +412,14 @@ struct SystestBinder::Impl
                 case TestDataIngestionType::INLINE: {
                     const auto testFile = getSourceFilePath();
                     physicalSourceConfig = SourceDataProvider::provideInlineDataSource(physicalSourceConfig, input.value().second, sourceThreads, testFile);
+                    break;
                 }
-                case TestDataIngestionType::FILE: {}
-                case TestDataIngestionType::GENERATOR: {}
+                case TestDataIngestionType::FILE: {
+                    break;
+                }
+                case TestDataIngestionType::GENERATOR: {
+                    break;
+                }
                 default:
                     std::unreachable();
             }
