@@ -40,10 +40,10 @@
 
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
+#include <JsonOutputFormatter.hpp>
 #include <StatementHandler.hpp>
 #include <StatementOutputAssembler.hpp>
-#include <TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
+#include <TextOutputFormatter.hpp>
 
 namespace NES
 {

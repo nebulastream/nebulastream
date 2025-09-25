@@ -22,12 +22,12 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <../../include/StatementHandler.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <StatementHandler.hpp>
 
 namespace NES
 {

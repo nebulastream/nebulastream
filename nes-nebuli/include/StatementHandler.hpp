@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -96,6 +95,16 @@ struct DropQueryStatementResult
     DistributedQueryId id;
 };
 
+struct CreateWorkerStatementResult
+{
+    WorkerId workerId;
+};
+
+struct DropWorkerStatementResult
+{
+    WorkerId workerId;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -159,6 +168,16 @@ public:
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
 };
 
+class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>
+{
+    SharedPtr<WorkerCatalog> workerCatalog;
+
+public:
+    explicit TopologyStatementHandler(SharedPtr<WorkerCatalog> workerCatalog);
+    std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
+    std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
+};
+
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;
@@ -169,7 +188,10 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
 
 public:
     explicit QueryStatementHandler(
-        const std::shared_ptr<QueryManager>& queryManager, SharedPtr<SourceCatalog> sourceCatalog, SharedPtr<SinkCatalog> sinkCatalog);
+        SharedPtr<QueryManager> queryManager,
+        SharedPtr<SourceCatalog> sourceCatalog,
+        SharedPtr<SinkCatalog> sinkCatalog,
+        SharedPtr<WorkerCatalog> workerCatalog);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);

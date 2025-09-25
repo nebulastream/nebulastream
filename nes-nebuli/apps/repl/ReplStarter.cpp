@@ -36,6 +36,7 @@
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
+#include <../repl/Repl.hpp>
 #include <GlobalOptimizer/GlobalOptimizer.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
@@ -57,7 +58,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <StatementHandler.hpp>
 #include <utils.hpp>

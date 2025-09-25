@@ -73,7 +73,8 @@ EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "could not place all operators")
-EXCEPTION(InvalidTopology, 2300, "topology is in an invalid state")
+EXCEPTION(InvalidTopology, 2301, "topology is in an invalid state")
+EXCEPTION(UnknownWorker, 2302, "worker does not exist")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

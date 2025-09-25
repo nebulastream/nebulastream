@@ -43,6 +43,8 @@ namespace NES
 {
 
 using DistributedQueryId = NESStrongType<uint64_t, struct DistributedQueryId_, 0, 1>;
+using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
+
 enum class StatementOutputFormat : uint8_t
 {
     JSON,
@@ -59,7 +61,7 @@ struct CreateLogicalSourceStatement
 
 struct CreatePhysicalSourceStatement
 {
-    LogicalSource attachedTo;
+    LogicalSourceName attachedTo;
     std::string sourceType;
     std::string workerId;
     std::unordered_map<std::string, std::string> sourceConfig;
@@ -88,7 +90,7 @@ struct ShowLogicalSourcesStatement
 /// referencing a dms object
 struct ShowPhysicalSourcesStatement
 {
-    std::optional<LogicalSource> logicalSource;
+    std::optional<LogicalSourceName> logicalSource;
     std::optional<uint32_t> id;
     std::optional<StatementOutputFormat> format;
 };
@@ -101,7 +103,7 @@ struct ShowSinksStatement
 
 struct DropLogicalSourceStatement
 {
-    LogicalSource source;
+    LogicalSourceName source;
 };
 
 struct DropPhysicalSourceStatement
@@ -127,7 +129,22 @@ struct DropQueryStatement
     DistributedQueryId id;
 };
 
+struct CreateWorkerStatement
+{
+    std::string host;
+    std::string grpc;
+    size_t capacity;
+    std::vector<std::string> downstream;
+};
+
+struct DropWorkerStatement
+{
+    std::string host;
+};
+
 using Statement = std::variant<
+    CreateWorkerStatement,
+    DropWorkerStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
@@ -215,8 +232,11 @@ struct formatter<std::unordered_map<std::string, std::string>>
 
 }
 
+
 FMT_OSTREAM(NES::CreateLogicalSourceStatement);
 FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
 FMT_OSTREAM(NES::DropLogicalSourceStatement);
 FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
+FMT_OSTREAM(NES::CreateWorkerStatement);
+FMT_OSTREAM(NES::DropWorkerStatement);

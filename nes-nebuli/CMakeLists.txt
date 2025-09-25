@@ -50,38 +50,6 @@ target_link_libraries(nes-nebuli-embedded-lib
         PRIVATE nes-sql-parser yaml-cpp::yaml-cpp PkgConfig::uuid ortools::ortools
 )
 
-add_executable(nes-nebuli src/NebuLIStarter.cpp src/Repl.cpp)
-# Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
-set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
-
-target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
-
-target_include_directories(nes-nebuli
-        PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
-)
-target_include_directories(nes-nebuli
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
-
-
-add_executable(nes-nebuli-embedded src/NebuLIStarter.cpp src/Repl.cpp)
-# Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
-set_property(TARGET nes-nebuli-embedded PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nes-nebuli-embedded PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
-
-
-target_include_directories(nes-nebuli-embedded
-        PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
-)
-target_include_directories(nes-nebuli-embedded
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
-
-
 add_tests_if_enabled(tests)
 
-add_test(
-        NAME "repl-test"
-#        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/test_repl.sh ${CMAKE_CURRENT_SOURCE_DIR}/test/test_large.sql ${CMAKE_CURRENT_BINARY_DIR}/nes-nebuli-embedded ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/testdata ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/working-dir ${CMAKE_CURRENT_SOURCE_DIR}/test/expected_output.json ${CMAKE_CURRENT_BINARY_DIR}/test
-)
+add_subdirectory(apps)

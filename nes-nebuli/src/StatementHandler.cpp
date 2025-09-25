@@ -53,8 +53,14 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
 std::expected<CreatePhysicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement)
 {
+    auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
+    if (!logicalSource)
+    {
+        return std::unexpected{UnknownSourceName(statement.attachedTo.getRawValue())};
+    }
+
     if (const auto created = sourceCatalog->addPhysicalSource(
-            statement.attachedTo, statement.sourceType, statement.workerId, statement.sourceConfig, statement.parserConfig))
+            *logicalSource, statement.sourceType, statement.workerId, statement.sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -113,11 +119,14 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
 
 std::expected<DropLogicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropLogicalSourceStatement& statement)
 {
-    if (sourceCatalog->removeLogicalSource(statement.source))
+    if (auto logical = sourceCatalog->getLogicalSource(statement.source.getRawValue()))
     {
-        return DropLogicalSourceStatementResult{statement.source};
+        if (sourceCatalog->removeLogicalSource(*logical))
+        {
+            return DropLogicalSourceStatementResult{statement.source};
+        }
     }
-    return std::unexpected{UnknownSourceName(statement.source.getLogicalSourceName())};
+    return std::unexpected{UnknownSourceName(statement.source.getRawValue())};
 }
 
 std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropPhysicalSourceStatement& statement)
@@ -165,10 +174,24 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.descriptor.getSinkName())};
 }
 
-QueryStatementHandler::QueryStatementHandler(
-    const std::shared_ptr<QueryManager>& queryManager, SharedPtr<SourceCatalog> sourceCatalog, SharedPtr<SinkCatalog> sinkCatalog)
-    : queryManager(queryManager), sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+TopologyStatementHandler::TopologyStatementHandler(SharedPtr<WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog))
 {
+}
+
+std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const CreateWorkerStatement& statement)
+{
+    workerCatalog->addWorker(statement.grpc, statement.host, statement.capacity, statement.downstream);
+    return CreateWorkerStatementResult{WorkerId(statement.host)};
+}
+
+std::expected<DropWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const DropWorkerStatement& statement)
+{
+    const auto workerConfigOpt = workerCatalog->removeWorker(statement.host);
+    if (workerConfigOpt)
+    {
+        return DropWorkerStatementResult{WorkerId(workerConfigOpt->host)};
+    }
+    return std::unexpected(UnknownWorker(": '{}'", statement.host));
 }
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
@@ -183,6 +206,18 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
                     fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
             })
         .transform([&statement] { return DropQueryStatementResult{statement.id}; });
+}
+
+QueryStatementHandler::QueryStatementHandler(
+    SharedPtr<QueryManager> queryManager,
+    SharedPtr<SourceCatalog> sourceCatalog,
+    SharedPtr<SinkCatalog> sinkCatalog,
+    SharedPtr<WorkerCatalog> workerCatalog)
+    : queryManager(std::move(queryManager))
+    , sourceCatalog(std::move(sourceCatalog))
+    , sinkCatalog(std::move(sinkCatalog))
+    , workerCatalog(std::move(workerCatalog))
+{
 }
 
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
