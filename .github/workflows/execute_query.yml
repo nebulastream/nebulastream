@@ -49,7 +49,7 @@ on:
 
 jobs:
   execute-query:
-    name: "Execute Query with runtime of ${{ inputs.runtime_seconds }} seconds"
+    name: "E2E Test"
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       volumes:
