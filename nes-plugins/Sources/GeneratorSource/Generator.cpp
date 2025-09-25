@@ -102,15 +102,18 @@ void Generator::parseSchema(const std::string_view rawSchema)
 
 bool Generator::shouldStop() const
 {
-    if (this->sequenceStopsGenerator == GeneratorStop::ALL)
+    switch (this->sequenceStopsGenerator)
     {
-        return this->numStoppableFields == this->numStoppedFields;
+        case GeneratorStop::ALL: {
+            return this->numStoppableFields == this->numStoppedFields;
+        }
+        case GeneratorStop::ONE: {
+            return this->numStoppedFields >= 1;
+        }
+        default: {
+            return false;
+        }
     }
-    if (this->sequenceStopsGenerator == GeneratorStop::ONE)
-    {
-        return this->numStoppedFields >= 1;
-    }
-    return false;
 }
 
 }
