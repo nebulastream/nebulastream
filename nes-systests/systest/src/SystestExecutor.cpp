@@ -294,7 +294,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
 
     if (program.is_used("-s"))
     {
-        config.grpcAddressUri = program.get<std::string>("-s");
+        config.grpcAddressUri.setValue(URI(program.get<std::string>("-s")));
     }
 
     if (program.is_used("-n"))
@@ -312,7 +312,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         config.workerConfig = program.get<std::string>("-w");
         if (not std::filesystem::is_regular_file(config.workerConfig.getValue()))
         {
-            std::cerr << config.workerConfig.getValue() << " is not a file.\n";
+            std::cerr << config.workerConfig << " is not a file.\n";
             std::exit(1); ///NOLINT(concurrency-mt-unsafe)
         }
     }
@@ -322,7 +322,7 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         config.queryCompilerConfig = program.get<std::string>("-q");
         if (not std::filesystem::is_regular_file(config.queryCompilerConfig.getValue()))
         {
-            std::cerr << config.queryCompilerConfig.getValue() << " is not a file.\n";
+            std::cerr << config.queryCompilerConfig << " is not a file.\n";
             std::exit(1); ///NOLINT(concurrency-mt-unsafe)
         }
     }
@@ -393,7 +393,7 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     {
         if (runRemote)
         {
-            return std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
+            return std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI.toString(), grpc::InsecureChannelCredentials()));
         }
         return std::make_unique<EmbeddedWorkerQueryManager>(singleNodeWorkerConfiguration);
     }();
