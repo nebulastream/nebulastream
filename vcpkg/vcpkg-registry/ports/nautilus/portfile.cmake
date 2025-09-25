@@ -11,10 +11,10 @@
 # limitations under the License.
 
 vcpkg_from_github(
-        OUT_SOURCE_PATH SOURCE_PATH
-        REPO nebulastream/nautilus
+		OUT_SOURCE_PATH SOURCE_PATH
+		REPO nebulastream/nautilus
 		REF 598041b59644088ed431bb27a35e77f48c1e8bad
-        SHA512 d458eb6d966d7d1885160f91fa0daae3c2bc9091ba3b8000d3166791d902b13b017e19489dcbc87705ac431946973b35aa5ca9ec7c6ad09f5ee259d68be6c572
+		SHA512 d458eb6d966d7d1885160f91fa0daae3c2bc9091ba3b8000d3166791d902b13b017e19489dcbc87705ac431946973b35aa5ca9ec7c6ad09f5ee259d68be6c572
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 )

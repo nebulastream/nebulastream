@@ -33,29 +33,29 @@ VarVal ZstdDecompressPhysicalFunction::execute(const Record& record, ArenaRef& a
     const auto value = childPhysicalFunction.execute(record, arena);
     auto varSizedValueCompressed = value.cast<VariableSizedData>();
 
-    auto c = varSizedValueCompressed.getContent();
-
     auto decompressedSize = nautilus::invoke(
-        +[](uint8_t* compressed, size_t inputSize) { return ZSTD_getFrameContentSize(compressed, inputSize); },
+        +[](uint8_t* compressed, size_t inputSize) { return static_cast<uint64_t>(ZSTD_getFrameContentSize(compressed, inputSize)); },
         varSizedValueCompressed.getContent(),
         varSizedValueCompressed.getContentSize());
 
     // //TODO can we also call this outside of nautilus to avoid calling invoke twice?
     auto decompressedVarSizedTotalSize = decompressedSize + nautilus::val<size_t>(sizeof(uint32_t));
     auto memDecompressed = arena.allocateMemory(decompressedVarSizedTotalSize);
-    VariableSizedData decompressedVarSized(memDecompressed, decompressedSize);
 
     nautilus::invoke(
         +[](size_t inputSize, int8_t* inputData, size_t decompressedSize, int8_t* decompressedData)
         {
-            size_t compressedSize = ZSTD_decompress(decompressedData, decompressedSize, inputData, inputSize);
+            //currently we ignore the returned compressed size, checking the actual returned size for error handlin might be desirable
+            *std::bit_cast<uint32_t*>(decompressedData) = static_cast<uint32_t>(decompressedSize);
+            size_t compressedSize = ZSTD_decompress(decompressedData + sizeof(uint32_t), decompressedSize, inputData, inputSize);
             //TODO: error handling?
         },
         varSizedValueCompressed.getContentSize(),
         varSizedValueCompressed.getContent(),
-        decompressedVarSized.getContentSize(),
-        decompressedVarSized.getContent());
+        decompressedSize,
+        memDecompressed);
 
+    VariableSizedData decompressedVarSized(memDecompressed);
     return decompressedVarSized;
 }
 

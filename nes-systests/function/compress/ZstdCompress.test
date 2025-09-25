@@ -5,6 +5,10 @@
 Source stream VARSIZED data INLINE
 abcdef
 
+# todo floatsource
+# Source stream  data INLINE
+# abcdef
+
 Sink sinkStream VARSIZED data
 SELECT ZstdCompress(data) AS data FROM stream INTO sinkStream
 ----
