@@ -302,6 +302,65 @@ def create_comparison_plots(df, output_dir, operator_metrics):
             plt.savefig(output_dir / f"{chain_name}_op{op_id}_throughput_by_strategy.png")
             plt.close()
 
+def create_filter_throughput_plots(df, output_dir):
+    """Create plots for filter throughput with selectivity on x-axis."""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(exist_ok=True, parents=True)
+
+    # Filter data for single filter operations
+    filter_df = df[df['operator_type'] == 'filter']
+
+    if filter_df.empty:
+        print("No filter data available for plotting.")
+        return
+
+    # Ensure required columns exist
+    required_columns = ['selectivity', 'layout', 'num_columns', 'accessed_columns', 'pipeline_3_eff_tp', 'pipeline_3_comp_tp']
+    if not all(col in filter_df.columns for col in required_columns):
+        print("Missing required columns for filter throughput plots.")
+        return
+
+    # Metrics to plot
+    metrics = [
+        ('pipeline_3_eff_tp', 'Effective Throughput'),
+        ('pipeline_3_comp_tp', 'Computational Throughput')
+    ]
+
+    # Group data by num_columns
+    for num_cols in sorted(filter_df['num_columns'].unique()):
+        num_cols_df = filter_df[filter_df['num_columns'] == num_cols]
+
+        for metric, metric_label in metrics:
+            plt.figure(figsize=(12, 8))
+            ax = plt.gca()
+
+            # Group by selectivity and layout
+            grouped = num_cols_df.groupby(['selectivity', 'layout', 'accessed_columns'])[metric].mean().reset_index()
+
+            # Pivot table for side-by-side bars
+            pivot_df = grouped.pivot(index='selectivity', columns=['layout', 'accessed_columns'], values=metric)
+
+            # Reorder columns to ensure ROW1 and COL1 are adjacent
+            ordered_columns = sorted(pivot_df.columns, key=lambda x: (x[1], x[0]))
+            pivot_df = pivot_df[ordered_columns]
+
+            # Plot bars
+            pivot_df.plot(kind='bar', ax=ax, width=0.8, colormap='viridis')
+
+            # Format plot
+            plt.title(f'Filter {metric_label} by Selectivity (Number of Total Columns: {num_cols})')
+            plt.xlabel('Selectivity (%)')
+            plt.ylabel(f'{metric_label} (tuples/s)')
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+
+            # Save plot
+            filename = f"filter_{metric.replace('pipeline_3_', '')}_num_cols_{num_cols}.png"
+            plt.savefig(output_dir / filename)
+            plt.close()
+
+            print(f"Created plot: {filename}")
+
 def main():
     parser = argparse.ArgumentParser(description='Create enhanced benchmark plots')
     parser.add_argument('--results-csv', required=True, help='Path to benchmark results CSV')
@@ -337,6 +396,7 @@ def main():
         if create_double_operator_plots(df, output_dir):
             print(f"Double operator plots created in {output_dir}")
     else:
+        create_filter_throughput_plots(df, output_dir)
         create_layout_comparison_plots(df, output_dir)
 
     # Additionally call the existing plots.py script
