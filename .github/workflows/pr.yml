@@ -75,8 +75,8 @@ jobs:
       ref: ${{ github.event.pull_request.head.ref }}
 
   test-nebuli-and-single-node-worker:
-    needs: [ get-dev-images ]
-    name: "Run a query using Nebuli and the single node worker"
+    needs: [ get-dev-images, smoke-tests ]
+    name: "E2E Test using Nebuli and SingleNodeWorker"
     uses: ./.github/workflows/execute_query.yml
     with:
       ref: ${{ github.event.pull_request.head.sha }}
