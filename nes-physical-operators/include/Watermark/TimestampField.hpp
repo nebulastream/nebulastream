@@ -75,8 +75,7 @@ public:
             return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
         }
 
-        auto timeStampFieldName = windowType->getTimeCharacteristic().field.name;
-        auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+        const auto timeStampFieldNameWithoutSourceName = windowType->getTimeCharacteristic().field.getUnqualifiedName();
 
         /// Extracting the left and right timestamp
         const auto timeStampFieldNameLeft = joinOperator.getInputSchemas().at(0).getFieldByName(timeStampFieldNameWithoutSourceName);
