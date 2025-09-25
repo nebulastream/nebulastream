@@ -78,7 +78,7 @@ CONFIG_FILES = {
     WORKER_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", WORKER_CONFIG_FILE_NAME),
     QUERY_CONFIG: os.path.join(pathlib.Path(__file__).parent.resolve(), "configs", QUERY_CONFIG_FILE_NAME),
 }
-ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_memory_bounds_benchmark_configs()
+ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_query_benchmark_configs()
 
 
 # Helper functions
@@ -485,7 +485,7 @@ def main():
         # Calling the postprocessing main
         start_time = time.time()
         measurement_time = MEASURE_INTERVAL * 1000
-        startup_time = WAIT_BETWEEN_COMMANDS * 1000
+        startup_time = 1 * 1000
         post_processing = PostProcessing.PostProcessing(output_folders + successful_runs,
                                                         measurement_time,
                                                         startup_time,

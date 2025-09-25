@@ -19,15 +19,15 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [100000, 10, 100, 1000]
-TIMESTAMP_INCREMENTS = [1, 100, 1000, 100000]
-INGESTION_RATES = [100000000, 0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
-MATCH_RATES = [70, 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
+BATCH_SIZES = [100000] # , 10, 100, 1000]
+TIMESTAMP_INCREMENTS = [1] # , 100, 1000, 100000]
+INGESTION_RATES = [100000000] # , 0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
+MATCH_RATES = [70] # , 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
 
 # Shared worker configuration parameters
-NUMBER_OF_WORKER_THREADS = [8, 16, 1, 4]
-BUFFER_SIZES = [4096, 16384, 524288, 1024]
-PAGE_SIZES = [4096, 16384, 524288, 1024]
+NUMBER_OF_WORKER_THREADS = [8, 16, 1, 2, 4]
+BUFFER_SIZES = [4096, 8192, 16384, 65536, 524288, 1024]
+PAGE_SIZES = [4096, 8192, 16384, 65536, 524288, 1024]
 WINDOW_SIZE_SLIDE = [
     # Representing a tumbling window of 277.78h, resulting in 1 concurrent window
     # (1000 * 1000 * 1000, 1000 * 1000 * 1000),
@@ -76,12 +76,12 @@ def get_queries():
             f"INTO csv_sink;"
         )
     # Join with two streams and multiple keys
-    # for window_size, slide in WINDOW_SIZE_SLIDE:
-    #     queries.append(
-    #         f"SELECT * FROM (SELECT * FROM tcp_source) "
-    #         f"INNER JOIN (SELECT * FROM tcp_source2) ON (id = id2 AND value = value2) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-    #         f"INTO csv_sink;"
-    #     )
+    for window_size, slide in WINDOW_SIZE_SLIDE:
+        queries.append(
+            f"SELECT * FROM (SELECT * FROM tcp_source) "
+            f"INNER JOIN (SELECT * FROM tcp_source2) ON (id = id2 AND value = value2) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INTO csv_sink;"
+        )
 
     # Join with two streams and variable sized data as payload
     for window_size, slide in WINDOW_SIZE_SLIDE:
@@ -98,13 +98,13 @@ def get_queries():
             f"INTO csv_sink;"
         )
     # Join with three streams
-    # for window_size, slide in WINDOW_SIZE_SLIDE:
-    #     queries.append(
-    #         f"SELECT * FROM (SELECT * FROM tcp_source) "
-    #         f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-    #         f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-    #         f"INTO csv_sink;"
-    #     )
+    for window_size, slide in WINDOW_SIZE_SLIDE:
+        queries.append(
+            f"SELECT * FROM (SELECT * FROM tcp_source) "
+            f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+            f"INTO csv_sink;"
+        )
 
     return queries
 
@@ -542,13 +542,13 @@ def create_query_benchmark_configs():
     del default_params["timestamp_increment"]
     del default_params["query"]
 
-    default_timestamp_increments, _ = get_additional_default_values()
+    # default_timestamp_increments, _ = get_additional_default_values()
     return [
         BenchmarkConfig(**default_params,
                         timestamp_increment=timestamp_increment,
                         slice_store_type=slice_store_type,
                         query=query)
-        for timestamp_increment in default_timestamp_increments
+        for timestamp_increment in TIMESTAMP_INCREMENTS[:1]
         for slice_store_type in SLICE_STORE_TYPES
         for query in get_queries()
     ]
