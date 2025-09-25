@@ -5,15 +5,19 @@ import os
 import argparse
 import json
 from pathlib import Path
-from benchmark_system import parse_int_list
+from benchmark_system import parse_int_list, parse_str_list
 
-def generate_data(num_rows=10000000, num_columns=10, num_groups=None, file_path="benchmark_data.csv"):
+def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_type='',  file_path="benchmark_data.csv"):
     """Generate test data with configurable columns, windows, and groups for different selectivities."""
 
     file_path += f"_cols{num_columns}"
     if num_groups is not None:
-        file_path += f"_groups{num_groups}.csv"
-    meta_file_path = str(file_path) + ".meta"
+        if id_data_type != '':
+            file_path += f"_groups{num_groups}_idtype{id_data_type}"
+        else:
+            file_path += f"_groups{num_groups}"
+    file_path += ".csv"
+    meta_file_path = str(file_path) + (".meta")
 
     # Check if file already exists
     if os.path.exists(file_path):
@@ -30,7 +34,19 @@ def generate_data(num_rows=10000000, num_columns=10, num_groups=None, file_path=
 
         # Generate timestamp column
         data["timestamp"] = np.arange(num_rows)
-        data["id"] = np.random.randint(0, num_groups, size=num_rows, dtype=np.uint64)
+
+        if id_data_type != '':
+            columns.append("id")
+            dtype = np.uint8
+            if '32' in id_data_type:
+                dtype = np.uint32
+            elif '64' in id_data_type:
+                dtype = np.uint64
+            elif '16' in id_data_type:
+                dtype = np.uint16
+
+
+            data["id"] = np.random.randint(0, num_groups, size=num_rows, dtype=dtype)
 
     # Generate other columns with up to num_groups unique values
     for i in range(num_columns):
@@ -60,12 +76,14 @@ if __name__ == "__main__":
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--columns', type=parse_int_list, default=[10], help='Number of columns (including timestamp)')
     parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
+    parser.add_argument('--id-data-types', type=parse_str_list, default = ['', "64"], help='Data type for id column (e.g., uint32, uint64), empty for no id column')
     args = parser.parse_args()
 
     output_path = Path(args.output)
     output_path.parent.mkdir(exist_ok=True, parents=True)
     for col_count in args.columns:
         for groups in args.groups:
-            generate_data(args.rows, col_count, groups, args.output)
+            for data_type in args.id_data_types:
+                generate_data(args.rows, col_count, groups, data_type, args.output)
         generate_data(args.rows, col_count, None, file_path= args.output)
 

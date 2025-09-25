@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import shutil
 import json
-from benchmark_system import parse_int_list
+from benchmark_system import parse_int_list, parse_str_list
 
 def swap_config_to_strategy(swap_config):
     """Convert swap configuration to layout strategy name"""
@@ -177,6 +177,21 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
             for col in names:
                 source_def += f" UINT64 {col}"
             source_def += f" FILE\n{docker_path}\n\n"
+            for num_groups in params['num_groups']:
+                for id_type in params['id_data_types']:
+                    if id_type != '':
+                        source_def += f"Source bench_data{num_cols}_groups{num_groups}_idtype{id_type}"
+                        source_def += f" UINT64 timestamp UINT{id_type} id"
+                        for col in names:
+                            source_def += f" UINT64 {col}"
+                        source_def += f" FILE\n{str(docker_data_path).format( f"{num_cols}_groups{num_groups}_idtype{id_type}")}\n\n"
+                    else:
+                        source_def += f"Source bench_data{num_cols}_groups{num_groups}"
+                        source_def += f" UINT64 timestamp"
+                        for col in names:
+                            source_def += f" UINT64 {col}"
+                        source_def += f" FILE\n{str(docker_data_path).format(f"{num_cols}_groups{num_groups}")}\n\n"
+
             f.write(source_def)
 
         # Sink definitions
@@ -228,6 +243,7 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
     if run_options == 'all' or run_options == 'single': #TODO: refactor in own function
         filter_dir.mkdir(exist_ok=True, parents=True)
         map_dir.mkdir(exist_ok=True)
+        agg_dir.mkdir(exist_ok=True)
         # For each buffer size, create separate test files and directory structure
         for buffer_size in buffer_sizes:
             filter_buffer_dir = filter_dir / f"bufferSize{buffer_size}"
@@ -235,12 +251,12 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
             agg_buffer_dir = agg_dir / f"bufferSize{buffer_size}"
             filter_buffer_dir.mkdir(exist_ok=True)
             map_buffer_dir.mkdir(exist_ok=True)
-            agg_dir.mkdir(exist_ok=True)
+            agg_buffer_dir.mkdir(exist_ok=True)
 
             # Create buffer-specific test files
             filter_test_path = filter_buffer_dir / f"filter_queries_buffer{buffer_size}.test"
             map_test_path = map_buffer_dir / f"map_queries_buffer{buffer_size}.test"
-            agg_test_path = agg_dir / f"agg_queries_buffer{buffer_size}.test"
+            agg_test_path = agg_buffer_dir / f"agg_queries_buffer{buffer_size}.test"
 
             # Copy header content from main test file
             shutil.copy(output_path, filter_test_path)
@@ -260,6 +276,8 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
 
                         # Filter queries with different selectivities
                         for selectivity in selectivities:
+                            if 'filter' not in params['operator_chains'][0]:
+                                break
                             filter_col = cols_to_access[0]
                             filter_queries+=1
                             # Calculate individual selectivity needed for each column
@@ -311,6 +329,8 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
 
                         # Map queries with different function types
                         for func_type in function_types:
+                            if 'map' not in params['operator_chains'][0]:
+                                break
                             map_queries+=1
                             # Create query directory
                             query_dir = map_buffer_dir / f"query_{func_type}_cols{num_col}_access{access_col}"
@@ -359,44 +379,77 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
 
                         # Aggregation queries
                         for agg_func in agg_functions:
+                            if 'agg' not in params['operator_chains'][0]:
+                                break
                             for window_size in params['window_sizes']:
                                 for num_groups in params['num_groups']:
-                                    agg_queries+=1
-                                    # Create query directory
-                                    query_dir = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}"
-                                    query_dir.mkdir(exist_ok=True)
+                                    for id_type in params['id_data_types']:
+                                        agg_queries+=1
+                                        # Create query directory
+                                        query_dir = agg_buffer_dir / (f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}")
+                                        if id_type != '':
+                                            query_dir = agg_buffer_dir / (f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}_idtype{id_type}")
 
-                                    # Write query config
-                                    config = {
-                                        "query_id": query_id,
-                                        "test_id": agg_queries,
-                                        "buffer_size": buffer_size,
-                                        "num_columns": num_col,
-                                        "accessed_columns": access_col,
-                                        "operator_chain": "agg",
-                                        "swap_strategy": "USE_SINGLE_LAYOUT",
-                                        "aggregation_function": agg_func,
-                                        "window_size": window_size,
-                                        "num_groups": num_groups,
-                                    }
-                                    with open(query_dir / "config.txt", 'w') as config_f:
-                                        for k, v in config.items():
-                                            config_f.write(f"{k}: {v}\n")
+                                        query_dir.mkdir(exist_ok=True)
 
-                                    # Store config in dictionary for later use
-                                    query_configs[query_id] = config
+                                        source = f"bench_data{num_col}_groups{num_groups}"
+                                        if id_type != '':
+                                            source += f"_idtype{id_type}"
 
-                                    # Write query to buffer-specific test file
-                                    query = f"# Query {query_id}: Aggregation with {agg_func} function\n"
-                                    query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: agg, AggregationFunction: {agg_func}\n"
+                                        # Write query config
+                                        config = {
+                                            "query_id": query_id,
+                                            "test_id": agg_queries,
+                                            "buffer_size": buffer_size,
+                                            "num_columns": num_col,
+                                            "accessed_columns": access_col,
+                                            "operator_chain": "agg",
+                                            "swap_strategy": "USE_SINGLE_LAYOUT",
+                                            "aggregation_function": agg_func,
+                                            "window_size": window_size,
+                                            "num_groups": num_groups
+                                        }
+                                        with open(query_dir / "config.txt", 'w') as config_f:
+                                            for k, v in config.items():
+                                                config_f.write(f"{k}: {v}\n")
 
-                                    query += f"SELECT {agg_func}(col_0) AS result FROM bench_data{num_cols} "
-                                    query += f"GROUP BY col_0 WINDOW TUMBLING(col_0, SIZE {window_size} MS) INTO AllSink{num_cols};\n----\n1, 1\n\n"
-                                    #TODO: use params acc_cols, add proper sink defs, test queries, try double
-                                    agg_f.write(query)
-                                    #TODO: decrease window size inside nested windows?
+                                        # Store config in dictionary for later use
+                                        query_configs[query_id] = config
 
-                                    query_id += 1
+                                        # Write query to buffer-specific test file
+                                        query = f"# Query {query_id}: Aggregation with {agg_func} function\n"
+                                        query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, WindowSize: {window_size}, NumGroups: {num_groups}, ID_data_type: {id_type}, AggregationFunction: {agg_func}\n"
+
+                                        indent = "    "
+                                        query += f"SELECT start, end, {agg_func}(col_0) AS col_0, *\n"
+                                        for x in range(1, access_col):
+                                            query += indent * x
+                                            query += f"FROM (SELECT start, end, {agg_func}(col_{x}) AS col_{x}, *\n"
+
+                                        query += indent * access_col
+                                        query += f"FROM {source} \n"
+
+                                        for x in range(access_col):
+
+                                            if id_type != '':
+                                                query += indent * (access_col - x)
+                                                query += f"GROUP BY id\n"
+                                            query += indent * (access_col - x)
+                                            if x == 0:
+                                                query += f"WINDOW TUMBLING(timestamp, SIZE {window_size} MS)\n"
+                                            else:
+                                                query += f"WINDOW TUMBLING(start, SIZE {window_size} MS)\n"
+                                            if x < access_col - 1:
+                                                query += indent * (access_col - x - 1)
+                                                query += ") \n"
+                                        query += f"INTO AllSink{num_cols};\n"
+                                        query += "----\n1, 1\n\n"
+
+                                        #TODO: use params acc_cols, add proper sink defs, test queries, try double
+                                        agg_f.write(query)
+                                        #TODO: decrease window size inside nested windows?
+
+                                        query_id += 1
 
 
 
@@ -509,20 +562,22 @@ if __name__ == "__main__":
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--window-sizes', type=parse_int_list, default=[10], help='Number of windows')
     parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
+    parser.add_argument('--id-data-types', type=parse_str_list, default = ['',"64"], help='Data type for id column (e.g., uint32, uint64)')
     parser.add_argument('--run-options', default='all', help='options: all, single or double')
     args = parser.parse_args()
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000, 400000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10],
         'num_rows': args.rows,
         'accessed_columns': [1, 2, 5, 10],
         'function_types': ['add', 'exp'],
-        'selectivities': [5, 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+        'selectivities': [5,50, 95],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
         'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
         'window_sizes': args.window_sizes, #[10000, 100000],
         'num_groups': args.groups, #[10, 100, 1000],
+        'id_data_types':args.id_data_types, #['64'], #Data type for id column (e.g., uint32, uint64)
 
 
         'operator_chains': [

@@ -51,6 +51,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
     # Determine which directories to process based on run_options
     filter_dir = output_dir / "filter"
     map_dir = output_dir / "map"
+    agg_dir = output_dir / "aggregation"
     double_op_dir = output_dir / "double_operator"
 
     dirs_to_process = []
@@ -61,6 +62,8 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
             dirs_to_process.append(filter_dir)
         if map_dir.exists():
             dirs_to_process.append(map_dir)
+        if agg_dir.exists():
+            dirs_to_process.append(agg_dir)
 
     if run_options == "all" or run_options == "double":
         if double_op_dir.exists():
@@ -91,7 +94,12 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
         for buffer_test_file in test_files:
             print(f"Processing test file: {buffer_test_file}")
             buffer_size = re.search(r'bufferSize(\d+)', str(buffer_dir)).group(1)
-
+            #available_memory = 201,830,776,832//2  # Use half of 200GB for buffer allocation
+            #requiredMemory= buffer_size * numberOfBuffers
+            #numberOfBuffers = int(available_memory) // int(buffer_size)
+            numberOfBuffers = 1000 #TODO check for what needed when multiple operators
+            if 'agg' in buffer_test_file.name:
+                numberOfBuffers = 20000
             # Extract strategy from parent directory name for double operators
             parent_dir = buffer_dir.parent
             strategy = parent_dir.name if parent_dir.name in ["ALL_ROW", "ALL_COL", "FIRST", "SECOND"] else "USE_SINGLE_LAYOUT"
@@ -163,7 +171,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
                                 f"-t {docker_test_path}:{test_id} -- "
                                 f"--worker.queryEngine.numberOfWorkerThreads=4 "
                                 f"--worker.bufferSizeInBytes={buffer_size} "
-                                f"--worker.numberOfBuffersInGlobalBufferManager=1000 "
+                                f"--worker.numberOfBuffersInGlobalBufferManager={numberOfBuffers} "
                                 f"--worker.defaultQueryExecution.operatorBufferSize={buffer_size} "
                                 f"--worker.defaultQueryExecution.memoryLayout={layout} "
                                 f"--worker.defaultQueryExecution.layoutStrategy={config_strategy} "

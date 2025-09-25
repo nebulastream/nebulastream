@@ -14,6 +14,9 @@ def parse_int_list(arg):
     """Convert comma-separated string to list of integers."""
     return [int(x) for x in arg.split(',')]
 
+def parse_str_list(arg):
+    """Convert comma-separated string to list of strings."""
+    return [x.strip() for x in arg.split(',')]
 def find_latest_benchmark_dir(base_dir):
     """Find the most recent benchmark directory."""
     base_dir = Path(base_dir)
