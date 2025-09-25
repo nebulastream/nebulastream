@@ -5,8 +5,14 @@
 Source generatorDefault UINT64 id UINT64 field2 GENERATOR
 CONFIG/sources/generator_10_tuples.yaml
 
+Source generatorDifferentDataTypes UINT64 field1 UINT32 field2 UINT16 field3 UINT8 field4 INT64 field5 INT32 field6 INT16 field7 INT8 field8 FLOAT64 field9 FLOAT32 field10 GENERATOR
+CONFIG/sources/generator_10_tuples_different_data_types.yaml
+
 Source generator10K UINT64 id UINT64 field2 GENERATOR
 CONFIG/sources/generator_10K_tuples.yaml
+
+Source generator10KSinus UINT64 id UINT64 field2 GENERATOR
+CONFIG/sources/generator_10K_tuples_sinus.yaml
 
 Source generatorStopAll UINT64 id UINT64 field2 GENERATOR
 CONFIG/sources/generator_stop_all.yaml
@@ -18,10 +24,12 @@ Source generatorInline UINT64 id GENERATOR seed 1, max_runtime_ms 1000, stop_gen
 id SEQUENCE UINT64 0 10 1
 
 SINK generator_sink UINT64 generatorDefault$id UINT64 generatorDefault$field2
+SINK generator_data_types_sink UINT64 generatorDifferentDataTypes$field1 UINT32 generatorDifferentDataTypes$field2 UINT16 generatorDifferentDataTypes$field3 UINT8 generatorDifferentDataTypes$field4 INT64 generatorDifferentDataTypes$field5 INT32 generatorDifferentDataTypes$field6 INT16 generatorDifferentDataTypes$field7 INT8 generatorDifferentDataTypes$field8 FLOAT64 generatorDifferentDataTypes$field9 FLOAT32 generatorDifferentDataTypes$field10
 
 SINK generator_sink_inline UINT64 generatorInline$id
 
 SINK checksum_10K TYPE Checksum UINT64 generator10K$id UINT64 generator10K$field2
+SINK checksum_10K_Sinus TYPE Checksum UINT64 generator10KSinus$id UINT64 generator10KSinus$field2
 SINK stop_all_checksum TYPE Checksum UINT64 generatorStopAll$id UINT64 generatorStopAll$field2
 SINK stop_one_checksum TYPE Checksum UINT64 generatorStopOne$id UINT64 generatorStopOne$field2
 
@@ -38,7 +46,26 @@ SELECT * FROM generatorDefault INTO generator_sink
 8 5
 9 5
 
+SELECT * FROM generatorDifferentDataTypes INTO generator_data_types_sink
+----
+0 0 0 0 0 0 0 0 0 0
+1 1 1 1 1 1 1 1 1 1
+2 2 2 2 2 2 2 2 2 1
+3 3 3 3 3 3 3 3 2 1
+4 4 4 4 4 4 4 3 2 1
+5 5 5 5 5 5 4 3 2 1
+6 6 6 6 6 5 4 3 2 1
+7 7 7 7 6 5 4 3 2 1
+8 8 8 7 6 5 4 3 2 1
+9 9 8 7 6 5 4 3 2 1
+
+
+
 SELECT * FROM generator10K INTO checksum_10K
+----
+10000 4032240
+
+SELECT * FROM generator10KSinus INTO checksum_10K_Sinus
 ----
 10000 4032240
 

@@ -93,7 +93,7 @@ void Generator::parseSchema(const std::string_view rawSchema)
     PRECONDITION(!rawSchema.empty(), "Cannot parse a schema from an empty string!");
     auto view = rawSchema | std::ranges::views::split('\n')
         | std::views::transform([](const auto& subView) { return std::string_view(subView); })
-        | std::views::filter([](const auto& subView) { return !subView.empty(); });
+        | std::views::filter([](const auto& subView) { return not subView.empty(); });
     for (const std::vector lines(view.begin(), view.end()); const auto line : lines)
     {
         parseRawSchemaLine(line);
