@@ -115,3 +115,9 @@ jobs:
           kill $WORKER_PID
           wait $WORKER_PID || true
           tail -n 50 worker.log
+
+      - name: Output Logs on failure
+        if: failure()
+        run: |
+          cat nebuli.log
+          cat worker.log
