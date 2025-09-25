@@ -321,6 +321,7 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
             break;
         case DataType::Type::FLOAT64:
             distribution = createDistribution<double, double>(mean, stddev);
+            break;
 
         /// We require an integer for binomial_distribution
         case DataType::Type::BOOLEAN:
