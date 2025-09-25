@@ -25,6 +25,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <span>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -41,7 +42,7 @@
 namespace NES
 {
 
-DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : address(address), physicalType(std::move(physicalType))
+DynamicField::DynamicField(std::span<const uint8_t> address, DataType physicalType) : address(address), physicalType(std::move(physicalType))
 {
 }
 
@@ -50,7 +51,7 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
-    return DynamicField{basePointer, memoryLayout->getPhysicalType(fieldIndex)};
+    return DynamicField{std::span<const uint8_t>(basePointer, memoryLayout->getPhysicalType(fieldIndex).getSizeInBytes()), memoryLayout->getPhysicalType(fieldIndex)};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) const
@@ -190,14 +191,14 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
 std::string DynamicField::toString() const
 {
-    return this->physicalType.formattedBytesToString(this->address);
+    return this->physicalType.formattedBytesToString(this->address.data());
 }
 
 bool DynamicField::operator==(const DynamicField& rhs) const
 {
     PRECONDITION(physicalType == rhs.physicalType, "Physical types have to be the same but are {} and {}", physicalType, rhs.physicalType);
 
-    return std::memcmp(address, rhs.address, physicalType.getSizeInBytes()) == 0;
+    return std::memcmp(address.data(), rhs.address.data(), physicalType.getSizeInBytes()) == 0;
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
@@ -210,7 +211,7 @@ const DataType& DynamicField::getPhysicalType() const
     return physicalType;
 }
 
-const uint8_t* DynamicField::getAddressPointer() const
+std::span<const uint8_t> DynamicField::getAddressPointer() const
 {
     return address;
 }
