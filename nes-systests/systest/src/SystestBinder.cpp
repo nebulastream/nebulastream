@@ -501,7 +501,7 @@ struct SystestBinder::Impl
         {
             schema.addField(name, type);
         }
-        if (const auto logicalSource = sourceCatalog.get()->addLogicalSource(source.name, schema); not logicalSource.has_value())
+        if (const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema); not logicalSource.has_value())
         {
             throw SourceAlreadyExists("{}", source.name);
         }
