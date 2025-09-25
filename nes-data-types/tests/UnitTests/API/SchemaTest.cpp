@@ -401,5 +401,4 @@ TEST_F(SchemaTest, withoutSourceQualifierTest)
         EXPECT_ANY_THROW(auto _ = withoutSourceQualifier(schema));
     }
 }
-
 }

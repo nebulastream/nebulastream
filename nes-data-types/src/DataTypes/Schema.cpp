@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -235,6 +236,82 @@ Schema withoutSourceQualifier(const Schema& input)
 
 
     return withoutPrefix;
+}
+
+SchemaDiff SchemaDiff::of(const Schema& expectedSchema, const Schema& actualSchema)
+{
+    SchemaDiff diff;
+
+    /// If the schemas do not contain the same number of fields, we do not check for field mismatches and report a size mismatch instead.
+    if (expectedSchema.getNumberOfFields() == actualSchema.getNumberOfFields())
+    {
+        /// Create vector to accumulate field mismatches
+        std::vector<FieldMismatch> foundMismatches{};
+
+        /// Check schemas for field mismatches
+        for (size_t i = 0; i < expectedSchema.getNumberOfFields(); ++i)
+        {
+            if (expectedSchema.getFieldAt(i) != actualSchema.getFieldAt(i))
+            {
+                foundMismatches.push_back(
+                    {.index = i, .expectedField = expectedSchema.getFieldAt(i), .actualField = actualSchema.getFieldAt(i)});
+            }
+        }
+        /// If we found any mismatches, the diff result will store them. Otherwise, it remains a "NoMismatch" type.
+        if (!foundMismatches.empty())
+        {
+            diff.result = foundMismatches;
+        }
+    }
+    else
+    {
+        diff.result = SizeMismatch{.expectedSize = expectedSchema.getNumberOfFields(), .actualSize = actualSchema.getNumberOfFields()};
+    }
+
+    return diff;
+}
+
+bool SchemaDiff::isDifferent() const
+{
+    /// Is the result a size mismatch or a vector of field mismatches?
+    return result.index() > 0;
+}
+
+std::ostream& operator<<(std::ostream& os, const SchemaDiff& diff)
+{
+    os << "SchemaDiff {\n";
+    switch (diff.result.index())
+    {
+        case 0: {
+            /// NoMismatch type
+            os << "  No differences found.\n";
+            break;
+        }
+        case 1: {
+            /// SizeMismatch type
+            const SchemaDiff::SizeMismatch mismatch = std::get<1>(diff.result);
+            os << "  Mismatching schema size:\n  Expected " << mismatch.expectedSize << " fields, got " << mismatch.actualSize
+               << " fields.\n";
+            break;
+        }
+        case 2: {
+            /// FieldMismatch vector type
+            const std::vector<SchemaDiff::FieldMismatch> mismatches = std::get<2>(diff.result);
+            os << "  Mismatching fields (" << mismatches.size() << "):\n";
+            for (const auto& [index, expected, actual] : mismatches)
+            {
+                os << "  For field " << index << ": Expected " << expected << ", got " << actual << ".\n";
+            }
+            break;
+        }
+        default: {
+            os << "  Unexpected type of schema diff result.\n";
+            break;
+        }
+    }
+
+    os << "}";
+    return os;
 }
 
 bool Schema::hasFields() const

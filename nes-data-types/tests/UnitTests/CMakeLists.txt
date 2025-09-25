@@ -13,4 +13,5 @@
 
 ### SchemaTest Test ###
 add_nes_unit_test(schema-tests "API/SchemaTest.cpp")
+add_nes_unit_test(schema-diff-tests "API/SchemaDiffTest.cpp")
 add_nes_unit_test(numeric-type-conversion-text "API/NumericTypeConversionTest.cpp")
