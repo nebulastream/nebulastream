@@ -42,8 +42,8 @@
 namespace NES
 {
 
-DynamicField::DynamicField(std::span<const uint8_t> addressSpan, DataType physicalType)
-    : addressSpan(addressSpan), physicalType(std::move(physicalType))
+DynamicField::DynamicField(std::span<const uint8_t> memory, DataType physicalType)
+    : memory(memory), physicalType(std::move(physicalType))
 {
 }
 
@@ -193,14 +193,14 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
 std::string DynamicField::toString() const
 {
-    return this->physicalType.formattedBytesToString(this->addressSpan.data());
+    return this->physicalType.formattedBytesToString(this->memory.data());
 }
 
 bool DynamicField::operator==(const DynamicField& rhs) const
 {
     PRECONDITION(physicalType == rhs.physicalType, "Physical types have to be the same but are {} and {}", physicalType, rhs.physicalType);
 
-    return std::memcmp(addressSpan.data(), rhs.addressSpan.data(), physicalType.getSizeInBytes()) == 0;
+    return std::ranges::equal(memory, rhs.memory);
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
@@ -213,9 +213,9 @@ const DataType& DynamicField::getPhysicalType() const
     return physicalType;
 }
 
-std::span<const uint8_t> DynamicField::getAddressSpan() const
+std::span<const uint8_t> DynamicField::getMemory() const
 {
-    return addressSpan;
+    return memory;
 }
 
 uint64_t TestTupleBuffer::getCapacity() const
