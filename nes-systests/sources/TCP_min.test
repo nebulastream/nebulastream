@@ -1,0 +1,21 @@
+# name: sources/TCP.test
+# description: forwarding queries with mixed CSV/TCP sources
+# groups: [Sources]
+
+# Source/Sink for single TCP stream
+Source STREAM UINT64 ID UINT64 VALUE UINT64 TIMESTAMP
+SINK TCP_SINK UINT64 STREAM$ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP
+
+Attach TCP CSV STREAM INLINE
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+
+
+SELECT * FROM STREAM INTO TCP_SINK
+----
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000

@@ -5,7 +5,7 @@
 
 CREATE LOGICAL SOURCE streamWithText(id UINT64, value UINT64, text1 VARSIZED, text2 VARSIZED);
 CREATE PHYSICAL SOURCE FOR streamWithText TYPE File;
-INLINE
+ATTACH INLINE
 1,1,test1,test1
 12,1,test1,test2
 4,1,test2,test2

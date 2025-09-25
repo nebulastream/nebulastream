@@ -718,11 +718,10 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     return tuples;
 }
 
-std::pair<std::string, std::optional<std::vector<std::string>>> SystestParser::expectCreateQuery()
+std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> > SystestParser::expectCreateQuery()
 {
     std::string createQuery;
-    std::optional<std::vector<std::string>> input = std::nullopt;
-    // std::vector<std::string> input;
+    std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input = std::nullopt;
 
     while (currentLine < lines.size())
     {
@@ -741,13 +740,13 @@ std::pair<std::string, std::optional<std::vector<std::string>>> SystestParser::e
         currentLine++;
     }
 
-    if (currentLine + 2 < lines.size() && lines[currentLine + 1].starts_with("INLINE"))
+    if (currentLine + 1 < lines.size() && lines[currentLine + 1].starts_with("ATTACH INLINE"))
     {
-        input = std::vector<std::string>{};
+        input = std::make_pair(TestDataIngestionType::INLINE, std::vector<std::string>{});
         currentLine += 2;
         while (currentLine < lines.size() && !lines[currentLine].empty())
         {
-            input.value().push_back(lines[currentLine]);
+            input.value().second.push_back(lines[currentLine]);
             currentLine++;
         }
         currentLine--;

@@ -87,10 +87,13 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegi
     return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
+// tuples, physicalSource.sourceConfig, serverThreads, testFilePath
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.attachSource.tuples)
+    if (systestAdaptorArguments.tuples)
     {
+
+        // SET file path
         if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
             filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
         {
@@ -98,7 +101,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
             if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
             {
                 /// Write inline tuples to test file.
-                for (const auto& tuple : systestAdaptorArguments.attachSource.tuples.value())
+                for (const auto& tuple : systestAdaptorArguments.tuples.value())
                 {
                     testFile << tuple << "\n";
                 }

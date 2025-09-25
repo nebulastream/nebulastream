@@ -356,6 +356,12 @@ struct SystestBinder::Impl
         }
     }
 
+
+    [[nodiscard]] std::string getSourceFilePath() const
+    {
+        return tempnam((workingDir / "testfile").c_str(), "source");
+    }
+
     void addInlineDataToFileSource(CreatePhysicalSourceStatement& statement, const std::vector<std::string>& input) const
     {
         std::ofstream file;
@@ -384,26 +390,39 @@ struct SystestBinder::Impl
     }
 
     void createPhysicalSource(
-        std::shared_ptr<SourceCatalog>& sourceCatalog,
-        CreatePhysicalSourceStatement statement,
-        const std::optional<std::vector<std::string>>& input)
+        const std::shared_ptr<SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
+        const CreatePhysicalSourceStatement& statement,
+        const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> & input)
     {
-        if (statement.sourceType == "File")
+        PhysicalSourceConfig physicalSourceConfig{
+            .logical=statement.attachedTo.getLogicalSourceName(),
+            .type=statement.sourceType,
+            .parserConfig=statement.parserConfig,
+            .sourceConfig=statement.sourceConfig
+        };
+
+        std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
+        physicalSourceConfig.parserConfig.merge(defaultParserConfig);
+
+        if (input.has_value())
         {
-            if (input.has_value())
+            switch (input.value().first)
             {
-                addInlineDataToFileSource(statement, input.value());
+                case TestDataIngestionType::INLINE: {
+                    const auto testFile = getSourceFilePath();
+                    physicalSourceConfig = SourceDataProvider::provideInlineDataSource(physicalSourceConfig, input.value().second, sourceThreads, testFile);
+                }
+                case TestDataIngestionType::FILE: {}
+                case TestDataIngestionType::GENERATOR: {}
+                default:
+                    std::unreachable();
             }
-        }
-        else if (statement.sourceType == "Generator")
-        {
-            std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
-            statement.parserConfig.merge(defaultParserConfig);
         }
 
 
         if (const auto created
-            = sourceCatalog->addPhysicalSource(statement.attachedTo, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+            = sourceCatalog->addPhysicalSource(statement.attachedTo, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
         {
             return;
         }
@@ -425,8 +444,9 @@ struct SystestBinder::Impl
         const StatementBinder& binder,
         std::shared_ptr<SourceCatalog>& sourceCatalog,
         SLTSinkFactory& sltSinkProvider,
+        std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
-        const std::optional<std::vector<std::string>>& input)
+        const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> & input)
     {
         const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
         const auto parseResult = managedParser->parseSingle();
@@ -447,7 +467,7 @@ struct SystestBinder::Impl
         }
         else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
         {
-            createPhysicalSource(sourceCatalog, std::get<CreatePhysicalSourceStatement>(statement), input);
+            createPhysicalSource(sourceCatalog, sourceThreads,std::get<CreatePhysicalSourceStatement>(statement), input);
         }
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
@@ -469,7 +489,7 @@ struct SystestBinder::Impl
         sltSinkProvider.registerSink(sinkParsed.type, sinkParsed.name, schema);
     }
 
-    static void logicalSourceCallback(std::shared_ptr<NES::SourceCatalog> sourceCatalog, const SystestParser::SystestLogicalSource& source)
+    static void logicalSourceCallback(const std::shared_ptr<NES::SourceCatalog>& sourceCatalog, const SystestParser::SystestLogicalSource& source)
     {
         Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
         for (const auto& [type, name] : source.fields)
@@ -485,7 +505,7 @@ struct SystestBinder::Impl
     /// NOLINTBEGIN(readability-function-cognitive-complexity)
     void attachSourceCallback(
         std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
-        std::shared_ptr<NES::SourceCatalog> sourceCatalog,
+        const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
         const std::string_view& testFileName,
         uint64_t& sourceIndex,
         SystestAttachSource& attachSource)
@@ -496,54 +516,7 @@ struct SystestBinder::Impl
             throw UnknownSourceFormat("Did not find input formatter for type {}", attachSource.inputFormatterType);
         }
 
-        /// Load physical source from file and overwrite logical source name with value from attach source
-        const auto initialPhysicalSourceConfigFromFile
-            = [](const std::string& logicalSourceName, const std::string& sourceConfigPath, const std::string& inputFormatterConfigPath)
-        {
-            try
-            {
-                auto loadedPhysicalSourceConfig = SystestSourceYAMLBinder::loadSystestPhysicalSourceFromYAML(
-                    logicalSourceName, sourceConfigPath, inputFormatterConfigPath);
-                return loadedPhysicalSourceConfig;
-            }
-            catch (const std::exception& e)
-            {
-                throw CannotLoadConfig("Failed to parse source: {}", e.what());
-            }
-        };
-
-        /// load physical source from inline definition
-        const auto initialPhysicalSourceConfigInline
-            = [&sourceCatalog](const std::string& logicalSourceName, const InlineGeneratorConfiguration& inlineConfig)
-        {
-            SystestSourceYAMLBinder::PhysicalSource physicalSource{};
-            physicalSource.logical = logicalSourceName;
-            physicalSource.parserConfig["type"] = "CSV";
-            physicalSource.parserConfig["field_delimiter"] = ",";
-            auto logicalSourceMapping = sourceCatalog.get()->getLogicalSource(logicalSourceName);
-            if (!logicalSourceMapping.has_value())
-            {
-                throw InvalidConfigParameter("{} does not exist in the same catalog!", logicalSourceName);
-            }
-            auto definedLogicalSchema = logicalSourceMapping.value().getSchema();
-            if (definedLogicalSchema->getFields().size() != inlineConfig.fieldSchema.size())
-            {
-                throw InvalidConfigParameter(
-                    "Number of defined generator field schemas ({}) does not match the number of fields defined in the source ({})",
-                    definedLogicalSchema->getFields().size(),
-                    inlineConfig.fieldSchema.size());
-            }
-
-
-            physicalSource.sourceConfig = inlineConfig.options;
-            return physicalSource;
-        };
-
-        const auto initialPhysicalSourceConfig = attachSource.inlineGeneratorConfiguration.has_value()
-            ? initialPhysicalSourceConfigInline(attachSource.logicalSourceName, attachSource.inlineGeneratorConfiguration.value())
-            : initialPhysicalSourceConfigFromFile(
-                  attachSource.logicalSourceName, attachSource.sourceConfigurationPath, attachSource.inputFormatterConfigurationPath);
-
+        const PhysicalSourceConfig initialPhysicalSourceConfig{};
         const auto [logical, sourceType, parserConfig, sourceConfig] = [&]()
         {
             switch (attachSource.testDataIngestionType)
@@ -552,28 +525,28 @@ struct SystestBinder::Impl
                     if (attachSource.tuples.has_value())
                     {
                         const auto sourceFile = SystestQuery::sourceFile(workingDir, testFileName, sourceIndex++);
-                        return SourceDataProvider::provideInlineDataSource(initialPhysicalSourceConfig, attachSource, sourceFile);
+                        return SourceDataProvider::provideInlineDataSource(initialPhysicalSourceConfig, attachSource.tuples, sourceThreads, sourceFile);
                     }
                     throw CannotLoadConfig("An InlineData source must have tuples, but tuples was null.");
                 }
                 case TestDataIngestionType::FILE: {
-                    return SourceDataProvider::provideFileDataSource(initialPhysicalSourceConfig, attachSource, testDataDir);
+                    // return SourceDataProvider::provideFileDataSource(initialPhysicalSourceConfig, attachSource, testDataDir);
                 }
                 case TestDataIngestionType::GENERATOR: {
-                    return SourceDataProvider::provideGeneratorDataSource(initialPhysicalSourceConfig, attachSource);
+                    // return SourceDataProvider::provideGeneratorDataSource(initialPhysicalSourceConfig, attachSource);
                 }
             }
             std::unreachable();
         }();
 
-        const auto logicalSource = sourceCatalog.get()->getLogicalSource(attachSource.logicalSourceName);
+        const auto logicalSource = sourceCatalog->getLogicalSource(attachSource.logicalSourceName);
         if (not logicalSource.has_value())
         {
             throw UnknownSourceName("{}", attachSource.logicalSourceName);
         }
 
         const auto physicalSource
-            = sourceCatalog.get()->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, parserConfig);
+            = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, parserConfig);
         if (not physicalSource.has_value())
         {
             NES_ERROR(
@@ -712,8 +685,8 @@ struct SystestBinder::Impl
         parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                               { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
 
-        parser.registerOnCreateCallback([&](const std::string& query, const std::optional<std::vector<std::string>>& input)
-                                        { createCallback(binder, sourceCatalog, sltSinkProvider, query, input); });
+        parser.registerOnCreateCallback([&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> & input)
+                                        { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, input); });
 
         try
         {

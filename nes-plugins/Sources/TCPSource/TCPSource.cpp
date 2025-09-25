@@ -290,14 +290,15 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegis
     return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
+// tuples, physicalSource.sourceConfig, serverThreads
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.attachSource.tuples)
+    if (systestAdaptorArguments.tuples)
     {
         if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
             port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
         {
-            auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.attachSource.tuples.value()));
+            auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples.value()));
             port->second = std::to_string(mockTCPServer->getPort());
 
             if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
@@ -306,7 +307,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
                 host->second = "localhost";
                 auto serverThread
                     = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
-                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+                systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
 
                 return systestAdaptorArguments.physicalSourceConfig;
             }

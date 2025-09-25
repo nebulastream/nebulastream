@@ -19,6 +19,15 @@
 namespace NES
 {
 
+struct PhysicalSourceConfig
+{
+    std::string logical;
+    std::string type;
+    std::unordered_map<std::string, std::string> parserConfig;
+    std::unordered_map<std::string, std::string> sourceConfig;
+};
+
+
 class SourceDataProvider
 {
 public:
@@ -26,9 +35,10 @@ public:
         SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig,
         SystestAttachSource attachSource,
         std::filesystem::path testDataDir);
-    static SystestSourceYAMLBinder::PhysicalSource provideInlineDataSource(
-        SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig,
-        SystestAttachSource attachSource,
+    static PhysicalSourceConfig provideInlineDataSource(
+        PhysicalSourceConfig initialPhysicalSourceConfig,
+        const std::optional<std::vector<std::string>>&tuples,
+        const std::shared_ptr<std::vector<std::jthread>>&serverThreads,
         std::filesystem::path testFilePath);
     static SystestSourceYAMLBinder::PhysicalSource
     provideGeneratorDataSource(SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig, SystestAttachSource attachSource);
