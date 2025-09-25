@@ -90,3 +90,11 @@ jobs:
         with:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
           path: /junit.xml
+
+  test-nebuli-and-single-node-worker:
+    name: "E2E Test using Nebuli and SingleNodeWorker"
+    uses: ./.github/workflows/execute_query.yml
+    with:
+      ref: ${{ inputs.ref }}
+      dev_image_tag: ${{ inputs.dev_image_tag }}
+      runtime_seconds: '$((1*60))'
