@@ -59,7 +59,6 @@ INGORED_ENDINGS = {
     "dummy",
     "env",
     "gitignore",
-    "mailmap",
     "json",
     "kts",
     "md",
@@ -72,10 +71,10 @@ INGORED_ENDINGS = {
     "xml",
     "yaml",
     "zip",
-    "sql",
     "bin",
-    "nes",
-    "jsonl"
+    "sql"
+    "nix",
+    "lock"
 }
 
 VENDORED_FILES = {
