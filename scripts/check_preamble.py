@@ -72,8 +72,10 @@ INGORED_ENDINGS = {
     "xml",
     "yaml",
     "zip",
-    "sql",
     "bin",
+    "sql",
+    "nix",
+    "lock",
     "nes",
     "jsonl"
 }
