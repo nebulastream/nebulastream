@@ -33,6 +33,11 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <YAML/YAMLBinder.hpp>
+
+#ifndef EOF
+#define EOF (-1)
+#endif
+
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>

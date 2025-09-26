@@ -186,6 +186,14 @@ endif ()
 find_package(gRPC CONFIG REQUIRED)
 message(STATUS "Using gRPC ${gRPC_VERSION}")
 
+find_package(gflags CONFIG REQUIRED)
+if (NOT TARGET gflags_shared AND TARGET gflags::gflags_shared)
+    add_library(gflags_shared ALIAS gflags::gflags_shared)
+endif ()
+
+find_package(glog CONFIG REQUIRED)
+add_compile_definitions(GLOG_USE_GLOG_EXPORT=1)
+
 set(_GRPC_GRPCPP gRPC::grpc++)
 if (CMAKE_CROSSCOMPILING)
     find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
