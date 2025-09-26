@@ -94,21 +94,27 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
     }
     if (not statement.id and statement.logicalSource)
     {
-        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue()))
         {
-            return ShowPhysicalSourcesStatementResult{*foundSources | std::ranges::to<std::vector>()};
+            if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
+            {
+                return ShowPhysicalSourcesStatementResult{*foundSources | std::ranges::to<std::vector>()};
+            }
         }
         return ShowPhysicalSourcesStatementResult{{}};
     }
     if (statement.logicalSource and statement.id)
     {
-        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue()))
         {
-            return ShowPhysicalSourcesStatementResult{
-                foundSources.value()
-                | std::views::filter([statement](const auto& source)
-                                     { return source.getPhysicalSourceId() == PhysicalSourceId{statement.id.value()}; })
-                | std::ranges::to<std::vector>()};
+            if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
+            {
+                return ShowPhysicalSourcesStatementResult{
+                    foundSources.value()
+                    | std::views::filter([statement](const auto& source)
+                                         { return source.getPhysicalSourceId() == PhysicalSourceId{statement.id.value()}; })
+                    | std::ranges::to<std::vector>()};
+            }
         }
         return ShowPhysicalSourcesStatementResult{{}};
     }

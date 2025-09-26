@@ -432,7 +432,7 @@ public:
             = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
         if (physicalSourcesSubject->logicalSourceName != nullptr)
         {
-            logicalSourceName = bindIdentifier(physicalSourcesSubject->logicalSourceName);
+            logicalSourceName = LogicalSourceName(bindIdentifier(physicalSourcesSubject->logicalSourceName));
         }
         if (showFilter != nullptr)
         {

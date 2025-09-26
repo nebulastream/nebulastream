@@ -67,7 +67,7 @@ struct ShowSinksStatementResult
 
 struct DropLogicalSourceStatementResult
 {
-    LogicalSource dropped;
+    LogicalSourceName dropped;
 };
 
 struct DropPhysicalSourceStatementResult
