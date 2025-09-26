@@ -112,6 +112,28 @@
           +  include(FetchContent)
         '';
 
+        gflagsGlogPatch = pkgs.writeText "nes-gflags-glog.patch" ''
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bb54f83a14..06be7b5266 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -186,6 +186,14 @@ endif ()
+ find_package(gRPC CONFIG REQUIRED)
+ message(STATUS "Using gRPC ''${gRPC_VERSION}")
+
++find_package(gflags CONFIG REQUIRED)
++if (NOT TARGET gflags_shared AND TARGET gflags::gflags_shared)
++    add_library(gflags_shared ALIAS gflags::gflags_shared)
++endif ()
++
++find_package(glog CONFIG REQUIRED)
++add_compile_definitions(GLOG_USE_GLOG_EXPORT=1)
++
+ set(_GRPC_GRPCPP gRPC::grpc++)
+ if (CMAKE_CROSSCOMPILING)
+ find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
+        '';
+
         libdwarfModule = pkgs.writeTextFile {
           name = "libdwarf-cmake";
           destination = "/share/cmake/Modules/Findlibdwarf.cmake";
@@ -447,7 +469,7 @@
 
           nativeBuildInputs = buildTools;
           buildInputs = llvmTools ++ thirdPartyDeps ++ [ mlirBinary ];
-          patches = [ antlr4JarPatch ];
+          patches = [ antlr4JarPatch gflagsGlogPatch ];
 
           CMAKE_PREFIX_PATH = cmakePrefixPath;
           PKG_CONFIG_PATH = pkgConfigPath;
