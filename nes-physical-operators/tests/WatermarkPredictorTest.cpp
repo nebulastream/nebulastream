@@ -31,7 +31,7 @@ class WatermarkPredictorTest : public Testing::BaseUnitTest
 public:
     static constexpr auto NUM_RUNS = 10;
     static constexpr auto SIZES = {10, 100, 1000, 10000, 100000, 1000000, 10000000};
-    static constexpr auto RANGES = {5, 50, 500, 5000, 50000};
+    static constexpr auto RANGES = {0, 5, 50, 500, 5000, 50000};
 
     static void SetUpTestSuite()
     {
@@ -43,13 +43,21 @@ public:
 
     static std::vector<std::pair<uint64_t, Timestamp::Underlying>> generateData(const size_t size, const int noiseRange)
     {
-        std::uniform_int_distribution dist(-noiseRange, noiseRange);
+        std::uniform_int_distribution dist(0, noiseRange);
         std::vector<std::pair<uint64_t, Timestamp::Underlying>> data;
         data.reserve(size);
 
         for (auto i = 0UL; i < size; ++i)
         {
-            data.emplace_back(i, std::max(i + dist(gen), 0UL));
+            const auto noiseValue = dist(gen);
+            if (noiseValue < 0)
+            {
+                data.emplace_back(i, std::max(i + dist(gen), 0UL));
+            }
+            else
+            {
+                data.emplace_back(i, i); // std::max(i + dist(gen), 0UL));
+            }
         }
 
         return data;
@@ -69,40 +77,106 @@ public:
                 throw std::runtime_error("Unknown watermark predictor type");
         }
     }
+
+    static std::shared_ptr<AbstractWatermarkPredictor> createWatermarkPredictor(const WatermarkPredictorType type)
+    {
+        switch (type)
+        {
+            case WatermarkPredictorType::KALMAN:
+                return std::make_shared<KalmanBasedWatermarkPredictor>();
+            case WatermarkPredictorType::REGRESSION:
+                return std::make_shared<RegressionBasedWatermarkPredictor>();
+            case WatermarkPredictorType::RLS:
+                return std::make_shared<RLSBasedWatermarkPredictor>();
+            default:
+                throw std::runtime_error("Unknown watermark predictor type");
+        }
+    }
 };
 
 TEST_F(WatermarkPredictorTest, update)
 {
-    std::ofstream file("WatermarkPredictorTestResult.csv", std::ios::out | std::ios::trunc | std::ios::binary);
+    std::ofstream file("WatermarkPredictorTestResult.csv", std::ios::out | std::ios::trunc);
+    if (not file.is_open())
+    {
+        throw std::runtime_error(fmt::format("Failed to open file: {}", std::strerror(errno)));
+    }
+    file << "WatermarkPredictor,UpdateSize,NoiseRange,UpdateExecutionTime,PredictionExecutionTime,timestampToPredict,ValueForTimestamp,"
+            "PredictionForTimestamp,Deviation\n";
+
+    const std::vector predictorTypes = {WatermarkPredictorType::KALMAN, WatermarkPredictorType::REGRESSION, WatermarkPredictorType::RLS};
+    for (auto i = 0; i < NUM_RUNS; ++i)
+    {
+        for (const auto range : RANGES)
+        {
+            for (const auto size : SIZES)
+            {
+                std::uniform_int_distribution dist(0, size);
+                const auto timestampToPredict = static_cast<uint64_t>(dist(gen));
+                const auto data = generateData(size, range);
+                for (const auto type : predictorTypes)
+                {
+                    const auto predictor = createWatermarkPredictor(type);
+                    const auto startWrite = std::chrono::high_resolution_clock::now();
+                    predictor->update(data);
+                    const auto endWrite = std::chrono::high_resolution_clock::now();
+                    const auto prediction = predictor->getEstimatedWatermark(timestampToPredict);
+                    const auto endPrediction = std::chrono::high_resolution_clock::now();
+
+                    const auto startWriteTicks = static_cast<uint64_t>(
+                        std::chrono::duration_cast<std::chrono::nanoseconds>(startWrite.time_since_epoch()).count());
+                    const auto endWriteTicks
+                        = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(endWrite.time_since_epoch()).count());
+                    const auto endPredictionTicks = static_cast<uint64_t>(
+                        std::chrono::duration_cast<std::chrono::nanoseconds>(endPrediction.time_since_epoch()).count());
+
+                    file << watermarkTypeToString(type) << "," << size << "," << range << "," << (endWriteTicks - startWriteTicks) << ","
+                         << (endPredictionTicks - endWriteTicks) << "," << timestampToPredict << "," << data[timestampToPredict].second
+                         << "," << prediction.getRawValue() << "," << (data[timestampToPredict].second - prediction.getRawValue()) << "\n";
+                }
+            }
+        }
+    }
+}
+
+TEST_F(WatermarkPredictorTest, DISABLED_update_2)
+{
+    std::ofstream file("WatermarkPredictorTestResult_2.csv", std::ios::out | std::ios::trunc);
     if (not file.is_open())
     {
         throw std::runtime_error(fmt::format("Failed to open file: {}", std::strerror(errno)));
     }
 
-    const std::vector<std::pair<WatermarkPredictorType, std::shared_ptr<AbstractWatermarkPredictor>>> predictors
-        = {{WatermarkPredictorType::KALMAN, std::make_shared<KalmanBasedWatermarkPredictor>()},
-           {WatermarkPredictorType::REGRESSION, std::make_shared<RegressionBasedWatermarkPredictor>()},
-           {WatermarkPredictorType::RLS, std::make_shared<RLSBasedWatermarkPredictor>()}};
-
+    const std::vector predictorTypes = {WatermarkPredictorType::KALMAN, WatermarkPredictorType::REGRESSION, WatermarkPredictorType::RLS};
     for (auto i = 0; i < NUM_RUNS; ++i)
     {
-        for (const auto size : SIZES)
+        for (const auto range : RANGES)
         {
-            for (const auto range : RANGES)
+            for (const auto type : predictorTypes)
             {
-                const auto data = generateData(size, range);
-                for (const auto& [type, predictor] : predictors)
+                const auto predictor = createWatermarkPredictor(type);
+                for (const auto size : SIZES)
                 {
-                    // TODO is there a difference if state is not cleared?
-                    const auto start = std::chrono::high_resolution_clock::now();
-                    predictor->update(data);
-                    const auto end = std::chrono::high_resolution_clock::now();
+                    std::uniform_int_distribution dist(0, size);
+                    const auto timestampToPredict = static_cast<uint64_t>(dist(gen));
+                    const auto data = generateData(size, range);
 
-                    const auto startTicks
-                        = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count());
-                    const auto endTicks
-                        = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(end.time_since_epoch()).count());
-                    file << watermarkTypeToString(type) << "," << (endTicks - startTicks) << "," << size << "," << range << "\n";
+                    const auto startWrite = std::chrono::high_resolution_clock::now();
+                    predictor->update(data);
+                    const auto endWrite = std::chrono::high_resolution_clock::now();
+                    const auto prediction = predictor->getEstimatedWatermark(timestampToPredict);
+                    const auto endPrediction = std::chrono::high_resolution_clock::now();
+
+                    const auto startWriteTicks = static_cast<uint64_t>(
+                        std::chrono::duration_cast<std::chrono::nanoseconds>(startWrite.time_since_epoch()).count());
+                    const auto endWriteTicks
+                        = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(endWrite.time_since_epoch()).count());
+                    const auto endPredictionTicks = static_cast<uint64_t>(
+                        std::chrono::duration_cast<std::chrono::nanoseconds>(endPrediction.time_since_epoch()).count());
+
+                    file << watermarkTypeToString(type) << "," << size << "," << range << "," << (endWriteTicks - startWriteTicks) << ","
+                         << (endPredictionTicks - endWriteTicks) << "," << timestampToPredict << ","
+                         << (data[timestampToPredict].second - prediction.getRawValue()) << "\n";
                 }
             }
         }
