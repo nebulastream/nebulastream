@@ -402,13 +402,14 @@ void SystestParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (Util::toLowerCase(potentialToken).starts_with(Util::toLowerCase(QueryToken)))
+    if (NES::Util::toLowerCase(potentialToken).starts_with(NES::Util::toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
     }
     /// Lookup in map
     const auto* it = std::ranges::find_if(
-        stringToToken, [&potentialToken](const auto& pair) { return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken); });
+        stringToToken,
+        [&potentialToken](const auto& pair) { return NES::Util::toLowerCase(pair.first) == NES::Util::toLowerCase(potentialToken); });
     if (it != stringToToken.end())
     {
         return it->second;
@@ -499,7 +500,7 @@ SystestParser::SystestSink SystestParser::expectSink() const
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
     INVARIANT(
-        Util::toLowerCase(discard) == Util::toLowerCase(SinkToken),
+        NES::Util::toLowerCase(discard) == NES::Util::toLowerCase(SinkToken),
         "Expected first word to be `{}` for sink statement",
         SystestLogicalSourceToken);
 
@@ -549,7 +550,7 @@ SystestParser::expectInlineGeneratorSource(SystestLogicalSource& source, const s
     std::advance(curPos, 2); /// First two words are always: Source sourceName
     for (; curPos != attachSourceTokens.end(); ++curPos)
     {
-        if (magic_enum::enum_cast<TestDataIngestionType>(Util::toUpperCase(*curPos)) == TestDataIngestionType::GENERATOR)
+        if (magic_enum::enum_cast<TestDataIngestionType>(NES::Util::toUpperCase(*curPos)) == TestDataIngestionType::GENERATOR)
         {
             break;
         }
@@ -599,7 +600,7 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
 
     SystestLogicalSource source;
     auto& line = lines[currentLine];
-    const auto attachSourceTokens = Util::splitWithStringDelimiter<std::string>(line, " ");
+    const auto attachSourceTokens = NES::Util::splitWithStringDelimiter<std::string>(line, " ");
 
     /// Read and discard the first word as it is always Source
     if (attachSourceTokens.front() != SystestLogicalSourceToken)
@@ -614,7 +615,7 @@ std::pair<SystestParser::SystestLogicalSource, std::optional<SystestAttachSource
     }
     source.name = attachSourceTokens.at(1);
 
-    if (const auto dataIngestionType = magic_enum::enum_cast<TestDataIngestionType>(Util::toUpperCase(attachSourceTokens.back())))
+    if (const auto dataIngestionType = magic_enum::enum_cast<TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.back())))
     {
         const std::vector<std::string> arguments = attachSourceTokens | std::views::drop(2)
             | std::views::take(std::ranges::size(attachSourceTokens) - 3) | std::ranges::to<std::vector<std::string>>();
@@ -733,7 +734,8 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
     std::vector<std::string> tuples;
     /// skip the result line `----`
-    if (currentLine < lines.size() && (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter) || ignoreFirst))
+    if (currentLine < lines.size()
+        && (NES::Util::toLowerCase(lines[currentLine]) == NES::Util::toLowerCase(ResultDelimiter) || ignoreFirst))
     {
         currentLine++;
     }
@@ -878,7 +880,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     /// Skip the ERROR token
     std::string token;
     stream >> token;
-    INVARIANT(Util::toLowerCase(token) == Util::toLowerCase(ErrorToken), "Expected ERROR token");
+    INVARIANT(NES::Util::toLowerCase(token) == NES::Util::toLowerCase(ErrorToken), "Expected ERROR token");
 
     /// Read the error code
     std::string errorStr;
