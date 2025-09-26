@@ -15,5 +15,6 @@ add_source_files(nes-common
         DumpHelper.cpp
         Strings.cpp
         ThreadNaming.cpp
+        UUID.cpp
 )
 add_subdirectory(Logger)
