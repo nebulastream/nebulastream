@@ -138,7 +138,7 @@ std::vector<RunningQuery> runQueries(
     }
 
     std::unordered_map<LocalQueryId, std::shared_ptr<RunningQuery>> active;
-    std::unordered_map<QueryId, LocalQueryStatus> finishedDifferentialQueries;
+    std::unordered_map<LocalQueryId, LocalQueryStatus> finishedDifferentialQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
     std::size_t finished = 0;
 
