@@ -13,12 +13,12 @@
 */
 
 #pragma once
+#include <algorithm>
 #include <compare>
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <type_traits>
-#include <algorithm>
 
 namespace NES
 {

@@ -241,7 +241,6 @@ struct formatter<std::unordered_map<std::string, std::string>>
 
 }
 
-
 FMT_OSTREAM(NES::CreateLogicalSourceStatement);
 FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
 FMT_OSTREAM(NES::DropLogicalSourceStatement);
