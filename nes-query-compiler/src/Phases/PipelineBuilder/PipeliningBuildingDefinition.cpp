@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
-#pragma once
 
+#include <cstdint>
 #include <memory>
-#include <PhysicalPlan.hpp>
-#include <PipelinedQueryPlan.hpp>
+#include <unordered_map>
 
-namespace NES::QueryCompilation::PipeliningPhase
+#include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+
+#include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
+
+namespace NES
 {
-/// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
-std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& queryPlan);
 }
