@@ -97,6 +97,15 @@
           hash = "sha256-6uLfoRmmQydERnKv9j6ew1ogGA3FuAkLemq4USXfTXY=";
         };
 
+        devCmakePrelude = pkgs.writeText "nes-dev-prelude.cmake" ''
+          find_package(gflags CONFIG REQUIRED)
+          if (NOT TARGET gflags_shared AND TARGET gflags::gflags_shared)
+            add_library(gflags_shared ALIAS gflags::gflags_shared)
+          endif ()
+          find_package(glog CONFIG REQUIRED)
+          add_compile_definitions(GLOG_USE_GLOG_EXPORT=1)
+        '';
+
         antlr4JarPatch = pkgs.writeText "nes-antlr-jar.patch" ''
           diff --git a/nes-sql-parser/CMakeLists.txt b/nes-sql-parser/CMakeLists.txt
           --- a/nes-sql-parser/CMakeLists.txt
@@ -410,7 +419,7 @@ index bb54f83a14..06be7b5266 100644
           nautilusPkg
         ];
 
-        cmakeInputs = [ mlirBinary ] ++ thirdPartyDeps;
+        cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;
 
         cmakePrefixPath = lib.makeSearchPath "" cmakeInputs;
 
@@ -426,6 +435,7 @@ index bb54f83a14..06be7b5266 100644
           PKG_CONFIG_PATH = pkgConfigPath;
           MLIR_DIR = "${mlirBinary}/lib/cmake/mlir";
           LLVM_DIR = "${mlirBinary}/lib/cmake/llvm";
+          CMAKE_MODULE_PATH = lib.makeSearchPath "share/cmake/Modules" [ libdwarfModule ];
         };
 
         # Core development tools
@@ -539,6 +549,19 @@ index bb54f83a14..06be7b5266 100644
             LLVM_TOOLCHAIN_VERSION = "19";
             CMAKE_GENERATOR = "Ninja";
             VCPKG_ENV_PASSTHROUGH = "MLIR_DIR;LLVM_DIR;CMAKE_PREFIX_PATH";
+            NES_USE_SYSTEM_DEPS = "ON";
+            cmakeFlags = [
+              "-DCMAKE_PROJECT_INCLUDE=${devCmakePrelude}"
+              "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
+              "-DNES_USE_SYSTEM_DEPS=ON"
+              "-DUSE_LOCAL_MLIR=ON"
+              "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
+              "-DLLVM_TOOLCHAIN_VERSION=19"
+              "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
+              "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
+              "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
+              "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
+            ];
             shellHook = ''
               unset NES_PREBUILT_VCPKG_ROOT
             '';
