@@ -15,9 +15,13 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 
 #include <memory>
+#include <ranges>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -31,12 +35,12 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     PRECONDITION(logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
     const auto source = logicalOperator.getAs<SourceDescriptorLogicalOperator>();
 
-    const auto outputOriginIds = source.getOutputOriginIds();
+    const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(source.getTraitSet());
     PRECONDITION(
-        outputOriginIds.size() == 1,
+        outputOriginIdsOpt.has_value() && std::ranges::size(outputOriginIdsOpt.value()) == 1,
         "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}",
-        outputOriginIds.size());
-    auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIds[0]);
+        std::ranges::size(*outputOriginIdsOpt));
+    auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
 
     const auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(

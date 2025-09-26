@@ -99,6 +99,10 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig
             {
                 protoVar.mutable_window_infos()->CopyFrom(arg);
             }
+            else if constexpr (std::is_same_v<U, OriginIdList>)
+            {
+                protoVar.mutable_origin_ids()->CopyFrom(arg);
+            }
             else
             {
                 static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
@@ -140,6 +144,8 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
             return protoVar.projections();
         case SerializableVariantDescriptor::kWindowInfos:
             return protoVar.window_infos();
+        case SerializableVariantDescriptor::kOriginIds:
+            return protoVar.origin_ids();
         case NES::SerializableVariantDescriptor::VALUE_NOT_SET:
             throw CannotSerialize("Protobuf oneOf has no value");
     }

@@ -13,6 +13,8 @@
 add_source_files(nes-query-optimizer
         Trait.cpp
         TraitSet.cpp
-        ImplementationTypeTrait.cpp)
+        ImplementationTypeTrait.cpp
+        OutputOriginIdsTrait.cpp)
 
 add_plugin(ImplementationType Trait nes-query-optimizer ImplementationTypeTrait.cpp)
+add_plugin(OutputOriginIds Trait nes-query-optimizer OutputOriginIdsTrait.cpp)
