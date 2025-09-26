@@ -24,7 +24,7 @@
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
-#include <NESThread.hpp>
+#include <Thread.hpp>
 
 void init_receiver_service(std::string connectionAddr, NES::WorkerId workerId)
 {
