@@ -16,6 +16,7 @@ SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 
 option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a locally installed version" OFF)
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
+option(NES_USE_SYSTEM_DEPS "Rely on externally provided dependencies instead of bootstrapping vcpkg" OFF)
 
 if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT} AND NOT DEFINED ENV{IN_NIX_SHELL})
     SET(DOCKER_DEV_IMAGE ON CACHE BOOL "Using Docker Development Image")
@@ -64,6 +65,8 @@ elseif (DEFINED CMAKE_TOOLCHAIN_FILE)
     # mode and VCPKG will try to install or update dependencies based on the vcpkg.json
     # manifest. This requires a fully setup vcpkg installation, not just a pre-built sdk.
     message(STATUS "CMAKE_TOOLCHAIN_FILE was supplied: Assuming independent vcpkg-repository at ${CMAKE_TOOLCHAIN_FILE}")
+elseif (NES_USE_SYSTEM_DEPS OR DEFINED ENV{NES_USE_SYSTEM_DEPS})
+    message(STATUS "Using externally provided dependencies; skipping vcpkg bootstrap")
 elseif (DEFINED ENV{VCPKG_ROOT})
     message(STATUS "VCPKG_ROOT Environment is set: Assuming user-managed vcpkg install at $ENV{VCPKG_ROOT}")
     SET(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)

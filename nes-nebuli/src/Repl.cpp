@@ -33,18 +33,20 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <YAML/YAMLBinder.hpp>
+#ifndef EOF
+    #define EOF (-1)
+#endif
+#include <SQLQueryParser/StatementBinder.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
-#include <replxx.hxx>
-
-#include <SQLQueryParser/StatementBinder.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
+#include <LegacyOptimizer.hpp>
 #include <StatementHandler.hpp>
 #include <StatementOutputAssembler.hpp>
 #include <TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
+#include <replxx.hxx>
 
 namespace NES
 {

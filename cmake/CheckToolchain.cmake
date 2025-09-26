@@ -20,27 +20,33 @@ option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 SET(USING_LIBCXX OFF)
 SET(USING_LIBSTDCXX OFF)
 
-# Nix environment - use libc++ with environment-provided flags
+# Nix environment - respect the preferred standard library
 if(DEFINED ENV{IN_NIX_SHELL})
-    message(STATUS "Nix environment detected - using libc++")
-    set(USING_LIBCXX ON)
-    
-    # Use CXXFLAGS from environment if available, otherwise default libc++ setup
-    if(DEFINED ENV{CXXFLAGS})
-        string(REGEX REPLACE " +" ";" CXXFLAGS_LIST "$ENV{CXXFLAGS}")
-        foreach(flag ${CXXFLAGS_LIST})
-            add_compile_options(${flag})
-        endforeach()
-        message(STATUS "Applied CXXFLAGS from Nix: $ENV{CXXFLAGS}")
+    message(STATUS "Nix environment detected")
+    if (NOT USE_LIBCXX_IF_AVAILABLE)
+        message(STATUS "Nix environment will use libstdc++ (USE_LIBCXX_IF_AVAILABLE=OFF)")
     else()
-        add_compile_options(-stdlib=libc++)
+        message(STATUS "Nix environment will use libc++")
+
+        set(USING_LIBCXX ON)
+
+        # Use CXXFLAGS from environment if available, otherwise default libc++ setup
+        if(DEFINED ENV{CXXFLAGS})
+            string(REGEX REPLACE " +" ";" CXXFLAGS_LIST "$ENV{CXXFLAGS}")
+            foreach(flag ${CXXFLAGS_LIST})
+                add_compile_options(${flag})
+            endforeach()
+            message(STATUS "Applied CXXFLAGS from Nix: $ENV{CXXFLAGS}")
+        else()
+            add_compile_options(-stdlib=libc++)
+        endif()
+
+        add_compile_options(-fexperimental-library)
+        add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
+        add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
+        add_link_options(-lc++)
+        return()
     endif()
-    
-    add_compile_options(-fexperimental-library)
-    add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
-    add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
-    add_link_options(-lc++)
-    return()
 endif()
 
 if (USE_LIBCXX_IF_AVAILABLE)

@@ -65,6 +65,9 @@ find_package(magic_enum CONFIG REQUIRED)
 find_package(spdlog     CONFIG REQUIRED)
 find_package(yaml-cpp   CONFIG REQUIRED)
 find_package(folly      CONFIG REQUIRED)
+if(NOT TARGET folly::folly AND TARGET Folly::folly)
+    add_library(folly::folly ALIAS Folly::folly)
+endif()
 target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly)
 
 target_include_directories(nes-common PUBLIC
