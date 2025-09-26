@@ -15,33 +15,25 @@
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
-#include <climits>
-#include <cstddef>
-#include <cstring>
-#include <format>
 #include <fstream>
 #include <functional>
-#include <initializer_list>
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <thread>
 #include <utility>
 #include <vector>
 #include <unistd.h>
 
-#include <GlobalOptimizer/GlobalOptimizer.hpp>
-#include <Identifiers/Identifiers.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -50,15 +42,11 @@
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/security/credentials.h>
-#include <yaml-cpp/node/parse.h>
-#include "DataTypes/DataTypeProvider.hpp"
-#include "Util/Common.hpp"
-
+#include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
-
-#include "StatementHandler.hpp"
-#include "WorkerCatalog.hpp"
+#include <StatementHandler.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace
 {
@@ -104,19 +92,12 @@ struct LogicalSource
     std::vector<SchemaField> schema;
 };
 
-struct ParserConfig
-{
-    std::string parserType;
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
-};
-
 struct PhysicalSource
 {
     std::string logical;
     std::string type;
     std::string host;
-    ParserConfig parserConfig;
+    std::unordered_map<std::string, std::string> parserConfig;
     std::unordered_map<std::string, std::string> sourceConfig;
 };
 
@@ -130,7 +111,7 @@ struct WorkerConfig
 
 struct QueryConfig
 {
-    std::string query;
+    std::vector<std::string> query;
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
@@ -147,24 +128,6 @@ struct convert<NES::CLI::SchemaField>
     {
         rhs.name = node["name"].as<std::string>();
         rhs.type = stringToFieldType(node["type"].as<std::string>());
-        return true;
-    }
-};
-
-template <>
-struct convert<NES::CLI::ParserConfig>
-{
-    static bool decode(const Node& node, NES::CLI::ParserConfig& rhs)
-    {
-        rhs.parserType = node["parser_type"].as<std::string>();
-        if (node["tuple_delimiter"].IsDefined())
-        {
-            rhs.tupleDelimiter = node["tuple_delimiter"].as<std::string>();
-        }
-        if (node["tuple_delimiter"].IsDefined())
-        {
-            rhs.fieldDelimiter = node["field_delimiter"].as<std::string>();
-        }
         return true;
     }
 };
@@ -202,7 +165,7 @@ struct convert<NES::CLI::PhysicalSource>
         rhs.logical = node["logical"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
         rhs.host = node["host"].as<std::string>();
-        rhs.parserConfig = node["parser_config"].as<NES::CLI::ParserConfig>();
+        rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
@@ -233,7 +196,18 @@ struct convert<NES::CLI::QueryConfig>
         rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
-        rhs.query = node["query"].as<std::string>();
+        rhs.query = {};
+        if (node["query"].IsDefined())
+        {
+            if (node["query"].IsSequence())
+            {
+                rhs.query = node["query"].as<std::vector<std::string>>();
+            }
+            else
+            {
+                rhs.query.emplace_back(node["query"].as<std::string>());
+            }
+        }
         rhs.workers = node["workers"].as<std::vector<NES::CLI::WorkerConfig>>();
         return true;
     }
@@ -276,16 +250,38 @@ static NES::CLI::QueryConfig getTopologyPath(const argparse::ArgumentParser& par
     throw NES::InvalidConfigParameter("Could not find topology file");
 }
 
-std::vector<NES::Statement> loadStatements(const argparse::ArgumentParser& parser)
+std::vector<std::string>
+loadQueries(const argparse::ArgumentParser& parser, const argparse::ArgumentParser& subcommand, const NES::CLI::QueryConfig& topologyConfig)
 {
-    auto config = getTopologyPath(parser);
-    std::vector<NES::Statement> statements;
-    for (const auto& worker : config.workers)
+    std::vector<std::string> queries;
+    if (subcommand.is_used("queries"))
     {
-        statements.push_back(NES::CreateWorkerStatement{
-            .host = worker.host, .grpc = worker.grpc, .capacity = worker.capacity, .downstream = worker.downstream});
+        for (auto query : subcommand.get<std::vector<std::string>>("queries"))
+        {
+            queries.emplace_back(query);
+        }
+        NES_DEBUG("loaded {} queries from commandline", queries.size());
     }
-    for (const auto& [name, schemaFields] : config.logical)
+    else
+    {
+        for (const auto& query : topologyConfig.query)
+        {
+            queries.emplace_back(query);
+        }
+        NES_DEBUG("loaded {} queries from topology file", queries.size());
+    }
+    return queries;
+}
+
+std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
+{
+    const auto& [query, sinks, logical, physical, workers] = topologyConfig;
+    std::vector<NES::Statement> statements;
+    for (const auto& [host, grpc, capacity, downstream] : workers)
+    {
+        statements.emplace_back(NES::CreateWorkerStatement{.host = host, .grpc = grpc, .capacity = capacity, .downstream = downstream});
+    }
+    for (const auto& [name, schemaFields] : logical)
     {
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
@@ -293,104 +289,135 @@ std::vector<NES::Statement> loadStatements(const argparse::ArgumentParser& parse
             schema.addField(schemaField.name, schemaField.type);
         }
 
-        statements.push_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
+        statements.emplace_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
     }
 
-    for (const auto& [logical, type, host, parserConfig, sourceConfig] : config.physical)
+    for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
-        statements.push_back(NES::CreatePhysicalSourceStatement{
+        statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(logical),
             .sourceType = type,
             .workerId = host,
             .sourceConfig = sourceConfig,
-            .parserConfig = NES::ParserConfig{
-                .parserType = parserConfig.parserType,
-                .tupleDelimiter = parserConfig.tupleDelimiter,
-                .fieldDelimiter = parserConfig.fieldDelimiter}});
+            .parserConfig = NES::ParserConfig::create(parserConfig)});
     }
-    statements.push_back(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query));
+    for (const auto& [name, schemaFields, type, host, config] : sinks)
+    {
+        NES::Schema schema;
+        for (const auto& schemaField : schemaFields)
+        {
+            schema.addField(schemaField.name, schemaField.type);
+        }
+
+        statements.emplace_back(
+            NES::CreateSinkStatement{.name = name, .sinkType = type, .workerId = host, .schema = schema, .sinkConfig = config});
+    }
+    return statements;
 }
 
-void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
+void doQueryManagement(const argparse::ArgumentParser&, const argparse::ArgumentParser&)
 {
+}
+
+template <typename HandlerT>
+bool tryCall(const NES::Statement& statement, HandlerT& handler)
+{
+    return std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+}
+
+template <typename HandlerT, typename... HandlerTs>
+bool tryCall(const NES::Statement& statement, HandlerT& handler, HandlerTs&... handlers)
+{
+    auto couldHandle = std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+    if (couldHandle)
+    {
+        return true;
+    }
+    return tryCall(statement, handlers...);
 }
 
 template <typename... HandlerT>
 void handleStatements(std::vector<NES::Statement> statements, HandlerT&... handler)
 {
-    auto throwOnError = []<typename T>(std::expected<T, NES::Exception> result)
-    {
-        if (!result)
-        {
-            throw result.error();
-        }
-        return true;
-    };
-
     for (const auto& statement : statements)
     {
-        std::visit(
-            [&]<typename StatementT>(const StatementT& typedStatement)
-            { ((std::invocable<HandlerT&, const StatementT&> && throwOnError(handler(typedStatement))) || ...); },
-            statement);
+        tryCall(statement, handler...);
     }
-}
-
-void startQuery(const std::vector<NES::Statement>& statements)
-{
-    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
-    auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-
-    NES::TopologyStatementHandler topologyHandler{workerCatalog};
-    NES::SourceStatementHandler sourceHandler{sourceCatalog};
-    NES::SinkStatementHandler sinkHandler{sinkCatalog};
-
-    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
-
-    auto queryManager
-        = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(workerCatalog->getAllWorkers()));
-
-    NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
-
-    handleStatements(statements, queryStatementHandler);
-}
-
-void dumpQuery(std::vector<NES::Statement> statements)
-{
-    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
-    auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-
-    NES::TopologyStatementHandler topologyHandler{workerCatalog};
-    NES::SourceStatementHandler sourceHandler{sourceCatalog};
-    NES::SinkStatementHandler sinkHandler{sinkCatalog};
-
-    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
-
-    auto plan = std::get<NES::LogicalPlan>(statements.back());
-
-    NES::QueryPlanningContext ctx{
-        .id = NES::INVALID<NES::LocalQueryId>,
-        .sqlString = plan.getOriginalSql(),
-        .sourceCatalog = sourceCatalog,
-        .sinkCatalog = sinkCatalog,
-        .workerCatalog = workerCatalog};
-
-    auto optimizedPlan = NES::GlobalOptimizer::with(ctx).optimize(NES::PlanStage::BoundLogicalPlan(plan));
-
 }
 
 void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
-    auto statements = loadStatements(subcommand);
-    if (program.is_used("start"))
+    auto topologyConfig = getTopologyPath(program);
+    auto statements = loadStatements(topologyConfig);
+    auto queries = loadQueries(program, subcommand, topologyConfig);
+    if (queries.empty())
     {
-        startQuery(statements);
+        throw NES::InvalidConfigParameter("No queries");
+    }
+
+    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
+    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+    auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+
+    NES::TopologyStatementHandler topologyHandler{workerCatalog};
+    NES::SourceStatementHandler sourceHandler{sourceCatalog};
+    NES::SinkStatementHandler sinkHandler{sinkCatalog};
+    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
+
+    if (program.is_subcommand_used("start"))
+    {
+        auto queryManager
+            = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(workerCatalog->getAllWorkers()));
+        NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
+        for (const auto& query : queries)
+        {
+            queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+        }
     }
     else
     {
-        dumpQuery(std::move(statements));
+        auto queryManager
+            = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(std::vector<NES::WorkerConfig>{}));
+        NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
+        for (const auto& query : queries)
+        {
+            auto result
+                = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            if (result)
+            {
+                std::cout << result->explainString << "\n";
+            }
+            else
+            {
+                throw result.error();
+            }
+        }
     }
 }
 
@@ -398,7 +425,7 @@ int main(int argc, char** argv)
 {
     CPPTRACE_TRY
     {
-        NES::Logger::setupLogging("nebucli.log", NES::LogLevel::LOG_ERROR, true);
+        NES::Logger::setupLogging("nebucli.log", NES::LogLevel::LOG_WARNING, true);
 
         using argparse::ArgumentParser;
         ArgumentParser program("nebucli");
@@ -407,15 +434,13 @@ int main(int argc, char** argv)
             "Path to the topology file. If this flag is not used it will fallback to the NES_TOPOLOGY_FILE environment");
 
         ArgumentParser startQuery("start");
-        startQuery.add_argument("-i", "--input")
-            .default_value("-")
-            .help("Read the query description. Use - for stdin which is the default");
+        startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         ArgumentParser stopQuery("stop");
         stopQuery.add_argument("queryId").scan<'i', size_t>();
 
         ArgumentParser dump("dump");
-        dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
+        dump.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
@@ -424,7 +449,16 @@ int main(int argc, char** argv)
         std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery};
         std::vector<std::reference_wrapper<ArgumentParser>> querySubmissionCommands{startQuery, dump};
 
-        program.parse_args(argc, argv);
+        try
+        {
+            program.parse_args(argc, argv);
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << e.what() << "\n";
+            std::cerr << program;
+            return 1;
+        }
 
         if (program.get<bool>("-d"))
         {
@@ -450,113 +484,6 @@ int main(int argc, char** argv)
         std::cerr << "No subcommand used.\n";
         std::cerr << program;
         return 1;
-
-        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
-        auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-
-        auto queryManager
-            = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(std::vector<NES::WorkerConfig>{}));
-
-        const bool anySubcommandUsed
-            = std::ranges::any_of(subcommands, [&](auto& subparser) { return program.is_subcommand_used(subparser.get()); });
-        if (!anySubcommandUsed)
-        {
-            std::cerr << "No subcommand used.\n";
-            std::cerr << program;
-            return 1;
-        }
-
-        bool handled = false;
-        for (const auto& [name, fn] : std::initializer_list<std::pair<
-                 std::string_view,
-                 std::expected<void, std::vector<NES::Exception>> (NES::QueryManager::*)(NES::DistributedQueryId)>>{
-                 {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
-        {
-            if (program.is_subcommand_used(name))
-            {
-                auto& parser = program.at<ArgumentParser>(name);
-                auto queryId = NES::DistributedQueryId{parser.get<size_t>("queryId")};
-                ((*queryManager).*fn)(queryId);
-                handled = true;
-                break;
-            }
-        }
-
-        if (handled)
-        {
-            return 0;
-        }
-
-
-        const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
-        auto input = program.at<argparse::ArgumentParser>(command).get("-i");
-        NES::LogicalPlan boundPlan;
-        if (input == "-")
-        {
-            boundPlan = yamlBinder.parseAndBind(std::cin);
-        }
-        else
-        {
-            std::ifstream file{input};
-            if (!file)
-            {
-                throw NES::QueryDescriptionNotReadable(std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
-            }
-            boundPlan = yamlBinder.parseAndBind(file);
-        }
-
-        NES::QueryPlanningContext context{
-            .id = NES::INVALID<NES::LocalQueryId>,
-            .sqlString = boundPlan.getOriginalSql(),
-            .sourceCatalog = sourceCatalog,
-            .sinkCatalog = sinkCatalog,
-            .workerCatalog = workerCatalog};
-
-        auto distributedPlan = NES::QueryPlanner::with(context).plan(NES::PlanStage::BoundLogicalPlan(boundPlan));
-
-        if (program.is_subcommand_used("dump"))
-        {
-            for (const auto& [worker, plans] : distributedPlan)
-            {
-                fmt::println("{:#>{}}", "", 80);
-                fmt::println("{} plans at {}:", plans.size(), worker);
-                for (const auto& plan : plans)
-                {
-                    fmt::println("{}", plan);
-                }
-            }
-            return 0;
-        }
-
-        std::optional<NES::DistributedQueryId> startedQuery;
-        if (program.is_subcommand_used("register"))
-        {
-            auto& registerArgs = program.at<ArgumentParser>("register");
-            const auto queryId = queryManager->registerQuery(distributedPlan);
-            if (queryId.has_value())
-            {
-                if (registerArgs.is_used("-x"))
-                {
-                    if (auto started = queryManager->start(queryId.value()); not started.has_value())
-                    {
-                        std::cerr << fmt::format(
-                            "Could not start query with error {}\n",
-                            fmt::join(std::views::transform(started.error(), [](auto ex) { return ex.what(); }), ", "));
-                        return 1;
-                    }
-                    std::cout << queryId.value().getRawValue();
-                    startedQuery = std::make_optional(queryId.value());
-                }
-            }
-            else
-            {
-                std::cerr << std::format("Could not register query: {}\n", queryId.error().what());
-                return 1;
-            }
-        }
-
-        return 0;
     }
 
     CPPTRACE_CATCH(...)

@@ -24,6 +24,7 @@
 #include <vector>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 
 #include <GlobalOptimizer/GlobalOptimizer.hpp>
@@ -31,7 +32,6 @@
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Common.hpp>
 #include <cpptrace/from_current.hpp>
-#include <oneapi/tbb/partitioner.h>
 
 namespace NES
 {
@@ -186,7 +186,7 @@ TopologyStatementHandler::TopologyStatementHandler(SharedPtr<WorkerCatalog> work
 
 std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const CreateWorkerStatement& statement)
 {
-    workerCatalog->addWorker(statement.grpc, statement.host, statement.capacity, statement.downstream);
+    workerCatalog->addWorker(statement.host, statement.grpc, statement.capacity, statement.downstream);
     return CreateWorkerStatementResult{WorkerId(statement.host)};
 }
 
@@ -226,14 +226,54 @@ QueryStatementHandler::QueryStatementHandler(
 {
 }
 
+std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)
+{
+    CPPTRACE_TRY
+    {
+        auto boundPlan = PlanStage::BoundLogicalPlan{statement.plan};
+        QueryPlanningContext context{
+            .id = INVALID<LocalQueryId>,
+            .sqlString = statement.plan.getOriginalSql(),
+            .sourceCatalog = Util::copyPtr(sourceCatalog),
+            .sinkCatalog = Util::copyPtr(sinkCatalog),
+            .workerCatalog = Util::copyPtr(workerCatalog)};
+
+        std::stringstream explainMessage;
+        fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
+        fmt::println(explainMessage, "Initial Logical Plan:\n{}", boundPlan.plan);
+        const auto distributedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
+
+        fmt::println(explainMessage, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
+
+        fmt::print(explainMessage, "Topology:");
+        renderTopology(workerCatalog->getTopology(), explainMessage);
+
+        fmt::println(explainMessage, "Decomposed Plans:");
+        for (const auto& [worker, plans] : distributedPlan)
+        {
+            fmt::println(explainMessage, "{} plans on {}:", plans.size(), worker);
+            for (const auto& [index, plan] : plans | views::enumerate)
+            {
+                fmt::println(explainMessage, "{}:\n{}\n", index, plan);
+            }
+        }
+        return ExplainQueryStatementResult{explainMessage.str()};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
 {
     CPPTRACE_TRY
     {
-        auto boundPlan = PlanStage::BoundLogicalPlan{statement};
+        auto boundPlan = PlanStage::BoundLogicalPlan{statement.plan};
         QueryPlanningContext context{
             .id = INVALID<LocalQueryId>,
-            .sqlString = statement.getOriginalSql(),
+            .sqlString = statement.plan.getOriginalSql(),
             .sourceCatalog = Util::copyPtr(sourceCatalog),
             .sinkCatalog = Util::copyPtr(sinkCatalog),
             .workerCatalog = Util::copyPtr(workerCatalog)};

@@ -116,7 +116,15 @@ struct DropSinkStatement
     SinkDescriptor descriptor;
 };
 
-using QueryStatement = LogicalPlan;
+struct QueryStatement
+{
+    LogicalPlan plan;
+};
+
+struct ExplainQueryStatement
+{
+    LogicalPlan plan;
+};
 
 struct ShowQueriesStatement
 {
@@ -154,6 +162,7 @@ using Statement = std::variant<
     DropPhysicalSourceStatement,
     DropSinkStatement,
     QueryStatement,
+    ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     DropQueryStatement>;

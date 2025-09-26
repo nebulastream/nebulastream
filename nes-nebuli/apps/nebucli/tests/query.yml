@@ -1,0 +1,41 @@
+query: |
+  SELECT 
+    *
+  FROM 
+    generator_source 
+  INTO 
+    void_sink
+sinks:
+  - name: void_sink
+    host: localhost:9090
+    schema:
+      - name: generator_source$double
+        type: FLOAT64
+    type: Void
+    config: { }
+
+logical:
+  - name: generator_source
+    schema:
+      - name: double
+        type: FLOAT64
+
+physical:
+  - logical: generator_source
+    host: localhost:9090
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 1000
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_schema: |
+        NORMAL_DISTRIBUTION FLOAT64 0 1
+
+workers:
+  - host: localhost:9090
+    grpc: localhost:8080
+    capacity: 10000

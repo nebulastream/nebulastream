@@ -11,7 +11,7 @@
 # limitations under the License.
 
 
-add_executable(nebucli nebucli/NebuLIStarter.cpp nebucli/YAML/YAMLBinder.cpp)
+add_executable(nebucli nebucli/NebuLIStarter.cpp)
 target_link_libraries(nebucli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp)
 
 target_include_directories(nebucli

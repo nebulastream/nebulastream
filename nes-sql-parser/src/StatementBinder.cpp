@@ -560,7 +560,7 @@ public:
     {
         if (statementAST->query() != nullptr)
         {
-            return queryBinder(statementAST->query());
+            return QueryStatement{queryBinder(statementAST->query())};
         }
         try
         {
@@ -578,7 +578,7 @@ public:
             }
             if (auto* const queryAst = statementAST->query(); queryAst != nullptr)
             {
-                return queryBinder(queryAst);
+                return QueryStatement{queryBinder(queryAst)};
             }
 
             throw InvalidStatement(statementAST->toString());

@@ -105,6 +105,11 @@ struct DropWorkerStatementResult
     WorkerId workerId;
 };
 
+struct ExplainQueryStatementResult
+{
+    std::string explainString;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -117,6 +122,7 @@ using StatementResult = std::variant<
     DropSinkStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
+    ExplainQueryStatementResult,
     DropQueryStatementResult>;
 
 /// A bit of CRTP magic for nicer syntax when the object is in a shared ptr
@@ -193,6 +199,7 @@ public:
         SharedPtr<SinkCatalog> sinkCatalog,
         SharedPtr<WorkerCatalog> workerCatalog);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
+    std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
 
