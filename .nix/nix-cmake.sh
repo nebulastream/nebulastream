@@ -12,7 +12,25 @@
 # limitations under the License.
 
 # based on: https://gist.github.com/pmenke-de/2fed80213c48c2fe80891678f4fa3b42
-# Use the cmakeFlags set by Nix - this doesn't work with --build
-FLAGS=$(echo "$@" | grep -e '--build' > /dev/null || echo "$cmakeFlags")
 
-"$(dirname "$0")"/nix-run.sh cmake ${FLAGS:+"$FLAGS"} "$@"
+# If we are outside the dev shell, re-run this script inside the nix develop environment.
+if [ -z "$IN_NIX_RUN" ]; then
+  SCRIPT_PATH="$(readlink -f "$0")"
+  exec "$(dirname "$0")"/nix-run.sh "$SCRIPT_PATH" "$@"
+fi
+
+# Use the cmakeFlags set by Nix - this doesn't work with --build
+if printf '%s\n' "$@" | grep -q -- '--build'; then
+  FLAGS=""
+else
+  FLAGS="$cmakeFlags"
+fi
+
+if [ -n "$FLAGS" ]; then
+  # shellcheck disable=SC2086
+  set -- $FLAGS "$@"
+else
+  set -- "$@"
+fi
+
+exec cmake "$@"

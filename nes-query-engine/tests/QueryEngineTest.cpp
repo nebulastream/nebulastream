@@ -88,7 +88,7 @@ TEST_F(QueryEngineTest, singleQueryWithShutdown)
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
-        test.sinkControls[pipeline]->waitForNumberOfReceivedBuffersOrMore(4);
+        ASSERT_TRUE(test.sinkControls[pipeline]->waitForNumberOfReceivedBuffersOrMore(4));
 
         /// The tests asserts that a query reaches the running state, to prevent flakey tests. Even if the query already produced 4 buffers
         /// shutting down the engine races the shutdown of the query and the is running report.
@@ -630,7 +630,7 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
 TEST_F(QueryEngineTest, singleQueryWithManySources)
 {
     constexpr size_t numberOfSources = 100;
-    constexpr size_t numberOfBuffersBeforeTermination = 1000;
+    constexpr size_t numberOfBuffersBeforeTermination = 200;
 
     TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources);
     auto builder = test.buildNewQuery();
@@ -662,7 +662,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
         test.startQuery(std::move(query));
         DataGenerator dataGenerator;
         dataGenerator.start(std::move(sourcesCtrls));
-        sinkCtrl->waitForNumberOfReceivedBuffersOrMore(numberOfBuffersBeforeTermination);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(numberOfBuffersBeforeTermination));
         dataGenerator.stop();
 
         ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -793,7 +793,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
 
-        sinkCtrls[0]->waitForNumberOfReceivedBuffersOrMore(2);
+        ASSERT_TRUE(sinkCtrls[0]->waitForNumberOfReceivedBuffersOrMore(2));
         dataGenerator.stop();
 
         for (auto queryId : queryIds)

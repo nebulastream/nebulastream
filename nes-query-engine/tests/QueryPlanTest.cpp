@@ -519,7 +519,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestInitialPipelineSetup)
 
     {
         auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
-        setups->waitForTasks(2);
+        EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_FALSE(srcCtrl->waitUntilOpened());
     }
 
