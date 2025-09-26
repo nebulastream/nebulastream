@@ -1,0 +1,86 @@
+name: Nix Build
+
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        type: string
+        required: true
+        description: "ref of the branch"
+
+jobs:
+  nix-build:
+    name: "Nix Build"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-libcxx-none
+      options: --user root
+      env:
+        MOLD_JOBS: 1
+    timeout-minutes: 60
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Nix
+        run: |
+          # Install Nix in the container
+          curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          
+          # Enable flakes
+          mkdir -p ~/.config/nix
+          echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+
+      - name: Build with Nix
+        run: |
+          # Source Nix environment
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          
+          # Enter the Nix development shell and build the project using prebuilt vcpkg
+          nix develop --command bash -c '
+            set -e
+            echo "=== Nix Build Environment ==="
+            echo "CC: $CC"
+            echo "CXX: $CXX"
+            echo "MLIR_DIR: $MLIR_DIR"
+            echo "CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH"
+            echo "NES_PREBUILT_VCPKG_ROOT: $NES_PREBUILT_VCPKG_ROOT"
+            
+            # Clean any previous builds
+            rm -rf cmake-build-nix
+            
+            # Configure with CMake using prebuilt vcpkg
+            echo "=== Configuring CMake ==="
+            cmake \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_C_COMPILER=$CC \
+              -DCMAKE_CXX_COMPILER=$CXX \
+              -DUSE_LOCAL_MLIR=ON \
+              -G Ninja \
+              -S . \
+              -B cmake-build-nix
+            
+            # Build the project
+            echo "=== Building project ==="
+            cmake --build cmake-build-nix --target nes-single-node-worker -j$(nproc)
+          '
+
+      - name: Upload build artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nix-build-logs-${{ matrix.os }}
+          path: |
+            cmake-build-nix/CMakeFiles/CMakeOutput.log
+            cmake-build-nix/CMakeFiles/CMakeError.log
+            vcpkg-repository/buildtrees/**/*.log
+          retention-days: 7

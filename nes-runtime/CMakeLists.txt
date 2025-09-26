@@ -29,6 +29,9 @@ target_include_directories(nes-runtime PUBLIC
 # folly
 include(CMakeFindDependencyMacro)
 find_package(folly CONFIG REQUIRED)
+if(NOT TARGET folly::folly AND TARGET Folly::folly)
+    add_library(folly::folly ALIAS Folly::folly)
+endif()
 target_link_libraries(nes-runtime PRIVATE folly::folly)
 target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
 
