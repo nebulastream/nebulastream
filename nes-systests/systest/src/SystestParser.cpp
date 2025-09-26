@@ -34,7 +34,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
