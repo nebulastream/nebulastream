@@ -20,6 +20,29 @@ option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 SET(USING_LIBCXX OFF)
 SET(USING_LIBSTDCXX OFF)
 
+# Nix environment - use libc++ with environment-provided flags
+if(DEFINED ENV{IN_NIX_SHELL})
+    message(STATUS "Nix environment detected - using libc++")
+    set(USING_LIBCXX ON)
+    
+    # Use CXXFLAGS from environment if available, otherwise default libc++ setup
+    if(DEFINED ENV{CXXFLAGS})
+        string(REGEX REPLACE " +" ";" CXXFLAGS_LIST "$ENV{CXXFLAGS}")
+        foreach(flag ${CXXFLAGS_LIST})
+            add_compile_options(${flag})
+        endforeach()
+        message(STATUS "Applied CXXFLAGS from Nix: $ENV{CXXFLAGS}")
+    else()
+        add_compile_options(-stdlib=libc++)
+    endif()
+    
+    add_compile_options(-fexperimental-library)
+    add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
+    add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
+    add_link_options(-lc++)
+    return()
+endif()
+
 if (USE_LIBCXX_IF_AVAILABLE)
     # Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
     set(CMAKE_REQUIRED_FLAGS "-std=c++23 -stdlib=libc++")
