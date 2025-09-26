@@ -122,7 +122,7 @@ private:
 
 /// Represents a single ExecutablePipelineStage with multiple functions ('taskSteps').
 /// Executes all 'taskSteps' in its 'execute' function.
-class TestPipelineStage : public ExecutablePipelineStage
+class TestPipelineStage final : public ExecutablePipelineStage
 {
 public:
     using ExecuteFunction = std::function<void(const TupleBuffer&, PipelineExecutionContext&)>;
@@ -148,15 +148,15 @@ private:
 /// Maps a pipeline task to a specific worker thread and therefore allows a test task queue to execute a specific task on a specific worker.
 struct TestPipelineTask
 {
-    TestPipelineTask() : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)) { };
+    TestPipelineTask() : workerThreadId(INVALID<WorkerThreadId>) { };
 
     TestPipelineTask(const WorkerThreadId workerThreadId, TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
         : workerThreadId(workerThreadId), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {
     }
 
-    TestPipelineTask(const WorkerThreadId workerThreadId, std::shared_ptr<ExecutablePipelineStage> eps)
-        : workerThreadId(workerThreadId), eps(std::move(eps))
+    TestPipelineTask(TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
+        : workerThreadId(INVALID<WorkerThreadId>), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {
     }
 
@@ -219,7 +219,7 @@ public:
     void waitForCompletion();
 
 private:
-    folly::MPMCQueue<WorkTask> threadTasks;
+    folly::MPMCQueue<TestPipelineTask> threadTasks;
     uint64_t numberOfWorkerThreads;
     std::latch completionLatch;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;

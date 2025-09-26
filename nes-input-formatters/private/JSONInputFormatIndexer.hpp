@@ -33,7 +33,8 @@ constexpr auto JSON_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::TWO;
 
 struct JSONMetaData
 {
-    explicit JSONMetaData(const ParserConfig& config, const Schema& schema) : tupleDelimiter(config.tupleDelimiter)
+    explicit JSONMetaData(const ParserConfig& config, const MemoryLayout& memoryLayout)
+        : schema(memoryLayout.getSchema()), tupleDelimiter(config.tupleDelimiter)
     {
         for (const auto& [fieldIdx, field] : schema | NES::views::enumerate)
         {
@@ -48,11 +49,16 @@ struct JSONMetaData
         }
     };
 
+    const Schema& getSchema() const { return this->schema; }
+
     std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+
+    static QuotationType getQuotationType() { return QuotationType::DOUBLE_QUOTE; }
 
     const std::unordered_map<std::string, FieldIndex>& getFieldNameToIndexOffset() const { return this->fieldNameToIndexOffset; }
 
 private:
+    Schema schema;
     std::string tupleDelimiter;
     std::unordered_map<std::string, FieldIndex> fieldNameToIndexOffset;
 };
@@ -60,8 +66,6 @@ private:
 class JSONInputFormatIndexer final : public InputFormatIndexer<JSONInputFormatIndexer>
 {
 public:
-    static constexpr bool IsFormattingRequired = true;
-    static constexpr bool HasSpanningTuple = true;
     using IndexerMetaData = JSONMetaData;
     using FieldIndexFunctionType = FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>;
     static constexpr char DELIMITER_SIZE = sizeof(char);
@@ -70,15 +74,12 @@ public:
     static constexpr char FIELD_DELIMITER = ',';
     static constexpr char KEY_QUOTE = '"';
 
-    explicit JSONInputFormatIndexer(const ParserConfig& config, size_t numberOfFieldsInSchema);
+    JSONInputFormatIndexer() = default;
     ~JSONInputFormatIndexer() = default;
 
     void indexRawBuffer(FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData&) const;
 
     friend std::ostream& operator<<(std::ostream& os, const JSONInputFormatIndexer& jsonInputFormatIndexer);
-
-private:
-    size_t numberOfFieldsInSchema;
 };
 
 struct ConfigParametersJSON

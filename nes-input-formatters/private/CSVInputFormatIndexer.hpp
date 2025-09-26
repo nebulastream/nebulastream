@@ -31,32 +31,36 @@ constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
 
 struct CSVMetaData
 {
-    explicit CSVMetaData(const ParserConfig& config, const Schema&) : tupleDelimiter(config.tupleDelimiter) { };
+    explicit CSVMetaData(const ParserConfig& config, const MemoryLayout& memoryLayout)
+        : tupleDelimiter(config.tupleDelimiter), fieldDelimiter(config.fieldDelimiter), schema(memoryLayout.getSchema()) { };
 
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
 
+    [[nodiscard]] std::string_view getFieldDelimitingBytes() const { return this->fieldDelimiter; }
+
+    static QuotationType getQuotationType() { return QuotationType::NONE; }
+
+    const Schema& getSchema() const { return this->schema; }
+
 private:
     std::string tupleDelimiter;
+    std::string fieldDelimiter;
+    Schema schema;
 };
 
 class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>
 {
 public:
-    static constexpr bool IsFormattingRequired = true;
-    static constexpr bool HasSpanningTuple = true;
     using IndexerMetaData = CSVMetaData;
     using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;
 
-    explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
+    CSVInputFormatIndexer() = default;
     ~CSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const;
+    void indexRawBuffer(
+        FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
 
     friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
-
-private:
-    ParserConfig config;
-    size_t numberOfFieldsInSchema;
 };
 
 }

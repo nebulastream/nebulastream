@@ -18,11 +18,16 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -30,7 +35,6 @@
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
-#include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
@@ -45,32 +49,27 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 /// This is used only when the wrapped operator does not already provide a scan
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
 /// Do not add further parameters here that should be part of the QueryExecutionConfiguration.
-void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
+PhysicalOperator
+createScanOperator(const Pipeline& prevPipeline, const std::optional<Schema>& inputSchema, const uint64_t configuredBufferSize)
 {
-    PRECONDITION(pipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
-    auto schema = wrappedOp.getInputSchema();
-    INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
+    INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-    /// Prepend the default scan operator.
-    pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(configuredBufferSize, inputSchema.value());
+    const auto formatScanConfig = (prevPipeline.isSourcePipeline())
+        ? std::optional{prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig()}
+        : std::nullopt;
+    return provideInputFormatterTask(formatScanConfig, memoryProvider);
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
-std::shared_ptr<Pipeline> createNewPiplineWithScan(
+std::shared_ptr<Pipeline> createNewPipelineWithScan(
     const std::shared_ptr<Pipeline>& prevPipeline,
     OperatorPipelineMap& pipelineMap,
     const PhysicalOperatorWrapper& wrappedOpAfterScan,
-    uint64_t configuredBufferSize)
+    const uint64_t configuredBufferSize)
 {
-    auto schema = wrappedOpAfterScan.getInputSchema();
-    INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
-
-    auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-
-    const auto newPipeline = std::make_shared<Pipeline>(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    const auto newPipeline
+        = std::make_shared<Pipeline>(createScanOperator(*prevPipeline, wrappedOpAfterScan.getInputSchema().value(), configuredBufferSize));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
@@ -151,7 +150,7 @@ void buildPipelineRecursively(
         {
             /// If the current operator is an emit operator and the prev operator was also an emit operator, we need to add a scan before the
             /// current operator to create a new pipeline
-            auto newPipeline = createNewPiplineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+            auto newPipeline = createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
             if (opWrapper->getHandler().has_value())
             {
                 /// Create an operator handler for the custom emit operator
@@ -183,6 +182,29 @@ void buildPipelineRecursively(
     /// Case 3: Sink Operator – treat sinks as pipeline breakers
     if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
     {
+        if (currentPipeline->isSourcePipeline())
+        {
+            /// If the immediate successor of a source pipeline is a sink pipeline, inject a scan-emit pipeline.
+            /// (We can't genenally skip the scan-emit, even if the formats match, since the sink receives the buffers asynchronously
+            ///  and would, without sorting, write out garabage. We could insert a sorting operator, or for sources with a dedicated thread,
+            ///  attach the sink directly to the source, to guarantee order (the source should just forward buffers)).
+
+            const auto sourcePipeline
+                = std::make_shared<Pipeline>(createScanOperator(*currentPipeline, opWrapper->getInputSchema(), configuredBufferSize));
+            currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
+
+            addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
+
+            INVARIANT(sourcePipeline->getRootOperator().getChild().has_value(), "Scan operator requires at least an emit as child.");
+            const auto emitOperatorId = sourcePipeline->getRootOperator().getChild().value().getId();
+            pipelineMap[emitOperatorId] = sourcePipeline;
+
+            const auto sinkPipeline = std::make_shared<Pipeline>(*sink);
+            sourcePipeline->addSuccessor(sinkPipeline, sourcePipeline);
+            auto sinkPipelinePtr = sourcePipeline->getSuccessors().back();
+            pipelineMap.emplace(opId, sinkPipelinePtr);
+            return;
+        }
         /// Add emit first if there is one needed
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
@@ -214,7 +236,8 @@ void buildPipelineRecursively(
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
-        addDefaultScan(newPipelinePtr, *opWrapper, configuredBufferSize);
+        PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
+        newPipelinePtr->prependOperator(createScanOperator(*currentPipeline, *opWrapper->getInputSchema(), configuredBufferSize));
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
@@ -227,7 +250,7 @@ void buildPipelineRecursively(
     {
         /// If the current operator is a fusible operator and the prev operator was an emit operator, we need to add a scan before the
         /// current operator to create a new pipeline.
-        createNewPiplineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+        createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
     }
     else
     {
