@@ -41,6 +41,7 @@
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -51,12 +52,21 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
+#include <TaskQueue.hpp>
 
 namespace NES
 {
 
 namespace
 {
+
+/// Graceful pipeline shutdown can only happen if no task depends on the pipeline anymore.
+/// It could happen that tasks are waiting within the admission queue and do not get a chance to execute as long as the
+/// PendingPipelineStop task is repeatedly added to the internal queue.
+/// This backoff interval is used when a pending pipeline stop has repeatedly (PIPELINE_STOP_BACKOFF_THRESHOLD) failed to allow pending
+/// tasks to make progress.
+constexpr auto PIPELINE_STOP_BACKOFF_INTERVAL = std::chrono::milliseconds(25);
+constexpr auto PIPELINE_STOP_BACKOFF_THRESHOLD = 2;
 
 /// This function is unsafe because it requires the lifetime of the RunningQueryPlanNode exceed the lifetime of the callback
 auto injectQueryFailureUnsafe(RunningQueryPlanNode& node, TaskCallback::onFailure failure)
@@ -171,7 +181,6 @@ public:
         const std::shared_ptr<QueryEngineStatisticListener>& statistic,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
-    QueryId registerQuery(std::unique_ptr<ExecutableQueryPlan>);
     void stopQuery(QueryId queryId);
 
     void clear()
@@ -195,41 +204,88 @@ struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
+    std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+
+#ifndef NO_ASSERT
+    bool wasRepeated = false;
+#endif
 
     DefaultPEC(
         size_t numberOfThreads,
         WorkerThreadId threadId,
         PipelineId pipelineId,
         std::shared_ptr<AbstractBufferProvider> bm,
-        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler)
-        : handler(std::move(handler)), bm(std::move(bm)), numberOfThreads(numberOfThreads), threadId(threadId), pipelineId(pipelineId)
+        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
+        std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
+        : handler(std::move(handler))
+        , repeatHandler(std::move(repeatHandler))
+        , bm(std::move(bm))
+        , numberOfThreads(numberOfThreads)
+        , threadId(threadId)
+        , pipelineId(pipelineId)
     {
     }
 
-    [[nodiscard]] WorkerThreadId getId() const override { return threadId; }
+    [[nodiscard]] WorkerThreadId getId() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return threadId;
+    }
 
-    TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
+    TupleBuffer allocateTupleBuffer() override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return bm->getBufferBlocking();
+    }
 
-    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return numberOfThreads; }
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return numberOfThreads;
+    }
 
-    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
+    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return handler(buffer, policy);
+    }
 
-    std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bm; }
+    void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds duration) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+#ifndef NO_ASSERT
+        wasRepeated = true;
+#endif
 
-    PipelineId getPipelineId() const override { return pipelineId; }
+        repeatHandler(buffer, duration);
+    }
+
+    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return bm;
+    }
+
+    [[nodiscard]] PipelineId getPipelineId() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return pipelineId;
+    }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
         PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return *operatorHandlers;
     }
 
     void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& handlers) override
     {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         operatorHandlers = std::addressof(handlers);
     }
 };
@@ -261,11 +317,11 @@ public:
             TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure.callback))),
         };
 
-        auto task = WorkTask(qid, node->id, node, buffer, std::move(wrappedCallback));
+        auto task = WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread
-            admissionQueue.blockingWrite(std::move(task));
+            taskQueue.addAdmissionTaskBlocking({}, std::move(task));
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;
         }
@@ -274,20 +330,11 @@ public:
         switch (continuationPolicy)
         {
             case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
-                addTaskOrDoItInPlace(std::move(task));
-                return true;
-
-            case PipelineExecutionContext::ContinuationPolicy::REPEAT:
             case PipelineExecutionContext::ContinuationPolicy::NEVER:
-                if (not internalTaskQueue.tryWriteUntil(
-                        std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
-                {
-                    node->pendingTasks.fetch_sub(1);
-                    ENGINE_LOG_DEBUG("TaskQueue is full, could not write within 1 second.");
-                    return false;
-                }
+                addInternalTask(std::move(task));
                 return true;
         }
+        std::unreachable();
     }
 
     void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
@@ -298,7 +345,7 @@ public:
             std::move(success),
             TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure.callback))),
         };
-        addTaskOrDoNextTask(StartPipelineTask(qid, node->id, std::move(wrappedCallback), node));
+        addInternalTask(StartPipelineTask(qid, node->id, std::move(wrappedCallback), node));
     }
 
     void emitPipelineStop(QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
@@ -307,59 +354,63 @@ public:
         auto wrappedCallback = TaskCallback{
             std::move(complete),
             std::move(success),
+            /// Calling the Unsafe version of injectQueryFailure is required here because the RunningQueryPlan is a unique ptr.
+            /// However the StopPipelineTask takes ownership of the Node and thus guarantees that it is alive when the callback is invoked.
             TaskCallback::OnFailure(injectQueryFailureUnsafe(*node, std::move(failure.callback))),
         };
-        /// Calling the Unsafe version of injectQueryFailure is required here because the RunningQueryPlan is a unique ptr.
-        /// However the StopPipelineTask takes ownership of the Node and thus guarantees that it is alive when the callback is invoked.
-        addTaskOrDoNextTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
+        addInternalTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
     }
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(FailSourceTask{
-            id,
-            std::move(source),
-            std::move(exception),
-            TaskCallback{TaskCallback::OnSuccess(
-                [id, sourceId, listener = listener]
-                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); })}});
+        taskQueue.addAdmissionTaskBlocking(
+            {},
+            FailSourceTask{
+                id,
+                std::move(source),
+                std::move(exception),
+                TaskCallback{TaskCallback::OnSuccess(
+                    [id, sourceId, listener = listener]
+                    { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); })}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        admissionQueue.blockingWrite(StopSourceTask{
-            id,
-            std::move(source),
-            TaskCallback{TaskCallback::OnSuccess(
-                [id, sourceId, listener = listener]
-                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); })}});
+        taskQueue.addAdmissionTaskBlocking(
+            {},
+            StopSourceTask{
+                id,
+                std::move(source),
+                0,
+                TaskCallback{TaskCallback::OnSuccess(
+                    [id, sourceId, listener = listener]
+                    { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); })}});
     }
 
     void emitPendingPipelineStop(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
     {
         ENGINE_LOG_DEBUG("Inserting Pending Pipeline Stop for {}-{}", queryId, node->id);
-        addTaskOrDoNextTask(PendingPipelineStopTask{queryId, std::move(node), 0, std::move(callback)});
+        addInternalTask(PendingPipelineStopTask{queryId, std::move(node), 0, std::move(callback)});
     }
 
     ThreadPool(
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
-        const size_t internalTaskQueueSize,
         const size_t admissionQueueSize)
         : listener(std::move(listener))
         , statistic(std::move(std::move(stats)))
         , bufferProvider(std::move(bufferProvider))
-        , admissionQueue(admissionQueueSize)
-        , internalTaskQueue(internalTaskQueueSize)
+        , taskQueue(admissionQueueSize)
+        , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
     {
     }
 
     /// Reserves the initial WorkerThreadId for the terminator thread, which is the thread which is calling shutdown.
-    /// This allows the thread to access into the internalTaskQueue, which is prohibited for non-worker threads.
-    /// The terminator thread does not count towards numberOfThreads
+    /// This allows the thread to access into the internal task queue, which is prohibited for non-worker threads.
+    /// The terminator thread does not count towards the numberOfThreads
     constexpr static WorkerThreadId terminatorThreadId = INITIAL<WorkerThreadId>;
 
     [[nodiscard]] size_t numberOfThreads() const { return numberOfThreads_.load(); }
@@ -387,45 +438,10 @@ public:
     };
 
 private:
-    void doTaskInPlace(Task&& task)
-    {
-        const WorkerThread worker{*this, false};
-        handleTask(worker, std::move(task));
-    }
-
-    void addTaskOrDoItInPlace(Task&& task)
+    void addInternalTask(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        if (not internalTaskQueue.write(std::move(task))) /// NOLINT no move will happen if tryWriteUntil has failed
-        {
-            doTaskInPlace(std::move(task)); /// NOLINT no move will happen
-        }
-    }
-
-    void addTaskOrDoNextTask(Task&& task, uint64_t stackLevel = 0)
-    {
-        PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-
-        /// It might happen that the task queue is full and we are not able to write the task into the queue.
-        /// If this happens for a lot of cases, we would end up in a stack overflow, as we recursively call this function.
-        /// To mitigate this, we will check if we have reached a certain stack level and if so, we will fail the task.
-        if (constexpr auto MAX_STACK_LEVEL = 5000; stackLevel >= MAX_STACK_LEVEL)
-        {
-            throw TooMuchWork("TaskQueue is always full. We have tried for {} times to write the task into the queue", stackLevel);
-        }
-
-
-        if (not internalTaskQueue.writeIfNotFull(std::move(task))) /// NOLINT no move will happen if writeIfNotFull has failed
-        {
-            /// The order below is important. We want to make sure that we pick up a next task before we write the current task into the queue.
-            Task nextTask;
-            const auto hasNextTask = internalTaskQueue.read(nextTask);
-            addTaskOrDoNextTask(std::move(task), stackLevel + 1); /// NOLINT no move will happen if tryWriteUntil has failed
-            if (hasNextTask)
-            {
-                addTaskOrDoItInPlace(std::move(nextTask));
-            }
-        }
+        taskQueue.addInternalTaskNonBlocking(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
     }
 
     /// Order of destruction matters: TaskQueue has to outlive the pool
@@ -434,8 +450,8 @@ private:
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
-    detail::Queue admissionQueue;
-    detail::Queue internalTaskQueue;
+    TaskQueue<Task> taskQueue;
+    DelayedTaskSubmitter<> delayedTaskSubmitter;
 
     /// Class Invariant: numberOfThreads == pool.size().
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
@@ -470,14 +486,6 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
-                /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
-                if (continuationPolicy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
-                {
-                    pool.statistic->onEvent(
-                        TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    return pool.emitWork(task.queryId, pipeline, tupleBuffer, TaskCallback{}, continuationPolicy);
-                }
-                /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 return std::ranges::all_of(
                     pipeline->successors,
                     [&](const auto& successor)
@@ -486,7 +494,22 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
                             TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
                         return pool.emitWork(task.queryId, successor, tupleBuffer, TaskCallback{}, continuationPolicy);
                     });
-            });
+            },
+            [&](const TupleBuffer& tupleBuffer, std::chrono::milliseconds duration)
+            {
+                if (duration.count() > 0)
+                {
+                    pool.delayedTaskSubmitter.submitTaskIn(
+                        WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)), duration);
+                }
+                else
+                {
+                    pool.addInternalTask(WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)));
+                }
+                pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+            }
+
+        );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
@@ -523,6 +546,13 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "Currently we assume that a pipeline cannot emit data during setup. All pipeline initializations happen "
                     "concurrently and there is no guarantee that the successor pipeline has been initialized");
                 return false;
+            },
+            [&](const TupleBuffer&, std::chrono::milliseconds)
+            {
+                INVARIANT(
+                    false,
+                    "Repeat pipeline setup is currently not supported. Although there is no inherit reason this wouldn't work, but its not "
+                    "tested");
             });
         pipeline->stage->start(pec);
         pool.statistic->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
@@ -554,20 +584,23 @@ bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask& pendingPipeli
             pendingPipelineStop.pipeline->id,
             pendingPipelineStop.pipeline->pendingTasks,
             pendingPipelineStop.attempts);
-        pendingPipelineStop.attempts += 1;
 
+        PendingPipelineStopTask repeatTask(
+            pendingPipelineStop.queryId,
+            pendingPipelineStop.pipeline,
+            pendingPipelineStop.attempts + 1,
+            std::move(pendingPipelineStop.callback));
         /// If we have seen this pipeline for the third time, we will add some work from the admission queue to the internal queue.
         /// We need to do this, as the pipeline might be stuck in a deadlock as it is waiting for data from a source which has not been moved into the internal queue.
-        if (pendingPipelineStop.attempts >= 2)
+        if (pendingPipelineStop.attempts >= PIPELINE_STOP_BACKOFF_THRESHOLD)
         {
-            Task admissionTask;
-            if (pool.admissionQueue.read(admissionTask))
-            {
-                pool.addTaskOrDoItInPlace(std::move(admissionTask));
-            }
+            pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatTask), PIPELINE_STOP_BACKOFF_INTERVAL);
         }
-
-        pool.addTaskOrDoNextTask(std::move(pendingPipelineStop));
+        else
+        {
+            pool.addInternalTask(std::move(repeatTask));
+        }
+        return false;
     }
 
     return true;
@@ -597,11 +630,26 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
                 pool.emitWork(stopPipelineTask.queryId, successor, tupleBuffer, TaskCallback{}, policy);
             }
             return true;
+        },
+        [&](const TupleBuffer&, std::chrono::milliseconds duration)
+        {
+            StopPipelineTask repeatedTask(
+                stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback));
+            if (duration.count() > 0)
+            {
+                pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatedTask), duration);
+            }
+            else
+            {
+                pool.addInternalTask(std::move(repeatedTask));
+            }
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
+    auto pipelineId = stopPipelineTask.pipeline->id;
+    auto queryId = stopPipelineTask.queryId;
     stopPipelineTask.pipeline->stage->stop(pec);
-    pool.statistic->onEvent(PipelineStop{WorkerThread::id, stopPipelineTask.queryId, stopPipelineTask.pipeline->id});
+    pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
 
@@ -636,8 +684,23 @@ bool ThreadPool::WorkerThread::operator()(StopSourceTask& stopSource) const
         ENGINE_LOG_DEBUG("Stop Source Task for Query {} Source {}", stopSource.queryId, source->getOriginId());
         if (!source->attemptUnregister())
         {
-            ENGINE_LOG_DEBUG("Could not immediately stop source. Reattempting at a later point");
-            pool.addTaskOrDoNextTask(StopSourceTask{stopSource.queryId, stopSource.target, std::move(stopSource.callback)});
+            ENGINE_LOG_WARNING(
+                "Could not immediately stop source. Reattempting at a later point. Query: {}, Source: {}",
+                stopSource.queryId,
+                source->getOriginId());
+
+            StopSourceTask repeatTask{
+                stopSource.queryId, std::move(stopSource.target), stopSource.attempts + 1, std::move(stopSource.callback)};
+
+            if (stopSource.attempts >= 2)
+            {
+                const auto delay = std::chrono::milliseconds(25) * stopSource.attempts;
+                pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatTask), delay);
+            }
+            else
+            {
+                pool.addInternalTask(std::move(repeatTask));
+            }
             return false;
         }
         return true;
@@ -652,7 +715,7 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     if (auto source = failSource.target.lock())
     {
         ENGINE_LOG_DEBUG("Fail Source Task for Query {} Source {}", failSource.queryId, source->getOriginId());
-        source->fail(failSource.exception);
+        source->fail(std::move(*failSource.exception));
         return true;
     }
     return false;
@@ -665,39 +728,21 @@ void ThreadPool::addThread()
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             setThreadName(fmt::format("WorkerThread-{}", id));
-            WorkerThread worker{*this, false};
+            const WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
-                Task task;
-                /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
-                const auto shallPickTaskFromAdmissionQueue = internalTaskQueue.size() < ((static_cast<ssize_t>(numberOfThreads())) * 3);
-                if (shallPickTaskFromAdmissionQueue)
+                if (auto task = taskQueue.getNextTaskBlocking(stopToken))
                 {
-                    if (admissionQueue.read(task))
-                    {
-                        ENGINE_LOG_TRACE(
-                            "Task picked from AdmissionQueue and shallPickTaskFromAdmissionQueue={}", shallPickTaskFromAdmissionQueue);
-                        addTaskOrDoItInPlace(std::move(task));
-                    }
+                    handleTask(worker, std::move(*task));
                 }
-                if (not internalTaskQueue.read(task))
-                {
-                    continue;
-                }
-                handleTask(worker, std::move(task));
             }
 
             ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
-            /// Worker in termination mode will emit further work and eventually clear the task queue and terminate.
-            WorkerThread terminatingWorker{*this, true};
-            while (true)
+            /// Worker in termination mode will not emit further work and eventually clear the task queue and terminate.
+            const WorkerThread terminatingWorker{*this, true};
+            while (auto task = taskQueue.getNextTaskNonBlocking())
             {
-                Task task;
-                if (!internalTaskQueue.readIfNotEmpty(task))
-                {
-                    break;
-                }
-                handleTask(terminatingWorker, std::move(task));
+                handleTask(terminatingWorker, std::move(*task));
             }
         });
 }
@@ -711,8 +756,7 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(
-          statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue(), config.admissionQueueSize.getValue()))
+    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize.getValue()))
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
@@ -724,14 +768,14 @@ QueryEngine::QueryEngine(
 void QueryEngine::stop(QueryId queryId)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
-    threadPool->admissionQueue.blockingWrite(StopQueryTask{queryId, queryCatalog, TaskCallback{}});
+    threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, queryCatalog, TaskCallback{}});
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
-    threadPool->admissionQueue.blockingWrite(
-        StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+    threadPool->taskQueue.addAdmissionTaskBlocking(
+        {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
 
 QueryEngine::~QueryEngine()
@@ -754,7 +798,7 @@ void QueryCatalog::start(
     {
         RealQueryLifeTimeListener(
             QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener, std::shared_ptr<QueryEngineStatisticListener> statistic)
-            : listener(std::move(listener)), statistic(statistic), queryId(queryId)
+            : listener(std::move(listener)), statistic(std::move(statistic)), queryId(queryId)
         {
         }
 

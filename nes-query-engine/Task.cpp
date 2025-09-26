@@ -130,17 +130,17 @@ StopPipelineTask::StopPipelineTask(QueryId queryId, std::unique_ptr<RunningQuery
 {
 }
 
-StopSourceTask::StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, TaskCallback callback)
-    : BaseTask(queryId, std::move(callback)), target(std::move(target))
+StopSourceTask::StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, size_t attempts, TaskCallback callback)
+    : BaseTask(queryId, std::move(callback)), attempts(attempts), target(std::move(target))
 {
 }
 
-FailSourceTask::FailSourceTask() : exception("", 0)
+FailSourceTask::FailSourceTask() : exception(nullptr)
 {
 }
 
 FailSourceTask::FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback)
-    : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::move(exception))
+    : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::make_unique<Exception>(std::move(exception)))
 {
 }
 
