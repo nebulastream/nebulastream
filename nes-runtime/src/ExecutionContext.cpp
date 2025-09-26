@@ -70,6 +70,7 @@ int8_t* Arena::allocateMemory(const size_t sizeInBytes)
     {
         fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
         lastAllocationSize = bufferProvider->getBufferSize();
+        currentOffset += sizeInBytes;
         return fixedSizeBuffers.back().getBuffer();
     }
 
