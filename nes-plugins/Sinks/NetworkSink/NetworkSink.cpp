@@ -48,7 +48,7 @@
 namespace NES
 {
 
-std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Valve& valve)
+std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, BackpressureController& backpressureController)
 {
     auto rstate = stateLock.ulock();
     if (rstate->hasBackpressure)
@@ -67,9 +67,9 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Valve
         return {};
     }
 
-    /// Apply backpressure now on the valve, leading to blocked ingestion threads until pressure is released again onSuccess.
+    /// Apply backpressure now on the backpressureController, leading to blocked ingestion threads until pressure is released again onSuccess.
     const auto wstate = rstate.moveFromUpgradeToWrite();
-    valve.applyPressure();
+    backpressureController.applyPressure();
     wstate->hasBackpressure = true;
     wstate->pendingSequenceNumber = buffer.getSequenceNumber();
     wstate->pendingChunkNumber = buffer.getChunkNumber();
@@ -77,14 +77,14 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Valve
 }
 
 /// Called on a successful send of a buffer to the network channel.
-/// 1. If we currently have backpressure, release pressure on the valve, causing ingestion to proceed.
+/// 1. If we currently have backpressure, release pressure on the backpressureController, causing ingestion to proceed.
 /// 2. In case of buffers remaining in the state, pop the oldest from the deque and return to try to send. Otherwise, return an empty optional.
-std::optional<TupleBuffer> BackpressureHandler::onSuccess(Valve& valve)
+std::optional<TupleBuffer> BackpressureHandler::onSuccess(BackpressureController& backpressureController)
 {
     const auto state = stateLock.wlock();
     if (state->hasBackpressure)
     {
-        valve.releasePressure();
+        backpressureController.releasePressure();
         state->hasBackpressure = false;
         state->pendingChunkNumber = INVALID<ChunkNumber>;
         state->pendingSequenceNumber = INVALID<SequenceNumber>;
@@ -104,8 +104,8 @@ bool BackpressureHandler::empty() const
     return stateLock.rlock()->buffered.empty();
 }
 
-NetworkSink::NetworkSink(Valve valve, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(valve))
+NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController))
     , tupleSize(sinkDescriptor.getSchema()->getSizeOfSchemaInBytes())
     , channelId(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CHANNEL))
     , connectionAddr(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CONNECTION))
@@ -176,13 +176,13 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
     {
         case SendResult::Closed: {
             this->closed = true;
-            auto _ = backpressureHandler.onFull(inputBuffer, valve);
+            auto _ = backpressureHandler.onFull(inputBuffer, backpressureController);
             NES_INFO("Network Sink was closed");
             return;
         }
         case SendResult::Ok: {
             /// Sent a buffer, check the backpressure handler to send another one
-            if (const auto nextBuffer = backpressureHandler.onSuccess(valve))
+            if (const auto nextBuffer = backpressureHandler.onSuccess(backpressureController))
             {
                 execute(*nextBuffer, pec);
             }
@@ -193,7 +193,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             break;
         }
         case SendResult::Full: {
-            if (const auto emit = backpressureHandler.onFull(inputBuffer, valve))
+            if (const auto emit = backpressureHandler.onFull(inputBuffer, backpressureController))
             {
                 pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
             }
@@ -218,7 +218,7 @@ SinkValidationRegistryReturnType RegisterNetworkSinkValidation(SinkValidationReg
 
 SinkRegistryReturnType RegisterNetworkSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<NetworkSink>(std::move(sinkRegistryArguments.valve), sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<NetworkSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }

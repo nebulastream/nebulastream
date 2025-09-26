@@ -46,8 +46,8 @@ class BackpressureHandler
     folly::Synchronized<State> stateLock;
 
 public:
-    std::optional<TupleBuffer> onFull(TupleBuffer buffer, Valve& valve);
-    std::optional<TupleBuffer> onSuccess(Valve& valve);
+    std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& backpressureController);
+    std::optional<TupleBuffer> onSuccess(BackpressureController& backpressureController);
     bool empty() const;
 };
 
@@ -62,7 +62,7 @@ public:
         return Instance;
     }
 
-    explicit NetworkSink(Valve valve, const SinkDescriptor& sinkDescriptor);
+    explicit NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
     ~NetworkSink() override = default;
 
     NetworkSink(const NetworkSink&) = delete;
