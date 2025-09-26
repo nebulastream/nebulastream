@@ -29,6 +29,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -89,20 +90,19 @@ LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
     const auto children = logicalOperator.getChildren()
         | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
     auto traitSet = logicalOperator.getTraitSet();
-    std::erase_if(traitSet, [](const Trait& trait) { return trait.tryGet<ImplementationTypeTrait>().has_value(); });
-    if (const auto joinOperator = logicalOperator.tryGet<JoinLogicalOperator>())
+    if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
     {
         if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
         {
-            traitSet.insert(ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }
-        else if (shallUseHashJoin(joinOperator->getJoinFunction()))
+        else if (shallUseHashJoin(joinOperator.value()->getJoinFunction()))
         {
-            traitSet.insert(ImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::HASH_JOIN});
         }
         else
         {
-            traitSet.insert(ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
             if (this->joinStrategy == StreamJoinStrategy::HASH_JOIN)
             {
                 NES_WARNING(
@@ -111,6 +111,10 @@ LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
                     logicalOperator);
             }
         }
+    }
+    else
+    {
+        tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::CHOICELESS});
     }
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }

@@ -12,21 +12,12 @@
     limitations under the License.
 */
 
+#pragma once
 #include <Operators/LogicalOperator.hpp>
-
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
-
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Traits/Trait.hpp>
-#include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
-
-
+class OriginIdAssigner : public Castable<OriginIdAssigner>
+{
+};
 }

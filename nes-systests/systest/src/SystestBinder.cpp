@@ -167,16 +167,17 @@ public:
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
         std::ranges::for_each(
             getOperatorByType<SourceDescriptorLogicalOperator>(*this->optimizedPlan),
-            [&sourceNamesToFilepathAndCountForQuery](const SourceDescriptorLogicalOperator& logicalSourceOperator)
+            [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
-                if (const auto path = logicalSourceOperator.getSourceDescriptor().tryGetFromConfig<std::string>(std::string{"file_path"});
+                if (const auto path
+                    = logicalSourceOperator->getSourceDescriptor().template tryGetFromConfig<std::string>(std::string{"file_path"});
                     path.has_value())
                 {
-                    if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator.getSourceDescriptor());
+                    if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
                         entry.empty())
                     {
                         sourceNamesToFilepathAndCountForQuery.emplace(
-                            logicalSourceOperator.getSourceDescriptor(), std::make_pair(SourceInputFile{*path}, 1));
+                            logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{*path}, 1));
                     }
                     else
                     {
@@ -188,15 +189,15 @@ public:
                 {
                     NES_INFO(
                         "No file found for physical source {} for logical source {}",
-                        logicalSourceOperator.getSourceDescriptor().getPhysicalSourceId(),
-                        logicalSourceOperator.getSourceDescriptor().getLogicalSource().getLogicalSourceName());
+                        logicalSourceOperator->getSourceDescriptor().getPhysicalSourceId(),
+                        logicalSourceOperator->getSourceDescriptor().getLogicalSource().getLogicalSourceName());
                 }
             });
         this->sourcesToFilePathsAndCounts = std::move(sourceNamesToFilepathAndCountForQuery);
-        const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGet<SinkLogicalOperator>();
+        const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
-        INVARIANT(sinkOperatorOpt.value().getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
-        if (sinkOperatorOpt.value().getSinkDescriptor().value().getSinkType() == "Checksum") /// NOLINT(bugprone-unchecked-optional-access)
+        INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
+        if (sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType() == "Checksum") /// NOLINT(bugprone-unchecked-optional-access)
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
         }

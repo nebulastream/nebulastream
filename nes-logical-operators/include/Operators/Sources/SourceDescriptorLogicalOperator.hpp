@@ -17,12 +17,14 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/OriginIdAssigner.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -34,43 +36,43 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator final : public LogicalOperatorConcept
+class SourceDescriptorLogicalOperator final : public OriginIdAssigner
 {
 public:
     explicit SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor);
 
     [[nodiscard]] SourceDescriptor getSourceDescriptor() const;
 
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    void serialize(SerializableOperator&) const override;
+    [[nodiscard]] bool operator==(const SourceDescriptorLogicalOperator& rhs) const;
+    void serialize(SerializableOperator&) const;
 
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
+    [[nodiscard]] SourceDescriptorLogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] TraitSet getTraitSet() const;
 
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+    [[nodiscard]] SourceDescriptorLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
+    [[nodiscard]] Schema getOutputSchema() const;
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
+    [[nodiscard]] SourceDescriptorLogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const;
+    [[nodiscard]] SourceDescriptorLogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+    [[nodiscard]] SourceDescriptorLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
 
 
 private:
     static constexpr std::string_view NAME = "Source";
     SourceDescriptor sourceDescriptor;
-    OriginIdAssignerTrait originIdTrait;
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     std::vector<OriginId> sourceOriginIds;
 };
 
+static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
 }

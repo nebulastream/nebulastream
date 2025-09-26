@@ -13,6 +13,7 @@
 */
 
 #include <cstddef>
+#include <ranges>
 #include <sstream>
 
 #include <utility>
@@ -32,7 +33,6 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>
 
 using namespace NES;
@@ -97,72 +97,64 @@ TEST_F(LogicalPlanTest, CopyConstructor)
 
 TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
 {
-    auto sourceOp = SourceNameLogicalOperator("source");
-    auto selectionOp = SelectionLogicalOperator(FieldAccessLogicalFunction("field"));
-    auto plan = LogicalPlan(sourceOp);
-    auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
-    EXPECT_EQ(promoteResultPlan.getRootOperators()[0].getId(), selectionOp.id);
-    EXPECT_EQ(promoteResultPlan.getRootOperators()[0].getChildren()[0].getId(), sourceOp.id);
+    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
+    const LogicalOperator selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("field"))};
+    const auto plan = LogicalPlan(sourceOp);
+    const auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
+    EXPECT_EQ(*promoteResultPlan.getRootOperators()[0], *selectionOp);
+    EXPECT_EQ(*promoteResultPlan.getRootOperators()[0].getChildren()[0], *sourceOp);
 }
 
 TEST_F(LogicalPlanTest, ReplaceOperator)
 {
-    auto sourceOp = SourceNameLogicalOperator("source");
-    auto sourceOp2 = SourceNameLogicalOperator("source2");
-    auto plan = LogicalPlan(sourceOp);
-    auto result = replaceOperator(plan, sourceOp.id, sourceOp2);
+    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
+    const LogicalOperator sourceOp2{SourceNameLogicalOperator("source2")};
+    const auto plan = LogicalPlan(sourceOp);
+    const auto result = replaceOperator(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(result->getRootOperators()[0].getId(), sourceOp2.id); ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*result->getRootOperators()[0], *sourceOp2); ///NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(LogicalPlanTest, replaceSubtree)
 {
-    auto sourceOp = SourceNameLogicalOperator("source");
-    auto sourceOp2 = SourceNameLogicalOperator("source2");
-    auto plan = LogicalPlan(sourceOp);
-    auto result = replaceSubtree(plan, sourceOp.id, sourceOp2);
+    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
+    const LogicalOperator sourceOp2{SourceNameLogicalOperator("source2")};
+    const auto plan = LogicalPlan(sourceOp);
+    const auto result = replaceSubtree(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(result->getRootOperators()[0].getId(), sourceOp2.id); ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(result->getRootOperators()[0].getId(), sourceOp2.getId()); ///NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(LogicalPlanTest, GetParents)
 {
-    auto sourceOp = SourceNameLogicalOperator("source");
-    auto selectionOp = SelectionLogicalOperator(FieldAccessLogicalFunction("field"));
-    auto plan = LogicalPlan(sourceOp);
-    auto promoteResult = promoteOperatorToRoot(plan, selectionOp);
-    auto parents = getParents(promoteResult, sourceOp);
+    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
+    const LogicalOperator selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("field"))};
+    const auto plan = LogicalPlan(sourceOp);
+    const auto promoteResult = promoteOperatorToRoot(plan, selectionOp);
+    const auto parents = getParents(promoteResult, sourceOp);
     EXPECT_EQ(parents.size(), 1);
-    EXPECT_EQ(parents[0].getId(), selectionOp.id);
+    EXPECT_EQ(*parents[0], *selectionOp);
 }
 
 TEST_F(LogicalPlanTest, GetOperatorByType)
 {
-    auto sourceOp = SourceNameLogicalOperator("source");
-    auto plan = LogicalPlan(sourceOp);
-    auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(plan);
+    const auto sourceOp = LogicalOperator{SourceNameLogicalOperator("source")};
+    const auto plan = LogicalPlan(sourceOp);
+    const auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(plan);
     EXPECT_EQ(sourceOperators.size(), 1);
-    EXPECT_EQ(sourceOperators[0].id, sourceOp.id);
-}
-
-TEST_F(LogicalPlanTest, GetOperatorsByTraits)
-{
-    const LogicalPlan plan(sourceOp2);
-    auto operators = getOperatorsByTraits<OriginIdAssignerTrait>(plan);
-    EXPECT_EQ(operators.size(), 1);
-    EXPECT_EQ(operators[0].getId(), sourceOp2.getId());
+    EXPECT_EQ(*LogicalOperator{sourceOperators[0]}, *sourceOp);
 }
 
 TEST_F(LogicalPlanTest, GetOperatorsById)
 {
-    auto sourceOp = SourceNameLogicalOperator{"TestSource"};
-    auto selectionOp = SelectionLogicalOperator{FieldAccessLogicalFunction{"fn"}}.withChildren({sourceOp});
-    const auto sinkOp = SinkLogicalOperator{"TestSink"}.withChildren({selectionOp});
+    const LogicalOperator sourceOp{SourceNameLogicalOperator{"TestSource"}};
+    const LogicalOperator selectionOp{SelectionLogicalOperator{FieldAccessLogicalFunction{"fn"}}.withChildren({sourceOp})};
+    const LogicalOperator sinkOp{SinkLogicalOperator{"TestSink"}.withChildren({selectionOp})};
     const LogicalPlan plan(sinkOp);
-    const auto op1 = getOperatorById(plan, sourceOp.id);
+    const auto op1 = getOperatorById(plan, sourceOp.getId());
     EXPECT_TRUE(op1.has_value());
     ///NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-    EXPECT_EQ(op1.value().getId(), sourceOp.id);
+    EXPECT_EQ(op1.value().getId(), sourceOp.getId());
     const auto op2 = getOperatorById(plan, selectionOp.getId());
     EXPECT_TRUE(op2.has_value());
     EXPECT_EQ(op2.value().getId(), selectionOp.getId());
@@ -177,18 +169,11 @@ TEST_F(LogicalPlanTest, AddTraits)
     {
     };
 
-    EXPECT_TRUE(sourceOp.getTraitSet().empty());
-    const auto sourceWithTrait = sourceOp.withTraitSet({TestTrait{}});
+    EXPECT_TRUE(std::ranges::empty(sourceOp.getTraitSet()));
+    const auto sourceWithTrait = sourceOp.withTraitSet(TraitSet{TestTrait{}});
     auto sourceTraitSet = sourceWithTrait.getTraitSet();
-    ASSERT_THAT(sourceTraitSet, ::testing::SizeIs(1));
-    ASSERT_THAT(sourceTraitSet, ::testing::ElementsAre(TestTrait{}));
-
-    const auto sourceWithTwoTraits = addAdditionalTraits(sourceWithTrait, {OriginIdAssignerTrait{}});
-    ASSERT_THAT(sourceWithTwoTraits.getTraitSet(), ::testing::SizeIs(2));
-    ASSERT_THAT(sourceWithTwoTraits.getTraitSet(), ::testing::UnorderedElementsAre(OriginIdAssignerTrait{}, TestTrait{}));
-    ASSERT_THAT(
-        addAdditionalTraits(sourceWithTwoTraits, {TestTrait{}}).getTraitSet(),
-        ::testing::UnorderedElementsAre(OriginIdAssignerTrait{}, TestTrait{}));
+    EXPECT_EQ(std::ranges::size(sourceTraitSet), 1);
+    EXPECT_TRUE(sourceTraitSet.tryGet<TestTrait>().has_value());
 }
 
 TEST_F(LogicalPlanTest, GetLeafOperators)
@@ -212,7 +197,7 @@ TEST_F(LogicalPlanTest, GetAllOperators)
     children = {selectionOp};
     sourceOp = sourceOp.withChildren(children);
     const LogicalPlan plan(sourceOp);
-    auto allOperators = flatten(plan);
+    const auto allOperators = flatten(plan);
     EXPECT_EQ(allOperators.size(), 3);
     EXPECT_TRUE(allOperators.contains(sourceOp));
     EXPECT_TRUE(allOperators.contains(selectionOp));
