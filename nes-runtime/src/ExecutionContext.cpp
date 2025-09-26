@@ -115,6 +115,11 @@ VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<size_t
     return VariableSizedData(basePtr, sizeInBytes);
 }
 
+nautilus::val<Arena*> ArenaRef::getArena() const
+{
+    return this->arenaRef;
+}
+
 ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
     : pipelineContext(pipelineContext)
     , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
