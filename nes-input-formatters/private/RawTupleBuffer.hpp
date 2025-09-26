@@ -21,6 +21,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Concepts.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -31,10 +32,14 @@ namespace NES
 /// 3. It selectively exposes the reduced set of functions, to prohibit setting, e.g., the SequenceNumber in InputFormatIndexer
 /// 4. It exposes functions with more descriptive names, e.g., `getNumberOfBytes()` instead of `getNumberOfTuples`
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
+
+template <InputFormatIndexerType FormatterType>
+class InputFormatterTask;
+
 class RawTupleBuffer
 {
-    TupleBuffer rawBuffer;
-    std::string_view bufferView;
+    template <InputFormatIndexerType FormatterType>
+    friend class InputFormatterTask;
 
 public:
     RawTupleBuffer() = default;
@@ -72,5 +77,12 @@ public:
     [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
+
+private:
+    TupleBuffer rawBuffer;
+    std::string_view bufferView;
+
+    /// Used by InputFormatterTask to pass an arena-allocated spanning tuple to an InputFormatIndexer
+    explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple) : bufferView(rawDataPtr, sizeOfSpanningTuple) { };
 };
 }

@@ -18,8 +18,8 @@
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
+#include <InputFormatters/ScanPhysicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
@@ -27,14 +27,21 @@
 namespace NES
 {
 
-std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const Schema& schema, const ParserConfig& config)
+PhysicalOperator provideInputFormatterTask(
+    const std::optional<ParserConfig>& formatScanConfig,
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
 {
-    if (auto inputFormatter
-        = InputFormatIndexerRegistry::instance().create(config.parserType, InputFormatIndexerRegistryArguments(config, schema)))
+    if (formatScanConfig.has_value())
     {
-        return std::move(inputFormatter.value());
+        if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
+                formatScanConfig.value().parserType,
+                InputFormatIndexerRegistryArguments(formatScanConfig.value(), std::move(memoryProvider))))
+        {
+            return FormatScanPhysicalOperator(std::move(inputFormatter.value()));
+        }
+        throw UnknownParserType("unknown type of input formatter: {}", formatScanConfig.value().parserType);
     }
-    throw UnknownParserType("unknown type of input formatter: {}", config.parserType);
+    return ScanPhysicalOperator(std::move(memoryProvider));
 }
 
 bool contains(const std::string& parserType)

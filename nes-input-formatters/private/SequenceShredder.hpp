@@ -65,6 +65,10 @@ public:
     /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
     [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
     {
+        if (rawBuffer.getRawBuffer().getBuffer() == nullptr) [[unlikely]]
+        {
+            return std::string_view();
+        }
         const auto sizeOfTrailingSpanningTuple = sizeOfBufferInBytes - (offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
         const auto startOfTrailingSpanningTuple = offsetOfLastTupleDelimiter + sizeOfTupleDelimiter;
         return rawBuffer.getBufferView().substr(startOfTrailingSpanningTuple, sizeOfTrailingSpanningTuple);

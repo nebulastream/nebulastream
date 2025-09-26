@@ -24,22 +24,23 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace NES::InputFormatterTestUtil
 {
-
 enum class TestDataTypes : uint8_t
 {
     INT8,
@@ -61,12 +62,6 @@ struct ThreadInputBuffers
 {
     SequenceNumber sequenceNumber;
     std::string rawBytes;
-};
-
-struct TaskPackage
-{
-    SequenceNumber sequenceNumber;
-    TupleBuffer rawByteBuffer;
 };
 
 template <typename TupleSchemaTemplate>
@@ -154,19 +149,17 @@ std::unique_ptr<SourceHandle> createFileSource(
     std::shared_ptr<BufferManager> sourceBufferPool,
     size_t numberOfRequiredSourceBuffers);
 
-std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType);
-
 /// Waits until source reached EoS
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
 
 /// Compares two files and returns true if they are equal on a byte level.
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
-TestPipelineTask createInputFormatterTask(
-    SequenceNumber sequenceNumber,
-    WorkerThreadId workerThreadId,
-    TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask);
+std::shared_ptr<CompiledExecutablePipelineStage>
+createInputFormatterTask(const ParserConfig& parserConfiguration, const Schema& schema, size_t sizeOfFormattedBuffers, bool isCompiled);
+
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatterTask(
+    std::unordered_map<std::string, std::string> parserConfiguration, const Schema& schema, size_t sizeOfFormattedBuffers, bool isCompiled);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -177,7 +170,7 @@ struct TestHandle
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
     Schema schema;
     std::unique_ptr<SingleThreadedTestTaskQueue> testTaskQueue;
-    std::vector<TaskPackage> inputBuffers;
+    std::vector<TupleBuffer> inputBuffers;
     std::vector<std::vector<TupleBuffer>> expectedResultVectors;
 
     void destroy()
@@ -319,7 +312,7 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
     return (sameTupleIndices.size() == leftBuffer.getNumberOfTuples());
 }
 
-inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, TupleBuffer tupleBuffer)
+inline void copyStringDataToTupleBuffer(const std::string_view rawData, TupleBuffer& tupleBuffer)
 {
     PRECONDITION(
         tupleBuffer.getBufferSize() >= rawData.size(),
@@ -328,7 +321,6 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
         rawData.size());
     std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
     tupleBuffer.setNumberOfTuples(rawData.size());
-    return tupleBuffer;
 }
 
 /// Takes a schema, a buffer manager and tuples.
@@ -445,28 +437,33 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    const std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask
-        = provideInputFormatterTask(testHandle.schema, testHandle.testConfig.parserConfig);
+    auto inputFormatterTask = createInputFormatterTask(
+        testHandle.testConfig.parserConfig, testHandle.schema, testHandle.formattedBufferManager->getBufferSize(), false);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
-        tasks.emplace_back(
-            createInputFormatterTask(inputBuffer.sequenceNumber, WorkerThreadId(0), inputBuffer.rawByteBuffer, inputFormatterTask));
+        tasks.emplace_back(TestPipelineTask{WorkerThreadId(0), inputBuffer, inputFormatterTask});
     }
     return tasks;
 }
 
 template <typename TupleSchemaTemplate>
-std::vector<TaskPackage> createTestTupleBuffers(const TestHandle<TupleSchemaTemplate>& testHandle)
+std::vector<TupleBuffer> createTestTupleBuffers(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    std::vector<TaskPackage> rawTupleBuffers;
+    std::vector<TupleBuffer> rawTupleBuffers;
     for (const auto& rawInputBuffer : testHandle.testConfig.rawBytesPerThread)
     {
-        auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking();
-        INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.");
-        rawTupleBuffers.emplace_back(TaskPackage{
-            rawInputBuffer.sequenceNumber, copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
+        if (auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking())
+        {
+            copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, tupleBuffer.value());
+            tupleBuffer.value().setSequenceNumber(rawInputBuffer.sequenceNumber);
+            rawTupleBuffers.emplace_back(tupleBuffer.value());
+        }
+        else
+        {
+            throw BufferAllocationFailure("Couldn't get buffer from bufferManager. Configure test to use more buffers.");
+        }
     }
     return rawTupleBuffers;
 }
@@ -490,5 +487,4 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// clean up
     testHandle.destroy();
 }
-
 }

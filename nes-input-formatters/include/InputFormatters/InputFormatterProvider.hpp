@@ -23,7 +23,10 @@
 
 namespace NES
 {
-std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const Schema& schema, const ParserConfig& config);
+
+PhysicalOperator provideInputFormatterTask(
+    const std::optional<ParserConfig>& formatScanConfig,
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
 
 bool contains(const std::string& parserType);
 }

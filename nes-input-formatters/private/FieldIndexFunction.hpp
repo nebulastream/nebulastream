@@ -16,39 +16,16 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <ranges>
-#include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Concepts.hpp>
-#include <RawValueParser.hpp>
 
 namespace NES
 {
 
 using FieldIndex = uint32_t;
-
-class SchemaInfo
-{
-public:
-    explicit SchemaInfo(const Schema& schema) : sizeOfTupleInBytes(schema.getSizeOfSchemaInBytes())
-    {
-        this->fieldSizesInBytes = schema.getFields()
-            | std::views::transform([](const auto& field) { return static_cast<size_t>(field.dataType.getSizeInBytes()); })
-            | std::ranges::to<std::vector>();
-    }
-
-    [[nodiscard]] size_t getSizeOfTupleInBytes() const { return sizeOfTupleInBytes; }
-
-    [[nodiscard]] const std::vector<size_t>& getFieldSizesInBytes() const { return fieldSizesInBytes; }
-
-private:
-    size_t sizeOfTupleInBytes;
-    std::vector<size_t> fieldSizesInBytes;
-};
 
 /// CRTP Interface that enables InputFormatters to define specialized functions to access fields that the InputFormatterTask can call directly
 /// (templated) without the overhead of a virtual function call (or a lambda function/std::function)
@@ -62,17 +39,6 @@ public:
     template <InputFormatIndexerType FormatterType>
     friend class InputFormatterTask;
 
-    /// Allows the free function 'processTuple' to access the protected 'readFieldAt' function
-    template <typename FieldIndexFunctionType>
-    friend void processTuple(
-        std::string_view tupleView,
-        const FieldIndexFunction<FieldIndexFunctionType>& fieldIndexFunction,
-        size_t numTuplesReadFromRawBuffer,
-        TupleBuffer& formattedBuffer,
-        const SchemaInfo& schemaInfo,
-        const std::vector<ParseFunctionSignature>& parseFunctions,
-        AbstractBufferProvider& bufferProvider);
-
     friend Derived;
 
 private:
@@ -80,7 +46,7 @@ private:
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
         /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
-        static_assert(std::is_constructible_v<Derived, AbstractBufferProvider&>, "Derived class must have a default constructor");
+        static_assert(std::is_constructible_v<Derived>, "Derived class must have a default constructor");
     };
 
 public:
@@ -98,20 +64,18 @@ public:
 
     [[nodiscard]] size_t getTotalNumberOfTuples() const { return static_cast<const Derived*>(this)->applyGetTotalNumberOfTuples(); }
 
-    [[nodiscard]] std::string_view readFieldAt(const std::string_view bufferView, size_t tupleIdx, size_t fieldIdx) const
+    template <typename IndexerMetaData>
+    [[nodiscard]] Nautilus::Record readSpanningRecord(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+        const nautilus::val<int8_t*>& recordBufferPtr,
+        nautilus::val<uint64_t>& recordIndex,
+        const IndexerMetaData& metaData,
+        nautilus::val<Derived*> fieldIndexFunction,
+        ArenaRef& arenaRef) const
     {
-        return static_cast<const Derived*>(this)->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
+        return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
+            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction, arenaRef);
     }
 };
 
-struct NoopFieldIndexFunction
-{
-    [[nodiscard]] static FieldIndex getOffsetOfFirstTupleDelimiter() { return 0; }
-
-    [[nodiscard]] static FieldIndex getOffsetOfLastTupleDelimiter() { return 0; }
-
-    [[nodiscard]] static size_t getTotalNumberOfTuples() { return 0; }
-
-    [[nodiscard]] static std::string_view readFieldAt(const std::string_view bufferView, size_t, size_t) { return bufferView; }
-};
 }
