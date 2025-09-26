@@ -26,6 +26,7 @@ EXCEPTION(CannotLoadConfig, 1002, "cannot load config")
 EXCEPTION(SLTUnexpectedToken, 1003, "unexpected token in sql logic test file")
 EXCEPTION(SLTWrongSchema, 1004, "schema is not equal to query result schema")
 EXCEPTION(CannotPersistConfig, 1005, "cannot persist config")
+EXCEPTION(InvalidUUID, 1006, "invalid UUID")
 
 /// 2XXX Errors during query registration and compilation
 EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")
