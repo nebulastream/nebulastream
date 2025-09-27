@@ -17,7 +17,6 @@
 #include <cstddef>
 #include <functional>
 #include <string_view>
-
 #include <DataTypes/DataType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -33,7 +32,7 @@ enum class QuotationType : uint8_t
 };
 
 using ParseFunctionSignature = std::function<void(
-    std::string_view inputString, size_t writeOffsetInBytes, AbstractBufferProvider& bufferProvider, TupleBuffer& tupleBufferFormatted)>;
+    std::string_view inputString, size_t writeOffsetInBytes, AbstractBufferProvider& bufferProvider, TupleBuffer& rawTupleBufferFormatted)>;
 
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.
@@ -44,11 +43,11 @@ auto parseFieldString()
     return [](const std::string_view fieldValueString,
               const size_t writeOffsetInBytes,
               AbstractBufferProvider&,
-              TupleBuffer& tupleBufferFormatted)
+              TupleBuffer& rawTupleBufferFormatted)
     {
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            rawTupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *valuePtr = parsedValue;
     };
 }
@@ -59,13 +58,13 @@ auto parseQuotedFieldString()
     return [](const std::string_view quotedFieldValueString,
               const size_t writeOffsetInBytes,
               AbstractBufferProvider&,
-              TupleBuffer& tupleBufferFormatted)
+              TupleBuffer& rawTupleBufferFormatted)
     {
         INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
         const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
         auto* valuePtr = reinterpret_cast<T*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            rawTupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *valuePtr = parsedValue;
     };
 }

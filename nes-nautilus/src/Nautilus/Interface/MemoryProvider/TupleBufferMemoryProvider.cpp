@@ -24,7 +24,9 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -32,31 +34,16 @@
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <function.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
-namespace
-{
-uint32_t storeAssociatedTextValueProxy(
-    const TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const int8_t* textValue, const uint32_t totalVariableSize)
-{
-    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
-    INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
-    std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
-    return tupleBuffer->storeChildBuffer(buffer.value());
-}
-
-const uint8_t* loadAssociatedTextValue(const TupleBuffer* tupleBuffer, const uint32_t childIndex)
-{
-    auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
-    return childBuffer.getBuffer<uint8_t>();
-}
-}
 
 VarVal TupleBufferMemoryProvider::loadValue(
     const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
@@ -65,9 +52,17 @@ VarVal TupleBufferMemoryProvider::loadValue(
     {
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
-    const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
-    const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-    return VariableSizedData(textPtr);
+    nautilus::val<VariableSizedAccess> combinedIdxOffset{
+        Nautilus::Util::readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
+    const auto varSizedPtr = invoke(
+        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess variableSizedAccess)
+        {
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            return MemoryLayout::loadAssociatedVarSizedValue(*tupleBuffer, variableSizedAccess);
+        },
+        recordBuffer.getReference(),
+        combinedIdxOffset);
+    return VariableSizedData(varSizedPtr);
 }
 
 VarVal TupleBufferMemoryProvider::storeValue(
@@ -89,16 +84,21 @@ VarVal TupleBufferMemoryProvider::storeValue(
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
 
-    if (physicalType.type == DataType::Type::VARSIZED)
-    {
-        const auto textValue = value.cast<VariableSizedData>();
-        const auto childIndex = invoke(
-            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
-        auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
-        *fieldReferenceCastedU32 = childIndex;
-        return value;
-    }
-    throw UnknownDataType("Physical Type: type {} is currently not supported", physicalType);
+    const auto varSizedValue = value.cast<VariableSizedData>();
+    const auto variableSizedAccess = invoke(
+        +[](TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const char* varSizedPtr, const uint32_t varSizedValueLength)
+        {
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
+            return MemoryLayout::writeVarSizedData(*tupleBuffer, *bufferProvider, varSizedPtr, varSizedValueLength);
+        },
+        recordBuffer.getReference(),
+        bufferProvider,
+        varSizedValue.getReference(),
+        varSizedValue.getTotalSize());
+    auto fieldReferenceCastedU64 = static_cast<nautilus::val<uint64_t*>>(fieldReference);
+    *fieldReferenceCastedU64 = variableSizedAccess.convertToValue();
+    return value;
 }
 
 bool TupleBufferMemoryProvider::includesField(

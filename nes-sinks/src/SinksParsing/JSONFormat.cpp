@@ -23,6 +23,7 @@
 #include <string>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
@@ -56,21 +57,23 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto buffer = std::span(tbuffer.getBuffer<char>(), numberOfTuples * formattingContext.schemaSizeInBytes);
+    auto buffer = std::span(tbuffer.getMemArea<char>(), numberOfTuples * formattingContext.schemaSizeInBytes);
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
         auto fields
             = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                  [&](const auto& index)
+                  [&formattingContext, &tuple, &tbuffer](const auto& index)
                   {
                       auto type = formattingContext.physicalTypes[index];
                       auto offset = formattingContext.offsets[index];
                       if (type.type == DataType::Type::VARSIZED)
                       {
-                          auto childIdx = *std::bit_cast<const uint32_t*>(&tuple[offset]);
-                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), readVarSizedData(tbuffer, childIdx));
+                          const VariableSizedAccess variableSizedAccess{
+                              *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
+                          const auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedData);
                       }
                       return fmt::format("\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(&tuple[offset]));
                   });

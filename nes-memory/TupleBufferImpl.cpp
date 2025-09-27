@@ -19,6 +19,7 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -47,7 +48,7 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 
 MemorySegment::MemorySegment(
     uint8_t* ptr,
-    uint32_t size,
+    const uint32_t size,
     std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
     uint8_t* controlBlock) /// NOLINT (readability-non-const-parameter)
     : ptr(ptr), size(size), controlBlock(new(controlBlock) BufferControlBlock(this, std::move(recycleFunction)))
@@ -149,7 +150,7 @@ BufferControlBlock* BufferControlBlock::retain()
     fillThreadOwnershipInfo(info.threadName, info.callstack);
     owningThreads[std::this_thread::get_id()].emplace_back(info);
 #endif
-    referenceCounter++;
+    ++referenceCounter;
     return this;
 }
 
@@ -181,20 +182,20 @@ bool BufferControlBlock::release()
 {
     if (const uint32_t prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
     {
-        numberOfTuples = 0;
         for (auto&& child : children)
         {
             child->controlBlock->release();
         }
         children.clear();
+        const auto recycler = std::move(owningBufferRecycler);
+        numberOfTuples = 0;
+        recycleCallback(owner, recycler.get());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
             owningThreads.clear();
         }
 #endif
-        auto recycler = std::move(owningBufferRecycler);
-        recycleCallback(owner, recycler.get());
         return true;
     }
     else
@@ -305,18 +306,19 @@ void BufferControlBlock::setOriginId(const OriginId originId)
 /// ------------------ VarLen fields support for TupleBuffer --------------------
 /// -----------------------------------------------------------------------------
 
-uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
+VariableSizedAccess::Index BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
 {
     control->retain();
     children.emplace_back(control->owner);
-    return children.size() - 1;
+    return VariableSizedAccess::Index{children.size() - 1};
 }
 
-bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
+bool BufferControlBlock::loadChildBuffer(
+    const VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
-    PRECONDITION(index < children.size(), "Index={} is out of range={}", index, children.size());
+    PRECONDITION(index.getRawIndex() < children.size(), "Index={} is out of range={}", index, children.size());
 
-    auto* child = children[index];
+    auto* child = children[index.getRawIndex()];
     control = child->controlBlock->retain();
     ptr = child->ptr;
     size = child->size;

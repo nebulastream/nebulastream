@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -69,7 +70,8 @@ public:
     int8_t* allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
-    [[nodiscard]] const ChainedHashMapEntry* getPage(uint64_t pageIndex) const;
+    [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
+    [[nodiscard]] uint64_t getNumberOfPages() const;
     [[nodiscard]] ChainedHashMapEntry* getStartOfChain(uint64_t entryIdx) const;
     [[nodiscard]] uint64_t getNumberOfChains() const;
 
@@ -86,6 +88,8 @@ public:
 private:
     friend class ChainedHashMapRef;
 
+    /// Specifies the number of pre-allocated var sized
+    static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
     TupleBuffer entrySpace;
     std::vector<TupleBuffer> storageSpace;
     std::vector<TupleBuffer> varSizedSpace;

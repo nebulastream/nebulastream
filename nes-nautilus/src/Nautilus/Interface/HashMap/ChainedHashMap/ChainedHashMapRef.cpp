@@ -133,7 +133,9 @@ HashFunction::HashValue ChainedHashMapRef::ChainedEntryRef::getHash() const
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext() const
 {
-    return invoke(+[](const ChainedHashMapEntry* entry) { return entry->next; }, entryRef);
+    const auto nextRef = Util::getMemberRef(entryRef, &ChainedHashMapEntry::next);
+    auto next = Util::readValueFromMemRef<ChainedHashMapEntry**>(nextRef);
+    return next;
 }
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
@@ -189,6 +191,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findEntry(const ChainedEn
 
 nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry)
 {
+    /// Finding the entry. If chainEntry is nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
     const ChainedEntryRef otherEntryRef{chainEntry, hashMapRef, fieldKeys, fieldValues};
     const auto entryRef = findEntry(otherEntryRef);
@@ -265,27 +268,53 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
 {
-    constexpr uint64_t numberOfTuples = 0;
-    return {hashMapRef, numberOfTuples, fieldKeys, fieldValues};
+    const nautilus::val<uint64_t> tupleIndex = 0;
+    const nautilus::val<uint64_t> indexOnPage = 0;
+    const nautilus::val<uint64_t> pageIndex = 0;
+    const auto currentEntry = nautilus::invoke(
+        +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
+        {
+            const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
+            return page.getMemArea<ChainedHashMapEntry>() + indexOnPageVal;
+        },
+        hashMapRef,
+        pageIndex,
+        indexOnPage);
+    const auto numberOfTuplesInCurrentPage = nautilus::invoke(
+        +[](const HashMap* hashMap, const uint64_t pageIndexVal)
+        { return dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal).getNumberOfTuples(); },
+        hashMapRef,
+        pageIndex);
+    const auto numberOfPages = nautilus::invoke(
+        +[](const HashMap* hashMap) { return dynamic_cast<const ChainedHashMap*>(hashMap)->getNumberOfPages(); }, hashMapRef);
+
+    return {hashMapRef, currentEntry, entrySize, tupleIndex, indexOnPage, numberOfTuplesInCurrentPage, pageIndex, numberOfPages};
 }
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
+    /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
     const auto numberOfTuples
-        = invoke(+[](HashMap* hashMap) { return dynamic_cast<ChainedHashMap*>(hashMap)->getNumberOfTuples(); }, hashMapRef);
-    return {hashMapRef, numberOfTuples, fieldKeys, fieldValues};
+        = Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
+    return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
-    return invoke(
-        +[](HashMap* hashMap, const HashFunction::HashValue::raw_type hashValue)
-        {
-            /// If no tuples are in the hashmap, we return nullptr otherwise we return the chain for the hash value.
-            return hashMap->getNumberOfTuples() == 0 ? nullptr : dynamic_cast<ChainedHashMap*>(hashMap)->findChain(hashValue);
-        },
-        hashMapRef,
-        hash);
+    const auto numberOfTuplesRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
+    const auto numberOfTuples = Util::readValueFromMemRef<uint64_t>(numberOfTuplesRef);
+    if (numberOfTuples == 0)
+    {
+        return nullptr;
+    }
+
+    const auto maskRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::mask);
+    auto mask = Util::readValueFromMemRef<uint64_t>(maskRef);
+    const auto entryStartPos = hash & mask;
+    const auto entriesRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::entries);
+    auto entries = Util::readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
+    const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
+    return chainStart;
 }
 
 nautilus::val<ChainedHashMapEntry*>
@@ -302,14 +331,14 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
 
 nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const
 {
-    nautilus::val<bool> equals = true;
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
     {
-        const auto& key = keys.read(fieldIdentifier);
-        const auto& keyFromEntry = entryRef.getKey(fieldIdentifier);
-        equals = equals && (key == keyFromEntry);
+        if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier))
+        {
+            return false;
+        }
     }
-    return equals;
+    return true;
 }
 
 ChainedHashMapRef::ChainedHashMapRef(
@@ -341,95 +370,58 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
     return *this;
 }
 
-uint64_t findChainIndexProxy(const HashMap* hashMap, const uint64_t tupleIndexVal)
-{
-    const auto* const chainedHashMap = dynamic_cast<const ChainedHashMap*>(hashMap);
-    uint64_t seenTuples = 0;
-    uint64_t chainIndex = 0;
-
-    /// First, we have to find a chain that is not empty (!= nullptr)
-    for (; chainIndex < chainedHashMap->getNumberOfChains(); chainIndex = chainIndex + 1)
-    {
-        if (chainedHashMap->getStartOfChain(chainIndex) != nullptr)
-        {
-            break;
-        }
-    }
-
-    /// Second, we have to find the chain that contains the tuple with the index #tupleIndexVal
-    /// Thus, we count how many tuples are there per chain until we reach the tuple with the index #tupleIndexVal
-    for (; chainIndex < chainedHashMap->getNumberOfChains(); ++chainIndex)
-    {
-        const auto* currentChain = chainedHashMap->getStartOfChain(chainIndex);
-        while (currentChain != nullptr && seenTuples < tupleIndexVal)
-        {
-            ++seenTuples;
-            currentChain = currentChain->next;
-        }
-        if (seenTuples >= tupleIndexVal)
-        {
-            return chainIndex;
-        }
-    }
-    INVARIANT(false, "Could not find the tuple with index {} in ChainedHashMap.", tupleIndexVal);
-    std::terminate(); /// Ensure termination even if INVARIANT is disabled.
-}
-
 ChainedHashMapRef::EntryIterator::EntryIterator(
     const nautilus::val<HashMap*>& hashMapRef,
+    const nautilus::val<ChainedHashMapEntry*>& currentEntry,
+    const nautilus::val<uint64_t>& entrySize,
     const nautilus::val<uint64_t>& tupleIndex,
-    const std::vector<MemoryProvider::FieldOffsets>& fieldKeys,
-    const std::vector<MemoryProvider::FieldOffsets>& fieldValues)
-    : hashMapRef(hashMapRef), currentEntry({nullptr, hashMapRef, fieldKeys, fieldValues}), chainIndex(0), tupleIndex(tupleIndex)
+    const nautilus::val<uint64_t>& indexOnPage,
+    const nautilus::val<uint64_t>& numberOfTuplesInCurrentPage,
+    const nautilus::val<uint64_t>& pageIndex,
+    const nautilus::val<uint64_t>& numberOfPages)
+    : hashMapRef(hashMapRef)
+    , currentEntry(currentEntry)
+    , entrySize(entrySize)
+    , tupleIndex(tupleIndex)
+    , indexOnPage(indexOnPage)
+    , numberOfTuplesInCurrentPage(numberOfTuplesInCurrentPage)
+    , pageIndex(pageIndex)
+    , numberOfPages(numberOfPages)
 {
-    const auto numberOfEntries = nautilus::invoke(
-        +[](const HashMap* hashMap) -> uint64_t
-        {
-            if (hashMap == nullptr)
-            {
-                return 0;
-            }
-            const auto* const chainedHashMap = dynamic_cast<const ChainedHashMap*>(hashMap);
-            return chainedHashMap->getNumberOfTuples();
-        },
-        hashMapRef);
-
-    /// We only set the members, if the number of entries is larger than 0. So if there exist some numberOfEntries
-    if (numberOfEntries == 0)
-    {
-        return;
-    }
-    /// We have to initialize the chainIndex and the currentEntry by iterating over the chains until we have seen #tupleIndex tuples.
-    chainIndex = invoke(findChainIndexProxy, hashMapRef, tupleIndex);
-    currentEntry = ChainedHashMapRef::ChainedEntryRef(
-        invoke(
-            +[](const HashMap* hashMap, const uint64_t chainIndexVal)
-            { return dynamic_cast<const ChainedHashMap*>(hashMap)->getStartOfChain(chainIndexVal); },
-            hashMapRef,
-            chainIndex),
-        hashMapRef,
-        fieldKeys,
-        fieldKeys);
-    numberOfChains
-        = invoke(+[](const HashMap* hashMap) { return dynamic_cast<const ChainedHashMap*>(hashMap)->getNumberOfChains(); }, hashMapRef);
 }
 
 ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
 {
-    /// Going to the next entry for the current chain
-    currentEntry.updateEntryRef(currentEntry.getNext());
-    while (not currentEntry.entryRef)
-    {
-        chainIndex = chainIndex + nautilus::val<uint64_t>(1);
-        currentEntry.updateEntryRef(invoke(
-            +[](const HashMap* hashMap, const uint64_t chainIndexVal)
-            { return dynamic_cast<const ChainedHashMap*>(hashMap)->getStartOfChain(chainIndexVal); },
-            hashMapRef,
-            chainIndex));
-    }
-
     /// We have to increment the tupleIndex, as we have seen a new tuple.
-    tupleIndex = tupleIndex + nautilus::val<uint64_t>(1);
+    ++tupleIndex;
+    ++indexOnPage;
+    if (indexOnPage >= numberOfTuplesInCurrentPage)
+    {
+        indexOnPage = 0;
+        if (pageIndex + 1 >= numberOfPages)
+        {
+            return *this;
+        }
+        ++pageIndex;
+        currentEntry = nautilus::invoke(
+            +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
+            {
+                const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
+                return page.getMemArea<ChainedHashMapEntry>() + indexOnPageVal;
+            },
+            hashMapRef,
+            pageIndex,
+            indexOnPage);
+        numberOfTuplesInCurrentPage = nautilus::invoke(
+            +[](const HashMap* hashMap, const uint64_t pageIndexVal)
+            { return dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal).getNumberOfTuples(); },
+            hashMapRef,
+            pageIndex);
+
+        return *this;
+    }
+    currentEntry = static_cast<nautilus::val<int8_t*>>(currentEntry) + entrySize;
+
     return *this;
 }
 
@@ -445,7 +437,7 @@ nautilus::val<bool> ChainedHashMapRef::EntryIterator::operator!=(const EntryIter
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::EntryIterator::operator*() const
 {
-    return currentEntry.entryRef;
+    return currentEntry;
 }
 
 }
