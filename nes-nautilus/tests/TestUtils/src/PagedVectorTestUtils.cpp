@@ -20,7 +20,7 @@
 #include <numeric>
 #include <vector>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -47,26 +47,25 @@ void runStoreTest(
     AbstractBufferProvider& bufferManager)
 {
     /// Creating the memory provider for the paged vector
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
-        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
+    const std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef
+        = Interface::BufferRef::TupleBufferRef::create(pageSize, testSchema);
 
     /// Compiling the function that inserts the records into the PagedVector, if it is not already compiled.
-    const auto memoryProviderInputBuffer
-        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
+    const auto inputBufferRef = Interface::BufferRef::TupleBufferRef::create(allRecords[0].getBufferSize(), testSchema);
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     auto insertIntoPagedVector = nautilusEngine.registerFunction(std::function(
-        [=](nautilus::val<TupleBuffer*> inputBufferRef,
+        [=](nautilus::val<TupleBuffer*> inputBufferPtr,
             nautilus::val<AbstractBufferProvider*> bufferProviderVal,
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
-            const RecordBuffer recordBuffer(inputBufferRef);
-            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider);
+            const RecordBuffer recordBuffer(inputBufferPtr);
+            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, bufferRef);
 
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
-                const auto record = memoryProviderInputBuffer->readRecord(projections, recordBuffer, i);
+                const auto record = inputBufferRef->readRecord(projections, recordBuffer, i);
                 pagedVectorRef.writeRecord(record, bufferProviderVal);
             }
         }));
@@ -82,7 +81,7 @@ void runStoreTest(
     /// Calculating the expected number of entries and pages
     const uint64_t expectedNumberOfEntries = std::accumulate(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    const uint64_t capacityPerPage = memoryProvider->getMemoryLayout()->getCapacity();
+    const uint64_t capacityPerPage = bufferRef->getMemoryLayout()->getCapacity();
     const uint64_t numberOfPages = std::ceil(static_cast<double>(expectedNumberOfEntries) / capacityPerPage);
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
     ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
@@ -111,11 +110,10 @@ void runRetrieveTest(
     auto outputBuffer = outputBufferVal.value();
 
     /// Creating the memory provider for the input buffers
-    const auto memoryProviderActualBuffer
-        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(outputBuffer.getBufferSize(), testSchema);
+    const auto memoryProviderActualBuffer = Interface::BufferRef::TupleBufferRef::create(outputBuffer.getBufferSize(), testSchema);
 
     /// Compiling the function that reads the records from the PagedVector, if it is not already compiled
-    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, testSchema);
+    const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(pageSize, testSchema);
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -145,8 +143,7 @@ void runRetrieveTest(
     /// Checking for correctness of the retrieved records
     const RecordBuffer recordBufferActual(nautilus::val<TupleBuffer*>(std::addressof(outputBuffer)));
     nautilus::val<uint64_t> recordBufferIndexActual = 0;
-    const auto memoryProviderInputBuffer
-        = Interface::MemoryProvider::TupleBufferMemoryProvider::create(allRecords[0].getBufferSize(), testSchema);
+    const auto memoryProviderInputBuffer = Interface::BufferRef::TupleBufferRef::create(allRecords[0].getBufferSize(), testSchema);
     for (auto inputBuf : allRecords)
     {
         const RecordBuffer recordBufferInput(nautilus::val<TupleBuffer*>(std::addressof(inputBuf)));
@@ -191,7 +188,7 @@ void insertAndAppendAllPagesTest(
             differentPageSizes++;
         }
         varPageSize += differentPageSizes * entrySize;
-        const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(varPageSize, schema);
+        const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(varPageSize, schema);
         allPagedVectors.emplace_back(std::make_unique<Interface::PagedVector>());
         runStoreTest(*allPagedVectors.back(), schema, pageSize, projections, allRecords, nautilusEngine, bufferManager);
         runRetrieveTest(*allPagedVectors.back(), schema, pageSize, projections, allRecords, nautilusEngine, bufferManager);
@@ -213,7 +210,7 @@ void insertAndAppendAllPagesTest(
 
     /// Checking for number of pagedVectors and correct values
     EXPECT_EQ(allPagedVectors.size(), 1);
-    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, schema);
+    const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(pageSize, schema);
     runRetrieveTest(*firstPagedVec, schema, pageSize, projections, expectedRecordsAfterAppendAll, nautilusEngine, bufferManager);
 }
 

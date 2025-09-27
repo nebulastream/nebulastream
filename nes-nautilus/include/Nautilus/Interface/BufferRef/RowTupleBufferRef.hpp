@@ -15,20 +15,20 @@
 #pragma once
 
 #include <memory>
-#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
-/// Implements MemoryProvider. Provides columnar memory access.
-class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
+/// Implements BufferRef. Provides row-wise memory access.
+class RowTupleBufferRef final : public TupleBufferRef
 {
 public:
-    /// Creates a column memory provider based on a valid column memory layout pointer.
-    ColumnTupleBufferMemoryProvider(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
-    ~ColumnTupleBufferMemoryProvider() override = default;
+    /// Creates a row memory provider based on a valid row memory layout pointer.
+    explicit RowTupleBufferRef(std::shared_ptr<RowLayout> rowMemoryLayoutPtr);
+    ~RowTupleBufferRef() override = default;
 
     [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
 
@@ -44,11 +44,11 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
 private:
-    nautilus::val<int8_t*>
-    calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
+    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
 
-    /// It is fine that we are storing here a non nautilus value, as they are trace-time-constants.
-    std::shared_ptr<ColumnLayout> columnMemoryLayout;
+    /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
+    /// the same, during tracing and during the execution of the generated code.
+    std::shared_ptr<RowLayout> rowMemoryLayout;
 };
 
 }

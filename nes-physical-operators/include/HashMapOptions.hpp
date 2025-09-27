@@ -35,8 +35,8 @@ struct HashMapOptions
     HashMapOptions(
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<PhysicalFunction> keyFunctions,
-        std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
-        std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
+        std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldKeys,
+        std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldValues,
         const uint64_t entriesPerPage,
         const uint64_t entrySize,
         const uint64_t keySize,
@@ -147,8 +147,8 @@ struct HashMapOptions
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     std::vector<PhysicalFunction> keyFunctions;
-    std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys;
-    std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues;
+    std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldKeys;
+    std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldValues;
     uint64_t entriesPerPage;
     uint64_t entrySize;
     uint64_t keySize;

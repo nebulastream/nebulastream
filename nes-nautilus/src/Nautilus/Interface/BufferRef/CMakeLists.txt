@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-nautilus
-        TupleBufferMemoryProvider.cpp
-        ColumnTupleBufferMemoryProvider.cpp
-        RowTupleBufferMemoryProvider.cpp
+        TupleBufferRef.cpp
+        ColumnTupleBufferRef.cpp
+        RowTupleBufferRef.cpp
         )

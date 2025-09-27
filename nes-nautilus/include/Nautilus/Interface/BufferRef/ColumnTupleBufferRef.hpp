@@ -15,20 +15,20 @@
 #pragma once
 
 #include <memory>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
-namespace NES::Nautilus::Interface::MemoryProvider
+namespace NES::Nautilus::Interface::BufferRef
 {
 
-/// Implements MemoryProvider. Provides row-wise memory access.
-class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
+/// Implements BufferRef. Provides columnar memory access.
+class ColumnTupleBufferRef final : public TupleBufferRef
 {
 public:
-    /// Creates a row memory provider based on a valid row memory layout pointer.
-    RowTupleBufferMemoryProvider(std::shared_ptr<RowLayout> rowMemoryLayoutPtr);
-    ~RowTupleBufferMemoryProvider() override = default;
+    /// Creates a column memory provider based on a valid column memory layout pointer.
+    explicit ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
+    ~ColumnTupleBufferRef() override = default;
 
     [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
 
@@ -44,11 +44,11 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
 private:
-    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
+    nautilus::val<int8_t*>
+    calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
 
-    /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
-    /// the same, during tracing and during the execution of the generated code.
-    std::shared_ptr<RowLayout> rowMemoryLayout;
+    /// It is fine that we are storing here a non nautilus value, as they are trace-time-constants.
+    std::shared_ptr<ColumnLayout> columnMemoryLayout;
 };
 
 }
