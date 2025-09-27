@@ -76,12 +76,12 @@ def get_queries():
             f"INTO csv_sink;"
         )
     # Join with two streams and multiple keys
-    for window_size, slide in WINDOW_SIZE_SLIDE:
-        queries.append(
-            f"SELECT * FROM (SELECT * FROM tcp_source) "
-            f"INNER JOIN (SELECT * FROM tcp_source2) ON (id = id2 AND value = value2) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INTO csv_sink;"
-        )
+    #for window_size, slide in WINDOW_SIZE_SLIDE:
+    #    queries.append(
+    #        f"SELECT * FROM (SELECT * FROM tcp_source) "
+    #        f"INNER JOIN (SELECT * FROM tcp_source2) ON (id = id2 AND value = value2) WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+    #        f"INTO csv_sink;"
+    #    )
 
     # Join with two streams and variable sized data as payload
     for window_size, slide in WINDOW_SIZE_SLIDE:
@@ -91,20 +91,20 @@ def get_queries():
             f"INTO csv_sink;"
         )
     # Join with two streams, multiple keys and variable sized data
-    for window_size, slide in WINDOW_SIZE_SLIDE:
-        queries.append(
-            f"SELECT * FROM (SELECT * FROM tcp_source4) "
-            f"INNER JOIN (SELECT * FROM tcp_source5) ON payload4 = payload5 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INTO csv_sink;"
-        )
+    #for window_size, slide in WINDOW_SIZE_SLIDE:
+    #    queries.append(
+    #        f"SELECT * FROM (SELECT * FROM tcp_source4) "
+    #        f"INNER JOIN (SELECT * FROM tcp_source5) ON payload4 = payload5 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+    #        f"INTO csv_sink;"
+    #    )
     # Join with three streams
-    for window_size, slide in WINDOW_SIZE_SLIDE:
-        queries.append(
-            f"SELECT * FROM (SELECT * FROM tcp_source) "
-            f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
-            f"INTO csv_sink;"
-        )
+    #for window_size, slide in WINDOW_SIZE_SLIDE:
+    #    queries.append(
+    #        f"SELECT * FROM (SELECT * FROM tcp_source) "
+    #        f"INNER JOIN (SELECT * FROM tcp_source2) ON id = id2 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+    #        f"INNER JOIN (SELECT * FROM tcp_source3) ON id = id3 WINDOW SLIDING (timestamp, size {window_size} ms, advance by {slide} ms) "
+    #        f"INTO csv_sink;"
+    #    )
 
     return queries
 
@@ -312,19 +312,19 @@ def create_benchmark_configs():
     configs = []
     default_params = get_default_params_dict()
     shared_params = {
-        "batch_size": BATCH_SIZES,
-        "timestamp_increment": TIMESTAMP_INCREMENTS,
-        "ingestion_rate": INGESTION_RATES,
-        "match_rate": MATCH_RATES,
+        #"batch_size": BATCH_SIZES,
+        #"timestamp_increment": TIMESTAMP_INCREMENTS,
+        #"ingestion_rate": INGESTION_RATES,
+        #"match_rate": MATCH_RATES,
         "number_of_worker_threads": NUMBER_OF_WORKER_THREADS,
         "buffer_size_in_bytes": BUFFER_SIZES,
         "page_size": PAGE_SIZES,
-        "query": get_queries()
+        #"query": get_queries()
     }
     file_backed_params = {
         "min_read_state_size": MIN_READ_STATE_SIZES,
-        "min_write_state_size": MIN_WRITE_STATE_SIZES,
-        "prediction_time_delta": PREDICTION_TIME_DELTAS,
+        #"min_write_state_size": MIN_WRITE_STATE_SIZES,
+        #"prediction_time_delta": PREDICTION_TIME_DELTAS,
         "with_cleanup": WITH_CLEANUPS,
         "file_layout": FILE_LAYOUTS,
         "max_num_file_descriptors": MAX_NUM_FILE_DESCRIPTORS,
@@ -333,80 +333,84 @@ def create_benchmark_configs():
     }
 
     # Generate configurations for each shared parameter (one per value)
-    for param, values in shared_params.items():
-        for value in values:
-            for slice_store_type in SLICE_STORE_TYPES:
-                config_params = default_params.copy()
-                config_params["slice_store_type"] = slice_store_type
-                config_params[param] = value
-                configs.append(BenchmarkConfig(**config_params))
-    # Generate configurations for each file backed parameter (one per value)
-    for param, values in file_backed_params.items():
-        for value in values:
-            config_params = default_params.copy()
-            config_params["slice_store_type"] = "FILE_BACKED"
-            config_params[param] = value
-            configs.append(BenchmarkConfig(**config_params))
-
-    # Add all combinations of memory bounds where lower is smaller than or equal to upper and all prediction strategies
-    for lower_memory_bound in LOWER_MEMORY_BOUNDS:
-        for upper_memory_bound in UPPER_MEMORY_BOUNDS:
-            if lower_memory_bound <= upper_memory_bound:
-                for with_prediction in WITH_PREDICTIONS:
-                    for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if with_prediction == "true" else [WATERMARK_PREDICTOR_TYPES[0]]):
-                        for max_num_watermark_gaps in (MAX_NUM_WATERMARK_GAPS if with_prediction == "true" else [MAX_NUM_WATERMARK_GAPS[0]]):
-                            for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if with_prediction == "true" else [MAX_NUM_SEQUENCE_NUMBERS[0]]):
-                                config_params = default_params.copy()
-                                config_params["slice_store_type"] = "FILE_BACKED"
-                                config_params["lower_memory_bound"] = lower_memory_bound
-                                config_params["upper_memory_bound"] = upper_memory_bound
-                                config_params["with_prediction"] = with_prediction
-                                config_params["watermark_predictor_type"] = watermark_predictor_type
-                                config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
-                                config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
-                                configs.append(BenchmarkConfig(**config_params))
-
-    # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
-    default_timestamp_increments, default_queries = get_additional_default_values()
-    for timestamp_increment in default_timestamp_increments:
-        for query in default_queries:
-            if (timestamp_increment, query) == (default_params['timestamp_increment'], default_params['query']):
-                continue
-            for param, values in shared_params.items():
-                for value in values:
-                    for slice_store_type in SLICE_STORE_TYPES:
-                        config_params = default_params.copy()
-                        config_params["slice_store_type"] = slice_store_type
-                        config_params["timestamp_increment"] = timestamp_increment
-                        config_params["query"] = query
-                        config_params[param] = value
-                        configs.append(BenchmarkConfig(**config_params))
-            for param, values in file_backed_params.items():
-                for value in values:
+    for query in get_queries():
+        for param, values in shared_params.items():
+            for value in values:
+                for slice_store_type in SLICE_STORE_TYPES:
                     config_params = default_params.copy()
-                    config_params["slice_store_type"] = "FILE_BACKED"
-                    config_params["timestamp_increment"] = timestamp_increment
+                    config_params["slice_store_type"] = slice_store_type
                     config_params["query"] = query
                     config_params[param] = value
                     configs.append(BenchmarkConfig(**config_params))
-            for lower_memory_bound in LOWER_MEMORY_BOUNDS:
-                for upper_memory_bound in UPPER_MEMORY_BOUNDS:
-                    if lower_memory_bound <= upper_memory_bound:
-                        for with_prediction in WITH_PREDICTIONS:
-                            for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if with_prediction == "true" else [WATERMARK_PREDICTOR_TYPES[0]]):
-                                for max_num_watermark_gaps in (MAX_NUM_WATERMARK_GAPS if with_prediction == "true" else [MAX_NUM_WATERMARK_GAPS[0]]):
-                                    for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if with_prediction == "true" else [MAX_NUM_SEQUENCE_NUMBERS[0]]):
-                                        config_params = default_params.copy()
-                                        config_params["slice_store_type"] = "FILE_BACKED"
-                                        config_params["timestamp_increment"] = timestamp_increment
-                                        config_params["query"] = query
-                                        config_params["lower_memory_bound"] = lower_memory_bound
-                                        config_params["upper_memory_bound"] = upper_memory_bound
-                                        config_params["with_prediction"] = with_prediction
-                                        config_params["watermark_predictor_type"] = watermark_predictor_type
-                                        config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
-                                        config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
-                                        configs.append(BenchmarkConfig(**config_params))
+    # Generate configurations for each file backed parameter (one per value)
+    for query in get_queries():
+        for param, values in file_backed_params.items():
+            for value in values:
+                config_params = default_params.copy()
+                config_params["slice_store_type"] = "FILE_BACKED"
+                config_params["query"] = query
+                config_params[param] = value
+                configs.append(BenchmarkConfig(**config_params))
+
+    # Add all combinations of memory bounds where lower is smaller than or equal to upper and all prediction strategies
+    #for lower_memory_bound in LOWER_MEMORY_BOUNDS:
+    #    for upper_memory_bound in UPPER_MEMORY_BOUNDS:
+    #        if lower_memory_bound <= upper_memory_bound:
+    #            for with_prediction in WITH_PREDICTIONS:
+    #                for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if with_prediction == "true" else [WATERMARK_PREDICTOR_TYPES[0]]):
+    #                    for max_num_watermark_gaps in (MAX_NUM_WATERMARK_GAPS if with_prediction == "true" else [MAX_NUM_WATERMARK_GAPS[0]]):
+    #                        for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if with_prediction == "true" else [MAX_NUM_SEQUENCE_NUMBERS[0]]):
+    #                            config_params = default_params.copy()
+    #                            config_params["slice_store_type"] = "FILE_BACKED"
+    #                            config_params["lower_memory_bound"] = lower_memory_bound
+    #                            config_params["upper_memory_bound"] = upper_memory_bound
+    #                            config_params["with_prediction"] = with_prediction
+    #                            config_params["watermark_predictor_type"] = watermark_predictor_type
+    #                            config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
+    #                            config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
+    #                            configs.append(BenchmarkConfig(**config_params))
+
+    # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
+    #default_timestamp_increments, default_queries = get_additional_default_values()
+    #for timestamp_increment in default_timestamp_increments:
+    #    for query in default_queries:
+    #        if (timestamp_increment, query) == (default_params['timestamp_increment'], default_params['query']):
+    #            continue
+    #        for param, values in shared_params.items():
+    #            for value in values:
+    #                for slice_store_type in SLICE_STORE_TYPES:
+    #                    config_params = default_params.copy()
+    #                    config_params["slice_store_type"] = slice_store_type
+    #                    config_params["timestamp_increment"] = timestamp_increment
+    #                    config_params["query"] = query
+    #                    config_params[param] = value
+    #                    configs.append(BenchmarkConfig(**config_params))
+    #        for param, values in file_backed_params.items():
+    #            for value in values:
+    #                config_params = default_params.copy()
+    #                config_params["slice_store_type"] = "FILE_BACKED"
+    #                config_params["timestamp_increment"] = timestamp_increment
+    #                config_params["query"] = query
+    #                config_params[param] = value
+    #                configs.append(BenchmarkConfig(**config_params))
+    #        for lower_memory_bound in LOWER_MEMORY_BOUNDS:
+    #            for upper_memory_bound in UPPER_MEMORY_BOUNDS:
+    #                if lower_memory_bound <= upper_memory_bound:
+    #                    for with_prediction in WITH_PREDICTIONS:
+    #                        for watermark_predictor_type in (WATERMARK_PREDICTOR_TYPES if with_prediction == "true" else [WATERMARK_PREDICTOR_TYPES[0]]):
+    #                            for max_num_watermark_gaps in (MAX_NUM_WATERMARK_GAPS if with_prediction == "true" else [MAX_NUM_WATERMARK_GAPS[0]]):
+    #                                for max_num_sequence_numbers in (MAX_NUM_SEQUENCE_NUMBERS if with_prediction == "true" else [MAX_NUM_SEQUENCE_NUMBERS[0]]):
+    #                                    config_params = default_params.copy()
+    #                                    config_params["slice_store_type"] = "FILE_BACKED"
+    #                                    config_params["timestamp_increment"] = timestamp_increment
+    #                                    config_params["query"] = query
+    #                                    config_params["lower_memory_bound"] = lower_memory_bound
+    #                                    config_params["upper_memory_bound"] = upper_memory_bound
+    #                                    config_params["with_prediction"] = with_prediction
+    #                                    config_params["watermark_predictor_type"] = watermark_predictor_type
+    #                                    config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
+    #                                    config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
+    #                                    configs.append(BenchmarkConfig(**config_params))
 
     return configs
 
@@ -417,17 +421,19 @@ def create_watermark_prediction_benchmark_configs():
     default_params = get_default_params_dict()
     default_params["slice_store_type"] = "FILE_BACKED"
     prediction_params = {
-        "min_read_state_size": MIN_READ_STATE_SIZES,
-        "min_write_state_size": MIN_WRITE_STATE_SIZES,
-        "prediction_time_delta": PREDICTION_TIME_DELTAS
+        #"min_read_state_size": MIN_READ_STATE_SIZES,
+        #"min_write_state_size": MIN_WRITE_STATE_SIZES,
+        "prediction_time_delta": PREDICTION_TIME_DELTAS[:3]
     }
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
-    default_timestamp_increments, default_queries = get_additional_default_values()
-    for timestamp_increment in default_timestamp_increments:
-        for query in default_queries:
-            for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS:
-                for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS:
+    #default_timestamp_increments, default_queries = get_additional_default_values()
+    for timestamp_increment in TIMESTAMP_INCREMENTS[:1]:
+        for query in get_queries():
+            for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS[:3]:
+                for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS[:3]:
+                    if 10 * max_num_sequence_numbers < max_num_watermark_gaps:
+                        continue
                     for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES:
                         for param, values in prediction_params.items():
                             for value in values:
@@ -443,28 +449,28 @@ def create_watermark_prediction_benchmark_configs():
     return configs
 
 
-def create_prediction_accuracy_precision_configs():
+def create_watermark_prediction_accuracy_precision_configs():
     # Generate configurations where only one parameter varies from the default value
     configs = []
     default_params = get_default_params_dict()
     default_params["slice_store_type"] = "FILE_BACKED"
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
-    default_timestamp_increments, default_queries = get_additional_default_values()
-    for timestamp_increment in default_timestamp_increments:
-        for query in default_queries:
+    #default_timestamp_increments, default_queries = get_additional_default_values()
+    for timestamp_increment in TIMESTAMP_INCREMENTS[:1]:
+        for query in get_queries():
             for max_num_watermark_gaps in [MAX_NUM_WATERMARK_GAPS[0], MAX_NUM_WATERMARK_GAPS[2]]:
                 for max_num_sequence_numbers in [MAX_NUM_SEQUENCE_NUMBERS[0], MAX_NUM_SEQUENCE_NUMBERS[2]]:
                     for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES:
-                        for value in PREDICTION_TIME_DELTAS[:3]:
-                            config_params = default_params.copy()
-                            config_params["prediction_time_delta"] = value
-                            config_params["timestamp_increment"] = timestamp_increment
-                            config_params["query"] = query
-                            config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
-                            config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
-                            config_params["watermark_predictor_type"] = watermark_predictor_type
-                            configs.append(BenchmarkConfig(**config_params))
+                        #for value in PREDICTION_TIME_DELTAS[:3]:
+                        config_params = default_params.copy()
+                        #config_params["prediction_time_delta"] = value
+                        config_params["timestamp_increment"] = timestamp_increment
+                        config_params["query"] = query
+                        config_params["max_num_watermark_gaps"] = max_num_watermark_gaps
+                        config_params["max_num_sequence_numbers"] = max_num_sequence_numbers
+                        config_params["watermark_predictor_type"] = watermark_predictor_type
+                        configs.append(BenchmarkConfig(**config_params))
 
     return configs
 
@@ -600,8 +606,9 @@ def create_memory_bounds_benchmark_configs():
         for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
         for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [WITH_PREDICTIONS[0]])
-        for min_write_state_size in ([0, 4096, 8388608] if slice_store_type == "FILE_BACKED" and with_prediction == "true" else [0])
+        for min_write_state_size in ([0, 4096, 262144, 1048576, 8388608] if slice_store_type == "FILE_BACKED" and with_prediction == "true" else [0])
         if 2 * lower_memory_bound == upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max]) or (lower_memory_bound == LOWER_MEMORY_BOUNDS[0] and upper_memory_bound == UPPER_MEMORY_BOUNDS[0])
+        #if (lower_memory_bound, upper_memory_bound) in [(0, 0), (0, np.iinfo(np.uint64).max), (8388608, 16777216), (16777216, 33554432), (np.iinfo(np.uint64).max, np.iinfo(np.uint64).max)]
     ]
 
 
