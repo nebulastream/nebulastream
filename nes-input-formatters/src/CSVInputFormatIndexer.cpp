@@ -42,10 +42,10 @@ void initializeIndexFunctionForTuple(
     size_t fieldIdx = 1;
     /// Find field delimiters, until reaching the end of the tuple
     /// The position of the field delimiter (+ size of field delimiter) is the beginning of the next field
-    for (size_t nextFieldOffset = tuple.find(metaData.getFieldDelimitingBytes(), 0); nextFieldOffset != std::string_view::npos;
-         nextFieldOffset = tuple.find(metaData.getFieldDelimitingBytes(), nextFieldOffset))
+    for (size_t nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), 0); nextFieldOffset != std::string_view::npos;
+         nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), nextFieldOffset))
     {
-        nextFieldOffset += metaData.getFieldDelimitingBytes().size();
+        nextFieldOffset += NES::CSVMetaData::SIZE_OF_FIELD_DELIMITER;
         fieldOffsets.emplaceFieldOffset(startIdxOfTuple + nextFieldOffset);
         ++fieldIdx;
     }
@@ -67,10 +67,9 @@ namespace NES
 void CSVInputFormatIndexer::indexRawBuffer(
     FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
-    fieldOffsets.startSetup(metaData.getSchema().getNumberOfFields(), metaData.getFieldDelimitingBytes().size());
+    fieldOffsets.startSetup(metaData.getSchema().getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
 
-    const auto sizeOfTupleDelimiter = metaData.getTupleDelimitingBytes().size();
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(metaData.getTupleDelimitingBytes()));
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(metaData.getTupleDelimiter()));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
     /// the InputFormatIndexerTask that there was no tuple delimiter in the buffer and return
@@ -81,8 +80,8 @@ void CSVInputFormatIndexer::indexRawBuffer(
     }
 
     /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
-    auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + sizeOfTupleDelimiter;
-    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimitingBytes(), startIdxOfNextTuple);
+    auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
+    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
 
     while (endIdxOfNextTuple != std::string::npos)
     {
@@ -95,11 +94,11 @@ void CSVInputFormatIndexer::indexRawBuffer(
         initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData);
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
-        startIdxOfNextTuple = endIdxOfNextTuple + sizeOfTupleDelimiter;
-        endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimitingBytes(), startIdxOfNextTuple);
+        startIdxOfNextTuple = endIdxOfNextTuple + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
+        endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
     }
     /// Since 'endIdxOfNextTuple == std::string::npos', we use the startIdx to determine the offset of the last tuple
-    const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - sizeOfTupleDelimiter);
+    const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 

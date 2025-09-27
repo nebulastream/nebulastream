@@ -31,20 +31,39 @@ constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
 
 struct CSVMetaData
 {
+    static constexpr size_t SIZE_OF_TUPLE_DELIMITER = 1;
+    static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
+
     explicit CSVMetaData(const ParserConfig& config, const MemoryLayout& memoryLayout)
-        : tupleDelimiter(config.tupleDelimiter), fieldDelimiter(config.fieldDelimiter), schema(memoryLayout.getSchema()) { };
+        : tupleDelimiter(config.tupleDelimiter.front()), fieldDelimiter(config.fieldDelimiter.front()), schema(memoryLayout.getSchema())
+    {
+        PRECONDITION(
+            config.tupleDelimiter.size() == 1,
+            "Delimiters must be of size '1 byte', but the tuple delimiter was {} (size {})",
+            config.tupleDelimiter,
+            config.tupleDelimiter.size());
+        PRECONDITION(
+            config.fieldDelimiter.size() == 1,
+            "Delimiters must be of size '1 byte', but the field delimiter was {} (size {})",
+            config.fieldDelimiter,
+            config.fieldDelimiter.size());
+    };
 
-    [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+    [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return {&tupleDelimiter, 1}; }
 
-    [[nodiscard]] std::string_view getFieldDelimitingBytes() const { return this->fieldDelimiter; }
+    [[nodiscard]] std::string_view getFieldDelimitingBytes() const { return {&fieldDelimiter, 1}; }
+
+    [[nodiscard]] char getTupleDelimiter() const { return tupleDelimiter; }
+
+    [[nodiscard]] char getFieldDelimiter() const { return fieldDelimiter; }
 
     static QuotationType getQuotationType() { return QuotationType::NONE; }
 
     const Schema& getSchema() const { return this->schema; }
 
 private:
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
+    char tupleDelimiter;
+    char fieldDelimiter;
     Schema schema;
 };
 
