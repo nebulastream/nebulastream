@@ -19,7 +19,7 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [100000] # , 10, 100, 1000]
+BATCH_SIZES = [100] # , 10, 100, 1000]
 TIMESTAMP_INCREMENTS = [1] # , 100, 1000, 100000]
 INGESTION_RATES = [100000000] # , 0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70] # , 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
@@ -51,7 +51,7 @@ SLICE_STORE_TYPES = ["DEFAULT", "FILE_BACKED"]
 # File-backed worker configuration parameters
 LOWER_MEMORY_BOUNDS = [0, 8 * 1024 * 1024, 16 * 1024 * 1024, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024, np.iinfo(np.uint64).max]
 UPPER_MEMORY_BOUNDS = [np.iinfo(np.uint64).max, 0, 8 * 1024 * 1024, 16 * 1024 * 1024, 32 * 1024 * 1024, 64 * 1024 * 1024, 128 * 1024 * 1024]
-MAX_NUM_WATERMARK_GAPS = [10, 100, 1000, 1]
+MAX_NUM_WATERMARK_GAPS = [1, 10, 100, 1000]
 MAX_NUM_SEQUENCE_NUMBERS = [np.iinfo(np.uint64).max, 10, 100, 1000]
 MIN_READ_STATE_SIZES = [0, 512, 4096, 16384]
 MIN_WRITE_STATE_SIZES = [0, 512, 4096, 16384]
@@ -59,7 +59,7 @@ PREDICTION_TIME_DELTAS = [0, 500, 5000, 100000]
 WITH_CLEANUPS = ["true", "false"]
 WITH_PREDICTIONS = ["true", "false"]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
-WATERMARK_PREDICTOR_TYPES = ["KALMAN", "REGRESSION", "RLS"]
+WATERMARK_PREDICTOR_TYPES = ["RLS", "KALMAN", "REGRESSION"]
 MAX_NUM_FILE_DESCRIPTORS = [0, 512, 4096, 16384]  # 0 means no limit (will fail if system's hard limit is exceeded)
 FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 16384, 524288, 1024]
 NUM_BUFFERS_PER_WORKER = [16384, 0, 512, 4096]
@@ -322,7 +322,7 @@ def create_benchmark_configs():
         #"query": get_queries()
     }
     file_backed_params = {
-        "min_read_state_size": MIN_READ_STATE_SIZES,
+        #"min_read_state_size": MIN_READ_STATE_SIZES,
         #"min_write_state_size": MIN_WRITE_STATE_SIZES,
         #"prediction_time_delta": PREDICTION_TIME_DELTAS,
         "with_cleanup": WITH_CLEANUPS,
@@ -459,12 +459,12 @@ def create_watermark_prediction_accuracy_precision_configs():
     #default_timestamp_increments, default_queries = get_additional_default_values()
     for timestamp_increment in TIMESTAMP_INCREMENTS[:1]:
         for query in get_queries():
-            for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS[:3]:
-                for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS[:3]:
+            for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS[:1]:
+                for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS[:1]:
                     if 10 * max_num_sequence_numbers < max_num_watermark_gaps:
                         continue
                     for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES:
-                        for value in PREDICTION_TIME_DELTAS[:3]:
+                        for value in PREDICTION_TIME_DELTAS[:1]:
                             config_params = default_params.copy()
                             config_params["prediction_time_delta"] = value
                             config_params["timestamp_increment"] = timestamp_increment
@@ -604,13 +604,13 @@ def create_memory_bounds_benchmark_configs():
                         min_write_state_size=min_write_state_size)
         for timestamp_increment in TIMESTAMP_INCREMENTS[:1]
         for query in get_queries()
-        for slice_store_type in SLICE_STORE_TYPES
+        for slice_store_type in SLICE_STORE_TYPES[1:]
         for lower_memory_bound in (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
         for upper_memory_bound in (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
         for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [WITH_PREDICTIONS[0]])
         for min_write_state_size in ([0, 4096, 262144, 1048576, 8388608] if slice_store_type == "FILE_BACKED" and with_prediction == "true" else [0])
-        if 2 * lower_memory_bound == upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max]) or (lower_memory_bound == LOWER_MEMORY_BOUNDS[0] and upper_memory_bound == UPPER_MEMORY_BOUNDS[0])
-        #if (lower_memory_bound, upper_memory_bound) in [(0, 0), (0, np.iinfo(np.uint64).max), (8388608, 16777216), (16777216, 33554432), (np.iinfo(np.uint64).max, np.iinfo(np.uint64).max)]
+        #if 2 * lower_memory_bound == upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max]) or (lower_memory_bound == LOWER_MEMORY_BOUNDS[0] and upper_memory_bound == UPPER_MEMORY_BOUNDS[0])
+        if (lower_memory_bound, upper_memory_bound) in [(0, 0), (0, np.iinfo(np.uint64).max), (8388608, 16777216), (16777216, 33554432), (33554432, 67108864), (67108864, 134217728), (np.iinfo(np.uint64).max, np.iinfo(np.uint64).max)]
     ]
 
 

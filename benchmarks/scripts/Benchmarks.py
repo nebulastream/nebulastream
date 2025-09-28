@@ -22,8 +22,9 @@ from scipy.interpolate import interp1d
 
 
 #DATETIME = ['2025-09-22_16-33-48', '2025-09-24_12-30-56', '2025-09-27_12-19-06'] # Prediction Ranges
-#DATETIME = ['2025-09-27_21-04-05'] #, '2025-09-28_12-11-29'] # Watermark Predictor Performance
-DATETIME = ['2025-09-28_08-16-27'] # Watermark Predictor Accuracy/Precision
+#DATETIME = ['2025-09-27_21-04-05', '2025-09-28_12-11-29'] # Watermark Predictor Comparison
+#DATETIME = ['2025-09-28_08-16-27', '2025-09-28_16-27-06'] # Watermark Predictor Accuracy/Precision
+DATETIME = ['2025-09-28_17-28-08'] # Watermark Predictor Accuracy/Precision
 
 #FILE = 'combined_benchmark_statistics.csv'
 FILE = 'combined_slice_accesses.csv'
@@ -397,18 +398,18 @@ query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)
 df['query_id'] = df['query'].map(query_mapping)
 #for query, query_id in query_mapping.items():
 #    print(f'{query_id}: {query}')
+#df['query_id'] = df['query_id'].str.replace('2', '5')
+#df['query_id'] = df['query_id'].str.replace('1', '2')
 
 # Add a hue column with default params
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
 df['file_backed_hue'] = df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
 df['watermark_predictor_hue'] = df['query_id'] + ' | ' + df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
 df['watermark_predictor_hue'] = df['watermark_predictor_hue'].str.replace(str(np.iinfo(np.uint64).max), 'infinite')
-df['accuracy_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
-df['accuracy_precision_hue'] = df['accuracy_precision_hue'].str.replace(str(np.iinfo(np.uint64).max), 'infinite')
 df['memory_bounds_hue'] = df['lower_memory_bound'].astype(str) + ' | ' + df['upper_memory_bound'].astype(str)
 
 if not SLICE_ACCESSES:
-    downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'watermark_predictor_hue'])
+    downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'file_backed_hue', 'watermark_predictor_hue', 'memory_bounds_hue'])
 
 # %% Compare slice store types for different configs
 
@@ -801,14 +802,14 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
 #      .mean()
 #      .reset_index()
 #)
-default_param_values['prediction_time_delta'] = [0]
+#default_param_values['prediction_time_delta'] = [0]
 
 file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
 for hue_value in df['file_backed_hue'].unique():
     data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
     # if data_per_hue['query_id'].unique()[0] == 'Q3':
-    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'accuracy_precision_hue', 'Prediction Accuracy', 'Watermark Gaps | Sequence Numbers | Time Delta')
-    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_precision', 'accuracy_precision_hue', 'Prediction Presicion', 'Watermark Gaps | Sequence Numbers | Time Delta')
+    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'watermark_predictor_hue', 'Prediction Accuracy', 'Query | Watermark Gaps | Sequence Numbers')
+    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_precision', 'watermark_predictor_hue', 'Prediction Presicion', 'Query | Watermark Gaps | Sequence Numbers')
 
 
 # %% Memory-Bounds plots for different memory models
