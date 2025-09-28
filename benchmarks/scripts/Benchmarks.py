@@ -21,11 +21,14 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 
+#DATETIME = ['2025-09-22_16-33-48', '2025-09-24_12-30-56', '2025-09-27_12-19-06'] # Prediction Ranges
+#DATETIME = ['2025-09-27_21-04-05'] #, '2025-09-28_12-11-29'] # Watermark Predictor Performance
+DATETIME = ['2025-09-28_08-16-27'] # Watermark Predictor Accuracy/Precision
+
+#FILE = 'combined_benchmark_statistics.csv'
+FILE = 'combined_slice_accesses.csv'
+SLICE_ACCESSES = True
 SERVER = 'amd'
-DATETIME = ['2025-09-22_16-33-48', '2025-09-24_12-30-56', '2025-09-27_12-19-06']
-FILE = 'combined_benchmark_statistics.csv'
-# FILE = 'combined_slice_accesses.csv'
-SLICE_ACCESSES = False
 
 
 # Define helper functions
@@ -295,9 +298,9 @@ def compute_prediction_accuracy(row):
         return False
     if pd.notna(row['last_write_pred_end']) and row['last_write_pred_end'] >= row['first_read_nopred_start']:
         return False
-    # if pd.notna(row['last_write_pred_end']) and pd.notna(row['first_read_pred_start']):
-    #     if row['last_write_pred_end'] >= row['first_read_pred_start']:
-    #         return False
+    if pd.notna(row['last_write_pred_end']) and pd.notna(row['first_read_pred_start']):
+        if row['last_write_pred_end'] >= row['first_read_pred_start']:
+            return False
 
     return True
 
@@ -355,7 +358,7 @@ file_backed_config_params = [
     'lower_memory_bound', 'upper_memory_bound', 'with_cleanup', 'with_prediction', 'num_buffers_per_worker'
 ]
 watermark_predictor_config_params = [
-    'prediction_time_delta', 'min_read_state_size', 'min_write_state_size'
+    'prediction_time_delta' #, 'min_read_state_size', 'min_write_state_size'
 ]
 all_config_params = shared_config_params + file_backed_config_params
 
@@ -398,11 +401,14 @@ df['query_id'] = df['query'].map(query_mapping)
 # Add a hue column with default params
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
 df['file_backed_hue'] = df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
-df['watermark_predictor_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
+df['watermark_predictor_hue'] = df['query_id'] + ' | ' + df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
+df['watermark_predictor_hue'] = df['watermark_predictor_hue'].str.replace(str(np.iinfo(np.uint64).max), 'infinite')
 df['accuracy_precision_hue'] = df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str) + ' | ' + df['prediction_time_delta'].astype(str)
+df['accuracy_precision_hue'] = df['accuracy_precision_hue'].str.replace(str(np.iinfo(np.uint64).max), 'infinite')
 df['memory_bounds_hue'] = df['lower_memory_bound'].astype(str) + ' | ' + df['upper_memory_bound'].astype(str)
 
-downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue'])
+if not SLICE_ACCESSES:
+    downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'watermark_predictor_hue'])
 
 # %% Compare slice store types for different configs
 
@@ -697,11 +703,16 @@ def plot_file_backed_params(data, param, metric, hue, label, legend): #, color):
     plt.title(f'Effect of {param} on {label} (File-Backed Only)')
     plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
     plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+    plt.grid(axis='y', which='major', linestyle='-', linewidth=1)
     plt.legend(title=legend)
     plt.show()
 
 
+default_param_values['prediction_time_delta'] = [0]
+
 file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
+#file_backed_data = file_backed_data[(file_backed_data['max_num_sequence_numbers'] == 100) | (file_backed_data['max_num_sequence_numbers'] == np.iinfo(np.uint64).max)]
+#file_backed_data = file_backed_data[file_backed_data['max_num_watermark_gaps'] != 100]
 #file_backed_data = expand_constant_params_for_groups(file_backed_data, 'max_memory_consumption', 'memory_model')
 #file_backed_data = add_categorical_param(file_backed_data, 'max_memory_consumption', 'max_memory_consumption_cat')
 for param in file_backed_config_params:
@@ -727,7 +738,7 @@ def plot_watermark_predictor_params(data, param, metric, hue, label, legend):
 
         if pd.api.types.is_numeric_dtype(data_scaled[param]):
             if param == 'prediction_time_delta':
-                data_scaled, param_unit = convert_units(data_scaled, param, 'μs')
+                data_scaled, param_unit = convert_units(data_scaled, param, 's', 1)
             else:
                 data_scaled, param_unit = convert_units(data_scaled, param)
             # sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o', ax=ax)
@@ -755,7 +766,7 @@ file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
 for param in watermark_predictor_config_params:
     for hue_value in df['file_backed_hue'].unique():
         data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
-        if data_per_hue['query_id'].unique()[0] == 'Q3':
+        if data_per_hue['query_id'].unique()[0] == 'Q1':
             plot_watermark_predictor_params(data_per_hue, param, 'throughput_data', 'watermark_predictor_hue', 'Throughput / sec', 'Watermark Gaps | Sequence Numbers')
             plot_watermark_predictor_params(data_per_hue, param, 'memory', 'watermark_predictor_hue', 'Memory', 'Watermark Gaps | Sequence Numbers')
 
@@ -763,10 +774,10 @@ for param in watermark_predictor_config_params:
 # %% Watermark-Predictor accuracy and precision plots
 
 def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label, legend):
-    data = filter_by_default_values_except_params(data, [param, 'max_num_watermark_gaps', 'max_num_sequence_numbers', 'prediction_time_delta'])
-    if metric == 'prediction_accuracy':
+    data = filter_by_default_values_except_params(data, [param, 'max_num_watermark_gaps', 'max_num_sequence_numbers'])
+    if metric == 'prediction_accuracy' or metric == 'prediction_accuracy_2':
         data_scaled, metric_unit = convert_units(data, metric, '%')
-    if metric == 'prediction_precision':
+    if metric == 'prediction_precision' or metric == 'prediction_precision_2':
         data_scaled, metric_unit = convert_units(data, metric, 's', 0)
 
     plt.figure(figsize=(14, 6))
@@ -790,6 +801,7 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
 #      .mean()
 #      .reset_index()
 #)
+default_param_values['prediction_time_delta'] = [0]
 
 file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
 for hue_value in df['file_backed_hue'].unique():
@@ -879,3 +891,6 @@ plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['throughput_da
 # %%
 
 print(query_mapping)
+print(df['lower_memory_bound'].unique())
+print(df['upper_memory_bound'].unique())
+print(df['min_write_state_size'].unique())
