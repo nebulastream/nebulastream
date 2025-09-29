@@ -35,6 +35,7 @@
     "folly",
     "grpc",
     "gtest",
+    "libcuckoo",
     "magic-enum",
     "nlohmann-json",
     "nautilus",
