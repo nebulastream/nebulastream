@@ -20,7 +20,8 @@
 #include <SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-// #define LOG_SLICE_ACCESS
+//#define LOG_SLICE_ACCESS
+//#define LOG_LATENCY
 
 namespace NES
 {
@@ -80,7 +81,13 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     alteredSlicesVec.insert(alteredSlicesVec.end(), slicesVec.begin(), slicesVec.end());
 #ifdef LOG_SLICE_ACCESS
     logger->log(
-        {std::chrono::system_clock::now(), workerThread, FileOperation::WRITE, OperationStatus::START, slicesVec[0]->getSliceEnd(), false});
+        AsyncLogger::SliceAccessParams(
+            std::chrono::system_clock::now(),
+            workerThread,
+            FileOperation::WRITE,
+            OperationStatus::START,
+            slicesVec[0]->getSliceEnd(),
+            false));
 #endif
     return slicesVec;
 }
@@ -98,7 +105,12 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     if (slice.has_value())
     {
 #ifdef LOG_SLICE_ACCESS
-        logger->log({std::chrono::system_clock::now(), workerThread, FileOperation::READ, OperationStatus::START, sliceEnd, false});
+        logger->log(
+            AsyncLogger::SliceAccessParams(
+                std::chrono::system_clock::now(), workerThread, FileOperation::READ, OperationStatus::START, sliceEnd, false));
+#endif
+#ifdef LOG_LATENCY
+        const auto start = std::chrono::system_clock::now();
 #endif
 
         readSliceFromFiles(
@@ -115,6 +127,10 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
             }(),
             workerThread,
             joinBuildSide);
+
+#ifdef LOG_LATENCY
+        logger->log(AsyncLogger::LatencyParams(workerThread, FileOperation::READ, start, std::chrono::system_clock::now()));
+#endif
     }
     return slice;
 }
@@ -231,6 +247,10 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const WorkerThreadId threadId,
     const JoinBuildSideType joinBuildSide)
 {
+#ifdef LOG_LATENCY
+    const auto start = std::chrono::system_clock::now();
+#endif
+
     const auto [timestamp, seqNumber, originId] = bufferMetaData;
     const auto watermark
         = sliceStoreInfo.upperMemoryBound == 0 ? Timestamp(0) : watermarkProcessor->updateWatermark(timestamp, seqNumber, originId);
@@ -262,10 +282,15 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     const auto now = std::chrono::system_clock::now();
     for (const auto& slice : alteredSlicesVec)
     {
-        logger->log({now, workerThreadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), false});
+        logger->log(
+            AsyncLogger::SliceAccessParams(now, workerThreadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), false));
     }
 #endif
     alteredSlicesVec.clear();
+
+#ifdef LOG_LATENCY
+    logger->log(AsyncLogger::LatencyParams(workerThreadId, FileOperation::WRITE, start, std::chrono::system_clock::now()));
+#endif
 
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
 }
@@ -371,7 +396,9 @@ FileBackedTimeBasedSliceStore::updateSlicesProactiveWithPrediction(const WorkerT
                 >= sliceEnd)
         {
 #ifdef LOG_SLICE_ACCESS
-            logger->log({std::chrono::system_clock::now(), threadId, FileOperation::READ, OperationStatus::START, sliceEnd, true});
+            logger->log(
+                AsyncLogger::SliceAccessParams(
+                    std::chrono::system_clock::now(), threadId, FileOperation::READ, OperationStatus::START, sliceEnd, true));
 #endif
 
             /// Slice should be read back now as it will be triggered once the read operation has finished
@@ -387,7 +414,9 @@ FileBackedTimeBasedSliceStore::updateSlicesProactiveWithPrediction(const WorkerT
                 < sliceEnd)
         {
 #ifdef LOG_SLICE_ACCESS
-            logger->log({std::chrono::system_clock::now(), threadId, FileOperation::WRITE, OperationStatus::START, sliceEnd, true});
+            logger->log(
+                AsyncLogger::SliceAccessParams(
+                    std::chrono::system_clock::now(), threadId, FileOperation::WRITE, OperationStatus::START, sliceEnd, true));
 #endif
 
             /// Slice should be written out as it will not be triggered before write and read operations have finished
@@ -424,7 +453,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::writeSliceToFile(
     // TODO handle wrong predictions
 
 #ifdef LOG_SLICE_ACCESS
-    logger->log({std::chrono::system_clock::now(), threadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), true});
+    logger->log(
+        AsyncLogger::SliceAccessParams(
+            std::chrono::system_clock::now(), threadId, FileOperation::WRITE, OperationStatus::END, slice->getSliceEnd(), true));
 #endif
 }
 
@@ -458,12 +489,14 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
 
 #ifdef LOG_SLICE_ACCESS
     logger->log(
-        {std::chrono::system_clock::now(),
-         workerThreadId,
-         FileOperation::READ,
-         OperationStatus::END,
-         slice->getSliceEnd(),
-         threadsToRead.size() <= 1});
+
+        AsyncLogger::SliceAccessParams(
+            std::chrono::system_clock::now(),
+            workerThreadId,
+            FileOperation::READ,
+            OperationStatus::END,
+            slice->getSliceEnd(),
+            threadsToRead.size() <= 1));
 #endif
 }
 

@@ -26,9 +26,27 @@ enum class OperationStatus : uint8_t;
 class AsyncLogger
 {
 public:
-    struct LoggingParams
+    struct LatencyParams
     {
-        LoggingParams(
+        LatencyParams(
+            const WorkerThreadId threadId,
+            const FileOperation operation,
+            const std::chrono::system_clock::time_point start,
+            const std::chrono::system_clock::time_point end)
+            : threadId(threadId), operation(operation), start(start), end(end)
+        {
+        }
+        LatencyParams() = default;
+
+        WorkerThreadId threadId = WorkerThreadId(WorkerThreadId::INVALID);
+        FileOperation operation = static_cast<FileOperation>(0);
+        std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+        std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+    };
+
+    struct SliceAccessParams
+    {
+        SliceAccessParams(
             const std::chrono::system_clock::time_point timestamp,
             const WorkerThreadId threadId,
             const FileOperation operation,
@@ -38,7 +56,7 @@ public:
             : timestamp(timestamp), threadId(threadId), operation(operation), status(status), sliceEnd(sliceEnd), prediction(prediction)
         {
         }
-        LoggingParams() = default;
+        SliceAccessParams() = default;
 
         std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
         WorkerThreadId threadId = WorkerThreadId(WorkerThreadId::INVALID);
@@ -47,6 +65,8 @@ public:
         SliceEnd sliceEnd = SliceEnd(SliceEnd::INVALID_VALUE);
         bool prediction = false;
     };
+
+    using LoggingParams = std::variant<LatencyParams, SliceAccessParams>;
 
     explicit AsyncLogger(const std::vector<std::string>& paths);
     ~AsyncLogger();

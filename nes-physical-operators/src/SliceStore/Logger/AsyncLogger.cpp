@@ -56,19 +56,33 @@ void AsyncLogger::processLogs(const std::string& path)
         throw std::runtime_error("Failed to open log file: " + path);
     }
 
-    LoggingParams params;
+    LoggingParams params{LatencyParams()};
     while (running)
     {
         if (queue.readIfNotEmpty(params)) [[likely]]
         {
-            file << fmt::format(
-                "{:%Y-%m-%d %H:%M:%S} Thread {} executed operation {} with status {} on slice {} {} prediction\n",
-                params.timestamp,
-                params.threadId,
-                magic_enum::enum_name<FileOperation>(params.operation),
-                magic_enum::enum_name<OperationStatus>(params.status),
-                params.sliceEnd,
-                params.prediction ? "with" : "without");
+            if (std::holds_alternative<LatencyParams>(params))
+            {
+                const auto latencyParams = std::get<LatencyParams>(params);
+                file << fmt::format(
+                    "Thread {} executed operation {} starting {:%Y-%m-%d %H:%M:%S} and ending {:%Y-%m-%d %H:%M:%S}\n",
+                    latencyParams.threadId,
+                    magic_enum::enum_name<FileOperation>(latencyParams.operation),
+                    latencyParams.start,
+                    latencyParams.end);
+            }
+            else
+            {
+                const auto sliceAccessParams = std::get<SliceAccessParams>(params);
+                file << fmt::format(
+                    "{:%Y-%m-%d %H:%M:%S} Thread {} executed operation {} with status {} on slice {} {} prediction\n",
+                    sliceAccessParams.timestamp,
+                    sliceAccessParams.threadId,
+                    magic_enum::enum_name<FileOperation>(sliceAccessParams.operation),
+                    magic_enum::enum_name<OperationStatus>(sliceAccessParams.status),
+                    sliceAccessParams.sliceEnd,
+                    sliceAccessParams.prediction ? "with" : "without");
+            }
         }
         else
         {
