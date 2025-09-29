@@ -94,19 +94,9 @@ nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& siz
     /// If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
     /// We use the arena's allocateMemory function to allocate a new buffer and set the available space for the pointer to the last allocation size.
     /// Further, we set the space pointer to the beginning of the new buffer.
-    if (availableSpaceForPointer < sizeInBytes)
-    {
-        spacePointer = nautilus::invoke(
-            +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal); },
-            arenaRef,
-            sizeInBytes);
-        availableSpaceForPointer
-            = Nautilus::Util::readValueFromMemRef<size_t>(Nautilus::Util::getMemberRef(arenaRef, &Arena::lastAllocationSize));
-    }
-    availableSpaceForPointer -= sizeInBytes;
-    auto result = spacePointer;
-    spacePointer += sizeInBytes;
-    return result;
+    const auto currentArenaPtr = nautilus::invoke(
+        +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal); }, arenaRef, sizeInBytes);
+    return currentArenaPtr;
 }
 
 VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<uint32_t>& sizeInBytes)
