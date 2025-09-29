@@ -29,6 +29,11 @@ else
   CMD="$(basename "$0")"
 fi
 
+if [ -z "$CMD" ]; then
+  echo "nix-run.sh: missing command" >&2
+  exit 1
+fi
+
 # ---------- avoid infinite recursion inside the dev‑shell ---
 if [ -n "$IN_NIX_RUN" ]; then
   exec "$CMD" "$@"
@@ -38,6 +43,24 @@ fi
 SCRIPT="$(readlink -f "$0")"          # follow symlinks
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT")")"
 
+# keep only the environment variables we actually need
+KEEP_VARS="
+HOME
+USER
+SHELL
+TERM
+SSH_AUTH_SOCK
+GIT_CONFIG
+"
+KEEP_ARGS="--keep IN_NIX_RUN"
+for var in $KEEP_VARS; do
+  if [ -n "$(eval echo \${$var+x})" ]; then
+    KEEP_ARGS="$KEEP_ARGS --keep $var"
+  fi
+done
+
 IN_NIX_RUN=1 NIX_CONFIG="warn-dirty = false" \
   nix develop "${PROJECT_DIR}#default" \
+  --ignore-environment \
+  $KEEP_ARGS \
   --command "$CMD" "$@"
