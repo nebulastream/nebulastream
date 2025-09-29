@@ -313,7 +313,6 @@ public:
 
             /// Cleanup
             resultBuffers->clear();
-            testBufferManager->destroy();
             NES_DEBUG("Destroyed result buffer");
         }
     }

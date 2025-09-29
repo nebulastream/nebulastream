@@ -78,7 +78,6 @@ public:
 NodeEngine::~NodeEngine()
 {
     queryEngine.reset();
-    bufferManager->destroy();
 }
 
 NodeEngine::NodeEngine(

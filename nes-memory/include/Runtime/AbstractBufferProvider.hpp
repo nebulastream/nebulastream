@@ -40,8 +40,6 @@ public:
         /// nop
     }
 
-    virtual void destroy() = 0;
-
     virtual BufferManagerType getBufferManagerType() const = 0;
 
     virtual size_t getBufferSize() const = 0;
