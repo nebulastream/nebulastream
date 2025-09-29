@@ -168,13 +168,13 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults
-        = {WorkerThreadResults<TestTuple>{{{TestTuple(123, 123, 123, 123)}}},
-           WorkerThreadResults<TestTuple>{{{TestTuple(123, 123, 123, 456789)}}}},
+        = {WorkerThreadResults<TestTuple>{{{TestTuple(123, 124, 125, 126)}}},
+           WorkerThreadResults<TestTuple>{{{TestTuple(127, 128, 129, 456789)}}}},
         .rawBytesPerThread
         = {{.sequenceNumber = SequenceNumber(4), .rawBytes = ",456789\n"},
-           {.sequenceNumber = SequenceNumber(1), .rawBytes = "123,123,"},
-           {.sequenceNumber = SequenceNumber(2), .rawBytes = "123,123\n123,123"},
-           {.sequenceNumber = SequenceNumber(3), .rawBytes = ",123"}}});
+           {.sequenceNumber = SequenceNumber(1), .rawBytes = "123,124,"},
+           {.sequenceNumber = SequenceNumber(2), .rawBytes = "125,126\n127,128"},
+           {.sequenceNumber = SequenceNumber(3), .rawBytes = ",129"}}});
 }
 
 }
