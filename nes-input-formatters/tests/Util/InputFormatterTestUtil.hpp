@@ -283,7 +283,7 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (leftBuffer.getNumberOfTuples() != rightBuffer.getNumberOfTuples())
     {
-        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        NES_ERROR("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
@@ -310,7 +310,7 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
 
         if (!idxFoundInBuffer2)
         {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
+            NES_ERROR("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
             return false;
         }
     }
