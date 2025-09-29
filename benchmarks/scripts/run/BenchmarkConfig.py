@@ -19,7 +19,7 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [100] # , 10, 100, 1000]
+BATCH_SIZES = [100000] # , 10, 100, 1000]
 TIMESTAMP_INCREMENTS = [1] # , 100, 1000, 100000]
 INGESTION_RATES = [100000000] # , 0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70] # , 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
@@ -60,9 +60,9 @@ WITH_CLEANUPS = ["true", "false"]
 WITH_PREDICTIONS = ["true", "false"]
 FILE_LAYOUTS = ["NO_SEPARATION", "SEPARATE_PAYLOAD", "SEPARATE_KEYS"]
 WATERMARK_PREDICTOR_TYPES = ["RLS", "KALMAN", "REGRESSION"]
-MAX_NUM_FILE_DESCRIPTORS = [0, 512, 4096, 16384]  # 0 means no limit (will fail if system's hard limit is exceeded)
-FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 16384, 524288, 1024]
-NUM_BUFFERS_PER_WORKER = [16384, 0, 512, 4096]
+MAX_NUM_FILE_DESCRIPTORS = [0, 128, 512, 1024, 4096, 16384]  # 0 means no limit (will fail if system's hard limit is exceeded)
+FILE_DESCRIPTOR_BUFFER_SIZES = [4096, 8192, 16384, 65536, 524288, 1024]
+NUM_BUFFERS_PER_WORKER = [16384, 0, 128, 512, 1024, 4096]
 
 
 def get_queries():
