@@ -21,7 +21,8 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 
-#DATETIME = ['2025-09-22_16-33-48', '2025-09-24_12-30-56', '2025-09-27_12-19-06'] # Prediction Ranges
+#DATETIME = ['2025-09-22_16-33-48', '2025-09-24_12-30-56', '2025-09-27_12-19-06'] # Prediction Ranges, wrong predictor
+#DATETIME = ['2025-09-22_16-33-48', '2025-09-28_20-33-29', '2025-09-29_09-27-29'] # Prediction Ranges
 #DATETIME = ['2025-09-27_21-04-05', '2025-09-28_12-11-29'] # Watermark Predictor Comparison
 #DATETIME = ['2025-09-28_08-16-27', '2025-09-28_16-27-06'] # Watermark Predictor Accuracy/Precision
 DATETIME = ['2025-09-28_17-28-08'] # Watermark Predictor Accuracy/Precision
@@ -406,7 +407,10 @@ df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] # + ' | ' + d
 df['file_backed_hue'] = df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
 df['watermark_predictor_hue'] = df['query_id'] + ' | ' + df['max_num_watermark_gaps'].astype(str) + ' | ' + df['max_num_sequence_numbers'].astype(str)
 df['watermark_predictor_hue'] = df['watermark_predictor_hue'].str.replace(str(np.iinfo(np.uint64).max), 'infinite')
-df['memory_bounds_hue'] = df['lower_memory_bound'].astype(str) + ' | ' + df['upper_memory_bound'].astype(str)
+#df['memory_bounds_hue'] = df['lower_memory_bound'].astype(str) + ' | ' + df['upper_memory_bound'].astype(str)
+df['memory_bounds'] = df.apply(lambda row: f"({convert_unit(row['lower_memory_bound'])}, {convert_unit(row['upper_memory_bound'])})", axis=1)
+df['memory_bounds_hue'] = df['query_id'] + ' | ' + df['memory_bounds']
+
 
 if not SLICE_ACCESSES:
     downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'file_backed_hue', 'watermark_predictor_hue', 'memory_bounds_hue'])
@@ -506,8 +510,11 @@ def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate
 
             # Add shaded regions for memory bounds
             if 'vals' in locals():
+                #if len(vals) == 3:
+                #    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[0], y2=vals[1], alpha=0.15, label=f'({vals[0]:.2f} {metric_unit}, {vals[1]:.2f} {metric_unit})')
+                #    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[1], y2=vals[2], alpha=0.15, label=f'({vals[1]:.2f} {metric_unit}, {vals[2]:.2f} {metric_unit})')
                 if len(vals) == 2:
-                    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[0], y2=vals[1], alpha=0.15, label=f'({vals[0]:.3f} {metric_unit}, {vals[1]:.3f} {metric_unit})')
+                    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[0], y2=vals[1], alpha=0.15, label=f'({vals[0]:.2f} {metric_unit}, {vals[1]:.2f} {metric_unit})')
                 if len(vals) == 1:
                     plt.axhline(y=vals[0], linestyle='-', linewidth=1, alpha=0.5, zorder=1, label=f'{vals[0]:.3f} {metric_unit}')
                     #plt.plot([data_scaled[param].min(), data_scaled[param].max()], [vals[0], vals[0]], linestyle='-', linewidth=2, alpha=0.5, zorder=1, label=f'{vals[0]:.3f} {metric_unit}')
@@ -572,7 +579,7 @@ for timestamp_increment in default_param_values['timestamp_increment']:
 
 # %%
 
-memory_bounds = [(16777216, 33554432)] #, (67108864, 134217728)]
+memory_bounds = [(0, np.iinfo(np.uint64).max), (8388608, 16777216)] #, (67108864, 134217728)]
 #for min_write_state_size in df['min_write_state_size'].unique():
 for lower_memory_bound in df['lower_memory_bound'].unique():
     for upper_memory_bound in df['upper_memory_bound'].unique():
@@ -589,7 +596,7 @@ for lower_memory_bound in df['lower_memory_bound'].unique():
         #data = downsampled_df[~downsampled_df['query_id'].isin(['Q1', 'Q3', 'Q4', 'Q6', 'Q7', 'Q9'])]
         #data = data[data['min_write_state_size'] == 0]
 
-        data_default = filter_by_default_values_except_params(data, ['query', 'min_write_state_size', 'with_prediction'])
+        data_default = filter_by_default_values_except_params(data, ['query', 'min_write_state_size', 'with_prediction', 'max_num_watermark_gaps', 'watermark_predictor_type'])
         data_default = data_default[data_default['slice_store_type'] == 'DEFAULT']
         data_memory_bound = filter_by_default_values_except_params(data, ['query', 'lower_memory_bound', 'upper_memory_bound', 'min_write_state_size', 'with_prediction'])
         data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE BACKED']
@@ -612,6 +619,17 @@ for lower_memory_bound in df['lower_memory_bound'].unique():
 
         #plot_time_comparison(data, config, 'throughput_data', 'shared_hue', 'Throughput', 'Slice Store | Query', False)
         plot_time_comparison(data, config, ['throughput_data', 'memory'], 'shared_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query', False)
+
+
+# %%
+
+data = df[(df['query_id'] == 'Q2') | (df['query_id'] == 'Q5')]
+memory_bounds = [(0, np.iinfo(np.uint64).max), (8388608, 16777216)] #, (67108864, 134217728)]
+data_memory_bound = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound'])
+data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE BACKED']
+data_memory_bound = data_memory_bound[((data_memory_bound['lower_memory_bound'] == 16777216) & (data_memory_bound['upper_memory_bound'] == 33554432)) | ((data_memory_bound['lower_memory_bound'] == 8388608) & (data_memory_bound['upper_memory_bound'] == 16777216))]
+data_memory_bound = data_memory_bound.sort_values(by=['lower_memory_bound', 'query'], ascending=[True, True])
+plot_time_comparison(data_memory_bound, config, ['throughput_data', 'memory'], 'tmp_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query', False)
 
 
 # %% Shared parameter plots
@@ -805,8 +823,10 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
 #default_param_values['prediction_time_delta'] = [0]
 
 file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
-for hue_value in df['file_backed_hue'].unique():
+#print(file_backed_data['file_backed_hue'].unique())
+for hue_value in file_backed_data['file_backed_hue'].unique():
     data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
+    #print(len(data_per_hue))
     # if data_per_hue['query_id'].unique()[0] == 'Q3':
     plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'watermark_predictor_hue', 'Prediction Accuracy', 'Query | Watermark Gaps | Sequence Numbers')
     plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_precision', 'watermark_predictor_hue', 'Prediction Presicion', 'Query | Watermark Gaps | Sequence Numbers')
