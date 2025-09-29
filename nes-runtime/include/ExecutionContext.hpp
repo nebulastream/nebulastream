@@ -71,7 +71,7 @@ struct ArenaRef
     /// Allocates memory from the arena. If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
     nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
 
-    VariableSizedData allocateVariableSizedData(const nautilus::val<size_t>& sizeInBytes);
+    VariableSizedData allocateVariableSizedData(const nautilus::val<uint32_t>& sizeInBytes);
 
 private:
     nautilus::val<Arena*> arenaRef;
