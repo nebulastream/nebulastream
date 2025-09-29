@@ -28,25 +28,26 @@ unit_multipliers = {'': 1, 'k': 10 ** 3, 'M': 10 ** 6, 'G': 10 ** 9, 'T': 10 ** 
 class PostProcessing:
 
     def __init__(self, input_folders, measure_interval, startup_time, benchmark_config_file, engine_statistics_file,
-                 benchmark_statistics_file, slices_accesses_file, combined_engine_file, combined_benchmark_file,
-                 combined_slice_accesses_file, engine_statistics_csv_path, benchmark_statistics_csv_path,
-                 slice_accesses_csv_path, server_name, test_name, slice_access_logging):
+                 benchmark_statistics_file, logging_file, combined_engine_file, combined_benchmark_file,
+                 combined_logging_file, engine_statistics_csv_path, benchmark_statistics_csv_path,
+                 logging_csv_path, server_name, test_name, slice_access_logging, latency_logging):
         self.input_folders = input_folders
         self.measure_interval = measure_interval
         self.startup_time = startup_time
         self.benchmark_config_file = benchmark_config_file
         self.engine_statistics_file = engine_statistics_file
         self.benchmark_statistics_file = benchmark_statistics_file
-        self.slices_accesses_file = slices_accesses_file
+        self.logging_file = logging_file
         self.combined_engine_file = combined_engine_file
         self.combined_benchmark_file = combined_benchmark_file
-        self.combined_slice_accesses_file = combined_slice_accesses_file
+        self.combined_logging_file = combined_logging_file
         self.engine_statistics_csv_path = engine_statistics_csv_path
         self.benchmark_statistics_csv_path = benchmark_statistics_csv_path
-        self.slice_accesses_csv_path = slice_accesses_csv_path
+        self.logging_csv_path = logging_csv_path
         self.server_name = server_name
         self.test_name = test_name
         self.slice_access_logging = slice_access_logging
+        self.latency_logging = latency_logging
 
     def main(self):
         print("Starting post processing...")
@@ -62,14 +63,21 @@ class PostProcessing:
             with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
                 futures = {executor.submit(self.convert_slice_accesses_to_csv, f): f for f in self.input_folders}
                 results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
+        if self.latency_logging:
+            with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
+                futures = {executor.submit(self.convert_latency_to_csv, f): f for f in self.input_folders}
+                results = [future.result() for future in tqdm(as_completed(futures), total=len(futures))]
 
         # Combine the engine and benchmark statistics into two separate csv files and return all folders of failed runs
         # failed_engines = self.combine_engine_statistics()
         failed_benchmarks = self.combine_benchmark_statistics()
         failed_experiments = failed_benchmarks  # + failed_engines
         if self.slice_access_logging:
-            failed_slice_accesses = self.combine_slice_accesses()
+            failed_slice_accesses = self.combine_logging("slice access")
             failed_experiments = list(set(failed_experiments + failed_slice_accesses))
+        if self.latency_logging:
+            failed_latencies = self.combine_logging("latency")
+            failed_experiments = list(set(failed_experiments + failed_latencies))
 
         return failed_experiments
 
@@ -148,15 +156,15 @@ class PostProcessing:
         return [input_folder_name for input_folder_name in self.input_folders if
                 self.combined_benchmark_file not in os.listdir(input_folder_name)]
 
-    # Converting slice accesses to a csv file
-    def combine_slice_accesses(self):
-        print("Combining all slice accesses...")
+    # Converting logging files to a csv file
+    def combine_logging(self, logging_type):
+        print(f"Combining all {logging_type} files...")
         # Gathering all statistic files across all folders
         accesses_files = [(input_folder_name, os.path.join(input_folder_name, f)) for input_folder_name in
                           self.input_folders for f in os.listdir(input_folder_name) if
-                          self.combined_slice_accesses_file in f]
+                          self.combined_logging_file in f]
 
-        print(f"Found {len(accesses_files)} slices accesses files in {os.path.dirname(self.input_folders[0])}")
+        print(f"Found {len(accesses_files)} {logging_type} files in {os.path.dirname(self.input_folders[0])}")
         combined_df = pd.DataFrame()
 
         dtype_map = {
@@ -178,7 +186,7 @@ class PostProcessing:
             combined_df['test'] = self.test_name
 
         # Writing the combined DataFrame to a csv file
-        combined_df.to_csv(self.slice_accesses_csv_path, index=False)
+        combined_df.to_csv(self.logging_csv_path, index=False)
 
         # Return all folders that did not contain a result file
         def file_backed_slice_store(input_folder_name):
@@ -187,7 +195,7 @@ class PostProcessing:
             return benchmark_config_yaml.get("slice_store_type") == "FILE_BACKED"
 
         return [input_folder_name for input_folder_name in self.input_folders
-                if self.combined_slice_accesses_file not in os.listdir(input_folder_name)
+                if self.combined_logging_file not in os.listdir(input_folder_name)
                 and file_backed_slice_store(input_folder_name)]
 
     def convert_engine_statistics_to_csv(self, input_folder):
@@ -351,7 +359,7 @@ class PostProcessing:
             combined_df.to_csv(os.path.join(input_folder, self.combined_benchmark_file), index=False)
 
     def convert_slice_accesses_to_csv(self, input_folder):
-        pattern_slice_accesses_file = rf"^{re.escape(self.slices_accesses_file)}[\w\.\-]+\.stats$"
+        pattern_slice_accesses_file = rf"^{re.escape(self.logging_file)}[\w\.\-]+\.stats$"
         pattern_slice_access_details = re.compile(
             r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"
             r"Thread (?P<thread_id>\d+) executed operation (?P<operation>WRITE|READ) "
@@ -468,4 +476,77 @@ class PostProcessing:
         df = df.sort_values(by=["slice_id"]).reset_index(drop=True)
 
         # Write the created DataFrame to the csv file
-        df.to_csv(os.path.join(input_folder, self.combined_slice_accesses_file), index=False)
+        df.to_csv(os.path.join(input_folder, self.combined_logging_file), index=False)
+
+    def convert_latency_to_csv(self, input_folder):
+        pattern_latency_file = rf"^{re.escape(self.logging_file)}[\w\.\-]+\.stats$"
+        pattern_latency_details = re.compile(
+            r"Thread (?P<thread_id>\d+) executed operation (?P<operation>WRITE|READ) starting "
+            r"(?P<start>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+) and ending "
+            r"(?P<end>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+)")
+
+        # Gathering all statistic files. For now, there should only be one
+        latency_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
+                           re.match(pattern_latency_file, f)]
+        combined_df = pd.DataFrame()
+
+        for idx, stat_file in enumerate(latency_files):
+            # print(f"Processing {stat_file} [{idx + 1}/{no_statistics_files}]")
+            dir_name = os.path.dirname(stat_file)
+            with open(stat_file, 'r') as file:
+                log_text = file.read()
+
+            with open(os.path.join(input_folder, self.benchmark_config_file), 'r') as file:
+                benchmark_config_yaml = yaml.safe_load(file)
+
+            records = []
+            for match in re.finditer(pattern_latency_details, log_text):
+                thread_id = int(match.group("thread_id"))
+                operation = match.group("operation")
+                start = pd.to_datetime(match.group("start"), format="%Y-%m-%d %H:%M:%S.%f").value
+                end = pd.to_datetime(match.group("end"), format="%Y-%m-%d %H:%M:%S.%f").value
+
+                new_record = benchmark_config_yaml.copy()
+                new_record['query'] = new_record['query'].replace(";", "")
+
+                new_record.update({
+                    "dir_name": dir_name,
+                    "thread_id": thread_id,
+                    "operation": operation,
+                    "start": start,
+                    "end": end,
+                    "latency": end - start
+                })
+
+                records.append(new_record)
+
+            if len(records) == 0:
+                print(f"WARNING: {stat_file} produced no data")
+                continue
+
+            # Create DataFrame from records
+            df = pd.DataFrame(records)
+
+            # Shift all timestamps by the minimal window start of any record
+            min_start_time = df['start'].min()
+            df['start_normalized'] = df['start'] - min_start_time
+            df['end_normalized'] = df['end'] - min_start_time
+
+            # Keep only relevant data within the measurement interval
+            #df = df[(df['window_start_normalized'] >= self.startup_time) & (
+            data = df[(df['start_normalized'] >= self.startup_time) & (
+                    df['start_normalized'] <= self.measure_interval)]
+
+            if data.empty:
+                print(f"WARNING: {stat_file} produced no data")
+                continue
+
+            # Sort the DataFrame
+            # df = df.sort_values(by=["query_id", "start"]).reset_index(drop=True)
+
+            # Write the created DataFrame to the csv file
+            df.to_csv(stat_file + ".csv", index=False)
+
+            # Adding this DataFrame to the global one
+            combined_df = pd.concat([combined_df, df], ignore_index=True)
+            combined_df.to_csv(os.path.join(input_folder, self.combined_logging_file), index=False)

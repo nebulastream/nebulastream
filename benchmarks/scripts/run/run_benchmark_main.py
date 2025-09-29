@@ -53,6 +53,7 @@ WAIT_BEFORE_SIGKILL = 5
 
 # Compilation for misc.
 LOG_SLICE_ACCESSES = False
+LOG_LATENCY = False
 DELETE_ENGINE_STATS = True
 DELETE_CSV_SINK = True
 SERVER_NAME = "amd"
@@ -63,10 +64,10 @@ WORKING_DIR = f".cache/benchmarks/{DATETIME_NOW}"
 ERROR_FILE_PATH = os.path.join(RESULTS_DIR, "failed_benchmarks.txt")
 COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
-COMBINED_SLICE_ACCESSES_FILE = "combined_slice_accesses.csv"
+COMBINED_LOGGING_FILE = "combined_logging.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
-SLICE_ACCESSES_FILE = "SliceAccesses_"
+LOGGING_FILE = "AsyncLogging_"
 CSV_SINK_FILE = "csv_sink.csv"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
@@ -107,7 +108,7 @@ def create_results_dir():
     # print(f"Created results dir {folder_name}...")
     return [os.path.join(RESULTS_DIR, COMBINED_ENGINE_STATISTICS_FILE),
             os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE),
-            os.path.join(RESULTS_DIR, COMBINED_SLICE_ACCESSES_FILE)]
+            os.path.join(RESULTS_DIR, COMBINED_LOGGING_FILE)]
 
 
 def create_working_dir(output_folder):
@@ -370,7 +371,7 @@ def run_benchmark(current_benchmark_config):
         # Move logs and statistics to output folder
         for file_name in os.listdir(os.getcwd()):
             if file_name.startswith(ENGINE_STATS_FILE) or file_name.startswith(
-                    BENCHMARK_STATS_FILE) or file_name.startswith(SLICE_ACCESSES_FILE) or file_name.endswith(".log"):
+                    BENCHMARK_STATS_FILE) or file_name.startswith(LOGGING_FILE) or file_name.endswith(".log"):
                 source_file = os.path.join(os.getcwd(), file_name)
                 shutil.move(source_file, output_folder)
 
@@ -440,7 +441,7 @@ def main():
     print("################################################################\n")
 
     all_benchmark_configs = ALL_BENCHMARK_CONFIGS
-    engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
+    engine_stats_csv_path, benchmark_stats_csv_path, logging_csv_path = create_results_dir()
     with open(ERROR_FILE_PATH, "w") as f:
         f.write("Errors in Benchmarks: \n")
 
@@ -492,16 +493,17 @@ def main():
                                                         BENCHMARK_CONFIG_FILE,
                                                         ENGINE_STATS_FILE,
                                                         BENCHMARK_STATS_FILE,
-                                                        SLICE_ACCESSES_FILE,
+                                                        LOGGING_FILE,
                                                         COMBINED_ENGINE_STATISTICS_FILE,
                                                         COMBINED_BENCHMARK_STATISTICS_FILE,
-                                                        COMBINED_SLICE_ACCESSES_FILE,
+                                                        COMBINED_LOGGING_FILE,
                                                         engine_stats_csv_path,
                                                         benchmark_stats_csv_path,
-                                                        slice_accesses_csv_path,
+                                                        logging_csv_path,
                                                         SERVER_NAME,
                                                         TEST_NAME,
-                                                        LOG_SLICE_ACCESSES)
+                                                        LOG_SLICE_ACCESSES,
+                                                        LOG_LATENCY)
         failed_run_folders = post_processing.main()
         successful_runs += [folder for folder in output_folders if folder not in failed_run_folders]
         end_time = time.time()

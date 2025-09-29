@@ -215,7 +215,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
         alteredSlices[{WorkerThreadId(i), JoinBuildSideType::Right}];
     }
 
-#ifdef LOG_SLICE_ACCESS
+#if defined(LOG_SLICE_ACCESS) || defined(LOG_LATENCY)
     /// Initialise files to keep track of slice operations
     if (numberOfWorkerThreads <= 1)
     {
@@ -225,7 +225,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     }
     const auto now = std::chrono::system_clock::now();
     const auto loggerPaths
-        = {fmt::format("SliceAccesses_{:%Y-%m-%d_%H-%M-%S}_0.stats", now), fmt::format("SliceAccesses_{:%Y-%m-%d_%H-%M-%S}_1.stats", now)};
+        = {fmt::format("AsyncLogging_{:%Y-%m-%d_%H-%M-%S}_0.stats", now), fmt::format("AsyncLogging_{:%Y-%m-%d_%H-%M-%S}_1.stats", now)};
     logger = std::make_shared<AsyncLogger>(loggerPaths);
 #endif
 

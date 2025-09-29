@@ -21,6 +21,7 @@ import PostProcessing
 
 # Compilation for misc.
 LOG_SLICE_ACCESSES = False
+LOG_LATENCY = False
 SERVER_NAME = "amd"
 DATETIME = "2025-06-02_20-08-46"
 RESULTS_DIR = f"benchmarks/data/{DATETIME}"
@@ -28,10 +29,10 @@ WORKING_DIR = f".cache/benchmarks/{DATETIME}"
 ERROR_FILE_PATH = os.path.join(RESULTS_DIR, "failed_benchmarks.txt")
 COMBINED_ENGINE_STATISTICS_FILE = "combined_engine_statistics.csv"
 COMBINED_BENCHMARK_STATISTICS_FILE = "combined_benchmark_statistics.csv"
-COMBINED_SLICE_ACCESSES_FILE = "combined_slice_accesses.csv"
+COMBINED_LOGGING_FILE = "combined_logging.csv"
 BENCHMARK_STATS_FILE = "BenchmarkStats_"
 ENGINE_STATS_FILE = "EngineStats_"
-SLICE_ACCESSES_FILE = "SliceAccesses_"
+LOGGING_FILE = "AsyncLogging_"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
 TEST_NAME = "Benchmark"
 
@@ -45,7 +46,7 @@ def create_results_dir():
     # print(f"Created results dir {folder_name}...")
     return [os.path.join(RESULTS_DIR, COMBINED_ENGINE_STATISTICS_FILE),
             os.path.join(RESULTS_DIR, COMBINED_BENCHMARK_STATISTICS_FILE),
-            os.path.join(RESULTS_DIR, COMBINED_SLICE_ACCESSES_FILE)]
+            os.path.join(RESULTS_DIR, COMBINED_LOGGING_FILE)]
 
 
 def get_subdirectories_with_paths(directory):
@@ -55,7 +56,7 @@ def get_subdirectories_with_paths(directory):
 if __name__ == "__main__":
     output_folders = get_subdirectories_with_paths(WORKING_DIR)
     print(f"Found {len(output_folders)} directories")
-    engine_stats_csv_path, benchmark_stats_csv_path, slice_accesses_csv_path = create_results_dir()
+    engine_stats_csv_path, benchmark_stats_csv_path, logging_csv_path = create_results_dir()
 
     # Calling the postprocessing main
     start_time = time.time()
@@ -67,13 +68,13 @@ if __name__ == "__main__":
                                                     BENCHMARK_CONFIG_FILE,
                                                     ENGINE_STATS_FILE,
                                                     BENCHMARK_STATS_FILE,
-                                                    SLICE_ACCESSES_FILE,
+                                                    LOGGING_FILE,
                                                     COMBINED_ENGINE_STATISTICS_FILE,
                                                     COMBINED_BENCHMARK_STATISTICS_FILE,
-                                                    COMBINED_SLICE_ACCESSES_FILE,
+                                                    COMBINED_LOGGING_FILE,
                                                     engine_stats_csv_path,
                                                     benchmark_stats_csv_path,
-                                                    slice_accesses_csv_path,
+                                                    logging_csv_path,
                                                     SERVER_NAME,
                                                     TEST_NAME,
                                                     LOG_SLICE_ACCESSES)
