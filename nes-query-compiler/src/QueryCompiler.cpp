@@ -32,8 +32,6 @@ QueryCompiler::QueryCompiler() = default;
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
-    auto requestQueryPlanCopy = request->queryPlan;
-
     auto pipelineBuilder = std::make_unique<PipelineBuilder>();
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
 
@@ -45,7 +43,7 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Caught an exception from the FSM PipelineBuilder: " << e.what() << std::endl;
+        NES_ERROR("Failed to build and apply PipelinedQueryPlan: . Error: {}.", e.what());
         throw;
     }
 }

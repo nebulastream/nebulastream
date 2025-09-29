@@ -93,14 +93,13 @@ public:
                     this->reset();
                 }
             }
-            std::cout << "END" << std::endl;
             INVARIANT(getState() == State::Success, "did not reach success state after all operators were processed");
 
             return ctx.outPlan;
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Exception: " << e.what() << std::endl;
+            NES_ERROR("Failed to build PipelinedQueryPlan: . Error: {}.", e.what());
             throw;
         }
     }

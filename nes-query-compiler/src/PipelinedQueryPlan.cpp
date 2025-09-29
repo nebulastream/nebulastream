@@ -26,7 +26,6 @@
 
 namespace NES
 {
-
 PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, ExecutionMode executionMode) : queryId(id), executionMode(executionMode) { };
 
 static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indentLevel)
@@ -79,15 +78,6 @@ void PipelinedQueryPlan::addPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
     pipeline->setExecutionMode(executionMode);
     pipelines.push_back(pipeline);
-}
-
-bool PipelinedQueryPlan::operator==(const PipelinedQueryPlan& other) const
-{
-    std::stringstream ostream1;
-    std::stringstream ostream2;
-    ostream1 << *this;
-    ostream2 << other;
-    return ostream1.str() == ostream2.str();
 }
 
 }
