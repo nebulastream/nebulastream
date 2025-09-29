@@ -107,7 +107,7 @@ nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& siz
     return result;
 }
 
-VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<size_t>& sizeInBytes)
+VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<uint32_t>& sizeInBytes)
 {
     auto basePtr = allocateMemory(sizeInBytes + nautilus::val<size_t>(4));
     *(static_cast<nautilus::val<uint32_t*>>(basePtr)) = sizeInBytes;
