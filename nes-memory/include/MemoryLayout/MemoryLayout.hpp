@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -46,18 +47,20 @@ public:
 
     virtual ~MemoryLayout() = default;
 
-    /// @brief Writes the varSizedValue to the tupleBuffer. Similar to writeVarSizedData, but this method expects the varSizedValue containing
-    /// the length of varSizedValue as its first 32-bits
-    static VariableSizedAccess writeVarSizedData(
-        TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const char* varSizedValue, uint32_t varSizedValueLength);
+    enum PrependMode : uint8_t
+    {
+        PREPEND_NONE,
+        PREPEND_LENGTH_AS_UINT32
+    };
 
     /// @brief Writes the variable sized data to the buffer
+    template <PrependMode PrependMode>
     static VariableSizedAccess
-    writeVarSizedDataAndPrependLength(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::string_view varSizedValue);
+    writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 
     /// @brief Reads the variable sized data and returns the pointer to the var sized data
     /// @return Pointer to variable sized data
-    static const int8_t* loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
+    static std::span<std::byte> loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
 
     /// @brief Reads the variable sized data. Similar as loadAssociatedVarSizedValue, but returns a string
     /// @return Variable sized data as a string
@@ -75,9 +78,6 @@ public:
     /// Depending on the concrete memory layout this value may change, e.g., some layouts may add some padding or alignment.
     /// @return number of tuples a tuple buffer can occupy.
     [[nodiscard]] uint64_t getCapacity() const;
-
-    /// Returns the number of tuples taken the used memory size into account
-    [[nodiscard]] virtual uint64_t getNumberOfTuples(uint64_t usedMemorySize) const;
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     void setBufferSize(uint64_t bufferSize);
@@ -99,6 +99,4 @@ protected:
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
     std::vector<std::string> keyFieldNames;
 };
-
-
 }
