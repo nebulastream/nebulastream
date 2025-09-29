@@ -25,7 +25,7 @@ from scipy.interpolate import interp1d
 #DATETIME = ['2025-09-22_16-33-48', '2025-09-28_20-33-29', '2025-09-29_09-27-29'] # Prediction Ranges
 #DATETIME = ['2025-09-27_21-04-05', '2025-09-28_12-11-29'] # Watermark Predictor Comparison
 #DATETIME = ['2025-09-28_08-16-27', '2025-09-28_16-27-06'] # Watermark Predictor Accuracy/Precision
-DATETIME = ['2025-09-28_17-28-08'] # Watermark Predictor Accuracy/Precision
+DATETIME = ['2025-09-29_15-02-13', '2025-09-29_17-16-29'] # Watermark Predictor Accuracy/Precision
 
 #FILE = 'combined_benchmark_statistics.csv'
 FILE = 'combined_slice_accesses.csv'
@@ -383,6 +383,7 @@ if SLICE_ACCESSES:
     # Compute accuracy of predictors
     df['prediction_accuracy'] = df.apply(compute_prediction_accuracy, axis=1)
     df['prediction_accuracy_2'] = df.apply(compute_prediction_accuracy_2, axis=1)
+    #df["prediction_accuracy"] = df["prediction_accuracy"].astype(str)
     
     # Compute precision of predictors
     df['prediction_precision'] = df.apply(compute_prediction_precision, axis=1)
@@ -792,25 +793,53 @@ for param in watermark_predictor_config_params:
 
 # %% Watermark-Predictor accuracy and precision plots
 
-def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label, legend):
-    data = filter_by_default_values_except_params(data, [param, 'max_num_watermark_gaps', 'max_num_sequence_numbers'])
-    if metric == 'prediction_accuracy' or metric == 'prediction_accuracy_2':
-        data_scaled, metric_unit = convert_units(data, metric, '%')
-    if metric == 'prediction_precision' or metric == 'prediction_precision_2':
-        data_scaled, metric_unit = convert_units(data, metric, 's', 0)
+def plot_watermark_predictor_accuracy_precision(data, param, metrics, hue, labels, legend):
+    fig, axes = plt.subplots(len(metrics), 1, figsize=(6, len(metrics) * 5), sharex=True)
+    axes = axes.ravel()
+    for i, metric in enumerate(metrics):
+        label = labels[i]
+        ax = axes[i]
+        data_filtered = filter_by_default_values_except_params(data, [param, 'batch_size', 'max_num_watermark_gaps', 'max_num_sequence_numbers'])
+        if metric == 'prediction_precision': #pd.api.types.is_numeric_dtype(data_filtered[metric]) and data_filtered[metric].max() - data_filtered[metric].min() >= 100:
+            yscale = "log"
+        if metric == 'prediction_accuracy' or metric == 'prediction_accuracy_2':
+            data_filtered = (data_filtered.groupby([param, hue])['prediction_accuracy'].mean().mul(100).reset_index(name='prediction_accuracy'))
+            data_scaled, metric_unit = (data_filtered, '%') #convert_units(data_filtered, metric, '%')
+            sns.barplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
+            #ax.legend(title=None, loc='lower right')
+        if metric == 'prediction_precision' or metric == 'prediction_precision_2':
+            data_scaled, metric_unit = convert_units(data_filtered, metric, 's', 0)
+            sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
+            #ax.legend(title=None) # legend)
 
-    plt.figure(figsize=(14, 6))
-    ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+        #plt.figure(figsize=(14, 6))
+        #sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
+        #sns.histplot(data=data_scaled, x=param, hue=hue, stat="percent", multiple="fill", ax=ax)
+        #sns.countplot(data=data_scaled, x=param, hue=hue, stat="percent", ax=ax)
 
-    # Create numeric labels for each hue value and add legend
-    add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend, 0.0675)
+        # Create numeric labels for each hue value and add legend
+        #add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend, 0.0675)
 
-    # Add legend below
-    add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
+        # Add legend below
+        #add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
 
-    plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
-    plt.xlabel(param)
-    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+        if 'yscale' in locals():
+            ax.set_yscale(yscale)
+            del yscale
+        elif metric != 'prediction_accuracy':
+            ax.set_ylim(0, data_scaled[metric].max() * 1.1)
+
+        if i == len(metrics) - 1:
+            ax.set_xlabel('Watermark Predictor')
+        ax.set_ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+        ax.grid(axis='y', which='major', linestyle='-', linewidth=1)
+        ax.legend(title=None) # legend)
+
+    fig.suptitle(f'Effect of Watermark Predictors on {" and ".join(map(str, labels))}')
+    #plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    #plt.xlabel(param)
+    #plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+    plt.tight_layout()
     plt.show()
 
 
@@ -824,12 +853,12 @@ def plot_watermark_predictor_accuracy_precision(data, param, metric, hue, label,
 
 file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
 #print(file_backed_data['file_backed_hue'].unique())
-for hue_value in file_backed_data['file_backed_hue'].unique():
-    data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
+#for hue_value in file_backed_data['file_backed_hue'].unique():
+    #data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
     #print(len(data_per_hue))
     # if data_per_hue['query_id'].unique()[0] == 'Q3':
-    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'watermark_predictor_hue', 'Prediction Accuracy', 'Query | Watermark Gaps | Sequence Numbers')
-    plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_precision', 'watermark_predictor_hue', 'Prediction Presicion', 'Query | Watermark Gaps | Sequence Numbers')
+    #plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'watermark_predictor_hue', 'Prediction Accuracy', 'Query | Watermark Gaps | Sequence Numbers')
+plot_watermark_predictor_accuracy_precision(file_backed_data, 'watermark_predictor_type', ['prediction_accuracy', 'prediction_precision'], 'file_backed_hue', ['Accuracy', 'Precision'], 'Query | Watermark Gaps | Sequence Numbers')
 
 
 # %% Memory-Bounds plots for different memory models
