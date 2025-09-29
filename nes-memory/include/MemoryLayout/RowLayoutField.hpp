@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
 #include <utility>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -49,12 +50,13 @@ public:
     inline T& operator[](size_t recordIndex);
 
 private:
-    RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, uint64_t fieldIndex, uint64_t recordSize)
-        : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)) { };
+    RowLayoutField(
+        std::shared_ptr<RowLayout> layout, const std::span<std::byte> baseSpan, const uint64_t fieldIndex, const uint64_t recordSize)
+        : fieldIndex(fieldIndex), recordSize(recordSize), baseSpan(baseSpan), layout(std::move(layout)) { };
 
     uint64_t fieldIndex;
     uint64_t recordSize;
-    uint8_t* basePointer;
+    std::span<std::byte> baseSpan;
     std::shared_ptr<RowLayout> layout;
 };
 
@@ -68,12 +70,9 @@ RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<R
         layout->getSchema().getNumberOfFields(),
         fieldIndex);
 
-    /// via pointer arithmetic gets the starting field address
-    auto* bufferBasePointer = &(buffer.getMemArea<uint8_t>()[0]);
-    auto offSet = layout->getFieldOffset(0, fieldIndex);
-    auto* basePointer = bufferBasePointer + offSet;
-
-    return RowLayoutField<T, boundaryChecks>(layout, basePointer, fieldIndex, layout->getTupleSize());
+    const auto offSet = layout->getFieldOffset(0, fieldIndex);
+    auto basePointer = buffer.getAvailableMemoryArea().subspan(offSet);
+    return RowLayoutField(layout, basePointer, fieldIndex, layout->getTupleSize());
 }
 
 template <class T, bool boundaryChecks>
@@ -90,7 +89,7 @@ inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
 {
     INVARIANT(
         boundaryChecks && recordIndex < layout->getCapacity(), "recordIndex out of bounds! {}  >= {}", layout->getCapacity(), recordIndex);
-    return *reinterpret_cast<T*>(basePointer + (recordSize * recordIndex));
+    return *reinterpret_cast<T*>(baseSpan.data() + (recordSize * recordIndex));
 }
 
 }

@@ -22,6 +22,10 @@
 
 namespace NES
 {
+namespace detail
+{
+class BufferControlBlock;
+}
 
 /// @brief This class is a helper class for accessing variable sized data in a tuple buffer.
 /// We store variable sized data as child buffer. To reference one variable sized data object, we require an index to the child buffer and
@@ -34,27 +38,27 @@ namespace NES
 class VariableSizedAccess
 {
 public:
+    using CombinedIndex = uint64_t;
+
     class Index
     {
     public:
         /// Required for allowing VariableSizedAccess to access offset in VariableSizedAccess::getCombinedIdxOffset()
         friend class VariableSizedAccess;
 
+        /// Required for allowing BufferControlBlock to access offset in BufferControlBlock::loadChildBuffer()
+        friend class detail::BufferControlBlock;
+
         using Underlying = uint32_t;
         static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
 
-        explicit Index(const uint64_t index) : index(index)
-        {
-            PRECONDITION(index < (1UL << UnderlyingBits), "Currently we only support {} child buffers", (1UL << UnderlyingBits));
-        }
-
-        static Index convertToIndex(const uint64_t combinedIdxOffset) { return Index{static_cast<uint32_t>(combinedIdxOffset >> 32UL)}; }
-
-        friend std::ostream& operator<<(std::ostream& os, const Index& index) { return os << index.index; }
-
+        explicit Index(uint64_t index);
+        static Index convertToIndex(CombinedIndex combinedIdxOffset);
+        friend std::ostream& operator<<(std::ostream& os, const Index& index);
         friend std::strong_ordering operator<=>(const Index& lhs, const Index& rhs) = default;
 
-        [[nodiscard]] Underlying getRawIndex() const { return index; }
+        friend Underlying operator/(const Index& index, Underlying other);
+        friend Underlying operator%(const Index& index, Underlying other);
 
     private:
         Underlying index;
@@ -68,25 +72,14 @@ public:
         using Underlying = uint32_t;
         static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
 
-        explicit Offset(const uint64_t offset) : offset(offset)
-        {
-            PRECONDITION(
-                offset < (1UL << UnderlyingBits), "Currently we only support {} ({}bit) offsets", (1UL << UnderlyingBits), UnderlyingBits);
-        }
+        explicit Offset(uint64_t offset);
 
-        static Offset convertToOffset(const uint64_t combinedIdxOffset)
-        {
-            return Offset{static_cast<uint32_t>(combinedIdxOffset & 0xffffffffUL)};
-        }
+        static Offset convertToOffset(CombinedIndex combinedIdxOffset);
+        [[nodiscard]] Underlying getRawOffset() const;
 
-        friend std::ostream& operator<<(std::ostream& os, const Offset& offset) { return os << offset.offset; }
+        friend std::ostream& operator<<(std::ostream& os, const Offset& offset);
 
         friend std::strong_ordering operator<=>(const Offset& lhs, const Offset& rhs) = default;
-
-        /// We allow to directly add the offset to a pointer. Thus, we do not need to return the
-        friend int8_t* operator+(const Offset& offset, int8_t* pointer) { return pointer + offset.offset; }
-
-        friend int8_t* operator+(int8_t* pointer, const Offset& offset) { return pointer + offset.offset; }
 
     private:
         Underlying offset;
@@ -101,8 +94,6 @@ private:
 
 
 public:
-    using CombinedIndex = uint64_t;
-
     explicit VariableSizedAccess(const CombinedIndex combinedIdxOffset)
         : offset(Offset::convertToOffset(combinedIdxOffset)), index(Index::convertToIndex(combinedIdxOffset))
     {
