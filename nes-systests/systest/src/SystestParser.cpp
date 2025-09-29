@@ -34,7 +34,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/ScanProvider.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Strings.hpp>

@@ -24,7 +24,7 @@
 #include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/ScanProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
