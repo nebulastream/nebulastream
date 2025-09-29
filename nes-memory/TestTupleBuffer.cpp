@@ -49,9 +49,9 @@ DynamicField::DynamicField(const uint8_t* address, DataType physicalType) : addr
 
 DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
 {
-    const auto* bufferBasePointer = buffer.getMemArea<uint8_t>();
+    const auto* bufferBasePointer = reinterpret_cast<const uint8_t*>(buffer.getAvailableMemoryArea().data());
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
-    auto* basePointer = bufferBasePointer + offset;
+    const auto* basePointer = bufferBasePointer + offset;
     return DynamicField{basePointer, memoryLayout->getPhysicalType(fieldIndex)};
 }
 
@@ -73,7 +73,8 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 void DynamicTuple::writeVarSized(
     std::variant<const uint64_t, const std::string> field, std::string_view value, AbstractBufferProvider& bufferProvider)
 {
-    auto combinedIdxOffset = MemoryLayout::writeVarSizedDataAndPrependLength(buffer, bufferProvider, value);
+    auto combinedIdxOffset
+        = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(buffer, bufferProvider, std::as_bytes(std::span{value}));
     std::visit(
         [this, combinedIdxOffset](const auto& key)
         {

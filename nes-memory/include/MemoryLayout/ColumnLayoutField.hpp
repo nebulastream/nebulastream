@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <span>
+#include <utility>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -47,9 +49,10 @@ public:
     inline T& operator[](size_t recordIndex);
 
 private:
-    ColumnLayoutField(T* basePointer, std::shared_ptr<ColumnLayout> layout) : basePointer(basePointer), layout(std::move(layout)) { };
+    ColumnLayoutField(const std::span<T> baseSpan, std::shared_ptr<ColumnLayout> layout)
+        : baseSpan(baseSpan), layout(std::move(layout)) { };
 
-    T* basePointer;
+    std::span<T> baseSpan;
     std::shared_ptr<ColumnLayout> layout;
 };
 
@@ -63,9 +66,10 @@ ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_pt
         layout->getSchema().getNumberOfFields(),
         fieldIndex);
 
-    const auto fieldOffset = layout->getFieldOffset(0, fieldIndex);
-    auto* basePointer = reinterpret_cast<T*>(buffer.getAvailableMemoryArea().data() + fieldOffset);
-    return ColumnLayoutField<T, boundaryChecks>(basePointer, layout);
+    const auto offSet = layout->getFieldOffset(0, fieldIndex);
+    auto baseSpan = buffer.getAvailableMemoryArea().subspan(offSet);
+    auto baseSpanField = std::span{reinterpret_cast<T*>(baseSpan.data()), baseSpan.size()};
+    return ColumnLayoutField<T, boundaryChecks>(baseSpanField, layout);
 }
 
 template <class T, bool boundaryChecks>
@@ -82,7 +86,7 @@ inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
 {
     INVARIANT(
         boundaryChecks && recordIndex < layout->getCapacity(), "recordIndex out of bounds {} >= {}", layout->getCapacity(), recordIndex);
-    return *(basePointer + recordIndex);
+    return baseSpan[recordIndex];
 }
 
 }
