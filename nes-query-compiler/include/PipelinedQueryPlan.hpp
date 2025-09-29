@@ -43,7 +43,6 @@ struct PipelinedQueryPlan final
 
     [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const;
     [[nodiscard]] const std::vector<std::shared_ptr<Pipeline>>& getPipelines() const;
-    [[nodiscard]] bool operator==(const PipelinedQueryPlan& otherPlan) const;
     void addPipeline(const std::shared_ptr<Pipeline>& pipeline);
     void removePipeline(Pipeline& pipeline);
 
