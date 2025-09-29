@@ -135,11 +135,6 @@ public:
     */
     void recycleUnpooledBuffer(detail::MemorySegment* segment, const AllocationThreadInfo&) override;
 
-    /**
-     * @brief this method clears all local buffers pools and remove all buffers from the global buffer manager
-     */
-    void destroy() override;
-
 private:
     std::vector<detail::MemorySegment> allBuffers;
 

@@ -186,7 +186,6 @@ struct TestHandle
         expectedResultVectors.clear();
         resultBuffers->clear();
         testTaskQueue.reset();
-        testBufferManager->destroy();
         schema = Schema{};
     }
 };
@@ -487,8 +486,6 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// validate: actual results vs expected results
     const auto validationResult = validateResult<TupleSchemaTemplate, PrintDebug>(testHandle);
     ASSERT_TRUE(validationResult);
-    /// clean up
-    testHandle.destroy();
 }
 
 }

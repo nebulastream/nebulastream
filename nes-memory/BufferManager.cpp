@@ -53,7 +53,13 @@ BufferManager::BufferManager(
     initialize(DEFAULT_ALIGNMENT);
 }
 
-void BufferManager::destroy()
+std::shared_ptr<BufferManager> BufferManager::create(
+    uint32_t bufferSize, uint32_t numOfBuffers, const std::shared_ptr<std::pmr::memory_resource>& memoryResource, uint32_t withAlignment)
+{
+    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, withAlignment);
+}
+
+BufferManager::~BufferManager()
 {
     bool expected = false;
     NES_DEBUG("Calling BufferManager::destroy()");
@@ -91,17 +97,6 @@ void BufferManager::destroy()
         /// Destroying the unpooled chunks
         unpooledChunksManager.reset();
     }
-}
-
-std::shared_ptr<BufferManager> BufferManager::create(
-    uint32_t bufferSize, uint32_t numOfBuffers, const std::shared_ptr<std::pmr::memory_resource>& memoryResource, uint32_t withAlignment)
-{
-    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, withAlignment);
-}
-
-BufferManager::~BufferManager()
-{
-    BufferManager::destroy();
 }
 
 void BufferManager::initialize(uint32_t withAlignment)
