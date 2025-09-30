@@ -451,9 +451,42 @@ def create_filter_buffersize_plots(df, output_dir):
             plt.tight_layout()
             plt.savefig(filter_dir / f"filter_{metric.replace('pipeline_3_', '')}_buffer_size_num_cols_{num_cols}.png")
             plt.close()
+def create_filter_overview_plots(df, output_dir):
+    """Create filter throughput plots with accessed_columns pairwise for layout."""
+    filter_dir = Path(output_dir) / "filter" / "overview"
+    filter_dir.mkdir(exist_ok=True, parents=True)
 
-def create_map_function_type_plots(df, output_dir):
-    """Adapt map selectivity plots to use function_type on the x-axis."""
+    metrics = [
+        ('pipeline_3_eff_tp', 'Effective Throughput'),
+        ('pipeline_3_comp_tp', 'Computational Throughput')
+    ]
+
+    for num_cols in sorted(df['num_columns'].unique()):
+        num_cols_df = df[df['num_columns'] == num_cols]
+        for metric, metric_label in metrics:
+            plt.figure(figsize=(16, 12))
+            selectivities = sorted(num_cols_df['selectivity'].unique())
+            for i, selectivity in enumerate(selectivities, 1):
+                subset = num_cols_df[num_cols_df['selectivity'] == selectivity]
+                plt.subplot(len(selectivities), 1, i)
+
+                # Group by layout and accessed_columns pairwise
+                grouped = subset.groupby(['layout', 'accessed_columns'])[metric].mean().reset_index()
+                pivot_df = grouped.pivot(index='layout', columns='accessed_columns', values=metric)
+
+                # Plot bars
+                pivot_df.plot(kind='bar', ax=plt.gca(), colormap='viridis', width=0.8)
+
+                plt.title(f"Selectivity: {selectivity} - {metric_label} (Num Columns: {num_cols})")
+                plt.xlabel('Layout')
+                plt.ylabel(f'{metric_label} (tuples/s)')
+                plt.yscale('log')
+                plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(filter_dir / f"filter_{metric.replace('pipeline_3_', '')}_overview_num_cols_{num_cols}.png")
+            plt.close()
+def create_map_overview_plots(df, output_dir):
+    """Create map throughput plots with function_type on the x-axis."""
     map_dir = Path(output_dir) / "map" / "function_type"
     map_dir.mkdir(exist_ok=True, parents=True)
 
@@ -470,12 +503,12 @@ def create_map_function_type_plots(df, output_dir):
             plt.subplot(len(buffer_sizes), 1, i)
             sns.barplot(data=subset, x='function_type', y=metric, hue='layout', palette='viridis')
             plt.title(f"Buffer Size: {buffer_size} - {metric_label}")
-            plt.xlabel('Projection Function')
+            plt.xlabel('Function Type')
             plt.ylabel(f'{metric_label} (tuples/s)')
             plt.yscale('log')
             plt.grid(True, axis='y', linestyle='--', alpha=0.7)
         plt.tight_layout()
-        plt.savefig(map_dir / f"map_{metric.replace('pipeline_3_', '')}_function_type.png")
+        plt.savefig(map_dir / f"map_{metric.replace('pipeline_3_', '')}_overview.png")
         plt.close()
 
 def create_map_buffersize_plots(df, output_dir):
@@ -526,34 +559,8 @@ def create_map_buffersize_plots(df, output_dir):
 
 
 
-def create_filter_overview_plots(df, output_dir):
-    """Create function type plots for filter without num_columns."""
-    filter_dir = Path(output_dir) / "filter" / "selectivity"
-    filter_dir.mkdir(exist_ok=True, parents=True)
-
-    metrics = [
-        ('pipeline_3_eff_tp', 'Effective Throughput'),
-        ('pipeline_3_comp_tp', 'Computational Throughput')
-    ]
-
-    for metric, metric_label in metrics:
-        plt.figure(figsize=(16, 12))
-        selectivities = sorted(df['selectivity'].unique())
-        for i, selectivity in enumerate(selectivities, 1):
-            subset = df[df['selectivity'] == selectivity]
-            plt.subplot(len(selectivities), 1, i)
-            sns.barplot(data=subset, x='layout', y=metric, hue='accessed_columns', palette='viridis')
-            plt.title(f"Selectivity: {selectivity} - {metric_label}")
-            plt.xlabel('Layout')
-            plt.ylabel(f'{metric_label} (tuples/s)')
-            plt.yscale('log')
-            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-        plt.tight_layout()
-        plt.savefig(filter_dir / f"filter_{metric.replace('pipeline_3_', '')}_selectivity.png")
-        plt.close()
-
-def create_map_overview_plots(df, output_dir):
-    """Create function type plots for map with accessed_columns pairwise for layout."""
+def create_map_function_type_plots(df, output_dir):
+    """Create map throughput plots with function_type on the x-axis and pairwise accessed_columns-layout."""
     map_dir = Path(output_dir) / "map" / "function_type"
     map_dir.mkdir(exist_ok=True, parents=True)
 
@@ -571,7 +578,7 @@ def create_map_overview_plots(df, output_dir):
                 subset = num_cols_df[num_cols_df['function_type'] == function]
                 plt.subplot(len(functions), 1, i)
 
-                # Group by layout and accessed_columns pairwise
+                # Group by function_type, layout, and accessed_columns
                 grouped = subset.groupby(['layout', 'accessed_columns'])[metric].mean().reset_index()
                 pivot_df = grouped.pivot(index='layout', columns='accessed_columns', values=metric)
 
