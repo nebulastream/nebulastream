@@ -24,12 +24,14 @@ using T = Transition<State, Event, BuilderContext>;
 
 static inline const std::vector<T> transitions = {
     ///  Start‑up (root operators)
-    {State::Start, Event::EncounterSource, State::SourceCreated, {appendSource}},
+    {State::Start, Event::EncounterSource, State::SourceContext, {appendSource}},
+
+    /// Source
+    {State::SourceContext, Event::DescendChild, State::SourceCreated, {pushContext}},
 
     ///  SourceCreated
     {State::SourceCreated, Event::EncounterFusibleOperator, State::BuildingPipeline, {createPipeline, prependDefaultScan}},
     {State::SourceCreated, Event::EncounterSink, State::SinkCreated, {appendSink}},
-    {State::SourceCreated, Event::DescendChild, State::SourceCreated, {pushContext}},
     {State::SourceCreated, Event::EncounterCustomScan, State::BuildingPipeline, {createPipeline, registerHandler}},
 
     /// BuildingPipeline  (fusible operators accumulate here)

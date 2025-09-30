@@ -41,9 +41,9 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
         auto pipelinedQueryPlan = pipelineBuilder->build(request->queryPlan);
         return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
     }
-    catch (const std::exception& e)
+    catch (Exception& e)
     {
-        NES_ERROR("Failed to build and apply PipelinedQueryPlan: . Error: {}.", e.what());
+        e.what() += "Failed to build PipelinedQueryPlan";
         throw;
     }
 }
