@@ -29,6 +29,7 @@ enum class State : uint8_t
     PendingEmit,
     AfterEmit,
     RevisitOperator,
+    SourceContext,
     SourceCreated,
     SinkCreated,
     ForcePipelineBreak,
@@ -101,6 +102,8 @@ inline const char* toString(State s)
             return "RevisitOperator";
         case State::SourceCreated:
             return "SourceCreated";
+        case State::SourceContext:
+            return "SourceContext";
         case State::SinkCreated:
             return "SinkCreated";
         case State::ForcePipelineBreak:
