@@ -54,6 +54,7 @@ Checks: [
   "-misc-no-recursion", # we allow recursion
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-readability-named-parameter", # does not work with our error of unused variable
+  "-cert-err60-cpp", # conflicts with using cpptrace::lazy_exception
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
