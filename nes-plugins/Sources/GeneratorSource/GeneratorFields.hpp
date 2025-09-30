@@ -24,8 +24,6 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 
-#include <DataTypes/DataType.hpp>
-
 namespace NES::GeneratorFields
 {
 
