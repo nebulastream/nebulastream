@@ -28,7 +28,7 @@
 class ClientHandler
 {
 public:
-    static constexpr auto VARIABLE_SIZED_DATA_SIZE = 1048576;
+    static constexpr auto VARIABLE_SIZED_DATA_SIZE = 256;
 
     ClientHandler(
         const int clientSocket,
@@ -69,7 +69,7 @@ public:
             std::string variableSizedData;
             if (varSized == 2)
             {
-                const auto filePath = std::filesystem::current_path().string() + "/benchmarks/data/VariableSizedData1MB.bin";
+                const auto filePath = std::filesystem::current_path().string() + "/benchmarks/data/VariableSizedData256B.bin";
                 std::cout << "TCPServer: FilePath is " << filePath << '\n';
                 if (std::ifstream file(filePath, std::ios::binary); file)
                 {

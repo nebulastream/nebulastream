@@ -614,6 +614,49 @@ def create_memory_bounds_benchmark_configs():
     ]
 
 
+def create_real_world_example_configs():
+    # Generate all possible configurations for memory bounds where lower is smaller than or equal to upper
+    default_params = get_default_params_dict()
+    del default_params["batch_size"]
+    del default_params["ingestion_rate"]
+    del default_params["lower_memory_bound"]
+    del default_params["upper_memory_bound"]
+    #del default_params["with_prediction"]
+    del default_params["timestamp_increment"]
+    del default_params["query"]
+    #del default_params["match_rate"]
+
+    def_query = (
+        f"SELECT * FROM (SELECT * FROM tcp_source5) "
+        f"INNER JOIN (SELECT * FROM tcp_source4) ON id5 = id4 WINDOW SLIDING (timestamp, size 163840 ms, advance by 163840 ms) "
+        f"INTO csv_sink;"
+    )
+
+    return [
+        BenchmarkConfig(**default_params,
+                        #match_rate=match_rate,
+                        batch_size=batch_size,
+                        ingestion_rate=ingestion_rate,
+                        timestamp_increment=timestamp_increment,
+                        query=query,
+                        slice_store_type=slice_store_type,
+                        lower_memory_bound=lower_memory_bound,
+                        upper_memory_bound=upper_memory_bound)
+                        #with_prediction=with_prediction)
+        #for match_rate in [101]
+        for batch_size in [100]
+        for ingestion_rate in [32768]
+        for timestamp_increment in [1]
+        for query in [def_query]
+        for slice_store_type in SLICE_STORE_TYPES
+        for lower_memory_bound in [16777216] # (LOWER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [LOWER_MEMORY_BOUNDS[0]])
+        for upper_memory_bound in [33554432] # (UPPER_MEMORY_BOUNDS if slice_store_type == "FILE_BACKED" else [UPPER_MEMORY_BOUNDS[0]])
+        #for with_prediction in (WITH_PREDICTIONS if slice_store_type == "FILE_BACKED" and lower_memory_bound < np.iinfo(np.uint64).max and (0 < lower_memory_bound or upper_memory_bound == np.iinfo(np.uint64).max) else [WITH_PREDICTIONS[0]])
+        #if 2 * lower_memory_bound == upper_memory_bound or (lower_memory_bound == upper_memory_bound and lower_memory_bound in [0, 64 * 1024 * 1024, np.iinfo(np.uint64).max]) or (lower_memory_bound == LOWER_MEMORY_BOUNDS[0] and upper_memory_bound == UPPER_MEMORY_BOUNDS[0])
+        #if (lower_memory_bound, upper_memory_bound) in [(0, 0), (0, np.iinfo(np.uint64).max), (8388608, 16777216), (16777216, 33554432), (33554432, 67108864), (67108864, 134217728), (np.iinfo(np.uint64).max, np.iinfo(np.uint64).max)]
+    ]
+
+
 def create_all_benchmark_configs():
     # Generate all possible configurations
     return [
