@@ -303,9 +303,9 @@ def create_comparison_plots(df, output_dir, operator_metrics):
             plt.close()
 
 def create_filter_throughput_plots(df, output_dir):
-    """Create plots for filter throughput with selectivity on x-axis."""
-    output_dir = Path(output_dir)
-    output_dir.mkdir(exist_ok=True, parents=True)
+    """Create filter throughput plots with subplots for bufferSize and selectivity."""
+    filter_dir = Path(output_dir) / "filter"
+    filter_dir.mkdir(exist_ok=True, parents=True)
 
     # Filter data for single filter operations
     filter_df = df[df['operator_type'] == 'filter']
@@ -356,12 +356,66 @@ def create_filter_throughput_plots(df, output_dir):
 
             # Save plot
             filename = f"filter_{metric.replace('pipeline_3_', '')}_num_cols_{num_cols}.png"
-            plt.savefig(output_dir / filename)
+            plt.savefig(filter_dir / filename)
             plt.close()
 
-            print(f"Created plot: {filename}")
+def create_map_throughput_plots(df, output_dir):
+    """Create map throughput plots with subplots for bufferSize and projection functions."""
+    map_dir = Path(output_dir) / "map"
+    map_dir.mkdir(exist_ok=True, parents=True)
+
+    if df.empty or 'function_type' not in df.columns or 'buffer_size' not in df.columns:
+        print("Missing required columns for map throughput plots.")
+        return
+
+    metrics = [
+        ('pipeline_3_eff_tp', 'Effective Throughput'),
+        ('pipeline_3_comp_tp', 'Computational Throughput')
+    ]
+
+    # BufferSize chart with subplots for projection functions
+    for metric, metric_label in metrics:
+        plt.figure(figsize=(16, 12))
+        functions = sorted(df['function_type'].unique())
+        for i, function in enumerate(functions, 1):
+            subset = df[df['function_type'] == function]
+            plt.subplot(len(functions), 1, i)
+            sns.barplot(data=subset, x='buffer_size', y=metric, hue='layout', palette='viridis')
+            plt.title(f"Function: {function} - {metric_label}")
+            plt.xlabel('Buffer Size')
+            plt.ylabel(f'{metric_label} (tuples/s)')
+            plt.yscale('log')
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(map_dir / f"map_{metric.replace('pipeline_3_', '')}_buffer_size.png")
+        plt.close()
+
+    # Projection function chart with subplots for bufferSize
+    for metric, metric_label in metrics:
+        plt.figure(figsize=(16, 12))
+        buffer_sizes = sorted(df['buffer_size'].unique())
+        for i, buffer_size in enumerate(buffer_sizes, 1):
+            subset = df[df['buffer_size'] == buffer_size]
+            plt.subplot(len(buffer_sizes), 1, i)
+            sns.barplot(data=subset, x='function_type', y=metric, hue='layout', palette='viridis')
+            plt.title(f"Buffer Size: {buffer_size} - {metric_label}")
+            plt.xlabel('Projection Function')
+            plt.ylabel(f'{metric_label} (tuples/s)')
+            plt.yscale('log')
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(map_dir / f"map_{metric.replace('pipeline_3_', '')}_function_type.png")
+        plt.close()
+def create_layout_comparison_plots(df, output_dir):
+    """Create layout comparison plots for filter and map operators."""
+    filter_df = df[df['operator_type'] == 'filter']
+    map_df = df[df['operator_type'] == 'map']
+
+    create_filter_throughput_plots(filter_df, output_dir)
+    create_map_throughput_plots(map_df, output_dir)
 
 def main():
+    import argparse
     parser = argparse.ArgumentParser(description='Create enhanced benchmark plots')
     parser.add_argument('--results-csv', required=True, help='Path to benchmark results CSV')
     parser.add_argument('--output-dir', help='Output directory for plots')
@@ -372,15 +426,9 @@ def main():
         print(f"Error: Results CSV file not found: {results_csv}")
         return
 
-    # Default output directory is charts/ under the CSV directory
-    output_dir = args.output_dir
-    if not output_dir:
-        output_dir = results_csv.parent / "charts"
-
-    # Load data
+    output_dir = args.output_dir or results_csv.parent / "charts"
     df = pd.read_csv(results_csv)
 
-    # Ensure layout is a string
     if 'layout' in df.columns:
         df['layout'] = df['layout'].astype(str)
 
@@ -396,7 +444,6 @@ def main():
         if create_double_operator_plots(df, output_dir):
             print(f"Double operator plots created in {output_dir}")
     else:
-        create_filter_throughput_plots(df, output_dir)
         create_layout_comparison_plots(df, output_dir)
 
     # Additionally call the existing plots.py script
