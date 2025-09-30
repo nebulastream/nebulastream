@@ -126,9 +126,9 @@ flowchart TB
 ### InputFormatterTaskPipeline
 
 The InputFormatterTaskPipeline essentially consists of two phases. In the first phase, the InputFormatterTaskPipeline
-uses the **InputFormatIndexer** to determine the indexes of all fields in the raw buffer similar to the approach taken
+uses the **RawScanIndexer** to determine the indexes of all fields in the raw buffer similar to the approach taken
 by [simd-json](https://arxiv.org/abs/1902.08318). Additionally, the InputFormatterTaskPipeline resolves tuples spanning
-over buffers using the **SequenceShredder** and indexes these spanning tuples using the InputFormatIndexer.\
+over buffers using the **SequenceShredder** and indexes these spanning tuples using the RawScanIndexer.\
 In the second phase, the InputFormatterTaskPipeline iterates over the indexed fields of the raw buffer and converts the
 raw values to values in our native representation. (We aim to implement this second phase heavily relying on Nautilus.
 Using Nautilus, we generate code for the field traversal that skips fields that we don't need to touch. Additionally, we
@@ -139,11 +139,11 @@ flowchart TB
     subgraph InputFormatterTaskPipeline
         subgraph Phase 1 - Indexing
             direction LR
-            B[InputFormatIndexer] --->|field indexes| A(InputFormatterTask)
-            A[InputFormatterTask] --->|raw buffer/spanning tuple| B(InputFormatIndexer)
+            B[RawScanIndexer] --->|field indexes| A(InputFormatterTask)
+            A[InputFormatterTask] --->|raw buffer/spanning tuple| B(RawScanIndexer)
             C[InputFormatterTask] --->|" raw buffers (with complete spanning tuple(s)) "| A(SequenceShredder)
             A[InputFormatterTask] --->|raw buffer| C(SequenceShredder)
-            B[InputFormatIndexer]
+            B[RawScanIndexer]
         end
         subgraph "Phase 2 - Parsing"
             direction LR
@@ -159,28 +159,28 @@ flowchart TB
 ### Class Hierarchy
 
 The InputFormatterTask implements the InputFormatterTaskPipeline and executes the two phases outlined above. First, it
-uses the InputFormatIndexer to determine the indexes of all fields in the raw buffer. The concrete InputFormatIndexer
+uses the RawScanIndexer to determine the indexes of all fields in the raw buffer. The concrete RawScanIndexer
 initializes a concrete FieldIndexFunction, so that the FieldIndexFunction allows to access all fields of a raw buffer,
 e.g., via offsets. Second, it uses the SequenceShredder to determine whether the indexed raw buffer completes any
 spanning tuples (potentially one that starts in an earlier buffer and ends in the raw buffer and one that starts in the
-raw buffer and ends in a later buffer). It uses the InputFormatIndexer to index the spanning tuples. Finally, it uses an
+raw buffer and ends in a later buffer). It uses the RawScanIndexer to index the spanning tuples. Finally, it uses an
 initialized FieldIndexFunction to iterate over the indexed raw buffer and spanning tuple(s), and parses all values into
 the native representation of NebulaStream.
 
 ```mermaid
 classDiagram
     InputFormatterTaskPipeline <|-- InputFormatterTask
-    InputFormatterTask --> InputFormatIndexer: 1. uses to index fields of raw buffer (2.5 and spanning tuples)
+    InputFormatterTask --> RawScanIndexer: 1. uses to index fields of raw buffer (2.5 and spanning tuples)
     InputFormatterTask --> SequenceShredder: 2. uses to resolve tuples spanning buffers
     InputFormatterTask --> FieldIndexFunction: 3. uses indexed fields, to parse fields of raw buffer
-    CSVInputFormatIndexer --> FieldOffsets: uses and sees only InputFormatIndexer functions
-    JSONInputFormatIndexer --> FieldOffsets: uses and sees only InputFormatIndexer functions
-    NativeInputFormatIndexer --> NativeFieldAccessFunction: sees and uses only InputFormatIndexer functions
+    CSVRawScanIndexer --> FieldOffsets: uses and sees only RawScanIndexer functions
+    JSONRawScanIndexer --> FieldOffsets: uses and sees only RawScanIndexer functions
+    NativeRawScanIndexer --> NativeFieldAccessFunction: sees and uses only RawScanIndexer functions
     FieldIndexFunction <|-- FieldOffsets
     FieldIndexFunction <|-- NativeFieldAccessFunction
-    InputFormatIndexer <|-- CSVInputFormatIndexer
-    InputFormatIndexer <|-- JSONInputFormatIndexer
-    InputFormatIndexer <|-- NativeInputFormatIndexer
+    RawScanIndexer <|-- CSVRawScanIndexer
+    RawScanIndexer <|-- JSONRawScanIndexer
+    RawScanIndexer <|-- NativeRawScanIndexer
     class InputFormatterTaskPipeline {
         <<Interface>>
         +InputFormatterTask
@@ -201,10 +201,10 @@ classDiagram
         + getOffsetOfFirstTupleDelimiter
         + getOffsetOfLastTupleDelimiter
         + getTotalNumberOfTuples
-        InputFormatIndexer Functions()
+        RawScanIndexer Functions()
         + concreteFunctionsOfDerived()
     }
-    class InputFormatIndexer {
+    class RawScanIndexer {
         <<Interface>>
         +setupFieldAccessFunctionForBuffer()
     }
@@ -214,7 +214,7 @@ classDiagram
         + getOffsetOfFirstTupleDelimiterImpl
         + getOffsetOfLastTupleDelimiterImpl
         + getTotalNumberOfTuplesImpl
-        + InputFormatIndexer Functions()
+        + RawScanIndexer Functions()
         + FieldOffsets_startSetup()
         + FieldOffsets_writeOffsetAt()
         + FieldOffsets_writeOffsetsOfNextTuple()
@@ -225,16 +225,16 @@ classDiagram
         + getOffsetOfFirstTupleDelimiterImpl
         + getOffsetOfLastTupleDelimiterImpl
         + getTotalNumberOfTuplesImpl
-        + InputFormatIndexer Functions()
+        + RawScanIndexer Functions()
         + calculateIndexes()
     }
-    class CSVInputFormatIndexer {
+    class CSVRawScanIndexer {
         +setupFieldAccessFunctionForBuffer()
     }
-    class JSONInputFormatIndexer {
+    class JSONRawScanIndexer {
         +setupFieldAccessFunctionForBuffer()
     }
-    class NativeInputFormatIndexer {
+    class NativeRawScanIndexer {
         +setupFieldAccessFunctionForBuffer()
     }
 ```
@@ -272,7 +272,7 @@ The second step during tracing is essentially one proxy function call, that exec
 The CompiledInputFormatter calls a proxy function of the InputFormatterTaskPipeline, which takes the concrete '
 InputFormatterTaskPipeline' object as an argument. The InputFormatterTaskPipeline delegates the function call to its '
 InputFormatterTask' object. The InputFormatterTask creates a FieldIndexFunction and uses the SequenceShredder (if
-needed) and the InputFormatIndexer to determine spanning tuples and to determine the indexes of all fields of the raw
+needed) and the RawScanIndexer to determine spanning tuples and to determine the indexes of all fields of the raw
 buffer and the spanning tuples. The function then returns the FieldIndexFunction.
 
 After the first proxy function call returns, the CompiledInputFormatter executes the second phase by calling a Nautilus
@@ -352,13 +352,13 @@ utilize the size to read the correct number of indexes (and potentially perform 
 appear zero times share the optional/null problem.
 
 If the size is not fixed, determining the indexes becomes more complex, which probably needs to be handled by the
-concrete InputFormatIndexers. Furthermore, parsing the raw values becomes more complex, since it is not clear who
+concrete RawScanIndexers. Furthermore, parsing the raw values becomes more complex, since it is not clear who
 determines how many fields to parse.
 
-- A1: the InputFormatIndexers determines the size of the repeated fields and conveys them
+- A1: the RawScanIndexers determines the size of the repeated fields and conveys them
     - A1.1 as a special field offset
     - A1.2 via an extra vector/data structure
-- A2: repeated/array/varsized as a datatype with special parsing function(s) for the datatype. The InputFormatIndexer
+- A2: repeated/array/varsized as a datatype with special parsing function(s) for the datatype. The RawScanIndexer
   determines the indexes, and the parsing function the determines the size (and therefore handles additional complexity)
 
 ### Nested Data
@@ -379,7 +379,7 @@ repeated Person
 
 Just given two names, e.g., "Alberta" and "Betty", it is not clear whether the two names belong to the same person or
 two different persons. When parsing such a document, we need to correctly construct our internal representation. The
-indexes that the InputFormatIndexer constructs are not enough. We need additional information
+indexes that the RawScanIndexer constructs are not enough. We need additional information
 
 - A1: for all indexes, add information on which level they were defined/repeated (similar
   to [Dremel/Parquet](https://dl.acm.org/doi/pdf/10.14778/1920841.1920886?casa_token=HXpkmowS1bwAAAAA:7imGEIHqv3138hR8uKEwrmXfFewQe7f0iJtry95I4-0Ypa5ob10aK3S9PqePqPl1n27IBiZtbPIQiw))
@@ -404,7 +404,7 @@ complete a delimiter (analog: buffer ends with first M bytes of the delimiter).
   yes|no|maybe' logic. A thread may mark a buffer as 'maybe has a delimiter', and whether its a leading or trailing
   delimiter
     - SequenceShredder determines consecutive pairs buffers with uncertainty (concerning delimiters) and uses a function
-      provided by the InputFormatIndexer that takes the potential delimiter bytes and determines whether it is a valid
+      provided by the RawScanIndexer that takes the potential delimiter bytes and determines whether it is a valid
       delimiter and if so, determines potential spanning tuples
     - (try to solve together with A3 of [escape sequences](#escape-sequences))
 - A4: in the SequenceShredder, for all buffers that form pairs of buffers without delimiters, check if there is a
@@ -476,7 +476,7 @@ operators.
     - currently, we don't have a holistic concept for how to validate that the raw data does not violate the expected
       schema and the rules of the format
     - since formatters deal with user data, we need to expect errors and handle them gracefully
-    - there should be a clear guideline of how to report errors for the specific InputFormatIndexers
+    - there should be a clear guideline of how to report errors for the specific RawScanIndexers
 - [fix bug] Multi-Part Sequence Numbers: when the input formatter merges multiple raw buffers into a single buffer,
   e.g., buffers with sequence numbers 1-5, it currently assigns only a single sequence number to the output buffer, e.g,
   5. The input formatter then never assigns the sequence numbers 1-4, creating 'holes'
@@ -503,8 +503,8 @@ operators.
 The FieldIndexFunction ties the indexing eand the parsing phases together (see [architecture](#architecture)). It has
 two 'interfaces', one for each phase.
 
-The first interface is for indexing raw buffers. The concrete InputFormatIndexers, e.g., the CSVInputFormatIndexer,
-implement this phase. Each InputFormatIndexer chooses a concrete FieldIndexFunction. For a text based format like JSON,
+The first interface is for indexing raw buffers. The concrete RawScanIndexers, e.g., the CSVRawScanIndexer,
+implement this phase. Each RawScanIndexer chooses a concrete FieldIndexFunction. For a text based format like JSON,
 it is necessary to determine the start and the end of each field. For a format with fixed-size values, e.g., the Native
 format, it is sufficient to determine the offset of the first field of the first tuple, the rest can be calculated.
 

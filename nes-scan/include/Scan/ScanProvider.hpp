@@ -12,30 +12,21 @@
     limitations under the License.
 */
 
-#include <Scan/ScanProvider.hpp>
+#pragma once
 
 #include <memory>
-#include <utility>
+#include <optional>
+#include <string>
 
-#include <RawScanProvider.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <ScanPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
 
 PhysicalOperator provideScan(
-    const std::optional<ParserConfig>& rawScanConfig, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
-{
-    if (rawScanConfig.has_value())
-    {
-        return provideRawScan(rawScanConfig.value(), std::move(memoryProvider));
-    }
-    return ScanPhysicalOperator(std::move(memoryProvider));
-}
+    const std::optional<ParserConfig>& rawScanConfig, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
 
-bool contains(const std::string& parserType)
-{
-    return containsRawScan(parserType);
-}
+bool contains(const std::string& parserType);
 }

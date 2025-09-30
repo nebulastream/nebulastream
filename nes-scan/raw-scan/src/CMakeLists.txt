@@ -10,7 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-scan
-        ScanPhysicalOperator.cpp
-        ScanProvider.cpp
+add_source_files(raw-scan
+        RawScanPhysicalOperator.cpp
+        SequenceShredder.cpp
+        RawValueParser.cpp
+        RawScanWrapper.cpp
 )
+
+# Register plugins
+add_plugin(CSV RawScanIndexer raw-scan CSVRawScanIndexer.cpp)

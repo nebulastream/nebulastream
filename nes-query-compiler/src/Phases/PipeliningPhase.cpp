@@ -20,8 +20,7 @@
 #include <utility>
 
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/RawScanPhysicalOperator.hpp>
-#include <InputFormatters/ScanProvider.hpp>
+#include <Scan/ScanProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>

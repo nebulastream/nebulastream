@@ -14,21 +14,30 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 # Set Sources and Headers
-add_subdirectory(raw-scan)
 add_subdirectory(src)
-get_source(nes-scan NES_SOURCE_PARSERS_SOURCE_FILES)
-
-add_library(nes-scan ${NES_SOURCE_PARSERS_SOURCE_FILES})
+get_source(raw-scan NES_RAW_SCAN_SOURCE_FILES)
+add_library(raw-scan ${NES_RAW_SCAN_SOURCE_FILES})
 
 # Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
-target_link_libraries(nes-scan PUBLIC nes-memory nes-executable PRIVATE raw-scan-provider nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
+target_link_libraries(raw-scan PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
 
-target_include_directories(nes-scan PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+target_include_directories(raw-scan PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/RawScan>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+add_library(raw-scan-provider src/RawScanProvider.cpp)
+target_link_libraries(raw-scan-provider PUBLIC nes-memory nes-executable PRIVATE raw-scan raw-scan-registry)
+target_include_directories(raw-scan-provider PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/RawScanProvider>
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-scan REUSE_FROM nes-common)
+    target_precompile_headers(raw-scan REUSE_FROM nes-common)
 endif ()
+
+create_registries_for_component(RawScanIndexer)
+
+add_tests_if_enabled(tests)

@@ -13,7 +13,7 @@
 */
 
 
-#include <../../nes-scan/include/InputFormatters/ScanPhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 #include <cstdint>
 #include <memory>
