@@ -14,6 +14,8 @@
 
 #include <BaseIntegrationTest.hpp>
 
+#include <uuid/uuid.h>
+
 #include <filesystem>
 #include <ios>
 #include <random>
@@ -21,7 +23,7 @@
 #include <string>
 
 #include <Util/Logger/Logger.hpp>
-#include <Util/UUID.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
@@ -29,8 +31,20 @@
 #endif
 namespace NES::Testing
 {
+namespace detail::uuid
+{
 
-BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / generateUUID())
+std::string generateUUID()
+{
+    uuid_t bytes;
+    std::array<char, 36 + 1> parsed;
+    uuid_generate(bytes);
+    uuid_unparse(bytes, parsed.data());
+    return std::string(parsed.data(), 36);
+}
+}
+
+BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID())
 {
 }
 
