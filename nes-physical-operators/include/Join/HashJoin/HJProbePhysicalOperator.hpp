@@ -44,7 +44,7 @@ public:
 
     /// As the second phase gets triggered by the first phase, we receive a tuple buffer containing all information for performing the probe.
     /// Thus, we start a new pipeline and therefore, we create new Records from the built-up state.
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    OpenReturnState open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider, rightMemoryProvider;

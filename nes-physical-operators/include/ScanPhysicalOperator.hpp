@@ -37,7 +37,7 @@ public:
         std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         std::vector<Record::RecordFieldIdentifier> projections);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    OpenReturnState open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

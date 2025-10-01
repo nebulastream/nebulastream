@@ -93,7 +93,7 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     invoke(registerActivePipeline, operatorHandlerMemRef);
 };
 
-void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+OpenReturnState WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// Initializing the time function
     timeFunction->open(executionCtx, recordBuffer);
@@ -101,6 +101,7 @@ void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
     /// Creating the local state for the window operator build.
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
+    return OpenReturnState::FINISHED;
 }
 
 void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
