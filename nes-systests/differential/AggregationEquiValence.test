@@ -1,6 +1,6 @@
 # name: differential/AggregationEquivalence.test
 # description: Ensure differential queries agree for logically equivalent aggregation
-# groups: [Differential, Aggregation]
+# groups: [Differential, Aggregation, CompilationIntensive]
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
 CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
