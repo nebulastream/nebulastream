@@ -43,6 +43,8 @@ HJOperatorHandler::HJOperatorHandler(
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     const uint64_t maxNumberOfBuckets)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    , setupAlreadyCalledLeft(false)
+    , setupAlreadyCalledRight(false)
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
 {
@@ -63,6 +65,23 @@ HJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& ne
             NES_TRACE("Creating new hash-join slice for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
             return {std::make_shared<HJSlice>(sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
         });
+}
+
+bool HJOperatorHandler::wasSetupCalled(const JoinBuildSideType& buildSide)
+{
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Right: {
+            bool expectedValue = false;
+            return not setupAlreadyCalledRight.compare_exchange_strong(expectedValue, true);
+        }
+        case JoinBuildSideType::Left: {
+            bool expectedValue = false;
+            return not setupAlreadyCalledLeft.compare_exchange_strong(expectedValue, true);
+        }
+    }
+
+    std::unreachable();
 }
 
 void HJOperatorHandler::setNautilusCleanupExec(
