@@ -34,7 +34,8 @@ public:
         const QueryEngineConfiguration& configuration,
         std::shared_ptr<QueryEngineStatisticListener> statListener,
         std::shared_ptr<AbstractQueryStatusListener> listener,
-        std::shared_ptr<BufferManager> bm);
+        std::shared_ptr<BufferManager> bm,
+        WorkerId workerId);
     void stop(QueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();
@@ -50,6 +51,7 @@ public:
     std::shared_ptr<QueryEngineStatisticListener> statisticListener;
     std::shared_ptr<QueryCatalog> queryCatalog;
     std::unique_ptr<ThreadPool> threadPool;
+    WorkerId workerId;
 };
 
 }
