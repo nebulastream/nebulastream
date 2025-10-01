@@ -26,7 +26,7 @@ def process_benchmark(benchmark_dir, run_options='all'):
         # Setup directory structure based on run_options
         if run_options in ['single', 'all']:
             # Single operator directories
-            single_op_dir = benchmark_dir / "single_operator"
+            single_op_dir = benchmark_dir
             if single_op_dir.exists():
                 for op_type in ['filter', 'map']:
                     op_dir = single_op_dir / op_type
@@ -247,14 +247,14 @@ def process_benchmark(benchmark_dir, run_options='all'):
                         double_ops_df.to_csv(double_csv, index=False)
 
                     # Average results across runs for all queries
-                    avg_columns = ['query_id', 'layout', 'buffer_size', 'operator_type',
-                                   'is_double_op', 'operator_chain', 'swap_strategy']
-                    avg_df = combined_df.groupby(avg_columns).mean(numeric_only=True).reset_index()
+                    #avg_columns = ['query_id', 'layout', 'buffer_size', 'operator_type',
+                                   #'is_double_op', 'operator_chain', 'swap_strategy']
+                    #avg_df = combined_df.groupby(avg_columns).mean(numeric_only=True).reset_index()
 
                     avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
-                    avg_df.to_csv(avg_csv, index=False)
+                    #avg_df.to_csv(avg_csv, index=False)
 
-                    return str(avg_csv)
+                    return str(output_csv)
 
         except Exception as e:
             print(f"Error processing trace files: {e}")

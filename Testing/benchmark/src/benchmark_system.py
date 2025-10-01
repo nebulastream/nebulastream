@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--test-file', help='Use existing test file')
     parser.add_argument('--build-dir', default='cmake-build-release', help='Build directory name')
     parser.add_argument('--project-dir', default=os.environ.get('PWD', os.getcwd()), help='Project root directory')
-    parser.add_argument('--run-options', default='double', help='options: all, single or double')
+    parser.add_argument('--run-options', default='single', help='options: all, single or double')
     parser.add_argument('--use-latest', action='store_true', help='Use latest benchmark directory instead of creating new one')
     args = parser.parse_args()
 
@@ -215,16 +215,16 @@ def main():
             # Extract the results CSV path from the output
             results_csv = None
             for line in process_result.stdout.strip().split('\n'):
-                if '_avg_results.csv' in line:
+                if '_results.csv' in line:
                     parts = line.split()
                     for part in parts:
-                        if part.endswith('_avg_results.csv') and Path(part).exists():
+                        if part.endswith('_results.csv') and Path(part).exists():
                             results_csv = part
                             break
 
             # If not found in output, try direct path construction
             if not results_csv or not Path(results_csv).exists():
-                potential_csv = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
+                potential_csv = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_results.csv"
                 if potential_csv.exists():
                     results_csv = str(potential_csv)
                     print(f"Found results CSV by direct lookup: {results_csv}")
