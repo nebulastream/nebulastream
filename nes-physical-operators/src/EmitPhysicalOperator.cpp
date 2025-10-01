@@ -98,13 +98,14 @@ public:
     nautilus::val<int8_t*> bufferMemoryArea;
 };
 
-void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
+OpenReturnState EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
     const auto resultBuffer = RecordBuffer(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
     ctx.setLocalOperatorState(id, std::move(emitState));
+    return OpenReturnState::FINISHED;
 }
 
 void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
