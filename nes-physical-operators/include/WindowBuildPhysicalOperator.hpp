@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
@@ -53,7 +54,7 @@ public:
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
 
     /// Initializes the time function, e.g., method that extracts the timestamp from a record
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    OpenReturnState open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
     /// Passes emits slices that are ready to the second phase (probe) for further processing
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
