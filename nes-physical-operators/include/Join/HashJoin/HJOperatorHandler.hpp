@@ -56,14 +56,19 @@ public:
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
 
+    bool wasSetupCalled(const JoinBuildSideType& buildSide);
     void setNautilusCleanupExec(
         std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> nautilusCleanupExec, const JoinBuildSideType& buildSide);
     [[nodiscard]] std::vector<std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec>> getNautilusCleanupExec() const;
 
 private:
+    /// Is required to not perform the setup again and resolving a race condition to the cleanup state function
+    std::atomic<bool> setupAlreadyCalledLeft;
+    std::atomic<bool> setupAlreadyCalledRight;
     /// shared_ptr as multiple slices need access to it
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> leftCleanupStateNautilusFunction;
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> rightCleanupStateNautilusFunction;
+
 
     void emitSlicesToProbe(
         Slice& sliceLeft,
