@@ -82,6 +82,12 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
+    auto* operatorHandler = dynamic_cast<HJOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
+    if (operatorHandler->wasSetupCalled(joinBuildSide))
+    {
+        return;
+    }
+
     const auto cleanupStateNautilusFunction
         = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
             [copyOfHashMapOptions = hashMapOptions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
@@ -109,7 +115,6 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
                 }
             })));
     /// NOLINTEND(performance-unnecessary-value-param)
-    auto* operatorHandler = dynamic_cast<HJOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 }
 
