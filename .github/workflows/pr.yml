@@ -14,76 +14,93 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run-docs-update:
+  detect-docs-changes:
+    runs-on: ubuntu-22.04
+    outputs:
+      docs_changed: ${{ steps.changed.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: changed
+        uses: tj-actions/changed-files@v46.0.1
+        with:
+          files: |
+            docs/website/**
+
+  build-docs-website:
+    needs: detect-docs-changes
+    if: ${{ needs.detect-docs-changes.outputs.docs_changed == 'true' }}
     uses: ./.github/workflows/docs_website_sync.yml
     with:
       deploy: false
     secrets: inherit
-#  get-dev-images:
-#    uses: ./.github/workflows/get_dev_images.yml
-#    secrets: inherit
-#    with:
-#      branch-name: ${{ github.head_ref }}
-#      ref: ${{ github.event.pull_request.head.sha }}
-#
-#  smoke-tests:
-#    needs: [ get-dev-images ]
-#    uses: ./.github/workflows/smoke-tests.yml
-#    with:
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#      head_sha: ${{ github.event.pull_request.head.sha }}
-#      number_of_commits: ${{ github.event.pull_request.commits }}
-#    secrets: inherit
-#
-#  build-and-test:
-#    needs: [ get-dev-images, smoke-tests ]
-#    name: "Run build and test"
-#    uses: ./.github/workflows/build_and_test.yml
-#    secrets: inherit
-#    with:
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#      ref: ${{ github.event.pull_request.head.ref }}
-#
-#  large-tests:
-#    needs: [ get-dev-images, smoke-tests ]
-#    name: "Run large scale tests"
-#    uses: ./.github/workflows/large_test.yml
-#    with:
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#      ref: ${{ github.event.pull_request.head.ref }}
-#
-#  clang-tidy-report:
-#    needs: [ get-dev-images, smoke-tests ]
-#    name: "Run clang tidy report"
-#    uses: ./.github/workflows/clang_tidy_diff.yml
-#    with:
-#      head_sha: ${{ github.event.pull_request.head.sha }}
-#      base_sha: ${{ github.event.pull_request.base.sha }}
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#      number_of_commits: ${{ github.event.pull_request.commits }}
-#
-#  run_code_coverage:
-#    needs: [ get-dev-images, smoke-tests ]
-#    name: "Run Code Coverage"
-#    uses: ./.github/workflows/code_coverage.yml
-#    with:
-#      head_sha: ${{ github.event.pull_request.head.sha }}
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#    secrets: inherit
-#
-#  run_endless_mode:
-#    needs: [ get-dev-images, smoke-tests ]
-#    name: "Run Endless Mode"
-#    uses: ./.github/workflows/endless-mode.yml
-#    with:
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#      ref: ${{ github.event.pull_request.head.ref }}
-#
-#  test-nebuli-and-single-node-worker:
-#    needs: [ get-dev-images, smoke-tests ]
-#    name: "E2E Test using Nebuli and SingleNodeWorker"
-#    uses: ./.github/workflows/execute_query.yml
-#    with:
-#      ref: ${{ github.event.pull_request.head.sha }}
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#      runtime_seconds: '$((1*60))'
+
+  get-dev-images:
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      branch-name: ${{ github.head_ref }}
+      ref: ${{ github.event.pull_request.head.sha }}
+
+  smoke-tests:
+    needs: [ get-dev-images ]
+    uses: ./.github/workflows/smoke-tests.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits }}
+    secrets: inherit
+
+  build-and-test:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run build and test"
+    uses: ./.github/workflows/build_and_test.yml
+    secrets: inherit
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      ref: ${{ github.event.pull_request.head.ref }}
+
+  large-tests:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run large scale tests"
+    uses: ./.github/workflows/large_test.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      ref: ${{ github.event.pull_request.head.ref }}
+
+  clang-tidy-report:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run clang tidy report"
+    uses: ./.github/workflows/clang_tidy_diff.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      number_of_commits: ${{ github.event.pull_request.commits }}
+
+  run_code_coverage:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run Code Coverage"
+    uses: ./.github/workflows/code_coverage.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+    secrets: inherit
+
+  run_endless_mode:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run Endless Mode"
+    uses: ./.github/workflows/endless-mode.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      ref: ${{ github.event.pull_request.head.ref }}
+
+  test-nebuli-and-single-node-worker:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "E2E Test using Nebuli and SingleNodeWorker"
+    uses: ./.github/workflows/execute_query.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      runtime_seconds: '$((1*60))'
