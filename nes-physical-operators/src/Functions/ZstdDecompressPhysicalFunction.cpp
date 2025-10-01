@@ -98,8 +98,8 @@ PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterZ
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1, "Zstd compression function must have exactly one sub-function");
-    return ZstdDecompressPhysicalFunction(
-        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctionTypes[0]);
+    auto function = physicalFunctionRegistryArguments.childFunctions[0];
+    return ZstdDecompressPhysicalFunction(function, physicalFunctionRegistryArguments.dataType);
 }
 
 }

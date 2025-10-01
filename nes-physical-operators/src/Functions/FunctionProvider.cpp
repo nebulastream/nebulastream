@@ -18,7 +18,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <Functions/CastFieldPhysicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
@@ -42,12 +41,6 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
         childFunction.emplace_back(lowerFunction(child));
     }
 
-    std::vector<DataType> childFunctionTypes;
-    for (const auto& child : logicalFunction.getChildren())
-    {
-        childFunctionTypes.emplace_back(child.getDataType());
-    }
-
     /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
     if (const auto fieldAccessFunction = logicalFunction.tryGet<FieldAccessLogicalFunction>())
@@ -59,16 +52,8 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
         return lowerConstantFunction(*constantValueFunction);
     }
 
-    //TODO remove this case
-    if (const auto castToTypeNode = logicalFunction.tryGet<CastToTypeLogicalFunction>())
-    {
-        INVARIANT(childFunction.size() == 1, "CastFieldPhysicalFunction expects exact one child!");
-        return CastFieldPhysicalFunction(childFunction[0], castToTypeNode->getDataType());
-    }
-
-
     /// 3. Calling the registry to create an executable function.
-    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction, childFunctionTypes);
+    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction, logicalFunction.getDataType());
     if (const auto function
         = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments)))
     {

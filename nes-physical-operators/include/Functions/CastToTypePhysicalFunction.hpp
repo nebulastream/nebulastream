@@ -22,10 +22,10 @@
 namespace NES
 {
 
-class CastFieldPhysicalFunction : public PhysicalFunctionConcept
+class CastToTypePhysicalFunction : public PhysicalFunctionConcept
 {
 public:
-    explicit CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
+    explicit CastToTypePhysicalFunction(PhysicalFunction childFunction, DataType castToType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:

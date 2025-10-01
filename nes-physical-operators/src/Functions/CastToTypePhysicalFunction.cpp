@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/CastFieldPhysicalFunction.hpp>
+#include <Functions/CastToTypePhysicalFunction.hpp>
 
 #include <utility>
 #include <DataTypes/DataType.hpp>
@@ -20,18 +20,27 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
 
-CastFieldPhysicalFunction::CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType)
+CastToTypePhysicalFunction::CastToTypePhysicalFunction(PhysicalFunction childFunction, DataType castToType)
     : castToType(std::move(castToType)), childFunction(std::move(childFunction))
 {
 }
 
-VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal CastToTypePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
     return value.castToType(castToType.type);
+}
+
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterCastToTypePhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+{
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "CastFieldPhysicalFunction expects exact one child!");
+    auto function = physicalFunctionRegistryArguments.childFunctions[0];
+    return CastToTypePhysicalFunction(function, physicalFunctionRegistryArguments.dataType);
 }
 }
