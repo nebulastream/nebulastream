@@ -1,13 +1,13 @@
-watermark prediction final
+all params
 
 batch_size: 100000
 ingestion_rate: 100000000
 memory_bounds: 0 max
 match_rate: 70
-watermark_gaps: 10, max
+watermark_gaps: 1
 min_write_size: 0
-slice_store: FILE_BACKED
+slice_store: all
 queries: 2, 5
 timestamp_increment: 1
-watermark_predictor: all
+watermark_predictor: RLS
 with_prediction: true
