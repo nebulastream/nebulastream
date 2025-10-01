@@ -1,6 +1,6 @@
 # name: window/WindowAggregationStackedAggregations.test
 # description: Test window aggregations over different data types for (keyed) windows with stacked aggregations
-# groups: [Aggregation, WindowOperators]
+# groups: [Aggregation, WindowOperators, CompilationIntensive]
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
