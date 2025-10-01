@@ -26,13 +26,13 @@ from scipy.interpolate import interp1d
 #DATETIME = ['2025-09-29_15-02-13', '2025-09-29_17-16-29'] # Watermark Predictor Accuracy/Precision, old
 #DATETIME = ['2025-09-27_21-04-05', '2025-09-28_12-11-29', '2025-09-30_10-12-51', '2025-09-30_19-51-05'] # Watermark Predictor Comparison: Gaps 10.. Q2..Q5, Gaps 1 Q2..Q5, Gaps1 Q1..Q2, Gaps 1 Q5
 
-#DATETIME = ['2025-09-22_16-33-48', '2025-09-28_20-33-29', '2025-09-29_09-27-29', '2025-09-30_14-35-45'] # Prediction Ranges: DEFAULT, Q1-Q6, Q8, Q5
+#DATETIME = ['2025-09-22_16-33-48', '2025-09-28_20-33-29', '2025-09-29_09-27-29', '2025-09-30_14-35-45', '2025-10-01_07-50-16'] # Prediction Ranges: DEFAULT, Q1-Q6, Q8, Q5, DEFAULT Q5
 #DATETIME = ['2025-09-30_10-12-51', '2025-09-30_19-51-05'] # Watermark Predictor Comparison: Gaps1 Q1..Q2, Gaps 1 Q5
 #DATETIME = ['2025-09-30_11-29-26'] # Watermark Predictor Accuracy/Precision: Q1..Q2 Batch 100, Q5 Batch 10
 #DATETIME = ['2025-09-30_13-23-04'] # Latency: Q1..Q2 Batch 100
 #DATETIME = ['2025-09-29_20-52-42', '2025-09-30_16-48-00'] # ALL PARAMS: Q2..Q5, Q5
-#DATETIME = ['2025-09-30_23-15-15'] # Queries
-DATETIME = ['2025-09-30_20-04-58', '2025-10-01_00-24-10', '2025-10-01_00-39-07', '2025-10-01_00-52-03'] # RealWorld
+DATETIME = ['2025-09-22_16-33-48','2025-09-28_20-33-29', '2025-09-30_23-15-15'] # Queries
+#DATETIME = ['2025-09-30_20-04-58', '2025-10-01_00-24-10', '2025-10-01_00-39-07', '2025-10-01_00-52-03'] # RealWorld
 
 FILE = 'combined_benchmark_statistics.csv'
 #FILE = 'combined_slice_accesses.csv'
@@ -410,8 +410,8 @@ df['query_id'] = df['query'].map(query_mapping)
 #for query, query_id in query_mapping.items():
 #    print(f'{query_id}: {query}')
 #df = df[~df['query_id'].isin(['Q4', 'Q5', 'Q6'])]
-df['query_id'] = df['query_id'].str.replace('2', '5')
-df['query_id'] = df['query_id'].str.replace('1', '2')
+#df['query_id'] = df['query_id'].str.replace('2', '5')
+#df['query_id'] = df['query_id'].str.replace('1', '2')
 #df['query_id'] = df['query_id'].str.replace('9', '6')
 
 # Add a hue column with default params
@@ -425,7 +425,7 @@ df['memory_bounds_hue'] = df['query_id'] + ' | ' + df['memory_bounds']
 
 
 if not SLICE_ACCESSES and not LATENCY:
-    downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'file_backed_hue', 'watermark_predictor_hue', 'memory_bounds_hue'], 100)
+    downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'file_backed_hue', 'watermark_predictor_hue', 'memory_bounds_hue'])
 
 # %% Compare slice store types for different configs
 
@@ -475,7 +475,7 @@ for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
 def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate=False):
     param = 'window_start_normalized'
     #data[param] = data[param].astype(float)
-    cols = data['min_write_state_size'].sort_values().unique()
+    cols = [0] #data['min_write_state_size'].sort_values().unique()
     #cols = np.append(cols, np.nan)
     fig, axes = plt.subplots(len(metrics), len(cols), figsize=(len(cols) * 10, len(metrics) * 5), sharex=True)
     axes = axes.ravel()
@@ -620,6 +620,7 @@ for lower_memory_bound in df['lower_memory_bound'].unique():
 
         data_default = filter_by_default_values_except_params(data, ['query', 'min_write_state_size', 'with_prediction', 'max_num_watermark_gaps', 'watermark_predictor_type', 'batch_size'])
         data_default = data_default[data_default['slice_store_type'] == 'DEFAULT']
+        data_default = data_default[(data_default['query_id'] != 'Q5') | (data_default['batch_size'] == 1000)]
         data_memory_bound = filter_by_default_values_except_params(data, ['query', 'lower_memory_bound', 'upper_memory_bound', 'min_write_state_size', 'with_prediction', 'batch_size'])
         data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE BACKED']
         data_memory_bound = data_memory_bound[data_memory_bound['lower_memory_bound'] == lower_memory_bound]
@@ -673,7 +674,9 @@ def plot_shared_params(data, param, metrics, hue, labels, legend):
         label = labels[i]
         ax = axes[i]
 
-        data_filtered = filter_by_default_values_except_params(data, [param, 'batch_size', 'query'])
+        data_filtered = filter_by_default_values_except_params(data, [param, 'batch_size', 'query', 'watermark_predictor_type', 'max_num_watermark_gaps'])
+        if len(data_filtered) == 0:
+            continue
         if data_filtered[metric].max() - data_filtered[metric].min() >= 1000000000:
             yscale = "log"
         data_scaled, metric_unit = convert_units(data_filtered, metric, 'Tup')
@@ -687,10 +690,10 @@ def plot_shared_params(data, param, metrics, hue, labels, legend):
 
         if param == 'query':
             # Sort data by whether or not the query contained variable sized data
-            data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
-            data_scaled = data_scaled.sort_values(by=['var_sized_data', 'query'], ascending=[True, True])
+            #data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
+            #data_scaled = data_scaled.sort_values(by=['var_sized_data', 'query'], ascending=[True, True])
 
-            data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
+            #data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
             legend = 'Slice Store | Time Increment'
             param = 'query_id'
         if param == 'timestamp_increment':
@@ -750,14 +753,21 @@ def plot_shared_params(data, param, metrics, hue, labels, legend):
     plt.tight_layout()
     plt.show()
 
+default_param_values['lower_memory_bound'] = [0]
+default_param_values['upper_memory_bound'] = [np.iinfo(np.uint64).max]
 
-data = downsampled_df.sort_values(by=['slice_store_type', 'query_id'], ascending=[True, True])
-data = data[(data['query_id'] == 'Q2') | ((data['query_id'] == 'Q5') & (data['batch_size'] == 1000))]
+data = downsampled_df
+data_file_backed = data[data['slice_store_type'] == 'FILE BACKED']
+data_file_backed = data_file_backed[((data_file_backed['query_id'] == 'Q1') & (data_file_backed['batch_size'] == 100000) & (data_file_backed['watermark_predictor_type'] == 'RLS')) | ((data_file_backed['query_id'] != 'Q1') & (data_file_backed['batch_size'] == 1000))]
+data_default = data[data['slice_store_type'] == 'DEFAULT']
+data_default = data_default[((data_default['query_id'] == 'Q2') & (data_default['batch_size'] == 100000)) | ((data_default['query_id'] != 'Q2') & (data_default['batch_size'] == 1000))]
+data = pd.concat([data_file_backed, data_default], ignore_index=True)
 data = data[(data['window_start_normalized'] >= 1000) & (data['window_start_normalized'] <= 5000)]
+data = data.sort_values(by=['slice_store_type', 'query_id'], ascending=[True, True])
 for param in ['buffer_size_in_bytes', 'number_of_worker_threads', 'page_size', 'query']:
     #plot_shared_params(df, param, 'throughput_data', 'shared_hue', 'Throughput / sec', 'Slice Store | Query | Time Increment')
     print(data[param].unique())
-    plot_shared_params(data, param, ['throughput_tuples', 'memory'], 'shared_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query | Time Increment')
+    plot_shared_params(data, param, ['throughput_tuples', 'memory'], 'slice_store_type', ['Throughput', 'Memory Consumption'], 'Slice Store | Query | Time Increment')
 
 
 # %% File-Backed-Only parameter plots
@@ -818,6 +828,7 @@ def plot_file_backed_params(data, param, metrics, hue, labels, legend): #, color
             x_legend = 'Garbage Collection'
         elif param == 'file_descriptor_buffer_size':
             x_legend = 'File Descriptor Buffer Size'
+            param_unit += 'B'
         elif param == 'num_buffers_per_worker':
             x_legend = 'Number of Buffer per Worker Thread'
         else:
@@ -1072,7 +1083,7 @@ def plot_file_backed_latency(data, param, metric, hue, label, legend):
         yscale = "log"
     data_scaled, metric_unit = convert_units(data_filtered, metric, 's', 0)
 
-    plt.figure(figsize=(14, 6))
+    plt.figure(figsize=(6, 5))
     ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
     #sns.histplot(data=data_scaled, x=param, hue=hue, stat="percent", multiple="fill", ax=ax)
     #sns.countplot(data=data_scaled, x=param, hue=hue, stat="percent", ax=ax)
@@ -1089,11 +1100,13 @@ def plot_file_backed_latency(data, param, metric, hue, label, legend):
     else:
         ax.set_ylim(0, data_scaled[metric].max() * 1.1)
 
-    plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
-    plt.xlabel(param)
+    #plt.title(f'Effect of Queries on {label} of the Probing Phase') # (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    #plt.title(f'Effect of Watermark Predictors on {label} of the Building Phase') # (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    plt.title(f'Effect of {legend} on {label} of the {"Building" if param == "watermark_predictor_type" else "Probing"} Phase') # (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    plt.xlabel(legend)
     plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
     ax.grid(axis='y', which='major', linestyle='-', linewidth=1)
-    ax.legend(title=None) # legend)
+    #ax.legend(title=None) # legend)
     plt.tight_layout()
     plt.show()
 
@@ -1107,6 +1120,8 @@ def plot_file_backed_latency(data, param, metric, hue, label, legend):
 #default_param_values['prediction_time_delta'] = [0]
 
 file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
+file_backed_data['operation'] = file_backed_data['operation'].str.replace('WRITE', 'Build')
+file_backed_data['operation'] = file_backed_data['operation'].str.replace('READ', 'Probe')
 #print(file_backed_data['file_backed_hue'].unique())
 #for hue_value in file_backed_data['file_backed_hue'].unique():
     #data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
@@ -1114,8 +1129,15 @@ file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
     # if data_per_hue['query_id'].unique()[0] == 'Q3':
     #plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'watermark_predictor_hue', 'Prediction Accuracy', 'Query | Watermark Gaps | Sequence Numbers')
 
-file_backed_data['watermark_predictor_hue2'] = file_backed_data['watermark_predictor_type'] + ' | ' + file_backed_data['query_id']
-plot_file_backed_latency(file_backed_data, 'operation', 'latency', 'watermark_predictor_hue2', 'Latency', 'Query')
+#file_backed_data['watermark_predictor_hue2'] = file_backed_data['watermark_predictor_type'] + ' | ' + file_backed_data['query_id']
+file_backed_data = file_backed_data.sort_values(by=['watermark_predictor_type', 'query_id'], ascending=[True, True])
+
+for phase in file_backed_data['operation'].unique():
+    data = file_backed_data[file_backed_data['operation'] == phase]
+    if phase == 'Build':
+        plot_file_backed_latency(data, 'watermark_predictor_type', 'latency', 'file_backed_hue', 'Latency', 'Watermark Predictor')
+    else:
+        plot_file_backed_latency(data, 'query_id', 'latency', 'file_backed_hue', 'Latency', 'Query')
 
 
 # %%

@@ -20,6 +20,7 @@
 #include <Util/ThreadNaming.hpp>
 #include <ThroughputListener.hpp>
 
+// TODO compare with https://github.com/keyseven123/engine-statemanagement-paper/blob/feature/engine-paper/nes-single-node-worker/include/ThroughputListener.hpp
 namespace NES
 {
 
