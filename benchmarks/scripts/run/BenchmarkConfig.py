@@ -19,7 +19,7 @@ import numpy as np
 
 ## First value of every parameter is the default value
 # Source configuration parameters
-BATCH_SIZES = [100000] # , 10, 100, 1000]
+BATCH_SIZES = [1000] # , 10, 100, 1000]
 TIMESTAMP_INCREMENTS = [1] # , 100, 1000, 100000]
 INGESTION_RATES = [100000000] # , 0, 1000, 100000, 1000000]  # 0 means the source will ingest tuples as fast as possible
 MATCH_RATES = [70] # , 30, 0, 101]  # match rate in percent, values > 100 simply use a counter for every server
@@ -423,15 +423,15 @@ def create_watermark_prediction_benchmark_configs():
     prediction_params = {
         #"min_read_state_size": MIN_READ_STATE_SIZES,
         #"min_write_state_size": MIN_WRITE_STATE_SIZES,
-        "prediction_time_delta": PREDICTION_TIME_DELTAS[:3]
+        "prediction_time_delta": PREDICTION_TIME_DELTAS[:1]
     }
 
     # Generate configurations for each default combination of timestamp_increment and query, excluding default_params
     #default_timestamp_increments, default_queries = get_additional_default_values()
     for timestamp_increment in TIMESTAMP_INCREMENTS[:1]:
         for query in get_queries():
-            for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS[:3]:
-                for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS[:3]:
+            for max_num_watermark_gaps in MAX_NUM_WATERMARK_GAPS[:1]:
+                for max_num_sequence_numbers in MAX_NUM_SEQUENCE_NUMBERS[:1]:
                     if 10 * max_num_sequence_numbers < max_num_watermark_gaps:
                         continue
                     for watermark_predictor_type in WATERMARK_PREDICTOR_TYPES:

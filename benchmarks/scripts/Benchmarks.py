@@ -22,14 +22,23 @@ from scipy.interpolate import interp1d
 
 
 #DATETIME = ['2025-09-22_16-33-48', '2025-09-24_12-30-56', '2025-09-27_12-19-06'] # Prediction Ranges, wrong predictor
-#DATETIME = ['2025-09-22_16-33-48', '2025-09-28_20-33-29', '2025-09-29_09-27-29'] # Prediction Ranges
-#DATETIME = ['2025-09-27_21-04-05', '2025-09-28_12-11-29'] # Watermark Predictor Comparison
-#DATETIME = ['2025-09-28_08-16-27', '2025-09-28_16-27-06'] # Watermark Predictor Accuracy/Precision
-DATETIME = ['2025-09-29_15-02-13', '2025-09-29_17-16-29'] # Watermark Predictor Accuracy/Precision
+#DATETIME = ['2025-09-28_08-16-27', '2025-09-28_16-27-06'] # Watermark Predictor Accuracy/Precision, old
+#DATETIME = ['2025-09-29_15-02-13', '2025-09-29_17-16-29'] # Watermark Predictor Accuracy/Precision, old
+#DATETIME = ['2025-09-27_21-04-05', '2025-09-28_12-11-29', '2025-09-30_10-12-51', '2025-09-30_19-51-05'] # Watermark Predictor Comparison: Gaps 10.. Q2..Q5, Gaps 1 Q2..Q5, Gaps1 Q1..Q2, Gaps 1 Q5
 
-#FILE = 'combined_benchmark_statistics.csv'
-FILE = 'combined_slice_accesses.csv'
-SLICE_ACCESSES = True
+#DATETIME = ['2025-09-22_16-33-48', '2025-09-28_20-33-29', '2025-09-29_09-27-29', '2025-09-30_14-35-45'] # Prediction Ranges: DEFAULT, Q1-Q6, Q8, Q5
+#DATETIME = ['2025-09-30_10-12-51', '2025-09-30_19-51-05'] # Watermark Predictor Comparison: Gaps1 Q1..Q2, Gaps 1 Q5
+#DATETIME = ['2025-09-30_11-29-26'] # Watermark Predictor Accuracy/Precision: Q1..Q2 Batch 100, Q5 Batch 10
+#DATETIME = ['2025-09-30_13-23-04'] # Latency: Q1..Q2 Batch 100
+#DATETIME = ['2025-09-29_20-52-42', '2025-09-30_16-48-00'] # ALL PARAMS: Q2..Q5, Q5
+#DATETIME = ['2025-09-30_23-15-15'] # Queries
+DATETIME = ['2025-09-30_20-04-58', '2025-10-01_00-24-10', '2025-10-01_00-39-07', '2025-10-01_00-52-03'] # RealWorld
+
+FILE = 'combined_benchmark_statistics.csv'
+#FILE = 'combined_slice_accesses.csv'
+#FILE = 'combined_logging.csv'
+SLICE_ACCESSES = False
+LATENCY = False
 SERVER = 'amd'
 
 
@@ -400,8 +409,10 @@ query_mapping = {q: f'Q{i}' for i, q in enumerate(df['query'].unique(), start=1)
 df['query_id'] = df['query'].map(query_mapping)
 #for query, query_id in query_mapping.items():
 #    print(f'{query_id}: {query}')
-#df['query_id'] = df['query_id'].str.replace('2', '5')
-#df['query_id'] = df['query_id'].str.replace('1', '2')
+#df = df[~df['query_id'].isin(['Q4', 'Q5', 'Q6'])]
+df['query_id'] = df['query_id'].str.replace('2', '5')
+df['query_id'] = df['query_id'].str.replace('1', '2')
+#df['query_id'] = df['query_id'].str.replace('9', '6')
 
 # Add a hue column with default params
 df['shared_hue'] = df['slice_store_type'] + ' | ' + df['query_id'] # + ' | ' + df['timestamp_increment'].astype(str)
@@ -413,8 +424,8 @@ df['memory_bounds'] = df.apply(lambda row: f"({convert_unit(row['lower_memory_bo
 df['memory_bounds_hue'] = df['query_id'] + ' | ' + df['memory_bounds']
 
 
-if not SLICE_ACCESSES:
-    downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'file_backed_hue', 'watermark_predictor_hue', 'memory_bounds_hue'])
+if not SLICE_ACCESSES and not LATENCY:
+    downsampled_df = downsample_data(df, all_config_params + ['slice_store_type', 'query_id', 'shared_hue', 'file_backed_hue', 'watermark_predictor_hue', 'memory_bounds_hue'], 100)
 
 # %% Compare slice store types for different configs
 
@@ -463,8 +474,9 @@ for i, config_chunk in enumerate(chunk_list(common_config_dicts, chunk_size)):
 
 def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate=False):
     param = 'window_start_normalized'
-    cols = [0] #data['min_write_state_size'].sort_values().unique()
-    cols = np.append(cols, np.nan)
+    #data[param] = data[param].astype(float)
+    cols = data['min_write_state_size'].sort_values().unique()
+    #cols = np.append(cols, np.nan)
     fig, axes = plt.subplots(len(metrics), len(cols), figsize=(len(cols) * 10, len(metrics) * 5), sharex=True)
     axes = axes.ravel()
     for i, metric in enumerate(metrics):
@@ -477,13 +489,14 @@ def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate
             else:
                 default_param_values['with_prediction'] = ['True']
                 default_param_values['min_write_state_size'] = [min_write_state_size]
-            data_filtered = filter_by_default_values_except_params(data, [param, 'query', 'lower_memory_bound', 'upper_memory_bound'])
+            data_filtered = filter_by_default_values_except_params(data, [param, 'query', 'lower_memory_bound', 'upper_memory_bound', 'max_num_watermark_gaps', 'watermark_predictor_type', 'batch_size'])
             if len(data_filtered) == 0:
                 continue
             # TODO fix for multiple queries: data_filtered = filter_by_config(data_filtered, config)
             if data_filtered[metric].max() - data_filtered[metric].min() >= 1000000000:
+            #if data_filtered[metric].max() - data_filtered[metric].min() >= 10000000:
                 yscale = "log"
-            data_scaled, metric_unit = convert_units(data_filtered, metric)
+            data_scaled, metric_unit = convert_units(data_filtered, metric, 'Tup')
 
             if interpolate:
                 normalized_data = normalize_time_per_groups(data_scaled, param, ['dir_name'], param)
@@ -493,11 +506,13 @@ def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate
                 filtered_data = cut_param_max_min_per_groups(data_scaled, param, ['dir_name'])
                 shifted_data = shift_time_per_groups(filtered_data, param, ['dir_name'], param)
                 data_scaled, param_unit = convert_units(shifted_data, param, 's', 2)
+                #data_scaled = data_scaled[data_scaled[param] <= 2]
 
             # Set estimator based on metric
             if metric == 'memory':
+                metric_unit = metric_unit.replace('Tup', 'B')
                 estimator = np.max
-                vals = convert_and_get_memory_bounds(data_scaled, 2 * data_filtered[metric].max(), 2 * data_scaled[metric].max(), metric)
+                vals = [] #convert_and_get_memory_bounds(data_scaled, 2 * data_filtered[metric].max(), 2 * data_scaled[metric].max(), metric)
             else:
                 estimator = np.mean
                 metric_unit += ' / sec'
@@ -511,9 +526,9 @@ def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate
 
             # Add shaded regions for memory bounds
             if 'vals' in locals():
-                #if len(vals) == 3:
-                #    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[0], y2=vals[1], alpha=0.15, label=f'({vals[0]:.2f} {metric_unit}, {vals[1]:.2f} {metric_unit})')
-                #    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[1], y2=vals[2], alpha=0.15, label=f'({vals[1]:.2f} {metric_unit}, {vals[2]:.2f} {metric_unit})')
+                if len(vals) == 3:
+                    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[0], y2=vals[1], alpha=0.15, label=f'({vals[0]:.2f} {metric_unit}, {vals[1]:.2f} {metric_unit})')
+                    ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[1], y2=vals[2], alpha=0.15, label=f'({vals[1]:.2f} {metric_unit}, {vals[2]:.2f} {metric_unit})')
                 if len(vals) == 2:
                     ax.fill_between(x=[data_scaled[param].min(), data_scaled[param].max()], y1=vals[0], y2=vals[1], alpha=0.15, label=f'({vals[0]:.2f} {metric_unit}, {vals[1]:.2f} {metric_unit})')
                 if len(vals) == 1:
@@ -527,8 +542,8 @@ def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate
             else:
                 ax.set_ylim(0, data_scaled[metric].max() * 1.1)
 
-            if i == 0:
-                ax.set_title(f'MinWriteStateSize = {convert_unit(min_write_state_size)}' if not np.isnan(min_write_state_size) else 'No Prediction')
+            #if i == 0:
+            #    ax.set_title(f'MinWriteStateSize = {convert_unit(min_write_state_size)}' if not np.isnan(min_write_state_size) else 'No Prediction')
             if i == len(metrics) - 1:
                 ax.set_xlabel(f'Time [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else 'Time')
             ax.set_ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
@@ -544,8 +559,8 @@ def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate
     #plt.subplots_adjust(left=0.05, right=0.99, top=0.9, bottom=0.15)
 
     #plt.title(f'Effect of {param} on {label}')
-    data['memory_bounds'] = data[data['slice_store_type'] == 'FILE BACKED'].apply(lambda row: f'({convert_unit(row["lower_memory_bound"])}, {convert_unit(row["upper_memory_bound"])})', axis=1)
-    fig.suptitle(f'{" and ".join(map(str, labels))} over Time for Prediction Range {data[data["slice_store_type"] == "FILE BACKED"]["memory_bounds"].unique()[0]}')
+    #data['memory_bounds'] = data[data['slice_store_type'] == 'FILE BACKED'].apply(lambda row: f'({convert_unit(row["lower_memory_bound"])}, {convert_unit(row["upper_memory_bound"])})', axis=1)
+    fig.suptitle(f'{" and ".join(map(str, labels))} over Time') # for Prediction Range {data[data["slice_store_type"] == "FILE BACKED"]["memory_bounds"].unique()[0]}')
     #plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
     ##plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
     ##plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
@@ -557,6 +572,12 @@ def plot_time_comparison(data, config, metrics, hue, labels, legend, interpolate
 
 default_param_values['lower_memory_bound'] = [0]
 default_param_values['upper_memory_bound'] = [np.iinfo(np.uint64).max]
+default_param_values['max_num_watermark_gaps'] = [1]
+default_param_values['watermark_predictor_type'] = ['RLS']
+
+#for query in downsampled_df['query_id'].unique():
+#    data = downsampled_df[downsampled_df['query_id'] == query]
+#    plot_time_comparison(data, {}, ['throughput_tuples', 'memory'], 'slice_store_type', ['Throughput', 'Memory Consumption'], 'Slice Store | Query', False)
 
 
 # %%
@@ -584,8 +605,8 @@ memory_bounds = [(0, np.iinfo(np.uint64).max), (8388608, 16777216)] #, (67108864
 #for min_write_state_size in df['min_write_state_size'].unique():
 for lower_memory_bound in df['lower_memory_bound'].unique():
     for upper_memory_bound in df['upper_memory_bound'].unique():
-        if lower_memory_bound > upper_memory_bound: # or (lower_memory_bound, upper_memory_bound) not in memory_bounds:
-            continue
+        #if lower_memory_bound > upper_memory_bound: # or (lower_memory_bound, upper_memory_bound) not in memory_bounds:
+        #    continue
         #data = df[((df['query_id'] == 'Q2') & (df['timestamp_increment'] == 1)) |
                   #((df['query_id'] == 'Q2') & (df['timestamp_increment'] == 1)) |
                   #((df['query_id'] == 'Q4') & (df['timestamp_increment'] == 1)) |
@@ -593,16 +614,17 @@ for lower_memory_bound in df['lower_memory_bound'].unique():
         #          ((df['query_id'] == 'Q5') & (df['timestamp_increment'] == 1)) |
                   #((df['query_id'] == 'Q8') & (df['timestamp_increment'] == 1)) |
         #          ((df['query_id'] == 'Q8') & (df['timestamp_increment'] == 1))]
-        data = df[(df['query_id'] == 'Q2') | (df['query_id'] == 'Q7') | (df['query_id'] == 'Q5') | (df['query_id'] == 'Q10')]
-        #data = downsampled_df[~downsampled_df['query_id'].isin(['Q1', 'Q3', 'Q4', 'Q6', 'Q7', 'Q9'])]
+        #data = df[(df['query_id'] == 'Q2') | (df['query_id'] == 'Q7') | (df['query_id'] == 'Q5') | (df['query_id'] == 'Q10')]
+        data = downsampled_df[~downsampled_df['query_id'].isin(['Q1', 'Q3', 'Q4', 'Q6', 'Q7', 'Q9'])]
         #data = data[data['min_write_state_size'] == 0]
 
-        data_default = filter_by_default_values_except_params(data, ['query', 'min_write_state_size', 'with_prediction', 'max_num_watermark_gaps', 'watermark_predictor_type'])
+        data_default = filter_by_default_values_except_params(data, ['query', 'min_write_state_size', 'with_prediction', 'max_num_watermark_gaps', 'watermark_predictor_type', 'batch_size'])
         data_default = data_default[data_default['slice_store_type'] == 'DEFAULT']
-        data_memory_bound = filter_by_default_values_except_params(data, ['query', 'lower_memory_bound', 'upper_memory_bound', 'min_write_state_size', 'with_prediction'])
+        data_memory_bound = filter_by_default_values_except_params(data, ['query', 'lower_memory_bound', 'upper_memory_bound', 'min_write_state_size', 'with_prediction', 'batch_size'])
         data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE BACKED']
         data_memory_bound = data_memory_bound[data_memory_bound['lower_memory_bound'] == lower_memory_bound]
         data_memory_bound = data_memory_bound[data_memory_bound['upper_memory_bound'] == upper_memory_bound]
+        data_memory_bound = data_memory_bound[(data_memory_bound['query_id'] != 'Q5') | (data_memory_bound['batch_size'] == 1000)]
         #data_memory_bound = data_memory_bound[data_memory_bound['min_write_state_size'] == 0]
         data = pd.concat([data_default, data_memory_bound], ignore_index=True)
 
@@ -618,81 +640,135 @@ for lower_memory_bound in df['lower_memory_bound'].unique():
             #print(config)
             continue
 
+        #data = downsampled_df
+        data = data.sort_values(by=['slice_store_type', 'query_id'], ascending=[True, True])
+        #print(data[data['slice_store_type'] == 'FILE BACKED']['query_id'].unique())
         #plot_time_comparison(data, config, 'throughput_data', 'shared_hue', 'Throughput', 'Slice Store | Query', False)
-        plot_time_comparison(data, config, ['throughput_data', 'memory'], 'shared_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query', False)
+        plot_time_comparison(data, config, ['throughput_tuples', 'memory'], 'shared_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query', False)
 
 
 # %%
 
-data = df[(df['query_id'] == 'Q2') | (df['query_id'] == 'Q5')]
+data = downsampled_df[(downsampled_df['query_id'] == 'Q2') | ((downsampled_df['query_id'] == 'Q5') & (downsampled_df['batch_size'] == 1000))]
 memory_bounds = [(0, np.iinfo(np.uint64).max), (8388608, 16777216)] #, (67108864, 134217728)]
-data_memory_bound = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound'])
+data_memory_bound = filter_by_default_values_except_params(data, ['lower_memory_bound', 'upper_memory_bound', 'batch_size'])
 data_memory_bound = data_memory_bound[data_memory_bound['slice_store_type'] == 'FILE BACKED']
 data_memory_bound = data_memory_bound[((data_memory_bound['lower_memory_bound'] == 16777216) & (data_memory_bound['upper_memory_bound'] == 33554432)) | ((data_memory_bound['lower_memory_bound'] == 8388608) & (data_memory_bound['upper_memory_bound'] == 16777216))]
 data_memory_bound = data_memory_bound.sort_values(by=['lower_memory_bound', 'query'], ascending=[True, True])
-plot_time_comparison(data_memory_bound, config, ['throughput_data', 'memory'], 'tmp_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query', False)
+plot_time_comparison(data_memory_bound, config, ['throughput_tuples', 'memory'], 'memory_bounds_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query', False)
 
 
 # %% Shared parameter plots
 
-def plot_shared_params(data, param, metric, hue, label, legend):
-    #data = data[data['buffer_size_in_bytes'] <= 131072]
-    #data = data[data['page_size'] <= 131072]
+def plot_shared_params(data, param, metrics, hue, labels, legend):
+    data = data[data['buffer_size_in_bytes'] <= 131072]
+    data = data[data['page_size'] <= 131072]
     #data = data[data['ingestion_rate'] <= 10000]
     #data = data[data['timestamp_increment'] <= 10000]
     #data = data[data['batch_size'] < 10000]
 
-    data = filter_by_default_values_except_params(data, [param])
-    data_scaled, metric_unit = convert_units(data, metric)
+    fig, axes = plt.subplots(len(metrics), 1, figsize=(8, len(metrics) * 5), sharex=True)
+    axes = axes.ravel()
+    for i, metric in enumerate(metrics):
+        label = labels[i]
+        ax = axes[i]
 
-    if param == 'query':
-        # Sort data by whether or not the query contained variable sized data
-        data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
-        data_scaled = data_scaled.sort_values(by=['var_sized_data', 'query'], ascending=[True, True])
+        data_filtered = filter_by_default_values_except_params(data, [param, 'batch_size', 'query'])
+        if data_filtered[metric].max() - data_filtered[metric].min() >= 1000000000:
+            yscale = "log"
+        data_scaled, metric_unit = convert_units(data_filtered, metric, 'Tup')
 
-        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
-        legend = 'Slice Store | Time Increment'
-        param = 'query_id'
-    if param == 'timestamp_increment':
-        data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['query_id']
-        legend = 'Slice Store | Query'
+        if metric == 'memory':
+            estimator = np.max
+            metric_unit = metric_unit.replace('Tup', 'B')
+        else:
+            estimator = np.mean
+            metric_unit += ' / sec'
 
-    plt.figure(figsize=(14, 6))
-    if pd.api.types.is_numeric_dtype(data_scaled[param]):
-        data_scaled, param_unit = convert_units(data_scaled, param, '')
-        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o')
-        ax.legend(title=legend)
+        if param == 'query':
+            # Sort data by whether or not the query contained variable sized data
+            data_scaled['var_sized_data'] = data_scaled['query'].str.contains('tcp_source4')
+            data_scaled = data_scaled.sort_values(by=['var_sized_data', 'query'], ascending=[True, True])
 
-        # Add labels for min and max values of metric for this param for each value of hue
-        add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
-    else:
-        ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+            data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['timestamp_increment'].astype(str)
+            legend = 'Slice Store | Time Increment'
+            param = 'query_id'
+        if param == 'timestamp_increment':
+            data_scaled[hue] = data_scaled['slice_store_type'] + ' | ' + data_scaled['query_id']
+            legend = 'Slice Store | Query'
 
-        # Create numeric labels for each hue value and add legend
-        add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend, 0.2)
+        #plt.figure(figsize=(14, 6))
+        if pd.api.types.is_numeric_dtype(data_scaled[param]) and param != 'number_of_worker_threads':
+            data_scaled, param_unit = convert_units(data_scaled, param)
+            sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar=None, marker=None, ax=ax)
+            ax.legend(title=legend)
 
-    # Add legend below
-    if param == 'query_id':
-        add_query_fig_text(' | ' + data_scaled[param].unique(), 0.35, -0.65)
-    else:
-        add_query_fig_text(ax.get_legend_handles_labels()[1], 0.2, 0.0)
+            # Add labels for min and max values of metric for this param for each value of hue
+            #add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
+        else:
+            sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
 
-    plt.title(f'Effect of {param} on {label}')
-    plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
-    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+            # Create numeric labels for each hue value and add legend
+            #add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend, 0.2)
+
+        if 'yscale' in locals():
+            ax.set_yscale(yscale)
+            del yscale
+        else:
+            ax.set_ylim(0, data_scaled[metric].max() * 1.1)
+
+        # Add legend below
+        #if param == 'query_id':
+        #    add_query_fig_text(' | ' + data_scaled[param].unique(), 0.35, -0.65)
+        #else:
+        #    add_query_fig_text(ax.get_legend_handles_labels()[1], 0.2, 0.0)if i == len(metrics) - 1:
+        if param == 'buffer_size_in_bytes':
+            x_legend = 'Buffer Size'
+        elif param == 'number_of_worker_threads':
+            x_legend = 'Number of Worker Threads'
+        elif param == 'page_size':
+            x_legend = 'Page Size'
+        elif param == 'query_id':
+            x_legend = 'Query'
+        else:
+            x_legend = param
+
+        #ax.set_xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
+        ax.set_xlabel(f'{x_legend} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else x_legend)
+        #ax.set_xlabel(param)
+        ax.set_ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+        ax.grid(axis='y', which='major', linestyle='-', linewidth=1)
+
+        ax.legend(title=None) # legend)
+        if param == 'query_id':
+            param = 'query'
+
+    fig.suptitle(f'Effect of {x_legend} on {" and ".join(map(str, labels))}')
+    #plt.title(f'Effect of {param} on {label}')
+    #plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
+    #plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+    plt.tight_layout()
     plt.show()
 
 
-for param in shared_config_params:
-    plot_shared_params(df, param, 'throughput_data', 'shared_hue', 'Throughput / sec', 'Slice Store | Query | Time Increment')
-    plot_shared_params(df, param, 'memory', 'shared_hue', 'Memory', 'Slice Store | Query | Time Increment')
+data = downsampled_df.sort_values(by=['slice_store_type', 'query_id'], ascending=[True, True])
+data = data[(data['query_id'] == 'Q2') | ((data['query_id'] == 'Q5') & (data['batch_size'] == 1000))]
+data = data[(data['window_start_normalized'] >= 1000) & (data['window_start_normalized'] <= 5000)]
+for param in ['buffer_size_in_bytes', 'number_of_worker_threads', 'page_size', 'query']:
+    #plot_shared_params(df, param, 'throughput_data', 'shared_hue', 'Throughput / sec', 'Slice Store | Query | Time Increment')
+    print(data[param].unique())
+    plot_shared_params(data, param, ['throughput_tuples', 'memory'], 'shared_hue', ['Throughput', 'Memory Consumption'], 'Slice Store | Query | Time Increment')
 
 
 # %% File-Backed-Only parameter plots
 
-def plot_file_backed_params(data, param, metric, hue, label, legend): #, color):
+def plot_file_backed_params(data, param, metrics, hue, labels, legend): #, color):
+    if param == 'watermark_predictor_type':
+        return
     # data = data[data['match_rate'] == 90]
-    data = data[data['file_descriptor_buffer_size'] <= 131072]
+    data = data[data['file_descriptor_buffer_size'] <= 16384]
+    data = data[data['num_buffers_per_worker'] <= 16384]
+    data = data[data['max_num_file_descriptors'] < 16384]
     # data = data[data['prediction_time_delta'] <= 100]
     # data = data[data['max_num_watermark_gaps'] <= 100]
     #if param == 'max_memory_consumption' or hue == 'max_memory_consumption':
@@ -700,49 +776,95 @@ def plot_file_backed_params(data, param, metric, hue, label, legend): #, color):
     if param == 'max_num_sequence_numbers':
         data = data[data['max_num_sequence_numbers'] <= 1000]
 
-    data = filter_by_default_values_except_params(data, [param])
-    data_scaled, metric_unit = convert_units(data, metric)
+    fig, axes = plt.subplots(len(metrics), 1, figsize=(6, len(metrics) * 5), sharex=True)
+    axes = axes.ravel()
+    for i, metric in enumerate(metrics):
+        label = labels[i]
+        ax = axes[i]
 
-    plt.figure(figsize=(14, 6))
-    if pd.api.types.is_numeric_dtype(data_scaled[param]):
-        data_scaled, param_unit = convert_units(data_scaled, param, '')
-        ax = sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar='sd', marker='o') #, palette=('dark:' + color))
+        data_filtered = filter_by_default_values_except_params(data, [param, 'query', 'batch_size'])
+        if data_filtered[metric].max() - data_filtered[metric].min() >= 100000000:
+            yscale = "log"
+        data_scaled, metric_unit = convert_units(data_filtered, metric, 'Tup')
 
-        # Add labels for min and max values of metric for this param for each value of hue
-        add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
-    else:
-        ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue) #, palette=('dark:' + color))
+        if metric == 'memory':
+            estimator = np.max
+            metric_unit = metric_unit.replace('Tup', 'B')
+        else:
+            estimator = np.mean
+            metric_unit += ' / sec'
 
-        #handles, labels = ax.get_legend_handles_labels()
-        #custom_labels = [f'{scaled_df[hue].iloc[0]:.1f} {label_unit}' for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
-        #ax.legend(handles, custom_labels, title='Max Memory')
+        #plt.figure(figsize=(14, 6))
+        if pd.api.types.is_numeric_dtype(data_scaled[param]):
+            data_scaled, param_unit = convert_units(data_scaled, param, '')
+            sns.lineplot(data=data_scaled, x=param, y=metric, hue=hue, errorbar=None, marker=None, ax=ax) #, palette=('dark:' + color))
 
-    # Add legend below
-    add_query_fig_text([' | ' + lbl for lbl in ax.get_legend_handles_labels()[1]], 0.2, 0.0)
+            # Add labels for min and max values of metric for this param for each value of hue
+            #add_min_max_labels_per_group(data_scaled, hue, metric, ax, param)
+        else:
+            sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax) #, palette=('dark:' + color))
+    
+            #handles, labels = ax.get_legend_handles_labels()
+            #custom_labels = [f'{scaled_df[hue].iloc[0]:.1f} {label_unit}' for lbl in labels for scaled_df, label_unit in [convert_units(pd.DataFrame({hue: [float(lbl)]}), hue)]]
+            #ax.legend(handles, custom_labels, title='Max Memory')
 
-    plt.title(f'Effect of {param} on {label} (File-Backed Only)')
-    plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
-    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
-    plt.grid(axis='y', which='major', linestyle='-', linewidth=1)
-    plt.legend(title=legend)
+        # Add legend below
+        #add_query_fig_text([' | ' + lbl for lbl in ax.get_legend_handles_labels()[1]], 0.2, 0.0)
+        #if i == 0:
+        #    ax.set_title(f'MinWriteStateSize = {convert_unit(min_write_state_size)}' if not np.isnan(min_write_state_size) else 'No Prediction')
+        if param == 'file_layout':
+            x_legend = 'File Layout'
+        elif param == 'with_cleanup':
+            x_legend = 'Garbage Collection'
+        elif param == 'file_descriptor_buffer_size':
+            x_legend = 'File Descriptor Buffer Size'
+        elif param == 'num_buffers_per_worker':
+            x_legend = 'Number of Buffer per Worker Thread'
+        else:
+            x_legend = param
+
+        if 'yscale' in locals():
+            ax.set_yscale(yscale)
+            del yscale
+        else:
+            ax.set_ylim(0, data_scaled[metric].max() * 1.1)
+        if i == len(metrics) - 1:
+            ax.set_xlabel(f'{x_legend} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else x_legend)
+        ax.set_ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+        ax.grid(axis='y', which='major', linestyle='-', linewidth=1)
+        ax.legend(title=None) # legend)
+    fig.suptitle(f'Effect of {x_legend} on {" and ".join(map(str, labels))}') #, fontsize=16)
+    plt.tight_layout()
+    #plt.title(f'Effect of {param} on {label} (File-Backed Only)')
+    #plt.xlabel(f'{param} [{param_unit}]' if 'param_unit' in locals() and param_unit != '' else param)
+    #plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+    #plt.grid(axis='y', which='major', linestyle='-', linewidth=1)
+    #plt.legend(title=legend)
     plt.show()
 
 
 default_param_values['prediction_time_delta'] = [0]
+for i, file_layout in enumerate(default_param_values['file_layout']):
+    default_param_values['file_layout'][i] = default_param_values['file_layout'][i].replace('_', ' ')
 
-file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
+file_backed_data = downsampled_df[downsampled_df['slice_store_type'] == 'FILE BACKED']
+#file_backed_data = file_backed_data[file_backed_data['query_id'].isin(['Q1', 'Q2'])]
+file_backed_data = file_backed_data[(file_backed_data['query_id'] == 'Q2') | ((file_backed_data['query_id'] == 'Q5') & (file_backed_data['batch_size'] == 1000))]
+file_backed_data = file_backed_data[(file_backed_data['window_start_normalized'] >= 1000) & (file_backed_data['window_start_normalized'] <= 5000)]
+file_backed_data = file_backed_data.sort_values(by=['watermark_predictor_type', 'slice_store_type', 'query_id'], ascending=[True, True, True])
+file_backed_data['file_layout'] = file_backed_data['file_layout'].str.replace('_', ' ')
 #file_backed_data = file_backed_data[(file_backed_data['max_num_sequence_numbers'] == 100) | (file_backed_data['max_num_sequence_numbers'] == np.iinfo(np.uint64).max)]
 #file_backed_data = file_backed_data[file_backed_data['max_num_watermark_gaps'] != 100]
 #file_backed_data = expand_constant_params_for_groups(file_backed_data, 'max_memory_consumption', 'memory_model')
 #file_backed_data = add_categorical_param(file_backed_data, 'max_memory_consumption', 'max_memory_consumption_cat')
-for param in file_backed_config_params:
+for param in ['file_descriptor_buffer_size', 'file_layout', 'max_num_file_descriptors', 'with_cleanup', 'num_buffers_per_worker']:
     #if param == 'max_memory_consumption':
     #    hue = 'memory_model'
     #elif param == 'memory_model':
     #    hue = 'max_memory_consumption'
         #hue = 'max_memory_consumption_cat'
-    plot_file_backed_params(file_backed_data, param, 'throughput_data', 'file_backed_hue', 'Throughput / sec', 'Query | Time Increment') #, 'blue')
-    plot_file_backed_params(file_backed_data, param, 'memory', 'file_backed_hue', 'Memory', 'Query | Time Increment') #, 'orange')
+    #plot_file_backed_params(file_backed_data, param, 'throughput_data', 'file_backed_hue', 'Throughput / sec', 'Query | Time Increment') #, 'blue')
+    plot_file_backed_params(file_backed_data, param, ['throughput_tuples', 'memory'], 'file_backed_hue', ['Throughput', 'Memory Consumption'], 'Query | Time Increment') #, 'orange')
 
 
 # %% Watermark-Predictor parameter plots
@@ -864,9 +986,9 @@ plot_watermark_predictor_accuracy_precision(file_backed_data, 'watermark_predict
 # %% Memory-Bounds plots for different memory models
 
 def plot_memory_bounds_comparison(data, param, metrics, hue, labels, legend):
-    cols = data['min_write_state_size'].sort_values().unique()
-    cols = np.append(cols, np.nan)
-    fig, axes = plt.subplots(len(metrics), len(cols), figsize=(len(cols) * 8, len(metrics) * 5)) #, sharex=True)
+    cols = [0] #data['min_write_state_size'].sort_values().unique()
+    #cols = np.append(cols, np.nan)
+    fig, axes = plt.subplots(len(metrics), len(cols), figsize=(len(cols) * 8, len(metrics) * 5), sharex=True)
     axes = axes.ravel()
     for i, metric in enumerate(metrics):
         label = labels[i]
@@ -878,14 +1000,15 @@ def plot_memory_bounds_comparison(data, param, metrics, hue, labels, legend):
             else:
                 default_param_values['with_prediction'] = ['True']
                 default_param_values['min_write_state_size'] = [min_write_state_size]
-            filtered_data = filter_by_default_values_except_params(data, [param, 'lower_memory_bound', 'upper_memory_bound'])
+            filtered_data = filter_by_default_values_except_params(data, [param, 'lower_memory_bound', 'upper_memory_bound', 'batch_size'])
             if filtered_data[metric].max() - filtered_data[metric].min() >= 1000000000:
                 yscale = "log"
-            data_scaled, metric_unit = convert_units(filtered_data, metric)
+            data_scaled, metric_unit = convert_units(filtered_data, metric, 'Tup')
 
             sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue, ax=ax)
 
             if metric == 'memory':
+                metric_unit = metric_unit.replace('Tup', 'B')
                 # Add shaded regions for memory bounds
                 for k, (group_name, group_data) in enumerate(filtered_data.groupby(param, sort=False)):
                     #if 0 < group_data['lower_memory_bound'].unique()[0] : # <= filtered_data[metric].max():
@@ -904,8 +1027,8 @@ def plot_memory_bounds_comparison(data, param, metrics, hue, labels, legend):
             else:
                 ax.set_ylim(0, data_scaled[metric].max() * 1.1)
 
-            if i == 0:
-                ax.set_title(f'MinWriteStateSize = {convert_unit(min_write_state_size)}' if not np.isnan(min_write_state_size) else 'No Prediction')
+            #if i == 0:
+            #    ax.set_title(f'MinWriteStateSize = {convert_unit(min_write_state_size)}' if not np.isnan(min_write_state_size) else 'No Prediction')
             if i == len(metrics) - 1:
                 ax.set_xlabel('Prediction Range (Lower Threshold, Upper Threshold)')
             ax.set_ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
@@ -919,23 +1042,80 @@ def plot_memory_bounds_comparison(data, param, metrics, hue, labels, legend):
 
 default_param_values['lower_memory_bound'] = [0]
 default_param_values['upper_memory_bound'] = [np.iinfo(np.uint64).max]
-default_param_values['with_prediction'] = ['True']
+default_param_values['max_num_watermark_gaps'] = [1]
+default_param_values['watermark_predictor_type'] = ['RLS']
 
 file_backed_data = downsampled_df[downsampled_df['slice_store_type'] == 'FILE BACKED']
-file_backed_data = file_backed_data[~file_backed_data['query_id'].isin(['Q1', 'Q3', 'Q4', 'Q6', 'Q7', 'Q9'])]
+file_backed_data = file_backed_data[file_backed_data['query_id'].isin(['Q2', 'Q5', 'Q8'])]
 file_backed_data = file_backed_data[file_backed_data['timestamp_increment'] == 1]
 #file_backed_data = file_backed_data[file_backed_data['with_prediction'] == 'False']
 file_backed_data = file_backed_data[(file_backed_data['window_start_normalized'] >= 1000) & (file_backed_data['window_start_normalized'] <= 5000)]
+file_backed_data = file_backed_data[(file_backed_data['query_id'] != 'Q5') | (file_backed_data['batch_size'] == 1000)]
 
 memory_bounds = [(0, 0), (0, np.iinfo(np.uint64).max), (8388608, 16777216), (16777216, 33554432), (33554432, 67108864), (67108864, 134217728), (np.iinfo(np.uint64).max, np.iinfo(np.uint64).max)]
 file_backed_data = file_backed_data[file_backed_data.apply(lambda row: (row['lower_memory_bound'], row['upper_memory_bound']) in memory_bounds, axis=1)]
 file_backed_data['memory_bounds'] = file_backed_data.apply(lambda row: f"({convert_unit(row['lower_memory_bound'])},\n{convert_unit(row['upper_memory_bound'])})", axis=1)
 
+file_backed_data = file_backed_data.sort_values(by=['slice_store_type', 'query_id'], ascending=[True, True])
 #for min_write_state_size in [0, 4096, 8388608]:
 #    default_param_values['min_write_state_size'] = [min_write_state_size]
 #plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['throughput_data'], 'query_id', ['Throughput'], 'Query')
 #plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['memory'], 'query_id', ['Memory Consumption'], 'Query')
-plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['throughput_data', 'memory'], 'query_id', ['Throughput', 'Memory Consumption'], 'Query')
+plot_memory_bounds_comparison(file_backed_data, 'memory_bounds', ['throughput_tuples', 'memory'], 'query_id', ['Throughput', 'Memory Consumption'], 'Query')
+
+
+# %% File-Backed latency plots
+
+def plot_file_backed_latency(data, param, metric, hue, label, legend):
+    data_filtered = filter_by_default_values_except_params(data, [param])
+    if data_filtered[metric].max() - data_filtered[metric].min() >= 1000000:
+        yscale = "log"
+    data_scaled, metric_unit = convert_units(data_filtered, metric, 's', 0)
+
+    plt.figure(figsize=(14, 6))
+    ax = sns.boxplot(data=data_scaled, x=param, y=metric, hue=hue)
+    #sns.histplot(data=data_scaled, x=param, hue=hue, stat="percent", multiple="fill", ax=ax)
+    #sns.countplot(data=data_scaled, x=param, hue=hue, stat="percent", ax=ax)
+
+    # Create numeric labels for each hue value and add legend
+    #add_numeric_labels_per_hue(ax, data_scaled, hue, param, legend, 0.0675)
+
+    # Add legend below
+    #add_query_fig_text([' | ' + lbl for lbl in data['file_backed_hue'].unique()], 0.2, 0.0)
+
+    if 'yscale' in locals():
+        ax.set_yscale(yscale)
+        del yscale
+    else:
+        ax.set_ylim(0, data_scaled[metric].max() * 1.1)
+
+    plt.title(f'Effect of {param} on {label} (File-Backed Only) with query_id={data["query_id"].unique()[0]} and timestamp_increment={data["timestamp_increment"].unique()[0]}')
+    plt.xlabel(param)
+    plt.ylabel(f'{label} [{metric_unit}]' if metric_unit != '' else label)
+    ax.grid(axis='y', which='major', linestyle='-', linewidth=1)
+    ax.legend(title=None) # legend)
+    plt.tight_layout()
+    plt.show()
+
+
+#df = df.head(4)
+#accuracy = (
+#    df.groupby("watermark_predictor_type")["prediction_accuracy"]
+#      .mean()
+#      .reset_index()
+#)
+#default_param_values['prediction_time_delta'] = [0]
+
+file_backed_data = df[df['slice_store_type'] == 'FILE BACKED']
+#print(file_backed_data['file_backed_hue'].unique())
+#for hue_value in file_backed_data['file_backed_hue'].unique():
+    #data_per_hue = file_backed_data[file_backed_data['file_backed_hue'] == hue_value]
+    #print(len(data_per_hue))
+    # if data_per_hue['query_id'].unique()[0] == 'Q3':
+    #plot_watermark_predictor_accuracy_precision(data_per_hue, 'watermark_predictor_type', 'prediction_accuracy', 'watermark_predictor_hue', 'Prediction Accuracy', 'Query | Watermark Gaps | Sequence Numbers')
+
+file_backed_data['watermark_predictor_hue2'] = file_backed_data['watermark_predictor_type'] + ' | ' + file_backed_data['query_id']
+plot_file_backed_latency(file_backed_data, 'operation', 'latency', 'watermark_predictor_hue2', 'Latency', 'Query')
 
 
 # %%
@@ -944,3 +1124,4 @@ print(query_mapping)
 print(df['lower_memory_bound'].unique())
 print(df['upper_memory_bound'].unique())
 print(df['min_write_state_size'].unique())
+print(len(df['dir_name'].unique()))

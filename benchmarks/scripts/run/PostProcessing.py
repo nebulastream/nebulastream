@@ -535,7 +535,7 @@ class PostProcessing:
             # Keep only relevant data within the measurement interval
             #df = df[(df['window_start_normalized'] >= self.startup_time) & (
             data = df[(df['start_normalized'] >= self.startup_time) & (
-                    df['start_normalized'] <= self.measure_interval)]
+                    df['end_normalized'] <= self.measure_interval)]
 
             if data.empty:
                 print(f"WARNING: {stat_file} produced no data")
