@@ -1,6 +1,6 @@
 # name: union/Union.test
 # description: Test large unions caused by source expansion
-# groups: [Union]
+# groups: [Union, CompilationIntensive]
 
 Source stream UINT64 id UINT64 value UINT64 timestamp
 SINK file_sink UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
