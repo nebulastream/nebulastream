@@ -1,49 +1,33 @@
-name: Sync website docs to documentation repo
+name: Build (and optionally deploy) documentation website
 
 on:
   workflow_call:
     inputs:
       deploy:
-        description: "If true, run the deploy step (placeholder)"
+        description: "If true, run the deploy step"
         required: true
         type: boolean
     secrets:
       ACCESS_TOKEN_DOCUMENTATION:
         required: true
-  # Nightly at 00:00 UTC (~02:00 Berlin summer, ~01:00 winter)
-  schedule:
-    - cron: "0 0 * * *"
+  # Keep manual trigger if you want ad-hoc runs; remove if undesired.
   workflow_dispatch: {}
 
 jobs:
-  sync:
+  build_website:
     runs-on: ubuntu-22.04
     permissions:
       contents: read
 
     steps:
-      # 0) Checkout source repo
-      - name: Checkout nebulastream
+      # 0) Checkout source repo (this repo)
+      - name: Checkout source repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 0.1) Detect changes under docs/website/**
-      - name: Detect changed files in docs/website/**
-        id: changes
-        uses: tj-actions/changed-files@v46.0.1
-        with:
-          files: |
-            docs/website/**
-
-      # 0.2) Short-circuit if no changes
-      - name: No docs changes, nothing to do
-        if: ${{ steps.changes.outputs.any_changed != 'true' }}
-        run: echo "No changes in docs/website/**; exiting early."
-
-      # 1) Verify source folder (only if changes)
+      # 1) Verify source folder
       - name: Verify source folder
-        if: ${{ steps.changes.outputs.any_changed == 'true' }}
         run: |
           set -e
           SRC="docs/website"
@@ -53,9 +37,8 @@ jobs:
           fi
           echo "Found source: $SRC"
 
-      # 2) Checkout destination repo (only if changes)
-      - name: Checkout documentation repo (target)
-        if: ${{ steps.changes.outputs.any_changed == 'true' }}
+      # 2) Checkout destination (documentation) repo
+      - name: Checkout documentation repo
         uses: actions/checkout@v4
         with:
           repository: nebulastream/documentation
@@ -64,9 +47,8 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.ACCESS_TOKEN_DOCUMENTATION }}
 
-      # 3) Sync Markdown/content (only if changes)
+      # 3) Sync Markdown/content
       - name: Sync docs → content/en/docs (excluding resources/)
-        if: ${{ steps.changes.outputs.any_changed == 'true' }}
         run: |
           set -euxo pipefail
           SRC="docs/website/"
@@ -77,9 +59,8 @@ jobs:
             "$SRC" "$DST"
           git -C docs-repo status --porcelain || true
 
-      # 3b) Sync static resources (only if changes)
+      # 3b) Sync static resources
       - name: Sync static resources → docs-repo/static/nes
-        if: ${{ steps.changes.outputs.any_changed == 'true' }}
         run: |
           set -euxo pipefail
           if [ -d docs/website/resources ]; then
@@ -90,27 +71,23 @@ jobs:
             echo "No docs/website/resources directory found; skipping."
           fi
 
-      # 4) Build website (only if changes)
+      # 4) Build website
       - uses: actions/setup-node@v4
-        if: ${{ steps.changes.outputs.any_changed == 'true' }}
       - name: Install dependencies
-        if: ${{ steps.changes.outputs.any_changed == 'true' }}
         working-directory: docs-repo
-        continue-on-error: true
         run: npm install
       - name: Build production website
-        if: ${{ steps.changes.outputs.any_changed == 'true' }}
         working-directory: docs-repo
         run: npm run build
 
-      # 5) Deploy (placeholder) — only if changes AND deploy=true
+      # 5) Deploy (placeholder) — only if deploy=true
       - name: Deploy (placeholder)
-        if: ${{ steps.changes.outputs.any_changed == 'true' && inputs.deploy }}
+        if: ${{ inputs.deploy }}
         run: echo "deployed!"
-
-        #- name: Deploy to GitHub Pages
-        # continue-on-error: true
-        #uses: peaceiris/actions-gh-pages@v4
-        #with:
-        # github_token: ${{ secrets.GITHUB_TOKEN }}
-        #publish_dir: ./public
+        # Example:
+        # - name: Deploy to GitHub Pages
+        #   if: ${{ inputs.deploy }}
+        #   uses: peaceiris/actions-gh-pages@v4
+        #   with:
+        #     github_token: ${{ secrets.GITHUB_TOKEN }}
+        #     publish_dir: docs-repo/public

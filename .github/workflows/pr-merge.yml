@@ -5,6 +5,12 @@ on:
     types: [ closed ]
 
 jobs:
+  build-and-deploy-docs:
+    if: ${{ github.event.pull_request.merged == true }}
+    uses: ./.github/workflows/docs_website_sync.yml
+    with:
+      deploy: true
+    secrets: inherit
   get-dev-images:
     if: github.event.pull_request.merged == true
     uses: ./.github/workflows/get_dev_images.yml
