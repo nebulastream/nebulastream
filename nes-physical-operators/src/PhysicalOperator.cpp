@@ -47,14 +47,14 @@ void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx, CompilationC
     setupChild(executionCtx, compilationContext);
 }
 
-void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
+OpenReturnState PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    openChild(executionCtx, rb);
+    return openChild(executionCtx, recordBuffer);
 }
 
-void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    closeChild(executionCtx, rb);
+    closeChild(executionCtx, recordBuffer);
 }
 
 void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const
@@ -73,10 +73,10 @@ void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx, Compila
     getChild().value().setup(executionCtx, compilationContext);
 }
 
-void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+OpenReturnState PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().open(executionCtx, recordBuffer);
+    return getChild().value().open(executionCtx, recordBuffer);
 }
 
 void PhysicalOperatorConcept::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -129,9 +129,9 @@ void PhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&
     self->setup(executionCtx, compilationContext);
 }
 
-void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+OpenReturnState PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    self->open(executionCtx, recordBuffer);
+    return self->open(executionCtx, recordBuffer);
 }
 
 void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

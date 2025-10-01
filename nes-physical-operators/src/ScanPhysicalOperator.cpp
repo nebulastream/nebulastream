@@ -36,7 +36,7 @@ ScanPhysicalOperator::ScanPhysicalOperator(
 {
 }
 
-void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+OpenReturnState ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -54,6 +54,7 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
+    return OpenReturnState::FINISHED;
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const
