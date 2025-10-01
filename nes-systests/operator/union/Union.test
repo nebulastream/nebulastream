@@ -20,6 +20,12 @@ Source stream3 UINT64 id UINT64 id2 UINT64 value UINT64 timestamp INLINE
 1,2,2,3002
 1,2,2,3003
 
+Source stream3_1 UINT64 id2 UINT64 value2 UINT64 timestamp INLINE
+1,1,1005
+1,1,1008
+2,2,2005
+2,2,2006
+
 SINK sink UINT64 id UINT64 value UINT64 timestamp
 # Simple Union
 SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink
@@ -115,6 +121,34 @@ INTO sink4
 65
 2
 
+SINK sink5 UINT64 idstream3_1$start UINT64 idstream3_1$end UINT64 id UINT64 value UINT64 timestamp UINT64 stream3_1$id2 UINT64 stream3_1$value2 UINT64 stream3_1$timestamp
+
+SELECT *
+FROM (SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2))
+INNER JOIN (SELECT * FROM stream3_1)
+ON (id = id2)
+WINDOW TUMBLING (timestamp, size 1 sec)
+INTO sink5;
+----
+1000,2000,1,1,1000,1,1,1005
+1000,2000,1,1,1001,1,1,1005
+1000,2000,1,1,1002,1,1,1005
+1000,2000,1,1,1003,1,1,1005
+1000,2000,1,1,1000,1,1,1008
+1000,2000,1,1,1001,1,1,1008
+1000,2000,1,1,1002,1,1,1008
+1000,2000,1,1,1003,1,1,1008
+2000,3000,2,2,2000,2,2,2005
+2000,3000,2,2,2001,2,2,2005
+2000,3000,2,2,2002,2,2,2005
+2000,3000,2,2,2003,2,2,2005
+2000,3000,2,2,2000,2,2,2006
+2000,3000,2,2,2001,2,2,2006
+2000,3000,2,2,2002,2,2,2006
+2000,3000,2,2,2003,2,2,2006
+
+
+
 # This demonstrates that all pending windows are triggered at the end of the execution
 Source stream6 UINT64 value UINT64 timestamp INLINE
 1,1000
@@ -128,7 +162,6 @@ Source stream7 UINT64 value UINT64 timestamp INLINE
 3,1002
 2,2003
 
-SINK sink5 UINT64 max_value
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM stream6 UNION SELECT * FROM stream7
