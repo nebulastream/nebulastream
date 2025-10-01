@@ -1,6 +1,6 @@
 # name: join/JoinMultipleKeys.test
 # description: Test join operator with multiple join keys
-# groups: [WindowOperators, Join]
+# groups: [WindowOperators, Join, CompilationIntensive]
 
 # Source definitions
 Source stream UINT64 id UINT64 value UINT64 timestamp FILE

@@ -1,6 +1,6 @@
 # name: window/WindowAggregationDifferentDataTypes.test
 # description: Test window aggregations over different data types
-# groups: [Aggregation, WindowOperators]
+# groups: [Aggregation, WindowOperators, CompilationIntensive]
 
 
 Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 CHAR c UINT64 ts INLINE
