@@ -25,10 +25,11 @@ namespace NES
 class ZstdDecompressPhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    ZstdDecompressPhysicalFunction(PhysicalFunction childPhysicalFunction);
+    ZstdDecompressPhysicalFunction(PhysicalFunction childPhysicalFunction, DataType type);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
     PhysicalFunction childPhysicalFunction;
+    DataType type;
 };
 }

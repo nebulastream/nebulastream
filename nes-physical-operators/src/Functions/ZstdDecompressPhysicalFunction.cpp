@@ -31,36 +31,65 @@ namespace NES
 VarVal ZstdDecompressPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childPhysicalFunction.execute(record, arena);
-    auto varSizedValueCompressed = value.cast<VariableSizedData>();
+    if (type.type == DataType::Type::VARSIZED)
+    {
+        auto varSizedValueCompressed = value.cast<VariableSizedData>();
 
-    auto decompressedSize = nautilus::invoke(
-        +[](uint8_t* compressed, size_t inputSize) { return static_cast<uint64_t>(ZSTD_getFrameContentSize(compressed, inputSize)); },
-        varSizedValueCompressed.getContent(),
-        varSizedValueCompressed.getContentSize());
+        auto decompressedSize = nautilus::invoke(
+            +[](uint8_t* compressed, size_t inputSize) { return static_cast<uint64_t>(ZSTD_getFrameContentSize(compressed, inputSize)); },
+            varSizedValueCompressed.getContent(),
+            varSizedValueCompressed.getContentSize());
 
-    // //TODO can we also call this outside of nautilus to avoid calling invoke twice?
-    auto decompressedVarSizedTotalSize = decompressedSize + nautilus::val<size_t>(sizeof(uint32_t));
-    auto memDecompressed = arena.allocateMemory(decompressedVarSizedTotalSize);
+        // //TODO can we also call this outside of nautilus to avoid calling invoke twice?
+        auto decompressedVarSizedTotalSize = decompressedSize + nautilus::val<size_t>(sizeof(uint32_t));
+        auto memDecompressed = arena.allocateMemory(decompressedVarSizedTotalSize);
 
-    nautilus::invoke(
-        +[](size_t inputSize, int8_t* inputData, size_t decompressedSize, int8_t* decompressedData)
-        {
-            //currently we ignore the returned compressed size, checking the actual returned size for error handlin might be desirable
-            *std::bit_cast<uint32_t*>(decompressedData) = static_cast<uint32_t>(decompressedSize);
-            size_t compressedSize = ZSTD_decompress(decompressedData + sizeof(uint32_t), decompressedSize, inputData, inputSize);
-            //TODO: error handling?
-        },
-        varSizedValueCompressed.getContentSize(),
-        varSizedValueCompressed.getContent(),
-        decompressedSize,
-        memDecompressed);
+        nautilus::invoke(
+            +[](size_t inputSize, int8_t* inputData, size_t decompressedSize, int8_t* decompressedData)
+            {
+                //currently we ignore the returned compressed size, checking the actual returned size for error handlin might be desirable
+                *std::bit_cast<uint32_t*>(decompressedData) = static_cast<uint32_t>(decompressedSize);
+                size_t compressedSize = ZSTD_decompress(decompressedData + sizeof(uint32_t), decompressedSize, inputData, inputSize);
+                //TODO: error handling?
+            },
+            varSizedValueCompressed.getContentSize(),
+            varSizedValueCompressed.getContent(),
+            decompressedSize,
+            memDecompressed);
 
-    VariableSizedData decompressedVarSized(memDecompressed);
-    return decompressedVarSized;
+        VariableSizedData decompressedVarSized(memDecompressed);
+        return decompressedVarSized;
+    }
+    else
+    {
+        auto varSizedValueCompressed = value.cast<VariableSizedData>();
+
+        //todo: we should be able to skip this, because we know the size
+        auto decompressedSize = nautilus::invoke(
+            +[](uint8_t* compressed, size_t inputSize) { return static_cast<uint64_t>(ZSTD_getFrameContentSize(compressed, inputSize)); },
+            varSizedValueCompressed.getContent(),
+            varSizedValueCompressed.getContentSize());
+
+        auto memDecompressed = arena.allocateMemory(decompressedSize);
+
+        nautilus::invoke(
+            +[](size_t inputSize, int8_t* inputData, size_t decompressedSize, int8_t* decompressedData)
+            {
+                //currently we ignore the returned compressed size, checking the actual returned size for error handlin might be desirable
+                size_t compressedSize = ZSTD_decompress(decompressedData, decompressedSize, inputData, inputSize);
+                //TODO: error handling?
+            },
+            varSizedValueCompressed.getContentSize(),
+            varSizedValueCompressed.getContent(),
+            decompressedSize,
+            memDecompressed);
+        auto decompressedValue = VarVal::readVarValFromMemory(memDecompressed, type.type);
+        return decompressedValue;
+    }
 }
 
-ZstdDecompressPhysicalFunction::ZstdDecompressPhysicalFunction(PhysicalFunction childPhysicalFunction)
-    : childPhysicalFunction(childPhysicalFunction)
+ZstdDecompressPhysicalFunction::ZstdDecompressPhysicalFunction(PhysicalFunction childPhysicalFunction, DataType type)
+    : childPhysicalFunction(childPhysicalFunction), type(type)
 {
 }
 
@@ -69,7 +98,8 @@ PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterZ
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1, "Zstd compression function must have exactly one sub-function");
-    return ZstdDecompressPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+    return ZstdDecompressPhysicalFunction(
+        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctionTypes[0]);
 }
 
 }

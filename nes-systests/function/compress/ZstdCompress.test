@@ -4,17 +4,26 @@
 
 Source stream VARSIZED data INLINE
 abcdef
+xyz
 
-# todo floatsource
-# Source stream  data INLINE
-# abcdef
+Source floatStream FLOAT64 data INLINE
+32.8
 
-Sink sinkStream VARSIZED data
-SELECT ZstdCompress(data) AS data FROM stream INTO sinkStream
-----
-abcdef
+Source intStream UINT64 data INLINE
+58
 
 Sink sinkStream VARSIZED data
 SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM stream INTO sinkStream
 ----
 abcdef
+xyz
+
+Sink sinkFloat FLOAT64 data
+SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM floatStream INTO sinkFloat
+----
+32.8
+
+Sink sinkInt UINT64 data
+SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM intStream INTO sinkInt
+----
+58

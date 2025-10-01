@@ -67,7 +67,6 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     }
 
 
-
     /// 3. Calling the registry to create an executable function.
     auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction, childFunctionTypes);
     if (const auto function
