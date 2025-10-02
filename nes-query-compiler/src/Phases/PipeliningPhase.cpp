@@ -16,18 +16,18 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/FormatScanPhysicalOperator.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/ScanProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -58,7 +58,7 @@ createScanOperator(const Pipeline& prevPipeline, const std::optional<Schema>& in
     const auto formatScanConfig = (prevPipeline.isSourcePipeline())
         ? std::optional{prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig()}
         : std::nullopt;
-    return provideInputFormatterTask(formatScanConfig, memoryProvider);
+    return provideScan(formatScanConfig, memoryProvider);
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline

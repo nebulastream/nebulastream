@@ -10,15 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-sources-test-utils Util/TestSource.cpp)
-target_include_directories(nes-sources-test-utils PUBLIC ../private Util)
-target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-memory-test-utils nes-scan)
+include(ExternalProject)
+include(GoogleTest)
 
-function(add_nes_source_test)
+add_library(nes-scan-test-utils ${CMAKE_CURRENT_SOURCE_DIR}/Util/InputFormatterTestUtil.cpp)
+target_link_libraries(nes-scan-test-utils PUBLIC nes-scan nes-executable-test-utils)
+target_include_directories(nes-scan-test-utils PUBLIC ${CMAKE_SOURCE_DIR}/nes-scan/private ${CMAKE_CURRENT_SOURCE_DIR}/Util/)
+
+function(add_nes_input_formatter_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-memory-test-utils nes-sources-test-utils)
+    target_link_libraries(${TARGET_NAME} nes-scan-test-utils)
 endfunction()
 
-add_nes_source_test(source-thread-test SourceThreadTest.cpp)
-add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)
+add_subdirectory(UnitTests)

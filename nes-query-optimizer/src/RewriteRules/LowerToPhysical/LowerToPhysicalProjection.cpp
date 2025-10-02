@@ -20,15 +20,17 @@
 #include <vector>
 
 #include <Functions/FunctionProvider.hpp>
-#include <InputFormatters/FormatScanPhysicalOperator.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/ScanProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <ErrorHandling.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -61,7 +63,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto bufferSize = conf.pageSize.getValue();
 
     const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, inputSchema);
-    auto scan = provideInputFormatterTask(getParserConfig(projectionLogicalOperator), memoryProvider);
+    auto scan = provideScan(getParserConfig(projectionLogicalOperator), memoryProvider);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
