@@ -1,0 +1,43 @@
+query: |
+  SELECT user_id FROM tcp_source INTO csv_sink
+
+logical:
+  - name: tcp_source
+    schema:
+      - name: user_id
+        type: VARSIZED
+      - name: page_id
+        type: VARSIZED
+      - name: campaign_id
+        type: VARSIZED
+      - name: ad_id
+        type: VARSIZED
+      - name: ad_type
+        type: VARSIZED
+      - name: event_type
+        type: VARSIZED
+      - name: event_time
+        type: VARSIZED
+      - name: ip_address
+        type: VARSIZED
+
+physical:
+  - logical: tcp_source
+    type: BlockingTCP
+    parserConfig:
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
+      type: CSV
+    sourceConfig:
+      socketPort: 1111
+      socketHost: localhost
+
+sinks:
+  name: csv_sink
+  schema:
+    - name: tcp_source$user_id
+      type: VARSIZED
+  type: Monitoring
+  config:
+    filePath: "/home/leo/Dokumente/Work/nebulastream-public/testing/output/outputQuery1.csv"
+    sizeOfInputDataInBytes: 3713333331
