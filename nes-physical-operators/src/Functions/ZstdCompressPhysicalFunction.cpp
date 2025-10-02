@@ -31,90 +31,61 @@ namespace NES
 VarVal ZstdCompressPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childPhysicalFunction.execute(record, arena);
+
+    // get the size and the memory location of the value
+    auto valueMem = nautilus::val<int8_t*>(0);
+    auto valueSize = nautilus::val<uint32_t>(0);
     if (type.type == DataType::Type::VARSIZED)
     {
         auto varSizedValueInput = value.cast<VariableSizedData>();
-
-        auto maxCompressedSize
-            = nautilus::invoke(+[](size_t inputSize) { return ZSTD_compressBound(inputSize); }, varSizedValueInput.getContentSize());
-
-        //TODO can we also call this outside of nautilus to avoid calling invoke twice?
-        auto tempBufferCompressed = arena.allocateMemory(maxCompressedSize);
-
-        auto compressedSize = nautilus::invoke(
-            +[](size_t inputSize, int8_t* inputData, size_t compressedMaxSize, int8_t* compressedData)
-            {
-                //TODO: make compression level configurable
-                auto compressionLevel = 3;
-                return ZSTD_compress(compressedData, compressedMaxSize, inputData, inputSize, compressionLevel);
-                //TODO: error handling?
-            },
-            varSizedValueInput.getContentSize(),
-            varSizedValueInput.getContent(),
-            maxCompressedSize,
-            tempBufferCompressed);
-
-        /*
-         * TODO: is this copying really necessary or can we just use the original buffer and supply a shorter size value?
-         * The answer depends on:
-         * - Does the system at any point assume that a varsized value really uses all the mamory that was allocated for the ref (probably not?)?
-         * - Can we return the big allocation to the arena to be reused? Then copying to the smaller buffer allows freeing the much l
-        */
-        auto compressedVarSizedTotalSize = compressedSize + nautilus::val<size_t>(sizeof(uint32_t));
-        auto memCompressedVarSized = arena.allocateMemory(compressedVarSizedTotalSize);
-
-        nautilus::invoke(
-            +[](int8_t* destination, int8_t* source, size_t compressedSize)
-            {
-                *std::bit_cast<uint32_t*>(destination) = static_cast<uint32_t>(compressedSize);
-                std::memcpy((destination + sizeof(uint32_t)), source, compressedSize);
-            },
-            memCompressedVarSized,
-            tempBufferCompressed,
-            compressedSize);
-
-        VariableSizedData compressedDataVarsized(memCompressedVarSized);
-        return compressedDataVarsized;
+        valueMem = varSizedValueInput.getContent();
+        valueSize = varSizedValueInput.getContentSize();
     }
     else
     {
         auto typedValue = value.castToType(type.type);
-        auto valueSize = nautilus::val<uint32_t>(type.getSizeInBytes());
-        auto maxCompressedSize = nautilus::invoke(+[](size_t inputSize) { return ZSTD_compressBound(inputSize); }, valueSize);
-        auto tempBufferCompressed = arena.allocateMemory(maxCompressedSize);
-
+        valueSize = nautilus::val<uint32_t>(type.getSizeInBytes());
         //TODO can this be done zero copy?
-        auto tempBufferUncompressed = arena.allocateMemory(valueSize);
-        typedValue.writeToMemory(tempBufferUncompressed);
-
-        auto compressedSize = nautilus::invoke(
-            +[](size_t inputSize, int8_t* inputData, size_t compressedMaxSize, int8_t* compressedData)
-            {
-                //TODO: make compression level configurable
-                auto compressionLevel = 3;
-                return ZSTD_compress(compressedData, compressedMaxSize, inputData, inputSize, compressionLevel);
-                //TODO: error handling?
-            },
-            valueSize,
-            tempBufferUncompressed,
-            maxCompressedSize,
-            tempBufferCompressed);
-        auto compressedVarSizedTotalSize = compressedSize + nautilus::val<size_t>(sizeof(uint32_t));
-        auto memCompressedVarSized = arena.allocateMemory(compressedVarSizedTotalSize);
-
-        nautilus::invoke(
-            +[](int8_t* destination, int8_t* source, size_t compressedSize)
-            {
-                *std::bit_cast<uint32_t*>(destination) = static_cast<uint32_t>(compressedSize);
-                std::memcpy((destination + sizeof(uint32_t)), source, compressedSize);
-            },
-            memCompressedVarSized,
-            tempBufferCompressed,
-            compressedSize);
-
-        VariableSizedData compressedDataVarsized(memCompressedVarSized);
-        return compressedDataVarsized;
+        valueMem = arena.allocateMemory(valueSize);
+        typedValue.writeToMemory(valueMem);
     }
+
+    //compress the data
+    auto maxCompressedSize = nautilus::invoke(+[](size_t inputSize) { return ZSTD_compressBound(inputSize); }, valueSize);
+    auto tempBufferCompressed = arena.allocateMemory(maxCompressedSize);
+    auto compressedSize = nautilus::invoke(
+        +[](size_t inputSize, int8_t* inputData, size_t compressedMaxSize, int8_t* compressedData)
+        {
+            //TODO: make compression level configurable
+            auto compressionLevel = 3;
+            return ZSTD_compress(compressedData, compressedMaxSize, inputData, inputSize, compressionLevel);
+        },
+        valueSize,
+        valueMem,
+        maxCompressedSize,
+        tempBufferCompressed);
+
+    //TODO: error handling can be inserted here for non positive compressed sizes
+
+    //copy the compressed data to a buffer fitting it's actual size
+    auto compressedVarSizedTotalSize = compressedSize + nautilus::val<size_t>(sizeof(uint32_t));
+    //this allocation can be optimized away if we use the original buffer. But this requires some additional metadata to handle the
+    //case when the compressed data is not actually smaller than the original
+    auto memCompressedVarSized = arena.allocateMemory(compressedVarSizedTotalSize);
+    nautilus::invoke(
+        +[](int8_t* destination, int8_t* source, size_t compressedSize)
+        {
+            //set the size field of the varsized value
+            *std::bit_cast<uint32_t*>(destination) = static_cast<uint32_t>(compressedSize);
+            //copy data
+            std::memcpy((destination + sizeof(uint32_t)), source, compressedSize);
+        },
+        memCompressedVarSized,
+        tempBufferCompressed,
+        compressedSize);
+
+    VariableSizedData compressedDataVarsized(memCompressedVarSized);
+    return compressedDataVarsized;
 }
 
 ZstdCompressPhysicalFunction::ZstdCompressPhysicalFunction(PhysicalFunction childPhysicalFunction, DataType type)

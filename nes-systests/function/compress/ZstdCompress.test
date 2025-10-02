@@ -14,9 +14,14 @@ Source intStream UINT64 data INLINE
 58
 2342
 
+Source varsizedStream VARSIZED data INLINE
+abcdef
+xyz
+
 SINK sinkF64 FLOAT64 f64_i8 FLOAT64 f64_i8_plus_1 FLOAT64 f64_i16 FLOAT64 f64_i16_plus_1 FLOAT64 f64_i32 FLOAT64 f64_i32_plus_1 FLOAT64 f64_i64 FLOAT64 f64_i64_plus_1 FLOAT64 f64_u8 FLOAT64 f64_u8_plus_1 FLOAT64 f64_u16 FLOAT64 f64_u16_plus_1 FLOAT64 f64_u32 FLOAT64 f64_u32_plus_1 FLOAT64 f64_u64 FLOAT64 f64_u64_plus_1 FLOAT64 f64_f32 FLOAT64 f64_f32_plus_1 FLOAT64 f64_f64 FLOAT64 f64_f64_plus_1 VARSIZED varsized
 Sink sinkFloat FLOAT64 data
 Sink sinkInt UINT64 data
+Sink sinkVarsized VARSIZED data
 
 # Div f64 value with all other data types
 SELECT
@@ -57,3 +62,8 @@ SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM intStream INTO sinkInt
 ----
 58
 2342
+
+SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM varsizedStream INTO sinkVarsized
+----
+abcdef
+xyz
