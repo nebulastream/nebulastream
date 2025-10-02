@@ -45,16 +45,17 @@ class QueryManager
 {
     UniquePtr<QuerySubmissionBackend> backend;
     QueryManagerState state;
-    std::expected<Query, Exception> getQuery(DistributedQueryId query) const;
 
 public:
-    QueryManager(UniquePtr<QuerySubmissionBackend> backend);
+    QueryManager(UniquePtr<QuerySubmissionBackend> backend, QueryManagerState state);
+    explicit QueryManager(UniquePtr<QuerySubmissionBackend> backend);
     [[nodiscard]] std::expected<DistributedQueryId, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
     std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
     std::expected<void, std::vector<Exception>> unregister(DistributedQueryId query);
     [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(DistributedQueryId query) const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
+    std::expected<Query, Exception> getQuery(DistributedQueryId query) const;
     std::vector<DistributedQueryId> getRunningQueries() const;
 };
 

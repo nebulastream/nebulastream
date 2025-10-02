@@ -25,9 +25,9 @@
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
-#include <NESThread.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Thread.hpp>
 
 namespace
 {

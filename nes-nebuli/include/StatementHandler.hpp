@@ -202,8 +202,6 @@ public:
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
-
-    [[nodiscard]] std::vector<Query> getRunningQueries() const;
 };
 
 }

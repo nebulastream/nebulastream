@@ -26,6 +26,11 @@ std::expected<Query, Exception> QueryManager::getQuery(DistributedQueryId query)
     return it->second;
 }
 
+QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend, QueryManagerState state)
+    : backend(std::move(backend)), state(std::move(state))
+{
+}
+
 QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend) : backend(std::move(backend))
 {
 }

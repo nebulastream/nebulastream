@@ -20,12 +20,14 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <thread>
 #include <utility>
 #include <vector>
 #include <unistd.h>
 
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -37,12 +39,15 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Ranges.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/security/credentials.h>
+#include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
+#include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <StatementHandler.hpp>
@@ -315,10 +320,6 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     return statements;
 }
 
-void doQueryManagement(const argparse::ArgumentParser&, const argparse::ArgumentParser&)
-{
-}
-
 template <typename HandlerT>
 bool tryCall(const NES::Statement& statement, HandlerT& handler)
 {
@@ -362,12 +363,133 @@ bool tryCall(const NES::Statement& statement, HandlerT& handler, HandlerTs&... h
     return tryCall(statement, handlers...);
 }
 
+namespace NES
+{
+template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+void to_json(BasicJsonType& nlohmann_json_j, const LocalQuery& nlohmann_json_t)
+{
+    nlohmann_json_j["id"] = nlohmann_json_t.id.getRawValue();
+    nlohmann_json_j["grpcAddr"] = nlohmann_json_t.grpcAddr;
+}
+
+template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+void from_json(const BasicJsonType& nlohmann_json_j, LocalQuery& nlohmann_json_t)
+{
+    nlohmann_json_t.id = LocalQueryId(nlohmann_json_j.at("id").template get<LocalQueryId::Underlying>());
+    nlohmann_json_j.at("grpcAddr").get_to(nlohmann_json_t.grpcAddr);
+};
+
+struct PersistentQueryId
+{
+    std::vector<LocalQuery> query;
+
+    std::string store()
+    {
+        std::string filename("query-XXXXXX");
+        auto result = mktemp(filename.data());
+        if (result == nullptr)
+        {
+            throw std::runtime_error("Could not create temporary file.");
+        }
+        std::filesystem::path path(result);
+        std::ofstream output(path);
+        nlohmann::json j(query);
+        output << j.dump(4);
+        return filename;
+    }
+
+    static PersistentQueryId load(std::string_view persistentId)
+    {
+        std::filesystem::path path(persistentId);
+        if (!exists(path))
+        {
+            throw InvalidConfigParameter(fmt::format("Could not find query with id {}", persistentId));
+        }
+        std::ifstream file(path);
+        if (!file)
+        {
+            throw InvalidConfigParameter(fmt::format("Could not open file: {}", path));
+        }
+        PersistentQueryId result(nlohmann::json::parse(file).get<std::vector<LocalQuery>>());
+        return result;
+    }
+};
+}
+
 template <typename... HandlerT>
 void handleStatements(std::vector<NES::Statement> statements, HandlerT&... handler)
 {
     for (const auto& statement : statements)
     {
         tryCall(statement, handler...);
+    }
+}
+
+void doStatus(NES::QueryManager& queryManager)
+{
+    if (queryManager.getRunningQueries().empty())
+    {
+        /// TODO: Worker Status
+        return;
+    }
+
+    for (const auto& runningQuery : queryManager.getRunningQueries())
+    {
+        if (auto statusResult = queryManager.status(runningQuery); !statusResult)
+        {
+            throw statusResult.error();
+        }
+        else
+        {
+            std::cout << statusResult->getGlobalQueryState();
+        }
+    }
+}
+
+void doStop(NES::QueryManager& queryManager)
+{
+    for (const auto& query : queryManager.getRunningQueries())
+    {
+        if (auto stopResult = queryManager.stop(query); !stopResult)
+        {
+            throw stopResult.error();
+        }
+    }
+}
+
+void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
+{
+    const auto topologyConfig = getTopologyPath(program);
+
+    const auto state
+        = NES::views::enumerate(subcommand.get<std::vector<std::string>>("queryId"))
+        | std::views::transform(
+              [](const auto& pair) -> std::pair<NES::DistributedQueryId, NES::Query>
+              {
+                  fmt::println("Yes: {}", std::get<1>(pair));
+                  return {NES::DistributedQueryId(std::get<0>(pair)), NES::Query{NES::PersistentQueryId::load(std::get<1>(pair)).query}};
+              })
+        | std::ranges::to<std::unordered_map>();
+
+    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
+    NES::TopologyStatementHandler topologyHandler{workerCatalog};
+
+    handleStatements(loadStatements(topologyConfig), topologyHandler);
+
+    const auto queryManager = std::make_shared<NES::QueryManager>(
+        std::make_unique<NES::GRPCQuerySubmissionBackend>(workerCatalog->getAllWorkers()), NES::QueryManagerState{state});
+
+    if (program.is_subcommand_used("stop"))
+    {
+        doStop(*queryManager);
+    }
+    else if (program.is_subcommand_used("status"))
+    {
+        doStatus(*queryManager);
+    }
+    else
+    {
+        throw NES::InvalidConfigParameter("Invalid query management subcommand");
     }
 }
 
@@ -397,7 +519,18 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
         for (const auto& query : queries)
         {
-            queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            if (result)
+            {
+                auto queryDescriptor = queryManager->getQuery(result->id);
+                INVARIANT(queryDescriptor.has_value(), "Query should exist in the query manager if statement handler succeed");
+                NES::PersistentQueryId persistentId(queryDescriptor->getLocalQueries());
+                std::cout << persistentId.store() << '\n';
+            }
+            else
+            {
+                throw result.error();
+            }
         }
     }
     else
@@ -437,16 +570,20 @@ int main(int argc, char** argv)
         startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         ArgumentParser stopQuery("stop");
-        stopQuery.add_argument("queryId").scan<'i', size_t>();
+        stopQuery.add_argument("queryId").nargs(argparse::nargs_pattern::at_least_one);
+
+        ArgumentParser statusQuery("status");
+        statusQuery.add_argument("queryId").nargs(argparse::nargs_pattern::any);
 
         ArgumentParser dump("dump");
         dump.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
+        program.add_subparser(statusQuery);
         program.add_subparser(dump);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery};
+        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery, statusQuery};
         std::vector<std::reference_wrapper<ArgumentParser>> querySubmissionCommands{startQuery, dump};
 
         try
@@ -489,6 +626,6 @@ int main(int argc, char** argv)
     CPPTRACE_CATCH(...)
     {
         NES::tryLogCurrentException();
-        return NES::getCurrentErrorCode();
+        return 1;
     }
 }

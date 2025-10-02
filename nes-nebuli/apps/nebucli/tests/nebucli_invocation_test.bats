@@ -88,7 +88,7 @@ teardown() {
 start_nes() {
   $NEBULASTREAM >&3 &
   INSTANCE_PID=$!
-  $HEALTH_PROBE -addr localhost:8080
+  $HEALTH_PROBE -addr localhost:8080 -connect-timeout 5s
 }
 
 @test "nebucli shows help" {
@@ -101,9 +101,57 @@ start_nes() {
   run $NEBUCLI -t tests/good/select-gen-into-void.yml start
   [ "$status" -eq 0 ]
 }
+@test "launch multiple query from topology" {
+  start_nes
+  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yml start
+  [ "$status" -eq 0 ]
+  [ ${#lines[@]} -eq 8 ]
 
+  query_ids=("${lines[@]}")
+
+  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yml stop "${query_ids[0]}"
+  [ "$status" -eq 0 ]
+
+  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yml stop "${query_ids[1]}" "${query_ids[2]}" "${query_ids[3]}" "${query_ids[4]}" "${query_ids[5]}"
+  [ "$status" -eq 0 ]
+
+  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yml stop "${query_ids[6]}" "${query_ids[7]}"
+  [ "$status" -eq 0 ]
+}
 @test "launch query from commandline" {
   start_nes
-  run $NEBUCLI -t tests/good/select-gen-into-void.yml start "select double * UINT64(2) from generator_source INTO void_sink"
+  run $NEBUCLI -t tests/good/select-gen-into-void.yml start "select double from generator_source INTO void_sink"
   [ "$status" -eq 0 ]
+}
+@test "launch bad query from commandline" {
+  start_nes
+  run $NEBUCLI -t tests/good/select-gen-into-void.yml start "selectaa double * UINT64(2) from generator_source INTO void_sink"
+  [ "$status" -eq 1 ]
+}
+@test "launch and stop query" {
+  start_nes
+  run $NEBUCLI -t tests/good/select-gen-into-void.yml start "select double from generator_source INTO void_sink"
+  [ "$status" -eq 0 ]
+
+  [ -f "$output" ]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run $NEBUCLI -t tests/good/select-gen-into-void.yml stop "$QUERY_ID"
+  [ "$status" -eq 0 ]
+}
+@test "launch and monitor query" {
+  start_nes
+  run $NEBUCLI -t tests/good/select-gen-into-void.yml start "select double from generator_source INTO void_sink"
+  [ "$status" -eq 0 ]
+
+  [ -f "$output" ]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run $NEBUCLI -t tests/good/select-gen-into-void.yml status "$QUERY_ID"
+  [ "$status" -eq 0 ]
+  [ "$output" = "Running" ]
 }
