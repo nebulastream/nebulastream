@@ -6,51 +6,6 @@ Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23.0,23.0,text123Text!!!
 # 232,-8,-56289,-8296248813,0,0,0,0,15.3,18.7,moreText987654321moreText!!!
 
-SINK sinkF64 FLOAT64 f64_i8 FLOAT64 f64_i8_plus_1 FLOAT64 f64_i16 FLOAT64 f64_i16_plus_1 FLOAT64 f64_i32 FLOAT64 f64_i32_plus_1 FLOAT64 f64_i64 FLOAT64 f64_i64_plus_1 FLOAT64 f64_u8 FLOAT64 f64_u8_plus_1 FLOAT64 f64_u16 FLOAT64 f64_u16_plus_1 FLOAT64 f64_u32 FLOAT64 f64_u32_plus_1 FLOAT64 f64_u64 FLOAT64 f64_u64_plus_1 FLOAT64 f64_f32 FLOAT64 f64_f32_plus_1 FLOAT64 f64_f64 FLOAT64 f64_f64_plus_1 VARSIZED varsized
-
-# Div f64 value with all other data types
-SELECT
-    # signed
-    # geht nicht:
-    # (f64 / (ZstdDecompress(ZstdCompress(i8)))) AS f64_i8,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i8)) AS f64_i8,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i8 + INT8(1)))) AS f64_i8_plus_1,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i16)) AS f64_i16,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i16 + INT16(1)))) AS f64_i16_plus_1,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i32)) AS f64_i32,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i32 + INT32(1)))) AS f64_i32_plus_1,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i64)) AS f64_i64,
-    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i64 + INT64(1)))) AS f64_i64_plus_1,
-    # f64 / i8 AS f64_i8,
-    # f64 / (i8 + INT8(1)) AS f64_i8_plus_1,
-    # f64 / i16 AS f64_i16,
-    # f64 / (i16 + INT16(1)) AS f64_i16_plus_1,
-    # f64 / i32 AS f64_i32,
-    # f64 / (i32 + INT32(1)) AS f64_i32_plus_1,
-    # f64 / i64 AS f64_i64,
-    # f64 / (i64 + INT64(1)) AS f64_i64_plus_1,
-    # unsigned
-    f64 / u8 AS f64_u8,
-    f64 / (u8 + UINT8(1)) AS f64_u8_plus_1,
-    f64 / u16 AS f64_u16,
-    f64 / (u16 + UINT16(1)) AS f64_u16_plus_1,
-    f64 / u32 AS f64_u32,
-    f64 / (u32 + UINT32(1)) AS f64_u32_plus_1,
-    f64 / u64 AS f64_u64,
-    f64 / (u64 + UINT64(1)) AS f64_u64_plus_1,
-    # float
-    f64 / f32 AS f64_f32,
-    f64 / (f32 + FLOAT32(1)) AS f64_f32_plus_1,
-    f64 / f64 AS f64_f64,
-    f64 / (f64 + FLOAT64(1)) AS f64_f64_plus_1,
-    varsized AS varsized
-FROM stream INTO sinkF64
-----
--0.547619,-0.560976,-0.178295,-0.179688,-0.000702,-0.000702,-0.000000,-0.000000,0.547619,0.534884,0.089844,0.089494,0.000351,0.000351,0.000000,0.000000,1.000000,0.958333,1.000000,0.958333, text123Text!!!
-
-
-SINK sinkConstant INT32 i8 INT32 i16 INT32 i32 INT64 i64 INT32 u8 INT32 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
-
 Source floatStream FLOAT64 data INLINE
 32.8
 32234.04
@@ -59,19 +14,45 @@ Source intStream UINT64 data INLINE
 58
 2342
 
-Sink sinkStream VARSIZED data
-SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM stream INTO sinkStream
-----
-text123Text!!!
-xyz
-
+SINK sinkF64 FLOAT64 f64_i8 FLOAT64 f64_i8_plus_1 FLOAT64 f64_i16 FLOAT64 f64_i16_plus_1 FLOAT64 f64_i32 FLOAT64 f64_i32_plus_1 FLOAT64 f64_i64 FLOAT64 f64_i64_plus_1 FLOAT64 f64_u8 FLOAT64 f64_u8_plus_1 FLOAT64 f64_u16 FLOAT64 f64_u16_plus_1 FLOAT64 f64_u32 FLOAT64 f64_u32_plus_1 FLOAT64 f64_u64 FLOAT64 f64_u64_plus_1 FLOAT64 f64_f32 FLOAT64 f64_f32_plus_1 FLOAT64 f64_f64 FLOAT64 f64_f64_plus_1 VARSIZED varsized
 Sink sinkFloat FLOAT64 data
+Sink sinkInt UINT64 data
+
+# Div f64 value with all other data types
+SELECT
+    # signed
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i8)) AS f64_i8,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i8 + INT8(1)))) AS f64_i8_plus_1,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i16)) AS f64_i16,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i16 + INT16(1)))) AS f64_i16_plus_1,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i32)) AS f64_i32,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i32 + INT32(1)))) AS f64_i32_plus_1,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / i64)) AS f64_i64,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (i64 + INT64(1)))) AS f64_i64_plus_1,
+    # unsigned
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / u8)) AS f64_u8,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (u8 + UINT8(1)))) AS f64_u8_plus_1,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / u16)) AS f64_u16,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (u16 + UINT16(1)))) AS f64_u16_plus_1,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / u32)) AS f64_u32,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (u32 + UINT32(1)))) AS f64_u32_plus_1,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / u64)) AS f64_u64,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (u64 + UINT64(1)))) AS f64_u64_plus_1,
+    # float
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / f32)) AS f64_f32,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (f32 + FLOAT32(1)))) AS f64_f32_plus_1,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / f64)) AS f64_f64,
+    ZstdDecompress(ZstdCompress(ZstdDecompress(ZstdCompress(f64)) / (f64 + FLOAT64(1)))) AS f64_f64_plus_1,
+    ZstdDecompress(ZstdCompress(varsized)) AS varsized
+FROM stream INTO sinkF64
+----
+-0.547619,-0.560976,-0.178295,-0.179688,-0.000702,-0.000702,-0.000000,-0.000000,0.547619,0.534884,0.089844,0.089494,0.000351,0.000351,0.000000,0.000000,1.000000,0.958333,1.000000,0.958333, text123Text!!!
+
 SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM floatStream INTO sinkFloat
 ----
 32.8
 32234.04
 
-Sink sinkInt UINT64 data
 SELECT ZstdDecompress(ZstdCompress(data)) AS data FROM intStream INTO sinkInt
 ----
 58
