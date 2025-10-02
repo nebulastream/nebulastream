@@ -698,7 +698,7 @@ struct SystestBinder::Impl
                     std::string token;
                     while (stream >> token)
                     {
-                        if (Util::toLowerCase(token) == "into")
+                        if (NES::Util::toLowerCase(token) == "into")
                         {
                             std::string sink;
                             if (!(stream >> sink))

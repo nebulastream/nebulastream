@@ -18,17 +18,37 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+
 #include <Functions/FunctionProvider.hpp>
+#include <InputFormatters/FormatScanPhysicalOperator.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <ScanPhysicalOperator.hpp>
+
+namespace
+{
+std::optional<NES::ParserConfig> getParserConfig(const NES::LogicalOperator& projectionOp)
+{
+    const auto sourceOperators
+        = projectionOp.getChildren()
+        | std::views::filter([](const auto& childOperator)
+                             { return childOperator.template tryGet<NES::SourceDescriptorLogicalOperator>().has_value(); })
+        | std::views::transform(
+              [](const auto& sourceChildOperator)
+              { return sourceChildOperator.template tryGet<NES::SourceDescriptorLogicalOperator>().value().getSourceDescriptor(); })
+        | std::ranges::to<std::vector>();
+    PRECONDITION(sourceOperators.size() < 2, "We expect a projection to have at most one source operator as a child.");
+    return (sourceOperators.empty()) ? std::nullopt : std::optional{sourceOperators.front().getParserConfig()};
+}
+}
 
 namespace NES
 {
@@ -40,14 +60,13 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
-    auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema);
-    auto scanMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(scanLayout);
-    auto accessedFields = projection.getAccessedFields();
-    auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
+    const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, inputSchema);
+    auto scan = provideInputFormatterTask(getParserConfig(projectionLogicalOperator), memoryProvider);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
     auto child = scanWrapper;
+
     for (const auto& [fieldName, function] : projection.getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
