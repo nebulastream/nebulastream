@@ -278,3 +278,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     process_benchmark(args.benchmark_dir, args.run_options)
+
+#python3 src/process_results.py --benchmark-dir /home/user/CLionProjects/nebulastream/Testing/benchmark/benchmark_results/benchmark14 --run-options=singl

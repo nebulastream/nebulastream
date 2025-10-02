@@ -599,14 +599,145 @@ def create_layout_comparison_plots(df, output_dir):
     filter_df = df[df['operator_type'] == 'filter']
     map_df = df[df['operator_type'] == 'map']
 
+    if not filter_df.empty:
+        create_filter_selectivity_plots(filter_df, output_dir)
+        create_filter_buffersize_plots(filter_df, output_dir)
+        create_filter_overview_plots(filter_df, output_dir)
 
-    create_filter_selectivity_plots(filter_df, output_dir)
-    create_filter_buffersize_plots(filter_df, output_dir)
-    create_filter_overview_plots(filter_df, output_dir)
+    if not map_df.empty:
+        create_map_function_type_plots(map_df, output_dir)
+        create_map_buffersize_plots(map_df, output_dir)
+        create_map_overview_plots(map_df, output_dir)
+def create_test_plots(df, output_dir):
+    """Generate new plots for filter, map, and aggregation operators."""
+    test_plots_dir = Path(output_dir) / "test_plots"
+    test_plots_dir.mkdir(exist_ok=True, parents=True)
 
-    create_map_function_type_plots(map_df, output_dir)
-    create_map_buffersize_plots(map_df, output_dir)
-    create_map_overview_plots(map_df, output_dir)
+    # Operators and their pipeline configurations
+    operators = {
+        'filter': {"row": [3], "col": [2, 3, 4]},
+        'map': {"row": [3], "col": [2, 3, 4]},
+        'aggregation': {"row": [3], "col": [2, 3, 4, 5]}
+    }
+
+    # Generate plots for each operator
+    for operator, pipelines in operators.items():
+        operator_df = df[df['operator_type'] == operator]
+        if operator_df.empty:
+            print(f"No data for operator: {operator}")
+            continue
+
+        operator_dir = test_plots_dir / operator
+        operator_dir.mkdir(exist_ok=True)
+
+        # Plot eff/comp_tp vs. total_columns for acc_col = 1
+        plot_eff_comp_tp(operator_df, operator_dir)
+
+        # Plot latency vs. total_columns
+        plot_latency(operator_df, operator_dir, pipelines)
+
+    # Generate aggregation-specific plots
+    create_aggregation_plots(df[df['operator_type'] == 'aggregation'], test_plots_dir / "aggregation")
+
+def plot_eff_comp_tp(df, output_dir):
+    """Plot eff/comp_tp vs. total_columns for acc_col = 1."""
+    metrics = ['pipeline_3_eff_tp', 'pipeline_3_comp_tp']
+    df = df[df['accessed_columns'] == 1]
+
+    for metric in metrics:
+        plt.figure(figsize=(12, 8))
+        sns.barplot(data=df, x='num_columns', y=metric, hue='layout', palette='viridis')
+        plt.title(f"{metric.replace('_', ' ').capitalize()} vs. Total Columns")
+        plt.xlabel("Total Columns")
+        plt.ylabel(metric.replace('_', ' ').capitalize())
+        plt.yscale('log')
+        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(output_dir / f"{metric}_vs_total_columns.png")
+        plt.close()
+
+def plot_latency(df, output_dir, pipelines):
+    """Plot latency vs. total_columns for ROW and COL layouts."""
+    row_pipelines = pipelines['row']
+    col_pipelines = pipelines['col']
+
+    # Calculate mean latency for ROW and COL (combined with swap)
+
+    df['row_latency'] =  df[f'pipeline_{row_pipelines[0]}_mean_latency']
+    df['col_latency'] = df[[f'pipeline_{p}_mean_latency' for p in col_pipelines]].sum(axis=1)
+
+    # Plot mean latency
+    plt.figure(figsize=(12, 8))
+    sns.lineplot(data=df, x='num_columns', y='row_latency', label='ROW Latency', marker='o')
+    sns.lineplot(data=df, x='num_columns', y='col_latency', label='COL Latency', marker='o')
+    plt.title("Mean Latency vs. Total Columns")
+    plt.xlabel("Total Columns")
+    plt.ylabel("Mean Latency (ms)")
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(output_dir / "mean_latency_vs_total_columns.png")
+    plt.close()
+
+    # Plot swap_in and swap_out for COL
+    if len(col_pipelines) > 2:
+        df['swap_in'] = df[f'pipeline_{col_pipelines[0]}_mean_latency']
+        df['swap_out'] = df[f'pipeline_{col_pipelines[-1]}_mean_latency']
+
+        plt.figure(figsize=(12, 8))
+        sns.lineplot(data=df, x='num_columns', y='swap_in', label='COL Swap In', marker='o')
+        sns.lineplot(data=df, x='num_columns', y='swap_out', label='COL Swap Out', marker='o')
+        plt.title("COL Swap In/Out Latency vs. Total Columns")
+        plt.xlabel("Total Columns")
+        plt.ylabel("Latency (ms)")
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(output_dir / "col_swap_in_out_latency.png")
+        plt.close()
+
+def create_aggregation_plots(df, output_dir):
+    """Create aggregation-specific plots."""
+    if df.empty:
+        return
+
+    output_dir.mkdir(exist_ok=True)
+
+    # Filter data for total_col = 10 and acc_col = 1
+    df = df[(df['num_columns'] == 10) & (df['accessed_columns'] == 1)]
+
+    # Parameters for x-axis
+    x_params = ['window_size', 'num_groups', 'id_data_type'] #TODO: add group by on vs off plot
+    metrics = ['pipeline_3_eff_tp', 'pipeline_3_comp_tp']
+
+    for x_param in x_params:
+        if x_param not in df.columns:
+            continue
+
+        for metric in metrics:
+            plt.figure(figsize=(12, 8))
+            sns.barplot(data=df, x=x_param, y=metric, hue='layout', palette='viridis')
+            plt.title(f"{metric.replace('_', ' ').capitalize()} vs. {x_param}")
+            plt.xlabel(x_param.capitalize())
+            plt.ylabel(metric.replace('_', ' ').capitalize())
+            plt.yscale('log')
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(output_dir / f"{metric}_vs_{x_param}.png")
+            plt.close()
+
+        # Latency plots for the same x-axis parameters
+        df['row_latency'] = df['pipeline_3_mean_latency']
+        df['col_latency'] = df[['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+
+        plt.figure(figsize=(12, 8))
+        sns.lineplot(data=df, x=x_param, y='row_latency', label='ROW Latency', marker='o')
+        sns.lineplot(data=df, x=x_param, y='col_latency', label='COL Latency', marker='o')
+        plt.title(f"Mean Latency vs. {x_param}")
+        plt.xlabel(x_param.capitalize())
+        plt.ylabel("Mean Latency (ms)")
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(output_dir / f"mean_latency_vs_{x_param}.png")
+        plt.close()
 
 def main():
     import argparse
@@ -639,6 +770,7 @@ def main():
             print(f"Double operator plots created in {output_dir}")
     else:
         create_layout_comparison_plots(df, output_dir)
+        create_test_plots(df, output_dir)
 
     # Additionally call the existing plots.py script
     #try:
@@ -651,3 +783,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+#python3 src/enhanced_plots.py --results-csv /home/user/CLionProjects/nebulastream/Testing/benchmark/benchmark_results/benchmark14_results.csv
