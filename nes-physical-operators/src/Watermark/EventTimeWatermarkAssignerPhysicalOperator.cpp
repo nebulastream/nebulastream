@@ -39,11 +39,12 @@ struct WatermarkState final : OperatorState
 EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction)
     : timeFunction(std::move(std::move(timeFunction))) { };
 
-void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+OpenReturnState EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(id, std::make_unique<WatermarkState>());
     timeFunction.open(executionCtx, recordBuffer);
+    return OpenReturnState::FINISHED;
 }
 
 void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const

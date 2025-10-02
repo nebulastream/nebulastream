@@ -39,7 +39,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/ScanProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -582,7 +582,7 @@ struct SystestBinder::Impl
                 return "";
             }
             const auto intoLength = std::string("INTO").length();
-            auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+            auto trimmedSinkName = std::string(NES::Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
 
             /// As the sink name might have a semicolon at the end, we remove it
             if (trimmedSinkName.back() == ';')
@@ -698,7 +698,7 @@ struct SystestBinder::Impl
                     std::string token;
                     while (stream >> token)
                     {
-                        if (Util::toLowerCase(token) == "into")
+                        if (NES::Util::toLowerCase(token) == "into")
                         {
                             std::string sink;
                             if (!(stream >> sink))

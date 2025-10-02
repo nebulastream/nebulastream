@@ -1,6 +1,6 @@
 # name: union/Union.test
 # description: Simple union tests
-# groups: [Union]
+# groups: [Union, CompilationIntensive]
 
 Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
 1,1,1000
