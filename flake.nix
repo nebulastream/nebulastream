@@ -54,7 +54,29 @@
           };
         };
 
+        stdlibOptions = {
+          libstdcxx = {
+            name = "libstdcxx";
+            cmakeValue = "OFF";
+            envValue = "local";
+            compileFlags = [ ];
+            linkFlags = [ ];
+            extraPackages = [ ];
+          };
+          libcxx = {
+            name = "libcxx";
+            cmakeValue = "ON";
+            envValue = "libcxx";
+            compileFlags = [ "-stdlib=libc++" "-fexperimental-library" ];
+            linkFlags = [ "-lc++" ];
+            extraPackages = [ llvm.libcxx ];
+          };
+        };
+
         sanitizerNames = builtins.attrNames sanitizerOptions;
+        stdlibNames = builtins.attrNames stdlibOptions;
+        defaultSanitizerName = "none";
+        defaultStdlibName = "libstdcxx";
 
         # MLIR 20 binary release
         mlirBinary = pkgs.stdenvNoCC.mkDerivation rec {
@@ -130,18 +152,20 @@
           openjdk21
         ];
 
-        mkThirdPartyDeps = sanitizer:
+        flagString = flags: lib.concatStringsSep " " flags;
+
+        mkThirdPartyDeps = sanitizer: stdlib:
           baseThirdPartyDeps ++ [
-            (mkAntlr4 sanitizer)
-            (mkCpptrace sanitizer)
-            (mkArgparse sanitizer)
-            (mkLibcuckoo sanitizer)
-            (mkNautilus sanitizer)
+            (mkAntlr4 sanitizer stdlib)
+            (mkCpptrace sanitizer stdlib)
+            (mkArgparse sanitizer stdlib)
+            (mkLibcuckoo sanitizer stdlib)
+            (mkNautilus sanitizer stdlib)
           ];
 
-        mkCmakeContext = sanitizer:
+        mkCmakeContext = sanitizer: stdlib:
           let
-            thirdPartyDeps = mkThirdPartyDeps sanitizer;
+            thirdPartyDeps = mkThirdPartyDeps sanitizer stdlib;
             cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;
             cmakePrefixPath = lib.makeSearchPath "" cmakeInputs;
             pkgConfigPath = lib.concatStringsSep ":" (
@@ -161,9 +185,9 @@
             inherit thirdPartyDeps cmakeInputs cmakePrefixPath pkgConfigPath commonCmakeEnv;
           };
 
-        cmakeCommonFlags = sanitizer: [
+        cmakeCommonFlags = sanitizer: stdlib: [
           "-DUSE_LOCAL_MLIR=ON"
-          "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
+          "-DUSE_LIBCXX_IF_AVAILABLE=${stdlib.cmakeValue}"
           "-DNES_USE_SYSTEM_DEPS=ON"
           "-DLLVM_TOOLCHAIN_VERSION=19"
           "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
@@ -173,19 +197,47 @@
           "-DUSE_SANITIZER=${sanitizer.cmakeValue}"
         ];
 
-        mkSanitizedAttrset = builder:
-          lib.foldl'
-            (acc: sanName:
-              let
-                sanitizer = sanitizerOptions.${sanName};
-                value = builder sanName;
-              in
-              acc
-              // { ${sanName} = value; }
-              // { ${sanitizer.name} = value; }
-            )
-            { }
-            sanitizerNames;
+        mkVariantAttrset = builder:
+          let
+            combos = lib.foldl'
+              (accSan: sanName:
+                lib.foldl'
+                  (accStd: stdName:
+                    let
+                      key = "${sanitizerOptions.${sanName}.name}-${stdlibOptions.${stdName}.name}";
+                    in
+                    accStd // { ${key} = builder sanName stdName; }
+                  )
+                  accSan
+                  stdlibNames
+              )
+              { }
+              sanitizerNames;
+            withSanAliases = lib.foldl'
+              (acc: sanName:
+                let
+                  sanitizer = sanitizerOptions.${sanName};
+                  target = "${sanitizer.name}-${stdlibOptions.${defaultStdlibName}.name}";
+                in
+                acc
+                // { ${sanitizer.name} = combos.${target}; }
+                // { ${sanName} = combos.${target}; }
+              )
+              combos
+              sanitizerNames;
+            withStdAliases = lib.foldl'
+              (acc: stdName:
+                let
+                  stdlib = stdlibOptions.${stdName};
+                  key = stdlib.name;
+                  target = "${sanitizerOptions.${defaultSanitizerName}.name}-${stdlib.name}";
+                in
+                acc // { ${key} = withSanAliases.${target}; }
+              )
+              withSanAliases
+              stdlibNames;
+          in
+          withStdAliases;
 
         antlr4Jar = pkgs.fetchurl {
           url = "https://www.antlr.org/download/antlr-${antlr4Version}-complete.jar";
@@ -264,8 +316,15 @@ index bb54f83a14..06be7b5266 100644
           '';
         };
 
-        mkAntlr4 = sanitizer:
-          clangStdenv.mkDerivation rec {
+        mkAntlr4 = sanitizer: stdlib:
+          let
+            compileFlags = stdlib.compileFlags;
+            linkFlags = stdlib.linkFlags;
+            extraPackages = sanitizer.extraPackages ++ stdlib.extraPackages;
+            compileAttr = if compileFlags == [] then { } else { NIX_CFLAGS_COMPILE = flagString compileFlags; };
+            linkAttr = if linkFlags == [] then { } else { NIX_LDFLAGS = flagString linkFlags; };
+          in
+          clangStdenv.mkDerivation ((rec {
             pname = "antlr4";
             version = antlr4Version;
 
@@ -286,7 +345,7 @@ index bb54f83a14..06be7b5266 100644
             buildInputs = [
               pkgs.libuuid
               pkgs.zlib
-            ] ++ sanitizer.extraPackages;
+            ] ++ extraPackages;
 
             postPatch = ''
               substituteInPlace runtime/CMakeLists.txt \
@@ -313,10 +372,17 @@ index bb54f83a14..06be7b5266 100644
               license = licenses.bsd3;
               platforms = platforms.linux;
             };
-          };
+          }) // compileAttr // linkAttr);
 
-        mkCpptrace = sanitizer:
-          clangStdenv.mkDerivation rec {
+        mkCpptrace = sanitizer: stdlib:
+          let
+            compileFlags = stdlib.compileFlags;
+            linkFlags = stdlib.linkFlags;
+            extraPackages = sanitizer.extraPackages ++ stdlib.extraPackages;
+            compileAttr = if compileFlags == [] then { } else { NIX_CFLAGS_COMPILE = flagString compileFlags; };
+            linkAttr = if linkFlags == [] then { } else { NIX_LDFLAGS = flagString linkFlags; };
+          in
+          clangStdenv.mkDerivation ((rec {
             pname = "cpptrace";
             version = "0.8.3";
 
@@ -335,7 +401,7 @@ index bb54f83a14..06be7b5266 100644
             buildInputs = [
               pkgs.libdwarf.dev
               pkgs.zstd.dev
-            ] ++ sanitizer.extraPackages;
+            ] ++ extraPackages;
 
             cmakeFlags = [
               "-G"
@@ -357,10 +423,17 @@ index bb54f83a14..06be7b5266 100644
               license = licenses.mit;
               platforms = platforms.linux;
             };
-          };
+          }) // compileAttr // linkAttr);
 
-        mkArgparse = sanitizer:
-          clangStdenv.mkDerivation rec {
+        mkArgparse = sanitizer: stdlib:
+          let
+            compileFlags = stdlib.compileFlags;
+            linkFlags = stdlib.linkFlags;
+            extraPackages = sanitizer.extraPackages ++ stdlib.extraPackages;
+            compileAttr = if compileFlags == [] then { } else { NIX_CFLAGS_COMPILE = flagString compileFlags; };
+            linkAttr = if linkFlags == [] then { } else { NIX_LDFLAGS = flagString linkFlags; };
+          in
+          clangStdenv.mkDerivation ((rec {
             pname = "argparse";
             version = "3.2";
 
@@ -376,7 +449,7 @@ index bb54f83a14..06be7b5266 100644
               pkgs.ninja
               pkgs.pkg-config
             ];
-            buildInputs = sanitizer.extraPackages;
+            buildInputs = extraPackages;
 
             cmakeFlags = [
               "-G"
@@ -396,10 +469,17 @@ index bb54f83a14..06be7b5266 100644
               license = licenses.mit;
               platforms = platforms.linux;
             };
-          };
+          }) // compileAttr // linkAttr);
 
-        mkLibcuckoo = sanitizer:
-          clangStdenv.mkDerivation rec {
+        mkLibcuckoo = sanitizer: stdlib:
+          let
+            compileFlags = stdlib.compileFlags;
+            linkFlags = stdlib.linkFlags;
+            extraPackages = sanitizer.extraPackages ++ stdlib.extraPackages;
+            compileAttr = if compileFlags == [] then { } else { NIX_CFLAGS_COMPILE = flagString compileFlags; };
+            linkAttr = if linkFlags == [] then { } else { NIX_LDFLAGS = flagString linkFlags; };
+          in
+          clangStdenv.mkDerivation ((rec {
             pname = "libcuckoo";
             version = "0.3.1";
 
@@ -415,7 +495,7 @@ index bb54f83a14..06be7b5266 100644
               pkgs.ninja
               pkgs.pkg-config
             ];
-            buildInputs = sanitizer.extraPackages;
+            buildInputs = extraPackages;
 
             cmakeFlags = [
               "-G"
@@ -436,7 +516,7 @@ index bb54f83a14..06be7b5266 100644
               license = licenses.bsd3;
               platforms = platforms.linux;
             };
-          };
+          }) // compileAttr // linkAttr);
 
         nautilusSrc = pkgs.fetchFromGitHub {
           owner = "nebulastream";
@@ -445,8 +525,15 @@ index bb54f83a14..06be7b5266 100644
           hash = "sha256-WSqOzo0kE9bVDD++qscVG+x0Q9CdQ1pu7IsG2YgTDy8=";
         };
 
-        mkNautilus = sanitizer:
-          clangStdenv.mkDerivation rec {
+        mkNautilus = sanitizer: stdlib:
+          let
+            compileFlags = stdlib.compileFlags;
+            linkFlags = stdlib.linkFlags;
+            extraPackages = sanitizer.extraPackages ++ stdlib.extraPackages;
+            cflagsList = ["-Wno-error=unused-result"] ++ compileFlags;
+            ldflagsAttr = if linkFlags == [] then { } else { NIX_LDFLAGS = flagString linkFlags; };
+          in
+          clangStdenv.mkDerivation ((rec {
             pname = "nautilus";
             version = "0.1";
 
@@ -472,9 +559,9 @@ index bb54f83a14..06be7b5266 100644
               pkgs.openssl.dev
               pkgs.tbb
               pkgs.python3
-            ] ++ sanitizer.extraPackages;
+            ] ++ extraPackages;
 
-            NIX_CFLAGS_COMPILE = "-Wno-error=unused-result";
+            NIX_CFLAGS_COMPILE = flagString cflagsList;
 
             postPatch = ''
               substituteInPlace nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp \
@@ -510,7 +597,7 @@ index bb54f83a14..06be7b5266 100644
               license = licenses.asl20;
               platforms = platforms.linux;
             };
-          };
+          }) // ldflagsAttr);
 
         # Core development tools
         buildTools = with pkgs; [
@@ -568,12 +655,16 @@ index bb54f83a14..06be7b5266 100644
           runHook postInstall
         '';
 
-        mkPackage = sanitizerName:
+        mkPackage = sanitizerName: stdlibName:
           let
             sanitizer = sanitizerOptions.${sanitizerName};
-            cmakeCtx = mkCmakeContext sanitizer;
-            cmakeFlagsList = [ "-DCMAKE_BUILD_TYPE=Release" "-DNES_ENABLES_TESTS=ON" ] ++ cmakeCommonFlags sanitizer;
-            envVars = sanitizer.extraEnv // { NES_SANITIZER = sanitizer.envValue; };
+            stdlib = stdlibOptions.${stdlibName};
+            cmakeCtx = mkCmakeContext sanitizer stdlib;
+            cmakeFlagsList = [ "-DCMAKE_BUILD_TYPE=Release" "-DNES_ENABLES_TESTS=ON" ] ++ cmakeCommonFlags sanitizer stdlib;
+            envVars = sanitizer.extraEnv // {
+              NES_SANITIZER = sanitizer.envValue;
+              VCPKG_STDLIB = stdlib.envValue;
+            };
           in
           clangStdenv.mkDerivation ((rec {
             pname = "nebulastream";
@@ -581,7 +672,7 @@ index bb54f83a14..06be7b5266 100644
             src = ./.;
 
             nativeBuildInputs = buildTools;
-            buildInputs = llvmTools ++ cmakeCtx.thirdPartyDeps ++ [ mlirBinary ] ++ sanitizer.extraPackages;
+            buildInputs = llvmTools ++ cmakeCtx.thirdPartyDeps ++ [ mlirBinary ] ++ sanitizer.extraPackages ++ stdlib.extraPackages;
             patches = [ antlr4JarPatch gflagsGlogPatch ];
 
             CMAKE_PREFIX_PATH = cmakeCtx.cmakePrefixPath;
@@ -598,16 +689,18 @@ index bb54f83a14..06be7b5266 100644
             installPhase = packageInstallPhase;
           }) // envVars);
 
-        mkDevShell = sanitizerName:
+        mkDevShell = sanitizerName: stdlibName:
           let
             sanitizer = sanitizerOptions.${sanitizerName};
-            cmakeCtx = mkCmakeContext sanitizer;
+            stdlib = stdlibOptions.${stdlibName};
+            cmakeCtx = mkCmakeContext sanitizer stdlib;
             cmakeFlagsList = [
               "-DCMAKE_PROJECT_INCLUDE=${devCmakePrelude}"
               "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
-            ] ++ cmakeCommonFlags sanitizer;
+            ] ++ cmakeCommonFlags sanitizer stdlib;
             envVars = sanitizer.extraEnv // {
               NES_SANITIZER = sanitizer.envValue;
+              VCPKG_STDLIB = stdlib.envValue;
               NES_USE_SYSTEM_DEPS = "ON";
             };
           in
@@ -616,7 +709,7 @@ index bb54f83a14..06be7b5266 100644
             // envVars
             // {
               name = "nebula-stream-${sanitizer.name}";
-              buildInputs = cmakeCtx.thirdPartyDeps ++ [ mlirBinary ] ++ sanitizer.extraPackages;
+              buildInputs = cmakeCtx.thirdPartyDeps ++ [ mlirBinary ] ++ sanitizer.extraPackages ++ stdlib.extraPackages;
               nativeBuildInputs = buildTools ++ llvmTools;
               packages = devTools;
               LLVM_TOOLCHAIN_VERSION = "19";
@@ -631,8 +724,8 @@ index bb54f83a14..06be7b5266 100644
 
       in
       let
-        packageVariants = mkSanitizedAttrset mkPackage;
-        devShellVariants = mkSanitizedAttrset mkDevShell;
+        packageVariants = mkVariantAttrset mkPackage;
+        devShellVariants = mkVariantAttrset mkDevShell;
       in
       {
         formatter = pkgs.nixfmt-tree;
