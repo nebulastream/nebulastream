@@ -106,9 +106,9 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
-TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
+TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_differential.dummy";
+    const auto* const filename = SYSTEST_DATA_DIR "config_override_invalid.dummy";
 
     SystestParser parser{};
     parser.registerOnSystestLogicalSourceCallback(
@@ -117,8 +117,76 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
             /// nop
         });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
-    parser.registerOnDifferentialQueryBlockCallback(
-        [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideMissingColonTest)
+{
+    /// Test: Configuration worker.query_optimizer.page_size [8] (missing colon)
+    SystestParser parser{};
+    parser.registerOnSystestLogicalSourceCallback(
+        [](const SystestParser::SystestLogicalSource&)
+        {
+            /// nop
+        });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+
+    ASSERT_TRUE(parser.loadString("Configuration worker.query_optimizer.page_size [8]\n"));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideMissingBracketsTest)
+{
+    /// Test: Configuration worker.query_optimizer.page_size: 8, 1024 (missing brackets for multiple values)
+    SystestParser parser{};
+    parser.registerOnSystestLogicalSourceCallback(
+        [](const SystestParser::SystestLogicalSource&)
+        {
+            /// nop
+        });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+
+    ASSERT_TRUE(parser.loadString("Configuration worker.query_optimizer.page_size: 8, 1024\n"));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideEmptyBracketsTest)
+{
+    /// Test: Configuration worker.query_optimizer.page_size: [] (empty value list)
+    SystestParser parser{};
+    parser.registerOnSystestLogicalSourceCallback(
+        [](const SystestParser::SystestLogicalSource&)
+        {
+            /// nop
+        });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+
+    ASSERT_TRUE(parser.loadString("Configuration worker.query_optimizer.page_size: []\n"));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserInvalidTestFilesTest, InvalidConfigOverrideNoKeyTest)
+{
+    /// Test: Configuration : [8] (no key)
+    SystestParser parser{};
+    parser.registerOnSystestLogicalSourceCallback(
+        [](const SystestParser::SystestLogicalSource&)
+        {
+            /// nop
+        });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+
+    ASSERT_TRUE(parser.loadString("Configuration : [8]\n"));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserInvalidTestFilesTest, GlobalConfigOverrideInvalidTest)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "global_config_override_invalid.dummy";
+
+    SystestParser parser{};
 
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)

@@ -1,4 +1,4 @@
-# name: parser/BasicTypeSupport.test
+# name: parser/VarSizedSupport.test
 # description: parser tests
 # groups: [Parser]
 
