@@ -100,6 +100,8 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
             numberOfBuffers = 1000 #TODO check for what needed when multiple operators
             if 'agg' in buffer_test_file.name:
                 numberOfBuffers = 20000
+                if int(buffer_size) >= 20000000: #TODO have variable based on given bufferSize and ops
+                    numberOfBuffers = 10000
             # Extract strategy from parent directory name for double operators
             parent_dir = buffer_dir.parent
             strategy = parent_dir.name if parent_dir.name in ["ALL_ROW", "ALL_COL", "FIRST", "SECOND"] else "USE_SINGLE_LAYOUT"

@@ -132,7 +132,7 @@ def generate_double_operator_query(query_id, test_id, buffer_size, num_cols, acc
                 f.write(f"{k}: {v}\n")
 
     return query, config, test_file
-def generate_test_file(data_file, output_path, result_dir, params, run_options='all'):
+def generate_test_file(data_file, result_dir, params, run_options='all'):
     """Generate benchmark test file with queries for all parameter combinations"""
     buffer_sizes = params.get('buffer_sizes', [4000, 400000, 20000000])
     num_columns_list = params.get('num_columns', [1, 5, 10])
@@ -140,7 +140,7 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
     function_types = params.get('function_types', ['add', 'exp'])
     selectivities = params.get('selectivities', [5, 50, 95])
     agg_functions = params.get('agg_functions', ['count', 'sum', 'avg', 'min', 'max'])
-
+    output_path = data_file + "/benchmark.test"
     docker_base_path= "/tmp/nebulastream/Testing/benchmark/benchmark_results/data"
 
     base_name = os.path.basename(data_file).split('_cols')[0]
@@ -196,12 +196,18 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
 
         # Sink definitions
         f.write("# Sink definitions\n")
+        qualifier = f"bench_data{num_cols}$"
         for num_cols in num_columns_list:
             sink_def= f"SINK AllSink{num_cols} TYPE Checksum"
+            agg_sink = f"SINK AggSink{num_cols} TYPE Checksum UINT64 {qualifier}timestamp"
+            if id_type != '':
+                agg_sink += f" UINT{id_type} {qualifier}id"
             names = column_names[:num_cols]
             for col in names:
-                sink_def += f" UINT64 bench_data{num_cols}${col}"
+                sink_def += f" UINT64 {qualifier}{col}"
+                agg_sink += f" UINT64 {qualifier}{col}"
             f.write(sink_def + "\n")
+            f.write(agg_sink + "\n")
 
         for acc_cols in accessed_columns_list:
             #smallest_num_cols = np.min([n for n in num_columns_list if n >= acc_cols], default=None)
@@ -407,7 +413,8 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
                                             "swap_strategy": "USE_SINGLE_LAYOUT",
                                             "aggregation_function": agg_func,
                                             "window_size": window_size,
-                                            "num_groups": num_groups
+                                            "num_groups": num_groups,
+                                            "id_data_type": id_type
                                         }
                                         with open(query_dir / "config.txt", 'w') as config_f:
                                             for k, v in config.items():
@@ -420,34 +427,26 @@ def generate_test_file(data_file, output_path, result_dir, params, run_options='
                                         query = f"# Query {query_id}: Aggregation with {agg_func} function\n"
                                         query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, WindowSize: {window_size}, NumGroups: {num_groups}, ID_data_type: {id_type}, AggregationFunction: {agg_func}\n"
 
-                                        indent = "    "
-                                        query += f"SELECT start, end, {agg_func}(col_0) AS col_0, *\n"
-                                        for x in range(1, access_col):
-                                            query += indent * x
-                                            query += f"FROM (SELECT start, end, {agg_func}(col_{x}) AS col_{x}, *\n"
-
-                                        query += indent * access_col
+                                        query += f"SELECT "#timestamp"
+                                        if id_type != '':
+                                            query += "id, " #", id"
+                                        query += (f"{agg_func}({cols_to_access[0]}) AS {cols_to_access[0]}")
+                                        for col_name in cols_to_access[1:]:
+                                            query += f" ,{agg_func}({col_name}) AS {col_name}"
+                                        query += " \n"
                                         query += f"FROM {source} \n"
 
-                                        for x in range(access_col):
+                                        if id_type != '':
 
-                                            if id_type != '':
-                                                query += indent * (access_col - x)
-                                                query += f"GROUP BY id\n"
-                                            query += indent * (access_col - x)
-                                            if x == 0:
-                                                query += f"WINDOW TUMBLING(timestamp, SIZE {window_size} MS)\n"
-                                            else:
-                                                query += f"WINDOW TUMBLING(start, SIZE {window_size} MS)\n"
-                                            if x < access_col - 1:
-                                                query += indent * (access_col - x - 1)
-                                                query += ") \n"
-                                        query += f"INTO AllSink{num_cols};\n"
+                                            query += f"GROUP BY id\n"
+
+                                        query += f"WINDOW TUMBLING(timestamp, SIZE {window_size} MS)\n"
+
+                                        query += f"INTO AggSink{num_cols};\n"
                                         query += "----\n1, 1\n\n"
 
-                                        #TODO: use params acc_cols, add proper sink defs, test queries, try double
+                                        #TODO: add proper sink defs, try double
                                         agg_f.write(query)
-                                        #TODO: decrease window size inside nested windows?
 
                                         query_id += 1
 
@@ -555,12 +554,11 @@ def generate_operator_chain_query(query_id, buffer_size, num_cols, op_chain, swa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate benchmark test file')
     parser.add_argument('--data', required=True, help='Path to benchmark data CSV')
-    parser.add_argument('--output', required=True, help='Output test file path')
     parser.add_argument('--result-dir', required=True, help='Result directory for organized structure')
-    parser.add_argument('--columns', type=parse_int_list, default=[10], help='List of number of columns to use')
+    parser.add_argument('--columns', type=parse_int_list, default=[1, 2, 5, 10], help='List of number of columns to use')
 
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
-    parser.add_argument('--window-sizes', type=parse_int_list, default=[10], help='Number of windows')
+    parser.add_argument('--window-sizes', type=parse_int_list, default=[1000], help='Number of windows')
     parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
     parser.add_argument('--id-data-types', type=parse_str_list, default = ['',"64"], help='Data type for id column (e.g., uint32, uint64)')
     parser.add_argument('--run-options', default='all', help='options: all, single or double')
@@ -571,7 +569,7 @@ if __name__ == "__main__":
         'buffer_sizes': [4000, 400000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10],
         'num_rows': args.rows,
-        'accessed_columns': [1, 2, 5, 10],
+        'accessed_columns': [1, 10],
         'function_types': ['add', 'exp'],
         'selectivities': [5,50, 95],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
         'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
@@ -622,4 +620,4 @@ if __name__ == "__main__":
 
 
     #TODO: save params to benchmark dir
-    generate_test_file(args.data, args.output, args.result_dir, params, args.run_options)
+    generate_test_file(args.data, args.result_dir, params, args.run_options)
