@@ -73,7 +73,7 @@ struct ArenaRef
 
     VariableSizedData allocateVariableSizedData(const nautilus::val<uint32_t>& sizeInBytes);
 
-    nautilus::val<Arena*> getArena() const;
+    [[nodiscard]] nautilus::val<Arena*> getArena() const;
 
 private:
     nautilus::val<Arena*> arenaRef;

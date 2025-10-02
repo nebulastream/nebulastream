@@ -44,12 +44,12 @@ inline OperatorId getNextLogicalOperatorId()
     return OperatorId(id++);
 }
 
-namespace detail
+namespace logicalOperatorDetail
 {
 struct ErasedLogicalOperator;
 }
 
-template <typename Checked = detail::ErasedLogicalOperator>
+template <typename Checked = logicalOperatorDetail::ErasedLogicalOperator>
 struct TypedLogicalOperator;
 using LogicalOperator = TypedLogicalOperator<>;
 
@@ -115,7 +115,7 @@ concept LogicalOperatorConcept = requires(
     { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
 };
 
-namespace detail
+namespace logicalOperatorDetail
 {
 struct DynamicBase
 {
@@ -129,7 +129,7 @@ struct DynamicBase
 /// This class is only there to add a commonly accessible VTable so that we can cast the pointer to the operator.
 /// @tparam T the type to be able to cast to from LogicalOperator
 template <typename T>
-struct Castable : detail::DynamicBase
+struct Castable : logicalOperatorDetail::DynamicBase
 {
     const T& get() const { return *dynamic_cast<const T*>(this); }
 
@@ -138,7 +138,7 @@ struct Castable : detail::DynamicBase
     const T& operator*() const { return *dynamic_cast<const T*>(this); }
 };
 
-namespace detail
+namespace logicalOperatorDetail
 {
 /// @brief A type erased wrapper for logical operators
 struct ErasedLogicalOperator
@@ -187,7 +187,7 @@ template <typename Checked>
 struct TypedLogicalOperator
 {
     template <LogicalOperatorConcept T>
-    requires std::same_as<Checked, detail::ErasedLogicalOperator>
+    requires std::same_as<Checked, logicalOperatorDetail::ErasedLogicalOperator>
     TypedLogicalOperator(TypedLogicalOperator<T> other) : self(other.self) /// NOLINT(google-explicit-constructor)
     {
     }
@@ -196,52 +196,53 @@ struct TypedLogicalOperator
     /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
     /// @param op The operator to wrap.
     template <LogicalOperatorConcept T>
-    TypedLogicalOperator(const T& op) : self(std::make_shared<detail::OperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
+    TypedLogicalOperator(const T& op)
+        : self(std::make_shared<logicalOperatorDetail::OperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
 
     template <LogicalOperatorConcept T>
-    TypedLogicalOperator(const detail::OperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
-        : self(std::make_shared<detail::OperatorModel<T>>(op.impl, op.id))
+    TypedLogicalOperator(const logicalOperatorDetail::OperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
+        : self(std::make_shared<logicalOperatorDetail::OperatorModel<T>>(op.impl, op.id))
     {
     }
 
-    explicit TypedLogicalOperator(std::shared_ptr<const detail::ErasedLogicalOperator> op) : self(std::move(op)) { }
+    explicit TypedLogicalOperator(std::shared_ptr<const logicalOperatorDetail::ErasedLogicalOperator> op) : self(std::move(op)) { }
 
     ///@brief Alternative to operator*
     [[nodiscard]] const Checked& get() const
     {
-        if constexpr (std::is_same_v<detail::ErasedLogicalOperator, Checked>)
+        if constexpr (std::is_same_v<logicalOperatorDetail::ErasedLogicalOperator, Checked>)
         {
-            return *std::dynamic_pointer_cast<const detail::ErasedLogicalOperator>(self);
+            return *std::dynamic_pointer_cast<const logicalOperatorDetail::ErasedLogicalOperator>(self);
         }
         else
         {
-            return std::dynamic_pointer_cast<const detail::OperatorModel<Checked>>(self)->impl;
+            return std::dynamic_pointer_cast<const logicalOperatorDetail::OperatorModel<Checked>>(self)->impl;
         }
     }
 
     const Checked& operator*() const
     {
-        if constexpr (std::is_same_v<detail::ErasedLogicalOperator, Checked>)
+        if constexpr (std::is_same_v<logicalOperatorDetail::ErasedLogicalOperator, Checked>)
         {
-            return *std::dynamic_pointer_cast<const detail::ErasedLogicalOperator>(self);
+            return *std::dynamic_pointer_cast<const logicalOperatorDetail::ErasedLogicalOperator>(self);
         }
         else
         {
-            return std::dynamic_pointer_cast<const detail::OperatorModel<Checked>>(self)->impl;
+            return std::dynamic_pointer_cast<const logicalOperatorDetail::OperatorModel<Checked>>(self)->impl;
         }
     }
 
     const Checked* operator->() const
     {
-        if constexpr (std::is_same_v<detail::ErasedLogicalOperator, Checked>)
+        if constexpr (std::is_same_v<logicalOperatorDetail::ErasedLogicalOperator, Checked>)
         {
-            return std::dynamic_pointer_cast<const detail::ErasedLogicalOperator>(self).get();
+            return std::dynamic_pointer_cast<const logicalOperatorDetail::ErasedLogicalOperator>(self).get();
         }
         else
         {
-            auto casted = std::dynamic_pointer_cast<const detail::OperatorModel<Checked>>(self);
+            auto casted = std::dynamic_pointer_cast<const logicalOperatorDetail::OperatorModel<Checked>>(self);
             return &casted->impl;
         }
     }
@@ -254,9 +255,9 @@ struct TypedLogicalOperator
     template <LogicalOperatorConcept T>
     std::optional<TypedLogicalOperator<T>> tryGetAs() const
     {
-        if (auto model = std::dynamic_pointer_cast<const detail::OperatorModel<T>>(self))
+        if (auto model = std::dynamic_pointer_cast<const logicalOperatorDetail::OperatorModel<T>>(self))
         {
-            return TypedLogicalOperator<T>{std::static_pointer_cast<const detail::ErasedLogicalOperator>(model)};
+            return TypedLogicalOperator<T>{std::static_pointer_cast<const logicalOperatorDetail::ErasedLogicalOperator>(model)};
         }
         return std::nullopt;
     }
@@ -285,9 +286,9 @@ struct TypedLogicalOperator
     template <LogicalOperatorConcept T>
     TypedLogicalOperator<T> getAs() const
     {
-        if (auto model = std::dynamic_pointer_cast<const detail::OperatorModel<T>>(self))
+        if (auto model = std::dynamic_pointer_cast<const logicalOperatorDetail::OperatorModel<T>>(self))
         {
-            return TypedLogicalOperator<T>{std::static_pointer_cast<const detail::ErasedLogicalOperator>(model)};
+            return TypedLogicalOperator<T>{std::static_pointer_cast<const logicalOperatorDetail::ErasedLogicalOperator>(model)};
         }
         PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
         std::unreachable();
@@ -366,10 +367,10 @@ private:
 
     [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
 
-    std::shared_ptr<const detail::ErasedLogicalOperator> self;
+    std::shared_ptr<const logicalOperatorDetail::ErasedLogicalOperator> self;
 };
 
-namespace detail
+namespace logicalOperatorDetail
 {
 
 /// @brief Wrapper type that acts as a bridge between a type satisfying LogicalOperatorConcept and TypedLogicalOperator

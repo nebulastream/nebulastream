@@ -19,11 +19,15 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
-std::unique_ptr<InputFormatterTaskPipeline> provideInputFormatterTask(const Schema& schema, const ParserConfig& config);
+
+PhysicalOperator provideInputFormatterTask(
+    const std::optional<ParserConfig>& formatScanConfig,
+    std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider);
 
 bool contains(const std::string& parserType);
 }

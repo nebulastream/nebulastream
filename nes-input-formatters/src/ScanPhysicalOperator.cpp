@@ -13,7 +13,7 @@
 */
 
 
-#include <ScanPhysicalOperator.hpp>
+#include <../../nes-input-formatters/include/InputFormatters/ScanPhysicalOperator.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -30,9 +30,8 @@
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
-    : bufferRef(std::move(bufferRef)), projections(std::move(projections))
+ScanPhysicalOperator::ScanPhysicalOperator(std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef)
+    : bufferRef(std::move(bufferRef)), projections(this->bufferRef->getMemoryLayout()->getKeyFieldNames())
 {
 }
 
