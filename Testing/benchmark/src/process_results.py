@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 import shutil
 
-def process_benchmark(benchmark_dir, run_options='all'):
+def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover latency (especially for swaps)
     """Process benchmark results with support for double operator configurations."""
     try:
         benchmark_dir = Path(benchmark_dir)
@@ -28,7 +28,7 @@ def process_benchmark(benchmark_dir, run_options='all'):
             # Single operator directories
             single_op_dir = benchmark_dir
             if single_op_dir.exists():
-                for op_type in ['filter', 'map']:
+                for op_type in ['filter', 'map', 'aggregation']:
                     op_dir = single_op_dir / op_type
                     if op_dir.exists():
                         dirs_to_process.append(op_dir)

@@ -116,6 +116,9 @@ def compute_stats(trace_path):
             wall_time = pipeline_wall_times.get(pid, 0)
             s['eff_tp'] = s['sum_tuples'] / wall_time if wall_time > 0 else 0
 
+            # Mean latency (total time divided by task count)
+            s['mean_latency'] = s['sum_time'] / s['count'] if s['count'] > 0 else 0
+
         total_skipped = sum(skipped_by_pipeline.values())
         return trace_path, all_task_time, full_query_time, agg, total_skipped
 
@@ -216,7 +219,7 @@ def main():
         for pid in sorted(pipelines):
             p = pipelines[pid]
             # Add columns for this pipeline
-            for metric in ['comp_tp', 'eff_tp', 'total_tuples', 'time_pct', 'skipped_tasks']:
+            for metric in ['comp_tp', 'eff_tp', 'total_tuples', 'time_pct', 'mean_latency', 'skipped_tasks']:
                 field_name = f'pipeline_{pid}_{metric}'
                 row[field_name] = p.get(metric, 0)
                 all_fields.add(field_name)
