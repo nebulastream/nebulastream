@@ -35,11 +35,11 @@ ParseFunctionSignature getQuotedStringParseFunction()
     {
         INVARIANT(inputString.length() >= 2, "Input string must be at least 2 characters long.");
         const auto inputStringWithoutQuotes = inputString.substr(1, inputString.length() - 2);
-        auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        const auto indexToChildBuffer
-            = MemoryLayout::writeVarSizedDataAndPrependLength(tupleBufferFormatted, bufferProvider, inputStringWithoutQuotes);
-        *childBufferIndexPointer = indexToChildBuffer.getCombinedIdxOffset();
+        const auto variableSizedAccess = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(
+            tupleBufferFormatted, bufferProvider, std::as_bytes(std::span{inputStringWithoutQuotes}));
+        const auto combinedIdxOffset = variableSizedAccess.getCombinedIdxOffset();
+        const auto parsedValueBytes = std::as_bytes(std::span{&combinedIdxOffset, 1});
+        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
     };
 }
 
@@ -50,10 +50,11 @@ ParseFunctionSignature getBasicStringParseFunction()
               AbstractBufferProvider& bufferProvider,
               TupleBuffer& tupleBufferFormatted)
     {
-        auto* childBufferIndexPointer = reinterpret_cast<uint64_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            tupleBufferFormatted.getMemArea() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        const auto indexToChildBuffer = MemoryLayout::writeVarSizedDataAndPrependLength(tupleBufferFormatted, bufferProvider, inputString);
-        *childBufferIndexPointer = indexToChildBuffer.getCombinedIdxOffset();
+        const auto variableSizedAccess = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(
+            tupleBufferFormatted, bufferProvider, std::as_bytes(std::span{inputString}));
+        const auto combinedIdxOffset = variableSizedAccess.getCombinedIdxOffset();
+        const auto parsedValueBytes = std::as_bytes(std::span{&combinedIdxOffset, 1});
+        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
     };
 }
 

@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -120,24 +121,16 @@ public:
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     void release() noexcept;
 
-    int8_t* getMemArea() noexcept;
-
-    /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = int8_t>
-    T* getMemArea() noexcept
+    template <typename T = std::byte>
+    std::span<T> getAvailableMemoryArea() noexcept
     {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(std::has_single_bit(alignof(T)));
-        return reinterpret_cast<T*>(ptr);
+        return std::span<T>{reinterpret_cast<T*>(ptr), size};
     }
 
-    /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = int8_t>
-    const T* getMemArea() const noexcept
+    template <typename T = std::byte>
+    std::span<const T> getAvailableMemoryArea() const noexcept
     {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(std::has_single_bit(alignof(T)));
-        return reinterpret_cast<const T*>(ptr);
+        return std::span<const T>{reinterpret_cast<T*>(ptr), size};
     }
 
     [[nodiscard]] uint32_t getReferenceCounter() const noexcept;

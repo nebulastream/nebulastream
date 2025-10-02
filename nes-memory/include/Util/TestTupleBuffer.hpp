@@ -62,7 +62,9 @@ public:
     requires IsNesType<Type> && std::is_pointer<Type>::value
     [[nodiscard]] Type read() const
     {
-        if (not physicalType.isSameDataType<Type>())
+        /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
+        if (not physicalType.isSameDataType<Type>()
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, typeid(Type).name());
         }

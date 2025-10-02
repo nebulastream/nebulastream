@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,7 +59,7 @@ VarVal TupleBufferMemoryProvider::loadValue(
         +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess variableSizedAccess)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            return MemoryLayout::loadAssociatedVarSizedValue(*tupleBuffer, variableSizedAccess);
+            return MemoryLayout::loadAssociatedVarSizedValue(*tupleBuffer, variableSizedAccess).data();
         },
         recordBuffer.getReference(),
         combinedIdxOffset);
@@ -86,11 +87,12 @@ VarVal TupleBufferMemoryProvider::storeValue(
 
     const auto varSizedValue = value.cast<VariableSizedData>();
     const auto variableSizedAccess = invoke(
-        +[](TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const char* varSizedPtr, const uint32_t varSizedValueLength)
+        +[](TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const int8_t* varSizedPtr, const uint32_t varSizedValueLength)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
-            return MemoryLayout::writeVarSizedData(*tupleBuffer, *bufferProvider, varSizedPtr, varSizedValueLength);
+            const std::span<const int8_t> varSizedValueSpan{varSizedPtr, varSizedPtr + varSizedValueLength};
+            return MemoryLayout::writeVarSized<MemoryLayout::PREPEND_NONE>(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
         },
         recordBuffer.getReference(),
         bufferProvider,
