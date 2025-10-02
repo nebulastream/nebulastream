@@ -159,10 +159,12 @@ struct DistributedQueryStatus
 
 struct LocalQuery
 {
-    LocalQueryId id;
+    LocalQueryId id = INVALID<LocalQueryId>;
     GrpcAddr grpcAddr;
 
     LocalQuery(const LocalQueryId id, const GrpcAddr& addr) : id{id}, grpcAddr{addr} { }
+
+    LocalQuery() = default;
 
     bool operator==(const LocalQuery& other) const = default;
 };
@@ -180,10 +182,6 @@ public:
     [[nodiscard]] auto end() const { return localQueries.end(); }
 
     bool operator==(const Query& other) const = default;
-
-    /// Serialization
-    static Query load(const std::string& identifier);
-    static std::string save(const Query& query);
 
     friend std::ostream& operator<<(std::ostream& os, const Query& query);
     Query() = default;
