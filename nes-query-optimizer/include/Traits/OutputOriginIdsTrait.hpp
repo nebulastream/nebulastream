@@ -15,44 +15,41 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <string>
 #include <string_view>
 #include <typeinfo>
+#include <utility>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <SerializableTrait.pb.h>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
-enum class JoinImplementation : uint8_t
-{
-    NESTED_LOOP_JOIN,
-    HASH_JOIN,
-    CHOICELESS
-};
 
-/// Struct that stores implementation types as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
-struct ImplementationTypeTrait final : public TraitConcept
+class OutputOriginIdsTrait final : public TraitConcept
 {
-    static constexpr std::string_view NAME = "ImplementationType";
-    JoinImplementation implementationType;
-
-    explicit ImplementationTypeTrait(JoinImplementation implementationType);
+public:
+    static constexpr std::string_view NAME = "OutputOriginIds";
+    explicit OutputOriginIdsTrait(std::vector<OriginId> originIds);
 
     [[nodiscard]] const std::type_info& getType() const override;
-
-    [[nodiscard]] SerializableTrait serialize() const override;
-
-    bool operator==(const TraitConcept& other) const override;
-
-    [[nodiscard]] size_t hash() const override;
-
-    [[nodiscard]] std::string explain(ExplainVerbosity) const override;
-
     [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] SerializableTrait serialize() const override;
+    bool operator==(const TraitConcept& other) const override;
+    [[nodiscard]] size_t hash() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+
+    [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<OriginId>>().cbegin());
+    [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<OriginId>>().cend());
+
+    OriginId& operator[](size_t index);
+    const OriginId& operator[](size_t index) const;
+    [[nodiscard]] size_t size() const;
+
+private:
+    std::vector<OriginId> originIds;
 };
 
 }
