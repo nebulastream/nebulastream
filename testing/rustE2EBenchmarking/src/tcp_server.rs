@@ -1,252 +1,275 @@
-// src/tcp_server.rs
-use tokio::net::{TcpListener, TcpStream};
-use tokio::io::AsyncWriteExt;
-use tokio::fs;
-use tokio::sync::{mpsc, oneshot};
+use std::fs::File;
+use std::io::Read;
+use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use tokio::io::AsyncWriteExt;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{Barrier, Mutex};
+use tokio::time::{sleep, interval};
 use clap::Parser;
-use anyhow::Result;
 
-#[derive(Parser)]
-#[command(name = "tcp-server")]
-#[command(about = "TCP server for NES benchmark framework")]
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value = "127.0.0.1")]
+    /// Path to the file to serve
+    #[clap(short, long)]
+    file: PathBuf,
+
+    /// Number of clients to wait for before serving
+    #[clap(short = 'n', long, default_value = "1")]
+    clients: usize,
+
+    /// Number of times to send the file to each client
+    #[clap(short = 'm', long, default_value = "1")]
+    iterations: usize,
+
+    /// Data rate in MB/s
+    #[clap(short, long, default_value = "125")]
+    rate: f64,
+
+    /// Sending mode: uniform or burst
+    #[clap(short, long, default_value = "uniform")]
+    mode: SendingMode,
+
+    /// Host to bind to
+    #[clap(long, default_value = "127.0.0.1")]
     host: String,
 
-    #[arg(short, long, default_value_t = 8080)]
+    /// Port to bind to
+    #[clap(short, long, default_value = "1111")]
     port: u16,
 
-    #[arg(short, long, default_value = "test_data.bin")]
-    file: String,
-
-    #[arg(long, default_value_t = 1)]
-    repeat: u32,
-
-    #[arg(long, default_value_t = 65536)]
-    buffer_size: usize,
-
-    #[arg(short = 'n', long, default_value_t = 1)]
-    batch_size: usize,
+    /// Chunk size in KB for sending data (affects granularity of rate limiting)
+    #[clap(long, default_value = "64")]
+    chunk_size_kb: usize,
 }
 
-// Reuse the existing server implementation from your code
-// (Copy the ServerMessage, ClientHandler, and Server structs from your original server.rs)
-
-#[derive(Debug)]
-enum ServerMessage {
-    NewClient {
-        stream: TcpStream,
-        addr: std::net::SocketAddr,
-        response_tx: oneshot::Sender<()>,
-    },
+#[derive(Debug, Clone, Copy)]
+enum SendingMode {
+    Uniform,
+    Burst,
 }
 
-struct ClientHandler {
-    stream: TcpStream,
-    client_id: u64,
-    data: Arc<Vec<u8>>,
-    repeat_count: u32,
-    buffer_size: usize,
-}
+impl std::str::FromStr for SendingMode {
+    type Err = String;
 
-impl ClientHandler {
-    fn new(
-        stream: TcpStream,
-        client_id: u64,
-        data: Arc<Vec<u8>>,
-        repeat_count: u32,
-        buffer_size: usize,
-    ) -> Self {
-        Self {
-            stream,
-            client_id,
-            data,
-            repeat_count,
-            buffer_size,
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "uniform" => Ok(SendingMode::Uniform),
+            "burst" => Ok(SendingMode::Burst),
+            _ => Err(format!("Invalid mode: {}. Use 'uniform' or 'burst'", s)),
         }
-    }
-
-    async fn serve(mut self) -> Result<()> {
-        self.stream.set_nodelay(true)?;
-        let start_time = Instant::now();
-        let mut total_sent = 0u64;
-
-        println!("Client {} starting data transmission", self.client_id);
-
-        for _ in 0..self.repeat_count {
-            let mut offset = 0;
-            while offset < self.data.len() {
-                let end = std::cmp::min(offset + self.buffer_size, self.data.len());
-                let chunk = &self.data[offset..end];
-
-                match self.stream.write_all(chunk).await {
-                    Ok(()) => {
-                        total_sent += chunk.len() as u64;
-                        offset = end;
-                    }
-                    Err(e) => {
-                        eprintln!("Client {}: Write error: {}", self.client_id, e);
-                        return Err(e.into());
-                    }
-                }
-            }
-        }
-
-        self.stream.flush().await?;
-
-        let duration = start_time.elapsed();
-        let throughput_mbps = (total_sent as f64) / (1024.0 * 1024.0) / duration.as_secs_f64();
-
-        println!(
-            "Client {} completed: {} MB in {:.2}s ({:.2} MB/s)",
-            self.client_id,
-            total_sent / (1024 * 1024),
-            duration.as_secs_f64(),
-            throughput_mbps
-        );
-
-        Ok(())
     }
 }
 
 struct Server {
-    data: Arc<Vec<u8>>,
-    repeat_count: u32,
-    buffer_size: usize,
-    batch_size: usize,
+    file_data: Arc<Vec<u8>>,
+    args: Arc<Args>,
+    barrier: Arc<Barrier>,
 }
 
 impl Server {
-    async fn new(file_path: &str, repeat_count: u32, buffer_size: usize, batch_size: usize) -> Result<Self> {
-        let data = match fs::read(file_path).await {
-            Ok(data) => {
-                println!("Loaded file: {} ({} bytes)", file_path, data.len());
-                data
-            }
-            Err(_) => {
-                println!("File not found, generating {} bytes of test data", buffer_size);
-                (0..buffer_size).map(|i| (i % 256) as u8).collect()
-            }
-        };
+    fn new(args: Args) -> Result<Self, Box<dyn std::error::Error>> {
+        // Read file data
+        let mut file = File::open(&args.file)?;
+        let mut file_data = Vec::new();
+        file.read_to_end(&mut file_data)?;
 
-        Ok(Self {
-            data: Arc::new(data),
-            repeat_count,
-            buffer_size,
-            batch_size,
+        let barrier = Arc::new(Barrier::new(args.clients + 1)); // +1 for main task
+
+        Ok(Server {
+            file_data: Arc::new(file_data),
+            args: Arc::new(args),
+            barrier,
         })
     }
 
-    async fn run(&self, host: &str, port: u16) -> Result<()> {
-        let listener = TcpListener::bind(format!("{}:{}", host, port)).await?;
-        println!("Server listening on {}:{}", host, port);
-        println!("Data size: {} bytes, repeat: {} times", self.data.len(), self.repeat_count);
-        println!("Batch size: {} clients per batch", self.batch_size);
-        println!();
+    async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let addr: SocketAddr = format!("{}:{}", self.args.host, self.args.port).parse()?;
+        let listener = TcpListener::bind(addr).await?;
 
-        let (tx, mut rx) = mpsc::unbounded_channel::<ServerMessage>();
+        println!("Server listening on {}", addr);
+        println!("Waiting for {} clients to connect...", self.args.clients);
+        println!("Will serve file {} times to each client", self.args.iterations);
+        println!("Total rate: {} MB/s, Per client: {:.2} MB/s",
+                 self.args.rate,
+                 self.args.rate / self.args.clients as f64);
+        println!("Mode: {:?}", self.args.mode);
 
-        let listener_tx = tx.clone();
-        tokio::spawn(async move {
-            loop {
-                match listener.accept().await {
-                    Ok((stream, addr)) => {
-                        let (response_tx, response_rx) = oneshot::channel();
+        let client_counter = Arc::new(Mutex::new(0));
+        let mut client_handles = Vec::new();
 
-                        if listener_tx.send(ServerMessage::NewClient {
-                            stream,
-                            addr,
-                            response_tx,
-                        }).is_err() {
-                            break;
-                        }
+        // Accept N clients
+        for _ in 0..self.args.clients {
+            let (stream, peer_addr) = listener.accept().await?;
 
-                        let _ = response_rx.await;
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to accept connection: {}", e);
-                    }
-                }
-            }
-        });
+            let mut counter = client_counter.lock().await;
+            *counter += 1;
+            let client_id = *counter;
 
-        let mut batch_number = 1u32;
-        let mut global_client_id = 0u64;
+            println!("Client {} connected from {}", client_id, peer_addr);
 
-        loop {
-            println!("=== Batch {} ===", batch_number);
-            println!("Waiting for {} clients to connect...", self.batch_size);
+            let barrier_clone = Arc::clone(&self.barrier);
+            let file_data = Arc::clone(&self.file_data);
+            let args = Arc::clone(&self.args);
 
-            let mut pending_clients = Vec::new();
-
-            while pending_clients.len() < self.batch_size {
-                if let Some(msg) = rx.recv().await {
-                    match msg {
-                        ServerMessage::NewClient { stream, addr, response_tx } => {
-                            global_client_id += 1;
-                            pending_clients.push((stream, global_client_id));
-
-                            println!(
-                                "Client {} connected from {} ({}/{} for batch {})",
-                                global_client_id,
-                                addr,
-                                pending_clients.len(),
-                                self.batch_size,
-                                batch_number
-                            );
-
-                            let _ = response_tx.send(());
-                        }
-                    }
-                }
-            }
-
-            println!("Batch {} ready! Starting simultaneous data transmission to {} clients...",
-                     batch_number, self.batch_size);
-
-            let mut client_tasks = Vec::new();
-
-            for (stream, client_id) in pending_clients {
-                let handler = ClientHandler::new(
+            let handle = tokio::spawn(async move {
+                if let Err(e) = handle_client(
                     stream,
                     client_id,
-                    Arc::clone(&self.data),
-                    self.repeat_count,
-                    self.buffer_size,
-                );
+                    barrier_clone,
+                    file_data,
+                    args,
+                ).await {
+                    eprintln!("Error handling client {}: {}", client_id, e);
+                }
+            });
 
-                let task = tokio::spawn(async move {
-                    if let Err(e) = handler.serve().await {
-                        eprintln!("Client {} error: {}", client_id, e);
-                    }
-                });
-
-                client_tasks.push(task);
-            }
-
-            let batch_start = Instant::now();
-            for task in client_tasks {
-                let _ = task.await;
-            }
-
-            let batch_duration = batch_start.elapsed();
-            println!(
-                "Batch {} completed in {:.2}s\n",
-                batch_number,
-                batch_duration.as_secs_f64()
-            );
-
-            batch_number += 1;
+            client_handles.push(handle);
         }
+
+
+        println!("All {} clients connected. Starting file transfer...", self.args.clients);
+
+        let now = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("Time went backwards");
+
+        println!("Start timestamp: {}", now.as_secs_f64());
+        // Signal all clients to start
+        self.barrier.wait().await;
+
+        // Wait for all clients to finish
+        for handle in client_handles {
+            handle.await?;
+        }
+
+        println!("All clients served. Server shutting down.");
+        Ok(())
     }
 }
 
+async fn handle_client(
+    mut stream: TcpStream,
+    client_id: usize,
+    barrier: Arc<Barrier>,
+    file_data: Arc<Vec<u8>>,
+    args: Arc<Args>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Wait for all clients to connect
+    barrier.wait().await;
+
+    let client_rate_mbps = args.rate / args.clients as f64;
+    let client_rate_bytes_per_sec = (client_rate_mbps * 1024.0 * 1024.0) as usize;
+    let chunk_size = args.chunk_size_kb * 1024;
+
+    println!("Client {}: Starting transfer ({} iterations, {:.2} MB/s)",
+             client_id, args.iterations, client_rate_mbps);
+
+    match args.mode {
+        SendingMode::Uniform => {
+            send_uniform(
+                &mut stream,
+                client_id,
+                &file_data,
+                args.iterations,
+                client_rate_bytes_per_sec,
+                chunk_size,
+            ).await?;
+        }
+        SendingMode::Burst => {
+            send_burst(
+                &mut stream,
+                client_id,
+                &file_data,
+                args.iterations,
+                client_rate_bytes_per_sec,
+            ).await?;
+        }
+    }
+
+    stream.shutdown().await?;
+    println!("Client {}: Disconnected", client_id);
+
+    Ok(())
+}
+
+async fn send_uniform(
+    stream: &mut TcpStream,
+    client_id: usize,
+    file_data: &[u8],
+    iterations: usize,
+    rate_bytes_per_sec: usize,
+    chunk_size: usize,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let chunk_duration = Duration::from_secs_f64(chunk_size as f64 / rate_bytes_per_sec as f64);
+    let mut interval = interval(chunk_duration);
+    interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+
+    for iteration in 1..=iterations {
+        let start = Instant::now();
+        let mut bytes_sent = 0;
+
+        for chunk in file_data.chunks(chunk_size) {
+            interval.tick().await;
+            stream.write_all(chunk).await?;
+            bytes_sent += chunk.len();
+        }
+
+        stream.flush().await?;
+
+        let elapsed = start.elapsed();
+        let actual_rate = (bytes_sent as f64 / elapsed.as_secs_f64()) / (1024.0 * 1024.0);
+
+        println!("Client {}: Iteration {}/{} complete ({:.2} MB/s actual)",
+                 client_id, iteration, iterations, actual_rate);
+    }
+
+    Ok(())
+}
+
+async fn send_burst(
+    stream: &mut TcpStream,
+    client_id: usize,
+    file_data: &[u8],
+    iterations: usize,
+    rate_bytes_per_sec: usize,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let file_size = file_data.len();
+    let burst_duration = Duration::from_secs_f64(file_size as f64 / rate_bytes_per_sec as f64);
+
+    for iteration in 1..=iterations {
+        let start = Instant::now();
+
+        // Send entire file in one burst
+        stream.write_all(file_data).await?;
+        stream.flush().await?;
+
+        let elapsed = start.elapsed();
+        let actual_rate = (file_size as f64 / elapsed.as_secs_f64()) / (1024.0 * 1024.0);
+
+        println!("Client {}: Iteration {}/{} burst sent ({:.2} MB/s actual)",
+                 client_id, iteration, iterations, actual_rate);
+
+        // Pause to maintain average rate
+        if iteration < iterations {
+            let remaining_time = burst_duration.saturating_sub(elapsed);
+            if !remaining_time.is_zero() {
+                println!("Client {}: Pausing for {:.2}s", client_id, remaining_time.as_secs_f64());
+                sleep(remaining_time).await;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-    let server = Server::new(&args.file, args.repeat, args.buffer_size, args.batch_size).await?;
-    server.run(&args.host, args.port).await?;
+    let server = Server::new(args)?;
+    server.run().await?;
     Ok(())
 }

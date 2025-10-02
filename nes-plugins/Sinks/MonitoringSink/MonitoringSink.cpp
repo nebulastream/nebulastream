@@ -14,6 +14,7 @@
 
 #include <MonitoringSink.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <filesystem>
 #include <iostream>
@@ -130,6 +131,12 @@ void MonitoringSink::stop(PipelineExecutionContext&)
     }(this->bufferLatenciesInMS);
 
     // Todo: is wrong for repititions
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    double seconds = std::chrono::duration_cast<std::chrono::duration<double>>(duration).count();
+    std::cout << std::fixed << std::setprecision(6);
+    std::cout << "Stop timestamp: " << seconds << std::endl;
+
     const auto processingTimeInSeconds = (this->timestampOfLastSN.second - this->timestampOfFirstSN) / static_cast<double>(1000);
     const auto inputSizeInMegaBytes = this->sizeOfInputDataInBytes / 1000000;
     const auto throughputInMegaBytesPerSecond = inputSizeInMegaBytes / processingTimeInSeconds;

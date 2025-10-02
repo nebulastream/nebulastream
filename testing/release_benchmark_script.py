@@ -26,8 +26,8 @@ def main():
     for i in range(1, num_queries + 1):
         # Create modified YAML with numbered output file
         modified_yaml = original_yaml.replace(
-            'filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"',
-            f'filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery{i}.csv"'
+            '/home/leo/Dokumente/Work/nebulastream-public/testing/output/outputQuery.csv"',
+            f'filePath: "/home/leo/Dokumente/Work/nebulastream-public/testing/output/outputQuery{i}.csv"'
         )
 
         # Create temporary file with modified YAML
@@ -37,11 +37,13 @@ def main():
 
         try:
             # Register query with modified YAML
-            register_cmd = f"/home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-nebuli/nes-nebuli -d -w -s localhost:8080 register < {temp_yaml_path}"
+            print("Registering le query")
+            register_cmd = f"/home/leo/Dokumente/Work/nebulastream-public/cmake-build-release-docker/nes-nebuli/nes-nebuli -d -w -s localhost:8080 register < {yaml_file_path}"
             subprocess.run(register_cmd, shell=True)
 
+            print("Starting le query")
             # Start query
-            start_cmd = f"/home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-nebuli/nes-nebuli -d -w -s localhost:8080 start {i}"
+            start_cmd = f"/home/leo/Dokumente/Work/nebulastream-public/cmake-build-release-docker/nes-nebuli/nes-nebuli -d -w -s localhost:8080 start {i}"
             subprocess.run(start_cmd, shell=True)
         finally:
             # Clean up temporary file
