@@ -27,20 +27,6 @@
     }
   },
   "dependencies": [
-    "antlr4",
-    "argparse",
-    "boost-asio",
-    "cpptrace",
-    "fmt",
-    "folly",
-    "grpc",
-    "gtest",
-    "libcuckoo",
-    "magic-enum",
-    "nlohmann-json",
-    "nautilus",
-    "replxx",
-    "spdlog",
     "yaml-cpp"
   ]
 }
