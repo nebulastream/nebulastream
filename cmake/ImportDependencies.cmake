@@ -57,7 +57,7 @@ if ($CACHE{DOCKER_DEV_IMAGE})
         SET(USE_LIBCXX_IF_AVAILABLE OFF)
     endif()
 
-    SET(SANITIZER_OPTION $ENV{VCPKG_SANITIZER})
+    SET(SANITIZER_OPTION $ENV{NES_SANITIZER})
     unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
     SET(CMAKE_TOOLCHAIN_FILE $ENV{NES_PREBUILT_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 elseif (DEFINED CMAKE_TOOLCHAIN_FILE)
