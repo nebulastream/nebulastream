@@ -188,7 +188,7 @@ protected:
     /// This map can and will be filled in this class but also in the tests themselves.
     std::map<NameAndNautilusBackend, std::unique_ptr<FunctionWrapperBase>> compiledFunctions;
 
-    /// We disable multithreading in MLIR by default to not interfer with NebulaStream's thread model
+    /// We disable multithreading in MLIR by default to not interfere with NebulaStream's thread model
     bool mlirEnableMultithreading = false;
 };
 

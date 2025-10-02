@@ -102,6 +102,8 @@ void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, 
 std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage(const std::shared_ptr<Pipeline>& pipeline)
 {
     nautilus::engine::Options options;
+    /// We disable multithreading in MLIR by default to not interfere with NebulaStream's thread model
+    options.setOption("mlir.enableMultithreading", false);
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {
