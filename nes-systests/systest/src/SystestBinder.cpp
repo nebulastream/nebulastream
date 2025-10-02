@@ -41,6 +41,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -592,7 +593,7 @@ struct SystestBinder::Impl
             std::string token;
             while (stream >> token)
             {
-                if (Util::toLowerCase(token) == "into")
+                if (NES::Util::toLowerCase(token) == "into")
                 {
                     std::string sink;
                     if (!(stream >> sink))

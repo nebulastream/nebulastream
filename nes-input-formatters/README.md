@@ -47,7 +47,7 @@ NebulaStream's query engine operates on an (internal) task queue. Each 'Task' is
 pipeline) to apply to the buffer. Worker threads asynchronously pick tasks from the task queue, executing them in
 non-deterministic order (see [architecture](#architecture)).\
 Asynchronous sources that only do I/O don't format the data. Instead, they put the (raw) buffers in the (admission) task
-queue. Ultimately, worker threads pick up and execute the format-tasks(InputFormatterTaskPipeline) only if there is data
+queue. Ultimately, worker threads pick up and execute the format-tasks(InputFormatterTupleBufferRef) only if there is data
 that requires formatting. Otherwise, worker threads are free to process other tasks.
 
 ### Simple Sources
@@ -89,15 +89,15 @@ format-specific implementation via a utility library.
 
 ## Architecture
 
-Input formatters are represented by InputFormatterTaskPipelines. In general, a pipeline that represents executable code
+Input formatters are represented by InputFormatterTupleBufferRefs. In general, a pipeline that represents executable code
 and a buffer form a *Task*. Worker threads asynchronously execute Tasks from the task queue, including tasks with
-InputFormatterTaskPipelines and raw buffers. (Note: We aim to replace the dedicated source threads in the figure below
+InputFormatterTupleBufferRefs and raw buffers. (Note: We aim to replace the dedicated source threads in the figure below
 with a more light-weight source runtime.)
 
 ```mermaid
 flowchart TB
     subgraph Legend
-        I[IFTP: InputFormatterTaskPipeline]
+        I[IFTP: InputFormatterTupleBufferRef]
     end
     subgraph External
         A[Source 1] -->|generate data| A(ExternalSource 1)
@@ -123,42 +123,42 @@ flowchart TB
     end
 ```
 
-### InputFormatterTaskPipeline
+### InputFormatterTupleBufferRef
 
-The InputFormatterTaskPipeline essentially consists of two phases. In the first phase, the InputFormatterTaskPipeline
+The InputFormatterTupleBufferRef essentially consists of two phases. In the first phase, the InputFormatterTupleBufferRef
 uses the **InputFormatIndexer** to determine the indexes of all fields in the raw buffer similar to the approach taken
-by [simd-json](https://arxiv.org/abs/1902.08318). Additionally, the InputFormatterTaskPipeline resolves tuples spanning
+by [simd-json](https://arxiv.org/abs/1902.08318). Additionally, the InputFormatterTupleBufferRef resolves tuples spanning
 over buffers using the **SequenceShredder** and indexes these spanning tuples using the InputFormatIndexer.\
-In the second phase, the InputFormatterTaskPipeline iterates over the indexed fields of the raw buffer and converts the
+In the second phase, the InputFormatterTupleBufferRef iterates over the indexed fields of the raw buffer and converts the
 raw values to values in our native representation. (We aim to implement this second phase heavily relying on Nautilus.
 Using Nautilus, we generate code for the field traversal that skips fields that we don't need to touch. Additionally, we
 aim to implement a registry of parsing functions that input formatters can leverage (**A3**).)
 
 ```mermaid
 flowchart TB
-    subgraph InputFormatterTaskPipeline
+    subgraph InputFormatterTupleBufferRef
         subgraph Phase 1 - Indexing
             direction LR
-            B[InputFormatIndexer] --->|field indexes| A(InputFormatterTask)
-            A[InputFormatterTask] --->|raw buffer/spanning tuple| B(InputFormatIndexer)
-            C[InputFormatterTask] --->|" raw buffers (with complete spanning tuple(s)) "| A(SequenceShredder)
-            A[InputFormatterTask] --->|raw buffer| C(SequenceShredder)
+            B[InputFormatIndexer] --->|field indexes| A(InputFormatter)
+            A[InputFormatter] --->|raw buffer/spanning tuple| B(InputFormatIndexer)
+            C[InputFormatter] --->|" raw buffers (with complete spanning tuple(s)) "| A(SequenceShredder)
+            A[InputFormatter] --->|raw buffer| C(SequenceShredder)
             B[InputFormatIndexer]
         end
         subgraph "Phase 2 - Parsing"
             direction LR
-            N[InputFormatterTask] --->|formatted field value| M(RawInputDataParser)
-            M[InputFormatterTask] --->|raw field value| N(RawInputDataParser)
+            N[InputFormatter] --->|formatted field value| M(RawInputDataParser)
+            M[InputFormatter] --->|raw field value| N(RawInputDataParser)
             M --->|" iterate over indexed buffer/spanning tuples(s) "| M
             N[RawInputDataParser]
         end
-        style InputFormatterTaskPipeline fill: #666666
+        style InputFormatterTupleBufferRef fill: #666666
     end
 ```
 
 ### Class Hierarchy
 
-The InputFormatterTask implements the InputFormatterTaskPipeline and executes the two phases outlined above. First, it
+The InputFormatter implements the InputFormatterTupleBufferRef and executes the two phases outlined above. First, it
 uses the InputFormatIndexer to determine the indexes of all fields in the raw buffer. The concrete InputFormatIndexer
 initializes a concrete FieldIndexFunction, so that the FieldIndexFunction allows to access all fields of a raw buffer,
 e.g., via offsets. Second, it uses the SequenceShredder to determine whether the indexed raw buffer completes any
@@ -169,10 +169,10 @@ the native representation of NebulaStream.
 
 ```mermaid
 classDiagram
-    InputFormatterTaskPipeline <|-- InputFormatterTask
-    InputFormatterTask --> InputFormatIndexer: 1. uses to index fields of raw buffer (2.5 and spanning tuples)
-    InputFormatterTask --> SequenceShredder: 2. uses to resolve tuples spanning buffers
-    InputFormatterTask --> FieldIndexFunction: 3. uses indexed fields, to parse fields of raw buffer
+    InputFormatterTupleBufferRef <|-- InputFormatter
+    InputFormatter --> InputFormatIndexer: 1. uses to index fields of raw buffer (2.5 and spanning tuples)
+    InputFormatter --> SequenceShredder: 2. uses to resolve tuples spanning buffers
+    InputFormatter --> FieldIndexFunction: 3. uses indexed fields, to parse fields of raw buffer
     CSVInputFormatIndexer --> FieldOffsets: uses and sees only InputFormatIndexer functions
     JSONInputFormatIndexer --> FieldOffsets: uses and sees only InputFormatIndexer functions
     NativeInputFormatIndexer --> NativeFieldAccessFunction: sees and uses only InputFormatIndexer functions
@@ -181,11 +181,11 @@ classDiagram
     InputFormatIndexer <|-- CSVInputFormatIndexer
     InputFormatIndexer <|-- JSONInputFormatIndexer
     InputFormatIndexer <|-- NativeInputFormatIndexer
-    class InputFormatterTaskPipeline {
+    class InputFormatterTupleBufferRef {
         <<Interface>>
-        +InputFormatterTask
+        +InputFormatter
     }
-    class InputFormatterTask {
+    class InputFormatter {
         +FieldIndexFunction fieldIndexFunction
         +FieldIndexFunction sequenceShredder
         +execute(rawBuffer)
@@ -196,7 +196,7 @@ classDiagram
     }
     class FieldIndexFunction {
         <<CRTP_Interface>>
-        InputFormatterTask Functions
+        InputFormatter Functions
         + readFieldAt
         + getOffsetOfFirstTupleDelimiter
         + getOffsetOfLastTupleDelimiter
@@ -242,18 +242,18 @@ classDiagram
 ## Nautilus Compilation
 
 Before addressing any of the [open challenges below](#open-challenges), we should transition the
-InputFormatterTaskPipeline to become a **CompiledExecutablePipelineStage**. The main goal is to profit from query
-compilation in the second phase of the InputFormatterTaskPipeline.
+InputFormatterTupleBufferRef to become a **CompiledExecutablePipelineStage**. The main goal is to profit from query
+compilation in the second phase of the InputFormatterTupleBufferRef.
 
 ### Concept
 
 The three main could be as follows:
 
 - First, create a Nautilus Operator called **CompiledInputFormatter**, which then orchestrates the compiled input
-  formatting via (proxy) function calls. We change the interface of the InputFormatterTaskPipeline, which does not need
+  formatting via (proxy) function calls. We change the interface of the InputFormatterTupleBufferRef, which does not need
   to implement the interface of the 'ExecutablePipelineStage' anymore, to match the two phases
   described [above](#architecture).
-- Second, we change the 'InputFormatterTask interface' of the **FieldIndexFunction** and its concrete implementations to
+- Second, we change the 'InputFormatter interface' of the **FieldIndexFunction** and its concrete implementations to
   Nautilus functions. That is, calling 'readFieldAt' on the FieldIndexFunction calls the concrete Nautilus readFieldAt
   function of the derived FieldIndexFunction. Since these functions are traced, accessing specific fields via the
   FieldIndexFunction ends up in the compiled code.
@@ -265,18 +265,18 @@ The three main could be as follows:
 
 #### Tracing
 
-During tracing, the CompiledInputFormatter first creates an InputFormatterTaskPipeline object via a proxy function call.
-Or an InputFormatterTaskPipeline object already exists as part of the state of the pipeline.
+During tracing, the CompiledInputFormatter first creates an InputFormatterTupleBufferRef object via a proxy function call.
+Or an InputFormatterTupleBufferRef object already exists as part of the state of the pipeline.
 
 The second step during tracing is essentially one proxy function call, that executes the first phase:\
-The CompiledInputFormatter calls a proxy function of the InputFormatterTaskPipeline, which takes the concrete '
-InputFormatterTaskPipeline' object as an argument. The InputFormatterTaskPipeline delegates the function call to its '
-InputFormatterTask' object. The InputFormatterTask creates a FieldIndexFunction and uses the SequenceShredder (if
+The CompiledInputFormatter calls a proxy function of the InputFormatterTupleBufferRef, which takes the concrete '
+InputFormatterTupleBufferRef' object as an argument. The InputFormatterTupleBufferRef delegates the function call to its '
+InputFormatter' object. The InputFormatter creates a FieldIndexFunction and uses the SequenceShredder (if
 needed) and the InputFormatIndexer to determine spanning tuples and to determine the indexes of all fields of the raw
 buffer and the spanning tuples. The function then returns the FieldIndexFunction.
 
 After the first proxy function call returns, the CompiledInputFormatter executes the second phase by calling a Nautilus
-function of the InputFormatterTaskPipeline and passing the FieldIndexFunction to it. This Nautilus function executes a
+function of the InputFormatterTupleBufferRef and passing the FieldIndexFunction to it. This Nautilus function executes a
 loop over all (raw) input tuples. It uses the nautilus functions of the FieldIndexFunction to access the fields of the
 raw buffer and to parse the specific fields using the RawValueParserRegistry. The loop also executes the compiled code
 of the other operators that were fused into the same pipeline. This, in combination with the LLVM optimizer, should fuse
@@ -303,7 +303,7 @@ arrays), optional/null fields (fields may not appear, or values may be null), es
       notify source, then asynchronously execute phase 2); source may load multiple buffers in advance
     - DAdv: source needs to wait; extra notify mechanism between sources and queryEngine (creates coupling); requires a
       dedicated source thread that is not available anymore to the task queue (slow sources may hog resources)
-- A2: Attach InputFormatterTaskPipeline to source thread
+- A2: Attach InputFormatterTupleBufferRef to source thread
     - Adv: no syncing, source thread does I/O and formatting; allows for tight coupling and tricks such as skipping page
       reads
     - DAdv: tightly couples sources and input formatters; adds complexity to otherwise simple sources; sources may hog
@@ -347,7 +347,7 @@ explicitly mark all child fields as null.
 
 ### Repeated Fields/Arrays
 
-If the size of the repeated field is known, the formatter can determine all indexes and the InputFormatterTask can
+If the size of the repeated field is known, the formatter can determine all indexes and the InputFormatter can
 utilize the size to read the correct number of indexes (and potentially perform validation). Repeated fields that may
 appear zero times share the optional/null problem.
 
@@ -413,8 +413,8 @@ complete a delimiter (analog: buffer ends with first M bytes of the delimiter).
 ### Codecs
 
 Codecs, such as LZ4 and ZStd (usually) require decoding the data first, before formatting/interpreting the data is
-possible. Given that the InputFormatterTaskPipeline is the first pipeline following the source, either the source
-decodes the data (goes against light-weight/simple sources principle) or the InputFormatterTaskPipeline does, requiring
+possible. Given that the InputFormatterTupleBufferRef is the first pipeline following the source, either the source
+decodes the data (goes against light-weight/simple sources principle) or the InputFormatterTupleBufferRef does, requiring
 an additional step.
 Potentially, only subsets of the schema, e.g., a single column is encoded. In that case, a tuple delimiter might exist
 that is not encoded. It would then be possible to asynchronously format the buffers and to treat the encoded fields as
@@ -443,7 +443,7 @@ braker, there is an interesting tradeoff (that requires experimental evaluation)
   that leads to a pipeline with the input formatter and all shared operators.
 
 Given a union over different sources in a query, the sources share the schema, format and follow-up operators. In that
-case, the sources should share the same InputFormatterTaskPipeline. However, currently the sources would both produce
+case, the sources should share the same InputFormatterTupleBufferRef. However, currently the sources would both produce
 buffers with sequence numbers starting at 1, leading to a conflict:
 
 - A1: synchronize sources that share the same input formatter
@@ -457,7 +457,7 @@ different formats via that single endpoint.
 #### Memory Layouts
 
 Given that we assume mostly external, text-based raw formats (**A1**), we can more or less freely choose an (internal)
-data layout that the input formatter produces (the input schema of the InputFormatterTaskPipeline would then be the
+data layout that the input formatter produces (the input schema of the InputFormatterTupleBufferRef would then be the
 schema that the input formatter produces). Whether we read flat CSV data into a row-based or columnar layout should
 depend on the rest of the query plan. This freedom can lead to formats where specific fields are in columnar layout for
 later aggregations, but the rest is written row-wise. Or even hybrid formats where parts of the input data is formatted
@@ -465,8 +465,8 @@ and other parts are still raw.
 
 #### Projections and Filters
 
-If we fuse the InputFormatterTaskPipeline into the first pipeline, we can merge certain operations into the second phase
-of the InputFormatterTaskPipeline (the one that iterates over indexes and parses fields). In that case, we could profit
+If we fuse the InputFormatterTupleBufferRef into the first pipeline, we can merge certain operations into the second phase
+of the InputFormatterTupleBufferRef (the one that iterates over indexes and parses fields). In that case, we could profit
 from filter and projection push-down into that pipeline, to avoid parsing raw data that we don't need in later
 operators.
 
@@ -508,7 +508,7 @@ implement this phase. Each InputFormatIndexer chooses a concrete FieldIndexFunct
 it is necessary to determine the start and the end of each field. For a format with fixed-size values, e.g., the Native
 format, it is sufficient to determine the offset of the first field of the first tuple, the rest can be calculated.
 
-The second interface is for accessing specific fields in a raw data buffer. Only InputFormatterTask has access to that
+The second interface is for accessing specific fields in a raw data buffer. Only InputFormatter has access to that
 interface. It uses it when iterating over indexed raw buffers and passes the fields to the RawValueParser, to convert
 the raw values into our internal representation.
 
