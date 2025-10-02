@@ -167,62 +167,72 @@ jobs:
         with:
           version: v0.10.0
       - name: Build Base Image
-        uses: docker/build-push-action@v6
+        uses: Wandalen/wretry.action@v3.8.0
         with:
-          push: true
-          tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}}
-            type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
-          context: .
-          file: docker/dependency/Base.dockerfile
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+            cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}},mode=max
+            cache-from: |
+              type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}}
+              type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
+            context: .
+            file: docker/dependency/Base.dockerfile
       - name: Build Dependency Image
-        uses: docker/build-push-action@v6
+        uses: Wandalen/wretry.action@v3.8.0
         with:
-          push: true
-          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          build-args: |
-            TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-            ARCH=${{matrix.arch}}
-            STDLIB=${{matrix.stdlib}}
-            SANITIZER=${{matrix.sanitizer}}
-            VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
-          context: .
-          file: docker/dependency/Dependency.dockerfile
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
+            cache-from: |
+              type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+              type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            build-args: |
+              TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+              ARCH=${{matrix.arch}}
+              STDLIB=${{matrix.stdlib}}
+              SANITIZER=${{matrix.sanitizer}}
+              VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
+            context: .
+            file: docker/dependency/Dependency.dockerfile
       - name: Build Development Image
-        uses: docker/build-push-action@v6
+        uses: Wandalen/wretry.action@v3.8.0
         with:
-          push: true
-          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          context: .
-          file: docker/dependency/Development.dockerfile
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
+            cache-from: |
+              type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+              type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            context: .
+            file: docker/dependency/Development.dockerfile
       - name: Build CI Image
-        uses: docker/build-push-action@v6
+        uses: Wandalen/wretry.action@v3.8.0
         with:
-          push: true
-          tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          context: .
-          file: docker/dependency/DevelopmentCI.dockerfile
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            context: .
+            file: docker/dependency/DevelopmentCI.dockerfile
       - name: Build benchmark image
-        uses: docker/build-push-action@v6
+        uses: Wandalen/wretry.action/main@v3.8.0
         if: ${{matrix.sanitizer == 'none'}}
         with:
-          push: true
-          tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-none
-          context: .
-          file: docker/dependency/Benchmark.dockerfile
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-none
+            context: .
+            file: docker/dependency/Benchmark.dockerfile
   merge-dev-images:
     # This Job merges platform specific images into a single multi-platform image
     name: "Merge Dev Images"
