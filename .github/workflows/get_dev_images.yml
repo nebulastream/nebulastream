@@ -144,53 +144,158 @@ jobs:
         with:
           version: v0.10.0
       - name: Build Base Image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}}
-            type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
-          context: .
-          file: docker/dependency/Base.dockerfile
+        env:
+          TAG: ${{ needs.detect-dependency-changes.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+          BRANCH_NAME: ${{ inputs.branch-name }}
+        run: |
+          set -euo pipefail
+
+          build_tag="nebulastream/nes-development-base:${TAG}-${ARCH}"
+          cache_to="type=registry,ref=nebulastream/nes-development-base-cache:${BRANCH_NAME}-${ARCH},mode=max"
+          cache_from_primary="type=registry,ref=nebulastream/nes-development-base-cache:${BRANCH_NAME}-${ARCH}"
+          cache_from_latest="type=registry,ref=nebulastream/nes-development-base-cache:latest-${ARCH}"
+
+          for attempt in $(seq 1 10); do
+            echo "Attempt ${attempt}/10 to build and push ${build_tag}"
+            if docker buildx build \
+                --push \
+                --tag "${build_tag}" \
+                --cache-to "${cache_to}" \
+                --cache-from "${cache_from_primary}" \
+                --cache-from "${cache_from_latest}" \
+                --sbom=true \
+                --provenance=true \
+                --file docker/dependency/Base.dockerfile \
+                .; then
+              echo "Build and push succeeded on attempt ${attempt}"
+              break
+            fi
+
+            if [ "${attempt}" -eq 10 ]; then
+              echo "Failed to build and push ${build_tag} after ${attempt} attempts" >&2
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
       - name: Build Dependency Image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          build-args: |
-            TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-            ARCH=${{matrix.arch}}
-            STDLIB=${{matrix.stdlib}}
-            SANITIZER=${{matrix.sanitizer}}
-            VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
-          context: .
-          file: docker/dependency/Dependency.dockerfile
+        env:
+          TAG: ${{ needs.detect-dependency-changes.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+          STDLIB: ${{ matrix.stdlib }}
+          SANITIZER: ${{ matrix.sanitizer }}
+          BRANCH_NAME: ${{ inputs.branch-name }}
+          VCPKG_DEPENDENCY_HASH: ${{ needs.detect-dependency-changes.outputs.hash }}
+        run: |
+          set -euo pipefail
+
+          build_tag="nebulastream/nes-development-dependency:${TAG}-${ARCH}-${STDLIB}-${SANITIZER}"
+          cache_to="type=registry,ref=nebulastream/nes-development-dependency-cache:${BRANCH_NAME}-${ARCH}-${STDLIB}-${SANITIZER},mode=max"
+          cache_from_primary="type=registry,ref=nebulastream/nes-development-dependency-cache:${BRANCH_NAME}-${ARCH}-${STDLIB}-${SANITIZER}"
+          cache_from_latest="type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${ARCH}-${STDLIB}-${SANITIZER}"
+
+          for attempt in $(seq 1 10); do
+            echo "Attempt ${attempt}/10 to build and push ${build_tag}"
+            if docker buildx build \
+                --push \
+                --tag "${build_tag}" \
+                --cache-to "${cache_to}" \
+                --cache-from "${cache_from_primary}" \
+                --cache-from "${cache_from_latest}" \
+                --build-arg TAG="${TAG}-${ARCH}" \
+                --build-arg ARCH="${ARCH}" \
+                --build-arg STDLIB="${STDLIB}" \
+                --build-arg SANITIZER="${SANITIZER}" \
+                --build-arg VCPKG_DEPENDENCY_HASH="${VCPKG_DEPENDENCY_HASH}" \
+                --sbom=true \
+                --provenance=true \
+                --file docker/dependency/Dependency.dockerfile \
+                .; then
+              echo "Build and push succeeded on attempt ${attempt}"
+              break
+            fi
+
+            if [ "${attempt}" -eq 10 ]; then
+              echo "Failed to build and push ${build_tag} after ${attempt} attempts" >&2
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
       - name: Build Development Image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          context: .
-          file: docker/dependency/Development.dockerfile
+        env:
+          TAG: ${{ needs.detect-dependency-changes.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+          STDLIB: ${{ matrix.stdlib }}
+          SANITIZER: ${{ matrix.sanitizer }}
+          BRANCH_NAME: ${{ inputs.branch-name }}
+        run: |
+          set -euo pipefail
+
+          build_tag="nebulastream/nes-development:${TAG}-${ARCH}-${STDLIB}-${SANITIZER}"
+          cache_to="type=registry,ref=nebulastream/nes-development-cache:${BRANCH_NAME}-${ARCH}-${STDLIB}-${SANITIZER},mode=max"
+          cache_from_primary="type=registry,ref=nebulastream/nes-development-cache:${BRANCH_NAME}-${ARCH}-${STDLIB}-${SANITIZER}"
+          cache_from_dependency="type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${ARCH}-${STDLIB}-${SANITIZER}"
+          build_arg_tag="${TAG}-${ARCH}-${STDLIB}-${SANITIZER}"
+
+          for attempt in $(seq 1 10); do
+            echo "Attempt ${attempt}/10 to build and push ${build_tag}"
+            if docker buildx build \
+                --push \
+                --tag "${build_tag}" \
+                --cache-to "${cache_to}" \
+                --cache-from "${cache_from_primary}" \
+                --cache-from "${cache_from_dependency}" \
+                --build-arg TAG="${build_arg_tag}" \
+                --sbom=true \
+                --provenance=true \
+                --file docker/dependency/Development.dockerfile \
+                .; then
+              echo "Build and push succeeded on attempt ${attempt}"
+              break
+            fi
+
+            if [ "${attempt}" -eq 10 ]; then
+              echo "Failed to build and push ${build_tag} after ${attempt} attempts" >&2
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
       - name: Build CI Image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          context: .
-          file: docker/dependency/DevelopmentCI.dockerfile
+        env:
+          TAG: ${{ needs.detect-dependency-changes.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+          STDLIB: ${{ matrix.stdlib }}
+          SANITIZER: ${{ matrix.sanitizer }}
+        run: |
+          set -euo pipefail
+
+          build_tag="nebulastream/nes-ci:${TAG}-${ARCH}-${STDLIB}-${SANITIZER}"
+          build_arg_tag="${TAG}-${ARCH}-${STDLIB}-${SANITIZER}"
+
+          for attempt in $(seq 1 10); do
+            echo "Attempt ${attempt}/10 to build and push ${build_tag}"
+            if docker buildx build \
+                --push \
+                --tag "${build_tag}" \
+                --build-arg TAG="${build_arg_tag}" \
+                --sbom=true \
+                --provenance=true \
+                --file docker/dependency/DevelopmentCI.dockerfile \
+                .; then
+              echo "Build and push succeeded on attempt ${attempt}"
+              break
+            fi
+
+            if [ "${attempt}" -eq 10 ]; then
+              echo "Failed to build and push ${build_tag} after ${attempt} attempts" >&2
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
       - name: Build benchmark image
         uses: docker/build-push-action@v6
         if: ${{matrix.sanitizer == 'none'}}
