@@ -184,16 +184,16 @@ public:
             {
                 NES_DEBUG("key: {}, value: {}", keyString, configParameterString);
             }
-            const auto validatedParameter = configParameter.validate(config);
-            if (validatedParameter.has_value())
-            {
-                validatedConfig.emplace(key, validatedParameter.value());
-                continue;
-            }
             /// If the user did not specify a parameter that is optional, use the default value.
             if (not config.contains(key) and configParameter.getDefaultValue().has_value())
             {
                 validatedConfig.emplace(key, configParameter.getDefaultValue().value());
+                continue;
+            }
+            const auto validatedParameter = configParameter.validate(config);
+            if (validatedParameter.has_value())
+            {
+                validatedConfig.emplace(key, validatedParameter.value());
                 continue;
             }
             throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in: {}", key, implementationName));
