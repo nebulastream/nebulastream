@@ -2,12 +2,15 @@
 # description: Ensure differential queries agree for logically equivalent aggregation
 # groups: [Differential, Aggregation]
 
-Source stream UINT64 id UINT64 value UINT64 timestamp GENERATOR seed 1, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
-id SEQUENCE UINT64 1 5 1
-value SEQUENCE UINT64 10 50 10
-timestamp SEQUENCE UINT64 0 20000 5000
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
+    1 AS `SOURCE`.SEED,
+    1000 AS `SOURCE`.MAX_RUNTIME_MS,
+    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'SEQUENCE UINT64 1 5 1, SEQUENCE UINT64 10 50 10, SEQUENCE UINT64 0 20000 5000' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-SINK sinkStream UINT64 stream$start UINT64 stream$end UINT64 stream$id UINT64 stream$sumValue
+CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.id UINT64, stream.sumValue UINT64) TYPE File;
 
 SELECT start, end, id, SUM(value) AS sumValue
 FROM (

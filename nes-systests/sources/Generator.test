@@ -2,36 +2,77 @@
 # description: Tests the generator source
 # groups: [Sources, Generator]
 
-Source generatorDefault UINT64 id UINT64 field2 GENERATOR
-CONFIG/sources/generator_10_tuples.yaml
+CREATE LOGICAL SOURCE generatorDefault(id UINT64, field2 UINT64);
+CREATE PHYSICAL SOURCE FOR generatorDefault TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-Source generatorDifferentDataTypes UINT64 field1 UINT32 field2 UINT16 field3 UINT8 field4 INT64 field5 INT32 field6 INT16 field7 INT8 field8 FLOAT64 field9 FLOAT32 field10 GENERATOR
-CONFIG/sources/generator_10_tuples_different_data_types.yaml
+CREATE LOGICAL SOURCE generatorDifferentDataTypes(field1 UINT64, field2 UINT32, field3 UINT16, field4 UINT8, field5 INT64, field6 INT32, field7 INT16, field8 INT8, field9 FLOAT64, field10 FLOAT32);
+CREATE PHYSICAL SOURCE FOR generatorDifferentDataTypes TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 10 1, SEQUENCE UINT32 0 9 1, SEQUENCE UINT16 0 8 1, SEQUENCE UINT8 0 7 1, SEQUENCE INT64 0 6 1, SEQUENCE INT32 0 5 1, SEQUENCE INT16 0 4 1, SEQUENCE INT8 0 3 1, SEQUENCE FLOAT64 0 2 1, SEQUENCE FLOAT32 0 1 1'
+       AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-Source generator10K UINT64 id UINT64 field2 GENERATOR
-CONFIG/sources/generator_10K_tuples.yaml
+CREATE LOGICAL SOURCE generator10K(id UINT64, field2 UINT64);
+CREATE PHYSICAL SOURCE FOR generator10K TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+       1 AS `SOURCE`.SEED,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-Source generator10KSinus UINT64 id UINT64 field2 GENERATOR
-CONFIG/sources/generator_10K_tuples_sinus.yaml
+CREATE LOGICAL SOURCE generator10KSinus(id UINT64, field2 UINT64);
+CREATE PHYSICAL SOURCE FOR generator10KSinus TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+       1 AS `SOURCE`.SEED,
+       'SINUS' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'amplitude 1000, frequency 2' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-Source generatorStopAll UINT64 id UINT64 field2 GENERATOR
-CONFIG/sources/generator_stop_all.yaml
+CREATE LOGICAL SOURCE generatorStopAll(id UINT64, field2 UINT64);
+CREATE PHYSICAL SOURCE FOR generatorStopAll TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-Source generatorStopOne UINT64 id UINT64 field2 GENERATOR
-CONFIG/sources/generator_stop_one.yaml
+CREATE LOGICAL SOURCE generatorStopOne(id UINT64, field2 UINT64);
+CREATE PHYSICAL SOURCE FOR generatorStopOne TYPE Generator SET(
+       'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-Source generatorInline UINT64 id GENERATOR seed 1, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
-id SEQUENCE UINT64 0 10 1
+CREATE LOGICAL SOURCE generatorInline(id UINT64);
+CREATE PHYSICAL SOURCE FOR generatorInline TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1000 AS `SOURCE`.MAX_RUNTIME_MS,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 10 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-SINK generator_sink UINT64 generatorDefault$id UINT64 generatorDefault$field2
-SINK generator_data_types_sink UINT64 generatorDifferentDataTypes$field1 UINT32 generatorDifferentDataTypes$field2 UINT16 generatorDifferentDataTypes$field3 UINT8 generatorDifferentDataTypes$field4 INT64 generatorDifferentDataTypes$field5 INT32 generatorDifferentDataTypes$field6 INT16 generatorDifferentDataTypes$field7 INT8 generatorDifferentDataTypes$field8 FLOAT64 generatorDifferentDataTypes$field9 FLOAT32 generatorDifferentDataTypes$field10
 
-SINK generator_sink_inline UINT64 generatorInline$id
-
-SINK checksum_10K TYPE Checksum UINT64 generator10K$id UINT64 generator10K$field2
-SINK checksum_10K_Sinus TYPE Checksum UINT64 generator10KSinus$id UINT64 generator10KSinus$field2
-SINK stop_all_checksum TYPE Checksum UINT64 generatorStopAll$id UINT64 generatorStopAll$field2
-SINK stop_one_checksum TYPE Checksum UINT64 generatorStopOne$id UINT64 generatorStopOne$field2
+CREATE SINK generator_sink(generatorDefault.id UINT64, generatorDefault.field2 UINT64) TYPE File;
+CREATE SINK generator_data_types_sink(generatorDifferentDataTypes.field1 UINT64, generatorDifferentDataTypes.field2 UINT32, generatorDifferentDataTypes.field3 UINT16, generatorDifferentDataTypes.field4 UINT8, generatorDifferentDataTypes.field5 INT64, generatorDifferentDataTypes.field6 INT32, generatorDifferentDataTypes.field7 INT16, generatorDifferentDataTypes.field8 INT8, generatorDifferentDataTypes.field9 FLOAT64, generatorDifferentDataTypes.field10 FLOAT32) TYPE File;
+CREATE SINK checksum_10K_Sinus(generator10KSinus.id UINT64,generator10KSinus.field2 UINT64) TYPE Checksum;
+CREATE SINK checksum_10K(generator10K.id UINT64, generator10K.field2 UINT64) TYPE Checksum;
+CREATE SINK stop_all_checksum(generatorStopAll.id UINT64, generatorStopAll.field2 UINT64) TYPE Checksum;
+CREATE SINK stop_one_checksum(generatorStopOne.id UINT64, generatorStopOne.field2 UINT64) TYPE Checksum;
+CREATE SINK generator_sink_inline(generatorInline.id UINT64) TYPE File;
 
 SELECT * FROM generatorDefault INTO generator_sink
 ----

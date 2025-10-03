@@ -1,4 +1,4 @@
-# name: invalid_error.dymmy
+# name: invalid_error.dummy
 # description: Test file used in SystestParserInvalidTestFileTest
 
 SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;

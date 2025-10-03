@@ -2,18 +2,18 @@
 # description: tests general input formatter behavior
 # groups: [Formatter, JSON]
 
-Source jsonStream UINT64 key UINT64 value VARSIZED name
+CREATE LOGICAL SOURCE jsonStream(KEY UINT64, value UINT64, name VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStream TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":1, "NAME":"john"}
+{"KEY":1, "VALUE":2, "NAME":"max"}
 
-ATTACH File JSON jsonStream INLINE
-{"key":1, "value":1, "name":"john"}
-{"key":1, "value":2, "name":"max"}
+CREATE SINK keySink(jsonStream.key UINT64) TYPE File;
+CREATE SINK valueSink(jsonStream.value UINT64) TYPE File;
+CREATE SINK nameSink(jsonStream.name VARSIZED) TYPE File;
+CREATE SINK allFieldsSink(jsonStream.key UINT64, jsonStream.value UINT64, jsonStream.name VARSIZED) TYPE File;
 
-Sink keySink UINT64 jsonStream$key
-Sink valueSink UINT64 jsonStream$value
-Sink nameSink VARSIZED jsonStream$name
-Sink allFieldsSink UINT64 jsonStream$key UINT64 jsonStream$value VARSIZED jsonStream$name
-
-SELECT key FROM jsonStream INTO keySink
+SELECT KEY FROM jsonStream INTO keySink
 ----
 1
 1

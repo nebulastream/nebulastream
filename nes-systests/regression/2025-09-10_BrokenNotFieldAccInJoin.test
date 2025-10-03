@@ -1,17 +1,21 @@
 # description: reproduces for https://github.com/nebulastream/nebulastream/issues/1052
 # groups: [regression]
 
-Source stream UINT64 id UINT64 timestamp INLINE
+CREATE LOGICAL SOURCE stream(id UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
 1,1
 2,1
 3,1
 
-Source stream2 UINT64 id2 UINT64 timestamp BOOLEAN e INLINE
+CREATE LOGICAL SOURCE stream2(id2 UINT64, timestamp UINT64, e BOOLEAN);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
 1,1,false
 2,1,false
 3,1,false
 
-SINK sink UINT64 i
+CREATE SINK sink(i UINT64) TYPE File;
 
 
 SELECT id AS i FROM (SELECT * FROM stream)

@@ -5,16 +5,16 @@
 # TODO #1036
 # Allow to configure input format indexers and to specify that (specific?) fields should be trimmed
 
-Source paddedValuesStream UINT64 key UINT64 value VARSIZED name
+CREATE LOGICAL SOURCE paddedValuesStream(key UINT64, value UINT64, name VARSIZED);
+CREATE PHYSICAL SOURCE FOR paddedValuesStream TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"KEY":  1,"VALUE":1      ,"NAME":  "john"  }
+{"KEY":1   ,"VALUE":   2,"NAME":   "max"   }
 
-ATTACH File JSON paddedValuesStream INLINE
-{"key":  1,"value":1      ,"name":  "john"  }
-{"key":1   ,"value":   2,"name":   "max"   }
-
-Sink keySink UINT64 paddedValuesStream$key
-Sink valueSink UINT64 paddedValuesStream$value
-Sink nameSink VARSIZED paddedValuesStream$name
-Sink allFieldsSink UINT64 paddedValuesStream$key UINT64 paddedValuesStream$value VARSIZED paddedValuesStream$name
+CREATE SINK keySink(paddedValuesStream.key UINT64)  TYPE File;
+CREATE SINK valueSink(paddedValuesStream.value UINT64)  TYPE File;
+CREATE SINK nameSink(paddedValuesStream.name VARSIZED)  TYPE File;
+CREATE SINK allFieldsSink(paddedValuesStream.key UINT64, paddedValuesStream.value UINT64, paddedValuesStream.name VARSIZED)  TYPE File;
 
 SELECT key FROM paddedValuesStream INTO keySink
 ----
