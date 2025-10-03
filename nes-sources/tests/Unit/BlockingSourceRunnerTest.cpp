@@ -92,7 +92,7 @@ struct RecordingEmitFunction
         block.notify_one();
     }
 
-    Memory::AbstractBufferProvider& bm;
+    AbstractBufferProvider& bm;
     folly::Synchronized<std::vector<Sources::SourceReturnType>, std::mutex> recordedEmits;
     std::condition_variable block;
 };
@@ -173,7 +173,7 @@ void verify_number_of_emits(
 /// Internal Stop by destroying the BlockingSourceRunner
 TEST_F(BlockingSourceRunnerTest, DestructionOfStartedSourceRunner)
 {
-    const auto bm = Memory::BufferManager::create();
+    const auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     {
@@ -195,7 +195,7 @@ TEST_F(BlockingSourceRunnerTest, DestructionOfStartedSourceRunner)
 
 TEST_F(BlockingSourceRunnerTest, NoOpDestruction)
 {
-    auto bm = Memory::BufferManager::create();
+    auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     {
@@ -214,7 +214,7 @@ TEST_F(BlockingSourceRunnerTest, NoOpDestruction)
 
 TEST_F(BlockingSourceRunnerTest, FailureDuringRunning)
 {
-    auto bm = Memory::BufferManager::create();
+    auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, static_cast<std::byte>(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -241,7 +241,7 @@ TEST_F(BlockingSourceRunnerTest, FailureDuringRunning)
 
 TEST_F(BlockingSourceRunnerTest, FailureDuringOpen)
 {
-    auto bm = Memory::BufferManager::create();
+    auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->failDuringOpen(std::chrono::milliseconds(0));
@@ -266,7 +266,7 @@ TEST_F(BlockingSourceRunnerTest, FailureDuringOpen)
 
 TEST_F(BlockingSourceRunnerTest, SimpleCaseWithInternalStop)
 {
-    auto bm = Memory::BufferManager::create();
+    auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, static_cast<std::byte>(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
@@ -293,7 +293,7 @@ TEST_F(BlockingSourceRunnerTest, SimpleCaseWithInternalStop)
 
 TEST_F(BlockingSourceRunnerTest, EoSFromSourceWithStop)
 {
-    auto bm = Memory::BufferManager::create();
+    auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<Sources::TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, static_cast<std::byte>(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);

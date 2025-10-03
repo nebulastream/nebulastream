@@ -28,7 +28,7 @@
 #include <ErrorHandling.hpp>
 #include "Identifiers/Identifiers.hpp"
 
-namespace NES::Sources
+namespace NES
 {
 
 /// RAII-Wrapper around source open and close

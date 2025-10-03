@@ -43,7 +43,7 @@
 #include <InlineDataRegistry.hpp>
 #include <DataServer/TCPDataServer.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 BlockingTCPSource::BlockingTCPSource(const SourceDescriptor& sourceDescriptor)

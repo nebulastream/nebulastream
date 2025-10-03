@@ -73,14 +73,14 @@ public:
     {
         BaseUnitTest::SetUp();
 
-        bufferManager = Memory::BufferManager::create(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
+        bufferManager = BufferManager::create(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
     }
 
     void TearDown() override { BaseUnitTest::TearDown(); }
 
 protected:
     asio::io_context ioc;
-    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::shared_ptr<BufferManager> bufferManager;
 };
 
 TEST_F(FileSourceTest, FillBuffer)

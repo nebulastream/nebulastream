@@ -36,7 +36,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 BlockingFileSource::BlockingFileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
@@ -58,7 +58,7 @@ void BlockingFileSource::close()
     this->inputFile.close();
 }
 
-size_t BlockingFileSource::fillBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t BlockingFileSource::fillBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
     const auto numBytesRead = this->inputFile.gcount();

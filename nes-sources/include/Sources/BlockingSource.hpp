@@ -21,10 +21,10 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
-using IOBuffer = Memory::TupleBuffer;
+using IOBuffer = TupleBuffer;
 
 /// BlockingSource is the interface for all blocking sources that read data into buffers in a blocking fashion.
 /// 'BlockingSourceRunner' creates IOBuffers and uses 'BlockingSource' to fill.
@@ -59,4 +59,4 @@ protected:
 
 }
 
-FMT_OSTREAM(NES::Sources::BlockingSource);
+FMT_OSTREAM(NES::BlockingSource);

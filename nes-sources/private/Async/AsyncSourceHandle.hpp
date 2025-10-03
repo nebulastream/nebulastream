@@ -33,7 +33,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/use_future.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class AsyncSourceHandle final : public SourceHandle

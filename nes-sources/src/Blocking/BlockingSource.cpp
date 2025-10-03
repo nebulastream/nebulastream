@@ -16,7 +16,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <ostream>
 
-namespace NES::Sources
+namespace NES
 {
 std::ostream& operator<<(std::ostream& out, const BlockingSource& source)
 {

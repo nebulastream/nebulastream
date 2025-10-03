@@ -25,7 +25,7 @@
     #include <Sources/SourceUtility.hpp>
     #include <ErrorHandling.hpp>
 
-    namespace NES::Sources
+    namespace NES
     {
 
     class AsyncSourceRunner

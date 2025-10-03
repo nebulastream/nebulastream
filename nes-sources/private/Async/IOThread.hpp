@@ -25,7 +25,7 @@
 #include <boost/asio/io_context.hpp>
 #include "Util/Logger/Logger.hpp"
 
-namespace NES::Sources
+namespace NES
 {
 namespace asio = boost::asio;
 

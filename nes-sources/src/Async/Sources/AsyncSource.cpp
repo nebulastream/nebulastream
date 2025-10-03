@@ -17,7 +17,7 @@
 
 #include <ostream>
 
-namespace NES::Sources
+namespace NES
 {
 std::ostream& operator<<(std::ostream& out, const AsyncSource& source)
 {

@@ -47,7 +47,7 @@
 #include "FileDataRegistry.hpp"
 #include "InlineDataRegistry.hpp"
 
-namespace NES::Sources
+namespace NES
 {
 
 FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))

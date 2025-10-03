@@ -78,7 +78,7 @@ This includes both internal plugins and the optional ones that have been activat
 Within each extensible component, you’ll find a registry directory.
 Inside it, the include directory contains the registries — e.g., `SourceRegistry.hpp`:
 ```c++
-namespace NES::Sources
+namespace NES
 {
 
 using SourceRegistryReturnType = std::unique_ptr<Source>; /// <-- this type will be returned by the registry

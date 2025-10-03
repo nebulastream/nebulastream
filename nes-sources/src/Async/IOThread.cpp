@@ -18,7 +18,7 @@
 
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 /// The io_context is initialized first from its default constructor.

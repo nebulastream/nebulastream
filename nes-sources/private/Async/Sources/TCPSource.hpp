@@ -29,7 +29,7 @@
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 using asio::ip::tcp;

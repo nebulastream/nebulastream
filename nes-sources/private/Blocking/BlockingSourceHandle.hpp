@@ -25,7 +25,7 @@
 #include <Sources/SourceUtility.hpp>
 #include <Util/AtomicState.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class BlockingSourceHandle final : public SourceHandle

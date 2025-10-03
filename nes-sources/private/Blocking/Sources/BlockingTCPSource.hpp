@@ -34,7 +34,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class BlockingTCPSource : public BlockingSource
@@ -55,7 +55,7 @@ public:
     BlockingTCPSource(BlockingTCPSource&&) = delete;
     BlockingTCPSource& operator=(BlockingTCPSource&&) = delete;
 
-    size_t fillBuffer(Memory::TupleBuffer& buffer, const std::stop_token& stopToken) override;
+    size_t fillBuffer(TupleBuffer& buffer, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
     void open() override;
@@ -67,7 +67,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool fillBuffer(Memory::TupleBuffer& buffer, size_t& numReceivedBytes);
+    bool fillBuffer(TupleBuffer& buffer, size_t& numReceivedBytes);
 
     int connection = -1;
     int sockfd = -1;

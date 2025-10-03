@@ -28,7 +28,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <SystestSources/SourceTypes.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class FileSource final : public AsyncSource

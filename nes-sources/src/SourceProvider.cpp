@@ -33,46 +33,44 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
+
+SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr<AbstractBufferProvider> bufferPool)
+    : defaultMaxInflightBuffers(defaultMaxInflightBuffers), bufferPool(std::move(bufferPool))
+{
+}
 
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     const OriginId originId,
-    const SourceDescriptor& sourceDescriptor,
-    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-    const size_t numBuffersPerSource)
+    const SourceDescriptor& sourceDescriptor)
 {
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     const auto numberOfBuffersInLocalPool = (sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL) > 0)
         ? sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL)
-        : numBuffersPerSource;
+        : defaultMaxInflightBuffers;
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
     {
-        if (const auto bufferProvider = poolProvider->createFixedSizeBufferPool(numberOfBuffersInLocalPool); bufferProvider)
-        {
-            return std::visit(
-                Overloaded{
-                    [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
-                    {
-                        const auto formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD);
-                        return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
-                            .originId = originId,
-                            .sourceImpl = std::move(sourceImpl),
-                            .bufferProvider = bufferProvider.value(),
-                            .formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD)});
-                    },
-                    [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
-                    {
-                        return std::make_unique<AsyncSourceHandle>(SourceExecutionContext{
-                            .originId = originId,
-                            .sourceImpl = std::move(sourceImpl),
-                            .bufferProvider = bufferProvider.value(),
-                            .formattingThread = std::nullopt});
-                    }},
-                std::move(source.value()));
-        }
-        throw BufferAllocationFailure(
-            "Cannot allocate the buffer pool for source: {}", sourceDescriptor.getLogicalSource().getLogicalSourceName());
+        return std::visit(
+            Overloaded{
+                [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                {
+                    const auto formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD);
+                    return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
+                        .originId = originId,
+                        .sourceImpl = std::move(sourceImpl),
+                        .bufferProvider = bufferPool,
+                        .formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD)});
+                },
+                [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                {
+                    return std::make_unique<AsyncSourceHandle>(SourceExecutionContext{
+                        .originId = originId,
+                        .sourceImpl = std::move(sourceImpl),
+                        .bufferProvider = bufferPool,
+                        .formattingThread = std::nullopt});
+                }},
+            std::move(source.value()));
     }
     throw UnknownSourceType("Unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }

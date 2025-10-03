@@ -24,7 +24,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 using SourceRegistryReturnType = std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>>;

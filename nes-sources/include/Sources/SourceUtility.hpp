@@ -24,15 +24,15 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
-using IOBuffer = Memory::TupleBuffer;
+using IOBuffer = TupleBuffer;
 
 struct InPlaceData
 {
     IOBuffer buffer;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
 };
 
 struct Data
@@ -56,8 +56,6 @@ inline void addBufferMetadata(const OriginId originId, IOBuffer& buffer, const u
 {
     buffer.setOriginId(originId);
     buffer.setCreationTimestampInMS(Timestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-    buffer.setSourceCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     buffer.setSequenceNumber(SequenceNumber{sequenceNumber});
     buffer.setChunkNumber(ChunkNumber{1});

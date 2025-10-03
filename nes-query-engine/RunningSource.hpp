@@ -60,7 +60,7 @@ public:
     void fail(Exception exception) const;
 
     /// Calls the underlying `tryStop`
-    [[nodiscard]] SourceReturnType::TryStopResult tryStop() const;
+    [[nodiscard]] TryStopResult tryStop() const;
 
 private:
     RunningSource(

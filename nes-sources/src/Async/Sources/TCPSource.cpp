@@ -50,7 +50,7 @@
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)

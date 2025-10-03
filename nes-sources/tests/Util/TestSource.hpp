@@ -33,7 +33,7 @@
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
-namespace NES::Sources
+namespace NES
 {
 
 class TestSourceControl
@@ -109,6 +109,6 @@ private:
 };
 
 std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
-getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
+getTestSource(OriginId originId, std::shared_ptr<AbstractPoolProvider> bufferPool);
 
 }

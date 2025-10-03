@@ -28,7 +28,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 BlockingSourceHandle::BlockingSourceHandle(SourceExecutionContext<BlockingSource> ctx)

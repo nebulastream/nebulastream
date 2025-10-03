@@ -23,7 +23,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-namespace NES::Sources
+namespace NES
 {
 
 class SourceHandle
@@ -50,4 +50,4 @@ protected:
 
 }
 
-FMT_OSTREAM(NES::Sources::SourceHandle);
+FMT_OSTREAM(NES::SourceHandle);

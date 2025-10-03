@@ -29,7 +29,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <absl/functional/any_invocable.h>
 #include <CompiledQueryPlan.hpp>
 #include <EngineLogger.hpp>

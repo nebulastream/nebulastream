@@ -29,7 +29,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <SystestSources/SourceTypes.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 class BlockingFileSource final : public BlockingSource
@@ -45,7 +45,7 @@ public:
     BlockingFileSource(BlockingFileSource&&) = delete;
     BlockingFileSource& operator=(BlockingFileSource&&) = delete;
 
-    size_t fillBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open file socket.
     void open() override;

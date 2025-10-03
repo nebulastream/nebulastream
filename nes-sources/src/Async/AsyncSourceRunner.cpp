@@ -32,7 +32,7 @@
 #include <Util/Overloaded.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 AsyncSourceRunner::AsyncSourceRunner(SourceExecutionContext<AsyncSource> sourceExecutionContext, EmitFunction&& emitFn)

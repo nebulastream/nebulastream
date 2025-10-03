@@ -25,10 +25,10 @@
 #include <Sources/SourceUtility.hpp>
 #include "Identifiers/Identifiers.hpp"
 
-namespace NES::Sources
+namespace NES
 {
 
-using IOBuffer = Memory::TupleBuffer;
+using IOBuffer = TupleBuffer;
 
 BlockingSourceRunner::BlockingSourceRunner(
     std::promise<void> terminationPromise, EmitFunction&& emitFn, std::unique_ptr<SourceExecutionContext<BlockingSource>> executionContext)
@@ -103,7 +103,7 @@ void BlockingSourceRunner::operator()(const std::stop_token& stopToken)
     catch (const std::exception& exception)
     {
         /// TODO(yschroeder97): this converts e.g., CannotOpenSource() exceptions into DataIngestionFailure, losing information
-        const auto ingestionException = DataIngestionFailure(exception.what());
+        const auto ingestionException = RunningRoutineFailure(exception.what());
         emitFn(executionContext->originId, Error{ingestionException});
         terminationPromise.set_exception(std::make_exception_ptr(ingestionException));
     }

@@ -30,7 +30,7 @@
 #include <Sources/SourceUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 AsyncSourceHandle::AsyncSourceHandle(SourceExecutionContext<AsyncSource> sourceExecutionContext)

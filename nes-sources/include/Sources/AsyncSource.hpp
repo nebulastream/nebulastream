@@ -26,10 +26,10 @@
 #include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
-using IOBuffer = Memory::TupleBuffer;
+using IOBuffer = TupleBuffer;
 using Executor = boost::asio::io_context::executor_type;
 
 namespace asio = boost::asio;
@@ -84,4 +84,4 @@ protected:
 
 }
 
-FMT_OSTREAM(NES::Sources::AsyncSource);
+FMT_OSTREAM(NES::AsyncSource);

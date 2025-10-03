@@ -21,7 +21,7 @@
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceUtility.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 template <typename SourceType>
@@ -29,7 +29,7 @@ struct SourceExecutionContext
 {
     const OriginId originId;
     std::unique_ptr<SourceType> sourceImpl;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::optional<FormattingThread> formattingThread;
 };
 
