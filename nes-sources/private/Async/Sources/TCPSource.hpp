@@ -71,11 +71,11 @@ private:
 struct ConfigParametersTCP
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "socketHost",
+        "socket_host",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
-        "socketPort",
+        "socket_port",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
