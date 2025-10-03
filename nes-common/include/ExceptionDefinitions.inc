@@ -95,6 +95,7 @@ EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed strin
 EXCEPTION(CannotAccessBuffer, 3008, "cannot access buffer")
 EXCEPTION(CannotAllocateBuffer, 3009, "cannot allocate buffer")
 EXCEPTION(TooMuchWork, 3010, "too much tasks for the internal task queue")
+EXCEPTION(SkippingDelayedTaskDuringShutdown, 3011, "skipping delayed task during shutdown")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
