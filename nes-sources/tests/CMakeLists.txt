@@ -10,9 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 add_library(nes-sources-test-utils Util/TestSource.cpp)
 target_include_directories(nes-sources-test-utils PUBLIC ../private Util)
-target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-memory-test-utils nes-scan)
+target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-memory-test-utils nes-input-formatters)
 
 function(add_nes_source_test)
     add_nes_test(${ARGN})
@@ -20,5 +21,14 @@ function(add_nes_source_test)
     target_link_libraries(${TARGET_NAME} nes-memory-test-utils nes-sources-test-utils)
 endfunction()
 
-add_nes_source_test(source-thread-test SourceThreadTest.cpp)
+add_nes_source_test(blocking-source-runner-test Unit/BlockingSourceRunnerTest.cpp)
+
+add_nes_unit_test(source-unit-tests
+        "Unit/FileSourceTest.cpp"
+        "Unit/TCPSourceTest.cpp"
+)
+
+target_include_directories(source-unit-tests PRIVATE ../private)
+
+target_link_libraries(source-unit-tests nes-sources)
 add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)

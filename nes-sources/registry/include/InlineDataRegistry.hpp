@@ -20,7 +20,7 @@
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 using InlineDataRegistryReturnType = SystestSourceYAMLBinder::PhysicalSource;

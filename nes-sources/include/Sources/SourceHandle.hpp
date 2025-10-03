@@ -17,59 +17,37 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <Sources/SourceExecutionContext.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-namespace NES
+namespace NES::Sources
 {
 
-/// Hides SourceThread implementation.
-class SourceThread;
-
-struct SourceRuntimeConfiguration
-{
-    size_t inflightBufferLimit;
-};
-
-/// Interface class to handle sources.
-/// Created from a source descriptor via the SourceProvider.
-/// start(): The underlying source starts consuming data. All queries using the source start processing.
-/// stop(): The underlying source stops consuming data, notifying the QueryEngine,
-/// that decides whether to keep queries, which used the particular source, alive.
 class SourceHandle
 {
 public:
-    explicit SourceHandle(
-        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        SourceRuntimeConfiguration configuration,
-        std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<Source> sourceImplementation);
+    SourceHandle() = delete;
+    explicit SourceHandle(const OriginId originId) : originId(originId) { }
+    virtual ~SourceHandle() = default;
 
-    ~SourceHandle();
+    virtual bool start(EmitFunction&& emitFn) = 0;
+    virtual bool stop() = 0;
+    virtual TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
 
-    bool start(SourceReturnType::EmitFunction&& emitFunction) const;
-    void stop() const;
+    virtual OriginId getOriginId() { return originId; }
 
-    /// Tries to stop the source within a given timeout.
-    [[nodiscard]] NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) const;
+    friend std::ostream& operator<<(std::ostream& out, const SourceHandle& handle) { return handle.toString(out); }
 
-    friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
+protected:
+    /// Implemented by children of SourceHandle. Called by '<<'. Allows to use '<<' on abstract SourceRunner.
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 
-    /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-    [[nodiscard]] OriginId getSourceId() const;
-
-    const SourceRuntimeConfiguration& getRuntimeConfiguration() const { return configuration; }
-
-private:
-    SourceRuntimeConfiguration configuration;
-    /// Used to print the data source via the overloaded '<<' operator.
-    std::unique_ptr<SourceThread> sourceThread;
+    OriginId originId;
 };
 
 }
 
-FMT_OSTREAM(NES::SourceHandle);
+FMT_OSTREAM(NES::Sources::SourceHandle);

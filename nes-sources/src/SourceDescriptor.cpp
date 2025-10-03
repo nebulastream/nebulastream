@@ -46,7 +46,7 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
-    if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
+    if (const auto tupleDelimiter = configMap.find("tupleDelimiter"); tupleDelimiter != configMap.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
         PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
@@ -54,16 +54,16 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     }
     else
     {
-        NES_DEBUG("Parser configuration did not contain: tuple_delimiter, using default: \\n");
+        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
         created.tupleDelimiter = '\n';
     }
-    if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
+    if (const auto fieldDelimiter = configMap.find("fieldDelimiter"); fieldDelimiter != configMap.end())
     {
         created.fieldDelimiter = fieldDelimiter->second;
     }
     else
     {
-        NES_DEBUG("Parser configuration did not contain: field_delimiter, using default: ,");
+        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
         created.fieldDelimiter = ",";
     }
     return created;
@@ -151,7 +151,7 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
 
     /// Serialize parser config.
-    auto* const serializedParserConfig = SerializableParserConfig().New();
+    auto* const serializedParserConfig = NES::SerializableParserConfig().New();
     serializedParserConfig->set_type(parserConfig.parserType);
     serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
     serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);

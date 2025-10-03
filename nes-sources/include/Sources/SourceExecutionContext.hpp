@@ -14,28 +14,23 @@
 
 #pragma once
 
-#include <cstdint>
-#include <functional>
-#include <variant>
+#include <memory>
+
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <ErrorHandling.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/BlockingSource.hpp>
+#include <Sources/SourceUtility.hpp>
 
-namespace NES::SourceReturnType
+namespace NES::Sources
 {
-/// Todo #237: Improve error handling in sources
-struct Error
-{
-    Exception ex;
-};
 
-struct Data
+template <typename SourceType>
+struct SourceExecutionContext
 {
-    TupleBuffer buffer;
-};
-
-struct EoS
-{
+    const OriginId originId;
+    std::unique_ptr<SourceType> sourceImpl;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    std::optional<FormattingThread> formattingThread;
 };
 
 enum class TryStopResult : uint8_t
@@ -44,13 +39,7 @@ enum class TryStopResult : uint8_t
     TIMEOUT
 };
 
-enum class EmitResult : uint8_t
-{
-    SUCCESS,
-    STOP_REQUESTED,
-};
-
-using SourceReturnType = std::variant<Error, Data, EoS>;
-using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token&)>;
+using SourceReturnType = std::variant<Error, Data, EoS, InPlaceData>;
+using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
 }

@@ -23,7 +23,7 @@
 #include <GeneratorDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 SystestSourceYAMLBinder::PhysicalSource SourceDataProvider::provideFileDataSource(
     SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig,

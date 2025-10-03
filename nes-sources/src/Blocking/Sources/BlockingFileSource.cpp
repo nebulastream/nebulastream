@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <FileSource.hpp>
+#include <Blocking/Sources/BlockingFileSource.hpp>
 
 #include <cerrno>
 #include <cstdlib>
@@ -36,14 +36,14 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+BlockingFileSource::BlockingFileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
 }
 
-void FileSource::open()
+void BlockingFileSource::open()
 {
     const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
@@ -53,41 +53,41 @@ void FileSource::open()
     }
 }
 
-void FileSource::close()
+void BlockingFileSource::close()
 {
     this->inputFile.close();
 }
 
-size_t FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t BlockingFileSource::fillBuffer(Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
 {
-    this->inputFile.read(tupleBuffer.getMemArea<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
+    this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
     const auto numBytesRead = this->inputFile.gcount();
     this->totalNumBytesRead += numBytesRead;
     return numBytesRead;
 }
 
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config BlockingFileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
 }
 
-std::ostream& FileSource::toString(std::ostream& str) const
+std::ostream& BlockingFileSource::toString(std::ostream& str) const
 {
-    str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
+    str << std::format("\nBlockingFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
     return str;
 }
 
-SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType SourceValidationGeneratedRegistrar::RegisterBlockingFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
-    return FileSource::validateAndFormat(std::move(sourceConfig.config));
+    return BlockingFileSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBlockingFileSource(SourceRegistryArguments sourceRegistryArguments)
 {
-    return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
+    return std::make_unique<BlockingFileSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterBlockingFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.attachSource.tuples)
     {
@@ -107,12 +107,12 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
             }
             throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
         }
-        throw InvalidConfigParameter("A FileSource config must contain file_path parameter");
+        throw InvalidConfigParameter("A BlockingFileSource config must contain file_path parameter");
     }
     throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
 }
 
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterBlockingFileFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
     /// Check that the test data dir is defined and that the 'filePath' parameter is set
     /// Replace the 'TESTDATA' placeholder in the filepath
@@ -124,7 +124,7 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(File
             filePath->second = attachSourceFilePath.value();
             return systestAdaptorArguments.physicalSourceConfig;
         }
-        throw InvalidConfigParameter("A FileSource config must contain file_path parameter.");
+        throw InvalidConfigParameter("A BlockingFileSource config must contain file_path parameter.");
     }
     throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }

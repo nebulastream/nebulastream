@@ -19,11 +19,12 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES::SourceValidationProvider
+namespace NES::Sources::SourceValidationProvider
 {
 
 std::optional<DescriptorConfig::Config>
