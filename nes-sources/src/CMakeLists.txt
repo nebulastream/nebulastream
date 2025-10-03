@@ -20,12 +20,13 @@ add_source_files(nes-sources
         SourceValidationProvider.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
-        Decoder.cpp
+        Decoders/Decoder.cpp
 )
 
 # Register plugins
 add_plugin(File Source nes-sources FileSource.cpp)
 add_plugin(File SourceValidation nes-sources FileSource.cpp)
+add_plugin(LZ4 Decoder nes-sources Decoders/LZ4Decoder.cpp)
 
 # Systest adaptors
 add_plugin(File InlineData nes-sources FileSource.cpp)

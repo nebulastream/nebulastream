@@ -29,7 +29,7 @@ namespace NES
 
 class Decoder
 {
-    public:
+public:
     Decoder() = default;
     virtual ~Decoder() = default;
 
