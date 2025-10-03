@@ -31,5 +31,8 @@ target_include_directories(nes-memory
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 find_package(folly REQUIRED)
+if(NOT TARGET folly::folly AND TARGET Folly::folly)
+    add_library(folly::folly ALIAS Folly::folly)
+endif()
 target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly)
 add_tests_if_enabled(tests)

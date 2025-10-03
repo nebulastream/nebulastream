@@ -1,0 +1,58 @@
+name: Nix Build
+
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        type: string
+        required: true
+        description: "ref of the branch"
+
+jobs:
+  nix-build:
+    name: "Nix Build"
+    timeout-minutes: 60
+    runs-on: [ ubuntu-latest ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Nix
+        run: |
+          # Install Nix in the container
+          curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          
+          # Enable flakes
+          mkdir -p ~/.config/nix
+          echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+
+      - name: Build with Nix
+        run: |
+          # Source Nix environment
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          
+          # Configure the project
+          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B cmake-build-nix
+                      
+          # Build the project
+          ./.nix/nix-cmake.sh --build cmake-build-nix --target nes-single-node-worker -j$(nproc)
+
+      - name: Upload build artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nix-build-logs-${{ matrix.os }}
+          path: |
+            cmake-build-nix/CMakeFiles/CMakeOutput.log
+            cmake-build-nix/CMakeFiles/CMakeError.log
+            vcpkg-repository/buildtrees/**/*.log
+          retention-days: 7
