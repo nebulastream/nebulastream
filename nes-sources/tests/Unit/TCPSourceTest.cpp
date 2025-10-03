@@ -159,7 +159,7 @@ TEST_F(TCPSourceTest, FillBuffer)
     }
     const std::string expected = oss.str();
 
-    const auto actual = std::string{buf.getBuffer<const char>(), expected.size()};
+    const auto actual = std::string{buf.getMemArea<const char>(), expected.size()};
     EXPECT_EQ(expected, actual);
 
     /// We expect to receive the Continue message since we have received exactly 32 bytes, which is equal to the buffer size specified

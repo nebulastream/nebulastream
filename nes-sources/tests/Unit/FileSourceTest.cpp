@@ -112,7 +112,7 @@ TEST_F(FileSourceTest, FillBuffer)
     EXPECT_TRUE(std::holds_alternative<Sources::AsyncSource::EndOfStream>(sourceResult));
 
     const std::string expected = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9";
-    const auto actual = std::string{buf.getBuffer<const char>(), expected.size()};
+    const auto actual = std::string{buf.getMemArea<const char>(), expected.size()};
 
     EXPECT_EQ(expected, actual);
 }
@@ -181,7 +181,7 @@ TEST_F(FileSourceTest, ReadIntoTwoBuffers)
     EXPECT_TRUE(std::holds_alternative<Sources::AsyncSource::Continue>(sourceResult1));
 
     const std::string expected1 = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n";
-    const std::string actual1 = std::string{buf1.getBuffer<const char>(), expected1.size()};
+    const std::string actual1 = std::string{buf1.getMemArea<const char>(), expected1.size()};
 
     EXPECT_EQ(expected1, actual1);
 
@@ -190,7 +190,7 @@ TEST_F(FileSourceTest, ReadIntoTwoBuffers)
     EXPECT_TRUE(std::holds_alternative<Sources::AsyncSource::EndOfStream>(sourceResult2));
 
     const std::string expected2 = "14\n15";
-    const auto actual2 = std::string{buf2.getBuffer<const char>(), expected2.size()};
+    const auto actual2 = std::string{buf2.getMemArea<const char>(), expected2.size()};
 
     EXPECT_EQ(expected2, actual2);
 }
@@ -234,8 +234,8 @@ TEST_F(FileSourceTest, ReadSameFileTwice)
     EXPECT_TRUE(std::holds_alternative<Sources::AsyncSource::EndOfStream>(result2));
 
     const std::string expected = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9";
-    const auto actual1 = std::string{buf1.getBuffer<const char>(), expected.size()};
-    const auto actual2 = std::string{buf2.getBuffer<const char>(), expected.size()};
+    const auto actual1 = std::string{buf1.getMemArea<const char>(), expected.size()};
+    const auto actual2 = std::string{buf2.getMemArea<const char>(), expected.size()};
     EXPECT_EQ(expected, actual1);
     EXPECT_EQ(actual1, actual2);
 }

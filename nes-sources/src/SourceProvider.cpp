@@ -43,12 +43,9 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     const OriginId originId,
-    const SourceDescriptor& sourceDescriptor)
+    const SourceDescriptor& sourceDescriptor) const
 {
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
-    const auto numberOfBuffersInLocalPool = (sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL) > 0)
-        ? sourceDescriptor.getFromConfig(SourceDescriptor::NUMBER_OF_BUFFERS_IN_LOCAL_POOL)
-        : defaultMaxInflightBuffers;
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
     {
         return std::visit(

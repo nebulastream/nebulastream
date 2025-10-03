@@ -319,7 +319,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                 ENGINE_LOG_DEBUG("Pipeline Setup Completed");
                 for (auto& [source, successors] : sources)
                 {
-                    auto sourceId = source->getSourceId();
+                    auto sourceId = source->getOriginId();
                     internal.sources.emplace(
                         sourceId,
                         RunningSource::create(
@@ -333,7 +333,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                                 ENGINE_LOG_INFO("Stopping Source with OriginId {}", id);
                                 if (const auto it = internal.sources.find(id); it != internal.sources.end())
                                 {
-                                    if (it->second->tryStop() != SourceReturnType::TryStopResult::SUCCESS)
+                                    if (it->second->tryStop() != TryStopResult::SUCCESS)
                                     {
                                         return false;
                                     }
