@@ -31,10 +31,12 @@ SourceHandle::SourceHandle(
     OriginId originId,
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::optional<std::unique_ptr<Decoder>> decoderImplementation)
     : configuration(std::move(configuration))
 {
-    this->sourceThread = std::make_unique<SourceThread>(std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
+    this->sourceThread = std::make_unique<SourceThread>(
+        std::move(originId), std::move(bufferPool), std::move(sourceImplementation), std::move(decoderImplementation));
 }
 
 SourceHandle::~SourceHandle() = default;
