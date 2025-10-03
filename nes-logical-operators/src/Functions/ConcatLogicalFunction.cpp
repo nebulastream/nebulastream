@@ -106,11 +106,11 @@ SerializableFunction ConcatLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.children.size() != 2)
+    if (arguments.children.size() < 2)
     {
-        throw CannotDeserialize("ConcatLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());
     }
-    return ConcatLogicalFunction(arguments.children[0], arguments.children[1]);
+    return ConcatLogicalFunction(*(arguments.children.end() - 2), *(arguments.children.end() - 1));
 }
 
 }

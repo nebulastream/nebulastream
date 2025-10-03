@@ -852,8 +852,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
             }
-            else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(helpers.top().functionBuilder)))
+            else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, helpers.top().functionBuilder))
             {
+                /// Remove exactly the functions used to create the 'logicalFunction' from the back of the function builder
+                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - logicalFunction.value().getChildren().size());
                 helpers.top().functionBuilder.push_back(*logicalFunction);
             }
             else
