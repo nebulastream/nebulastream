@@ -18,5 +18,5 @@ add_source_files(nes-physical-operators
 
 add_subdirectory(FileDescriptor)
 add_subdirectory(Logger)
-add_subdirectory(MemoryController)
+add_subdirectory(FileDescriptorManager)
 add_subdirectory(WatermarkPredictor)
