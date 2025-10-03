@@ -84,5 +84,12 @@ endfunction()
 add_test(
         NAME "repl-test"
 #        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/test_repl.sh ${CMAKE_CURRENT_SOURCE_DIR}/test/test_large.sql ${CMAKE_CURRENT_BINARY_DIR}/nes-nebuli-embedded ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/testdata ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/working-dir ${CMAKE_CURRENT_SOURCE_DIR}/test/expected_output.json ${CMAKE_CURRENT_BINARY_DIR}/test
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/test_repl.sh ${CMAKE_CURRENT_SOURCE_DIR}/test/input/test_large.sql ${CMAKE_CURRENT_BINARY_DIR}/nes-nebuli-embedded ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/testdata ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/working-dir ${CMAKE_CURRENT_SOURCE_DIR}/test/output/expected_output_large.json ${CMAKE_CURRENT_BINARY_DIR}/test
 )
+
+add_test(
+        NAME "repl-test-fast"
+        #        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/test_repl.sh ${CMAKE_CURRENT_SOURCE_DIR}/test/input/test_fast.sql ${CMAKE_CURRENT_BINARY_DIR}/nes-nebuli-embedded ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/testdata ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/working-dir ${CMAKE_CURRENT_SOURCE_DIR}/test/output/expected_output_fast.json ${CMAKE_CURRENT_BINARY_DIR}/test
+)
+
