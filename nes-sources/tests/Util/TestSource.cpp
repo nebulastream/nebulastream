@@ -235,7 +235,8 @@ NES::getTestSource(OriginId originId, std::shared_ptr<AbstractBufferProvider> bu
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
     SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
 
-    auto sourceHandle
-        = std::make_unique<SourceHandle>(std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
+    /// The test source does not produce encoded data
+    auto sourceHandle = std::make_unique<SourceHandle>(
+        std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource), std::nullopt);
     return {std::move(sourceHandle), ctrl};
 }

@@ -43,8 +43,14 @@ namespace NES
 {
 
 SourceThread::SourceThread(
-    OriginId originId, std::shared_ptr<AbstractBufferProvider> poolProvider, std::unique_ptr<Source> sourceImplementation)
-    : originId(originId), localBufferManager(std::move(poolProvider)), sourceImplementation(std::move(sourceImplementation))
+    OriginId originId,
+    std::shared_ptr<AbstractBufferProvider> poolProvider,
+    std::unique_ptr<Source> sourceImplementation,
+    std::optional<std::unique_ptr<Decoder>> decoderImplementation)
+    : originId(originId)
+    , localBufferManager(std::move(poolProvider))
+    , sourceImplementation(std::move(sourceImplementation))
+    , decoderImplementation(std::move(decoderImplementation))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -109,14 +115,18 @@ struct SourceHandle
 };
 
 SourceImplementationTermination dataSourceThreadRoutine(
-    const std::stop_token& stopToken, Source& source, std::shared_ptr<AbstractBufferProvider> bufferProvider, const EmitFn& emit)
+    const std::stop_token& stopToken,
+    Source& source,
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    const EmitFn& emit,
+    std::optional<Decoder*> decoder)
 {
     const SourceHandle sourceHandle(source, bufferProvider);
     const bool requiresMetadata = !source.addsMetadata();
     while (!stopToken.stop_requested())
     {
         /// 4 Things that could happen:
-        /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
+        /// 1. Happy Path: Source produces a tuple buffer, we optionally decode the tuple buffer and emit is called. The loop continues.
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
         ///    The thread exits with `StopRequested`
         /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
@@ -129,9 +139,33 @@ SourceImplementationTermination dataSourceThreadRoutine(
         if (!fillTupleResult.isEoS())
         {
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
-            /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
+            /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer.setNumberOfTuples(fillTupleResult.getNumberOfBytes());
-            emit(std::move(emptyBuffer), requiresMetadata);
+
+            /// If a decoder implementation is given, the source produces encoded data. We must decode the empty buffer and emit the result.
+            if (decoder.has_value())
+            {
+                /// Lambda function to emit a decoded buffer and optionally provide an empty, new one.
+                auto emitAndProvide = [&emit, &bufferProvider](
+                                          TupleBuffer& filledDecodedBuffer,
+                                          const Decoder::DecodeStatusType decodeStatus) -> std::optional<TupleBuffer>
+                {
+                    /// Emit the filled buffer.
+                    emit(std::move(filledDecodedBuffer), true);
+                    /// If required, provide a new, empty buffer.
+                    return decodeStatus == Decoder::DecodeStatusType::DECODING_REQUIRES_ANOTHER_BUFFER
+                        ? std::optional(bufferProvider->getBufferBlocking())
+                        : std::nullopt;
+                };
+
+                /// Get an initial empty buffer for the decoded data
+                auto decodedBuffer = bufferProvider->getBufferBlocking();
+                decoder.value()->decodeAndEmit(emptyBuffer, decodedBuffer, emitAndProvide);
+            }
+            else
+            {
+                emit(std::move(emptyBuffer), true);
+            }
         }
         else
         {
@@ -150,6 +184,7 @@ void dataSourceThread(
     const std::stop_token& stopToken,
     std::promise<SourceImplementationTermination> result,
     Source* source,
+    std::optional<Decoder*> decoder,
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
@@ -169,7 +204,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, std::move(bufferProvider), dataEmit));
+        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, std::move(bufferProvider), dataEmit, decoder));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{}, stopToken);
@@ -196,8 +231,18 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
+    /// If we have a decoder implementation, we pass a pointer to it to the sourceThread. Otherwise we pass nullopt
+    std::optional<Decoder*> optionalDecoderPtr = decoderImplementation ? std::optional(decoderImplementation->get()) : std::nullopt;
+
     std::jthread sourceThread(
-        dataSourceThread, std::move(terminationPromise), sourceImplementation.get(), std::move(emitFunction), originId, localBufferManager);
+        dataSourceThread,
+        std::move(terminationPromise),
+        sourceImplementation.get(),
+        optionalDecoderPtr,
+        std::move(emitFunction),
+        originId,
+        localBufferManager);
+
     thread = std::move(sourceThread);
     return true;
 }
@@ -258,6 +303,7 @@ std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)
     out << "\nSourceThread(";
     out << "\n  originId: " << sourceThread.originId;
     out << "\n  source implementation:" << *sourceThread.sourceImplementation;
+    out << "\n decoder implementation:" << *sourceThread.decoderImplementation;
     out << ")\n";
     return out;
 }
