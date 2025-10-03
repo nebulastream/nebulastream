@@ -50,7 +50,7 @@
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersFileSource::FILEPATH))
 {
 }
 
@@ -113,7 +113,7 @@ std::ostream& FileSource::toString(std::ostream& str) const
 
 DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersFileSource>(std::move(config), NAME);
 }
 
 SourceValidationRegistryReturnType SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidationRegistryArguments arguments)

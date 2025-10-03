@@ -64,7 +64,7 @@ private:
     std::optional<asio::posix::stream_descriptor> fileStream;
 };
 
-struct ConfigParametersFile
+struct ConfigParametersFileSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         std::string(SYSTEST_FILE_PATH_PARAMETER),
