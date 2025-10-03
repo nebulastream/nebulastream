@@ -27,6 +27,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
@@ -68,7 +69,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
     const std::string_view sourceType,
     std::unordered_map<std::string, std::string> descriptorConfig,
-    const ParserConfig& parserConfig)
+    const std::unordered_map<std::string, std::string>& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
 
@@ -84,7 +85,14 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     {
         return std::nullopt;
     }
-    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfig};
+
+    auto parserConfigObject = ParserConfig::create(parserConfig);
+    if (not contains(parserConfigObject.parserType))
+    {
+        throw InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType);
+    }
+
+    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfigObject};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);

@@ -27,10 +27,11 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SystestSources/SourceTypes.hpp>
 
 namespace NES
 {
+
+static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "file_path";
 
 class FileSource final : public Source
 {

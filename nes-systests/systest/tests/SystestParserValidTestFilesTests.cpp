@@ -24,7 +24,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
@@ -51,29 +50,19 @@ public:
 TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 {
     const std::vector<std::vector<std::string>> expectedResults = {{"1,1,1", "1,1,1", "1,1,1"}, {"2,2,2", "2,2,2", "2,2,2"}};
-    const SystestAttachSource expectedAttachSource
-        = {.sourceType = "File",
-           .sourceConfigurationPath = "",
-           .inputFormatterType = "CSV",
-           .inputFormatterConfigurationPath = "",
-           .logicalSourceName = "e124",
-           .testDataIngestionType = TestDataIngestionType::FILE,
-           .tuples = std::nullopt,
-           .fileDataPath = "dummy_path.txt",
-           .serverThreads = nullptr,
-           .inlineGeneratorConfiguration = std::nullopt};
+
     const SystestParser::SystestLogicalSource expectedLogicalSource
         = {.name = "e124", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"}}};
 
     bool queryCallbackCalled = false;
-    bool logicalSourceCallbackCalled = false;
-    bool attachSourceCallbackCalled = false;
+    bool createCallbackCalled = false;
 
     SystestParser parser{};
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
-    parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { logicalSourceCallbackCalled = true; });
-    parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { attachSourceCallbackCalled = true; });
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&)
+        { createCallbackCalled = true; });
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
@@ -83,8 +72,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 
     /// Verify that all expected callbacks were called
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
-    ASSERT_TRUE(logicalSourceCallbackCalled) << "Logical source callback was never called";
-    ASSERT_TRUE(attachSourceCallbackCalled) << "Attach source callback was never called";
+    ASSERT_TRUE(createCallbackCalled) << "Create callback was never called";
     ASSERT_TRUE(queryResultMap.size() != 3) << "Result callback was never called";
 
     ASSERT_TRUE(std::ranges::all_of(
@@ -102,23 +90,13 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}}};
-    const SystestAttachSource expectedAttachSource
-        = {.sourceType = "File",
-           .sourceConfigurationPath = "",
-           .inputFormatterType = "CSV",
-           .inputFormatterConfigurationPath = "",
-           .logicalSourceName = "e124",
-           .testDataIngestionType = TestDataIngestionType::INLINE,
-           .tuples
-           = std::vector<std::string>{{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
-                                       "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
-                                       "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
-                                       "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}},
-           .fileDataPath = "null",
-           .serverThreads = nullptr,
-           .inlineGeneratorConfiguration = std::nullopt};
 
-    /// Expected queries and results
+    const std::vector<std::string> expectedInlineData
+        = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
+            "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
+            "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
+            "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
+
     const auto expectedQueries = std::to_array<std::string>(
         {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow)",
          R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow)",
@@ -161,18 +139,35 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
             "1,6,6000",   "1,7,7000",   "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
             "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
 
-    bool logicalSourceCallbackCalled = false;
+    bool createLogicalSourceCallbackCalled = false;
+    bool createPhysicalSourceCallbackCalled = false;
+    bool createSinkCallbackCalled = false;
     bool queryCallbackCalled = false;
-    bool attachSourceCallbackCalled = false;
 
     SystestParser parser{};
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
-    parser.registerOnSystestLogicalSourceCallback(
-        [&logicalSourceCallbackCalled, &expectedLogicalSource](const SystestParser::SystestLogicalSource& source)
+
+    parser.registerOnCreateCallback(
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
         {
-            logicalSourceCallbackCalled = true;
-            ASSERT_EQ(source.name, expectedLogicalSource.name);
-            ASSERT_EQ(source.fields, expectedLogicalSource.fields);
+            if (query.starts_with("CREATE LOGICAL SOURCE"))
+            {
+                createLogicalSourceCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
+            if (query.starts_with("CREATE PHYSICAL SOURCE"))
+            {
+                createPhysicalSourceCallbackCalled = true;
+                EXPECT_TRUE(testData.has_value());
+                EXPECT_EQ(TestDataIngestionType::INLINE, testData.value().first);
+                EXPECT_EQ(expectedInlineData.size(), testData.value().second.size());
+                ASSERT_TRUE(testData.value().second == expectedInlineData);
+            }
+            if (query.starts_with("CREATE SINK"))
+            {
+                createSinkCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
         });
 
     parser.registerOnQueryCallback(
@@ -184,24 +179,15 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
             ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
         });
 
-    parser.registerOnSystestAttachSourceCallback(
-        [&attachSourceCallbackCalled, &expectedAttachSource](const SystestAttachSource& attachSource)
-        {
-            attachSourceCallbackCalled = true;
-            ASSERT_EQ(attachSource.sourceType, expectedAttachSource.sourceType);
-            ASSERT_EQ(attachSource.inputFormatterType, expectedAttachSource.inputFormatterType);
-            ASSERT_TRUE(
-                attachSource.tuples.has_value() and expectedAttachSource.tuples.has_value()
-                and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
-        });
-
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(attachSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
+    ASSERT_TRUE(createLogicalSourceCallbackCalled);
+    ASSERT_TRUE(createPhysicalSourceCallbackCalled);
+    ASSERT_TRUE(createSinkCallbackCalled);
     ASSERT_TRUE(queryResultMap.size() == expectedResults.size());
     ASSERT_TRUE(std::ranges::all_of(
         expectedResults,
@@ -218,22 +204,6 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}}};
-
-    const SystestAttachSource expectedAttachSource
-        = {.sourceType = "File",
-           .sourceConfigurationPath = "",
-           .inputFormatterType = "CSV",
-           .inputFormatterConfigurationPath = "",
-           .logicalSourceName = "e124",
-           .testDataIngestionType = TestDataIngestionType::INLINE,
-           .tuples
-           = std::vector<std::string>{{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
-                                       "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
-                                       "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
-                                       "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}},
-           .fileDataPath = "null",
-           .serverThreads = nullptr,
-           .inlineGeneratorConfiguration = std::nullopt};
 
     const auto expectedQueries = std::to_array<std::string>(
         {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow)",
@@ -282,19 +252,43 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
             "0,8,8000",   "0,9,9000",   "0,10,10000", "0,11,11000", "0,12,12000", "0,13,13000", "0,14,14000",
             "0,15,15000", "0,16,16000", "0,17,17000", "0,18,18000", "0,19,19000", "0,20,20000", "0,21,21000"}};
 
-    bool sltSourceCallbackCalled = false;
+    const std::vector<std::string> expectedInlineData
+        = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
+            "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
+            "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
+            "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
+
     bool queryCallbackCalled = false;
-    bool attachSourceCallbackCalled = false;
+    bool createLogicalSourceCallbackCalled = false;
+    bool createPhysicalSourceCallbackCalled = false;
+    bool createSinkCallbackCalled = false;
 
     SystestParser parser{};
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
-    parser.registerOnSystestLogicalSourceCallback(
-        [&](const SystestParser::SystestLogicalSource& source)
+
+    parser.registerOnCreateCallback(
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
         {
-            sltSourceCallbackCalled = true;
-            ASSERT_EQ(source.name, expectedLogicalSource.name);
-            ASSERT_EQ(source.fields, expectedLogicalSource.fields);
+            if (query.starts_with("CREATE LOGICAL SOURCE"))
+            {
+                createLogicalSourceCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
+            if (query.starts_with("CREATE PHYSICAL SOURCE"))
+            {
+                createPhysicalSourceCallbackCalled = true;
+                EXPECT_TRUE(testData.has_value());
+                EXPECT_EQ(TestDataIngestionType::INLINE, testData.value().first);
+                EXPECT_EQ(expectedInlineData.size(), testData.value().second.size());
+                ASSERT_TRUE(testData.value().second == expectedInlineData);
+            }
+            if (query.starts_with("CREATE SINK"))
+            {
+                createSinkCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
         });
+
 
     parser.registerOnQueryCallback(
         [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
@@ -305,25 +299,15 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
             ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
         });
 
-    parser.registerOnSystestAttachSourceCallback(
-        [&attachSourceCallbackCalled, &expectedAttachSource](const SystestAttachSource& attachSource)
-        {
-            attachSourceCallbackCalled = true;
-            ASSERT_EQ(attachSource.sourceType, expectedAttachSource.sourceType);
-            ASSERT_EQ(attachSource.inputFormatterType, expectedAttachSource.inputFormatterType);
-            ASSERT_TRUE(
-                attachSource.tuples.has_value() and expectedAttachSource.tuples.has_value()
-                and (attachSource.tuples.value() == expectedAttachSource.tuples.value()));
-        });
-
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
+    ASSERT_TRUE(createLogicalSourceCallbackCalled);
+    ASSERT_TRUE(createPhysicalSourceCallbackCalled);
+    ASSERT_TRUE(createSinkCallbackCalled);
     ASSERT_TRUE(queryCallbackCalled);
-    ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
-    ASSERT_TRUE(attachSourceCallbackCalled) << "Attach source callback was never called";
     ASSERT_TRUE(queryResultMap.size() == expectedResults.size());
     ASSERT_TRUE(std::ranges::all_of(
         expectedResults,
@@ -348,7 +332,8 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
             queryCallbackCalled = true;
         });
 
-    parser.registerOnSystestAttachSourceCallback([](const SystestAttachSource&) { /* parses input tuples */ });
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
 
     parser.registerOnErrorExpectationCallback(
         [&errorCallbackCalled, &expectErrorMessage, &expectErrorCode](

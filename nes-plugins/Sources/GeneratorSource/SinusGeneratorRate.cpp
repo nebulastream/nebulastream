@@ -18,9 +18,11 @@
 #include <cmath>
 #include <cstdint>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 #include <Util/Strings.hpp>
 
 namespace NES
@@ -34,7 +36,18 @@ std::optional<std::tuple<double, double>> SinusGeneratorRate::parseAndValidateCo
 {
     std::optional<double> amplitude = {};
     std::optional<double> frequency = {};
-    if (const auto params = Util::splitWithStringDelimiter<std::string_view>(configString, "\n"); params.size() == 2)
+
+    std::vector<std::string_view> params;
+
+    for (const auto& line : configString | std::views::split(','))
+    {
+        for (const auto& subLine : line | std::views::split('\n'))
+        {
+            params.emplace_back(Util::trimWhiteSpaces(std::string_view(subLine)));
+        }
+    }
+
+    if (params.size() == 2)
     {
         const auto amplitudeParams = Util::splitWithStringDelimiter<std::string_view>(params[0], " ");
         if (Util::toLowerCase(amplitudeParams[0]) == "amplitude")
@@ -48,6 +61,7 @@ std::optional<std::tuple<double, double>> SinusGeneratorRate::parseAndValidateCo
             frequency = Util::from_chars<double>(frequencyParams[1]);
         }
     }
+
 
     if (amplitude.has_value() and frequency.has_value())
     {
