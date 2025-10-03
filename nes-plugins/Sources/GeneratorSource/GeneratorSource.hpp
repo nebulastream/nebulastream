@@ -26,12 +26,14 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
@@ -169,9 +171,20 @@ struct ConfigParametersGenerator
                 NES_ERROR("Generator schema cannot be empty!")
                 throw InvalidConfigParameter("Generator schema cannot be empty!");
             }
-            auto lines = schema | std::ranges::views::split('\n')
-                | std::views::transform([](const auto& subView) { return std::string_view(subView); })
-                | std::views::filter([](const auto& subView) { return !subView.empty(); });
+
+            std::vector<std::string> lines;
+            for (const auto& line : schema | std::ranges::views::split(','))
+            {
+                for (const auto& subLine : line | std::ranges::views::split('\n'))
+                {
+                    if (subLine.empty())
+                    {
+                        continue;
+                    }
+                    lines.emplace_back(Util::trimWhiteSpaces(std::string_view(subLine)));
+                }
+            }
+
             for (auto line : lines)
             {
                 const auto foundIdentifier = line.substr(0, line.find_first_of(' '));

@@ -60,7 +60,7 @@ public:
         const LogicalSource& logicalSource,
         std::string_view sourceType,
         std::unordered_map<std::string, std::string> descriptorConfig,
-        const ParserConfig& parserConfig);
+        const std::unordered_map<std::string, std::string>& parserConfig);
 
     /// @brief removes a physical source
     /// @return true if there is a source descriptor with that id registered and it was removed

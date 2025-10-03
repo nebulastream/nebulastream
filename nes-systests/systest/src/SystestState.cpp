@@ -45,7 +45,6 @@
 
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>

@@ -2,11 +2,13 @@
 # description: Simple source/buffer tests
 # groups: [Sources]
 
-Source noTuple UINT64 field_1 INLINE
+CREATE LOGICAL SOURCE noTuple(field_1 UINT64);
+CREATE PHYSICAL SOURCE FOR noTuple TYPE File;
+ATTACH INLINE
 
-SINK SINK UINT64 noTuple$field_1
+CREATE SINK noTupelSink(noTuple.field_1 UINT64) TYPE File;
 
 # Description: check if we run into an error if we process a single tuple.
-SELECT field_1 FROM noTuple INTO SINK
+SELECT field_1 FROM noTuple INTO noTupelSink
 ----
 

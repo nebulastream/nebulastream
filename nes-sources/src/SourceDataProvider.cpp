@@ -16,56 +16,46 @@
 
 #include <filesystem>
 
+#include <memory>
+#include <string>
+#include <thread>
 #include <utility>
-#include <SystestSources/SourceTypes.hpp>
+#include <vector>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
-#include <GeneratorDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
 
 namespace NES
 {
-SystestSourceYAMLBinder::PhysicalSource SourceDataProvider::provideFileDataSource(
-    SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig,
-    SystestAttachSource attachSource,
-    std::filesystem::path testDataDir)
+PhysicalSourceConfig SourceDataProvider::provideFileDataSource(
+    const PhysicalSourceConfig& initialPhysicalSourceConfig,
+    const std::shared_ptr<std::vector<std::jthread>>& serverThreads,
+    const std::filesystem::path& testFilePath)
 {
     const auto fileDataArgs = FileDataRegistryArguments{
-        .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
-        .attachSource = attachSource,
-        .testDataDir = std::move(testDataDir)};
-    if (auto physicalSourceConfig = FileDataRegistry::instance().create(attachSource.sourceType, fileDataArgs))
+        .physicalSourceConfig = initialPhysicalSourceConfig, .serverThreads = serverThreads, .testFilePath = testFilePath};
+    if (auto physicalSourceConfig = FileDataRegistry::instance().create(fileDataArgs.physicalSourceConfig.type, fileDataArgs))
     {
         return physicalSourceConfig.value();
     }
-    throw UnknownSourceType("Source type {} not found.", attachSource.sourceType);
+    throw UnknownSourceType("Source type {} not found.", fileDataArgs.physicalSourceConfig.type);
 }
 
-SystestSourceYAMLBinder::PhysicalSource SourceDataProvider::provideInlineDataSource(
-    SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig,
-    SystestAttachSource attachSource,
-    std::filesystem::path testFilePath)
+PhysicalSourceConfig SourceDataProvider::provideInlineDataSource(
+    const PhysicalSourceConfig& initialPhysicalSourceConfig,
+    const std::vector<std::string>& tuples,
+    const std::shared_ptr<std::vector<std::jthread>>& serverThreads,
+    const std::filesystem::path& testFilePath)
 {
     const auto inlineDataArgs = InlineDataRegistryArguments{
-        .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
-        .attachSource = attachSource,
-        .testFilePath = std::move(testFilePath)};
-    if (auto physicalSourceConfig = InlineDataRegistry::instance().create(attachSource.sourceType, inlineDataArgs))
+        .physicalSourceConfig = initialPhysicalSourceConfig,
+        .tuples = tuples,
+        .serverThreads = serverThreads,
+        .testFilePath = testFilePath};
+    if (auto physicalSourceConfig = InlineDataRegistry::instance().create(inlineDataArgs.physicalSourceConfig.type, inlineDataArgs))
     {
         return physicalSourceConfig.value();
     }
-    throw UnknownSourceType("Source type {} not found.", attachSource.sourceType);
-}
-
-SystestSourceYAMLBinder::PhysicalSource SourceDataProvider::provideGeneratorDataSource(
-    SystestSourceYAMLBinder::PhysicalSource initialPhysicalSourceConfig, SystestAttachSource attachSource)
-{
-    const auto generatorDataArgs
-        = GeneratorDataRegistryArguments{.physicalSourceConfig = std::move(initialPhysicalSourceConfig), .attachSource = attachSource};
-    if (auto physicalSourceConfig = GeneratorDataRegistry::instance().create(attachSource.sourceType, generatorDataArgs))
-    {
-        return physicalSourceConfig.value();
-    }
-    throw UnknownSourceType("Source type {} not found.", attachSource.sourceType);
+    throw UnknownSourceType("Source type {} not found.", initialPhysicalSourceConfig.type);
 }
 }

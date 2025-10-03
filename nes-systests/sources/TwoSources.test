@@ -3,14 +3,18 @@
 # groups: [Tuples]
 
 # Both queries below should pass, but the first fails.
-Source fiveTuples UINT64 field_1 INLINE
+CREATE LOGICAL SOURCE fiveTuples(field_1 UINT64);
+CREATE PHYSICAL SOURCE FOR fiveTuples TYPE File;
+ATTACH INLINE
 1
 2
 3
 4
 5
 
-Source sixTuples UINT64 field_1 INLINE
+CREATE LOGICAL SOURCE sixTuples(field_1 UINT64);
+CREATE PHYSICAL SOURCE FOR sixTuples TYPE File;
+ATTACH INLINE
 1
 2
 3
@@ -18,8 +22,8 @@ Source sixTuples UINT64 field_1 INLINE
 5
 6
 
-SINK fiveTuplesSink UINT64 fiveTuples$field_1
-SINK sixTuplesSink UINT64 sixTuples$field_1
+CREATE SINK fiveTuplesSink(fiveTuples.field_1 UINT64)  TYPE File;
+CREATE SINK sixTuplesSink(sixTuples.field_1 UINT64)  TYPE File;
 
 # Description: simply reads in five tuples with a single value and produces the same tuples
 SELECT field_1 FROM fiveTuples INTO fiveTuplesSink

@@ -5,14 +5,16 @@
 # Todo #501
 # This test works if it does not contain 'TESTDATA' in its file name.
 # This might be true for other keywords too. 'Source' seems to be fine though.
-Source fiveTuples UINT64 field_1 INLINE
+CREATE LOGICAL SOURCE fiveTuples(field_1 UINT64);
+CREATE PHYSICAL SOURCE FOR fiveTuples TYPE File;
+ATTACH INLINE
 1
 2
 3
 4
 5
 
-SINK sink UINT64 fiveTuples$field_1
+CREATE SINK sink(fiveTuples.field_1 UINT64)  TYPE File;
 
 # Description: simply reads in five tuples with a single value and produces the same tuples
 SELECT field_1 FROM fiveTuples INTO sink

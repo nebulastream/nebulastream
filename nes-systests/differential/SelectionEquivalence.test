@@ -2,12 +2,15 @@
 # description: Ensure differential queries agree for logically equivalent selections
 # groups: [Differential, Selection]
 
-Source stream UINT64 id UINT64 value UINT64 timestamp GENERATOR seed 1, max_runtime_ms 1000, stop_generator_when_sequence_finishes ALL
-id SEQUENCE UINT64 1 2001 10
-value SEQUENCE UINT64 0 1200 6
-timestamp SEQUENCE UINT64 0 1000000 5000
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
+    1 AS `SOURCE`.SEED,
+    1000 AS `SOURCE`.MAX_RUNTIME_MS,
+    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'SEQUENCE UINT64 1 2001 10, SEQUENCE UINT64 0 1200 6, SEQUENCE UINT64 0 1000000 5000' AS `SOURCE`.GENERATOR_SCHEMA
+);
 
-SINK selectionSink UINT64 out_id UINT64 out_value UINT64 out_timestamp
+CREATE SINK selectionSink(out_id UINT64, out_value UINT64, out_timestamp UINT64) TYPE File;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE value >= UINT64(10) INTO selectionSink;
 ====

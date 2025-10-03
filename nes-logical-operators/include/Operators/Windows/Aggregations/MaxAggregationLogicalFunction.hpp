@@ -36,6 +36,6 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
-    static constexpr std::string_view NAME = "Max";
+    static constexpr std::string_view NAME = "MAX";
 };
 }

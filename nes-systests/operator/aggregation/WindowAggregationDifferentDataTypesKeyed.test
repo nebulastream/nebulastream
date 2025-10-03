@@ -3,7 +3,9 @@
 # groups: [Aggregation, WindowOperators]
 
 
-Source stream INT8 keyI8 INT16 keyI16 UINT64 keyU64 INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 UINT64 ts CHAR c INLINE
+CREATE LOGICAL SOURCE stream(keyI8 INT8, keyI16 INT16, keyU64 UINT64, i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64, ts UINT64, c CHAR);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
 1,2,1,1,2,3,4,5,6,7,8,9,10,0,a
 1,2,4,2,3,4,5,6,7,8,9,10,11,25,b
 1,2,4,0,0,0,0,0,0,0,0,0,0,50,c
@@ -13,10 +15,10 @@ Source stream INT8 keyI8 INT16 keyI16 UINT64 keyU64 INT8 i8 INT16 i16 INT32 i32 
 1,2,3,1,2,3,4,5,6,7,8,9,10,225,g
 1,1,3,2,3,4,5,6,7,8,9,10,11,250,h
 
-SINK sinkStreamKeyI8I16 UINT64 stream$start UINT64 stream$end INT8 stream$keyI8 INT16 stream$keyI16 INT8 stream$i8_out INT16 stream$i16_out INT32 stream$i32_out INT64 stream$i64_out UINT8 stream$u8_out UINT16 stream$u16_out UINT32 stream$u32_out UINT64 stream$u64_out FLOAT32 stream$f32_out FLOAT64 stream$f64_out
-SINK sinkStreamAllU64KeyI8 UINT64 stream$start UINT64 stream$end INT8 stream$keyI8 UINT64 stream$i8_out UINT64 stream$i16_out UINT64 stream$i32_out UINT64 stream$i64_out UINT64 stream$u8_out UINT64 stream$u16_out UINT64 stream$u32_out UINT64 stream$u64_out UINT64 stream$f32_out UINT64 stream$f64_out
-SINK sinkStreamAllF64KeyI8I16U64 UINT64 stream$start UINT64 stream$end INT8 stream$keyI8 INT16 stream$keyI16 UINT64 stream$keyU64 FLOAT64 stream$i8_out FLOAT64 stream$i16_out FLOAT64 stream$i32_out FLOAT64 stream$i64_out FLOAT64 stream$u8_out FLOAT64 stream$u16_out FLOAT64 stream$u32_out FLOAT64 stream$u64_out FLOAT64 stream$f32_out FLOAT64 stream$f64_out
-SINK sinkStreamAllF64KeyI16 UINT64 stream$start UINT64 stream$end INT16 stream$keyI16 FLOAT64 stream$i8_out FLOAT64 stream$i16_out FLOAT64 stream$i32_out FLOAT64 stream$i64_out FLOAT64 stream$u8_out FLOAT64 stream$u16_out FLOAT64 stream$u32_out FLOAT64 stream$u64_out FLOAT64 stream$f32_out FLOAT64 stream$f64_out
+CREATE SINK sinkStreamKeyI8I16(stream.start UINT64, stream.end UINT64, stream.keyI8 INT8, stream.keyI16 INT16, stream.i8_out INT8, stream.i16_out INT16, stream.i32_out INT32, stream.i64_out INT64, stream.u8_out UINT8, stream.u16_out UINT16, stream.u32_out UINT32, stream.u64_out UINT64, stream.f32_out FLOAT32, stream.f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllU64KeyI8(stream.start UINT64, stream.end UINT64, stream.keyI8 INT8, stream.i8_out UINT64, stream.i16_out UINT64, stream.i32_out UINT64, stream.i64_out UINT64, stream.u8_out UINT64, stream.u16_out UINT64, stream.u32_out UINT64, stream.u64_out UINT64, stream.f32_out UINT64, stream.f64_out UINT64)  TYPE File;
+CREATE SINK sinkStreamAllF64KeyI8I16U64(stream.start UINT64, stream.end UINT64, stream.keyI8 INT8, stream.keyI16 INT16, stream.keyU64 UINT64, stream.i8_out FLOAT64, stream.i16_out FLOAT64, stream.i32_out FLOAT64, stream.i64_out FLOAT64, stream.u8_out FLOAT64, stream.u16_out FLOAT64, stream.u32_out FLOAT64, stream.u64_out FLOAT64, stream.f32_out FLOAT64, stream.f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllF64KeyI16(stream.start UINT64, stream.end UINT64, stream.keyI16 INT16, stream.i8_out FLOAT64, stream.i16_out FLOAT64, stream.i32_out FLOAT64, stream.i64_out FLOAT64, stream.u8_out FLOAT64, stream.u16_out FLOAT64, stream.u32_out FLOAT64, stream.u64_out FLOAT64, stream.f32_out FLOAT64, stream.f64_out FLOAT64)  TYPE File;
 
 
 # Checking if a count over a keyed window works for all data types
@@ -70,7 +72,8 @@ FROM stream GROUP BY (keyI16) WINDOW SLIDING(ts, size 200 ms, advance by 100 ms)
 200,400,2,-20.5,-63.5,-16383,-1073741822.5,23.5,131,32771.5,2147483652,16,16.5
 200,400,1,2,3,4,5,6,7,8,9,10,11
 
-SINK charKeySink UINT64 stream$start UINT64 stream$end CHAR stream$c UINT64 stream$i16_Count
+CREATE SINK charKeySink(stream.start UINT64, stream.end UINT64, stream.c CHAR, stream.i16_Count
+ UINT64)  TYPE File;
 # Char as aggregation key
 SELECT start, end, c, COUNT(i16)
 FROM stream GROUP BY (c) WINDOW SLIDING(ts, size 200 ms, advance by 100 ms) INTO charKeySink

@@ -3,13 +3,15 @@
 # groups: [WindowOperators, Join]
 
 # Source definitions
-Source stream UINT64 id UINT64 value UINT64 timestamp FILE
-TESTDATA/small/stream.csv
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH FILE small/stream.csv
 
-Source stream2 UINT64 id2 UINT64 value2 UINT64 timestamp FILE
-TESTDATA/small/stream2.csv
+CREATE LOGICAL SOURCE stream2(id2 UINT64, value2 UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH FILE small/stream2.csv
 
-SINK sinkStreamStream2 UINT64 streamstream2$start UINT64 streamstream2$end UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp UINT64 stream2$id2 UINT64 stream2$value2 UINT64 stream2$timestamp
+CREATE SINK sinkStreamStream2(streamstream2.start UINT64, streamstream2.end UINT64, stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, stream2.id2 UINT64, stream2.value2 UINT64, stream2.timestamp UINT64)  TYPE File;
 
 
 # Query 1 - Join two streams

@@ -141,7 +141,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, ParserConfig{});
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 
@@ -172,7 +172,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, ParserConfig{});
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withOutputOriginIds({OriginId{1}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 
