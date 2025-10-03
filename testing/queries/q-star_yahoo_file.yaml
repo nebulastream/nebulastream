@@ -1,0 +1,67 @@
+query: |
+  SELECT * FROM tcp_source INTO csv_sink
+logical:
+  - name: tcp_source
+    schema:
+      - name: user_id
+        type: UINT64
+      - name: page_id
+        type: UINT64
+      - name: campaign_id
+        type: UINT64
+      - name: ad_type
+        type: UINT64
+      - name: event_type
+        type: UINT64
+      - name: current_ms
+        type: UINT64
+      - name: ip
+        type: UINT64
+      - name: d1
+        type: UINT64
+      - name: d2
+        type: UINT64
+      - name: d3
+        type: UINT32
+      - name: d4
+        type: UINT16
+physical:
+  - logical: tcp_source
+    type: BlockingFile
+    parserConfig:
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
+      type: CSV
+    sourceConfig:
+      #      filePath: /home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-systests/testdata/large/ysb/ysb_1k_data_474M.csv
+      filePath: /home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/ExternalData/Objects/MD5/5efe90254a4107665cb57224e9965787_x10
+
+sinks:
+  name: csv_sink
+  schema:
+    - name: tcp_source$user_id
+      type: UINT64
+    - name: tcp_source$page_id
+      type: UINT64
+    - name: tcp_source$campaign_id
+      type: UINT64
+    - name: tcp_source$ad_type
+      type: UINT64
+    - name: tcp_source$event_type
+      type: UINT64
+    - name: tcp_source$current_ms
+      type: UINT64
+    - name: tcp_source$ip
+      type: UINT64
+    - name: tcp_source$d1
+      type: UINT64
+    - name: tcp_source$d2
+      type: UINT64
+    - name: tcp_source$d3
+      type: UINT32
+    - name: tcp_source$d4
+      type: UINT16
+  type: Monitoring
+  config:
+    filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+    sizeOfInputDataInBytes: 4972142310

@@ -1,0 +1,44 @@
+#SELECT start, end, campaign_id, SUM(user_id) AS sum_user_id FROM bid WHERE event_type < UINT64(1) GROUP BY campaign_id WINDOW TUMBLING(current_ms, SIZE 30 SEC) INTO checksum_sink
+query: |
+  SELECT start, end, auctionId, num, max_tmp FROM (SELECT auctionId, COUNT(auctionId) AS num, start, end FROM bid GROUP BY auctionId WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)) INNER JOIN (SELECT MAX(num_ids) AS max_tmp, start, end FROM (SELECT auctionId, COUNT(auctionId) AS num_ids, start FROM bid GROUP BY auctionId WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC)) WINDOW TUMBLING(start, SIZE 2 SEC)) ON num == max_tmp WINDOW TUMBLING(start, SIZE 2 SEC) INTO checksum_sink
+logical:
+  - name: bid
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: auctionId
+        type: INT32
+      - name: bidder
+        type: INT32
+      - name: datetime
+        type: INT64
+      - name: price
+        type: FLOAT64
+physical:
+  - logical: bid
+    type: TCP
+    parserConfig:
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
+      type: CSV
+    sourceConfig:
+      socketPort: 1112
+      socketHost: localhost
+
+sinks:
+  name: checksum_sink
+  schema:
+    - name: bidbid$start
+      type: UINT64
+    - name: bidbid$end
+      type: UINT64
+    - name: bid$auctionId
+      type: INT32
+    - name: bid$num
+      type: UINT64
+    - name: bid$max_tmp
+      type: UINT64
+  type: Monitoring
+  config:
+    filePath: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+    sizeOfInputDataInBytes: 994428462

@@ -1,0 +1,50 @@
+query: |
+  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
+logical:
+  - name: tcp_source
+    schema:
+      - name: user_id
+        type: UINT64
+      - name: page_id
+        type: UINT64
+      - name: campaign_id
+        type: UINT64
+      - name: ad_type
+        type: UINT64
+      - name: event_type
+        type: UINT64
+      - name: current_ms
+        type: UINT64
+      - name: ip
+        type: UINT64
+      - name: d1
+        type: UINT64
+      - name: d2
+        type: UINT64
+      - name: d3
+        type: UINT32
+      - name: d4
+        type: UINT16
+physical:
+  - logical: tcp_source
+    type: File
+    parser_config:
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
+      type: CSV
+    source_config:
+      file_path: /home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-systests/testdata/large/ysb/ysb_1k_data_474M.csv
+
+sinks:
+  - name: csv_sink
+    type: File
+    schema:
+      - name: tcp_source$user_id
+        type: UINT64
+      - name: tcp_source$page_id
+        type: UINT64
+      - name: tcp_source$campaign_id
+        type: UINT64
+    config:
+      file_path: "/home/rudi/dima/nebulastream-public/testing/output/outputQuery.csv"
+      input_format: CSV
