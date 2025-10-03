@@ -47,7 +47,8 @@ asio::awaitable<void, Executor> AsyncSourceRunner::runningRoutine() const
     const auto dataEmit = [&](IOBuffer& buf) -> void
     {
         addBufferMetadata(context.originId, buf, sequenceNumberGenerator++);
-        emitFn(context.originId, Data{std::move(buf)});
+        const std::stop_token stopToken;
+        emitFn(context.originId, Data{std::move(buf)}, stopToken);
     };
 
     ///  RAII-wrapper around the source to ensure that close() is called on all code paths, even if an exception is thrown.
@@ -59,7 +60,8 @@ asio::awaitable<void, Executor> AsyncSourceRunner::runningRoutine() const
     }
     catch (const Exception& exception)
     {
-        emitFn(context.originId, Error{exception});
+        const std::stop_token stopToken;
+        emitFn(context.originId, SourceError{exception}, stopToken);
         co_return;
     }
 
@@ -111,13 +113,15 @@ void AsyncSourceRunner::handleSourceResult(
                     dataEmit(buffer);
                     // context.inputFormatter->parseTupleBufferRaw(buffer, *context.bufferProvider, resultEos.bytesRead, dataEmit);
                 }
-                emitFn(context.originId, EoS{});
+                const std::stop_token stopToken;
+                emitFn(context.originId, EoS{}, stopToken);
             },
             [this](const AsyncSource::Error& resultError)
             {
                 /// The source returned an error that it is not able to recover from.
                 /// Therefore, we propagate the error to the query engine via the emitFn.
-                emitFn(context.originId, Error{resultError.exception});
+                const std::stop_token stopToken;
+                emitFn(context.originId, SourceError{resultError.exception}, stopToken);
             },
             [](const AsyncSource::Cancelled&)
             {

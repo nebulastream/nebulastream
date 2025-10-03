@@ -56,7 +56,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <GeneratorFields.hpp>
+// #include <GeneratorFields.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -478,17 +478,18 @@ struct SystestBinder::Impl
                         magic_enum::enum_name<DataType::Type>(definedLogicalField.value().dataType.type));
                 }
                 auto generatorFieldIdentifier = fieldSchemaTokens[1];
-                auto [acceptedTypesBegin, acceptedTypesEnd]
-                    = GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
+                // Todo: fix
+                // auto [acceptedTypesBegin, acceptedTypesEnd]
+                //     = GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
                 bool isAcceptedType = false;
-                for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
-                {
-                    if (definedLogicalField->dataType.type == it->second)
-                    {
-                        isAcceptedType = true;
-                        break;
-                    }
-                }
+                // for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
+                // {
+                //     if (definedLogicalField->dataType.type == it->second)
+                //     {
+                //         isAcceptedType = true;
+                //         break;
+                //     }
+                // }
                 if (!isAcceptedType)
                 {
                     throw InvalidConfigParameter(

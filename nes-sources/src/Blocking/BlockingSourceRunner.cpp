@@ -62,11 +62,11 @@ void BlockingSourceRunner::runningRoutine(const std::stop_token& stopToken) cons
             switch (this->executionContext->formattingThread.value())
             {
                 case BlockingSourceThread: {
-                    emitFn(executionContext->originId, InPlaceData{std::move(buffer), this->executionContext->bufferProvider});
+                    emitFn(executionContext->originId, InPlaceData{std::move(buffer), this->executionContext->bufferProvider}, stopToken);
                     break;
                 }
                 case WorkerThread: {
-                    emitFn(executionContext->originId, Data{std::move(buffer)});
+                    emitFn(executionContext->originId, Data{std::move(buffer)}, stopToken);
                     break;
                 }
             }
@@ -96,7 +96,7 @@ void BlockingSourceRunner::operator()(const std::stop_token& stopToken)
         /// Emitting EoS ONLY if a stop was not requested until now
         if (!stopToken.stop_requested())
         {
-            emitFn(executionContext->originId, EoS{});
+            emitFn(executionContext->originId, EoS{}, stopToken);
         }
         terminationPromise.set_value();
     }
@@ -104,7 +104,7 @@ void BlockingSourceRunner::operator()(const std::stop_token& stopToken)
     {
         /// TODO(yschroeder97): this converts e.g., CannotOpenSource() exceptions into DataIngestionFailure, losing information
         const auto ingestionException = RunningRoutineFailure(exception.what());
-        emitFn(executionContext->originId, Error{ingestionException});
+        emitFn(executionContext->originId, SourceError{ingestionException}, stopToken);
         terminationPromise.set_exception(std::make_exception_ptr(ingestionException));
     }
 }

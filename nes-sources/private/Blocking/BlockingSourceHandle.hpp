@@ -31,7 +31,7 @@ namespace NES
 class BlockingSourceHandle final : public SourceHandle
 {
 public:
-    explicit BlockingSourceHandle(SourceExecutionContext<BlockingSource> ctx);
+    explicit BlockingSourceHandle(SourceExecutionContext<BlockingSource> ctx, uint64_t maxInflightBuffers);
 
     BlockingSourceHandle() = delete;
     ~BlockingSourceHandle() override = default;

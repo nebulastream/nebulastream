@@ -31,8 +31,8 @@
 namespace NES
 {
 
-BlockingSourceHandle::BlockingSourceHandle(SourceExecutionContext<BlockingSource> ctx)
-    : SourceHandle{ctx.originId}, state{BlockingSourceState{Initial{std::move(ctx)}}}
+BlockingSourceHandle::BlockingSourceHandle(SourceExecutionContext<BlockingSource> ctx, const uint64_t maxInflightBuffers)
+    : SourceHandle{ctx.originId, maxInflightBuffers}, state{BlockingSourceState{Initial{std::move(ctx)}}}
 {
 }
 

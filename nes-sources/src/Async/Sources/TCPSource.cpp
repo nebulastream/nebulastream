@@ -88,7 +88,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> TCPSource::fillBuff
     }
 
     auto [errorCode, bytesRead]
-        = co_await async_read(socket.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
+        = co_await async_read(socket.value(), asio::mutable_buffer(buffer.getMemArea(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
 
     buffer.setNumberOfTuples(bytesRead);
     if (not errorCode)
@@ -104,7 +104,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> TCPSource::fillBuff
         co_return Cancelled{};
     }
     co_return Error{
-        .exception = DataIngestionFailure(
+        .exception = RunningRoutineFailure(
             std::format("Failed to read from socket: {}:{} with error: {}", socketHost, socketPort, errorCode.message()))};
 }
 

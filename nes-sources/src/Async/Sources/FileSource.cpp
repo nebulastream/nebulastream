@@ -78,7 +78,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuf
     }
 
     auto [errorCode, bytesRead] = co_await async_read(
-        fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
+        fileStream.value(), asio::mutable_buffer(buffer.getMemArea(), buffer.getBufferSize()), asio::as_tuple(asio::deferred));
     buffer.setNumberOfTuples(bytesRead);
 
     if (errorCode)
@@ -92,7 +92,7 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuf
             co_return Cancelled{};
         }
         const auto message = std::format("Failed to read from file {} with errorCode: '{}'", filePath, errorCode.message());
-        co_return Error{.exception = DataIngestionFailure(message)};
+        co_return Error{.exception = RunningRoutineFailure(message)};
     }
     co_return Continue{.bytesRead = bytesRead};
 }

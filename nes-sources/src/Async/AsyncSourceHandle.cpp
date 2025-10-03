@@ -33,8 +33,8 @@
 namespace NES
 {
 
-AsyncSourceHandle::AsyncSourceHandle(SourceExecutionContext<AsyncSource> sourceExecutionContext)
-    : SourceHandle{sourceExecutionContext.originId}, state{AsyncSourceState{Initial{std::move(sourceExecutionContext)}}}
+AsyncSourceHandle::AsyncSourceHandle(SourceExecutionContext<AsyncSource> sourceExecutionContext, const uint64_t maxInflightBuffers)
+    : SourceHandle{sourceExecutionContext.originId, maxInflightBuffers}, state{AsyncSourceState{Initial{std::move(sourceExecutionContext)}}}
 {
 }
 

@@ -39,7 +39,7 @@ namespace NES
 class AsyncSourceHandle final : public SourceHandle
 {
 public:
-    explicit AsyncSourceHandle(SourceExecutionContext<AsyncSource> sourceExecutionContext);
+    explicit AsyncSourceHandle(SourceExecutionContext<AsyncSource> sourceExecutionContext, uint64_t maxInflightBuffers);
     ~AsyncSourceHandle() override = default;
 
     AsyncSourceHandle(const AsyncSourceHandle&) = delete;

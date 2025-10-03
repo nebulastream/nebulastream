@@ -39,7 +39,7 @@ namespace NES
 
 namespace
 {
-SourceReturnType::EmitFunction emitFunction(
+EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
     std::weak_ptr<RunningSource> source,
@@ -50,23 +50,31 @@ SourceReturnType::EmitFunction emitFunction(
     auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
         std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
     return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
-               const OriginId sourceId,
-               SourceReturnType::SourceReturnType event,
-               const std::stop_token& stopToken) -> SourceReturnType::EmitResult
+               const OriginId sourceId, SourceReturnType event, const std::stop_token& stopToken) -> EmitResult
     {
         return std::visit(
             Overloaded{
-                [&](const SourceReturnType::Data& data)
+                [&](const InPlaceData&)
+                {
+                    // Todo: think of a better way to place the 'bufferProvider'
+                    // -> currently we pass the sources' buffer provider, which is a fixed-size buffer pool
+                    // -> this can easily lead to a deadlock (window build in InputFormatterPipeline that requires > 64 buffers)
+                    // DefaultSourcePEC test{queryId, successors.front(), inPlaceData.bufferProvider, emitter};
+                    // successors.front()->stage->execute(inPlaceData.buffer, test);
+                    INVARIANT(false, "not supporting InPlaceData");
+                    return EmitResult::STOP_REQUESTED;
+                },
+                [&](const Data& data)
                 {
                     for (const auto& successor : successors)
                     {
                         {
                             /// release the semaphore in case the source wants to terminate
-                            const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
+                            const std::stop_callback callback(stopToken, [availableBuffer]() { availableBuffer->release(); });
                             availableBuffer->acquire();
                             if (stopToken.stop_requested())
                             {
-                                return SourceReturnType::EmitResult::STOP_REQUESTED;
+                                return EmitResult::STOP_REQUESTED;
                             }
                         }
                         /// The admission queue might be full, we have to reattempt
@@ -79,23 +87,23 @@ SourceReturnType::EmitFunction emitFunction(
                         {
                             if (stopToken.stop_requested())
                             {
-                                return SourceReturnType::EmitResult::STOP_REQUESTED;
+                                return EmitResult::STOP_REQUESTED;
                             }
                         }
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
-                    return SourceReturnType::EmitResult::SUCCESS;
+                    return EmitResult::SUCCESS;
                 },
-                [&](SourceReturnType::EoS)
+                [&](EoS)
                 {
                     ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
                     controller.initializeSourceStop(queryId, sourceId, source);
-                    return SourceReturnType::EmitResult::SUCCESS;
+                    return EmitResult::SUCCESS;
                 },
-                [&](SourceReturnType::Error error)
+                [&](SourceError error)
                 {
                     controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex));
-                    return SourceReturnType::EmitResult::SUCCESS;
+                    return EmitResult::SUCCESS;
                 }},
             std::move(event));
     };
@@ -104,7 +112,7 @@ SourceReturnType::EmitFunction emitFunction(
 
 OriginId RunningSource::getOriginId() const
 {
-    return source->getSourceId();
+    return source->getOriginId();
 }
 
 RunningSource::RunningSource(
@@ -128,7 +136,7 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
+    const auto maxInflightBuffers = source->getMaxInflightBuffers();
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(tryUnregister), std::move(unregisterWithError)));
     ENGINE_LOG_DEBUG("Starting Running Source");
@@ -141,7 +149,7 @@ RunningSource::~RunningSource()
     if (source)
     {
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
+        if (source->tryStop(std::chrono::milliseconds(0)) == TryStopResult::TIMEOUT)
         {
             ENGINE_LOG_DEBUG("Source was requested to stop. Stop will happen asynchronously.");
         }
@@ -160,7 +168,7 @@ bool RunningSource::attemptUnregister()
     return false;
 }
 
-SourceReturnType::TryStopResult RunningSource::tryStop() const
+TryStopResult RunningSource::tryStop() const
 {
     return this->source->tryStop(std::chrono::milliseconds(0));
 }

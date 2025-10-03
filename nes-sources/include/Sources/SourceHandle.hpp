@@ -30,7 +30,7 @@ class SourceHandle
 {
 public:
     SourceHandle() = delete;
-    explicit SourceHandle(const OriginId originId) : originId(originId) { }
+    explicit SourceHandle(const OriginId originId, const uint64_t maxInflightBuffers) : originId(originId), maxInflightBuffers(maxInflightBuffers) { }
     virtual ~SourceHandle() = default;
 
     virtual bool start(EmitFunction&& emitFn) = 0;
@@ -38,6 +38,7 @@ public:
     virtual TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
 
     virtual OriginId getOriginId() { return originId; }
+    virtual uint64_t getMaxInflightBuffers() { return maxInflightBuffers; }
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& handle) { return handle.toString(out); }
 
@@ -46,6 +47,7 @@ protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 
     OriginId originId;
+    uint64_t maxInflightBuffers;
 };
 
 }

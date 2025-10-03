@@ -27,6 +27,12 @@
 namespace NES
 {
 
+enum class EmitResult : uint8_t
+{
+    SUCCESS,
+    STOP_REQUESTED,
+};
+
 using IOBuffer = TupleBuffer;
 
 struct InPlaceData
@@ -44,13 +50,13 @@ struct EoS
 {
 };
 
-struct Error
+struct SourceError
 {
     Exception ex;
 };
 
-using SourceReturnType = std::variant<Error, Data, EoS, InPlaceData>;
-using EmitFunction = std::function<void(OriginId, SourceReturnType)>;
+using SourceReturnType = std::variant<SourceError, Data, EoS, InPlaceData>;
+using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token& stopToken)>;
 
 inline void addBufferMetadata(const OriginId originId, IOBuffer& buffer, const uint64_t sequenceNumber)
 {

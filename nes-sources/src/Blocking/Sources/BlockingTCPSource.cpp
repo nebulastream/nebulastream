@@ -157,7 +157,7 @@ bool BlockingTCPSource::fillBuffer(IOBuffer& buffer, size_t& numReceivedBytes)
     const size_t rawTBSize = buffer.getBufferSize();
     while (numReceivedBytes < rawTBSize)
     {
-        const ssize_t bufferSizeReceived = read(sockfd, buffer.getBuffer() + numReceivedBytes, rawTBSize - numReceivedBytes);
+        const ssize_t bufferSizeReceived = read(sockfd, buffer.getMemArea() + numReceivedBytes, rawTBSize - numReceivedBytes);
         if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
         {
             /// if read method returned -1 an error occurred during read.
@@ -188,7 +188,7 @@ bool BlockingTCPSource::fillBuffer(IOBuffer& buffer, size_t& numReceivedBytes)
         // }
     }
     ++generatedBuffers;
-    // if (numReceivedBytes < rawTBSize - 1 and buffer.getBuffer()[numReceivedBytes] == '\n')
+    // if (numReceivedBytes < rawTBSize - 1 and buffer.getMemArea()[numReceivedBytes] == '\n')
     // {
     //     ++numReceivedBytes;
     // }

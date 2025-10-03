@@ -41,9 +41,7 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 {
 }
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(
-    const OriginId originId,
-    const SourceDescriptor& sourceDescriptor) const
+std::unique_ptr<SourceHandle> SourceProvider::lower(const OriginId originId, const SourceDescriptor& sourceDescriptor) const
 {
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
@@ -53,19 +51,23 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
                 [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                 {
                     const auto formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD);
-                    return std::make_unique<BlockingSourceHandle>(SourceExecutionContext{
-                        .originId = originId,
-                        .sourceImpl = std::move(sourceImpl),
-                        .bufferProvider = bufferPool,
-                        .formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD)});
+                    return std::make_unique<BlockingSourceHandle>(
+                        SourceExecutionContext{
+                            .originId = originId,
+                            .sourceImpl = std::move(sourceImpl),
+                            .bufferProvider = bufferPool,
+                            .formattingThread = sourceDescriptor.getFromConfig(SourceDescriptor::FORMATTING_THREAD)},
+                        defaultMaxInflightBuffers);
                 },
                 [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                 {
-                    return std::make_unique<AsyncSourceHandle>(SourceExecutionContext{
-                        .originId = originId,
-                        .sourceImpl = std::move(sourceImpl),
-                        .bufferProvider = bufferPool,
-                        .formattingThread = std::nullopt});
+                    return std::make_unique<AsyncSourceHandle>(
+                        SourceExecutionContext{
+                            .originId = originId,
+                            .sourceImpl = std::move(sourceImpl),
+                            .bufferProvider = bufferPool,
+                            .formattingThread = std::nullopt},
+                        defaultMaxInflightBuffers);
                 }},
             std::move(source.value()));
     }
