@@ -27,6 +27,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Decoders/Decoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -34,6 +35,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
+#include <magic_enum/magic_enum.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -103,10 +105,35 @@ public:
         INVALID_MAX_INFLIGHT_BUFFERS,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
 
+    /// Describes the codec that the data of the source is encoded with. The default is no codec. The codec string must match one of the enum types
+    /// of the Codec enum in Decoder.hpp
+    static inline const DescriptorConfig::ConfigParameter<std::string> CODEC{
+        "codec",
+        "None",
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            const auto codec = DescriptorConfig::tryGet(CODEC, config);
+            if (codec.has_value())
+            {
+                auto optionalCodecEnum = magic_enum::enum_cast<Decoder::Codec>(codec.value());
+                if (!optionalCodecEnum)
+                {
+                    NES_ERROR(
+                        "Trying to create physical source that uses the {} codec, which we currently do not support.\nCurrently supported "
+                        "codec "
+                        "options are: {}.",
+                        codec.value(),
+                        Decoder::getCodecOptionsAsString())
+                }
+                return codec;
+            }
+            return codec;
+        }};
+
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+        = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS, CODEC);
 };
 
 }

@@ -74,7 +74,8 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto physical1Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}}, ParserConfig{});
-    const auto physical2Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}}, ParserConfig{});
+    const auto physical2Opt
+        = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}, {"codec", "None"}}, ParserConfig{});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -97,7 +98,7 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     ASSERT_TRUE(sourceCatalog.removePhysicalSource(physical1));
 
     const auto physical3Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}}, ParserConfig{});
-    ASSERT_TRUE(physical2Opt.has_value());
+    ASSERT_TRUE(physical3Opt.has_value());
     const auto& physical3 = physical3Opt.value();
 
     ASSERT_EQ(physical3.getPhysicalSourceId(), PhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue() + 2});
@@ -121,7 +122,8 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
     ASSERT_TRUE(sourceOpt.has_value());
     const auto& logicalSource = sourceOpt.value();
     const auto physical1Opt = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, ParserConfig{});
-    const auto physical2Opt = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, ParserConfig{});
+    const auto physical2Opt
+        = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}, {"codec", "None"}}, ParserConfig{});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());

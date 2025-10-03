@@ -20,6 +20,8 @@ add_source_files(nes-sources
         SourceValidationProvider.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
+        Decoders/Decoder.cpp
+        Decoders/DecoderProvider.cpp
 )
 
 # Register plugins
