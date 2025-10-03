@@ -362,7 +362,7 @@ public:
         SpanningTupleData spanningTupleData{};
         if (not rawInputFormatScan->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
         {
-            pec->emitBuffer(*tupleBuffer, PipelineExecutionContext::ContinuationPolicy::REPEAT);
+            pec->repeatTask(*tupleBuffer, std::chrono::milliseconds(0));
             spanningTupleData.setIsRepeat(true);
             return spanningTupleData.getThreadLocalSpanningTuplePODPtr();
         }
