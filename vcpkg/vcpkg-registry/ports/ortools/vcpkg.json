@@ -17,6 +17,7 @@
     "bzip2",
     "abseil",
     "protobuf",
-    "re2"
+    "re2",
+    "eigen3"
   ]
 }
