@@ -1,3 +1,18 @@
+---
+title: "Build instructions"
+description: ""
+lead: ""
+date: 2020-10-06T08:49:31+00:00
+lastmod: 2020-10-06T08:49:31+00:00
+draft: false
+images: []
+menu:
+  docs:
+    parent: "dev"
+    identifier: "Developer"
+weight: 560
+toc: true
+---
 # Development
 
 This document explains how to set up the development environment for NebulaStream.
@@ -113,7 +128,8 @@ docker run \
 To integrate the container-based development environment you need to create a new docker-based toolchain. With the
 following settings:
 
-![CLion-Toolchain-Settings](../resources/SetupDockerToolchainClion.png)
+
+<img src="/nes/SetupDockerToolchainClion.png" alt="CLion-Toolchain-Settings">
 
 > [!IMPORTANT]
 > If running on MacOS with Colima as your docker VM, you will need to select Colima instead of the default docker daemon.
@@ -123,7 +139,7 @@ docker-based toolchains if you plan to experiment with different sanitizer.
 
 Lastly, you need to create a new CMake profile which uses the newly created docker-based toolchain:
 
-![CLion-CMake-Settings](../resources/SetupDockerCmakeClion.png)
+<img src="/nes/SetupDockerCmakeClion.png"   alt="CLion-CMake-Settings">
 
 ## Non-Container Development Environment
 

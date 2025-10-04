@@ -1,3 +1,18 @@
+---
+title: "How to add a Source"
+description: ""
+lead: ""
+date: 2020-10-06T08:49:31+00:00
+lastmod: 2020-10-06T08:49:31+00:00
+draft: false
+images: []
+menu:
+  docs:
+    parent: "dev"
+    identifier: "Source"
+weight: 560
+toc: true
+---
 # How to add a `Source` in NebulaStream
 
 In NebulaStream, sources are responsible for ingesting data into the system.
