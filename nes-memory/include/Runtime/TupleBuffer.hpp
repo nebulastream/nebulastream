@@ -17,9 +17,11 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <ErrorHandling.hpp>
 #include <span>
 #include <sstream>
 #include <string>
@@ -122,15 +124,60 @@ public:
     void release() noexcept;
 
     template <typename T = std::byte>
+    /// TODO: if T is not trivially copyable this is UB.
+    /// requires(std::is_trivially_copyable_v<T>)
     std::span<T> getAvailableMemoryArea() noexcept
     {
-        return std::span<T>{reinterpret_cast<T*>(ptr), size};
+        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(T) == 0, "Bad alignment for type: {}", typeid(T).name());
+        return std::span<T>{std::bit_cast<T*>(ptr), size / sizeof(T)};
     }
 
     template <typename T = std::byte>
-    std::span<const T> getAvailableMemoryArea() const noexcept
+    /// TODO: if T is not trivially copyable this is UB.
+    /// requires(std::is_trivially_copyable_v<T>)
+    [[nodiscard]] std::span<const T> getAvailableMemoryArea() const noexcept
     {
-        return std::span<const T>{reinterpret_cast<T*>(ptr), size};
+        PRECONDITION(reinterpret_cast<std::uintptr_t>(ptr) % alignof(T) == 0, "Bad alignment for type: {}", typeid(T).name());
+        return std::span<const T>{std::bit_cast<const T*>(ptr), size / sizeof(T)};
+    }
+
+    template <typename T>
+    /// TODO: if T is not trivially copyable this is UB.
+    /// requires(std::is_trivially_copyable_v<T>)
+    size_t writeValue(std::size_t offset, const T& value)
+    {
+        PRECONDITION(offset + sizeof(T) <= size, "Out of bounds");
+        std::memcpy(ptr + offset, &value, sizeof(T));
+        return offset + sizeof(T);
+    }
+
+    template <typename T>
+    /// TODO: if T is not trivially copyable this is UB.
+    /// requires(std::is_trivially_copyable_v<T>)
+    [[nodiscard]] std::span<std::byte> readBytes(std::size_t offset)
+    {
+        PRECONDITION(offset + sizeof(T) <= size, "Out of bounds");
+        return getAvailableMemoryArea().subspan(offset, sizeof(T));
+    }
+
+    template <typename T>
+    /// TODO: if T is not trivially copyable this is UB.
+    /// requires(std::is_trivially_copyable_v<T>)
+    [[nodiscard]] std::span<const std::byte> readBytes(std::size_t offset) const
+    {
+        PRECONDITION(offset + sizeof(T) <= size, "Out of bounds");
+        return getAvailableMemoryArea().subspan(offset, sizeof(T));
+    }
+
+    template <typename T>
+    /// TODO: if T is not trivially copyable this is UB.
+    /// requires(std::is_trivially_copyable_v<T>)
+    [[nodiscard]] T readValue(std::size_t offset) const
+    {
+        PRECONDITION(offset + sizeof(T) <= size, "Out of bounds");
+        T value;
+        memcpy(&value, ptr + offset, sizeof(T));
+        return value;
     }
 
     [[nodiscard]] uint32_t getReferenceCounter() const noexcept;

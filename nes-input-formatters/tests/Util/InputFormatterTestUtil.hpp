@@ -325,7 +325,7 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
         "{} < {}, size of TupleBuffer is not sufficient to contain string",
         tupleBuffer.getBufferSize(),
         rawData.size());
-    std::ranges::copy(rawData, reinterpret_cast<char*>(tupleBuffer.getAvailableMemoryArea().data()));
+    std::ranges::copy(rawData, tupleBuffer.getAvailableMemoryArea<char>().data());
     tupleBuffer.setNumberOfTuples(rawData.size());
     return tupleBuffer;
 }

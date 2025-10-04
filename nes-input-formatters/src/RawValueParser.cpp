@@ -38,8 +38,7 @@ ParseFunctionSignature getQuotedStringParseFunction()
         const auto variableSizedAccess = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(
             tupleBufferFormatted, bufferProvider, std::as_bytes(std::span{inputStringWithoutQuotes}));
         const auto combinedIdxOffset = variableSizedAccess.getCombinedIdxOffset();
-        const auto parsedValueBytes = std::as_bytes(std::span{&combinedIdxOffset, 1});
-        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
+        tupleBufferFormatted.writeValue(writeOffsetInBytes, combinedIdxOffset);
     };
 }
 

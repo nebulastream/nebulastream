@@ -46,8 +46,7 @@ auto parseFieldString()
               TupleBuffer& tupleBufferFormatted)
     {
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
-        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
-        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
+        tupleBufferFormatted.writeValue(writeOffsetInBytes, parsedValue);
     };
 }
 
@@ -62,8 +61,7 @@ auto parseQuotedFieldString()
         INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
         const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
         const T parsedValue = Util::from_chars_with_exception<T>(fieldValueString);
-        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
-        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
+        tupleBufferFormatted.writeValue(writeOffsetInBytes, parsedValue);
     };
 }
 

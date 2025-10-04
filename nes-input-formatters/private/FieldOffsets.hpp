@@ -94,8 +94,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     public:
         explicit FieldOffsetsBuffer(TupleBuffer tupleBuffer)
             : tupleBuffer(std::move(tupleBuffer))
-            , fieldOffsetSpan(
-                  reinterpret_cast<OffsetType*>(this->tupleBuffer.getAvailableMemoryArea().data()), this->tupleBuffer.getBufferSize()) { };
+            , fieldOffsetSpan(this->tupleBuffer.getAvailableMemoryArea<OffsetType>()) { };
         ~FieldOffsetsBuffer() = default;
 
         [[nodiscard]] OffsetType& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
