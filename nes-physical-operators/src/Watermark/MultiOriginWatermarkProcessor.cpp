@@ -108,8 +108,11 @@ std::vector<std::pair<uint64_t, Timestamp::Underlying>> MultiOriginWatermarkProc
             const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.rlock();
             for (const auto& [seqNumber, timestamp] : nextSequenceNumbers)
             {
-                const auto ingestionTime = seqNumbersIngestionTimeLocked->at({origin, SequenceNumber(seqNumber)});
-                ingestionTimesForWatermarks.emplace_back(ingestionTime, timestamp);
+                if (seqNumbersIngestionTimeLocked->contains({origin, SequenceNumber(seqNumber)}))
+                {
+                    const auto ingestionTime = seqNumbersIngestionTimeLocked->at({origin, SequenceNumber(seqNumber)});
+                    ingestionTimesForWatermarks.emplace_back(ingestionTime, timestamp);
+                }
             }
             break;
         }
