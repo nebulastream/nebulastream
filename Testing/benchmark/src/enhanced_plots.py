@@ -615,9 +615,9 @@ def create_test_plots(df, output_dir):
 
     # Operators and their pipeline configurations
     operators = {
-        'filter': {"row": [3], "col": [2, 3, 4]},
-        'map': {"row": [3], "col": [2, 3, 4]},
-        'aggregation': {"row": [3], "col": [2, 3, 4, 5]}
+        'filter': [2, 3, 4],
+        'map': [2, 3, 4],
+        'aggregation': [2, 3, 4, 5]
     }
 
     # Generate plots for each operator
@@ -657,19 +657,19 @@ def plot_eff_comp_tp(df, output_dir):
         plt.close()
 
 def plot_latency(df, output_dir, pipelines):
-    """Plot latency vs. total_columns for ROW and COL layouts."""
-    row_pipelines = pipelines['row']
-    col_pipelines = pipelines['col']
+    """Plot latency vs. total_columns for ROW and COL layouts, including swaps and additional operators."""
 
-    # Calculate mean latency for ROW and COL (combined with swap)
+    row_df = df[df['layout'] == 'ROW']
+    col_df = df[df['layout'] == 'COLUMNAR']
 
-    df['row_latency'] =  df[f'pipeline_{row_pipelines[0]}_mean_latency']
-    df['col_latency'] = df[[f'pipeline_{p}_mean_latency' for p in col_pipelines]].sum(axis=1)
+    # Calculate mean latency for ROW and COL
+    row_df['row_latency'] = row_df[[f'pipeline_{pid}_mean_latency' for pid in pipelines]].sum(axis=1)
+    col_df['col_latency'] = col_df[[f'pipeline_{pid}_mean_latency' for pid in pipelines]].sum(axis=1)
 
     # Plot mean latency
     plt.figure(figsize=(12, 8))
-    sns.lineplot(data=df, x='num_columns', y='row_latency', label='ROW Latency', marker='o')
-    sns.lineplot(data=df, x='num_columns', y='col_latency', label='COL Latency', marker='o')
+    sns.lineplot(data=row_df, x='num_columns', y='row_latency', label='ROW Latency', marker='o')
+    sns.lineplot(data=col_df, x='num_columns', y='col_latency', label='COL Latency', marker='o')
     plt.title("Mean Latency vs. Total Columns")
     plt.xlabel("Total Columns")
     plt.ylabel("Mean Latency (ms)")
@@ -678,21 +678,56 @@ def plot_latency(df, output_dir, pipelines):
     plt.savefig(output_dir / "mean_latency_vs_total_columns.png")
     plt.close()
 
-    # Plot swap_in and swap_out for COL
-    if len(col_pipelines) > 2:
-        df['swap_in'] = df[f'pipeline_{col_pipelines[0]}_mean_latency']
-        df['swap_out'] = df[f'pipeline_{col_pipelines[-1]}_mean_latency']
+    # Plot swap_in, swap_out, and additional operators for COL
+    if len(pipelines) > 2:
 
-        plt.figure(figsize=(12, 8))
-        sns.lineplot(data=df, x='num_columns', y='swap_in', label='COL Swap In', marker='o')
-        sns.lineplot(data=df, x='num_columns', y='swap_out', label='COL Swap Out', marker='o')
-        plt.title("COL Swap In/Out Latency vs. Total Columns")
-        plt.xlabel("Total Columns")
-        plt.ylabel("Latency (ms)")
-        plt.grid(True, linestyle='--', alpha=0.7)
-        plt.tight_layout()
-        plt.savefig(output_dir / "col_swap_in_out_latency.png")
-        plt.close()
+
+        row_df.loc[:,'swap_in'] = row_df[f'pipeline_{pipelines[0]}_mean_latency']
+        row_df.loc[:,'swap_out'] = row_df[f'pipeline_{pipelines[-1]}_mean_latency']
+        col_df.loc[:,'swap_in'] = col_df[f'pipeline_{pipelines[0]}_mean_latency']
+        col_df.loc[:,'swap_out'] = col_df[f'pipeline_{pipelines[-1]}_mean_latency']
+
+        for values in ["swap", "swapIn", "swapOut", "build", "probe", "all"]:
+            plt.figure(figsize=(12, 8))
+            if 'swap' in values or 'all' in values:
+
+                if values in ["swap", "swapIn", "all"]:
+                    sns.lineplot(data=col_df, x='num_columns', y='swap_in', label='COL Swap In', marker='o')
+                    sns.lineplot(data=row_df, x='num_columns', y='swap_in', label='ROW Swap In', marker='o')
+                if values in ["swap", "swapOut", "all"]:
+                    sns.lineplot(data=col_df, x='num_columns', y='swap_out', label='COL Swap Out', marker='o')
+                    sns.lineplot(data=row_df, x='num_columns', y='swap_out', label='ROW Swap Out', marker='o')
+
+            if not 'swap' in values:
+
+                # Add build and probe for agg operator
+                if 'aggregation' in df['operator_type'].unique():
+                    if values in ["build", "all"]:
+                        row_df['build_latency'] = row_df[f'pipeline_{pipelines[1]}_mean_latency']
+                        col_df['build_latency'] = col_df[f'pipeline_{pipelines[1]}_mean_latency']
+                        sns.lineplot(data=col_df, x='num_columns', y='build_latency', label='COL Build Latency', marker='o')
+                        sns.lineplot(data=row_df, x='num_columns', y='build_latency', label='ROW Build Latency', marker='o')
+
+                    if values in ["probe", "all"]:
+                        row_df['probe_latency'] = row_df[f'pipeline_{pipelines[2]}_mean_latency']
+                        col_df['probe_latency'] = col_df[f'pipeline_{pipelines[2]}_mean_latency']
+                        sns.lineplot(data=col_df, x='num_columns', y='probe_latency', label='COL Probe Latency', marker='o')
+                        sns.lineplot(data=row_df, x='num_columns', y='probe_latency', label='ROW Probe Latency', marker='o')
+
+                # Add filter/map operator latency
+                elif values in ["all"]:
+                    #elif 'filter' in df['operator_type'].unique() or 'map' in df['operator_type'].unique() and values in ["all"]:
+                    df.loc[:,'filter_map_latency'] = df[f'pipeline_{pipelines[1]}_mean_latency']
+                    sns.lineplot(data=df, x='num_columns', y='filter_map_latency', label='Filter/Map Latency', marker='o')
+
+
+            plt.title("Operator Latency vs. Total Columns")
+            plt.xlabel("Total Columns")
+            plt.ylabel("Latency (ms)")
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(output_dir / f"{values}_operator_latency.png")
+            plt.close()
 
 def create_aggregation_plots(df, output_dir):
     """Create aggregation-specific plots."""
