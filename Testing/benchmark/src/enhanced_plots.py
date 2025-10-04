@@ -738,6 +738,8 @@ def create_aggregation_plots(df, output_dir):
 
     # Filter data for total_col = 10 and acc_col = 1
     df = df[(df['num_columns'] == 10) & (df['accessed_columns'] == 1)]
+    row_df = df[df['layout'] == 'ROW']
+    col_df = df[df['layout'] == 'COLUMNAR']
 
     # Parameters for x-axis
     x_params = ['window_size', 'num_groups', 'id_data_type'] #TODO: add group by on vs off plot
@@ -750,7 +752,7 @@ def create_aggregation_plots(df, output_dir):
         for metric in metrics:
             plt.figure(figsize=(12, 8))
             sns.barplot(data=df, x=x_param, y=metric, hue='layout', palette='viridis')
-            plt.title(f"{metric.replace('_', ' ').capitalize()} vs. {x_param}")
+            plt.title(f"Aggregation {metric.split('_')[2]} Throughput vs. {x_param}, accessed cols: 1/10 (3/12)")
             plt.xlabel(x_param.capitalize())
             plt.ylabel(metric.replace('_', ' ').capitalize())
             plt.yscale('log')
@@ -760,13 +762,13 @@ def create_aggregation_plots(df, output_dir):
             plt.close()
 
         # Latency plots for the same x-axis parameters
-        df['row_latency'] = df['pipeline_3_mean_latency']
-        df['col_latency'] = df[['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+        row_df.loc[:, 'row_latency'] = row_df.loc[:,['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+        col_df.loc[:, 'col_latency'] = col_df.loc[:,['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
 
         plt.figure(figsize=(12, 8))
-        sns.lineplot(data=df, x=x_param, y='row_latency', label='ROW Latency', marker='o')
-        sns.lineplot(data=df, x=x_param, y='col_latency', label='COL Latency', marker='o')
-        plt.title(f"Mean Latency vs. {x_param}")
+        sns.lineplot(data=row_df, x=x_param, y='row_latency', label='ROW Latency', marker='o')
+        sns.lineplot(data=col_df, x=x_param, y='col_latency', label='COL Latency', marker='o')
+        plt.title(f"Mean Latency vs. {x_param}, accessed cols: 1/10 (3/12)")
         plt.xlabel(x_param.capitalize())
         plt.ylabel("Mean Latency (ms)")
         plt.grid(True, linestyle='--', alpha=0.7)
