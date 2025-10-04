@@ -41,7 +41,7 @@ public:
         std::shared_ptr<TupleBufferRef> leftMemoryProvider,
         std::shared_ptr<TupleBufferRef> rightMemoryProvider);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    OpenReturnState open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 protected:
     void performNLJ(
