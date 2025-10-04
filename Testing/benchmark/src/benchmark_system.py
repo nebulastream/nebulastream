@@ -47,6 +47,7 @@ def main():
     parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--repeats', type=int, default=2, help='Number of benchmark repetitions')
+    parser.add_argument('--id-data-types', type=parse_str_list, default = ['', "32", "64"], help='Data type for id column (e.g., uint32, uint64), empty for no id column')
     parser.add_argument('--output-dir', default='benchmark_results', help='Base output directory')
     parser.add_argument('--skip-data-gen', action='store_true', help='Skip data generation')
     parser.add_argument('--skip-test-gen', action='store_true', help='Skip test generation')

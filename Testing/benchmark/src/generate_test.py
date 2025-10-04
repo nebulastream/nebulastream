@@ -560,7 +560,7 @@ if __name__ == "__main__":
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--window-sizes', type=parse_int_list, default=[1000], help='Number of windows')
     parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
-    parser.add_argument('--id-data-types', type=parse_str_list, default = ['',"64"], help='Data type for id column (e.g., uint32, uint64)')
+    parser.add_argument('--id-data-types', type=parse_str_list, default = ['', "64"], help='Data type for id column (e.g., uint32, uint64)')
     parser.add_argument('--run-options', default='all', help='options: all, single or double')
     args = parser.parse_args()
 
