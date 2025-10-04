@@ -647,7 +647,7 @@ def plot_eff_comp_tp(df, output_dir):
     for metric in metrics:
         plt.figure(figsize=(12, 8))
         sns.barplot(data=df, x='num_columns', y=metric, hue='layout', palette='viridis')
-        plt.title(f"{metric.replace('_', ' ').capitalize()} vs. Total Columns")
+        plt.title(f"{metric.split('_')[2]} Throughput vs. Total Columns, accessed columns: 1")
         plt.xlabel("Total Columns")
         plt.ylabel(metric.replace('_', ' ').capitalize())
         plt.yscale('log')
