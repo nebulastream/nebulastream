@@ -31,7 +31,7 @@ QueryCompiler::QueryCompiler() = default;
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
-    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
+    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, request->dumpGraph);
     auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }
