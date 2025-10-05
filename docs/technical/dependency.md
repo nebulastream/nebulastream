@@ -134,3 +134,7 @@ nautilus.
 ### Nautilus
 
 Nautilus is not currently on vcpkg.
+
+### Scope Guard
+
+[Scope Guard](https://github.com/Neargye/scope_guard) is not currently on vcpkg.
