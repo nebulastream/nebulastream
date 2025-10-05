@@ -41,7 +41,9 @@
     "replxx",
     "spdlog",
     "yaml-cpp",
-    "boost-url"
+    "boost-url",
+    "nameof",
+    "scope-guard"
   ],
   "overrides": [
     {
