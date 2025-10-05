@@ -120,6 +120,9 @@ using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
     CreateSinkStatementResult,
+    DropWorkerStatementResult,
+    CreateWorkerStatementResult,
+    WorkerStatusStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
@@ -212,6 +215,58 @@ public:
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
 };
+
+template <typename HandlerT>
+bool tryCall(const Statement& statement, HandlerT& handler)
+{
+    return std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+}
+
+template <typename HandlerT, typename... HandlerTs>
+bool tryCall(const Statement& statement, HandlerT& handler, HandlerTs&... handlers)
+{
+    auto couldHandle = std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+    if (couldHandle)
+    {
+        return true;
+    }
+    return tryCall(statement, handlers...);
+}
+
+template <typename... HandlerT>
+void handleStatements(std::vector<Statement> statements, HandlerT&... handler)
+{
+    for (const auto& statement : statements)
+    {
+        tryCall(statement, handler...);
+    }
+}
 
 }
 

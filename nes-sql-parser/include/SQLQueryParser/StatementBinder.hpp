@@ -135,6 +135,7 @@ struct ShowQueriesStatement
 struct DropQueryStatement
 {
     DistributedQueryId id;
+    bool blocking = true;
 };
 
 struct WorkerStatusStatement

@@ -29,6 +29,61 @@ std::expected<Query, Exception> QueryManager::getQuery(DistributedQueryId query)
     return it->second;
 }
 
+QueryStatusNotifier::QueryStatusNotifier(QueryManager& owner) : owner(owner)
+{
+    thread = Thread(
+        "QueryStatusNotifier",
+        [this](std::stop_token token)
+        {
+            std::chrono::time_point<std::chrono::system_clock> nextUpdate{std::chrono::microseconds(0)};
+            while (!token.stop_requested())
+            {
+                auto lastUpdate = std::exchange(nextUpdate, std::chrono::system_clock::now());
+                auto result = this->owner.workerStatus(lastUpdate);
+                auto state = this->notifiers.wlock();
+                if (result)
+                {
+                    for (const auto& [grpc, workerStatusResult] : result->workerStatus)
+                    {
+                        if (workerStatusResult)
+                        {
+                            for (const auto& activeQuery : workerStatusResult->activeQueries)
+                            {
+                                auto it = state->find({grpc, activeQuery.queryId, QueryState::Running});
+                                if (it != state->end())
+                                {
+                                    for (auto& notifier : it->second)
+                                    {
+                                        if (--notifier.waiting == 0)
+                                        {
+                                            notifier.promise.set_value();
+                                        }
+                                    }
+                                    state->erase(it);
+                                }
+                            }
+                            for (const auto& terminatedQuery : workerStatusResult->terminatedQueries)
+                            {
+                                auto it = state->find({grpc, terminatedQuery.queryId, QueryState::Stopped});
+                                if (it != state->end())
+                                {
+                                    for (auto& notifier : it->second)
+                                    {
+                                        if (--notifier.waiting == 0)
+                                        {
+                                            notifier.promise.set_value();
+                                        }
+                                    }
+                                    state->erase(it);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+}
+
 std::unordered_map<GrpcAddr, UniquePtr<QuerySubmissionBackend>>
 QueryManager::QueryManagerBackends::createBackends(const std::vector<WorkerConfig>& workers, const BackendProvider& provider)
 {
@@ -47,12 +102,12 @@ QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state)
-    : state(std::move(state)), backends(std::move(workerCatalog), std::move(provider))
+    : state(std::move(state)), backends(std::move(workerCatalog), std::move(provider)), notifier(*this)
 {
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
-    : backends(std::move(workerCatalog), std::move(provider))
+    : backends(std::move(workerCatalog), std::move(provider)), notifier(*this)
 {
 }
 

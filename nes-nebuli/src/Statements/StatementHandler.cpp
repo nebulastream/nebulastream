@@ -213,16 +213,44 @@ std::expected<DropWorkerStatementResult, Exception> TopologyStatementHandler::op
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
-    return queryManager->stop(statement.id)
-        .and_then([&statement, this] { return queryManager->unregister(statement.id); })
-        .transform_error(
-            [](auto vecOfErrors)
+    auto stopResult = queryManager->stop(statement.id)
+                          .and_then([&statement, this] { return queryManager->unregister(statement.id); })
+                          .transform_error(
+                              [](auto vecOfErrors)
+                              {
+                                  return QueryStopFailed(
+                                      "Could not stop query: {}",
+                                      fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+                              })
+                          .transform([&statement] { return DropQueryStatementResult{statement.id}; });
+
+    if (statement.blocking)
+    {
+        while (true)
+        {
+            auto statusResult = queryManager->status(statement.id)
+                                    .transform(
+                                        [](const DistributedQueryStatus& status) {
+                                            return status.getGlobalQueryState() == QueryState::Failed
+                                                || status.getGlobalQueryState() == QueryState::Stopped;
+                                        });
+            if (!statusResult)
             {
-                return QueryStopFailed(
-                    "Could not stop query: {}",
-                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
-            })
-        .transform([&statement] { return DropQueryStatementResult{statement.id}; });
+                return std::unexpected(QueryStopFailed(
+                    "while waiting for query status to change to stopped or failed: {}",
+                    fmt::join(
+                        std::views::transform(statusResult.error(), [](const Exception& exception) { return exception.what(); }), "; ")));
+            }
+            if (*statusResult)
+            {
+                return stopResult;
+            }
+            NES_DEBUG("Query has not been stopped yet. Waiting...");
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+
+    return stopResult;
 }
 
 QueryStatementHandler::QueryStatementHandler(
@@ -300,8 +328,8 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
                         .transform_error(
                             [](auto vecOfErrors)
                             {
-                                return QueryStopFailed(
-                                    "Could not stop query: {}",
+                                return QueryStartFailed(
+                                    "Could not start query: {}",
                                     fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
                             });
                 })
@@ -336,13 +364,17 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
 
         auto failedStatusResults = statusResults
             | std::views::filter([](const auto& idAndStatusResult) { return !idAndStatusResult.second.has_value(); })
-            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, Exception>
-                                    { return {idAndStatusResult.first, idAndStatusResult.second.error()}; });
+            | std::views::transform(
+                                       [](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, Exception> {
+                                           return {idAndStatusResult.first, idAndStatusResult.second.error()};
+                                       });
 
         auto goodQueryStatusResults = statusResults
             | std::views::filter([](const auto& idAndStatusResult) { return idAndStatusResult.second.has_value(); })
-            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, DistributedQueryStatus>
-                                    { return {idAndStatusResult.first, idAndStatusResult.second.value()}; });
+            | std::views::transform(
+                                          [](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, DistributedQueryStatus> {
+                                              return {idAndStatusResult.first, idAndStatusResult.second.value()};
+                                          });
         if (!failedStatusResults.empty())
         {
             return std::unexpected(

@@ -10,14 +10,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Nebuli is our REPL based frontend it comes in two flavours. The embedded version contains the single-node-worker and
+# can thus execute queries locally. The non-embedded version always requires the '-s' flag to deploy remote queries.
 
-add_executable(nebucli nebucli/NebuLIStarter.cpp)
-target_link_libraries(nebucli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp)
-
-target_include_directories(nebucli
-        PRIVATE nebucli
+# nebuli-embedded
+add_executable(nebuli-embedded repl/ReplStarter.cpp repl/Repl.cpp)
+target_link_libraries(nebuli-embedded PUBLIC nes-nebuli-embedded-lib argparse::argparse replxx::replxx)
+target_include_directories(nebuli-embedded
+        PUBLIC repl
+)
+add_test(
+        NAME "repl-test"
+        COMMAND
+        env NEBULI=$<TARGET_FILE:nebuli-embedded>
+        env NEBULI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
+        env SYSTEST_TESTDATA=${CMAKE_CURRENT_BINARY_DIR}/../../nes-systests/testdata
+        bats -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/nebuli_invocation_test.bats
 )
 
+# nebuli
 add_executable(nebuli repl/ReplStarter.cpp repl/Repl.cpp)
 target_link_libraries(nebuli PUBLIC nes-nebuli-lib argparse::argparse replxx::replxx)
 
@@ -25,9 +36,16 @@ target_include_directories(nebuli
         PUBLIC repl
 )
 
-add_test(
-        NAME "repl-test"
-        COMMAND repl/tests/test_repl.sh repl/tests/test_large.sql <$TARGET_FILE:nebuli> ${CMAKE_CURRENT_BINARY_DIR}/../../nes-systests/testdata ${CMAKE_CURRENT_BINARY_DIR}/../nes-systests/working-dir apps/repl/tests/expected_output.json ${CMAKE_CURRENT_BINARY_DIR}/test
+
+# NebuCLI is the one-shot controller for the nes-single-node-worker, it is completely stateless and intended to deploy
+# and control queries based on a topology specification which contains all state required to perform placement and
+# optimizations.
+
+add_executable(nebucli nebucli/NebuLIStarter.cpp)
+target_link_libraries(nebucli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp)
+
+target_include_directories(nebucli
+        PRIVATE nebucli
 )
 
 set(VERSION "v0.4.40")

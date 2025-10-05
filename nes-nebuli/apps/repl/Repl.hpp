@@ -18,12 +18,12 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <../../include/QueryManager/QueryManager.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <replxx.hxx>
 
-#include <../../include/StatementHandler.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 
 namespace NES

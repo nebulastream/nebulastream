@@ -169,8 +169,11 @@ std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(Loca
 
 WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
 {
+    std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
     const auto summaries = nodeEngine->getQueryLog()->getStatus();
     WorkerStatus status;
+    status.after = after;
+    status.until = until;
     for (const auto& [queryId, state, metrics] : summaries)
     {
         if (state == QueryState::Running)

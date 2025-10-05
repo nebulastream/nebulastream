@@ -44,6 +44,7 @@ struct WorkerStatus
     /// Currently we will not store all historical data on the WorkerNode.
     /// This timestamp indicates which events are captured by the WorkerStatus
     std::chrono::system_clock::time_point after{};
+    std::chrono::system_clock::time_point until{};
     std::vector<ActiveQuery> activeQueries{};
     std::vector<TerminatedQuery> terminatedQueries{};
 };

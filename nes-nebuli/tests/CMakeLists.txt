@@ -21,3 +21,4 @@ function(add_nes_test_nebuli)
 endfunction()
 
 add_nes_test_nebuli("distributed-planning-test" DistributedPlanningTest.cpp)
+add_nes_test_nebuli("query-manager-test" QueryManagerTest.cpp)

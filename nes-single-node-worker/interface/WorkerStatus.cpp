@@ -56,6 +56,7 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
         }
     }
     response->set_afterunixtimestampinms(std::chrono::duration_cast<std::chrono::milliseconds>(status.after.time_since_epoch()).count());
+    response->set_untilunixtimestampinms(std::chrono::duration_cast<std::chrono::milliseconds>(status.until.time_since_epoch()).count());
 }
 
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
@@ -64,6 +65,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
     { return std::chrono::system_clock::time_point{std::chrono::milliseconds{unixTimestampInMillis}}; };
     return {
         .after = fromMillis(response->afterunixtimestampinms()),
+        .until = fromMillis(response->untilunixtimestampinms()),
         .activeQueries = response->activequeries()
             | std::views::transform(
                              [&](const auto& activeQuery)

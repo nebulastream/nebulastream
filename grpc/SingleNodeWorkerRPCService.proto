@@ -114,6 +114,7 @@ message WorkerStatusResponse {
   }
 
   uint64 afterUnixTimestampInMs = 3;
+  uint64 untilUnixTimestampInMs = 4;
   repeated ActiveQuery activeQueries = 1;
   repeated TerminatedQuery terminatedQueries = 2;
 }

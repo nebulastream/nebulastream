@@ -17,10 +17,13 @@
 #include <expected>
 #include <vector>
 
+#include <future>
 #include <Listeners/QueryLog.hpp>
+#include <rust/cxx.h>
 #include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryPlanning.hpp>
+#include <Thread.hpp>
 
 namespace NES
 {
@@ -44,6 +47,24 @@ struct QueryManagerState
     std::unordered_map<DistributedQueryId, Query> queries;
 };
 
+class QueryManager;
+
+struct QueryStatusNotifier
+{
+    struct Notifier
+    {
+        size_t waiting;
+        std::promise<void> promise;
+    };
+
+    std::future<void> waitForQuery(DistributedQueryId queryId, QueryState state);
+    folly::Synchronized<std::unordered_map<std::tuple<GrpcAddr, LocalQueryId, QueryState>, std::vector<Notifier>>> notifiers;
+    QueryManager& owner;
+    Thread thread;
+
+    explicit QueryStatusNotifier(QueryManager& owner);
+};
+
 class WorkerCatalog;
 
 class QueryManager
@@ -60,6 +81,7 @@ class QueryManager
 
     public:
         QueryManagerBackends(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
+
         auto begin() const
         {
             rebuildBackendsIfNeeded();
@@ -89,6 +111,7 @@ class QueryManager
 
     QueryManagerState state;
     QueryManagerBackends backends;
+    QueryStatusNotifier notifier;
 
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);

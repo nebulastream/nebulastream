@@ -43,6 +43,7 @@
 #include <Statements/StatementOutputAssembler.hpp>
 #include <Statements/TextOutputFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -52,6 +53,7 @@ struct Repl::Impl
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
+    SharedPtr<TopologyStatementHandler> topologyStatementHandler;
     StatementBinder binder;
 
     std::unique_ptr<replxx::Replxx> rx;
@@ -396,6 +398,10 @@ struct Repl::Impl
                 else if constexpr (requires { queryStatementHandler->apply(stmt); })
                 {
                     return queryStatementHandler->apply(stmt);
+                }
+                else if constexpr (requires { topologyStatementHandler->apply(stmt); })
+                {
+                    return topologyStatementHandler->apply(stmt);
                 }
                 else
                 {

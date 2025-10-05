@@ -72,9 +72,14 @@ class NESStrongStringType
     constexpr static std::string_view INVALID = invalid;
 
 public:
-    explicit constexpr NESStrongStringType(std::string v) : v(std::move(v)) { }
+    explicit constexpr NESStrongStringType(std::string string) : v(std::move(string)) { }
 
-    explicit constexpr NESStrongStringType(std::string_view v) : v(std::string(v)) { }
+    template <size_t N>
+    explicit constexpr NESStrongStringType(const char (&cstr)[N]) : v(cstr)
+    {
+    }
+
+    explicit constexpr NESStrongStringType(std::string_view view) : v(std::string(view)) { }
 
     [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongStringType& lhs, const NESStrongStringType& rhs) noexcept
         = default;
@@ -94,11 +99,21 @@ concept NESIdentifier = requires(T t) {
     requires(sizeof(t) == sizeof(typename T::Underlying));
     requires(!std::is_convertible_v<T, typename T::Underlying>);
     requires(std::is_trivially_destructible_v<T>);
-    { t < t };
-    { t > t };
-    { t == t };
-    { t != t };
-    { std::hash<T>()(t) };
+    {
+        t < t
+    };
+    {
+        t > t
+    };
+    {
+        t == t
+    };
+    {
+        t != t
+    };
+    {
+        std::hash<T>()(t)
+    };
 };
 
 template <NESIdentifier Ident>

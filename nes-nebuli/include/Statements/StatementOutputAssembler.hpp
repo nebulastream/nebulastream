@@ -298,6 +298,39 @@ struct StatementOutputAssembler<DropQueryStatementResult>
 };
 
 template <>
+struct StatementOutputAssembler<ExplainQueryStatementResult>
+{
+    using OutputRowType = std::tuple<std::string>;
+
+    auto convert(const ExplainQueryStatementResult& result)
+    {
+        return std::make_pair(std::to_array<std::string_view>({"explain"}), std::vector{std::make_tuple(result.explainString)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<CreateWorkerStatementResult>
+{
+    using OutputRowType = std::tuple<WorkerId>;
+
+    auto convert(const CreateWorkerStatementResult& result)
+    {
+        return std::make_pair(std::to_array<std::string_view>({"worker"}), std::vector{std::make_tuple(result.workerId)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropWorkerStatementResult>
+{
+    using OutputRowType = std::tuple<WorkerId>;
+
+    auto convert(const DropWorkerStatementResult& result)
+    {
+        return std::make_pair(std::to_array<std::string_view>({"worker"}), std::vector{std::make_tuple(result.workerId)});
+    }
+};
+
+template <>
 struct StatementOutputAssembler<WorkerStatusStatementResult>
 {
     using OutputRowType = WorkerStatusOutputRowType;
