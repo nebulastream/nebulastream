@@ -29,6 +29,7 @@ struct QueryCompilationRequest
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
     DumpMode dumpCompilationResult = DumpMode::NONE;
+    bool dumpGraph = false;
 };
 
 /// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan
