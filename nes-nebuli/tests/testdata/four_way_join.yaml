@@ -7,111 +7,28 @@ query: |
 
 sinks:
   - name: sinkStreamStream2Stream4Stream4_1
-    type: Print
-    schema:
-      - name: streamstream2stream4stream4_1$start
-        type: UINT64
-      - name: streamstream2stream4stream4_1$end
-        type: UINT64
-      - name: streamstream2stream4$start
-        type: UINT64
-      - name: streamstream2stream4$end
-        type: UINT64
-      - name: streamstream2$start
-        type: UINT64
-      - name: streamstream2$end
-        type: UINT64
-      - name: stream$id
-        type: UINT64
-      - name: stream$value
-        type: UINT64
-      - name: stream$timestamp
-        type: UINT64
-      - name: stream2$id2
-        type: UINT64
-      - name: stream2$value2
-        type: UINT64
-      - name: stream2$timestamp
-        type: UINT64
-      - name: stream4$id4
-        type: UINT64
-      - name: stream4$value4
-        type: UINT64
-      - name: stream4$timestamp
-        type: UINT64
-      - name: stream4_1$id4_1
-        type: UINT64
-      - name: stream4_1$value4_1
-        type: UINT64
-      - name: stream4_1$timestamp
-        type: UINT64
+    schema: [ streamstream2stream4stream4_1$start, streamstream2stream4stream4_1$end, streamstream2stream4$start, streamstream2stream4$end, streamstream2$start, streamstream2$end, stream$id, stream$value, stream$timestamp, stream2$id2, stream2$value2, stream2$timestamp, stream4$id4, stream4$value4, stream4$timestamp, stream4_1$id4_1, stream4_1$value4_1, stream4_1$timestamp ]
     host: host2
-    config:
-      input_format: CSV
 
 logical:
   - name: stream
-    schema:
-      - name: id
-        type: UINT64
-      - name: value
-        type: UINT64
-      - name: timestamp
-        type: UINT64
+    schema: [ id, value, timestamp ]
   - name: stream2
-    schema:
-      - name: id2
-        type: UINT64
-      - name: value2
-        type: UINT64
-      - name: timestamp
-        type: UINT64
+    schema: [ id2, value2, timestamp ]
   - name: stream4
-    schema:
-      - name: id4
-        type: UINT64
-      - name: value4
-        type: UINT64
-      - name: timestamp
-        type: UINT64
+    schema: [ id4, value4, timestamp ]
   - name: stream4_1
-    schema:
-      - name: id4_1
-        type: UINT64
-      - name: value4_1
-        type: UINT64
-      - name: timestamp
-        type: UINT64
+    schema: [ id4_1, value4_1, timestamp ]
 
 physical:
   - logical: stream
-    type: File
     host: host1
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
   - logical: stream2
-    type: File
     host: host1
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
   - logical: stream4
-    type: File
     host: host1
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
   - logical: stream4_1
-    type: File
     host: host1
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
 
 workers:
   - host: host1

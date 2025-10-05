@@ -17,7 +17,6 @@
 
 #include <gtest/gtest.h>
 
-#include <../apps/nebucli/YAML/YAMLBinder.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
@@ -27,15 +26,168 @@
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
 
 #include <BaseUnitTest.hpp>
 #include <QueryPlanning.hpp>
 
+namespace NES::Test
+{
+
+struct Sink
+{
+    std::string name;
+    std::vector<std::string> schema;
+    std::string host;
+};
+
+struct LogicalSource
+{
+    std::string name;
+    std::vector<std::string> schema;
+};
+
+struct PhysicalSource
+{
+    std::string logical;
+    std::string host;
+};
+
+struct WorkerConfig
+{
+    std::string host;
+    std::string grpc;
+    size_t capacity;
+    std::vector<std::string> downstream;
+};
+
+struct QueryConfig
+{
+    std::string query;
+    std::vector<Sink> sinks;
+    std::vector<LogicalSource> logical;
+    std::vector<PhysicalSource> physical;
+    std::vector<WorkerConfig> workers;
+};
+}
+
+namespace YAML
+{
+
+template <>
+struct convert<NES::Test::Sink>
+{
+    static bool decode(const Node& node, NES::Test::Sink& rhs)
+    {
+        rhs.name = node["name"].as<std::string>();
+        rhs.schema = node["schema"].as<std::vector<std::string>>();
+        rhs.host = node["host"].as<std::string>();
+        return true;
+    }
+};
+
+template <>
+struct convert<NES::Test::LogicalSource>
+{
+    static bool decode(const Node& node, NES::Test::LogicalSource& rhs)
+    {
+        rhs.name = node["name"].as<std::string>();
+        rhs.schema = node["schema"].as<std::vector<std::string>>();
+        return true;
+    }
+};
+
+template <>
+struct convert<NES::Test::PhysicalSource>
+{
+    static bool decode(const Node& node, NES::Test::PhysicalSource& rhs)
+    {
+        rhs.logical = node["logical"].as<std::string>();
+        rhs.host = node["host"].as<std::string>();
+        return true;
+    }
+};
+
+template <>
+struct convert<NES::Test::WorkerConfig>
+{
+    static bool decode(const Node& node, NES::Test::WorkerConfig& rhs)
+    {
+        rhs.capacity = node["capacity"].as<size_t>();
+        if (node["downstream"].IsDefined())
+        {
+            rhs.downstream = node["downstream"].as<std::vector<std::string>>();
+        }
+        rhs.grpc = node["grpc"].as<std::string>();
+        rhs.host = node["host"].as<std::string>();
+
+        return true;
+    }
+};
+
+template <>
+struct convert<NES::Test::QueryConfig>
+{
+    static bool decode(const Node& node, NES::Test::QueryConfig& rhs)
+    {
+        rhs.sinks = node["sinks"].as<std::vector<NES::Test::Sink>>();
+        rhs.logical = node["logical"].as<std::vector<NES::Test::LogicalSource>>();
+        rhs.physical = node["physical"].as<std::vector<NES::Test::PhysicalSource>>();
+        rhs.workers = node["workers"].as<std::vector<NES::Test::WorkerConfig>>();
+        rhs.query = node["query"].as<std::string>();
+        return true;
+    }
+};
+}
+
+std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topologyConfig)
+{
+    const auto& [query, sinks, logical, physical, workers] = topologyConfig;
+    std::vector<NES::Statement> statements;
+    for (const auto& [host, grpc, capacity, downstream] : workers)
+    {
+        statements.emplace_back(NES::CreateWorkerStatement{.host = host, .grpc = grpc, .capacity = capacity, .downstream = downstream});
+    }
+    for (const auto& [name, schemaFields] : logical)
+    {
+        NES::Schema schema;
+        for (const auto& schemaField : schemaFields)
+        {
+            schema.addField(schemaField, NES::DataType::Type::UINT64);
+        }
+
+        statements.emplace_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
+    }
+
+    for (const auto& [logical, host] : physical)
+    {
+        statements.emplace_back(NES::CreatePhysicalSourceStatement{
+            .attachedTo = NES::LogicalSourceName(logical),
+            .sourceType = "File",
+            .workerId = host,
+            .sourceConfig = {{"file_path", "does_not_exist"}},
+            .parserConfig = NES::ParserConfig::create({{"type", "CSV"}})});
+    }
+    for (const auto& [name, schemaFields, host] : sinks)
+    {
+        NES::Schema schema;
+        for (const auto& schemaField : schemaFields)
+        {
+            schema.addField(schemaField, NES::DataType::Type::UINT64);
+        }
+
+        statements.emplace_back(
+            NES::CreateSinkStatement{.name = name, .sinkType = "Void", .workerId = host, .schema = schema, .sinkConfig = {}});
+    }
+    statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
+    return statements;
+}
+
 namespace NES
 {
-class DistributedPlanningTest : public Testing::BaseUnitTest
+class QueryManagerTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestSuite()
@@ -55,24 +207,26 @@ std::pair<QueryPlanningContext, PlanStage::BoundLogicalPlan> loadAndBind(std::st
     auto sinks = std::make_shared<SinkCatalog>();
     auto workers = std::make_shared<WorkerCatalog>();
 
-    std::ifstream file(std::filesystem::path{NEBULI_TEST_DATA_DIR} / testFileName);
-    if (!file)
-    {
-        throw TestException("Could not open topology file");
-    }
-    auto plan = CLI::YAMLBinder{sources, sinks, workers}.parseAndBind(file);
-    renderTopology(workers->getTopology(), std::cout);
+    auto queryConfig = YAML::LoadFile(std::filesystem::path{NEBULI_TEST_DATA_DIR} / testFileName).as<Test::QueryConfig>();
+    auto statements = loadStatements(queryConfig);
+
+    TopologyStatementHandler topologyHandler{nullptr, workers};
+    SinkStatementHandler sinkStatementHandler{sinks};
+    SourceStatementHandler sourceStatementHandler{sources};
+
+    handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
+
     return {
         QueryPlanningContext{
             .id = INVALID<LocalQueryId>,
-            .sqlString = plan.getOriginalSql(),
+            .sqlString = std::get<ExplainQueryStatement>(statements.back()).plan.getOriginalSql(),
             .sourceCatalog = sources,
             .sinkCatalog = sinks,
             .workerCatalog = workers},
-        PlanStage::BoundLogicalPlan{std::move(plan)}};
+        PlanStage::BoundLogicalPlan{std::get<ExplainQueryStatement>(statements.back()).plan}};
 }
 
-TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
+TEST_F(QueryManagerTest, BasicPlacementSingleNode)
 {
     auto [ctx, boundPlan] = loadAndBind("basic_single_node.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -82,7 +236,7 @@ TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
     EXPECT_TRUE(root.size() == 1);
     const auto sink = root.back().tryGet<SinkLogicalOperator>();
     EXPECT_TRUE(sink.has_value());
-    EXPECT_EQ(sink->getSinkDescriptor()->getSinkType(), "File");
+    EXPECT_EQ(sink->getSinkDescriptor()->getSinkType(), "Void");
     const auto leaf = getLeafOperators(localPlan);
     EXPECT_TRUE(leaf.size() == 1);
     const auto source = leaf.back().tryGet<SourceDescriptorLogicalOperator>();
@@ -90,7 +244,7 @@ TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
     EXPECT_EQ(source->getSourceDescriptor().getSourceType(), "File");
 }
 
-TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
+TEST_F(QueryManagerTest, BasicPlacementTwoNodes)
 {
     auto [ctx, boundPlan] = loadAndBind("basic_two_nodes.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -113,7 +267,7 @@ TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
     EXPECT_EQ(networkSource.value().getSourceDescriptor().getSourceType(), "Network");
 }
 
-TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
+TEST_F(QueryManagerTest, JoinPlacementWithOneSelection)
 {
     auto [ctx, boundPlan] = loadAndBind("join_with_one_selection.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -157,7 +311,7 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkNodePlan).size(), 1);
 }
 
-TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
+TEST_F(QueryManagerTest, PlacementWithThreeNodes)
 {
     auto [ctx, boundPlan] = loadAndBind("three_nodes.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -188,7 +342,7 @@ TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
     EXPECT_EQ(flatten(plan2).size(), 4);
 }
 
-TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
+TEST_F(QueryManagerTest, JoinPlacementWithLimitedCapacity)
 {
     auto [ctx, boundPlan] = loadAndBind("join_with_limited_capacity.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -216,14 +370,14 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
     EXPECT_EQ(flatten(plan2).size(), 3);
 }
 
-TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
+TEST_F(QueryManagerTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
 {
     auto [ctx, boundPlan] = loadAndBind("join_with_limited_capacity_on_two_nodes.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
 
     const auto sinkPlan = plan["sink-node:8080"].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).front().getSinkDescriptor()->getSinkType(), "Print");
+    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).front().getSinkDescriptor()->getSinkType(), "Void");
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 2);
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(flatten(sinkPlan).size(), 4);
@@ -246,7 +400,7 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
     EXPECT_EQ(flatten(sourcePlan2).size(), 4);
 }
 
-TEST_F(DistributedPlanningTest, FourWayJoin)
+TEST_F(QueryManagerTest, FourWayJoin)
 {
     auto [ctx, boundPlan] = loadAndBind("four_way_join.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -260,7 +414,7 @@ TEST_F(DistributedPlanningTest, FourWayJoin)
     }
 }
 
-TEST_F(DistributedPlanningTest, BridgePlacement)
+TEST_F(QueryManagerTest, BridgePlacement)
 {
     auto [ctx, boundPlan] = loadAndBind("bridge.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -284,10 +438,10 @@ TEST_F(DistributedPlanningTest, BridgePlacement)
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].getSourceDescriptor().getSourceType(), "Network");
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Print");
+    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Void");
 }
 
-TEST_F(DistributedPlanningTest, LongBridgePlacement)
+TEST_F(QueryManagerTest, LongBridgePlacement)
 {
     auto [ctx, boundPlan] = loadAndBind("long_bridge.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -318,10 +472,10 @@ TEST_F(DistributedPlanningTest, LongBridgePlacement)
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].getSourceDescriptor().getSourceType(), "Network");
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Print");
+    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Void");
 }
 
-TEST_F(DistributedPlanningTest, BridgePlacementJoin)
+TEST_F(QueryManagerTest, BridgePlacementJoin)
 {
     auto [ctx, boundPlan] = loadAndBind("bridge_join.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -364,10 +518,10 @@ TEST_F(DistributedPlanningTest, BridgePlacementJoin)
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[1].getSourceDescriptor().getSourceType(), "Network");
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Print");
+    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Void");
 }
 
-TEST_F(DistributedPlanningTest, ComplexJoinQuery)
+TEST_F(QueryManagerTest, ComplexJoinQuery)
 {
     auto [ctx, boundPlan] = loadAndBind("complex_join.yaml");
     auto plan = QueryPlanner::with(ctx).plan(std::move(boundPlan));
@@ -429,22 +583,22 @@ TEST_F(DistributedPlanningTest, ComplexJoinQuery)
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[2].getSourceDescriptor().getSourceType(), "Network");
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkPlan).size(), 2);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Print");
+    EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].getSinkDescriptor()->getSinkType(), "Void");
 }
 
-TEST_F(DistributedPlanningTest, Disconnected)
+TEST_F(QueryManagerTest, Disconnected)
 {
     auto [ctx, boundPlan] = loadAndBind("disconnected.yaml");
     EXPECT_ANY_THROW(QueryPlanner::with(ctx).plan(std::move(boundPlan)));
 }
 
-TEST_F(DistributedPlanningTest, NotEnoughCapacities)
+TEST_F(QueryManagerTest, NotEnoughCapacities)
 {
     auto [ctx, boundPlan] = loadAndBind("not_enough_capacities.yaml");
     EXPECT_ANY_THROW(QueryPlanner::with(ctx).plan(std::move(boundPlan)));
 }
 
-TEST_F(DistributedPlanningTest, MultiplePhysicalSources)
+TEST_F(QueryManagerTest, MultiplePhysicalSources)
 {
     /// Plan has a logical source that is referenced by 9 physical sources. 4 physical source on source and 5 on source2.
     /// Capacity prevents the union from beeing placed at the intermediate node

@@ -3,61 +3,20 @@ query: |
 
 sinks:
   - name: sink
-    type: Print
-    schema:
-      - name: stream0stream1$start
-        type: UINT64
-      - name: stream0stream1$end
-        type: UINT64
-      - name: stream0$ts
-        type: UINT64
-      - name: stream0$id0
-        type: INT32
-      - name: stream1$ts
-        type: UINT64
-      - name: stream1$id1
-        type: INT32
-      - name: stream1$a
-        type: INT32
-      - name: stream1$b
-        type: INT32
+    schema: [ stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream1$a, stream1$b ]
     host: "sink-node-host:9090"
-    config:
-      input_format: CSV
 
 logical:
   - name: stream0
-    schema:
-      - name: ts
-        type: UINT64
-      - name: id0
-        type: INT32
+    schema: [ ts, id0 ]
   - name: stream1
-    schema:
-      - name: ts
-        type: UINT64
-      - name: id1
-        type: INT32
-      - name: a
-        type: INT32
-      - name: b
-        type: INT32
+    schema: [ ts, id1, a, b ]
 
 physical:
   - logical: stream0
-    type: File
     host: "source-node0-host:9090"
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
   - logical: stream1
-    type: File
     host: "source-node1-host:9090"
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
 
 workers:
   - host: "sink-node-host:9090"

@@ -3,34 +3,16 @@ query: |
 
 sinks:
   - name: mock_sink
-    type: File
-    schema:
-      - name: mock_source$a
-        type: INT32
-      - name: mock_source$b
-        type: INT32
+    schema: [ mock_source$a, mock_source$b ]
     host: "sink-node-host:9090"
-    config:
-      input_format: CSV
-      file_path: "[MOCKED]"
-      append: false
 
 logical:
   - name: mock_source
-    schema:
-      - name: a
-        type: INT32
-      - name: b
-        type: INT32
+    schema: [ a, b ]
 
 physical:
   - logical: mock_source
-    type: File
     host: "source-node-host:9090"
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
 
 workers:
   - host: "sink-node-host:9090"

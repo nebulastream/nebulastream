@@ -3,28 +3,16 @@ query: |
 
 sinks:
   - name: sink
-    type: Print
-    schema:
-      - name: stream$ts
-        type: UINT64
+    schema: [ stream$ts ]
     host: "sink-node-host:9090"
-    config:
-      input_format: CSV
 
 logical:
   - name: stream
-    schema:
-      - name: ts
-        type: UINT64
+    schema: [ ts ]
 
 physical:
   - logical: stream
-    type: File
     host: "source-node-host:9090"
-    parser_config:
-      type: CSV
-    source_config:
-      file_path: "[MOCKED]"
 
 workers:
   - host: "source-node-host:9090"
