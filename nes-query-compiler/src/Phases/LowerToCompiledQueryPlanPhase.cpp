@@ -128,6 +128,14 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
             options.setOption("dump.file", true);
             break;
     }
+    if (dumpGraph)
+    {
+        options.setOption("dump.graph", true);
+    }
+    else
+    {
+        options.setOption("dump.graph", false);
+    }
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 
