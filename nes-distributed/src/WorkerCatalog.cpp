@@ -32,6 +32,7 @@ bool WorkerCatalog::addWorker(const HostAddr& host, const GrpcAddr& grpc, size_t
     if (added)
     {
         topology.addNode(host, downstream);
+        ++version;
     }
     return added;
 }
@@ -52,6 +53,7 @@ std::optional<WorkerConfig> WorkerCatalog::removeWorker(const HostAddr& hostAddr
     }
 
     topology.removeNode(hostAddr);
+    ++version;
     return {workers.extract(it).mapped()};
 }
 
@@ -94,6 +96,11 @@ Topology WorkerCatalog::getTopology() const
 std::vector<WorkerConfig> WorkerCatalog::getAllWorkers() const
 {
     return workers | std::views::values | std::ranges::to<std::vector<WorkerConfig>>();
+}
+
+uint64_t WorkerCatalog::getVersion() const
+{
+    return version;
 }
 
 }

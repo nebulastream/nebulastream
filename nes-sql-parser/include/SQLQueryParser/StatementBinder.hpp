@@ -137,6 +137,11 @@ struct DropQueryStatement
     DistributedQueryId id;
 };
 
+struct WorkerStatusStatement
+{
+    std::vector<std::string> host;
+};
+
 struct CreateWorkerStatement
 {
     std::string host;
@@ -151,6 +156,7 @@ struct DropWorkerStatement
 };
 
 using Statement = std::variant<
+    WorkerStatusStatement,
     CreateWorkerStatement,
     DropWorkerStatement,
     CreateLogicalSourceStatement,
@@ -247,4 +253,5 @@ FMT_OSTREAM(NES::DropLogicalSourceStatement);
 FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
 FMT_OSTREAM(NES::CreateWorkerStatement);
+FMT_OSTREAM(NES::WorkerStatusStatement);
 FMT_OSTREAM(NES::DropWorkerStatement);

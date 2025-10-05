@@ -14,6 +14,14 @@
 
 #pragma once
 
+#include <chrono>
+#include <optional>
+#include <vector>
+
+#include <Identifiers/Identifiers.hpp>
+#include <ErrorHandling.hpp>
+#include <SingleNodeWorkerRPCService.pb.h>
+
 namespace NES
 {
 
@@ -39,5 +47,8 @@ struct WorkerStatus
     std::vector<ActiveQuery> activeQueries{};
     std::vector<TerminatedQuery> terminatedQueries{};
 };
+
+void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* response);
+WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response);
 
 }

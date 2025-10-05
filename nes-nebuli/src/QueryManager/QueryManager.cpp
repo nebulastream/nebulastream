@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <QueryManager/QueryManager.hpp>
+#include <Util/Pointers.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -26,13 +29,42 @@ std::expected<Query, Exception> QueryManager::getQuery(DistributedQueryId query)
     return it->second;
 }
 
-QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend, QueryManagerState state)
-    : backend(std::move(backend)), state(std::move(state))
+std::unordered_map<GrpcAddr, UniquePtr<QuerySubmissionBackend>>
+QueryManager::QueryManagerBackends::createBackends(const std::vector<WorkerConfig>& workers, const BackendProvider& provider)
+{
+    std::unordered_map<GrpcAddr, UniquePtr<QuerySubmissionBackend>> backends;
+    for (const auto& workerConfig : workers)
+    {
+        backends.emplace(workerConfig.grpc, provider(workerConfig));
+    }
+    return backends;
+}
+
+QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
+    : workerCatalog(std::move(workerCatalog)), backendProvider(std::move(provider))
+{
+    rebuildBackendsIfNeeded();
+}
+
+QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state)
+    : state(std::move(state)), backends(std::move(workerCatalog), std::move(provider))
 {
 }
 
-QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend) : backend(std::move(backend))
+QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
+    : backends(std::move(workerCatalog), std::move(provider))
 {
+}
+
+void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
+{
+    const auto currentVersion = workerCatalog->getVersion();
+    if (currentVersion != cachedWorkerCatalogVersion)
+    {
+        NES_DEBUG("WorkerCatalog version changed from {} to {}, rebuilding backends", cachedWorkerCatalogVersion, currentVersion);
+        backends = createBackends(workerCatalog->getAllWorkers(), backendProvider);
+        cachedWorkerCatalogVersion = currentVersion;
+    }
 }
 
 std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
@@ -42,11 +74,12 @@ std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const P
 
     for (const auto& [grpcAddr, localPlans] : plan)
     {
+        INVARIANT(backends.contains(grpcAddr), "Plan was assigned to a node ({}) that is not part of the cluster", grpcAddr);
         for (const auto& localPlan : localPlans)
         {
             try
             {
-                const auto result = backend->registerQuery(grpcAddr, localPlan);
+                const auto result = backends.at(grpcAddr).registerQuery(localPlan);
                 if (result)
                 {
                     NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), grpcAddr);
@@ -81,7 +114,11 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     {
         try
         {
-            const auto result = backend->start(localQuery);
+            INVARIANT(
+                backends.contains(localQuery.grpcAddr),
+                "Local query references node ({}) that is not part of the cluster",
+                localQuery.grpcAddr);
+            const auto result = backends.at(localQuery.grpcAddr).start(localQuery.id);
             if (result)
             {
                 NES_DEBUG("Starting query {} on node {} was successful.", localQuery.id, localQuery.grpcAddr);
@@ -119,7 +156,11 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
     {
         try
         {
-            const auto result = backend->status(localQuery);
+            INVARIANT(
+                backends.contains(localQuery.grpcAddr),
+                "Local query references node ({}) that is not part of the cluster",
+                localQuery.grpcAddr);
+            const auto result = backends.at(localQuery.grpcAddr).status(localQuery.id);
             if (result)
             {
                 localStatusResults.emplace_back(*result);
@@ -145,6 +186,16 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
 std::vector<DistributedQueryId> QueryManager::queries() const
 {
     return state.queries | std::views::keys | std::ranges::to<std::vector>();
+}
+
+std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std::chrono::system_clock::time_point after) const
+{
+    DistributedWorkerStatus distributedStatus;
+    for (const auto& [grpcAddr, backend] : backends)
+    {
+        distributedStatus.workerStatus.try_emplace(grpcAddr, backend->workerStatus(after));
+    }
+    return distributedStatus;
 }
 
 std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
@@ -185,7 +236,11 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
     {
         try
         {
-            auto result = backend->stop(localQuery);
+            INVARIANT(
+                backends.contains(localQuery.grpcAddr),
+                "Local query references node ({}) that is not part of the cluster",
+                localQuery.grpcAddr);
+            auto result = backends.at(localQuery.grpcAddr).stop(localQuery.id);
             if (result)
             {
                 NES_DEBUG("Stopping query {} on node {} was successful.", localQuery.id, localQuery.grpcAddr);
@@ -220,7 +275,11 @@ std::expected<void, std::vector<Exception>> QueryManager::unregister(Distributed
     {
         try
         {
-            auto result = backend->unregister(localQuery);
+            INVARIANT(
+                backends.contains(localQuery.grpcAddr),
+                "Local query references node ({}) that is not part of the cluster",
+                localQuery.grpcAddr);
+            auto result = backends.at(localQuery.grpcAddr).unregister(localQuery.id);
             if (result)
             {
                 NES_DEBUG("Unregister of query {} on node {} was successful.", localQuery.id, localQuery.grpcAddr);

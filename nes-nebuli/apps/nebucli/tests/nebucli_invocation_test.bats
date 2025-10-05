@@ -153,5 +153,7 @@ start_nes() {
 
   run $NEBUCLI -t tests/good/select-gen-into-void.yml status "$QUERY_ID"
   [ "$status" -eq 0 ]
-  [ "$output" = "Running" ]
+
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[][] | select(.global == $query_id and (has("local") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
 }

@@ -32,18 +32,17 @@
 #include <unistd.h>
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <YAML/YAMLBinder.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Statements/JsonOutputFormatter.hpp>
+#include <Statements/StatementHandler.hpp>
+#include <Statements/StatementOutputAssembler.hpp>
+#include <Statements/TextOutputFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <JsonOutputFormatter.hpp>
-#include <StatementHandler.hpp>
-#include <StatementOutputAssembler.hpp>
-#include <TextOutputFormatter.hpp>
 
 namespace NES
 {
@@ -414,8 +413,7 @@ struct Repl::Impl
             {
                 case NES::StatementOutputFormat::TEXT:
                     std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
+                        [](const auto& statementResult) {
                             return toText(
                                 StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult));
                         },

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <StatementHandler.hpp>
+#include <Statements/StatementHandler.hpp>
 
 #include <algorithm>
 #include <expected>
@@ -129,7 +129,7 @@ std::expected<DropLogicalSourceStatementResult, Exception> SourceStatementHandle
     {
         if (sourceCatalog->removeLogicalSource(*logical))
         {
-            return DropLogicalSourceStatementResult{statement.source};
+            return DropLogicalSourceStatementResult{statement.source, *logical->getSchema()};
         }
     }
     return std::unexpected{UnknownSourceName(statement.source.getRawValue())};
@@ -180,8 +180,19 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.descriptor.getSinkName())};
 }
 
-TopologyStatementHandler::TopologyStatementHandler(SharedPtr<WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog))
+TopologyStatementHandler::TopologyStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog)
+    : queryManager(std::move(queryManager)), workerCatalog(std::move(workerCatalog))
 {
+}
+
+std::expected<WorkerStatusStatementResult, Exception> TopologyStatementHandler::operator()(const WorkerStatusStatement& statement)
+{
+    if (statement.host.empty())
+    {
+        /// Fetch all
+        return std::unexpected(UnknownException("WorkerStatusStatement not fully implemented"));
+    }
+    return std::unexpected(UnknownException("WorkerStatusStatement not fully implemented"));
 }
 
 std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const CreateWorkerStatement& statement)

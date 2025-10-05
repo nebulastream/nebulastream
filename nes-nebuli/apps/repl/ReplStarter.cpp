@@ -169,8 +169,7 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager
-                = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(std::vector<NES::WorkerConfig>{}));
+            queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
         }
         else
         {
@@ -192,8 +191,9 @@ int main(int argc, char** argv)
             auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
                                               .value_or(NES::SingleNodeWorkerConfiguration{});
 
-            queryManager = std::make_shared<NES::QueryManager>(
-                std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(std::vector<NES::WorkerConfig>{}, singleNodeWorkerConfig));
+            NES::WorkerConfig workerConfig{.host = "embedded", .grpc = singleNodeWorkerConfig.grpcAddressUri};
+            workerCatalog->addWorker(workerConfig.host, workerConfig.grpc, workerConfig.capacity, workerConfig.downstream);
+            queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
                       "single node worker.")

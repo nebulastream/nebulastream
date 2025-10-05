@@ -30,21 +30,19 @@ namespace NES
 {
 class GRPCQuerySubmissionBackend final : public QuerySubmissionBackend
 {
-    struct ClusterNode
-    {
-        std::unique_ptr<WorkerRPCService::Stub> stub;
-        WorkerConfig workerConfig;
-    };
-
-    using Cluster = std::unordered_map<GrpcAddr, ClusterNode>;
-    Cluster cluster;
+    std::unique_ptr<WorkerRPCService::Stub> stub;
+    WorkerConfig workerConfig;
 
 public:
-    explicit GRPCQuerySubmissionBackend(std::vector<WorkerConfig> configs);
-    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(const GrpcAddr& grpc, LogicalPlan) override;
-    std::expected<void, Exception> start(const LocalQuery& query) override;
-    std::expected<void, Exception> stop(const LocalQuery& query) override;
-    std::expected<void, Exception> unregister(const LocalQuery& query) override;
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(const LocalQuery& query) const override;
+    explicit GRPCQuerySubmissionBackend(WorkerConfig config);
+    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(LogicalPlan) override;
+    std::expected<void, Exception> start(LocalQueryId) override;
+    std::expected<void, Exception> stop(LocalQueryId) override;
+    std::expected<void, Exception> unregister(LocalQueryId) override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId) const override;
+    [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 };
+
+BackendProvider createGRPCBackend();
+
 }

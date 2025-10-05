@@ -68,6 +68,7 @@ struct ShowSinksStatementResult
 struct DropLogicalSourceStatementResult
 {
     LogicalSourceName dropped;
+    Schema schema;
 };
 
 struct DropPhysicalSourceStatementResult
@@ -93,6 +94,11 @@ struct ShowQueriesStatementResult
 struct DropQueryStatementResult
 {
     DistributedQueryId id;
+};
+
+struct WorkerStatusStatementResult
+{
+    DistributedWorkerStatus status;
 };
 
 struct CreateWorkerStatementResult
@@ -176,10 +182,13 @@ public:
 
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>
 {
+    SharedPtr<QueryManager> queryManager;
     SharedPtr<WorkerCatalog> workerCatalog;
 
 public:
-    explicit TopologyStatementHandler(SharedPtr<WorkerCatalog> workerCatalog);
+    TopologyStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog);
+
+    std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
     std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
     std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
 };

@@ -28,75 +28,51 @@ namespace NES
 {
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
-    std::vector<std::pair<WorkerConfig, SingleNodeWorkerConfiguration>> workers)
-    : cluster{
-          std::views::transform(
-              workers,
-              [&](const auto& configs)
-              {
-                  auto [networkConfig, localConfiguration] = configs;
-                  localConfiguration.connection = networkConfig.host;
-                  localConfiguration.grpcAddressUri = networkConfig.grpc;
-                  LogContext logContext("create", networkConfig.grpc);
-                  return std::make_pair(networkConfig.grpc, SingleNodeWorker(localConfiguration, WorkerId(networkConfig.host)));
-              })
-          | std::ranges::to<std::unordered_map>()}
+    WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
+    : worker{[&]()
+             {
+                 workerConfiguration.connection = config.host;
+                 workerConfiguration.grpcAddressUri = config.grpc;
+                 LogContext logContext("create", config.grpc);
+                 return SingleNodeWorker(workerConfiguration, WorkerId(config.host));
+             }()}
 {
 }
 
-EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
-    std::vector<WorkerConfig> configs, const SingleNodeWorkerConfiguration& globalConfiguration)
-    : EmbeddedWorkerQuerySubmissionBackend(
-          std::views::transform(
-              configs, [&](auto config) -> std::pair<WorkerConfig, SingleNodeWorkerConfiguration> { return {config, globalConfiguration}; })
-          | std::ranges::to<std::vector>())
-
+std::expected<LocalQueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
 {
+    return worker.registerQuery(plan);
 }
 
-std::expected<LocalQueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(const GrpcAddr& grpc, LogicalPlan plan)
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LocalQueryId queryId)
 {
-    LogContext logContext("register", grpc);
-    return getWorker(grpc).registerQuery(plan);
+    return worker.startQuery(queryId);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(const LocalQuery& query)
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(LocalQueryId queryId)
 {
-    LogContext logContext("start", query.grpcAddr);
-    return getWorker(query.grpcAddr).startQuery(query.id);
+    return worker.stopQuery(queryId, QueryTerminationType::Graceful);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(const LocalQuery& query)
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::unregister(LocalQueryId queryId)
 {
-    LogContext logContext("stop", query.grpcAddr);
-    return getWorker(query.grpcAddr).stopQuery(query.id, QueryTerminationType::Graceful);
+    return worker.unregisterQuery(queryId);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::unregister(const LocalQuery& query)
+std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::status(LocalQueryId queryId) const
 {
-    LogContext logContext("unregister", query.grpcAddr);
-    return getWorker(query.grpcAddr).unregisterQuery(query.id);
+    return worker.getQueryStatus(queryId);
 }
 
-std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::status(const LocalQuery& query) const
+std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
-    LogContext logContext("status", query.grpcAddr);
-    return getWorker(query.grpcAddr).getQueryStatus(query.id);
+    return worker.getWorkerStatus(after);
 }
 
-const SingleNodeWorker& EmbeddedWorkerQuerySubmissionBackend::getWorker(const GrpcAddr& grpc) const
+BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)
 {
-    const auto it = cluster.find(grpc);
-    if (it == cluster.end())
-    {
-        throw TestException("No worker found grpc address: {}", grpc);
-    }
-    return it->second;
-}
-
-SingleNodeWorker& EmbeddedWorkerQuerySubmissionBackend::getWorker(const GrpcAddr& grpc)
-{
-    return const_cast<SingleNodeWorker&>(const_cast<const EmbeddedWorkerQuerySubmissionBackend&>(*this).getWorker(grpc));
+    return [workerConfiguration](const WorkerConfig& config)
+    { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, workerConfiguration); };
 }
 
 }

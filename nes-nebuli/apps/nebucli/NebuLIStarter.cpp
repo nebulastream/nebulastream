@@ -35,6 +35,9 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Statements/JsonOutputFormatter.hpp>
+#include <Statements/StatementHandler.hpp>
+#include <Statements/StatementOutputAssembler.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -50,7 +53,6 @@
 #include <DistributedQueryId.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
-#include <StatementHandler.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace
@@ -425,67 +427,93 @@ void handleStatements(std::vector<NES::Statement> statements, HandlerT&... handl
     }
 }
 
-void doStatus(NES::QueryManager& queryManager)
+void doStatus(
+    NES::QueryStatementHandler& queryStatementHandler,
+    NES::TopologyStatementHandler& topologyStatementHandler,
+    const std::unordered_map<NES::DistributedQueryId, std::string>& queries)
 {
-    if (queryManager.getRunningQueries().empty())
+    if (queries.empty())
     {
-        /// TODO: Worker Status
-        return;
+        auto result = topologyStatementHandler(NES::WorkerStatusStatement{{}});
+        std::cout << nlohmann::json(NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value())).dump(4)
+                  << '\n';
     }
-
-    for (const auto& runningQuery : queryManager.getRunningQueries())
+    else
     {
-        if (auto statusResult = queryManager.status(runningQuery); !statusResult)
+        nlohmann::json result;
+        for (const auto& query : queries | std::views::keys)
         {
-            throw statusResult.error();
+            auto statementResult = queryStatementHandler(NES::ShowQueriesStatement{query, NES::StatementOutputFormat::JSON});
+            result.push_back(NES::StatementOutputAssembler<NES::ShowQueriesStatementResult>{}.convert(statementResult.value()));
         }
-        else
+
+        /// Patch distributed Query Ids with persistent queryIds
+        for (auto& jsonQuery : result)
         {
-            std::cout << statusResult->getGlobalQueryState();
+            for (auto& individualQueries : jsonQuery)
+            {
+                individualQueries["global"] = queries.at(individualQueries["global"]);
+            }
         }
+
+        std::cout << result.dump(4) << '\n';
     }
 }
 
-void doStop(NES::QueryManager& queryManager)
+void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unordered_map<NES::DistributedQueryId, std::string>& queries)
 {
-    for (const auto& query : queryManager.getRunningQueries())
+    nlohmann::json result;
+    for (const auto& query : queries | std::views::keys)
     {
-        if (auto stopResult = queryManager.stop(query); !stopResult)
-        {
-            throw stopResult.error();
-        }
+        auto statementResult = queryStatementHandler(NES::DropQueryStatement{query});
+        result.push_back(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
     }
+    /// Patch distributed Query Ids with persistent queryIds
+    for (auto& jsonQuery : result)
+    {
+        jsonQuery[0]["query_id"] = queries.at(jsonQuery[0]["query_id"]);
+    }
+
+    std::cout << result.dump(4) << '\n';
 }
 
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
 
-    const auto state
-        = NES::views::enumerate(subcommand.get<std::vector<std::string>>("queryId"))
+    const auto mapping = NES::views::enumerate(subcommand.get<std::vector<std::string>>("queryId"))
         | std::views::transform(
-              [](const auto& pair) -> std::pair<NES::DistributedQueryId, NES::Query>
-              {
-                  fmt::println("Yes: {}", std::get<1>(pair));
-                  return {NES::DistributedQueryId(std::get<0>(pair)), NES::Query{NES::PersistentQueryId::load(std::get<1>(pair)).query}};
-              })
+                             [](const auto& pair) -> std::pair<NES::DistributedQueryId, std::string> {
+                                 return {NES::DistributedQueryId(std::get<0>(pair) + 1), std::get<1>(pair)};
+                             })
+        | std::ranges::to<std::unordered_map>();
+    const auto state = mapping
+        | std::views::transform(
+                           [](const auto& pair) -> std::pair<NES::DistributedQueryId, NES::Query> {
+                               return {std::get<0>(pair), NES::Query{NES::PersistentQueryId::load(std::get<1>(pair)).query}};
+                           })
         | std::ranges::to<std::unordered_map>();
 
+    auto statements = loadStatements(topologyConfig);
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-    NES::TopologyStatementHandler topologyHandler{workerCatalog};
+    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+    auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+    const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
-    handleStatements(loadStatements(topologyConfig), topologyHandler);
+    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
+    NES::SourceStatementHandler sourceHandler{sourceCatalog};
+    NES::SinkStatementHandler sinkHandler{sinkCatalog};
+    NES::QueryStatementHandler queryHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
 
-    const auto queryManager = std::make_shared<NES::QueryManager>(
-        std::make_unique<NES::GRPCQuerySubmissionBackend>(workerCatalog->getAllWorkers()), NES::QueryManagerState{state});
+    handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("stop"))
     {
-        doStop(*queryManager);
+        doStop(queryHandler, mapping);
     }
     else if (program.is_subcommand_used("status"))
     {
-        doStatus(*queryManager);
+        doStatus(queryHandler, topologyHandler, mapping);
     }
     else
     {
@@ -506,16 +534,15 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+    auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
-    NES::TopologyStatementHandler topologyHandler{workerCatalog};
+    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))
     {
-        auto queryManager
-            = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(workerCatalog->getAllWorkers()));
         NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
         for (const auto& query : queries)
         {
@@ -535,8 +562,6 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        auto queryManager
-            = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(std::vector<NES::WorkerConfig>{}));
         NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
         for (const auto& query : queries)
         {

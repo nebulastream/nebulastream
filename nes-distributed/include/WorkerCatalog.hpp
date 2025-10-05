@@ -29,6 +29,7 @@ class WorkerCatalog
 {
     std::unordered_map<HostAddr, WorkerConfig> workers;
     Topology topology;
+    uint64_t version = 0;
 
 public:
     bool addWorker(const HostAddr& host, const GrpcAddr& grpc, size_t capacity, const std::vector<HostAddr>& downstream);
@@ -38,6 +39,7 @@ public:
     [[nodiscard]] size_t getNumWorkers() const;
     std::vector<WorkerConfig> getAllWorkers() const;
     [[nodiscard]] Topology getTopology() const;
+    [[nodiscard]] uint64_t getVersion() const;
 };
 
 }

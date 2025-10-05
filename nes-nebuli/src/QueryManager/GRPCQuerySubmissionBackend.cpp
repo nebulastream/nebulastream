@@ -41,35 +41,27 @@
 #include <DistributedQueryId.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
-GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(std::vector<WorkerConfig> configs)
-    : cluster{
-          configs
-          | std::views::transform(
-              [](const WorkerConfig& config)
-              {
-                  const auto channel = grpc::CreateChannel(config.grpc, grpc::InsecureChannelCredentials());
-                  return std::make_pair(config.grpc, ClusterNode{.stub = WorkerRPCService::NewStub(channel), .workerConfig = config});
-              })
-          | std::ranges::to<std::unordered_map>()}
+GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
+    : stub{WorkerRPCService::NewStub(grpc::CreateChannel(config.grpc, grpc::InsecureChannelCredentials()))}, workerConfig{std::move(config)}
 {
 }
 
-std::expected<LocalQueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(const GrpcAddr& grpcAddr, LogicalPlan localPlan)
+std::expected<LocalQueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(LogicalPlan localPlan)
 {
     try
     {
         grpc::ClientContext context;
         RegisterQueryReply reply;
         RegisterQueryRequest request;
-        INVARIANT(cluster.contains(grpcAddr), "Plan was assigned to a node ({}) that is not part of the cluster", grpcAddr);
         request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(localPlan));
-        const auto status = cluster.at(grpcAddr).stub->RegisterQuery(&context, request, &reply);
+        const auto status = stub->RegisterQuery(&context, request, &reply);
         if (status.ok())
         {
-            NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), grpcAddr);
+            NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), workerConfig.grpc);
             return LocalQueryId{reply.queryid()};
         }
         return std::unexpected{QueryRegistrationFailed(
@@ -84,20 +76,18 @@ std::expected<LocalQueryId, Exception> GRPCQuerySubmissionBackend::registerQuery
     }
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::start(const LocalQuery& query)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::start(LocalQueryId queryId)
 {
     try
     {
         grpc::ClientContext context;
         StartQueryRequest request;
         google::protobuf::Empty response;
-        request.set_queryid(query.id.getRawValue());
-        INVARIANT(
-            cluster.contains(query.grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", query.grpcAddr);
-        const auto status = cluster.at(query.grpcAddr).stub->StartQuery(&context, request, &response);
+        request.set_queryid(queryId.getRawValue());
+        const auto status = stub->StartQuery(&context, request, &response);
         if (status.ok())
         {
-            NES_DEBUG("Starting query {} on node {} was successful.", query.id, query.grpcAddr);
+            NES_DEBUG("Starting query {} on node {} was successful.", queryId, workerConfig.grpc);
             return {};
         }
 
@@ -113,31 +103,29 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::start(const LocalQuer
     }
 }
 
-std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(const LocalQuery& query) const
+std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(LocalQueryId queryId) const
 {
     try
     {
         grpc::ClientContext context;
         QueryStatusRequest request;
-        request.set_queryid(query.id.getRawValue());
+        request.set_queryid(queryId.getRawValue());
         QueryStatusReply response;
 
-        INVARIANT(
-            cluster.contains(query.grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", query.grpcAddr);
-        if (const auto status = cluster.at(query.grpcAddr).stub->RequestQueryStatus(&context, request, &response); status.ok())
+        if (const auto status = stub->RequestQueryStatus(&context, request, &response); status.ok())
         {
-            NES_DEBUG("Status of query {} on node {} was successful.", query.id, query.grpcAddr);
+            NES_DEBUG("Status of query {} on node {} was successful.", queryId, workerConfig.grpc);
         }
         else
         {
             if (status.error_code() == grpc::StatusCode::NOT_FOUND)
             {
                 /// separate exception so that the embedded worker query manager can give back the same exception
-                return std::unexpected{QueryNotFound("{}", query.id)};
+                return std::unexpected{QueryNotFound("{}", queryId)};
             }
             return std::unexpected{QueryStatusFailed(
                 "Could not request status for query {}.\nStatus: {}\nMessage: {}\nDetail: {}",
-                query.id,
+                queryId,
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
                 status.error_details())};
@@ -166,22 +154,42 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(co
     }
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(const LocalQuery& query)
+std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
+{
+    CPPTRACE_TRY
+    {
+        grpc::ClientContext context;
+        WorkerStatusRequest request;
+        WorkerStatusResponse response;
+        request.set_afterunixtimestampinms(std::chrono::duration_cast<std::chrono::milliseconds>(after.time_since_epoch()).count());
+        const auto responseCode = stub->RequestStatus(&context, request, &response);
+        if (!responseCode.ok())
+        {
+            return std::unexpected(UnknownException("GRPC Status: {}", responseCode.error_message()));
+        }
+        return deserializeWorkerStatus(&response);
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected(UnknownException("Exception in workerStatus"));
+    }
+    std::unreachable();
+}
+
+std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(LocalQueryId queryId)
 {
     try
     {
         grpc::ClientContext context;
         StopQueryRequest request;
-        request.set_queryid(query.id.getRawValue());
+        request.set_queryid(queryId.getRawValue());
         request.set_terminationtype(StopQueryRequest::Graceful);
         google::protobuf::Empty response;
 
-        INVARIANT(
-            cluster.contains(query.grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", query.grpcAddr);
-        const auto status = cluster.at(query.grpcAddr).stub->StopQuery(&context, request, &response);
+        const auto status = stub->StopQuery(&context, request, &response);
         if (status.ok())
         {
-            NES_DEBUG("Stopping query {} on node {} was successful.", query.id, query.grpcAddr);
+            NES_DEBUG("Stopping query {} on node {} was successful.", queryId, workerConfig.grpc);
             return {};
         }
 
@@ -197,21 +205,19 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(const LocalQuery
     }
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(const LocalQuery& query)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(LocalQueryId queryId)
 {
     try
     {
         grpc::ClientContext context;
         UnregisterQueryRequest request;
         google::protobuf::Empty response;
-        request.set_queryid(query.id.getRawValue());
+        request.set_queryid(queryId.getRawValue());
 
-        INVARIANT(
-            cluster.contains(query.grpcAddr), "Node {}, which is contained in the query id is not part of the cluster", query.grpcAddr);
-        const auto status = cluster.at(query.grpcAddr).stub->UnregisterQuery(&context, request, &response);
+        const auto status = stub->UnregisterQuery(&context, request, &response);
         if (status.ok())
         {
-            NES_DEBUG("Unregister of query {} on node {} was successful.", query.id, query.grpcAddr);
+            NES_DEBUG("Unregister of query {} on node {} was successful.", queryId, workerConfig.grpc);
             return {};
         }
 
@@ -226,4 +232,10 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(const Loca
         return std::unexpected{QueryUnregistrationFailed("Message from external exception: {} ", e.what())};
     }
 }
+
+BackendProvider createGRPCBackend()
+{
+    return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
+}
+
 }

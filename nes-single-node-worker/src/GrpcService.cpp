@@ -29,6 +29,7 @@
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -242,35 +243,7 @@ grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const Worke
         const auto status
             = delegate.getWorkerStatus(std::chrono::system_clock::time_point(std::chrono::milliseconds(request->afterunixtimestampinms())));
 
-        for (const auto& activeQuery : status.activeQueries)
-        {
-            auto* activeQueryGRPC = response->add_activequeries();
-            activeQueryGRPC->set_queryid(activeQuery.queryId.getRawValue());
-            activeQueryGRPC->set_startedunixtimestampinms(
-                std::chrono::duration_cast<std::chrono::milliseconds>(activeQuery.started.time_since_epoch()).count());
-        }
-
-        for (const auto& terminatedQuery : status.terminatedQueries)
-        {
-            auto* terminatedQueryGRPC = response->add_terminatedqueries();
-            terminatedQueryGRPC->set_queryid(terminatedQuery.queryId.getRawValue());
-            terminatedQueryGRPC->set_startedunixtimestampinms(
-                std::chrono::duration_cast<std::chrono::milliseconds>(terminatedQuery.started.time_since_epoch()).count());
-            terminatedQueryGRPC->set_terminatedunixtimestampinms(
-                std::chrono::duration_cast<std::chrono::milliseconds>(terminatedQuery.terminated.time_since_epoch()).count());
-            if (terminatedQuery.error)
-            {
-                const auto& exception = terminatedQuery.error.value();
-                auto* errorGRPC = terminatedQueryGRPC->mutable_error();
-                errorGRPC->set_message(exception.what());
-                errorGRPC->set_stacktrace(exception.trace().to_string());
-                errorGRPC->set_code(exception.code());
-                errorGRPC->set_location(
-                    std::string(exception.where()->filename) + ":" + std::to_string(exception.where()->line.value_or(0)));
-            }
-        }
-        response->set_afterunixtimestampinms(
-            std::chrono::duration_cast<std::chrono::milliseconds>(status.after.time_since_epoch()).count());
+        serializeWorkerStatus(status, response);
 
         return grpc::Status::OK;
     }

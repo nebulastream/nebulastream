@@ -29,18 +29,18 @@ namespace NES
 class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    EmbeddedWorkerQuerySubmissionBackend(std::vector<std::pair<WorkerConfig, SingleNodeWorkerConfiguration>> workers);
-    EmbeddedWorkerQuerySubmissionBackend(std::vector<WorkerConfig> worker, const SingleNodeWorkerConfiguration& globalConfig);
-    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(const GrpcAddr& grpc, LogicalPlan) override;
-    std::expected<void, Exception> start(const LocalQuery&) override;
-    std::expected<void, Exception> stop(const LocalQuery&) override;
-    std::expected<void, Exception> unregister(const LocalQuery&) override;
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(const LocalQuery&) const override;
+    EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
+    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(LogicalPlan) override;
+    std::expected<void, Exception> start(LocalQueryId) override;
+    std::expected<void, Exception> stop(LocalQueryId) override;
+    std::expected<void, Exception> unregister(LocalQueryId) override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId) const override;
+    [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 
 private:
-    SingleNodeWorker& getWorker(const GrpcAddr& grpc);
-    const SingleNodeWorker& getWorker(const GrpcAddr& grpc) const;
-    using Cluster = std::unordered_map<GrpcAddr, SingleNodeWorker>;
-    Cluster cluster;
+    SingleNodeWorker worker;
 };
+
+BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);
+
 }

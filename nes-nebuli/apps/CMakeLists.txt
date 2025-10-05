@@ -18,7 +18,7 @@ target_include_directories(nebucli
         PRIVATE nebucli
 )
 
-add_executable(nebuli repl/ReplStarter.cpp repl/Repl.cpp repl/JsonOutputFormatter.cpp)
+add_executable(nebuli repl/ReplStarter.cpp repl/Repl.cpp)
 target_link_libraries(nebuli PUBLIC nes-nebuli-lib argparse::argparse replxx::replxx)
 
 target_include_directories(nebuli

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <JsonOutputFormatter.hpp>
+#include <Statements/JsonOutputFormatter.hpp>
 
 #include <map>
 #include <ranges>

@@ -25,9 +25,12 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/TypeTraits.hpp>
+#include <fmt/chrono.h>
 #include <google/protobuf/message_lite.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <ortools/base/file.h>
 
 namespace nlohmann
 {
@@ -60,6 +63,40 @@ void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& co
 namespace nlohmann
 {
 
+template <typename Clock, typename Duration>
+struct adl_serializer<std::chrono::time_point<Clock, Duration>>
+{
+    static void to_json(json& j, const std::chrono::time_point<Clock, Duration>& tp)
+    {
+        j["since_epoch"] = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
+        j["unit"] = "microseconds";
+        j["formatted"] = fmt::format("{}", tp);
+    }
+};
+
+template <typename EnumType>
+requires std::is_enum_v<EnumType>
+struct adl_serializer<EnumType>
+{
+    static void to_json(json& j, const EnumType& tp) { j = magic_enum::enum_name(tp); }
+};
+
+template <typename T>
+void serializeTupleField(json& target, std::string_view fieldName, const T& field)
+{
+    if constexpr (NES::Optional<T>)
+    {
+        if (field.has_value())
+        {
+            target[fieldName] = field.value();
+        }
+    }
+    else
+    {
+        target[fieldName] = field;
+    }
+}
+
 template <size_t N, typename... Ts>
 struct adl_serializer<std::pair<std::array<std::string_view, N>, std::vector<std::tuple<Ts...>>>>
 {
@@ -73,7 +110,7 @@ struct adl_serializer<std::pair<std::array<std::string_view, N>, std::vector<std
         {
             json currentRow;
             [&]<size_t... Is>(std::index_sequence<Is...>)
-            { ((currentRow[columnNames[Is]] = std::get<Is>(row), 0), ...); }(std::make_index_sequence<sizeof...(Ts)>());
+            { (serializeTupleField(currentRow, columnNames[Is], std::get<Is>(row)), ...); }(std::make_index_sequence<sizeof...(Ts)>());
             jsonRows.push_back(std::move(currentRow));
         }
         jsonOutput = jsonRows;

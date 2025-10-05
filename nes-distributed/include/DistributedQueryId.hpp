@@ -34,6 +34,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <WorkerConfig.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -44,6 +45,11 @@ inline DistributedQueryId getNextDistributedQueryId()
     static std::atomic_uint64_t id = DistributedQueryId::INITIAL;
     return DistributedQueryId(id++);
 }
+
+struct DistributedWorkerStatus
+{
+    std::unordered_map<GrpcAddr, std::expected<WorkerStatus, Exception>> workerStatus;
+};
 
 struct DistributedQueryStatus
 {
@@ -89,8 +95,13 @@ struct DistributedQueryStatus
         return exceptions;
     }
 
-    Exception coalesceException() const
+    std::optional<Exception> coalesceException() const
     {
+        if (getExceptions().empty())
+        {
+            return std::nullopt;
+        }
+
         return QueryStatusFailed(fmt::format(
             "Bad Distributed Query State: {}",
             fmt::join(getExceptions() | std::views::transform([](const auto& exception) { return exception.what(); }), ". ")));
