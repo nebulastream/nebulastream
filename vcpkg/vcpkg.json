@@ -41,6 +41,8 @@
     "replxx",
     "spdlog",
     "yaml-cpp",
-    "ortools"
+    "ortools",
+    "nameof",
+    "scope-guard"
   ]
 }
