@@ -115,18 +115,17 @@ static PhysicalPlan createSimplePhysicalPlan()
     std::string sourceType = "File";
     int32_t numberOfBuffersInLocalPool = -1;
     DescriptorConfig::Config config = {};
+    std::unordered_map<std::string, std::string> fileSourceConfiguration{};
 
-    auto sourceDescriptorOpt
-        = catalog.addPhysicalSource(logicalSource, workerId, sourceType, numberOfBuffersInLocalPool, std::move(config), parserConfig);
+    auto sourceDescriptorOpt = catalog.addPhysicalSource(logicalSource, sourceType, std::move(fileSourceConfiguration), parserConfig);
     assert(sourceDescriptorOpt.has_value());
     SourceDescriptor sourceDescriptor = sourceDescriptorOpt.value();
+
     auto sourceOp = SourceDescriptorLogicalOperator(sourceDescriptor).withOutputOriginIds({{OriginId(0)}});
+    auto sinkOp = SinkLogicalOperator{"test_sink"}.withChildren({sourceOp});
+    const LogicalOperator sinkLogicalOperator{std::move(sinkOp)};
 
-    auto sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>("test_sink", DescriptorConfig::Config(), false);
-    auto sinkOperator = SinkLogicalOperator();
-    sinkOperator.sinkDescriptor = std::move(sinkDescriptor);
-
-    auto logicalPlan = LogicalPlan(sinkOperator.withChildren({sourceOp}));
+    auto logicalPlan = LogicalPlan(sinkLogicalOperator);
 
     QueryExecutionConfiguration conf{};
     QueryOptimizer optimizer(conf);
