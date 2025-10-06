@@ -631,7 +631,7 @@ def create_test_plots(df, output_dir):
         operator_dir.mkdir(exist_ok=True)
 
         # Plot eff/comp_tp vs. total_columns for acc_col = 1
-        plot_eff_comp_tp(operator_df, operator_dir)
+        plot_eff_comp_tp(operator_df, operator_dir, operator)
 
         # Plot latency vs. total_columns
         plot_latency(operator_df, operator_dir, pipelines)
@@ -669,17 +669,17 @@ def create_test_plots(df, output_dir):
     # Generate aggregation-specific plots
     create_aggregation_plots(df[df['operator_type'] == 'aggregation'], test_plots_dir / "aggregation")
 
-def plot_eff_comp_tp(df, output_dir):
+def plot_eff_comp_tp(df, output_dir, operator):
     """Plot eff/comp_tp vs. total_columns for acc_col = 1."""
-    metrics = ['pipeline_3_eff_tp', 'pipeline_3_comp_tp']
+    metrics = ['pipeline_3_eff_tp']#, 'pipeline_3_comp_tp']
     df = df[df['accessed_columns'] == 1]
 
     for metric in metrics:
         plt.figure(figsize=(12, 8))
-        sns.barplot(data=df, x='num_columns', y=metric, hue='layout', palette='viridis')
-        plt.title(f"{metric.split('_')[2]} Throughput vs. Total Columns, accessed columns: 1")
+        sns.barplot(data=df, x='num_columns', y=metric, hue='layout', palette='viridis') #TODO: switch legend labels to NSM/PAX
+        plt.title(f"{metric.split('_')[2].capitalize()} {operator.capitalize()} Throughput vs. Total Columns, accessed columns: 1")
         plt.xlabel("Total Columns")
-        plt.ylabel(metric.replace('_', ' ').capitalize())
+        plt.ylabel("Throughput in Bytes/s")
         plt.yscale('log')
         plt.grid(True, axis='y', linestyle='--', alpha=0.7)
         plt.tight_layout()
@@ -700,8 +700,8 @@ def plot_latency(df, output_dir, pipelines):
 
         # Plot mean latency
         plt.figure(figsize=(12, 8))
-        sns.lineplot(data=row_df, x='num_columns', y='row_latency', label='ROW Latency', marker='o')
-        sns.lineplot(data=col_df, x='num_columns', y='col_latency', label='COL Latency', marker='o')
+        sns.lineplot(data=row_df, x='num_columns', y='row_latency', label='NSM Latency', marker='o')
+        sns.lineplot(data=col_df, x='num_columns', y='col_latency', label='PAX Latency', marker='o')
         plt.title("Mean Latency vs. Total Columns")
         plt.xlabel("Total Columns")
         plt.ylabel("Mean Latency (ms)")
@@ -724,11 +724,11 @@ def plot_latency(df, output_dir, pipelines):
                 if 'swap' in values or 'all' in values:
 
                     if values in ["swap", "swapIn", "all"]:
-                        sns.lineplot(data=col_df, x='num_columns', y='swap_in', label='COL Swap In', marker='o')
-                        sns.lineplot(data=row_df, x='num_columns', y='swap_in', label='ROW Swap In', marker='o')
+                        sns.lineplot(data=col_df, x='num_columns', y='swap_in', label='PAX Swap In', marker='o')
+                        sns.lineplot(data=row_df, x='num_columns', y='swap_in', label='NSM Swap In', marker='o')
                     if values in ["swap", "swapOut", "all"]:
-                        sns.lineplot(data=col_df, x='num_columns', y='swap_out', label='COL Swap Out', marker='o')
-                        sns.lineplot(data=row_df, x='num_columns', y='swap_out', label='ROW Swap Out', marker='o')
+                        sns.lineplot(data=col_df, x='num_columns', y='swap_out', label='PAX Swap Out', marker='o')
+                        sns.lineplot(data=row_df, x='num_columns', y='swap_out', label='NSM Swap Out', marker='o')
 
                 if not 'swap' in values:
 
@@ -737,14 +737,14 @@ def plot_latency(df, output_dir, pipelines):
                         if values in ["build", "all"]:
                             row_df['build_latency'] = row_df[f'pipeline_{pipelines[1]}_mean_latency']
                             col_df['build_latency'] = col_df[f'pipeline_{pipelines[1]}_mean_latency']
-                            sns.lineplot(data=col_df, x='num_columns', y='build_latency', label='COL Build Latency', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='build_latency', label='ROW Build Latency', marker='o')
+                            sns.lineplot(data=col_df, x='num_columns', y='build_latency', label='PAX Build Latency', marker='o')
+                            sns.lineplot(data=row_df, x='num_columns', y='build_latency', label='NSM Build Latency', marker='o')
 
                         if values in ["probe", "all"]:
                             row_df['probe_latency'] = row_df[f'pipeline_{pipelines[2]}_mean_latency']
                             col_df['probe_latency'] = col_df[f'pipeline_{pipelines[2]}_mean_latency']
-                            sns.lineplot(data=col_df, x='num_columns', y='probe_latency', label='COL Probe Latency', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='probe_latency', label='ROW Probe Latency', marker='o')
+                            sns.lineplot(data=col_df, x='num_columns', y='probe_latency', label='PAX Probe Latency', marker='o')
+                            sns.lineplot(data=row_df, x='num_columns', y='probe_latency', label='NSM Probe Latency', marker='o')
 
                     # Add filter/map operator latency
                     elif values in ["all"]:
@@ -753,11 +753,11 @@ def plot_latency(df, output_dir, pipelines):
                         row_df.loc[:,'filter_map_latency'] = row_df[f'pipeline_{pipelines[1]}_mean_latency']
 
                         if 'filter' in df['operator_type'].unique():
-                            sns.lineplot(data=col_df, x='num_columns', y='filter_map_latency', label='COL Filter', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='filter_map_latency', label='ROW Filter', marker='o')
+                            sns.lineplot(data=col_df, x='num_columns', y='filter_map_latency', label='PAX Filter', marker='o')
+                            sns.lineplot(data=row_df, x='num_columns', y='filter_map_latency', label='NSM Filter', marker='o')
                         else:
-                            sns.lineplot(data=col_df, x='num_columns', y='filter_map_latency', label='COL Map', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='filter_map_latency', label='ROW Map', marker='o')
+                            sns.lineplot(data=col_df, x='num_columns', y='filter_map_latency', label='PAX Map', marker='o')
+                            sns.lineplot(data=row_df, x='num_columns', y='filter_map_latency', label='NSM Map', marker='o')
                     else: #filter / map and probe/build
                         break
 
@@ -788,7 +788,7 @@ def create_aggregation_plots(df, output_dir):
 
     # Parameters for x-axis
     x_params = ['window_size', 'num_groups', 'id_data_type'] #TODO: add group by on vs off plot
-    metrics = ['pipeline_3_eff_tp', 'pipeline_3_comp_tp']
+    metrics = ['pipeline_3_eff_tp']#, 'pipeline_3_comp_tp']
 
     for x_param in x_params:
         if x_param not in df.columns:
@@ -799,7 +799,7 @@ def create_aggregation_plots(df, output_dir):
             sns.barplot(data=df, x=x_param, y=metric, hue='layout', palette='viridis')
             plt.title(f"Aggregation {metric.split('_')[2]} Throughput vs. {x_param}, accessed cols: 1/10 (3/12)")
             plt.xlabel(x_param.capitalize())
-            plt.ylabel(metric.replace('_', ' ').capitalize())
+            plt.ylabel("Throughput in Bytes/s")
             plt.yscale('log')
             plt.grid(True, axis='y', linestyle='--', alpha=0.7)
             plt.tight_layout()
@@ -811,8 +811,8 @@ def create_aggregation_plots(df, output_dir):
         col_df.loc[:, 'col_latency'] = col_df.loc[:,['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
 
         plt.figure(figsize=(12, 8))
-        sns.lineplot(data=row_df, x=x_param, y='row_latency', label='ROW Latency', marker='o')
-        sns.lineplot(data=col_df, x=x_param, y='col_latency', label='COL Latency', marker='o')
+        sns.lineplot(data=row_df, x=x_param, y='row_latency', label='NSM Latency', marker='o')
+        sns.lineplot(data=col_df, x=x_param, y='col_latency', label='PAX Latency', marker='o')
         plt.title(f"Mean Latency vs. {x_param}, accessed cols: 1/10 (3/12)")
         plt.xlabel(x_param.capitalize())
         plt.ylabel("Mean Latency (ms)")
@@ -851,7 +851,7 @@ def main():
         if create_double_operator_plots(df, output_dir):
             print(f"Double operator plots created in {output_dir}")
     else:
-        create_layout_comparison_plots(df, output_dir)
+        #create_layout_comparison_plots(df, output_dir)
         create_test_plots(df, output_dir)
 
     # Additionally call the existing plots.py script
