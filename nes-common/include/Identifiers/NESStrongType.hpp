@@ -13,11 +13,15 @@
 */
 
 #pragma once
+#include <algorithm>
 #include <compare>
+#include <concepts>
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <type_traits>
+#include <utility>
 
 namespace NES
 {
@@ -54,6 +58,44 @@ private:
     T v;
 };
 
+template <size_t N>
+struct StringLiteral
+{
+    /// C-Strings cannot be converted to std::array, so we are using a fixed size char array where the length N can be deduced.
+    /// StringLiteral is intended to be used as a non-type template parameter like fun<"my_string"> so we want the non-explicit constructor.
+    ///NOLINTNEXTLINE(modernize-avoid-c-arrays, google-explicit-constructor)
+    constexpr StringLiteral(const char (&str)[N]) { std::copy_n(str, N, value.begin()); }
+
+    std::array<char, N> value;
+};
+
+template <typename Tag, StringLiteral invalid>
+class NESStrongStringType
+{
+    std::string v;
+
+public:
+    using Underlying = std::string;
+    using TypeTag = Tag;
+    static constexpr std::string_view INVALID{invalid.value.begin(), invalid.value.end()};
+
+    explicit constexpr NESStrongStringType(std::string_view view) : v(std::string(view)) { }
+
+    template <std::convertible_to<std::string> StringType>
+    explicit constexpr NESStrongStringType(StringType&& stringType) : v(static_cast<std::string>(std::forward<StringType>(stringType)))
+    {
+    }
+
+    [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongStringType& lhs, const NESStrongStringType& rhs) noexcept
+        = default;
+
+    friend std::ostream& operator<<(std::ostream& os, const NESStrongStringType& t) { return os << t.v; }
+
+    std::string getRawValue() const { return v; }
+
+    std::string_view view() const { return v; }
+};
+
 template <typename T>
 concept NESIdentifier = requires(T t) {
     requires(std::same_as<T, NESStrongType<typename T::Underlying, typename T::TypeTag, T::INVALID, T::INITIAL>>);
@@ -84,6 +126,15 @@ struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
     size_t operator()(const NES::NESStrongType<T, Tag, invalid, initial>& strongType) const
     {
         return std::hash<T>()(strongType.getRawValue());
+    }
+};
+
+template <typename Tag, NES::StringLiteral invalid>
+struct hash<NES::NESStrongStringType<Tag, invalid>>
+{
+    size_t operator()(const NES::NESStrongStringType<Tag, invalid>& strongType) const
+    {
+        return std::hash<std::string>()(strongType.getRawValue());
     }
 };
 }
