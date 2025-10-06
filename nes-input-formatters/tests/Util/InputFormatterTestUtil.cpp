@@ -120,10 +120,10 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
     {
         std::visit(
             Overloaded{
-                [&](const SourceReturnType::Data& data) { resultBuffers.emplace_back(data.buffer); },
-                [](const SourceReturnType::EoS&) { NES_DEBUG("Reached EoS in source"); },
-                [](const SourceReturnType::Error& error) { throw error.ex; }},
-            returnType);
+                [&](SourceReturnType::Data data) { resultBuffers.emplace_back(std::move(data.buffer)); },
+                [](SourceReturnType::EoS) { NES_DEBUG("Reached EoS in source"); },
+                [](SourceReturnType::Error error) { throw std::move(error.ex); }},
+            std::move(returnType));
         return SourceReturnType::EmitResult::SUCCESS;
     };
 }
