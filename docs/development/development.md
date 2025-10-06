@@ -242,16 +242,20 @@ that wrap build tools to run inside the Nix development shell.
 
 To use the Nix development environment with CLion:
 
-1. **Create tool symlinks**:
-   The `.nix/` directory contains wrapper scripts that ensure build tools run with the correct Nix environment.
-   Create symlinks for the tools you need:
+0. **Install Nix (with flakes enabled)**:
+   Follow the [official Nix installation instructions](https://nixos.org/download/) and open a shell with access to the
+   `nix` command. The following commands rely on Nix flakes, so either enable them globally by adding
+   `experimental-features = nix-command flakes` to `~/.config/nix/nix.conf`, or prefix the commands with
+   `nix --extra-experimental-features 'nix-command flakes' ...`. nix commands should not need sudo rights. If they do
+    make sure the nix damon is running in the background.
+
+1. **Generate tool shims**:
+   Run the helper bundled in the flake to create the required symlinks in `.nix/`:
    ```shell
-   cd .nix
-   ln -s nix-run.sh cc
-   ln -s nix-run.sh c++
-   ln -s nix-run.sh ninja
-   ...
+   nix run .#clion-setup
    ```
+   This produces `.nix/cc`, `.nix/c++`, `.nix/clang`, `.nix/clang++`, `.nix/ctest`, and `.nix/ninja`, each pointing to
+   `nix-run.sh` so every invocation re-enters the Nix development shell with the correct toolchain.
 
 2. **Configure a custom toolchain** in CLion:
    - Go to Settings → Build, Execution, Deployment → Toolchains
@@ -259,7 +263,12 @@ To use the Nix development environment with CLion:
      - C Compiler: `/path/to/project/.nix/cc`
      - C++ Compiler: `/path/to/project/.nix/c++`
      - CMake: `/path/to/project/.nix/nix-cmake.sh`
+     - CTest: `/path/to/project/.nix/ctest`
+     - Make/Ninja: `/path/to/project/.nix/ninja`
+     - Debugger: `/path/to/project/.nix/gdb`
+
 
 3. **Set up the CMake profile**:
    - Go to Settings → Build, Execution, Deployment → CMake
    - Create a new profile with the Nix toolchain created above
+   - You might need to set ´NES_USE_SYSTEM_DEPS=1´ in the cmake flags in specific setups
