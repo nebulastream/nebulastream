@@ -114,8 +114,9 @@ def main():
     distance_main = os.environ["DISTANCE_MERGE_BASE"]
 
     diff = run_cmd(["git", "diff", f"HEAD~{distance_main}", "--",
-                    # Ignore patch files in our vcpkg ports
-                    ":!vcpkg/vcpkg-registry/**/*.patch"
+                    # Ignore patch files in our vcpkg & nix ports
+                    ":!vcpkg/vcpkg-registry/**/*.patch",
+                    ":!.nix/**/patches/*.patch"
                     ])
 
     added_lines = get_added_lines_from_diff(diff)
