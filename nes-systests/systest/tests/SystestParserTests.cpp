@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -66,30 +66,23 @@ TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
 TEST_F(SystestParserTest, testAttachSourceCallbackSource)
 {
     SystestParser parser{};
-    const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp\n"
-                                 "Attach File CSV window INLINE";
+    const std::string sourceIn = "CREATE LOGICAL SOURCE window(id UINT64, value UINT64, timestamp UINT64 timestamp);\n"
+                                 "CREATE PHYSICAL SOURCE FOR window TYPE File";
 
-    bool isSystestLogicalSourceCallbackCalled = false;
-    bool isAttachSourceCallbackCalled = false;
+    bool isCreateCallbackCalled = false;
 
     const std::string str = sourceIn + "\n";
 
-    parser.registerOnQueryCallback([](const std::string&, SystestQueryId) { FAIL(); });
-    parser.registerOnSystestLogicalSourceCallback([&isSystestLogicalSourceCallbackCalled](const SystestParser::SystestLogicalSource&)
-                                                  { isSystestLogicalSourceCallbackCalled = true; });
-    parser.registerOnSystestAttachSourceCallback(
-        [&isAttachSourceCallbackCalled](const SystestAttachSource& attachSource)
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
         {
-            isAttachSourceCallbackCalled = true;
-            /// Not asserting on configurationPath, because we expand 'CONFIG' to the local path on the system executing the test
-            ASSERT_EQ(attachSource.logicalSourceName, "window");
-            ASSERT_EQ(attachSource.sourceType, "File");
-            ASSERT_EQ(attachSource.testDataIngestionType, TestDataIngestionType::INLINE);
+            isCreateCallbackCalled = true;
+            ASSERT_FALSE(testData.has_value());
         });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(isSystestLogicalSourceCallbackCalled);
+    ASSERT_TRUE(isCreateCallbackCalled);
 }
 
 TEST_F(SystestParserTest, testCallbackQuery)
@@ -113,8 +106,8 @@ TEST_F(SystestParserTest, testCallbackQuery)
             ASSERT_EQ(queryIn, queryOut);
             queryCallbackCalled = true;
         });
-    parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { FAIL(); });
-    parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId)
                                           { receivedResultTuples = std::move(resultTuples); });
 
@@ -125,36 +118,6 @@ TEST_F(SystestParserTest, testCallbackQuery)
     ASSERT_EQ(receivedResultTuples.size(), 2);
     ASSERT_EQ(receivedResultTuples.at(0), tpl1);
     ASSERT_EQ(receivedResultTuples.at(1), tpl2);
-}
-
-TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
-{
-    SystestParser parser{};
-    const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp INLINE";
-    const std::string tpl1 = "1,1,1";
-    const std::string tpl2 = "2,2,2";
-
-    bool callbackCalled = false;
-
-    const std::string str = sourceIn + "\n" + tpl1 + "\n" + tpl2 + "\n";
-
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
-    parser.registerOnSystestLogicalSourceCallback(
-        [&](const SystestParser::SystestLogicalSource& sourceOut)
-        {
-            ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(sourceOut.fields[0].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(sourceOut.fields[1].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(sourceOut.fields[2].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
-            callbackCalled = true;
-        });
-
-    ASSERT_TRUE(parser.loadString(str));
-    EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(callbackCalled);
 }
 
 TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
@@ -172,55 +135,11 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
         {
             /// nop
         });
-    parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { FAIL(); });
-    parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
-}
-
-TEST_F(SystestParserTest, testSubstitutionRule)
-{
-    SystestParser parser{};
-    const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
-    const std::string delim = "----";
-    const std::string result = "1 1 1";
-
-    std::string queryExpect = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO TestSink()";
-
-    bool callbackCalled = false;
-
-    const std::string str = queryIn + "\n" + delim + "\n" + result + "\n";
-
-    const SystestParser::SubstitutionRule rule{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "TestSink()"; }};
-    parser.registerSubstitutionRule(rule);
-
-    const SystestParser::QueryCallback callback = [&queryExpect, &callbackCalled](const std::string& query, SystestQueryId)
-    {
-        ASSERT_EQ(queryExpect, query);
-        callbackCalled = true;
-    };
-    parser.registerOnQueryCallback(callback);
-    parser.registerOnResultTuplesCallback(
-        [&](const std::vector<std::string>&, const SystestQueryId)
-        {
-            /// nop
-        });
-
-    ASSERT_TRUE(parser.loadString(str));
-    EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(callbackCalled);
-}
-
-TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
-{
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const SystestParser::SubstitutionRule rule1{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "TestSink()"; }};
-    const SystestParser::SubstitutionRule rule2{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "AnotherTestSink()"; }};
-
-    SystestParser parser{};
-    parser.registerSubstitutionRule(rule1);
-    ASSERT_DEATH_DEBUG(parser.registerSubstitutionRule(rule2), "");
 }
 
 TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
@@ -252,6 +171,9 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
             ASSERT_EQ(expectedDifferentialQuery, rightQuery);
             differentialQueryCallbackCalled = true;
         });
+
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
 
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
                                           { FAIL() << "Result tuple callback should not be called for a differential query test."; });
@@ -300,14 +222,21 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
 
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
                                           { FAIL() << "Result tuple callback should not be called for a differential query test."; });
+
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+
     parser.registerOnErrorExpectationCallback(
         [](const SystestParser::ErrorExpectation&, SystestQueryId)
         { FAIL() << "Error expectation callback should not be called for a differential query test."; });
 
-    static constexpr std::string_view TestContent = R"(Source stream INT64 id INT64 value INT64 timestamp INLINE
+    static constexpr std::string_view TestContent = R"(
+CREATE LOGICAL SOURCE stream(id INT64, value INT64, timestamp INT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
 5,1,1000
 
-SINK streamSink INT64 id INT64 stream$value INT64 stream$timestamp
+CREATE SINK streamSink(id INT64, stream.value INT64, stream.timestamp INT64) TYPE File;
 
 SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink
 ====

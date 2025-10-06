@@ -15,21 +15,24 @@
 #pragma once
 
 #include <filesystem>
+#include <memory>
 #include <string>
+#include <thread>
+#include <vector>
 
-#include <SystestSources/SourceTypes.hpp>
+#include <Sources/SourceDataProvider.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
 {
 
-using FileDataRegistryReturnType = SystestSourceYAMLBinder::PhysicalSource;
+using FileDataRegistryReturnType = PhysicalSourceConfig;
 
 struct FileDataRegistryArguments
 {
-    SystestSourceYAMLBinder::PhysicalSource physicalSourceConfig;
-    SystestAttachSource attachSource;
-    std::filesystem::path testDataDir;
+    PhysicalSourceConfig physicalSourceConfig;
+    std::shared_ptr<std::vector<std::jthread>> serverThreads;
+    std::filesystem::path testFilePath;
 };
 
 class FileDataRegistry : public BaseRegistry<FileDataRegistry, std::string, FileDataRegistryReturnType, FileDataRegistryArguments>

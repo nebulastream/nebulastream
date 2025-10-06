@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <DataServer/TCPDataServer.hpp>
+#include <TCPDataServer.hpp>
 
 #include <exception>
 #include <filesystem>

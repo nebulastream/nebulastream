@@ -14,6 +14,7 @@
 
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 
+#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -68,6 +69,29 @@
 
 namespace NES::Parsers
 {
+
+namespace
+{
+std::string parseIdentifier(AntlrSQLParser::IdentifierContext* identifier)
+{
+    if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(identifier->strictIdentifier()))
+    {
+        std::string text = unquotedIdentifier->getText();
+        return text | std::ranges::views::transform([](const char character) { return std::toupper(character); })
+            | std::ranges::to<std::string>();
+    }
+    if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(identifier->strictIdentifier()))
+    {
+        const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
+        return withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
+    }
+    INVARIANT(
+        false,
+        "Unknown identifier type, was neither valid quoted or unquoted, is the grammar out of sync with the binder or was a nullptr "
+        "passed?");
+    std::unreachable();
+}
+}
 
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
@@ -167,7 +191,7 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
     for (const auto& sink : context->sink())
     {
         const auto sinkIdentifier = sink->identifier();
-        sinkNames.emplace_back(sinkIdentifier->getText());
+        sinkNames.emplace_back(parseIdentifier(sinkIdentifier));
     }
 }
 
@@ -351,18 +375,18 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     if (helpers.top().isGroupBy)
     {
-        helpers.top().groupByFields.emplace_back(context->getText());
+        helpers.top().groupByFields.emplace_back(parseIdentifier(context));
     }
     else if (
         (helpers.top().isWhereOrHaving || helpers.top().isSelect || helpers.top().isWindow)
         && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(context->getText()));
+        helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(parseIdentifier(context)));
     }
     else if (helpers.top().isFrom and not helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
-        helpers.top().setSource(context->getText());
+        helpers.top().setSource(parseIdentifier(context));
     }
     else if (
         AntlrSQLParser::RuleNamedExpression == parentRuleIndex and helpers.top().isInFunctionCall() and not helpers.top().isJoinRelation
@@ -379,14 +403,14 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             /// (we handle cases where the user did not specify a name via 'AS' in 'exitNamedExpression')
             const auto attribute = std::move(helpers.top().functionBuilder.back());
             helpers.top().functionBuilder.pop_back();
-            helpers.top().addProjection(FieldIdentifier(context->getText()), attribute);
+            helpers.top().addProjection(FieldIdentifier(parseIdentifier(context)), attribute);
         }
     }
     else if (helpers.top().isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
     {
         auto aggFunc = helpers.top().windowAggs.back();
         helpers.top().windowAggs.pop_back();
-        aggFunc->asField = (FieldAccessLogicalFunction(context->getText()));
+        aggFunc->asField = (FieldAccessLogicalFunction(parseIdentifier(context)));
         helpers.top().windowAggs.push_back(aggFunc);
         INVARIANT(
             std::nullopt != helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>(),
@@ -397,15 +421,15 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        helpers.top().joinKeyRelationHelper.emplace_back(FieldAccessLogicalFunction(context->getText()));
+        helpers.top().joinKeyRelationHelper.emplace_back(FieldAccessLogicalFunction(parseIdentifier(context)));
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
-        helpers.top().joinSources.push_back(context->getText());
+        helpers.top().joinSources.push_back(parseIdentifier(context));
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RuleTableAlias == parentRuleIndex)
     {
-        helpers.top().joinSourceRenames.push_back(context->getText());
+        helpers.top().joinSourceRenames.push_back(parseIdentifier(context));
     }
 }
 
@@ -523,7 +547,7 @@ void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyP
 
 void AntlrSQLQueryPlanCreator::exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context)
 {
-    helpers.top().timestamp = context->getText();
+    helpers.top().timestamp = parseIdentifier(context->name);
 }
 
 /// WINDOWS
@@ -583,7 +607,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         helpers.top().functionBuilder.pop_back();
         const auto fieldAccessNode = accessFunction.get<FieldAccessLogicalFunction>();
         const auto lastAggregation = helpers.top().windowAggs.back();
-        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), lastAggregation->getName());
+        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), Util::toUpperCase(lastAggregation->getName()));
         const auto asField = FieldAccessLogicalFunction(newName);
         lastAggregation->asField = asField;
         helpers.top().windowAggs.pop_back();
