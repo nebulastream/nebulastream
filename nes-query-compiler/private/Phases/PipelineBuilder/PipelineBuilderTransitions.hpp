@@ -26,7 +26,7 @@ static inline const std::vector<T> transitions = {
     ///  Start‑up (root operators)
     {State::Start, Event::EncounterSource, State::SourceContext, {appendSource}},
 
-    /// Source
+    /// SourceContext
     {State::SourceContext, Event::DescendChild, State::SourceCreated, {pushContext}},
 
     ///  SourceCreated
