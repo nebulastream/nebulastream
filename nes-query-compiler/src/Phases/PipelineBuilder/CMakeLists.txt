@@ -11,7 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-query-compiler
-        LowerToCompiledQueryPlanPhase.cpp
+        PipelineBuilderActions.cpp
 )
-
-add_subdirectory(PipelineBuilder)

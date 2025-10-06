@@ -25,7 +25,7 @@ namespace NES
 {
 
 /// NOTE: think twice before changing this file to extend the builders' functionality.
-/// Most extensions should be possible by extending @link PipeliningBuildingDefintion.cpp
+/// Most extensions should be possible by extending @link PipeliningBuilderTransitions.cpp
 class PipelineBuilder final : public AbstractStateMachine<State, Event, BuilderContext>
 {
 public:
