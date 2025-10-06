@@ -3,7 +3,9 @@
 # groups: [Aggregation, WindowOperators, Parser]
 
 # Source definitions
-Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
 1,1,1000
 12,1,1001
 4,1,1002
@@ -33,7 +35,7 @@ Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
 1,20,20000
 1,21,21000
 
-SINK sinkStream UINT64 stream$start UINT64 stream$end UINT64 stream$id UINT64 stream$sumValue
+CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.id UINT64, stream.sumValue UINT64)  TYPE File;
 
 # Test aggregation syntax with window definition before group by
 SELECT start, end, id, SUM(value) as sumValue

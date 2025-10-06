@@ -3,7 +3,9 @@
 # groups: [Aggregation, WindowOperators]
 
 
-Source stream VARSIZED keyI8 VARSIZED keyI16 VARSIZED keyU64 INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 UINT64 ts INLINE
+CREATE LOGICAL SOURCE stream(keyI8 VARSIZED, keyI16 VARSIZED, keyU64 VARSIZED, i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
 cat4VPUMd,ikhbCibnkg,o4BSHvfWO,1,2,3,4,5,6,7,8,9,10,0
 cat4VPUMd,ikhbCibnkg,vjYvMIm,2,3,4,5,6,7,8,9,10,11,25
 cat4VPUMd,ikhbCibnkg,vjYvMIm,0,0,0,0,0,0,0,0,0,0,50
@@ -14,10 +16,10 @@ cat4VPUMd,ikhbCibnkg,r6Bzr,1,2,3,4,5,6,7,8,9,10,225
 cat4VPUMd,dog4VZYMd,r6Bzr,2,3,4,5,6,7,8,9,10,11,250
 
 
-SINK sinkStreamKeyI8I16 UINT64 stream$start UINT64 stream$end VARSIZED stream$keyI8 VARSIZED stream$keyI16 INT8 stream$i8_out INT16 stream$i16_out INT32 stream$i32_out INT64 stream$i64_out UINT8 stream$u8_out UINT16 stream$u16_out UINT32 stream$u32_out UINT64 stream$u64_out FLOAT32 stream$f32_out FLOAT64 stream$f64_out
-SINK sinkStreamAllU64KeyI8 UINT64 stream$start UINT64 stream$end VARSIZED stream$keyI8 UINT64 stream$i8_out UINT64 stream$i16_out UINT64 stream$i32_out UINT64 stream$i64_out UINT64 stream$u8_out UINT64 stream$u16_out UINT64 stream$u32_out UINT64 stream$u64_out UINT64 stream$f32_out UINT64 stream$f64_out
-SINK sinkStreamAllF64KeyI8I16U64 UINT64 stream$start UINT64 stream$end VARSIZED stream$keyI8 VARSIZED stream$keyI16 VARSIZED stream$keyU64 FLOAT64 stream$i8_out FLOAT64 stream$i16_out FLOAT64 stream$i32_out FLOAT64 stream$i64_out FLOAT64 stream$u8_out FLOAT64 stream$u16_out FLOAT64 stream$u32_out FLOAT64 stream$u64_out FLOAT64 stream$f32_out FLOAT64 stream$f64_out
-SINK sinkStreamAllF64KeyI16 UINT64 stream$start UINT64 stream$end VARSIZED stream$keyI16 FLOAT64 stream$i8_out FLOAT64 stream$i16_out FLOAT64 stream$i32_out FLOAT64 stream$i64_out FLOAT64 stream$u8_out FLOAT64 stream$u16_out FLOAT64 stream$u32_out FLOAT64 stream$u64_out FLOAT64 stream$f32_out FLOAT64 stream$f64_out
+CREATE SINK sinkStreamKeyI8I16(stream.start UINT64, stream.end UINT64, stream.keyI8 VARSIZED, stream.keyI16 VARSIZED, stream.i8_out INT8, stream.i16_out INT16, stream.i32_out INT32, stream.i64_out INT64, stream.u8_out UINT8, stream.u16_out UINT16, stream.u32_out UINT32, stream.u64_out UINT64, stream.f32_out FLOAT32, stream.f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllU64KeyI8(stream.start UINT64, stream.end UINT64, stream.keyI8 VARSIZED, stream.i8_out UINT64, stream.i16_out UINT64, stream.i32_out UINT64, stream.i64_out UINT64, stream.u8_out UINT64, stream.u16_out UINT64, stream.u32_out UINT64, stream.u64_out UINT64, stream.f32_out UINT64, stream.f64_out UINT64)  TYPE File;
+CREATE SINK sinkStreamAllF64KeyI8I16U64(stream.start UINT64, stream.end UINT64, stream.keyI8 VARSIZED, stream.keyI16 VARSIZED, stream.keyU64 VARSIZED, stream.i8_out FLOAT64, stream.i16_out FLOAT64, stream.i32_out FLOAT64, stream.i64_out FLOAT64, stream.u8_out FLOAT64, stream.u16_out FLOAT64, stream.u32_out FLOAT64, stream.u64_out FLOAT64, stream.f32_out FLOAT64, stream.f64_out FLOAT64)  TYPE File;
+CREATE SINK sinkStreamAllF64KeyI16(stream.start UINT64, stream.end UINT64, stream.keyI16 VARSIZED, stream.i8_out FLOAT64, stream.i16_out FLOAT64, stream.i32_out FLOAT64, stream.i64_out FLOAT64, stream.u8_out FLOAT64, stream.u16_out FLOAT64, stream.u32_out FLOAT64, stream.u64_out FLOAT64, stream.f32_out FLOAT64, stream.f64_out FLOAT64)  TYPE File;
 
 
 # Checking if a count over a keyed window works for all data types

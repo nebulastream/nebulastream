@@ -1,9 +1,0 @@
-type: TCP
-max_inflight_buffers: 16
-socket_domain: AF_INET
-socket_type: SOCK_STREAM
-socket_port: PLACEHOLDER
-socket_host: PLACEHOLDER
-socket_buffer_size: 2
-flush_interval_ms: 100
-connect_timeout_seconds: 60
