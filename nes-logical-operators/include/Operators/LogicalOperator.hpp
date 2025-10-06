@@ -136,6 +136,10 @@ struct Castable : detail::DynamicBase
     const T* operator->() const { return dynamic_cast<const T*>(this); }
 
     const T& operator*() const { return *dynamic_cast<const T*>(this); }
+
+private:
+    Castable() = default;
+    friend T;
 };
 
 namespace detail
