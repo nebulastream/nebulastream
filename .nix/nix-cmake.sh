@@ -27,7 +27,6 @@ else
 fi
 
 if [ -n "$FLAGS" ]; then
-  # shellcheck disable=SC2086
   set -- $FLAGS "$@"
 else
   set -- "$@"
