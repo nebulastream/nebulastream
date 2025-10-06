@@ -289,7 +289,7 @@ timeUnit: MS
         | DAY
         ;
 
-timestampParameter: IDENTIFIER;
+timestampParameter: name=identifier;
 
 functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 

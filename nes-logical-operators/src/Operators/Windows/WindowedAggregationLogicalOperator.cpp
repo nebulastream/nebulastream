@@ -149,8 +149,8 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     {
         const auto& newQualifierForSystemField = firstSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator();
 
-        copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "start";
-        copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "end";
+        copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
+        copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "END";
         copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
         copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
     }

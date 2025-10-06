@@ -15,6 +15,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <vector>
 #include <Util/Strings.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -477,6 +478,54 @@ TEST(EscapeSpecialCharactersTest, UnicodeAndSpecialMixed)
 {
     EXPECT_EQ("Unicode: 😀\\nNext line", escapeSpecialCharacters("Unicode: 😀\nNext line"));
     EXPECT_EQ("\\tÆØÅ\\r\\næøå", escapeSpecialCharacters("\tÆØÅ\r\næøå"));
+}
+
+TEST(SplitStringViewTest, SingleSplit)
+{
+    constexpr std::string_view input("Hello|World!|I'm,a,simple;test|string");
+    const std::vector<char> delimiter{'|'};
+
+    const std::vector<std::string_view> result = splitOnMultipleDelimiters(input, delimiter);
+
+    EXPECT_EQ(result.size(), 4);
+    EXPECT_EQ(result[0], "Hello");
+    EXPECT_EQ(result[1], "World!");
+    EXPECT_EQ(result[2], "I'm,a,simple;test");
+    EXPECT_EQ(result[3], "string");
+}
+
+TEST(SplitStringViewTest, MultipleSplits)
+{
+    constexpr std::string_view input("Hello|World!|I'm,a,simple;test|string");
+    const std::vector<char> delimiter{';', ',', '|'};
+
+    const std::vector<std::string_view> result = splitOnMultipleDelimiters(input, delimiter);
+
+    EXPECT_EQ(result.size(), 7);
+    EXPECT_EQ(result[0], "Hello");
+    EXPECT_EQ(result[1], "World!");
+    EXPECT_EQ(result[2], "I'm");
+    EXPECT_EQ(result[3], "a");
+    EXPECT_EQ(result[4], "simple");
+    EXPECT_EQ(result[5], "test");
+    EXPECT_EQ(result[6], "string");
+}
+
+TEST(SplitStringViewTest, MultipleSplitsIncludingLineBreak)
+{
+    constexpr std::string_view input("Hello\nWorld!|I'm,a,simple;test\nstring");
+    const std::vector<char> delimiter{';', ',', '|', '\n'};
+
+    const std::vector<std::string_view> result = splitOnMultipleDelimiters(input, delimiter);
+
+    EXPECT_EQ(result.size(), 7);
+    EXPECT_EQ(result[0], "Hello");
+    EXPECT_EQ(result[1], "World!");
+    EXPECT_EQ(result[2], "I'm");
+    EXPECT_EQ(result[3], "a");
+    EXPECT_EQ(result[4], "simple");
+    EXPECT_EQ(result[5], "test");
+    EXPECT_EQ(result[6], "string");
 }
 
 }

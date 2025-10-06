@@ -173,9 +173,7 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
         }
         NES_DEBUG("Source type is: {}", sourceType);
 
-        const auto validInputFormatterConfig = ParserConfig::create(parserConfig);
-        const auto sourceDescriptorOpt
-            = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, validInputFormatterConfig);
+        const auto sourceDescriptorOpt = sourceCatalog->addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, parserConfig);
         if (not sourceDescriptorOpt.has_value())
         {
             throw UnknownSourceName("{}", logicalSource.value().getLogicalSourceName());

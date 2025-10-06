@@ -142,4 +142,8 @@ std::vector<T> splitWithStringDelimiter(std::string_view inputString, std::strin
         | std::views::filter([](auto optional) { return optional.has_value(); })
         | std::views::transform([](auto optional) { return *optional; }) | std::ranges::to<std::vector>();
 }
+
+/// Splits the given input string_view on all characters of the delimiters string_view.
+std::vector<std::string_view> splitOnMultipleDelimiters(std::string_view input, const std::vector<char>& delimiters);
+
 }

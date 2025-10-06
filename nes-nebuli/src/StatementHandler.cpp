@@ -155,11 +155,16 @@ std::expected<ShowSinksStatementResult, Exception> SinkStatementHandler::operato
 
 std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator()(const DropSinkStatement& statement)
 {
-    if (sinkCatalog->removeSinkDescriptor(statement.descriptor))
+    const auto sink = sinkCatalog->getSinkDescriptor(statement.name);
+    if (not sink.has_value())
     {
-        return DropSinkStatementResult{statement.descriptor};
+        throw UnknownSinkName("Cannot remove unknown sink: {}", statement.name);
     }
-    return std::unexpected{UnknownSinkName(statement.descriptor.getSinkName())};
+    if (sinkCatalog->removeSinkDescriptor(sink.value()))
+    {
+        return DropSinkStatementResult{sink.value()};
+    }
+    return std::unexpected{UnknownSinkName(statement.name)};
 }
 
 QueryStatementHandler::QueryStatementHandler(

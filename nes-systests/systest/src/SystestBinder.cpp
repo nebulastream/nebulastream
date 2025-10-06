@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -26,6 +27,7 @@
 #include <ostream>
 #include <ranges>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -39,24 +41,21 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SystestSources/SourceTypes.hpp>
-#include <SystestSources/SystestSourceYAMLBinder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <GeneratorFields.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -345,7 +344,7 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
@@ -381,186 +380,123 @@ struct SystestBinder::Impl
         return buildSystests;
     }
 
-    static void sinkCallback(SLTSinkFactory& sltSinkProvider, const SystestParser::SystestSink& sinkParsed)
+    static void createLogicalSource(const std::shared_ptr<SourceCatalog>& sourceCatalog, const CreateLogicalSourceStatement& statement)
+    {
+        const auto created = sourceCatalog->addLogicalSource(statement.name, statement.schema);
+        if (not created.has_value())
+        {
+            throw InvalidQuerySyntax();
+        }
+    }
+
+    [[nodiscard]] static std::filesystem::path generateSourceFilePath() { return std::tmpnam(nullptr); }
+
+    [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
+
+    [[nodiscard]] PhysicalSourceConfig setUpSourceWithTestData(
+        PhysicalSourceConfig& physicalSourceConfig,
+        std::shared_ptr<std::vector<std::jthread>> sourceThreads,
+        std::pair<TestDataIngestionType, std::vector<std::string>> testData) const
+    {
+        switch (testData.first)
+        {
+            case TestDataIngestionType::INLINE: {
+                const auto testFile = generateSourceFilePath();
+                return SourceDataProvider::provideInlineDataSource(
+                    std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads), testFile);
+            }
+            case TestDataIngestionType::FILE: {
+                if (testData.second.size() != 1)
+                {
+                    throw UnknownException("Invalid State");
+                }
+
+                const std::filesystem::path testFilePath = generateSourceFilePath(testData.second[0]);
+                return SourceDataProvider::provideFileDataSource(std::move(physicalSourceConfig), std::move(sourceThreads), testFilePath);
+            }
+            default:
+                std::unreachable();
+        }
+    }
+
+    void createPhysicalSource(
+        const std::shared_ptr<SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
+        const CreatePhysicalSourceStatement& statement,
+        std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
+    {
+        PhysicalSourceConfig physicalSourceConfig{
+            .logical = statement.attachedTo.getLogicalSourceName(),
+            .type = statement.sourceType,
+            .parserConfig = statement.parserConfig,
+            .sourceConfig = statement.sourceConfig};
+
+        std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
+        physicalSourceConfig.parserConfig.merge(defaultParserConfig);
+
+        if (testData.has_value())
+        {
+            physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
+        }
+
+
+        if (const auto created = sourceCatalog->addPhysicalSource(
+                statement.attachedTo, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
+        {
+            return;
+        }
+
+        throw InvalidQuerySyntax();
+    }
+
+    static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
         Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-        for (const auto& [type, name] : sinkParsed.fields)
+        for (const auto& field : statement.schema.getFields())
         {
-            schema.addField(name, type);
+            schema.addField(field.name, field.dataType);
         }
-        sltSinkProvider.registerSink(sinkParsed.type, sinkParsed.name, schema);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
     }
 
-    static void logicalSourceCallback(SourceCatalog& sourceCatalog, const SystestParser::SystestLogicalSource& source)
+    void createCallback(
+        const StatementBinder& binder,
+        const std::shared_ptr<SourceCatalog>& sourceCatalog,
+        SLTSinkFactory& sltSinkProvider,
+        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
+        const std::string& query,
+        std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
-        Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-        for (const auto& [type, name] : source.fields)
+        const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
+        const auto parseResult = managedParser->parseSingle();
+        if (not parseResult.has_value())
         {
-            schema.addField(name, type);
-        }
-        if (const auto logicalSource = sourceCatalog.addLogicalSource(source.name, schema); not logicalSource.has_value())
-        {
-            throw SourceAlreadyExists("{}", source.name);
-        }
-    }
-
-    /// NOLINTBEGIN(readability-function-cognitive-complexity)
-    void attachSourceCallback(
-        std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
-        SourceCatalog& sourceCatalog,
-        const std::string_view& testFileName,
-        uint64_t& sourceIndex,
-        SystestAttachSource& attachSource)
-    {
-        attachSource.serverThreads = sourceThreads;
-        if (not contains(attachSource.inputFormatterType))
-        {
-            throw UnknownSourceFormat("Did not find input formatter for type {}", attachSource.inputFormatterType);
+            throw InvalidQuerySyntax(parseResult.error().what());
         }
 
-        /// Load physical source from file and overwrite logical source name with value from attach source
-        const auto initialPhysicalSourceConfigFromFile
-            = [](const std::string& logicalSourceName, const std::string& sourceConfigPath, const std::string& inputFormatterConfigPath)
+        const auto binding = binder.bind(parseResult.value().get());
+        if (not binding.has_value())
         {
-            try
-            {
-                auto loadedPhysicalSourceConfig = SystestSourceYAMLBinder::loadSystestPhysicalSourceFromYAML(
-                    logicalSourceName, sourceConfigPath, inputFormatterConfigPath);
-                return loadedPhysicalSourceConfig;
-            }
-            catch (const std::exception& e)
-            {
-                throw CannotLoadConfig("Failed to parse source: {}", e.what());
-            }
-        };
-
-        /// load physical source from inline definition
-        const auto initialPhysicalSourceConfigInline
-            = [&sourceCatalog](const std::string& logicalSourceName, const InlineGeneratorConfiguration& inlineConfig)
-        {
-            SystestSourceYAMLBinder::PhysicalSource physicalSource{};
-            physicalSource.logical = logicalSourceName;
-            physicalSource.parserConfig["type"] = "CSV";
-            physicalSource.parserConfig["field_delimiter"] = ",";
-            auto logicalSourceMapping = sourceCatalog.getLogicalSource(logicalSourceName);
-            if (!logicalSourceMapping.has_value())
-            {
-                throw InvalidConfigParameter("{} does not exist in the same catalog!", logicalSourceName);
-            }
-            auto definedLogicalSchema = logicalSourceMapping.value().getSchema();
-            if (definedLogicalSchema->getFields().size() != inlineConfig.fieldSchema.size())
-            {
-                throw InvalidConfigParameter(
-                    "Number of defined generator field schemas ({}) does not match the number of fields defined in the source ({})",
-                    definedLogicalSchema->getFields().size(),
-                    inlineConfig.fieldSchema.size());
-            }
-
-            std::string generatorSchema;
-            for (const auto& fieldSchema : inlineConfig.fieldSchema)
-            {
-                auto fieldSchemaTokens = fieldSchema | std::views::split(' ') | std::views::filter([](auto val) { return !val.empty(); })
-                    | std::views::transform([](auto val) { return std::string_view(&*val.begin(), std::ranges::distance(val)); })
-                    | std::ranges::to<std::vector<std::string>>();
-                auto fieldName = fieldSchemaTokens[0];
-                auto schemaFieldType = fieldSchemaTokens[2];
-                auto definedLogicalField = definedLogicalSchema->getFieldByName(fieldName);
-                if (!definedLogicalField.has_value())
-                {
-                    throw InvalidConfigParameter(
-                        "Field {} is defined in the generatorSchema, but does not exist in the sources logical schema!", fieldName);
-                }
-                if (magic_enum::enum_cast<DataType::Type>(schemaFieldType) != definedLogicalField.value().dataType.type)
-                {
-                    throw InvalidConfigParameter(
-                        "Field \"{}\" type in generator Schema does not match declared type ({}) in Source Schema ({})",
-                        fieldName,
-                        schemaFieldType,
-                        magic_enum::enum_name<DataType::Type>(definedLogicalField.value().dataType.type));
-                }
-                auto generatorFieldIdentifier = fieldSchemaTokens[1];
-                auto [acceptedTypesBegin, acceptedTypesEnd]
-                    = GeneratorFields::FieldNameToAcceptedTypes.equal_range(generatorFieldIdentifier);
-                bool isAcceptedType = false;
-                for (auto it = acceptedTypesBegin; it != acceptedTypesEnd; ++it)
-                {
-                    if (definedLogicalField->dataType.type == it->second)
-                    {
-                        isAcceptedType = true;
-                        break;
-                    }
-                }
-                if (!isAcceptedType)
-                {
-                    throw InvalidConfigParameter(
-                        "Field {} is of {} type, which does not allow {}!",
-                        fieldName,
-                        generatorFieldIdentifier,
-                        magic_enum::enum_name(definedLogicalField.value().dataType.type));
-                }
-
-                for (const auto& token : fieldSchemaTokens | std::views::drop(1))
-                {
-                    generatorSchema.append(token);
-                    generatorSchema.append(" "sv);
-                }
-                generatorSchema.back() = '\n';
-            }
-
-            physicalSource.sourceConfig = inlineConfig.options;
-            physicalSource.type = "Generator";
-            physicalSource.sourceConfig["generator_schema"] = generatorSchema;
-            return physicalSource;
-        };
-
-        const auto initialPhysicalSourceConfig = attachSource.inlineGeneratorConfiguration.has_value()
-            ? initialPhysicalSourceConfigInline(attachSource.logicalSourceName, attachSource.inlineGeneratorConfiguration.value())
-            : initialPhysicalSourceConfigFromFile(
-                  attachSource.logicalSourceName, attachSource.sourceConfigurationPath, attachSource.inputFormatterConfigurationPath);
-
-        const auto [logical, sourceType, parserConfig, sourceConfig] = [&]()
-        {
-            switch (attachSource.testDataIngestionType)
-            {
-                case TestDataIngestionType::INLINE: {
-                    if (attachSource.tuples.has_value())
-                    {
-                        const auto sourceFile = SystestQuery::sourceFile(workingDir, testFileName, sourceIndex++);
-                        return SourceDataProvider::provideInlineDataSource(initialPhysicalSourceConfig, attachSource, sourceFile);
-                    }
-                    throw CannotLoadConfig("An InlineData source must have tuples, but tuples was null.");
-                }
-                case TestDataIngestionType::FILE: {
-                    return SourceDataProvider::provideFileDataSource(initialPhysicalSourceConfig, attachSource, testDataDir);
-                }
-                case TestDataIngestionType::GENERATOR: {
-                    return SourceDataProvider::provideGeneratorDataSource(initialPhysicalSourceConfig, attachSource);
-                }
-            }
-            std::unreachable();
-        }();
-
-        const auto logicalSource = sourceCatalog.getLogicalSource(attachSource.logicalSourceName);
-        if (not logicalSource.has_value())
-        {
-            throw UnknownSourceName("{}", attachSource.logicalSourceName);
+            throw InvalidQuerySyntax(binding.error().what());
         }
 
-        const auto physicalSource
-            = sourceCatalog.addPhysicalSource(logicalSource.value(), sourceType, sourceConfig, ParserConfig::create(parserConfig));
-        if (not physicalSource.has_value())
+        if (const auto& statement = binding.value(); std::holds_alternative<CreateLogicalSourceStatement>(statement))
         {
-            NES_ERROR(
-                "Concurrent deletion of just created logical source \"{}\" by another thread",
-                logicalSource.value().getLogicalSourceName());
-            throw UnknownSourceName(
-                "Failed to attach physical source with type {} to logical source {}",
-                attachSource.sourceType,
-                attachSource.logicalSourceName);
+            createLogicalSource(sourceCatalog, std::get<CreateLogicalSourceStatement>(statement));
+        }
+        else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
+        {
+            createPhysicalSource(sourceCatalog, sourceThreads, std::get<CreatePhysicalSourceStatement>(statement), std::move(testData));
+        }
+        else if (std::holds_alternative<CreateSinkStatement>(statement))
+        {
+            createSink(sltSinkProvider, std::get<CreateSinkStatement>(statement));
+        }
+        else
+        {
+            throw UnsupportedQuery();
         }
     }
-
-    /// NOLINTEND(readability-function-cognitive-complexity)
 
     void queryCallback(
         const std::string_view& testFileName,
@@ -594,7 +530,7 @@ struct SystestBinder::Impl
         }();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = sinkName + std::to_string(currentQueryNumberInTest.getRawValue());
+        const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
         query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
@@ -602,7 +538,8 @@ struct SystestBinder::Impl
 
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
-        if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
+        if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
+            not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
         }
@@ -623,12 +560,13 @@ struct SystestBinder::Impl
 
     static void errorExpectationCallback(
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
-        const SystestParser::ErrorExpectation& errorExpectation,
-        const SystestQueryId& correspondingQueryId)
+        SystestParser::ErrorExpectation errorExpectation,
+        SystestQueryId correspondingQueryId)
     {
         /// Error always belongs to the last parsed plan
         plans.emplace(correspondingQueryId, correspondingQueryId)
-            .first->second.setExpectedResult(ExpectedError{.code = errorExpectation.code, .message = errorExpectation.message});
+            .first->second.setExpectedResult(
+                ExpectedError{.code = std::move(errorExpectation.code), .message = std::move(errorExpectation.message)});
     }
 
     static void resultTuplesCallback(
@@ -639,10 +577,89 @@ struct SystestBinder::Impl
         plans.emplace(correspondingQueryId, correspondingQueryId).first->second.setExpectedResult(std::move(resultTuples));
     }
 
+    void differentialQueryBlocksCallback(
+        SystestQueryId& lastParsedQueryId,
+        const std::string_view& testFileName,
+        std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
+        SLTSinkFactory& sltSinkProvider,
+        std::string leftQuery,
+        std::string rightQuery,
+        const SystestQueryId currentQueryNumberInTest) const
+    {
+        const auto extractSinkName = [](const std::string& query) -> std::string
+        {
+            std::istringstream stream(query);
+            std::string token;
+            while (stream >> token)
+            {
+                if (Util::toLowerCase(token) == "into")
+                {
+                    std::string sink;
+                    if (!(stream >> sink))
+                    {
+                        NES_ERROR("INTO clause not followed by sink name in query: {}", query);
+                        return "";
+                    }
+                    if (!sink.empty() && sink.back() == ';')
+                    {
+                        sink.pop_back();
+                    }
+                    return sink;
+                }
+            }
+            NES_ERROR("INTO clause not found in query: {}", query);
+            return "";
+        };
+
+        const auto leftSinkName = extractSinkName(leftQuery);
+        const auto rightSinkName = extractSinkName(rightQuery);
+
+        const auto leftSinkForQuery = leftSinkName + std::to_string(lastParsedQueryId.getRawValue());
+        const auto rightSinkForQuery = rightSinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
+
+        leftQuery = std::regex_replace(leftQuery, std::regex(leftSinkName), leftSinkForQuery);
+        rightQuery = std::regex_replace(rightQuery, std::regex(rightSinkName), rightSinkForQuery);
+
+        const auto differentialTestResultFileName = std::string(testFileName) + "differential";
+        const auto leftResultFile = SystestQuery::resultFile(workingDir, testFileName, lastParsedQueryId);
+        const auto rightResultFile = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
+
+        auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
+
+        if (auto leftSinkExpected
+            = sltSinkProvider.createActualSink(Util::toUpperCase(leftSinkName), Util::toUpperCase(leftSinkForQuery), leftResultFile);
+            not leftSinkExpected.has_value())
+        {
+            currentTest.setException(leftSinkExpected.error());
+            return;
+        }
+        if (auto rightSinkExpected
+            = sltSinkProvider.createActualSink(Util::toUpperCase(rightSinkName), Util::toUpperCase(rightSinkForQuery), rightResultFile);
+            not rightSinkExpected.has_value())
+        {
+            currentTest.setException(rightSinkExpected.error());
+            return;
+        }
+
+        try
+        {
+            auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
+            auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
+
+            currentTest.setQueryDefinition(std::move(leftQuery));
+            currentTest.setBoundPlan(std::move(leftPlan));
+            currentTest.setDifferentialQueryPlan(std::move(rightPlan));
+        }
+        catch (Exception& e)
+        {
+            currentTest.setException(e);
+        }
+    }
+
     std::vector<SystestQueryBuilder> loadFromSLTFile(
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
-        SourceCatalog& sourceCatalog,
+        const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -652,114 +669,45 @@ struct SystestBinder::Impl
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
         SystestParser parser{};
-
-        parser.registerSubstitutionRule(
-            {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
-        parser.registerSubstitutionRule({.keyword = "CONFIG", .ruleFunction = [&](std::string& substitute) { substitute = configDir; }});
-
+        const auto binder = NES::StatementBinder{
+            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
         if (!parser.loadFile(testFilePath))
         {
             throw TestException("Could not successfully load test file://{}", testFilePath.string());
         }
 
-        /// We create a map from sink names to their schema
-        parser.registerOnSystestSinkCallback([&](const SystestParser::SystestSink& sinkParsed)
-                                             { sinkCallback(sltSinkProvider, sinkParsed); });
-
-        parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource& source)
-                                                      { logicalSourceCallback(sourceCatalog, source); });
-
-        /// We add new found sources to our config
-        parser.registerOnSystestAttachSourceCallback(
-            [&](SystestAttachSource attachSource)
-            { attachSourceCallback(sourceThreads, sourceCatalog, testFileName, sourceIndex, attachSource); });
-
         /// We create a new query plan from our config when finding a query
         SystestQueryId lastParsedQueryId = INVALID_SYSTEST_QUERY_ID;
         parser.registerOnQueryCallback(
-            [&](std::string query, const SystestQueryId currentQueryNumberInTest)
+            [&](std::string query, SystestQueryId currentQueryNumberInTest)
             {
                 lastParsedQueryId = currentQueryNumberInTest;
-                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest);
+                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), std::move(currentQueryNumberInTest));
             });
 
         parser.registerOnErrorExpectationCallback(
-            [&](const SystestParser::ErrorExpectation& errorExpectation, const SystestQueryId correspondingQueryId)
-            { errorExpectationCallback(plans, errorExpectation, correspondingQueryId); });
+            [&](SystestParser::ErrorExpectation errorExpectation, SystestQueryId correspondingQueryId)
+            { errorExpectationCallback(plans, std::move(errorExpectation), std::move(correspondingQueryId)); });
 
-        parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-                                              { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
-
+        parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId correspondingQueryId)
+                                              { resultTuplesCallback(plans, std::move(resultTuples), std::move(correspondingQueryId)); });
         parser.registerOnDifferentialQueryBlockCallback(
-            [&](std::string leftQuery, std::string rightQuery, const SystestQueryId currentQueryNumberInTest, const SystestQueryId)
+            [&](std::string leftQuery, std::string rightQuery, SystestQueryId currentQueryNumberInTest, SystestQueryId)
             {
-                const auto extractSinkName = [](const std::string& query) -> std::string
-                {
-                    std::istringstream stream(query);
-                    std::string token;
-                    while (stream >> token)
-                    {
-                        if (Util::toLowerCase(token) == "into")
-                        {
-                            std::string sink;
-                            if (!(stream >> sink))
-                            {
-                                NES_ERROR("INTO clause not followed by sink name in query: {}", query);
-                                return "";
-                            }
-                            if (!sink.empty() && sink.back() == ';')
-                            {
-                                sink.pop_back();
-                            }
-                            return sink;
-                        }
-                    }
-                    NES_ERROR("INTO clause not found in query: {}", query);
-                    return "";
-                };
-
-                const auto leftSinkName = extractSinkName(leftQuery);
-                const auto rightSinkName = extractSinkName(rightQuery);
-
-                const auto leftSinkForQuery = leftSinkName + std::to_string(lastParsedQueryId.getRawValue());
-                const auto rightSinkForQuery = rightSinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
-
-                leftQuery = std::regex_replace(leftQuery, std::regex(leftSinkName), leftSinkForQuery);
-                rightQuery = std::regex_replace(rightQuery, std::regex(rightSinkName), rightSinkForQuery);
-
-                const auto differentialTestResultFileName = std::string(testFileName) + "differential";
-                const auto leftResultFile = SystestQuery::resultFile(workingDir, testFileName, lastParsedQueryId);
-                const auto rightResultFile = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
-
-                auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
-
-                if (auto leftSinkExpected = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
-                    not leftSinkExpected.has_value())
-                {
-                    currentTest.setException(leftSinkExpected.error());
-                    return;
-                }
-                if (auto rightSinkExpected = sltSinkProvider.createActualSink(rightSinkName, rightSinkForQuery, rightResultFile);
-                    not rightSinkExpected.has_value())
-                {
-                    currentTest.setException(rightSinkExpected.error());
-                    return;
-                }
-
-                try
-                {
-                    auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
-                    auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
-
-                    currentTest.setQueryDefinition(std::move(leftQuery));
-                    currentTest.setBoundPlan(std::move(leftPlan));
-                    currentTest.setDifferentialQueryPlan(std::move(rightPlan));
-                }
-                catch (Exception& e)
-                {
-                    currentTest.setException(e);
-                }
+                differentialQueryBlocksCallback(
+                    lastParsedQueryId,
+                    testFileName,
+                    plans,
+                    sltSinkProvider,
+                    std::move(leftQuery),
+                    std::move(rightQuery),
+                    std::move(currentQueryNumberInTest));
             });
+
+        parser.registerOnCreateCallback(
+            [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
+            { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+
         try
         {
             parser.parse();
