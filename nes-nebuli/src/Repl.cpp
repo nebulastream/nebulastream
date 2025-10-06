@@ -208,7 +208,7 @@ struct Repl::Impl
 
     /// This method should handle "regular" errors, such as from parsing user input or being unable to execute statements.
     /// The try-catch in the main-loop should only catch unexpected errors.
-    void handleError(const auto& error)
+    void handleError(auto error)
     {
         if (errorBehaviour == ErrorBehaviour::FAIL_FAST)
         {
@@ -370,7 +370,7 @@ struct Repl::Impl
         auto parseResult = managedParser->parseMultiple();
         if (not parseResult.has_value())
         {
-            handleError(parseResult.error());
+            handleError(std::move(parseResult.error()));
             return false;
         }
         auto toHandle = parseResult.value() | std::views::transform([this](const auto& stmt) { return binder.bind(stmt.get()); })
@@ -380,7 +380,7 @@ struct Repl::Impl
         {
             if (not bindingResult.has_value())
             {
-                handleError(bindingResult.error());
+                handleError(std::move(bindingResult.error()));
                 continue;
             }
             /// NOLINTNEXTLINE(fuchsia-trailing-return)
@@ -407,7 +407,7 @@ struct Repl::Impl
             auto result = std::visit(visitor, bindingResult.value());
             if (not result.has_value())
             {
-                handleError(result.error());
+                handleError(std::move(result.error()));
                 continue;
             }
             switch (getOutputFormat(bindingResult.value()).value_or(defaultOutputFormat))
