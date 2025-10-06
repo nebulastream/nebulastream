@@ -180,20 +180,20 @@ public:
         /// Next, try to validate all config parameters.
         for (const auto& [key, configParameter] : SpecificConfiguration::parameterMap)
         {
-            for (const auto& [keyString, configParameterString] : config)
+            /// If the user did not specify a parameter that is optional, use the default value (if available).
+            if (not config.contains(key))
             {
-                NES_DEBUG("key: {}, value: {}", keyString, configParameterString);
+                if (const auto defaultValue = configParameter.getDefaultValue())
+                {
+                    validatedConfig.emplace(key, defaultValue.value());
+                    continue;
+                }
+                throw InvalidConfigParameter(
+                    fmt::format("Non-default parameter {} not specified in config of {}", key, implementationName));
             }
-            const auto validatedParameter = configParameter.validate(config);
-            if (validatedParameter.has_value())
+            if (const auto validatedParameter = configParameter.validate(config); validatedParameter.has_value())
             {
                 validatedConfig.emplace(key, validatedParameter.value());
-                continue;
-            }
-            /// If the user did not specify a parameter that is optional, use the default value.
-            if (not config.contains(key) and configParameter.getDefaultValue().has_value())
-            {
-                validatedConfig.emplace(key, configParameter.getDefaultValue().value());
                 continue;
             }
             throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in: {}", key, implementationName));
