@@ -5,14 +5,16 @@
 # Todo 484 Validate that exception is thrown
 # The 'TESTDATA/200x8-rows-fields.csv' is wrong. However, our test parser does not catch this.
 # Instead the systest-utils runs indefinitely.
-Source fiveTuples UINT64 field_1 INLINE
+CREATE LOGICAL SOURCE fiveTuples(field_1 UINT64);
+CREATE PHYSICAL SOURCE FOR fiveTuples TYPE File;
+ATTACH INLINE
 1
 2
 3
 4
 5
 
-SINK fiveTuplesSink UINT64 fiveTuples$field_1
+CREATE SINK fiveTuplesSink(fiveTuples.field_1 UINT64)  TYPE File;
 
 # Description: simply reads in five tuples with a single value and produces the same tuples
 SELECT field_1 FROM fiveTuples INTO fiveTuplesSink

@@ -3,15 +3,17 @@
 # groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
-Source ysb1k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address FILE
-TESTDATA/large/ysb/ysb1k_more_data_3GB.csv
-Source ysb10k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address FILE
-TESTDATA/large/ysb/ysb10k_more_data_3GB.csv
+CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
+ATTACH FILE large/ysb/ysb1k_more_data_3GB.csv
 
-SINK printSink UINT64 ysb1k$campaign
+CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
+ATTACH FILE large/ysb/ysb10k_more_data_3GB.csv
 
-SINK ysb1kChecksum TYPE Checksum UINT64 ysb1k$start UINT64 ysb1k$end VARSIZED ysb1k$campaign_id UINT64 ysb1k$count_user_id
-SINK ysb10kChecksum TYPE Checksum UINT64 ysb10k$start UINT64 ysb10k$end VARSIZED ysb10k$campaign_id UINT64 ysb10k$count_user_id
+CREATE SINK printSink(ysb1k.campaign UINT64)  TYPE File;
+CREATE SINK ysb1kChecksum(ysb1k.start UINT64, ysb1k.end UINT64, ysb1k.campaign_id VARSIZED, ysb1k.count_user_id UINT64)  TYPE Checksum;
+CREATE SINK ysb10kChecksum(ysb10k.start UINT64, ysb10k.end UINT64, ysb10k.campaign_id VARSIZED, ysb10k.count_user_id UINT64)  TYPE Checksum;
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
 # YSB Query
