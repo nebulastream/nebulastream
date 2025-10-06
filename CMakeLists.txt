@@ -27,7 +27,7 @@ option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
-option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
+option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 
 
 if (CMAKE_BUILD_TYPE STREQUAL "Benchmark")
@@ -83,7 +83,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 # Set NES Flags
 set(NES_SPECIFIC_FLAGS)
-if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
+if (NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
