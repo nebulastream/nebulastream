@@ -636,6 +636,36 @@ def create_test_plots(df, output_dir):
         # Plot latency vs. total_columns
         plot_latency(operator_df, operator_dir, pipelines)
 
+        # Additional plot for filter: eff_tp averaged for acc_col = 1 and num_columns = 10
+        if operator == 'filter':
+            filter_df = operator_df[(operator_df['num_columns'] == 10) & (operator_df['accessed_columns'] == 1)]
+            if not filter_df.empty:
+                plt.figure(figsize=(12, 8))
+                sns.barplot(data=filter_df, x='selectivity', y='pipeline_3_eff_tp', hue='layout', palette='viridis')
+                plt.title("Filter Effective Throughput Averaged for acc_col = 1, Total Columns = 10")
+                plt.xlabel("Layout")
+                plt.ylabel("Effective Throughput (tuples/s)")
+                plt.yscale('log')
+                plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+                plt.tight_layout()
+                plt.savefig(operator_dir / "filter_eff_tp_avg_acc_col_1_num_cols_10.png")
+                plt.close()
+
+        # Additional plot for map: eff_tp vs. function_type for num_columns = 10 and acc_col = 1
+        if operator == 'map':
+            map_df = operator_df[(operator_df['num_columns'] == 10) & (operator_df['accessed_columns'] == 1)]
+            if not map_df.empty:
+                plt.figure(figsize=(12, 8))
+                sns.barplot(data=map_df, x='function_type', y='pipeline_3_eff_tp', hue='layout', palette='viridis')
+                plt.title("Map Effective Throughput by Function Type (Total Columns = 10, acc_col = 1)")
+                plt.xlabel("Function Type")
+                plt.ylabel("Effective Throughput (tuples/s)") #TODO: tuples or bytes / second?
+                plt.yscale('log')
+                plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+                plt.tight_layout()
+                plt.savefig(operator_dir / "map_eff_tp_func_type_num_cols_10_acc_col_1.png")
+                plt.close()
+
     # Generate aggregation-specific plots
     create_aggregation_plots(df[df['operator_type'] == 'aggregation'], test_plots_dir / "aggregation")
 
