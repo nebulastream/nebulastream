@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <optional>
 #include <type_traits>
 
 namespace NES
@@ -27,4 +28,16 @@ inline constexpr auto UniqueTypes<T, Rest...> = std::bool_constant<(!std::is_sam
 template <typename... Ts>
 inline constexpr auto UniqueTypesIgnoringCVRef = UniqueTypes<std::remove_cvref_t<Ts>...>;
 
+template <typename T, typename Enable = void>
+struct IsOptional : std::false_type
+{
+};
+
+template <typename T>
+struct IsOptional<std::optional<T>> : std::true_type
+{
+};
+
+template <typename T>
+concept Optional = IsOptional<T>::value;
 }
