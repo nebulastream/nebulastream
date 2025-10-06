@@ -31,7 +31,7 @@ void addDefaultScan(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedO
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
     auto layout = std::make_shared<RowLayout>(ctx.bufferSize, schema.value());
-    auto memProv = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    auto memProv = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout);
 
     ctx.currentPipeline->prependOperator(ScanPhysicalOperator(memProv, schema->getFieldNames()));
 }
@@ -45,7 +45,7 @@ void addDefaultEmit(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedO
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
     auto layout = std::make_shared<RowLayout>(ctx.bufferSize, schema.value());
-    auto memProv = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    auto memProv = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout);
 
     const OperatorHandlerId handlerId = getNextOperatorHandlerId();
     ctx.currentPipeline->getOperatorHandlers().emplace(handlerId, std::make_shared<EmitOperatorHandler>());

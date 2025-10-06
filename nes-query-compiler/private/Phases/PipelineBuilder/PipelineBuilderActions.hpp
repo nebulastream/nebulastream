@@ -18,7 +18,7 @@
 #include <memory>
 #include <ranges>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Phases/PipelineBuilder/AbstractStateMachine.hpp>
 #include <Phases/PipelineBuilder/PipelineBuilderState.hpp>
 #include <EmitPhysicalOperator.hpp>
