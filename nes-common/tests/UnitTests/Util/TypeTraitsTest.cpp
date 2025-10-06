@@ -14,6 +14,10 @@
 
 #include <Util/TypeTraits.hpp>
 
+#include <expected>
+#include <optional>
+#include <string>
+
 /// Since TypeTraits only compile static type utilities, this file only has to compile
 namespace NES
 {
@@ -34,5 +38,14 @@ struct CustomType1
 static_assert(!UniqueTypes<CustomType, TypeAlias>, "type alias do not create distinct types");
 static_assert(UniqueTypes<CustomType, CustomType1>, "\"equal\" types are distinct types");
 static_assert(UniqueTypes<CustomType, struct CustomType2>, "\"equal\" types are distinct types");
+
+static_assert(!IsOptional<int>::value);
+static_assert(IsOptional<std::optional<int>>::value);
+static_assert(!IsOptional<std::optional<int>&>::value, "should not ignore cv qualifier");
+
+static_assert(!Optional<int>);
+static_assert(Optional<std::optional<std::optional<int>>>);
+static_assert(Optional<std::optional<std::string>>);
+static_assert(!Optional<std::expected<std::string, void>>);
 
 }
