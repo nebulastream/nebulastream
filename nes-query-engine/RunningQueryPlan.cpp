@@ -206,30 +206,35 @@ void RunningQueryPlanNode::fail(Exception exception) const
     unregisterWithError(std::move(exception));
 }
 
-std::
-    pair<std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
-        QueryId queryId,
-        ExecutableQueryPlan& queryPlan,
-        std::function<void(Exception)> unregisterWithError,
-        const CallbackRef& terminationCallbackRef,
-        const CallbackRef& pipelineSetupCallbackRef,
-        WorkEmitter& emitter)
+static std::pair<
+    std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>,
+    std::vector<std::weak_ptr<RunningQueryPlanNode>>>
+createRunningNodes(
+    QueryId queryId,
+    ExecutableQueryPlan& queryPlan,
+    std::function<void(Exception)> unregisterWithError,
+    const CallbackRef& terminationCallbackRef,
+    const CallbackRef& pipelineSetupCallbackRef,
+    WorkEmitter& emitter)
 {
     std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
     std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
     std::unordered_map<ExecutablePipeline*, std::shared_ptr<RunningQueryPlanNode>> cache;
-    std::function<std::shared_ptr<RunningQueryPlanNode>(ExecutablePipeline*)> getOrCreate = [&](ExecutablePipeline* pipeline)
+    std::function<std::shared_ptr<RunningQueryPlanNode>(ExecutablePipeline*)> getOrCreate
+        = [&](ExecutablePipeline* pipeline) -> std::shared_ptr<RunningQueryPlanNode>
     {
         INVARIANT(pipeline, "Pipeline should not be nullptr");
         if (auto it = cache.find(pipeline); it != cache.end())
         {
             return it->second;
         }
+
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
         std::ranges::transform(
             pipeline->successors,
             std::back_inserter(successors),
             [&](const auto& successor) { return getOrCreate(successor.lock().get()); });
+
         auto node = RunningQueryPlanNode::create(
             queryId,
             pipeline->id,
@@ -239,6 +244,7 @@ std::
             unregisterWithError,
             terminationCallbackRef,
             pipelineSetupCallbackRef);
+
         pipelines.emplace_back(node);
         cache[pipeline] = std::move(node);
         return cache[pipeline];

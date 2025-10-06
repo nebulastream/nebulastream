@@ -21,10 +21,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
+#include <Join/HashJoin/SerializableHJOperatorHandler.hpp>
+#include <Join/HashJoin/SerializableHJSlice.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/HashMap/OffsetHashMap/OffsetHashMapRef.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -71,6 +74,48 @@ Interface::HashMap* getHashJoinHashMapProxy(
     const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
+}
+
+// Serializable path: obtain offset-based hash map wrapper from serializable handler
+DataStructures::OffsetHashMapWrapper* getSerializableHashJoinHashMapProxy(
+    const SerializableHJOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const JoinBuildSideType buildSide,
+    const HJBuildPhysicalOperator* buildOperator)
+{
+    PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
+    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
+
+    // Create args without cleanup (wrappers manage memory)
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+        {},
+        buildOperator->hashMapOptions.keySize,
+        buildOperator->hashMapOptions.valueSize,
+        buildOperator->hashMapOptions.pageSize,
+        buildOperator->hashMapOptions.numberOfBuckets};
+    const auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
+        timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
+    INVARIANT(
+        slices.size() == 1,
+        "We expect exactly one slice for the given timestamp during the SerializableHJBuild, but got {}",
+        slices.size());
+
+    const auto serSlice = std::dynamic_pointer_cast<SerializableHJSlice>(slices[0]);
+    INVARIANT(serSlice != nullptr, "The slice should be a SerializableHJSlice in a SerializableHJBuildPhysicalOperator");
+    return serSlice->getOffsetHashMapWrapper(workerThreadId, buildSide);
+}
+
+// Helper: convert to offset field offsets
+static std::vector<NES::Nautilus::Interface::MemoryProvider::OffsetFieldOffsets> toOffsetFields(
+    const std::vector<NES::Nautilus::Interface::MemoryProvider::FieldOffsets>& fields)
+{
+    std::vector<NES::Nautilus::Interface::MemoryProvider::OffsetFieldOffsets> out;
+    out.reserve(fields.size());
+    for (const auto& f : fields) {
+        out.emplace_back(NES::Nautilus::Interface::MemoryProvider::OffsetFieldOffsets{f.fieldIdentifier, f.type, f.fieldOffset});
+    }
+    return out;
 }
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
@@ -148,34 +193,79 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         record.write(fieldIdentifier, value);
     }
 
-    /// Finding or creating the entry for the provided record
-    const auto hashMapEntry = hashMap.findOrCreateEntry(
-        record,
-        *hashMapOptions.hashFunction,
-        [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
-        {
-            /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
-            const auto state = entryRefReset.getValueMemArea();
-            nautilus::invoke(
-                +[](int8_t* pagedVectorMemArea) -> void
-                {
-                    /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-                    /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                    auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea);
-                    new (pagedVector) Nautilus::Interface::PagedVector();
-                },
-                state);
-        },
-        ctx.pipelineMemoryProvider.bufferProvider);
+    if (useSerializableJoinVectors)
+    {
+        // Serializable path: use offset-based hash map
+        const auto wrapperPtr = nautilus::invoke(
+            +[](OperatorHandler* handler, Timestamp ts, WorkerThreadId threadId, JoinBuildSideType side, const HJBuildPhysicalOperator* self) -> DataStructures::OffsetHashMapWrapper*
+            {
+                auto* ser = dynamic_cast<const SerializableHJOperatorHandler*>(handler);
+                PRECONDITION(ser != nullptr, "Handler must be SerializableHJOperatorHandler when serializable join is enabled");
+                return getSerializableHashJoinHashMapProxy(ser, ts, threadId, side, self);
+            },
+            operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<JoinBuildSideType>(joinBuildSide), nautilus::val<const HJBuildPhysicalOperator*>(this));
 
-    /// Inserting the tuple into the corresponding hash entry
-    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef{
-        hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
-    auto entryMemArea = entryRef.getValueMemArea();
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
-    pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+        auto keyOffsets = toOffsetFields(hashMapOptions.fieldKeys);
+        auto valOffsets = toOffsetFields(hashMapOptions.fieldValues);
+        Interface::OffsetHashMapRef offMap(wrapperPtr, keyOffsets, valOffsets);
+
+        // Insert/find and initialize vector if new
+        const auto entry = offMap.findOrCreateEntry(
+            record,
+            *hashMapOptions.hashFunction,
+            [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+            {
+                const Interface::OffsetHashMapRef::OffsetEntryRef ref(
+                    static_cast<nautilus::val<DataStructures::OffsetEntry*>>(static_cast<nautilus::val<void*>>(entry)),
+                    wrapperPtr, keyOffsets, valOffsets);
+                const auto state = ref.getValueMemArea();
+                // Use non-serializable PagedVector to avoid linking SerializablePagedVector in this path
+                nautilus::invoke(+[](int8_t* mem) { new (reinterpret_cast<Nautilus::Interface::PagedVector*>(mem)) Nautilus::Interface::PagedVector(); }, state);
+            },
+            ctx.pipelineMemoryProvider.bufferProvider);
+
+        const Interface::OffsetHashMapRef::OffsetEntryRef ref(
+            static_cast<nautilus::val<DataStructures::OffsetEntry*>>(static_cast<nautilus::val<void*>>(entry)),
+            wrapperPtr, keyOffsets, valOffsets);
+        auto entryMemArea = ref.getValueMemArea();
+        Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
+        pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+    }
+    else
+    {
+        /// Finding or creating the entry for the provided record (chained hash map)
+        const auto hashMapEntry = hashMap.findOrCreateEntry(
+            record,
+            *hashMapOptions.hashFunction,
+            [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+            {
+                const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                    entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+                const auto state = entryRefReset.getValueMemArea();
+                if (useSerializableJoinVectors)
+                {
+                    nautilus::invoke(+[](int8_t* mem) { new (reinterpret_cast<NES::DataStructures::SerializablePagedVector*>(mem)) NES::DataStructures::SerializablePagedVector(); }, state);
+                }
+                else
+                {
+                    nautilus::invoke(+[](int8_t* mem) { new (reinterpret_cast<Nautilus::Interface::PagedVector*>(mem)) Nautilus::Interface::PagedVector(); }, state);
+                }
+            },
+            ctx.pipelineMemoryProvider.bufferProvider);
+
+        const Interface::ChainedHashMapRef::ChainedEntryRef entryRef{
+            hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+        auto entryMemArea = entryRef.getValueMemArea();
+        Nautilus::Interface::PagedVectorRef pagedVectorRef = [&]() {
+            if (useSerializableJoinVectors)
+            {
+                auto asSerializable = static_cast<nautilus::val<NES::DataStructures::SerializablePagedVector*>>(static_cast<nautilus::val<void*>>(entryMemArea));
+                return Nautilus::Interface::PagedVectorRef(asSerializable, memoryProvider);
+            }
+            return Nautilus::Interface::PagedVectorRef(entryMemArea, memoryProvider);
+        }();
+        pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+    }
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(
@@ -183,9 +273,11 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-    HashMapOptions hashMapOptions)
+    HashMapOptions hashMapOptions,
+    bool useSerializableJoinVectors)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), memoryProvider)
     , hashMapOptions(std::move(hashMapOptions))
+    , useSerializableJoinVectors(useSerializableJoinVectors)
 {
 }
 

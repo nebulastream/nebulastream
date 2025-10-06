@@ -81,5 +81,13 @@ public:
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
     /// Summary structure for query.
     [[nodiscard]] std::expected<QuerySummary, Exception> getQuerySummary(QueryId queryId) const noexcept;
+
+    std::expected<void, Exception> exportCheckpoint(QueryId queryId, const std::string& path) noexcept;
+    std::expected<QueryId, Exception> importCheckpoint(const std::string& path) noexcept;
+
+private:
+    std::unordered_map<QueryId, LogicalPlan> originalPlans;
+    /// Map checkpoint path to a plan snapshot for import
+    std::unordered_map<std::string, LogicalPlan> checkpointPlanByPath;
 };
 }

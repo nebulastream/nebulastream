@@ -52,7 +52,7 @@ struct SequenceState
 class EmitOperatorHandler final : public OperatorHandler
 {
 public:
-    EmitOperatorHandler() = default;
+    EmitOperatorHandler() : OperatorHandler(false) {}
 
     /// Returns the next chunk number belonging to a sequence number for emitting a buffer
     uint64_t getNextChunkNumber(SequenceNumberForOriginId seqNumberOriginId);

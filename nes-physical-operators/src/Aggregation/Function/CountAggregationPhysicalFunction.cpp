@@ -44,13 +44,22 @@ void CountAggregationPhysicalFunction::lift(
 {
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    nautilus::invoke(+[](AggregationState* ptr) {
+        printf("COUNT_LIFT: StatePtr=%p, reading count\n", ptr);
+    }, aggregationState);
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, inputType.type);
+    nautilus::invoke(+[](AggregationState* ptr) {
+        uint64_t countValue = *reinterpret_cast<uint64_t*>(ptr);
+        printf("COUNT_LIFT: Read count=%lu, incrementing\n", countValue);
+    }, aggregationState);
 
     /// Updating the count with the new value
     const auto newCount = count + nautilus::val<uint64_t>(1);
+    printf("COUNT_LIFT: Writing incremented count\n");
 
     /// Writing the new count and count back to the aggregation state
     newCount.writeToMemory(memAreaCount);
+    fflush(stdout);
 }
 
 void CountAggregationPhysicalFunction::combine(
@@ -78,6 +87,14 @@ Nautilus::Record CountAggregationPhysicalFunction::lower(const nautilus::val<Agg
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, inputType.type);
+    auto statePtr = nautilus::invoke(+[](AggregationState* ptr) -> AggregationState* {
+        return ptr;
+    }, aggregationState);
+    nautilus::invoke(+[](AggregationState* ptr) {
+        uint64_t finalCountValue = *reinterpret_cast<uint64_t*>(ptr);
+        printf("COUNT_LOWER: StatePtr=%p, FinalCount=%lu\n", ptr, finalCountValue);
+    }, aggregationState);
+    fflush(stdout);
 
     /// Creating a record with the count
     Nautilus::Record record;
@@ -90,7 +107,15 @@ void CountAggregationPhysicalFunction::reset(const nautilus::val<AggregationStat
 {
     /// Resetting the count and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    nautilus::invoke(+[](AggregationState* ptr, size_t size) {
+        printf("COUNT_RESET: StatePtr=%p, Size=%zu\n", ptr, size);
+    }, aggregationState, nautilus::val<size_t>(getSizeOfStateInBytes()));
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
+    nautilus::invoke(+[](AggregationState* ptr) {
+        uint64_t resetValue = *reinterpret_cast<uint64_t*>(ptr);
+        printf("COUNT_RESET: After memset, State[0]=%lu\n", resetValue);
+    }, aggregationState);
+    fflush(stdout);
 }
 
 void CountAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)

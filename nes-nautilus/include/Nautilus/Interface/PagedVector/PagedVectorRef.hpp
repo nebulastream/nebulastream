@@ -24,6 +24,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+#include <Nautilus/DataStructures/SerializablePagedVector.hpp>
+#include <functional>
 
 namespace NES::Nautilus::Interface
 {
@@ -39,6 +41,14 @@ public:
     friend class PagedVectorRefIter;
     PagedVectorRef(
         const nautilus::val<PagedVector*>& pagedVectorRef,
+        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
+
+    PagedVectorRef(
+        const nautilus::val<DataStructures::SerializablePagedVector*>& pagedVectorRef,
+        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
+
+    PagedVectorRef(
+        const nautilus::val<int8_t*>& valueAreaPtr,
         const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
     /// Writes a new record to the pagedVectorRef
@@ -58,7 +68,12 @@ public:
     [[nodiscard]] nautilus::val<uint64_t> getNumberOfTuples() const;
 
 private:
-    nautilus::val<PagedVector*> pagedVectorRef;
+    nautilus::val<void*> anyVectorRef;
+    std::function<uint64_t(void*)> fnGetTotalEntries;
+    std::function<const Memory::TupleBuffer*(void*, Memory::AbstractBufferProvider*, const Memory::MemoryLayouts::MemoryLayout*)>
+        fnCreateNewEntry;
+    std::function<const Memory::TupleBuffer*(void*, uint64_t)> fnGetTupleBufferForEntry;
+    std::function<uint64_t(void*, uint64_t)> fnGetBufferPosForEntry;
     std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     nautilus::val<Memory::MemoryLayouts::MemoryLayout*> memoryLayout;
 };

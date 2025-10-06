@@ -19,6 +19,7 @@
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
@@ -48,7 +49,7 @@ namespace
 NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceEnd sliceEnd)
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
-    const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
+    const auto* opHandler = dynamic_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
 
     auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);

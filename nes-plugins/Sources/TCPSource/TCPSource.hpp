@@ -193,6 +193,7 @@ public:
 private:
     bool tryToConnect(const addrinfo* result, int flags);
     bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    [[nodiscard]] const char* formatErrnoMessage(int error);
 
     int connection = -1;
     int sockfd = -1;

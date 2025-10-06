@@ -67,6 +67,24 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
 }
 
+const char* TCPSource::formatErrnoMessage(int error)
+{
+#if defined(__GLIBC__) && !defined(__APPLE__)
+    char* message = strerror_r(error, errBuffer.data(), errBuffer.size());
+    if (message != nullptr && message != errBuffer.data())
+    {
+        std::strncpy(errBuffer.data(), message, errBuffer.size());
+        errBuffer.back() = '\0';
+    }
+#else
+    if (const int rc = strerror_r(error, errBuffer.data(), errBuffer.size()); rc != 0)
+    {
+        std::snprintf(errBuffer.data(), errBuffer.size(), "Error %d", error);
+    }
+#endif
+    return errBuffer.data();
+}
+
 std::ostream& TCPSource::toString(std::ostream& str) const
 {
     str << "\nTCPSource(";
@@ -127,8 +145,11 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             close();
             /// if connection was unsuccessful, throw an exception with context using errno
-            strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+            throw CannotOpenSource(
+                "Could not connect to: {}:{}. {}",
+                socketHost,
+                socketPort,
+                formatErrnoMessage(errno));
         }
 
         /// Set the timeout for the connect attempt
@@ -144,8 +165,11 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
             /// Timeout or error
             errno = ETIMEDOUT;
             close();
-            strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+            throw CannotOpenSource(
+                "Could not connect to: {}:{}. {}",
+                socketHost,
+                socketPort,
+                formatErrnoMessage(errno));
         }
 
         /// Check if connect succeeded
@@ -155,8 +179,11 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             errno = error;
             close();
-            strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+            throw CannotOpenSource(
+                "Could not connect to: {}:{}. {}",
+                socketHost,
+                socketPort,
+                formatErrnoMessage(errno));
         }
     }
     return true;

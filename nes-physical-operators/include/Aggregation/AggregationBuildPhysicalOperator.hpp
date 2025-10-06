@@ -18,9 +18,11 @@
 #include <memory>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
+#include <Aggregation/SerializableAggregationOperatorHandler.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/DataStructures/OffsetBasedHashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -37,6 +39,12 @@ Interface::HashMap* getAggHashMapProxy(
     WorkerThreadId workerThreadId,
     const AggregationBuildPhysicalOperator* buildOperator);
 
+DataStructures::OffsetHashMapWrapper* getSerializableAggHashMapProxy(
+    const SerializableAggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    const AggregationBuildPhysicalOperator* buildOperator);
+
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
 public:
@@ -46,17 +54,25 @@ public:
         WorkerThreadId workerThreadId,
         const AggregationBuildPhysicalOperator* buildOperator);
 
+    friend DataStructures::OffsetHashMapWrapper* getSerializableAggHashMapProxy(
+        const SerializableAggregationOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        const AggregationBuildPhysicalOperator* buildOperator);
+
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
-        HashMapOptions hashMapOptions);
+        HashMapOptions hashMapOptions,
+        bool useSerializableAggregation);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
+    bool useSerializableAggregation{false};
 
     /// shared_ptr as multiple slices need access to it
     using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;

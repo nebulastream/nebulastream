@@ -130,3 +130,12 @@ void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
 }
 
 }
+
+
+std::vector<NES::QueryEngine::OperatorHandlerSnapshot> NES::NodeEngine::snapshotOperatorHandlers(QueryId queryId) const
+{
+    if (queryEngine) {
+        return queryEngine->snapshotOperatorHandlers(queryId);
+    }
+    return {};
+}

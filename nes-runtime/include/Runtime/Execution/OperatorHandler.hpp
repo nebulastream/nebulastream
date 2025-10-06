@@ -39,13 +39,18 @@ inline OperatorHandlerId getNextOperatorHandlerId()
 class OperatorHandler
 {
 public:
-    OperatorHandler() = default;
+    explicit OperatorHandler(bool isSerializable = false) : isSerializableHandler(isSerializable) {}
 
     virtual ~OperatorHandler() = default;
 
     virtual void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) = 0;
 
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
+
+    bool getIsSerializable() const { return isSerializableHandler; }
+
+protected:
+    bool isSerializableHandler = false;
 };
 
 }

@@ -40,6 +40,11 @@ public:
     void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
+    const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() const
+    {
+        return operatorHandlers;
+    }
+
 protected:
     std::ostream& toString(std::ostream& os) const override;
 

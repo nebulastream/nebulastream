@@ -26,6 +26,7 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
 
@@ -120,5 +121,23 @@ std::vector<QuerySummary> QuerySubmitter::finishedQueries()
 
         return results;
     }
+}
+
+std::expected<void, Exception> QuerySubmitter::checkpoint(QueryId query, const std::string& path)
+{
+    if (auto* local = dynamic_cast<EmbeddedWorkerQueryManager*>(queryManager.get()))
+    {
+        return local->checkpoint(query, path);
+    }
+    return std::unexpected(InvalidConfigParameter("Checkpointing is only supported in local embedded mode"));
+}
+
+std::expected<QueryId, Exception> QuerySubmitter::recover(const std::string& path)
+{
+    if (auto* local = dynamic_cast<EmbeddedWorkerQueryManager*>(queryManager.get()))
+    {
+        return local->recover(path);
+    }
+    return std::unexpected(InvalidConfigParameter("Recovery is only supported in local embedded mode"));
 }
 }

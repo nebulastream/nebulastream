@@ -44,6 +44,8 @@
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <OperatorHandlersSnapshotRegistry.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -430,8 +432,8 @@ private:
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
-    detail::Queue admissionQueue;
-    detail::Queue internalTaskQueue;
+    NES::detail::Queue admissionQueue;
+    NES::detail::Queue internalTaskQueue;
 
     /// Class Invariant: numberOfThreads == pool.size().
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
@@ -521,6 +523,18 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
                 return false;
             });
         pipeline->stage->start(pec);
+        if (auto* compiled = dynamic_cast<CompiledExecutablePipelineStage*>(pipeline->stage.get()))
+        {
+            std::vector<OperatorHandlersSnapshotRegistry::Entry> entries;
+            for (const auto& kv : compiled->getOperatorHandlers())
+            {
+                entries.emplace_back(kv.first, kv.second);
+            }
+            if (!entries.empty())
+            {
+                OperatorHandlersSnapshotRegistry::add(startPipeline.queryId, entries);
+            }
+        }
         pool.statistic->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
         return true;
     }
@@ -755,6 +769,18 @@ QueryEngine::~QueryEngine()
 {
     ThreadPool::WorkerThread::id = ThreadPool::terminatorThreadId;
     queryCatalog->clear();
+}
+
+std::vector<QueryEngine::OperatorHandlerSnapshot> QueryEngine::snapshotOperatorHandlers(QueryId queryId) const
+{
+    std::vector<OperatorHandlerSnapshot> result;
+    auto entries = OperatorHandlersSnapshotRegistry::get(queryId);
+    result.reserve(entries.size());
+    for (auto& entry : entries)
+    {
+        result.push_back(OperatorHandlerSnapshot{entry.first, entry.second});
+    }
+    return result;
 }
 
 void QueryCatalog::start(

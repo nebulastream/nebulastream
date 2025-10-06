@@ -40,6 +40,8 @@ public:
 
     std::string getCurrentStatus();
 
+    void initializeBaseline(Timestamp ts);
+
 private:
     const std::vector<OriginId> origins;
     std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors;

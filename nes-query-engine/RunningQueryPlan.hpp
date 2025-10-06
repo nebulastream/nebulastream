@@ -202,6 +202,7 @@ struct RunningQueryPlan
     /// 3. Block until all sources are terminated.
     ~RunningQueryPlan();
 
+
 private:
     struct Internal
     {

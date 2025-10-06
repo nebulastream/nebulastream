@@ -25,51 +25,84 @@
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <val_ptr.hpp>
+#include <Nautilus/DataStructures/SerializablePagedVector.hpp>
 
 namespace NES::Nautilus::Interface
 {
 
-uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
-{
-    return pagedVector->getTotalNumberOfEntries();
-}
-
-const Memory::TupleBuffer* createNewEntryProxy(
-    PagedVector* pagedVector, Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
-{
-    pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
-    return std::addressof(pagedVector->getLastPage());
-}
-
-const Memory::TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
-{
-    return std::addressof(pagedVector->getFirstPage());
-}
-
-const Memory::TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
-{
-    return pagedVector->getTupleBufferForEntry(entryPos);
-}
-
-uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
-{
-    return pagedVector->getBufferPosForEntry(entryPos).value_or(0);
-}
-
 nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
 {
-    return nautilus::invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
+    return nautilus::invoke(fnGetTotalEntries, anyVectorRef);
 }
 
 PagedVectorRef::PagedVectorRef(
-    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
-    : pagedVectorRef(pagedVectorRef), memoryProvider(memoryProvider), memoryLayout(memoryProvider->getMemoryLayout().get())
+    const nautilus::val<PagedVector*>& pagedVectorRef,
+    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
+    : anyVectorRef(static_cast<nautilus::val<void*>>(static_cast<nautilus::val<void*>>(pagedVectorRef)))
+    , memoryProvider(memoryProvider)
+    , memoryLayout(memoryProvider->getMemoryLayout().get())
 {
+    fnGetTotalEntries = +[](void* ptr) -> uint64_t { return static_cast<PagedVector*>(ptr)->getTotalNumberOfEntries(); };
+    fnCreateNewEntry = +[](void* ptr, Memory::AbstractBufferProvider* provider, const Memory::MemoryLayouts::MemoryLayout* layout) {
+        auto* vector = static_cast<PagedVector*>(ptr);
+        vector->appendPageIfFull(provider, layout);
+        return std::addressof(vector->getLastPage());
+    };
+    fnGetTupleBufferForEntry = +[](void* ptr, uint64_t entry) -> const Memory::TupleBuffer* {
+        return static_cast<PagedVector*>(ptr)->getTupleBufferForEntry(entry);
+    };
+    fnGetBufferPosForEntry = +[](void* ptr, uint64_t entry) -> uint64_t {
+        return static_cast<PagedVector*>(ptr)->getBufferPosForEntry(entry).value_or(0);
+    };
+}
+
+PagedVectorRef::PagedVectorRef(
+    const nautilus::val<DataStructures::SerializablePagedVector*>& pagedVectorRef,
+    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
+    : anyVectorRef(static_cast<nautilus::val<void*>>(static_cast<nautilus::val<void*>>(pagedVectorRef)))
+    , memoryProvider(memoryProvider)
+    , memoryLayout(memoryProvider->getMemoryLayout().get())
+{
+    fnGetTotalEntries = +[](void* ptr) -> uint64_t {
+        return static_cast<DataStructures::SerializablePagedVector*>(ptr)->getTotalNumberOfEntries();
+    };
+    fnCreateNewEntry = +[](void* ptr, Memory::AbstractBufferProvider* provider, const Memory::MemoryLayouts::MemoryLayout* layout) {
+        auto* vector = static_cast<DataStructures::SerializablePagedVector*>(ptr);
+        vector->appendPageIfFull(provider, layout);
+        return std::addressof(vector->getLastPage());
+    };
+    fnGetTupleBufferForEntry = +[](void* ptr, uint64_t entry) -> const Memory::TupleBuffer* {
+        return static_cast<DataStructures::SerializablePagedVector*>(ptr)->getTupleBufferForEntry(entry);
+    };
+    fnGetBufferPosForEntry = +[](void* ptr, uint64_t entry) -> uint64_t {
+        return static_cast<DataStructures::SerializablePagedVector*>(ptr)->getBufferPosForEntry(entry).value_or(0);
+    };
+}
+
+PagedVectorRef::PagedVectorRef(
+    const nautilus::val<int8_t*>& valueAreaPtr,
+    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
+    : anyVectorRef(static_cast<nautilus::val<void*>>(valueAreaPtr))
+    , memoryProvider(memoryProvider)
+    , memoryLayout(memoryProvider->getMemoryLayout().get())
+{
+    fnGetTotalEntries = +[](void* ptr) -> uint64_t { return static_cast<PagedVector*>(ptr)->getTotalNumberOfEntries(); };
+    fnCreateNewEntry = +[](void* ptr, Memory::AbstractBufferProvider* provider, const Memory::MemoryLayouts::MemoryLayout* layout) {
+        auto* vector = static_cast<PagedVector*>(ptr);
+        vector->appendPageIfFull(provider, layout);
+        return std::addressof(vector->getLastPage());
+    };
+    fnGetTupleBufferForEntry = +[](void* ptr, uint64_t entry) -> const Memory::TupleBuffer* {
+        return static_cast<PagedVector*>(ptr)->getTupleBufferForEntry(entry);
+    };
+    fnGetBufferPosForEntry = +[](void* ptr, uint64_t entry) -> uint64_t {
+        return static_cast<PagedVector*>(ptr)->getBufferPosForEntry(entry).value_or(0);
+    };
 }
 
 void PagedVectorRef::writeRecord(const Record& record, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
-    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
+    auto recordBuffer = RecordBuffer(invoke(fnCreateNewEntry, anyVectorRef, bufferProvider, memoryLayout));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
     memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record, bufferProvider);
     recordBuffer.setNumRecords(numTuplesOnPage + 1);
@@ -80,8 +113,8 @@ Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos, const std:
     /// As we can not return two values via one invoke, we have to perform two invokes
     /// This is still less than iterating over the pages in the PagedVector here and calling getNumberOfTuples on each page.
     /// As calling getNumberOfTuples on each page would require one invoke per page.
-    const auto recordBuffer = RecordBuffer(invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos));
-    auto recordEntry = invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
+    const auto recordBuffer = RecordBuffer(invoke(fnGetTupleBufferForEntry, anyVectorRef, pos));
+    auto recordEntry = invoke(fnGetBufferPosForEntry, anyVectorRef, pos);
     const auto record = memoryProvider->readRecord(projections, recordBuffer, recordEntry);
     return record;
 }
@@ -89,9 +122,9 @@ Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos, const std:
 PagedVectorRefIter PagedVectorRef::begin(const std::vector<Record::RecordFieldIdentifier>& projections) const
 {
     const nautilus::val<uint64_t> pos(0);
-    const auto numberOfTuplesInPagedVector = invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
-    const auto curPage = nautilus::invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos);
-    const auto posOnPage = nautilus::invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
+    const auto numberOfTuplesInPagedVector = invoke(fnGetTotalEntries, anyVectorRef);
+    const auto curPage = nautilus::invoke(fnGetTupleBufferForEntry, anyVectorRef, pos);
+    const auto posOnPage = nautilus::invoke(fnGetBufferPosForEntry, anyVectorRef, pos);
     PagedVectorRefIter pagedVectorRefIter(*this, memoryProvider, projections, curPage, posOnPage, pos, numberOfTuplesInPagedVector);
     return pagedVectorRefIter;
 }
@@ -99,7 +132,7 @@ PagedVectorRefIter PagedVectorRef::begin(const std::vector<Record::RecordFieldId
 PagedVectorRefIter PagedVectorRef::end(const std::vector<Record::RecordFieldIdentifier>& projections) const
 {
     /// End does not point to any existing page. Therefore, we only set the pos
-    const auto pos = invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
+    const auto pos = invoke(fnGetTotalEntries, anyVectorRef);
     const nautilus::val<Memory::TupleBuffer*> curPage(nullptr);
     const nautilus::val<uint64_t> posOnPage(0);
     PagedVectorRefIter pagedVectorRefIter(*this, memoryProvider, projections, curPage, posOnPage, pos, pos);
@@ -108,7 +141,7 @@ PagedVectorRefIter PagedVectorRef::end(const std::vector<Record::RecordFieldIden
 
 nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) const
 {
-    return memoryProvider == other.memoryProvider && pagedVectorRef == other.pagedVectorRef;
+    return memoryProvider == other.memoryProvider && anyVectorRef == other.anyVectorRef;
 }
 
 PagedVectorRefIter::PagedVectorRefIter(
@@ -147,8 +180,8 @@ PagedVectorRefIter& PagedVectorRefIter::operator++()
         posOnPage = 0;
         if (pos < numberOfTuplesInPagedVector)
         {
-            curPage = nautilus::invoke(getTupleBufferForEntryProxy, this->pagedVector.pagedVectorRef, this->pos);
-            posOnPage = nautilus::invoke(getBufferPosForEntryProxy, this->pagedVector.pagedVectorRef, this->pos);
+            curPage = nautilus::invoke(this->pagedVector.fnGetTupleBufferForEntry, this->pagedVector.anyVectorRef, this->pos);
+            posOnPage = nautilus::invoke(this->pagedVector.fnGetBufferPosForEntry, this->pagedVector.anyVectorRef, this->pos);
         }
     }
     return *this;

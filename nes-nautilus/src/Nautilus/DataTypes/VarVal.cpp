@@ -67,7 +67,10 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
         {
             if constexpr (std::is_same_v<ValType, VariableSizedData>)
             {
-                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData"));
+                // For VARSIZED_POINTER_REP, we store the pointer to the data
+                // The caller (OffsetEntryMemoryProvider) should handle memory allocation
+                // and call this method with the address where the pointer should be stored
+                static_cast<nautilus::val<const int8_t**>>(memRef) = val.getReference();
             }
             else
             {
@@ -137,10 +140,10 @@ VarVal VarVal::castToType(const DataType::Type type) const
         case DataType::Type::VARSIZED: {
             return cast<VariableSizedData>();
         }
-        case DataType::Type::VARSIZED_POINTER_REP:
-            throw UnknownDataType(
-                "Not supporting reading {} data type from memory. VARSIZED_POINTER_REP should is only supported in the ChainedHashMap!",
-                magic_enum::enum_name(type));
+        case DataType::Type::VARSIZED_POINTER_REP: {
+            // For VARSIZED_POINTER_REP in castToType, just return the VariableSizedData as-is
+            return cast<VariableSizedData>();
+        }
         case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
@@ -188,8 +191,12 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         case DataType::Type::FLOAT64: {
             return {Util::readValueFromMemRef<double>(memRef)};
         }
+        case DataType::Type::VARSIZED_POINTER_REP: {
+            // For VARSIZED_POINTER_REP, we read the pointer from memory and create VariableSizedData
+            const auto varSizedDataPtr = Util::readValueFromMemRef<const int8_t*>(memRef);
+            return VariableSizedData(varSizedDataPtr);
+        }
         case DataType::Type::VARSIZED:
-        case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
     }

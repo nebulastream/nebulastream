@@ -60,7 +60,8 @@ public:
     WindowBasedOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        bool isSerializable = false);
 
     ~WindowBasedOperatorHandler() override = default;
 
@@ -70,6 +71,10 @@ public:
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
+
+    // Accessors for recovery/export integration
+    const std::vector<OriginId>& getInputOrigins() const { return inputOrigins; }
+    OriginId getOutputOriginId() const { return outputOriginId; }
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore
     void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
@@ -85,6 +90,14 @@ public:
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
     [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const = 0;
+
+    // Initialize watermark baselines (used during recovery)
+    void setBuildWatermarkBaseline(Timestamp ts);
+    void setProbeWatermarkBaseline(Timestamp ts);
+    void seedBuildWatermarkForOrigin(OriginId origin, Timestamp ts);
+
+    // Wait until slice store has observable state or timeout (best-effort)
+    bool waitForDataOrTimeout(uint64_t maxWaitMs = 200, uint64_t pollMs = 5) const;
 
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.

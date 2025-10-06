@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <thread>
 
 namespace NES
 {
@@ -32,8 +33,10 @@ namespace NES
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : sliceAndWindowStore(std::move(sliceAndWindowStore))
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    bool isSerializable)
+    : OperatorHandler(isSerializable)
+    , sliceAndWindowStore(std::move(sliceAndWindowStore))
     , numberOfWorkerThreads(0)
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
@@ -98,6 +101,42 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
     NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
+}
+
+void WindowBasedOperatorHandler::setBuildWatermarkBaseline(Timestamp ts)
+{
+    if (!watermarkProcessorBuild) {
+        watermarkProcessorBuild = std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins);
+    }
+    watermarkProcessorBuild->initializeBaseline(ts);
+}
+
+void WindowBasedOperatorHandler::setProbeWatermarkBaseline(Timestamp ts)
+{
+    if (!watermarkProcessorProbe) {
+        watermarkProcessorProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
+    }
+    watermarkProcessorProbe->initializeBaseline(ts);
+}
+
+void WindowBasedOperatorHandler::seedBuildWatermarkForOrigin(OriginId origin, Timestamp ts)
+{
+    if (!watermarkProcessorBuild) {
+        watermarkProcessorBuild = std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins);
+    }
+    // Seed specific origin with baseline value using initial sequence
+    [[maybe_unused]] auto result = watermarkProcessorBuild->updateWatermark(ts, SequenceData(INITIAL_SEQ_NUMBER, INITIAL_CHUNK_NUMBER, true), origin);
+}
+
+bool WindowBasedOperatorHandler::waitForDataOrTimeout(uint64_t maxWaitMs, uint64_t pollMs) const
+{
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(maxWaitMs);
+    while (std::chrono::steady_clock::now() < deadline) {
+        auto m = sliceAndWindowStore->getAllNonTriggeredSlices();
+        if (!m.empty()) { return true; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(pollMs));
+    }
+    return false;
 }
 
 }

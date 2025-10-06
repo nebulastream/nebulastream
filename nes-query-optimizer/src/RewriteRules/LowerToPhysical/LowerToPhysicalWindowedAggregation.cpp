@@ -21,6 +21,7 @@
 #include <vector>
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
+#include <Aggregation/SerializableAggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -31,6 +32,7 @@
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Nautilus/Interface/HashMap/OffsetHashMap/OffsetEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -58,16 +60,13 @@ getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
     std::vector<Record::RecordFieldIdentifier> fieldKeyNames;
     std::vector<Record::RecordFieldIdentifier> fieldValueNames;
 
-    /// Getting the key and value field names
+    /// Getting the key  field names
     for (const auto& nodeAccess : logicalOperator.getGroupingKeys())
     {
         fieldKeyNames.emplace_back(nodeAccess.getFieldName());
     }
-    for (const auto& descriptor : logicalOperator.getWindowAggregation())
-    {
-        const auto aggregationResultFieldIdentifier = descriptor->onField.getFieldName();
-        fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
-    }
+    /// For aggregation, we return empty value fields to trigger fallback logic
+    /// The value area contains aggregation states, not input field values
     return {fieldKeyNames, fieldValueNames};
 }
 
@@ -184,8 +183,68 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto entriesPerPage = pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
-    const auto& [fieldKeys, fieldValues]
-        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
+    
+    // For serializable aggregation, we need different field offset handling
+    bool serializableEnabled = conf.enableSerializableAggregation.getValue();
+    std::vector<Interface::MemoryProvider::FieldOffsets> fieldKeys, fieldValues;
+    
+    if (serializableEnabled) {
+        // For OffsetHashMap with aggregation: keys use input schema, values should be empty
+        // This allows OffsetEntryMemoryProvider to calculate correct aggregation state offsets
+        auto [keys, values] = Interface::MemoryProvider::OffsetEntryMemoryProvider::createOffsetFieldOffsets(
+            newInputSchema, fieldKeyNames, {} // Empty fieldValueNames for aggregation
+        );
+        
+        // Convert OffsetFieldOffsets to FieldOffsets for compatibility
+        for (const auto& key : keys) {
+            fieldKeys.emplace_back(Interface::MemoryProvider::FieldOffsets{
+                key.fieldIdentifier, key.type, key.fieldOffset
+            });
+        }
+        // Process values too - should be empty for aggregation states
+        for (const auto& val : values) {
+            fieldValues.emplace_back(Interface::MemoryProvider::FieldOffsets{
+                val.fieldIdentifier, val.type, val.fieldOffset
+            });
+        }
+        printf("FIELD_DEBUG: Serializable aggregation - fieldValues size=%zu after processing\n", fieldValues.size());
+        if (!fieldValues.empty()) {
+            printf("FIELD_DEBUG: WARNING - fieldValues should be empty for aggregation but has %zu entries\n", fieldValues.size());
+        }
+        fflush(stdout);
+    } else {
+        // Regular ChainedHashMap logic
+        auto [keys, values] = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
+            newInputSchema, fieldKeyNames, fieldValueNames
+        );
+        fieldKeys = std::move(keys);
+        fieldValues = std::move(values);
+    }
+
+    // Debug: Log aggregation hash map configuration and field offsets
+    NES_DEBUG(
+        "AGG_FIELD: keySize={} valueSize={} entriesPerPage={} entrySize={} buckets={} pageSize={} serializableEnabled={}",
+        keySize,
+        valueSize,
+        entriesPerPage,
+        entrySize,
+        numberOfBuckets,
+        pageSize,
+        serializableEnabled);
+    for (const auto& f : fieldKeys) {
+        NES_DEBUG(
+            "AGG_FIELD_OFFSETS: key field='{}' offset={} size={}",
+            f.fieldIdentifier,
+            f.fieldOffset,
+            f.type.getSizeInBytes());
+    }
+    for (const auto& f : fieldValues) {
+        NES_DEBUG(
+            "AGG_FIELD_OFFSETS: value field='{}' offset={} size={}",
+            f.fieldIdentifier,
+            f.fieldOffset,
+            f.type.getSizeInBytes());
+    }
 
     const auto windowMetaData = WindowMetaData{aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName()};
 
@@ -203,9 +262,43 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler = std::make_shared<AggregationOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
-    auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions);
-    auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData);
+    
+    // Check configuration to decide which handler to create
+    std::shared_ptr<OperatorHandler> handler;
+    
+    if (serializableEnabled) {
+        // Create SerializableAggregationOperatorHandler and configure sizes
+        auto serializableHandler = std::make_shared<SerializableAggregationOperatorHandler>(
+            inputOriginIds, outputOriginId, std::move(sliceAndWindowStore)
+        );
+        // Propagate correct key/value sizes and parameters into handler state config
+        auto& serState = serializableHandler->getState();
+        serState.config.keySize = keySize;               // sum of key sizes
+        serState.config.valueSize = valueSize;           // sum of aggregation state sizes
+        serState.config.numberOfBuckets = numberOfBuckets;
+        serState.config.pageSize = pageSize;
+        handler = serializableHandler;
+        NES_DEBUG("AGG_HANDLER: Using SerializableAggregationOperatorHandler (keySize={}, valueSize={}, buckets={}, pageSize={})",
+                  keySize, valueSize, numberOfBuckets, pageSize);
+    } else {
+        // Create regular AggregationOperatorHandler
+        handler = std::make_shared<AggregationOperatorHandler>(
+            inputOriginIds, outputOriginId, std::move(sliceAndWindowStore)
+        );
+        NES_DEBUG("AGG_HANDLER: Using AggregationOperatorHandler");
+    }
+    auto build = AggregationBuildPhysicalOperator(
+        handlerId,
+        std::move(timeFunction),
+        aggregationPhysicalFunctions,
+        hashMapOptions,
+        serializableEnabled);
+    auto probe = AggregationProbePhysicalOperator(
+        hashMapOptions,
+        aggregationPhysicalFunctions,
+        handlerId,
+        windowMetaData,
+        serializableEnabled);
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);

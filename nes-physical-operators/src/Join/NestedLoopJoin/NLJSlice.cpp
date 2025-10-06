@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/DataStructures/SerializablePagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
 namespace NES
@@ -29,48 +30,40 @@ namespace NES
 
 NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads) : Slice(sliceStart, sliceEnd)
 {
-    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
-    {
-        leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i) {
+        leftPagedVectors.emplace_back(std::make_unique<DataStructures::SerializablePagedVector>());
     }
 
-    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
-    {
-        rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i) {
+        rightPagedVectors.emplace_back(std::make_unique<DataStructures::SerializablePagedVector>());
     }
 }
 
 uint64_t NLJSlice::getNumberOfTuplesLeft() const
 {
-    return std::accumulate(
-        leftPagedVectors.begin(),
-        leftPagedVectors.end(),
-        0,
-        [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
+    return std::accumulate(leftPagedVectors.begin(), leftPagedVectors.end(), 0ULL,
+                           [](uint64_t sum, const auto& pv) { return sum + pv->getTotalNumberOfEntries(); });
 }
 
 uint64_t NLJSlice::getNumberOfTuplesRight() const
 {
-    return std::accumulate(
-        rightPagedVectors.begin(),
-        rightPagedVectors.end(),
-        0,
-        [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
+    return std::accumulate(rightPagedVectors.begin(), rightPagedVectors.end(), 0ULL,
+                           [](uint64_t sum, const auto& pv) { return sum + pv->getTotalNumberOfEntries(); });
 }
 
-Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
+DataStructures::SerializablePagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % leftPagedVectors.size();
     return leftPagedVectors[pos].get();
 }
 
-Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
+DataStructures::SerializablePagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % rightPagedVectors.size();
     return rightPagedVectors[pos].get();
 }
 
-Nautilus::Interface::PagedVector*
+DataStructures::SerializablePagedVector*
 NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)

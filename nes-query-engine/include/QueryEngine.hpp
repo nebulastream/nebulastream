@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
@@ -38,6 +39,12 @@ public:
     void stop(QueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();
+
+    struct OperatorHandlerSnapshot {
+        OperatorHandlerId id;
+        std::shared_ptr<OperatorHandler> handler;
+    };
+    std::vector<OperatorHandlerSnapshot> snapshotOperatorHandlers(QueryId queryId) const;
 
     /// Order of Member construction is top to bottom and order of destruction is reversed
     /// Starting the ThreadPool is the very **last** thing the query engine does and **stopping**

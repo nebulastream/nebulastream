@@ -31,6 +31,10 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &testGroups,
         &testDataDir,
         &endlessMode,
+        &checkpointMode,
+        &checkpointAfterMs,
+        &checkpointDir,
+        &checkpointCompareBaseline,
         &excludeGroups,
         &grpcAddressUri};
 }

@@ -21,6 +21,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/DataStructures/SerializablePagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/Slice.hpp>
 
@@ -38,16 +39,16 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuplesRight() const;
 
     /// Returns the pointer to the PagedVector on either side.
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
+    [[nodiscard]] DataStructures::SerializablePagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] DataStructures::SerializablePagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] DataStructures::SerializablePagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
 
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
 
 private:
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
+    std::vector<std::unique_ptr<DataStructures::SerializablePagedVector>> leftPagedVectors;
+    std::vector<std::unique_ptr<DataStructures::SerializablePagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;
 };
 }

@@ -14,7 +14,9 @@
 
 #include <SystestRunner.hpp>
 
+#include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <cerrno>
 #include <chrono>
 #include <cstddef>
@@ -36,6 +38,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <thread>
 
 #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
 #include <fmt/base.h>
@@ -67,6 +70,28 @@ namespace NES::Systest
 {
 namespace
 {
+std::string sanitizeForFilename(std::string_view candidate)
+{
+    std::string sanitized;
+    sanitized.reserve(candidate.size());
+    for (const char ch : candidate)
+    {
+        if (std::isalnum(static_cast<unsigned char>(ch)) || ch == '-' || ch == '_')
+        {
+            sanitized.push_back(ch);
+        }
+        else
+        {
+            sanitized.push_back('_');
+        }
+    }
+    if (sanitized.empty())
+    {
+        sanitized = "query";
+    }
+    return sanitized;
+}
+
 template <typename ErrorCallable>
 void reportResult(
     std::shared_ptr<RunningQuery>& runningQuery,
@@ -354,6 +379,241 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
     QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter);
+}
+
+std::vector<RunningQuery> runQueriesAtLocalWorkerWithCheckpoint(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t /*numConcurrentQueriesIgnored*/,
+    const SingleNodeWorkerConfiguration& configuration,
+    const SystestConfiguration& config)
+{
+    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
+    QuerySubmitter submitter(std::move(embeddedQueryManager));
+
+    std::vector<std::shared_ptr<RunningQuery>> executedQueries;
+    executedQueries.reserve(queries.size());
+
+    const auto totalQueries = queries.size();
+    std::size_t queryFinishedCounter = 0;
+
+    const auto checkpointRoot = std::filesystem::path(config.checkpointDir.getValue());
+    try
+    {
+        if (!checkpointRoot.empty())
+        {
+            std::filesystem::create_directories(checkpointRoot);
+        }
+    }
+    catch (const std::filesystem::filesystem_error& error)
+    {
+        NES_WARNING("Failed to create checkpoint directory {}: {}", checkpointRoot.string(), error.what());
+    }
+
+    for (const auto& query : queries)
+    {
+        auto runningQuery = std::make_shared<RunningQuery>(query);
+        executedQueries.emplace_back(runningQuery);
+
+        const auto finishWithResult = [&](const std::string& message, bool passed, std::optional<Exception> error = std::nullopt) {
+            runningQuery->passed = passed;
+            if (error.has_value())
+            {
+                runningQuery->exception = error;
+            }
+            const auto performanceMessage = passed ? fmt::format(" in {} ({})", runningQuery->getElapsedTime(), runningQuery->getThroughput())
+                                                   : std::string{};
+            printQueryResultToStdOut(*runningQuery, message, queryFinishedCounter, totalQueries, performanceMessage);
+            ++queryFinishedCounter;
+            if (!passed)
+            {
+                NES_DEBUG("Checkpoint run failed for {}: {}", runningQuery->systestQuery.testName, message);
+            }
+        };
+
+        if (!query.planInfoOrException.has_value())
+        {
+            auto error = query.planInfoOrException.error();
+            finishWithResult(error.what(), false, error);
+            continue;
+        }
+
+        const auto& planInfo = query.planInfoOrException.value();
+        {
+            size_t bytesProcessed = 0;
+            size_t tuplesProcessed = 0;
+            for (const auto& [sourcePath, sourceOccurrencesInQuery] : planInfo.sourcesToFilePathsAndCounts | std::views::values)
+            {
+                if (!std::filesystem::exists(sourcePath.getRawValue()) || !sourcePath.getRawValue().has_filename())
+                {
+                    NES_ERROR("Source path is empty or does not exist.");
+                    bytesProcessed = 0;
+                    tuplesProcessed = 0;
+                    break;
+                }
+                bytesProcessed += (std::filesystem::file_size(sourcePath.getRawValue()) * sourceOccurrencesInQuery);
+                std::ifstream inFile(sourcePath.getRawValue());
+                tuplesProcessed
+                    += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
+            }
+            runningQuery->bytesProcessed = bytesProcessed;
+            runningQuery->tuplesProcessed = tuplesProcessed;
+        }
+
+        const auto registrationResult = submitter.registerQuery(planInfo.queryPlan);
+        if (!registrationResult.has_value())
+        {
+            auto error = registrationResult.error();
+            finishWithResult(error.what(), false, error);
+            continue;
+        }
+
+        const auto originalQueryId = registrationResult.value();
+        runningQuery->queryId = originalQueryId;
+
+        const auto cleanupOriginalQuery = [&]() {
+            try
+            {
+                submitter.stopQuery(originalQueryId);
+            }
+            catch (const Exception& exception)
+            {
+                NES_DEBUG("Ignoring stop failure for checkpoint baseline query {}: {}", originalQueryId, exception.what());
+            }
+            try
+            {
+                submitter.waitForQueryTermination(originalQueryId);
+            }
+            catch (const std::exception& exception)
+            {
+                NES_DEBUG("Ignoring wait failure for checkpoint baseline query {}: {}", originalQueryId, exception.what());
+            }
+            try
+            {
+                submitter.unregisterQuery(originalQueryId);
+            }
+            catch (const Exception& exception)
+            {
+                NES_DEBUG("Ignoring unregister failure for checkpoint baseline query {}: {}", originalQueryId, exception.what());
+            }
+        };
+
+        try
+        {
+            submitter.startQuery(originalQueryId);
+        }
+        catch (const Exception& error)
+        {
+            cleanupOriginalQuery();
+            finishWithResult(error.what(), false, error);
+            continue;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(config.checkpointAfterMs.getValue()));
+
+        const auto checkpointFile = checkpointRoot
+            / fmt::format(
+                  "{}_{}_{}.neschk",
+                  sanitizeForFilename(query.testName),
+                  query.queryIdInFile.toString(),
+                  originalQueryId.getRawValue());
+
+        const auto checkpointResult = submitter.checkpoint(originalQueryId, checkpointFile.string());
+        if (!checkpointResult.has_value())
+        {
+            cleanupOriginalQuery();
+            auto error = checkpointResult.error();
+            finishWithResult(error.what(), false, error);
+            continue;
+        }
+
+        cleanupOriginalQuery();
+
+        const auto recoveredQueryIdResult = submitter.recover(checkpointFile.string());
+        if (!recoveredQueryIdResult.has_value())
+        {
+            auto error = recoveredQueryIdResult.error();
+            finishWithResult(error.what(), false, error);
+            continue;
+        }
+
+        const auto recoveredQueryId = recoveredQueryIdResult.value();
+        runningQuery->queryId = recoveredQueryId;
+
+        const auto cleanupRecoveredQuery = [&]() {
+            try
+            {
+                submitter.stopQuery(recoveredQueryId);
+            }
+            catch (const Exception& exception)
+            {
+                NES_DEBUG("Ignoring stop failure for recovered checkpoint query {}: {}", recoveredQueryId, exception.what());
+            }
+            try
+            {
+                submitter.unregisterQuery(recoveredQueryId);
+            }
+            catch (const Exception& exception)
+            {
+                NES_DEBUG("Ignoring unregister failure for recovered checkpoint query {}: {}", recoveredQueryId, exception.what());
+            }
+        };
+
+        try
+        {
+            submitter.startQuery(recoveredQueryId);
+        }
+        catch (const Exception& error)
+        {
+            cleanupRecoveredQuery();
+            finishWithResult(error.what(), false, error);
+            continue;
+        }
+
+        auto summary = submitter.waitForQueryTermination(recoveredQueryId);
+        runningQuery->querySummary = summary;
+
+        cleanupRecoveredQuery();
+
+        if (summary.runs.empty())
+        {
+            finishWithResult("Query summary run history is empty after recovery", false, TestException("Recovered query produced no run"));
+            continue;
+        }
+
+        if (summary.runs.back().error.has_value())
+        {
+            auto error = summary.runs.back().error.value();
+            finishWithResult(error.what(), false, error);
+            continue;
+        }
+
+        const auto errorMessage = checkResult(*runningQuery);
+        if (errorMessage.has_value())
+        {
+            finishWithResult(*errorMessage, false, TestException(*errorMessage));
+            continue;
+        }
+
+        runningQuery->passed = true;
+        printQueryResultToStdOut(
+            *runningQuery,
+            "",
+            queryFinishedCounter,
+            totalQueries,
+            fmt::format(" in {} ({})", runningQuery->getElapsedTime(), runningQuery->getThroughput()));
+        ++queryFinishedCounter;
+    }
+
+    std::vector<RunningQuery> failedQueries;
+    failedQueries.reserve(executedQueries.size());
+    for (const auto& query : executedQueries)
+    {
+        if (!query->passed)
+        {
+            failedQueries.emplace_back(*query);
+        }
+    }
+    return failedQueries;
 }
 
 std::vector<RunningQuery>

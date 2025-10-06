@@ -51,4 +51,14 @@ std::expected<QuerySummary, Exception> EmbeddedWorkerQueryManager::status(QueryI
 {
     return worker.getQuerySummary(queryId);
 }
+
+std::expected<void, Exception> EmbeddedWorkerQueryManager::checkpoint(QueryId queryId, const std::string& path) noexcept
+{
+    return worker.exportCheckpoint(queryId, path);
+}
+
+std::expected<QueryId, Exception> EmbeddedWorkerQueryManager::recover(const std::string& path) noexcept
+{
+    return worker.importCheckpoint(path);
+}
 }

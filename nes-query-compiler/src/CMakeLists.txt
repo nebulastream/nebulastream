@@ -13,6 +13,7 @@
 add_source_files(nes-query-compiler
         QueryCompiler.cpp
         PipelinedQueryPlan.cpp
+        RecoveredOperatorHandlersRegistry.cpp
 )
 
 add_subdirectory(Phases)

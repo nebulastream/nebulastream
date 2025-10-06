@@ -30,8 +30,18 @@
 namespace NES
 {
 class HJBuildPhysicalOperator;
+class SerializableHJOperatorHandler;
+namespace DataStructures { class OffsetHashMapWrapper; }
+
 Interface::HashMap* getHashJoinHashMapProxy(
     const HJOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    JoinBuildSideType buildSide,
+    const HJBuildPhysicalOperator* buildOperator);
+
+DataStructures::OffsetHashMapWrapper* getSerializableHashJoinHashMapProxy(
+    const SerializableHJOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
     JoinBuildSideType buildSide,
@@ -49,17 +59,25 @@ public:
         WorkerThreadId workerThreadId,
         JoinBuildSideType buildSide,
         const HJBuildPhysicalOperator* buildOperator);
+    friend DataStructures::OffsetHashMapWrapper* getSerializableHashJoinHashMapProxy(
+        const SerializableHJOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        JoinBuildSideType buildSide,
+        const HJBuildPhysicalOperator* buildOperator);
     HJBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-        HashMapOptions hashMapOptions);
+        HashMapOptions hashMapOptions,
+        bool useSerializableJoinVectors = false);
     void setup(ExecutionContext& executionCtx) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     HashMapOptions hashMapOptions;
+    bool useSerializableJoinVectors{false};
 };
 
 }

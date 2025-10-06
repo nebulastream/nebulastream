@@ -39,7 +39,14 @@ nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T:
 template <typename T>
 nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
 {
-    return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
+    if constexpr (std::is_pointer_v<T>)
+    {
+        return static_cast<nautilus::val<T>>(static_cast<nautilus::val<T*>>(memRef));
+    }
+    else
+    {
+        return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
+    }
 }
 
 inline const std::unordered_map<DataType::Type, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>> storeValueFunctionMap

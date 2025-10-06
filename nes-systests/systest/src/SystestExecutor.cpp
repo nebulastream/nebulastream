@@ -33,7 +33,6 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-
 #include <Configurations/Util.hpp>
 #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
 #include <QueryManager/GRPCQueryManager.hpp>
@@ -123,6 +122,12 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
         .default_value(false)
         .implicit_value(true);
 
+    /// Checkpoint testing
+    program.add_argument("--checkpoint").flag().help("Enable checkpoint testing mode (local only)");
+    program.add_argument("--checkpointAfterMs").help("Milliseconds after start to take checkpoint").default_value(50).scan<'i', int>();
+    program.add_argument("--checkpointDir").help("Directory for checkpoint files");
+    program.add_argument("--checkpointCompareBaseline").flag().help("Also run baseline without checkpoint and compare");
+
     try
     {
         program.parse_args(argc, argv);
@@ -163,6 +168,23 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     if (program.is_used("--data"))
     {
         config.testDataDir = program.get<std::string>("--data");
+    }
+
+    if (program.is_used("--checkpoint"))
+    {
+        config.checkpointMode = true;
+    }
+    if (program.is_used("--checkpointAfterMs"))
+    {
+        config.checkpointAfterMs = program.get<int>("--checkpointAfterMs");
+    }
+    if (program.is_used("--checkpointDir"))
+    {
+        config.checkpointDir = program.get<std::string>("--checkpointDir");
+    }
+    if (program.is_used("--checkpointCompareBaseline"))
+    {
+        config.checkpointCompareBaseline = true;
     }
 
     if (program.is_used("--log-path"))
@@ -555,6 +577,76 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                 std::ofstream outputFile(outputPath);
                 outputFile << benchmarkResults.dump(4);
                 outputFile.close();
+            }
+            else if (config.checkpointMode)
+            {
+                // Force sequential in checkpoint mode for determinism
+                const auto prev = config.numberConcurrentQueries.getValue();
+                (void)prev;
+                // Also force single worker thread to ensure deterministic operator scheduling
+                singleNodeWorkerConfiguration.workerConfiguration.queryEngine.numberOfWorkerThreads.setValue(1);
+
+                if (config.checkpointCompareBaseline.getValue())
+                {
+                    // Baseline pass
+                    SystestConfiguration baselineCfg = config;
+                    baselineCfg.checkpointMode = false;
+                    baselineCfg.workingDir = (std::filesystem::path(config.workingDir.getValue()) / "baseline").string();
+                    std::filesystem::create_directories(baselineCfg.workingDir.getValue());
+                    auto baselineFiles = Systest::loadTestFileMap(baselineCfg);
+                    Systest::SystestBinder baselineBinder{baselineCfg.workingDir.getValue(), baselineCfg.testDataDir.getValue(), baselineCfg.configDir.getValue()};
+                    auto [baselineQueries, baselineLoaded] = baselineBinder.loadOptimizeQueries(baselineFiles);
+                    auto baselineFailures = runQueriesAtLocalWorker(baselineQueries, 1, singleNodeWorkerConfiguration);
+
+                    // Checkpoint pass
+                    SystestConfiguration cpCfg = config;
+                    cpCfg.workingDir = (std::filesystem::path(config.workingDir.getValue()) / "checkpoint").string();
+                    std::filesystem::create_directories(cpCfg.workingDir.getValue());
+                    auto cpFiles = Systest::loadTestFileMap(cpCfg);
+                    Systest::SystestBinder cpBinder{cpCfg.workingDir.getValue(), cpCfg.testDataDir.getValue(), cpCfg.configDir.getValue()};
+                    auto [cpQueries, cpLoaded] = cpBinder.loadOptimizeQueries(cpFiles);
+                    auto cpFailures = Systest::runQueriesAtLocalWorkerWithCheckpoint(cpQueries, 1, singleNodeWorkerConfiguration, cpCfg);
+
+                    // Aggregate failures
+                    failedQueries.reserve(baselineFailures.size() + cpFailures.size());
+                    failedQueries.insert(failedQueries.end(), baselineFailures.begin(), baselineFailures.end());
+                    failedQueries.insert(failedQueries.end(), cpFailures.begin(), cpFailures.end());
+
+                    // Compare results across working dirs (baseline vs checkpoint)
+                    const auto equalFiles = [](const std::filesystem::path& a, const std::filesystem::path& b) {
+                        std::ifstream fa(a), fb(b);
+                        if (!fa.good() || !fb.good()) return false;
+                        std::string la, lb;
+                        while (true) {
+                            bool ra = static_cast<bool>(std::getline(fa, la));
+                            bool rb = static_cast<bool>(std::getline(fb, lb));
+                            if (!ra && !rb) return true; // both EOF
+                            if (ra != rb) return false; // different lengths
+                            if (la != lb) return false;
+                        }
+                    };
+
+                    const size_t N = std::min(baselineQueries.size(), cpQueries.size());
+                    for (size_t i = 0; i < N; ++i)
+                    {
+                        const auto& bq = baselineQueries[i];
+                        const auto& cq = cpQueries[i];
+                        auto bPath = bq.resultFile();
+                        auto cPath = cq.resultFile();
+                        if (!equalFiles(bPath, cPath))
+                        {
+                            Systest::RunningQuery rq{cq, INVALID_QUERY_ID, {}, {}, {}, false, std::nullopt};
+                            rq.passed = false;
+                            rq.exception = TestException(fmt::format("checkpoint result mismatch: {} vs {}", bPath.string(), cPath.string()));
+                            failedQueries.push_back(rq);
+                        }
+                    }
+                }
+                else
+                {
+                    failedQueries = Systest::runQueriesAtLocalWorkerWithCheckpoint(
+                        queries, /*sequential*/ 1, singleNodeWorkerConfiguration, config);
+                }
             }
             else
             {

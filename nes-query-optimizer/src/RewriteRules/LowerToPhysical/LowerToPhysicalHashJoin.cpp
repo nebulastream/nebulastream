@@ -35,6 +35,7 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
+#include <Join/HashJoin/SerializableHJOperatorHandler.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -328,10 +329,11 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
 
     /// Creating the left and right hash join build operator
     auto handlerId = getNextOperatorHandlerId();
+    const bool useSerializableJoinVectors = conf.enableSerializableJoin.getValue();
     const HJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider, leftHashMapOptions};
+        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider, leftHashMapOptions, useSerializableJoinVectors};
     const HJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightMemoryProvider, rightHashMapOptions};
+        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightMemoryProvider, rightHashMapOptions, useSerializableJoinVectors};
 
     /// Creating the hash join probe
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema);
@@ -343,13 +345,26 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         leftMemoryProvider,
         rightMemoryProvider,
         leftHashMapOptions,
-        rightHashMapOptions);
+        rightHashMapOptions,
+        useSerializableJoinVectors);
 
 
     /// Creating the hash join operator handler
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    std::shared_ptr<OperatorHandler> handler;
+    if (useSerializableJoinVectors) {
+        auto serHandler = std::make_shared<SerializableHJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+        // Set config based on left side options (assumed symmetric)
+        auto& st = serHandler->getState();
+        st.config.keySize = leftHashMapOptions.keySize;
+        st.config.valueSize = leftHashMapOptions.valueSize;
+        st.config.numberOfBuckets = leftHashMapOptions.numberOfBuckets;
+        st.config.pageSize = leftHashMapOptions.pageSize;
+        handler = serHandler;
+    } else {
+        handler = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    }
 
 
     /// Building operator wrapper for the two builds and the probe.

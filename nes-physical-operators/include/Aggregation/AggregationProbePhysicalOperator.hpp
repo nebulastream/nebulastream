@@ -33,12 +33,14 @@ public:
         HashMapOptions hashMapOptions,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         OperatorHandlerId operatorHandlerId,
-        WindowMetaData windowMetaData);
+        WindowMetaData windowMetaData,
+        bool useSerializableAggregation);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
+    bool useSerializableAggregation{false};
 };
 
 }

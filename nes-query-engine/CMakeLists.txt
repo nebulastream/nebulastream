@@ -25,6 +25,9 @@ endif()
 target_compile_definitions(nes-query-engine PRIVATE ENGINE_LOG_LEVEL_${ENGINE_LOG_LEVEL})
 
 find_package(folly CONFIG REQUIRED)
+if(NOT TARGET folly::folly AND TARGET Folly::folly)
+    add_library(folly::folly ALIAS Folly::folly)
+endif()
 target_link_libraries(nes-query-engine
         PUBLIC nes-common nes-executable
         PRIVATE folly::folly

@@ -66,6 +66,13 @@ runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, uint64_t numC
 [[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson);
 
+/// Checkpoint testing runner (local only)
+[[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorkerWithCheckpoint(
+    const std::vector<SystestQuery>& queries,
+    uint64_t /*numConcurrentQueriesIgnored*/,
+    const SingleNodeWorkerConfiguration& configuration,
+    const SystestConfiguration& config);
+
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed
 /// function/arithmetical/FunctionMul:5..................................Failed

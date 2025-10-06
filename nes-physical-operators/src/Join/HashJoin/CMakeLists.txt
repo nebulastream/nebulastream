@@ -15,4 +15,6 @@ add_source_files(nes-physical-operators
         HJOperatorHandler.cpp
         HJProbePhysicalOperator.cpp
         HJSlice.cpp
+        SerializableHJSlice.cpp
+        SerializableHJOperatorHandler.cpp
 )

@@ -77,10 +77,28 @@ public:
            "JoinStrategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
+    BoolOption enableSerializableAggregation
+        = {"enable_serializable_aggregation",
+           "false",
+           "Enable serializable aggregation handler for checkpointing support"};
+
+    BoolOption enableSerializableJoin
+        = {"enable_serializable_join",
+           "false",
+           "Enable serializable value vectors for Hash Join (SerializablePagedVector)"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &joinStrategy, &numberOfRecordsPerKey, &operatorBufferSize};
+        return {
+            &executionMode,
+            &pageSize,
+            &numberOfPartitions,
+            &joinStrategy,
+            &numberOfRecordsPerKey,
+            &operatorBufferSize,
+            &enableSerializableAggregation,
+            &enableSerializableJoin};
     }
 };
 

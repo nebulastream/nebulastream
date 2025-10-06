@@ -45,14 +45,24 @@ void SumAggregationPhysicalFunction::lift(
 {
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    nautilus::invoke(+[](AggregationState* ptr) {
+        printf("SUM_LIFT: StatePtr=%p, reading sum\n", ptr);
+    }, aggregationState);
     const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType.type);
+    nautilus::invoke(+[](AggregationState* ptr) {
+        uint64_t sumValue = *reinterpret_cast<uint64_t*>(ptr);
+        printf("SUM_LIFT: Current sum=%lu\n", sumValue);
+    }, aggregationState);
 
     /// Updating the sum and count with the new value
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    printf("SUM_LIFT: Adding input value to sum\n");
     const auto newSum = sum + value;
+    printf("SUM_LIFT: Computed new sum, writing to memory\n");
 
     /// Writing the new sum and count back to the aggregation state
     newSum.writeToMemory(memAreaSum);
+    fflush(stdout);
 }
 
 void SumAggregationPhysicalFunction::combine(
@@ -80,6 +90,11 @@ Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     /// Reading the sum from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType.type);
+    nautilus::invoke(+[](AggregationState* ptr) {
+        uint64_t finalSumValue = *reinterpret_cast<uint64_t*>(ptr);
+        printf("SUM_LOWER: StatePtr=%p, FinalSum=%lu\n", ptr, finalSumValue);
+    }, aggregationState);
+    fflush(stdout);
 
     /// Creating a record with the sum
     Nautilus::Record record;
@@ -92,7 +107,15 @@ void SumAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*
 {
     /// Resetting the sum to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    nautilus::invoke(+[](AggregationState* ptr, size_t size) {
+        printf("SUM_RESET: StatePtr=%p, Size=%zu\n", ptr, size);
+    }, aggregationState, nautilus::val<size_t>(getSizeOfStateInBytes()));
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
+    nautilus::invoke(+[](AggregationState* ptr) {
+        uint64_t resetValue = *reinterpret_cast<uint64_t*>(ptr);
+        printf("SUM_RESET: After memset, State[0]=%lu\n", resetValue);
+    }, aggregationState);
+    fflush(stdout);
 }
 
 void SumAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)

@@ -46,6 +46,9 @@ public:
     /// Blocks until atleast one query has finished (or potentially failed)
     std::vector<QuerySummary> finishedQueries();
 
+    std::expected<void, Exception> checkpoint(QueryId query, const std::string& path);
+    std::expected<QueryId, Exception> recover(const std::string& path);
+
 private:
     UniquePtr<QueryManager> queryManager;
     std::unordered_set<QueryId> ids;

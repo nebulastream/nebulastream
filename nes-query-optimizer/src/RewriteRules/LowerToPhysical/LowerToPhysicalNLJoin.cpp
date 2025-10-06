@@ -31,6 +31,7 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Join/NestedLoopJoin/SerializableNLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -183,7 +184,15 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    std::shared_ptr<OperatorHandler> handler;
+    if (conf.enableSerializableJoin.getValue()) {
+        auto serHandler = std::make_shared<SerializableNLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+        // Configure pageSize for paged vectors
+        serHandler->getState().config.pageSize = pageSize;
+        handler = serHandler;
+    } else {
+        handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    }
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator), leftInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);

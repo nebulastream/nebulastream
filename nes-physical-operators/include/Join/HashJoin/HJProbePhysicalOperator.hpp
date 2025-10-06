@@ -40,7 +40,8 @@ public:
         std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
         std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider,
         HashMapOptions leftHashMapBasedOptions,
-        HashMapOptions rightHashMapBasedOptions);
+        HashMapOptions rightHashMapBasedOptions,
+        bool useSerializableJoinVectors = false);
 
     /// As the second phase gets triggered by the first phase, we receive a tuple buffer containing all information for performing the probe.
     /// Thus, we start a new pipeline and therefore, we create new Records from the built-up state.
@@ -49,6 +50,7 @@ public:
 private:
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider, rightMemoryProvider;
     HashMapOptions leftHashMapOptions, rightHashMapOptions;
+    bool useSerializableJoinVectors{false};
 };
 
 }

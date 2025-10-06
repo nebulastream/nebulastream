@@ -33,6 +33,10 @@ public:
     std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
     [[nodiscard]] std::expected<QuerySummary, Exception> status(QueryId queryId) const noexcept override;
 
+    // Local-only extensions used by systest checkpoint integration
+    std::expected<void, Exception> checkpoint(QueryId queryId, const std::string& path) noexcept;
+    std::expected<QueryId, Exception> recover(const std::string& path) noexcept;
+
 private:
     SingleNodeWorker worker;
 };

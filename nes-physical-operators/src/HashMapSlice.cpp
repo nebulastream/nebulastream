@@ -49,16 +49,21 @@ HashMapSlice::HashMapSlice(
 
 HashMapSlice::~HashMapSlice()
 {
-    INVARIANT(createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams, "We expect one cleanup function per input ");
-
-    /// As we assume that each hashmap of an input stream lie one after the other.
-    /// Thus, we need to call #numbnumberOfHashMaps times the same nautilusCleanup function and then move to the next one.
-    for (size_t i = 0; i < hashMaps.size(); i++)
+    if (!createNewHashMapSliceArgs.nautilusCleanup.empty())
     {
-        if (hashMaps[i] and hashMaps[i]->getNumberOfTuples() > 0)
+        INVARIANT(
+            createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams,
+            "We expect one cleanup function per input");
+
+        /// As we assume that each hashmap of an input stream lie one after the other.
+        /// Thus, we need to call #numberOfHashMaps times the same nautilusCleanup function and then move to the next one.
+        for (size_t i = 0; i < hashMaps.size(); i++)
         {
-            /// Calling the compiled nautilus function
-            createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->operator()(hashMaps[i].get());
+            if (hashMaps[i] && hashMaps[i]->getNumberOfTuples() > 0)
+            {
+                /// Calling the compiled nautilus function
+                createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->operator()(hashMaps[i].get());
+            }
         }
     }
 
@@ -75,7 +80,9 @@ uint64_t HashMapSlice::getNumberOfTuples() const
     return std::accumulate(
         hashMaps.begin(),
         hashMaps.end(),
-        0,
-        [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+        0ULL,
+        [](uint64_t runningSum, const auto& hashMap) {
+            return runningSum + (hashMap ? hashMap->getNumberOfTuples() : 0ULL);
+        });
 }
 }

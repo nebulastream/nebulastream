@@ -82,4 +82,13 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
     return Timestamp(minimalWatermark);
 }
 
+void MultiOriginWatermarkProcessor::initializeBaseline(Timestamp ts)
+{
+    // Seed each origin's queue with a baseline value so getCurrentWatermark returns ts
+    for (auto& q : watermarkProcessors) {
+        // Use initial sequence, initial chunk, mark as last chunk
+        q->emplace(SequenceData(INITIAL_SEQ_NUMBER, INITIAL_CHUNK_NUMBER, true), ts.getRawValue());
+    }
+}
+
 }

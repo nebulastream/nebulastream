@@ -14,6 +14,7 @@
 
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
+#include <RecoveredOperatorHandlersRegistry.hpp>
 #include <algorithm>
 #include <memory>
 #include <optional>
@@ -142,7 +143,14 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
             options.setOption("dump.file", true);
             break;
     }
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
+    {
+        auto merged = pipeline->getOperatorHandlers();
+        auto recovered = RecoveredOperatorHandlersRegistry::getForQuery(pipelineQueryPlan->getQueryId());
+        for (auto& kv : recovered) {
+            merged[kv.first] = kv.second;
+        }
+        return std::make_unique<CompiledExecutablePipelineStage>(pipeline, merged, options);
+    }
 }
 
 std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperatorPipeline(const std::shared_ptr<Pipeline>& pipeline)
