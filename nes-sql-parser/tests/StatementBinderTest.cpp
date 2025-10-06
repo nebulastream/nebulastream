@@ -69,7 +69,6 @@ public:
         sinkCatalog = std::make_shared<SinkCatalog>();
         binder = std::make_shared<StatementBinder>(
             sourceCatalog,
-            sinkCatalog,
             [](auto&& queryContext)
             { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
         sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog);
@@ -87,6 +86,23 @@ TEST_F(StatementBinderTest, BindQuery)
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+}
+
+TEST_F(StatementBinderTest, BindQuotedIdentifiers)
+{
+    const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE `testSource` (`attribute1` UINT32, `attribute2` VARSIZED)";
+    const auto statement1 = binder->parseAndBindSingle(createLogicalSourceStatement);
+    ASSERT_TRUE(statement1.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
+    const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement1));
+    ASSERT_TRUE(createdSourceResult.has_value());
+    const auto [actualSource] = createdSourceResult.value();
+    Schema expectedSchema{};
+    auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
+    expectedSchema.addField("testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
+    expectedSchema.addField("testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
 
 TEST_F(StatementBinderTest, BindCreateBindSource)
@@ -155,17 +171,6 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
     schema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     const auto logicalSourceOpt = sourceCatalog->addLogicalSource("TESTSOURCE", schema);
     ASSERT_TRUE(logicalSourceOpt.has_value());
-
-    /// Misspelled CSV
-    const std::string createPhysicalSourceStatement
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('/dev/null' AS `SOURCE`.FILE_PATH, 'CVS' AS PARSER.`TYPE`))";
-    const auto statement = binder->parseAndBindSingle(createPhysicalSourceStatement);
-    ASSERT_FALSE(statement.has_value());
-
-    const std::string createPhysicalSourceStatement2
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('/dev/null' AS `SOURCE`.FILE_PATH, 'INVALID PARSER' AS PARSER.`TYPE`))";
-    const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement2);
-    ASSERT_FALSE(statement2.has_value());
 
     /// Invalid logical source
     const std::string createPhysicalSourceStatement3

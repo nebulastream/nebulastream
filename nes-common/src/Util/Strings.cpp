@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <vector>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -262,6 +263,27 @@ void removeDoubleSpaces(std::string& input)
 {
     const auto newEnd = std::ranges::unique(input, [](const char lhs, const char rhs) { return (lhs == rhs) && (lhs == ' '); }).begin();
     input.erase(newEnd, input.end());
+}
+
+std::vector<std::string_view> splitOnMultipleDelimiters(std::string_view input, const std::vector<char>& delimiters)
+{
+    std::vector<std::string_view> result;
+    result.emplace_back(input);
+
+    for (const char delimiter : delimiters)
+    {
+        result = result
+            | std::views::transform(
+                     [delimiter](std::string_view inputSV)
+                     {
+                         return inputSV | std::views::split(delimiter)
+                             | std::views::transform([](auto&& split) { return std::string_view(split); })
+                             | std::views::filter([](const std::string_view splitSV) { return not splitSV.empty(); });
+                     })
+            | std::views::join | std::ranges::to<std::vector<std::string_view>>();
+    }
+
+    return result;
 }
 
 }

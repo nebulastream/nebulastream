@@ -33,10 +33,8 @@
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
-#include <DataServer/TCPDataServer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
@@ -47,6 +45,7 @@
 #include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+#include <TCPDataServer.hpp>
 
 namespace NES
 {
@@ -292,56 +291,52 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegis
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.attachSource.tuples)
+    std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
+
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::PORT))
     {
-        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
-            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-        {
-            auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.attachSource.tuples.value()));
-            port->second = std::to_string(mockTCPServer->getPort());
-
-            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
-                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-            {
-                host->second = "localhost";
-                auto serverThread
-                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
-                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
-
-                return systestAdaptorArguments.physicalSourceConfig;
-            }
-            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
-        }
-        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::HOST))
+    {
+        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
+    }
+
+    auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
+
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
+
+    auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+    systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
+
+    return systestAdaptorArguments.physicalSourceConfig;
 }
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+    std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
+
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::PORT))
     {
-        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
-            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-        {
-            auto mockTCPServer = std::make_unique<TCPDataServer>(attachSourceFilePath.value());
-            port->second = std::to_string(mockTCPServer->getPort());
-
-            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
-                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-            {
-                host->second = "localhost";
-                auto serverThread
-                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
-                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
-
-                systestAdaptorArguments.physicalSourceConfig.sourceConfig.erase(std::string(SYSTEST_FILE_PATH_PARAMETER));
-                return systestAdaptorArguments.physicalSourceConfig;
-            }
-            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
-        }
-        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::HOST))
+    {
+        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
+    }
+
+
+    auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
+
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
+
+    auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+    systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
+
+    return systestAdaptorArguments.physicalSourceConfig;
 }
 }

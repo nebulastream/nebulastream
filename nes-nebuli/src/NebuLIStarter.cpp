@@ -163,9 +163,7 @@ int main(int argc, char** argv)
         auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
-            sourceCatalog,
-            sinkCatalog,
-            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
         if (program.is_used("-s"))
         {

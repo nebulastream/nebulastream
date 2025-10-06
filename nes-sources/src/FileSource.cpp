@@ -29,7 +29,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
@@ -89,44 +88,39 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegi
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.attachSource.tuples)
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(std::string(SYSTEST_FILE_PATH_PARAMETER)))
     {
-        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
-            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-        {
-            filePath->second = systestAdaptorArguments.testFilePath;
-            if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
-            {
-                /// Write inline tuples to test file.
-                for (const auto& tuple : systestAdaptorArguments.attachSource.tuples.value())
-                {
-                    testFile << tuple << "\n";
-                }
-                testFile.flush();
-                return systestAdaptorArguments.physicalSourceConfig;
-            }
-            throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
-        }
-        throw InvalidConfigParameter("A FileSource config must contain file_path parameter");
+        throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
     }
-    throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(
+        std::string(SYSTEST_FILE_PATH_PARAMETER), systestAdaptorArguments.testFilePath.string());
+
+
+    if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+    {
+        /// Write inline tuples to test file.
+        for (const auto& tuple : systestAdaptorArguments.tuples)
+        {
+            testFile << tuple << "\n";
+        }
+        testFile.flush();
+        return systestAdaptorArguments.physicalSourceConfig;
+    }
+    throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
 }
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    /// Check that the test data dir is defined and that the 'filePath' parameter is set
-    /// Replace the 'TESTDATA' placeholder in the filepath
-    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(std::string(SYSTEST_FILE_PATH_PARAMETER)))
     {
-        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
-            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-        {
-            filePath->second = attachSourceFilePath.value();
-            return systestAdaptorArguments.physicalSourceConfig;
-        }
-        throw InvalidConfigParameter("A FileSource config must contain file_path parameter.");
+        throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
     }
-    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
+
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        std::string(SYSTEST_FILE_PATH_PARAMETER), systestAdaptorArguments.testFilePath.string());
+
+    return systestAdaptorArguments.physicalSourceConfig;
 }
 
 

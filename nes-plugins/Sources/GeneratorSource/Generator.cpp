@@ -21,8 +21,10 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
 
@@ -91,12 +93,10 @@ void Generator::parseRawSchemaLine(std::string_view line)
 void Generator::parseSchema(const std::string_view rawSchema)
 {
     PRECONDITION(!rawSchema.empty(), "Cannot parse a schema from an empty string!");
-    auto view = rawSchema | std::ranges::views::split('\n')
-        | std::views::transform([](const auto& subView) { return std::string_view(subView); })
-        | std::views::filter([](const auto& subView) { return not subView.empty(); });
-    for (const std::vector lines(view.begin(), view.end()); const auto line : lines)
+
+    for (const auto schemaLine = Util::splitOnMultipleDelimiters(rawSchema, {'\n', ','}); const auto& field : schemaLine)
     {
-        parseRawSchemaLine(line);
+        parseRawSchemaLine(Util::trimWhiteSpaces(std::string_view(field)));
     }
 }
 

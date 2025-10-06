@@ -32,6 +32,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
@@ -169,11 +170,11 @@ struct ConfigParametersGenerator
                 NES_ERROR("Generator schema cannot be empty!")
                 throw InvalidConfigParameter("Generator schema cannot be empty!");
             }
-            auto lines = schema | std::ranges::views::split('\n')
-                | std::views::transform([](const auto& subView) { return std::string_view(subView); })
-                | std::views::filter([](const auto& subView) { return !subView.empty(); });
-            for (auto line : lines)
+
+
+            for (const auto lines = Util::splitOnMultipleDelimiters(schema, {',', '\n'}); auto line : lines)
             {
+                line = Util::trimWhiteSpaces(line);
                 const auto foundIdentifier = line.substr(0, line.find_first_of(' '));
                 bool validatorExists = false;
                 for (const auto& [identifier, validator] : GeneratorFields::Validators)

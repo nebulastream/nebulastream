@@ -16,6 +16,7 @@
 #include <ranges>
 #include <sstream>
 
+#include <unordered_map>
 #include <utility>
 
 #include <gmock/gmock-matchers.h>
@@ -46,7 +47,8 @@ protected:
         sourceOp = SourceNameLogicalOperator("Source");
         auto dummySchema = Schema{};
         auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value(); /// NOLINT
-        auto dummyParserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+        const std::unordered_map<std::string, std::string> dummyParserConfig
+            = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
         auto dummySourceDescriptor = sourceCatalog /// NOLINT
                                          .addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig)
                                          .value();

@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(TCP Source nes-sources-registry tcp_source_plugin_library TCPSource.cpp)
+add_plugin_as_library(TCP Source nes-sources-registry tcp_source_plugin_library TCPSource.cpp TCPDataServer.cpp)
 add_plugin_as_library(TCP SourceValidation nes-sources-registry tcp_source_validation_plugin_library TCPSource.cpp)
 add_plugin_as_library(TCP InlineData nes-sources-registry tcp_inline_data_plugin_library TCPSource.cpp)
 add_plugin_as_library(TCP FileData nes-sources-registry tcp_file_data_plugin_library TCPSource.cpp)

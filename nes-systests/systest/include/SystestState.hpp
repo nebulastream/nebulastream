@@ -44,7 +44,6 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>

@@ -20,23 +20,23 @@ on:
         type: string
         default: |
           query: |
-            SELECT * FROM generator_source INTO void_sink
+            SELECT * FROM GENERATOR_SOURCE INTO void_sink
           sinks:
-            - name: void_sink
+            - name: VOID_SINK
               schema:
-                - name: generator_source$double
+                - name: GENERATOR_SOURCE$double
                   type: FLOAT64
               type: Void
               config: {}
                 
           logical:
-            - name: generator_source
+            - name: GENERATOR_SOURCE
               schema:
                 - name: double
                   type: FLOAT64
 
           physical:
-            - logical: generator_source
+            - logical: GENERATOR_SOURCE
               parser_config:
                 type: CSV
                 fieldDelimiter: ","
