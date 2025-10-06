@@ -35,9 +35,29 @@ struct as_if<NES::NESStrongType<T, Tag, invalid, initial>, void>
     NES::NESStrongType<T, Tag, invalid, initial> operator()() const
     {
         if (!node.m_pNode)
+        {
             throw TypedBadConversion<T>(node.Mark());
+        }
 
         return NES::NESStrongType<T, Tag, invalid, initial>{node.as<T>()};
+    }
+};
+
+template <typename Tag, NES::StringLiteral invalid>
+struct as_if<NES::NESStrongStringType<Tag, invalid>, void>
+{
+    explicit as_if(const Node& node_) : node(node_) { }
+
+    const Node& node;
+
+    NES::NESStrongStringType<Tag, invalid> operator()() const
+    {
+        if (!node.m_pNode)
+        {
+            throw TypedBadConversion<std::string>(node.Mark());
+        }
+
+        return NES::NESStrongStringType<Tag, invalid>{node.as<std::string>()};
     }
 };
 }
