@@ -2,7 +2,10 @@
 # description: Test for variable sized data types
 # groups: [VariableSizedData]
 
-Source streamWithText UINT64 id UINT64 value VARSIZED text1 VARSIZED text2 INLINE
+
+CREATE LOGICAL SOURCE streamWithText(id UINT64, value UINT64, text1 VARSIZED, text2 VARSIZED);
+CREATE PHYSICAL SOURCE FOR streamWithText TYPE File;
+ATTACH INLINE
 1,1,test1,test1
 12,1,test1,test2
 4,1,test2,test2
@@ -16,7 +19,7 @@ Source streamWithText UINT64 id UINT64 value VARSIZED text1 VARSIZED text2 INLIN
 6,4,test1,test2
 8,5,test1,test2
 
-SINK sinkStreamWithText UINT64 streamWithText$id UINT64 streamWithText$value VARSIZED streamWithText$text1 VARSIZED streamWithText$text2
+CREATE SINK sinkStreamWithText(streamWithText.id UINT64, streamWithText.value UINT64, streamWithText.text1 VARSIZED, streamWithText.text2 VARSIZED) TYPE File;
 
 
 # Simple text query

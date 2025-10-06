@@ -2,17 +2,18 @@
 # description: Combine two files sources with different input formatter configurations
 # groups: [Sources]
 
-Source combinedSource UINT64 id UINT64 value UINT64 timestamp
-Attach File CSV combinedSource FILE
-TESTDATA/small/stream8.csv
+CREATE LOGICAL SOURCE combinedSource(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR combinedSource TYPE File;
+ATTACH FILE small/stream8.csv
 
-Attach File CSV CONFIG/inputFormatters/csv_pipe_delimiter.yaml combinedSource INLINE
+CREATE PHYSICAL SOURCE FOR combinedSource TYPE File SET('|' AS PARSER.FIELD_DELIMITER);
+ATTACH INLINE
 1|6|67
 1|7|78
 1|8|89
 1|9|100
 
-SINK unifiedStreamSink UINT64 combinedSource$id UINT64 combinedSource$value UINT64 combinedSource$timestamp
+CREATE SINK unifiedStreamSink(combinedSource.id UINT64, combinedSource.value UINT64, combinedSource.timestamp UINT64)  TYPE File;
 
 SELECT * FROM combinedSource INTO unifiedStreamSink
 ----

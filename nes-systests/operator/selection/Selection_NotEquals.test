@@ -2,7 +2,9 @@
 # description: Simple selection tests
 # groups: [Selection]
 
-Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
 1,1,1000
 12,1,1001
 4,1,1002
@@ -33,7 +35,9 @@ Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
 1,21,21000
 
 
-Source streamWithText UINT64 id UINT64 value VARSIZED text1 VARSIZED text2 INLINE
+CREATE LOGICAL SOURCE streamWithText(id UINT64, value UINT64, text1 VARSIZED, text2 VARSIZED);
+CREATE PHYSICAL SOURCE FOR streamWithText TYPE File;
+ATTACH INLINE
 1,1,test1,test1
 12,1,test1,test2
 4,1,test2,test2
@@ -47,8 +51,8 @@ Source streamWithText UINT64 id UINT64 value VARSIZED text1 VARSIZED text2 INLIN
 6,4,test1,test2
 8,5,test1,test2
 
-SINK sinkStream UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
-SINK sinkStreamWithText UINT64 streamWithText$id UINT64 streamWithText$value VARSIZED streamWithText$text1 VARSIZED streamWithText$text2
+CREATE SINK sinkStream(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
+CREATE SINK sinkStreamWithText(streamWithText.id UINT64, streamWithText.value UINT64, streamWithText.text1 VARSIZED, streamWithText.text2 VARSIZED)  TYPE File;
 
 
 # Filter equal
