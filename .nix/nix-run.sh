@@ -16,7 +16,6 @@
 # Run any build tool inside the project’s dev‑shell (flake).
 # ----------------------------------------------------------
 # For every tool you need (gcc, g++, clang++, make, ninja …)
-# make a symlink that points *to this file*:
 #   ln -s nix-run.sh .nix/g++
 # ----------------------------------------------------------
 
@@ -51,6 +50,7 @@ SHELL
 TERM
 SSH_AUTH_SOCK
 GIT_CONFIG
+CTEST_PARALLEL_LEVEL
 "
 KEEP_ARGS="--keep IN_NIX_RUN"
 for var in $KEEP_VARS; do

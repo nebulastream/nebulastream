@@ -7,7 +7,7 @@
   };
 
   outputs =
-    { nixpkgs, flake-utils, ... }:
+    { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (
       system:
       let
@@ -17,55 +17,20 @@
         clangStdenv = llvm.stdenv;
         mkShellClang = pkgs.mkShell.override { stdenv = clangStdenv; };
 
-        # MLIR 20 binary release
-        mlirBinary = pkgs.stdenvNoCC.mkDerivation rec {
-          pname = "nes-mlir";
-          version = "20";
+        nautilusPackages = import ./.nix/nautilus/package.nix { inherit pkgs; };
+        mlirBinary = nautilusPackages.mlirBinary;
+        nautilusPkg = nautilusPackages.nautilus;
 
-          src =
-            if pkgs.stdenv.hostPlatform.isAarch64 then
-              pkgs.fetchurl {
-                url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-arm64-none-libstdcxx.tar.zstd";
-                sha256 = "3e74c024e865efac646abe09b2cadcf88530b9af799b2d6fd0a5e5e1e01e685e";
-              }
-            else if pkgs.stdenv.hostPlatform.isx86_64 then
-              pkgs.fetchurl {
-                url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-x64-none-libstdcxx.tar.zstd";
-                sha256 = "aef98d5bd61a8530392796e86a15a36d7fde9d553579cf64dfd465454e3fae7a";
-              }
-            else
-              throw "Unsupported system: ${pkgs.stdenv.hostPlatform.system}";
-
-          nativeBuildInputs = [
-            pkgs.zstd
-            pkgs.gnutar
-          ];
-
-          dontUnpack = true;
-          strictDeps = true;
-
-          installPhase = ''
-            runHook preInstall
-            mkdir -p "$TMPDIR/mlir"
-            zstd -d "$src" --stdout | tar -xf - -C "$TMPDIR/mlir"
-            mkdir -p "$out"
-            cp -r "$TMPDIR/mlir"/clang/* "$out"/
-            runHook postInstall
-          '';
-
-          meta = with lib; {
-            description = "Prebuilt MLIR toolchain used by NebulaStream";
-            license = licenses.asl20;
-            platforms = platforms.linux;
-          };
-        };
-
-        antlr4Version = "4.13.2";
+        cpptracePkg = pkgs.callPackage ./.nix/cpptrace/package.nix { };
+        argparsePkg = pkgs.callPackage ./.nix/argparse/package.nix { };
+        libcuckooPkg = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
 
         fmtPkg = pkgs.fmt_11;
         spdlogPkg = pkgs.spdlog.override { fmt = fmtPkg; };
+        follyPkg = import ./.nix/folly/package.nix { inherit pkgs; };
+        antlr4Pkg = import ./.nix/antlr4/package.nix { inherit pkgs; };
 
-        baseThirdPartyDeps = with pkgs; [
+        baseThirdPartyDeps = (with pkgs; [
           fmtPkg
           spdlogPkg
           grpc
@@ -73,10 +38,8 @@
           abseil-cpp
           nlohmann_json
           yaml-cpp
-          folly
           replxx
           magic-enum
-          antlr4
           boost
           openssl.dev
           zstd.dev
@@ -90,10 +53,10 @@
           tbb
           python3
           openjdk21
-        ];
+        ]) ++ [ follyPkg antlr4Pkg ];
 
         antlr4Jar = pkgs.fetchurl {
-          url = "https://www.antlr.org/download/antlr-${antlr4Version}-complete.jar";
+          url = "https://www.antlr.org/download/antlr-${antlr4Pkg.version}-complete.jar";
           hash = "sha256-6uLfoRmmQydERnKv9j6ew1ogGA3FuAkLemq4USXfTXY=";
         };
 
@@ -106,42 +69,22 @@
           add_compile_definitions(GLOG_USE_GLOG_EXPORT=1)
         '';
 
-        antlr4JarPatch = pkgs.writeText "nes-antlr-jar.patch" ''
-          diff --git a/nes-sql-parser/CMakeLists.txt b/nes-sql-parser/CMakeLists.txt
-          --- a/nes-sql-parser/CMakeLists.txt
-          +++ b/nes-sql-parser/CMakeLists.txt
-          @@ -26,3 +26,5 @@
-          -  set(ANTLR4_JAR_LOCATION "/opt/''${ANTLR_JAR_FILE}")
-          -else ()
-          -  include(FetchContent)
-          +  set(ANTLR4_JAR_LOCATION "/opt/''${ANTLR_JAR_FILE}")
-          +elseif (DEFINED ANTLR4_JAR_LOCATION)
-          +  message(STATUS "Using provided ANTLR jar")
-          +else ()
-          +  include(FetchContent)
-        '';
+        patchRoot = ./.nix;
 
-        gflagsGlogPatch = pkgs.writeText "nes-gflags-glog.patch" ''
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index bb54f83a14..06be7b5266 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -186,6 +186,14 @@ endif ()
- find_package(gRPC CONFIG REQUIRED)
- message(STATUS "Using gRPC ''${gRPC_VERSION}")
+        patchFilesFor = package:
+          let
+            packageDir = patchRoot + "/${package}/patches";
+          in
+          lib.optionals (builtins.pathExists packageDir) (
+            let
+              entries = builtins.readDir packageDir;
+              patchNames = lib.filter (name: lib.strings.hasSuffix ".patch" name)
+                (lib.attrNames (lib.filterAttrs (_: type: type == "regular") entries));
+            in
+            map (name: packageDir + "/${name}") patchNames
+          );
 
-+find_package(gflags CONFIG REQUIRED)
-+if (NOT TARGET gflags_shared AND TARGET gflags::gflags_shared)
-+    add_library(gflags_shared ALIAS gflags::gflags_shared)
-+endif ()
-+
-+find_package(glog CONFIG REQUIRED)
-+add_compile_definitions(GLOG_USE_GLOG_EXPORT=1)
-+
- set(_GRPC_GRPCPP gRPC::grpc++)
- if (CMAKE_CROSSCOMPILING)
- find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-        '';
+        nebulastreamPatches = patchFilesFor "nebulastream";
 
         libdwarfModule = pkgs.writeTextFile {
           name = "libdwarf-cmake";
@@ -169,253 +112,10 @@ index bb54f83a14..06be7b5266 100644
           '';
         };
 
-        antlr4 = clangStdenv.mkDerivation rec {
-          pname = "antlr4";
-          version = antlr4Version;
-
-          src = pkgs.fetchFromGitHub {
-            owner = "antlr";
-            repo = "antlr4";
-            rev = antlr4Version;
-            hash = "sha512-dSzBW7T1Qo8S1StnIsRfW3dcXNdGYI19KZPtVX2sY6Uyd5j4mwfwXu5n/ncDaUd3Fs8KcjcLUNrXWxCZTEdTdg==";
-          };
-
-          sourceRoot = "source/runtime/Cpp";
-
-          nativeBuildInputs = [
-            pkgs.cmake
-            pkgs.ninja
-            pkgs.pkg-config
-          ];
-          buildInputs = [
-            pkgs.libuuid
-            pkgs.zlib
-          ];
-
-          postPatch = ''
-            substituteInPlace runtime/CMakeLists.txt \
-              --replace "target_compile_definitions(antlr4_shared PUBLIC ANTLR4CPP_EXPORTS)" "target_compile_definitions(antlr4_shared PRIVATE ANTLR4CPP_EXPORTS)"
-            substituteInPlace runtime/src/atn/ProfilingATNSimulator.cpp \
-              --replace "#include \"atn/ProfilingATNSimulator.h\"" "#include \"atn/ProfilingATNSimulator.h\"\n#include <chrono>"
-          '';
-
-          cmakeFlags = [
-            "-G"
-            "Ninja"
-            "-DANTLR_BUILD_STATIC=ON"
-            "-DANTLR_BUILD_SHARED=ON"
-            "-DANTLR4_INSTALL=ON"
-            "-DANTLR_BUILD_CPP_TESTS=OFF"
-          ];
-
-          enableParallelBuilding = true;
-          strictDeps = true;
-
-          meta = with lib; {
-            description = "ANTLR4 C++ runtime for NebulaStream";
-            homepage = "https://www.antlr.org";
-            license = licenses.bsd3;
-            platforms = platforms.linux;
-          };
-        };
-
-        cpptrace = clangStdenv.mkDerivation rec {
-          pname = "cpptrace";
-          version = "0.8.3";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "jeremy-rifkin";
-            repo = "cpptrace";
-            rev = "v${version}";
-            hash = "sha512-T+fmn1DvgAhUBjanRJBcXc3USAJe4Qs2v5UpiLj+HErLtRKoOCr9V/Pa5Nfpfla9v5H/q/2REKpBJ3r4exSSoQ==";
-          };
-
-          nativeBuildInputs = [
-            pkgs.cmake
-            pkgs.ninja
-            pkgs.pkg-config
-          ];
-          buildInputs = [
-            pkgs.libdwarf.dev
-            pkgs.zstd.dev
-          ];
-
-          cmakeFlags = [
-            "-G"
-            "Ninja"
-            "-DCMAKE_BUILD_TYPE=Release"
-            "-DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON"
-            "-DCPPTRACE_USE_EXTERNAL_ZSTD=ON"
-            "-DCPPTRACE_BUILD_TESTS=OFF"
-            "-DCPPTRACE_BUILD_EXAMPLES=OFF"
-            "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
-          ];
-
-          enableParallelBuilding = true;
-          strictDeps = true;
-
-          meta = with lib; {
-            description = "C++ stack trace library";
-            homepage = "https://github.com/jeremy-rifkin/cpptrace";
-            license = licenses.mit;
-            platforms = platforms.linux;
-          };
-        };
-
-        argparse = clangStdenv.mkDerivation rec {
-          pname = "argparse";
-          version = "3.2";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "p-ranav";
-            repo = "argparse";
-            rev = "v${version}";
-            hash = "sha512-TGSBdWib2WSlIZp8hqYVC4YzcZDaGICPLlUfxg1XFIUAyV4v1L3gKxKtiy1w0aTCdRxFZwt++mnEdv4AX+zjdw==";
-          };
-
-          nativeBuildInputs = [
-            pkgs.cmake
-            pkgs.ninja
-            pkgs.pkg-config
-          ];
-          buildInputs = [ ];
-
-          cmakeFlags = [
-            "-G"
-            "Ninja"
-            "-DARGPARSE_BUILD_TESTS=OFF"
-            "-DARGPARSE_INSTALL_CMAKE_DIR=lib/cmake/argparse"
-            "-DARGPARSE_INSTALL_PKGCONFIG_DIR=lib/pkgconfig"
-            "-DCMAKE_INSTALL_INCLUDEDIR=include"
-          ];
-
-          enableParallelBuilding = true;
-          strictDeps = true;
-
-          meta = with lib; {
-            description = "Header-only C++17 argument parser";
-            homepage = "https://github.com/p-ranav/argparse";
-            license = licenses.mit;
-            platforms = platforms.linux;
-          };
-        };
-
-        libcuckoo = clangStdenv.mkDerivation rec {
-          pname = "libcuckoo";
-          version = "0.3.1";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "efficient";
-            repo = "libcuckoo";
-            rev = "ea8c36c65bf9cf83aaf6b0db971248c6ae3686cf";
-            hash = "sha512-kXfaPFyDC2x4osXD81zglOXIQG6CHxts2thp1V9FxGMdR+7kLGBJPtBoIMzPNR2biu3/xSpVlkXkM8Megh1gxA==";
-          };
-
-          nativeBuildInputs = [
-            pkgs.cmake
-            pkgs.ninja
-            pkgs.pkg-config
-          ];
-          buildInputs = [ ];
-
-          cmakeFlags = [
-            "-G"
-            "Ninja"
-            "-DBUILD_EXAMPLES=OFF"
-            "-DBUILD_TESTS=OFF"
-            "-DBUILD_STRESS_TESTS=OFF"
-            "-DBUILD_UNIT_TESTS=OFF"
-            "-DBUILD_UNIVERSAL_BENCHMARK=OFF"
-          ];
-
-          enableParallelBuilding = true;
-          strictDeps = true;
-
-          meta = with lib; {
-            description = "C++ library providing fast concurrent hash tables";
-            homepage = "https://github.com/efficient/libcuckoo";
-            license = licenses.bsd3;
-            platforms = platforms.linux;
-          };
-        };
-
-        nautilusSrc = pkgs.fetchFromGitHub {
-          owner = "nebulastream";
-          repo = "nautilus";
-          rev = "364c89c184430e1ccd0d9422fc73b1cc54c33ca8";
-          hash = "sha512-yMC9HCBRd3yQuLWXKYCurbEUEb+2OzQa3E3o/MtjfrqcoMTJfqXI/e4jDRdk6V6ehhqSqfeyGGuAuRA558QwsQ==";
-        };
-
-        nautilusPkg = clangStdenv.mkDerivation rec {
-          pname = "nautilus";
-          version = "0.1";
-
-          src = nautilusSrc;
-
-          nativeBuildInputs = [
-            pkgs.cmake
-            pkgs.ninja
-            pkgs.pkg-config
-          ];
-          buildInputs = [
-            mlirBinary
-            llvm.llvm
-            fmtPkg
-            spdlogPkg
-            pkgs.binutils
-            pkgs.elfutils
-            pkgs.libdwarf.dev
-            pkgs.zlib.dev
-            pkgs.libffi
-            pkgs.libxml2
-            pkgs.boost
-            pkgs.openssl.dev
-            pkgs.tbb
-            pkgs.python3
-          ];
-
-          CMAKE_CXX_FLAGS = "-Wno-error=unused-result";
-
-          postPatch = ''
-            substituteInPlace nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp \
-              --replace "context.allowsUnregisteredDialects();" "(void)context.allowsUnregisteredDialects();"
-          '';
-
-          cmakeFlags = [
-            "-G"
-            "Ninja"
-            "-DCMAKE_BUILD_TYPE=Release"
-            "-DUSE_EXTERNAL_FMT=ON"
-            "-DUSE_EXTERNAL_SPDLOG=ON"
-            "-DUSE_EXTERNAL_MLIR=ON"
-            "-DNAUTILUS_DOWNLOAD_MLIR=OFF"
-            "-DENABLE_LOGGING=ON"
-            "-DENABLE_STACKTRACE=OFF"
-            "-DENABLE_COMPILER=ON"
-            "-DENABLE_TRACING=ON"
-            "-DENABLE_MLIR_BACKEND=ON"
-            "-DENABLE_C_BACKEND=ON"
-            "-DENABLE_BC_BACKEND=OFF"
-            "-DENABLE_TESTS=OFF"
-            "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
-            "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
-          ];
-
-          enableParallelBuilding = true;
-          strictDeps = true;
-
-          meta = with lib; {
-            description = "NebulaStream Nautilus compiler";
-            homepage = "https://github.com/nebulastream/nautilus";
-            license = licenses.asl20;
-            platforms = platforms.linux;
-          };
-        };
-
         thirdPartyDeps = baseThirdPartyDeps ++ [
-          cpptrace
-          argparse
-          libcuckoo
+          cpptracePkg
+          argparsePkg
+          libcuckooPkg
           nautilusPkg
         ];
 
@@ -436,6 +136,46 @@ index bb54f83a14..06be7b5266 100644
           MLIR_DIR = "${mlirBinary}/lib/cmake/mlir";
           LLVM_DIR = "${mlirBinary}/lib/cmake/llvm";
           CMAKE_MODULE_PATH = lib.makeSearchPath "share/cmake/Modules" [ libdwarfModule ];
+        };
+
+        clionSetupScript = pkgs.writeShellApplication {
+          name = "clion-setup";
+          runtimeInputs = [ pkgs.coreutils ];
+          text = ''
+            set -euo pipefail
+
+            project_root="$(pwd -P)"
+
+            target="$project_root/.nix/nix-run.sh"
+            if [ ! -x "$target" ]; then
+              printf 'clion-setup: expected executable %s/.nix/nix-run.sh\n' "$project_root" >&2
+              printf 'clion-setup: run this command from the repository root after fetching the repo.\n' >&2
+              exit 1
+            fi
+
+            bin_dir="$project_root/.nix"
+            if [ ! -d "$bin_dir" ]; then
+              printf 'clion-setup: expected directory %s/.nix to exist.\n' "$project_root" >&2
+              exit 1
+            fi
+
+            if rel_target=$(realpath --relative-to="$bin_dir" "$target" 2>/dev/null); then
+              link_target="$rel_target"
+            else
+              link_target="$target"
+            fi
+
+            created_list=""
+            for tool in cc c++ clang clang++ ctest ninja; do
+              link="$bin_dir/$tool"
+              ln -sf "$link_target" "$link"
+              created_list="$created_list\n  - $link -> $link_target"
+            done
+
+            printf 'clion-setup: shims available in %s\n' "$bin_dir"
+            printf '%b\n' "$created_list"
+            printf '\nThese binaries re-enter the Nix dev shell on demand; point CLion at them for compilers, ctest, and ninja.\n'
+          '';
         };
 
         # Core development tools
@@ -479,7 +219,7 @@ index bb54f83a14..06be7b5266 100644
 
           nativeBuildInputs = buildTools;
           buildInputs = llvmTools ++ thirdPartyDeps ++ [ mlirBinary ];
-          patches = [ antlr4JarPatch gflagsGlogPatch ];
+          patches = nebulastreamPatches;
 
           CMAKE_PREFIX_PATH = cmakePrefixPath;
           PKG_CONFIG_PATH = pkgConfigPath;
@@ -534,9 +274,16 @@ index bb54f83a14..06be7b5266 100644
         packages.default = defaultPackage;
 
         checks = {
-          antlr4 = antlr4;
-          cpptrace = cpptrace;
+          antlr4 = antlr4Pkg;
+          cpptrace = cpptracePkg;
           nautilus = nautilusPkg;
+        };
+
+        apps = {
+          clion-setup = {
+            type = "app";
+            program = "${clionSetupScript}/bin/clion-setup";
+          };
         };
 
         devShells.default = mkShellClang (

@@ -1,0 +1,12 @@
+diff --git a/nes-sql-parser/CMakeLists.txt b/nes-sql-parser/CMakeLists.txt
+--- a/nes-sql-parser/CMakeLists.txt
++++ b/nes-sql-parser/CMakeLists.txt
+@@ -26,3 +26,5 @@
+-  set(ANTLR4_JAR_LOCATION "/opt/${ANTLR_JAR_FILE}")
+-else ()
+-  include(FetchContent)
++  set(ANTLR4_JAR_LOCATION "/opt/${ANTLR_JAR_FILE}")
++elseif (DEFINED ANTLR4_JAR_LOCATION)
++  message(STATUS "Using provided ANTLR jar")
++else ()
++  include(FetchContent)
