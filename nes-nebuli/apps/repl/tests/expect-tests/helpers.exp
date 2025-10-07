@@ -1,0 +1,297 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# Helper procedures for expect-based testing of nes-nebuli
+
+# Helper to clean JSON by removing ANSI codes
+proc clean_json {text} {
+    # Remove all ANSI escape sequences
+    regsub -all {\033\[[0-9;]*[a-zA-Z]} $text {} cleaned
+    # Remove other control sequences like [J, [K, etc
+    # But don't remove JSON brackets!
+    regsub -all {(\[[0-9]+[GJKGHF])} $cleaned {} cleaned2
+    # Remove remaining control characters
+    regsub -all {\[[0-9]+G} $cleaned2 {} cleaned3
+    return $cleaned3
+}
+
+# Helper to extract JSON from buffer
+proc extract_json_from_buffer {buffer} {
+    # Extract just the line that contains the JSON (starts with [)
+    if {[regexp {(\[[^\n\r]*\][^\n\r]*)} $buffer json]} {
+        return [clean_json $json]
+    }
+    return ""
+}
+
+# Helper to wait for the prompt
+proc wait_for_prompt {} {
+    expect "NES 🌌 > "
+}
+
+# Helper to send SQL without escaping quotes
+proc send_sql {sql} {
+    set sql_substituted [uplevel 1 [list subst $sql]]
+    send "$sql_substituted\r"
+}
+
+# Helper to report test failure
+proc fail {message {expected ""} {actual ""}} {
+    puts "❌ FAILED: $message"
+    if {$expected ne ""} {
+        puts "Expected: $expected"
+    }
+    if {$actual ne ""} {
+        puts "Actual: $actual"
+    }
+    set log [exec cat nes-repl.log]
+    puts "$log"
+    exit 1
+}
+
+# Helper to expect JSON response and assert equality
+proc expect_json_equal {expected testname {timeout_msg ""}} {
+    if {$timeout_msg eq ""} {
+        set timeout_msg "Timeout waiting for $testname response"
+    }
+    expect {
+        timeout { fail $timeout_msg }
+        -re {\[.*\]} {
+            set json [extract_json_from_buffer $expect_out(buffer)]
+            assert_json_equal $expected $json $testname
+        }
+    }
+    wait_for_prompt
+}
+
+# Helper to expect multiple JSON responses and validate them, then wait for prompt once
+# Usage: expect_multiple_json_equal "testname" {
+#     {[{"worker":"sink-node:$port"}]}
+#     {[{"worker":"source-node-1:9090"}]}
+#     ...
+# }
+# Variables in the list will be substituted from the caller's scope
+proc expect_multiple_json_equal {testname expected_list} {
+    # Substitute variables in the list from the caller's scope
+    # Use subst with -nobackslashes and -nocommands to only substitute variables
+    set expected_list [uplevel 1 [list subst -nobackslashes -nocommands $expected_list]]
+    set count [llength $expected_list]
+    
+    for {set i 0} {$i < $count} {incr i} {
+        set expected [lindex $expected_list $i]
+        expect {
+            timeout { fail "Timeout waiting for $testname response [expr $i + 1] of $count" }
+            -re {(\[[^\n\r]*\])} {
+                set json [clean_json $expect_out(1,string)]
+                assert_json_equal $expected $json "$testname [expr $i + 1]"
+            }
+        }
+    }
+    # Wait for prompt only once after all responses
+    wait_for_prompt
+}
+
+# Helper to expect JSON response and return it
+proc expect_json {{timeout_msg "Timeout waiting for JSON response"}} {
+    expect {
+        timeout { fail $timeout_msg }
+        -re {\[.*\]} {
+            set json [extract_json_from_buffer $expect_out(buffer)]
+            wait_for_prompt
+            return $json
+        }
+    }
+}
+
+# Helper to check if JSON matches expected
+proc assert_json_equal {expected actual testname} {
+    set actual_cleaned [clean_json $actual]
+    set expected_sorted [exec echo $expected | jq --sort-keys .]
+    set actual_sorted [exec echo $actual_cleaned | jq --sort-keys .]
+
+    if {$expected_sorted ne $actual_sorted} {
+        fail $testname $expected_sorted $actual_sorted
+    }
+}
+
+# Helper to check if actual JSON contains expected subset
+proc assert_json_contains {expected actual testname} {
+    set actual_cleaned [clean_json $actual]
+    set result [exec echo $actual_cleaned | jq --argjson exp $expected "contains(\$exp)"]
+
+    if {$result ne "true"} {
+        fail "$testname (subset check)" $expected $actual_cleaned
+    }
+}
+
+# Helper to test if a jq expression returns true
+proc assert_jq_test {json jq_expr testname} {
+    set result [exec echo $json | jq $jq_expr]
+    if {$result ne "true"} {
+        fail $testname
+    }
+}
+
+# Helper to extract a value from JSON using jq
+proc jq {json expr} {
+    return [exec echo $json | jq -r $expr]
+}
+
+# Helper to setup distributed Docker Compose environment
+proc setup {topology_file} {
+    global temp_dir
+    global env
+
+    set script_dir [file dirname [info script]]
+
+    # Validate environment variables
+    if {![info exists env(NES_REPL)]} {
+        puts "ERROR: NES_REPL environment variable must be set"
+        puts "Usage: NES_REPL_TESTDATA=/path/to/nes-nebuli/apps/repl/tests NES_REPL=/path/to/nes-repl NEBULASTREAM=/path/to/nes-single-node-worker [test script]"
+        exit 1
+    }
+
+    if {![info exists env(NEBULASTREAM)]} {
+        puts "ERROR: NEBULASTREAM environment variable must be set"
+        puts "Usage: NES_REPL_TESTDATA=/path/to/nes-nebuli/apps/repl/tests NES_REPL=/path/to/nes-repl NEBULASTREAM=/path/to/nes-single-node-worker [test script]"
+        exit 1
+    }
+
+    if {![info exists env(NES_REPL_TESTDATA)]} {
+        puts "ERROR: NES_REPL_TESTDATA environment variable must be set"
+        puts "Usage: NES_REPL_TESTDATA=/path/to/nes-nebuli/apps/repl/tests NES_REPL=/path/to/nes-repl NEBULASTREAM=/path/to/nes-single-node-worker [test script]"
+        exit 1
+    }
+
+    set nes_repl_binary $env(NES_REPL)
+    set worker_binary $env(NEBULASTREAM)
+    set testdata_dir $env(NES_REPL_TESTDATA)
+
+    # Validate binaries exist
+    if {![file exists $nes_repl_binary]} {
+        puts "ERROR: NES_REPL file does not exist: $nes_repl_binary"
+        exit 1
+    }
+
+    if {![file exists $worker_binary]} {
+        puts "ERROR: NEBULASTREAM file does not exist: $worker_binary"
+        exit 1
+    }
+
+    if {![file executable $nes_repl_binary]} {
+        puts "ERROR: NES_REPL file is not executable: $nes_repl_binary"
+        exit 1
+    }
+
+    if {![file executable $worker_binary]} {
+        puts "ERROR: NEBULASTREAM file is not executable: $worker_binary"
+        exit 1
+    }
+
+    if {![file exists $testdata_dir/topologies/$topology_file]} {
+        puts "ERROR: Topology does not exist: $topology_file"
+        exit 1
+    }
+
+    # Convert to absolute paths
+    set nes_repl_binary [exec realpath $nes_repl_binary]
+    set worker_binary [exec realpath $worker_binary]
+
+    puts "Using NES_REPL: $nes_repl_binary"
+    puts "Using NEBULASTREAM: $worker_binary"
+
+    # Create temp directory
+    set temp_dir [exec mktemp -d]
+    cd $temp_dir
+
+    puts "Building Docker images..."
+
+    # Build worker image
+    set worker_dir [file dirname $worker_binary]
+    set dockerfile_worker {FROM ubuntu:24.04 AS app
+ENV LLVM_TOOLCHAIN_VERSION=19
+RUN apt update -y && apt install curl wget gpg -y
+RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
+&& chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
+&& echo "deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/$(. /etc/os-release && echo \"$VERSION_CODENAME\")/ llvm-toolchain-$(. /etc/os-release && echo \"$VERSION_CODENAME\")-${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
+&& echo "deb-src [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/$(. /etc/os-release && echo \"$VERSION_CODENAME\")/ llvm-toolchain-$(. /etc/os-release && echo \"$VERSION_CODENAME\")-${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
+&& apt update -y \
+&& apt install -y libc++1-${LLVM_TOOLCHAIN_VERSION} libc++abi1-${LLVM_TOOLCHAIN_VERSION}
+
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.40 && \
+wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-$(dpkg --print-architecture) && \
+chmod +x /bin/grpc_health_probe
+
+COPY nes-single-node-worker /usr/bin
+ENTRYPOINT ["nes-single-node-worker"]}
+
+    # Write Dockerfile to temp file and build
+    set worker_dockerfile_path "$temp_dir/Dockerfile.worker"
+    set fp [open $worker_dockerfile_path w]
+    puts $fp $dockerfile_worker
+    close $fp
+    catch {exec docker build -t worker-image -f $worker_dockerfile_path $worker_dir 2>@1} build_output
+    puts $build_output
+
+    # Build nes-repl image
+    set nes_repl_dir [file dirname $nes_repl_binary]
+    set dockerfile_nes_repl {FROM ubuntu:24.04 AS app
+ENV LLVM_TOOLCHAIN_VERSION=19
+RUN apt update -y && apt install curl wget gpg -y
+RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
+&& chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
+&& echo "deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/$(. /etc/os-release && echo \"$VERSION_CODENAME\")/ llvm-toolchain-$(. /etc/os-release && echo \"$VERSION_CODENAME\")-${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
+&& echo "deb-src [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/$(. /etc/os-release && echo \"$VERSION_CODENAME\")/ llvm-toolchain-$(. /etc/os-release && echo \"$VERSION_CODENAME\")-${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
+&& apt update -y \
+&& apt install -y libc++1-${LLVM_TOOLCHAIN_VERSION} libc++abi1-${LLVM_TOOLCHAIN_VERSION}
+
+COPY nes-repl /usr/bin}
+
+    # Write Dockerfile to temp file and build
+    set nes_repl_dockerfile_path "$temp_dir/Dockerfile.nes-repl"
+    set fp [open $nes_repl_dockerfile_path w]
+    puts $fp $dockerfile_nes_repl
+    close $fp
+    catch {exec docker build -t nes-repl-image -f $nes_repl_dockerfile_path $nes_repl_dir 2>@1} build_output
+    puts $build_output
+
+    puts "Using $temp_dir"
+    puts "Setting up Docker Compose environment..."
+
+    # Generate docker-compose.yaml
+    exec $testdata_dir/util/create_compose.sh $testdata_dir/topologies/$topology_file > docker-compose.yaml
+
+    # Start docker compose services
+    catch {exec docker compose up -d --wait 2>@1} compose_output
+    puts $compose_output
+
+    # Register cleanup handler to ensure docker compose is always stopped
+    proc cleanup {} {
+        global temp_dir
+        puts "\nCleaning up Docker Compose environment..."
+        cd $temp_dir
+        catch {exec docker compose down -v 2>@1} cleanup_error
+    }
+
+    # Register cleanup to run on exit and signals
+    trap cleanup {SIGINT SIGTERM}
+
+    # Override exit to call cleanup
+    rename exit original_exit
+    proc exit {{code 0}} {
+        cleanup
+        original_exit $code
+    }
+
+    puts "Docker Compose environment ready!"
+}
