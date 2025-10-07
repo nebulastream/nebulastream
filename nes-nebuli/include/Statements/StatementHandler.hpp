@@ -87,6 +87,11 @@ struct QueryStatementResult
     QueryId id;
 };
 
+struct WorkerStatusStatementResult
+{
+    WorkerStatus status;
+};
+
 struct ShowQueriesStatementResult
 {
     std::unordered_map<QueryId, LocalQueryStatus> queries;
@@ -109,7 +114,8 @@ using StatementResult = std::variant<
     DropSinkStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
-    DropQueryStatementResult>;
+    DropQueryStatementResult,
+    WorkerStatusStatementResult>;
 
 /// A bit of CRTP magic for nicer syntax when the object is in a shared ptr
 template <typename HandlerImpl>
@@ -174,6 +180,16 @@ public:
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
 };
 
+class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>
+{
+    SharedPtr<QueryManager> queryManager;
+
+public:
+    explicit TopologyStatementHandler(SharedPtr<QueryManager> queryManager);
+
+    std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
+};
+
 template <typename HandlerT>
 bool tryCall(const Statement& statement, HandlerT& handler)
 {
@@ -234,3 +250,4 @@ FMT_OSTREAM(NES::DropLogicalSourceStatementResult);
 FMT_OSTREAM(NES::DropPhysicalSourceStatementResult);
 FMT_OSTREAM(NES::DropQueryStatementResult);
 FMT_OSTREAM(NES::QueryStatementResult);
+FMT_OSTREAM(NES::WorkerStatusStatementResult);

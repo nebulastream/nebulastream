@@ -73,6 +73,13 @@ constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
 using QueryStatusOutputRowType = std::tuple<QueryId, std::string>;
 constexpr std::array<std::string_view, 2> queryStatusOutputColumns{"query_id", "query_status"};
+using WorkerStatusOutputRowType = std::tuple<
+    size_t,
+    QueryState,
+    std::optional<std::string>,
+    std::optional<std::chrono::system_clock::time_point>,
+    std::optional<std::chrono::system_clock::time_point>>;
+constexpr std::array<std::string_view, 5> workerStatusOutputColumns{"query_id", "query_status", "error", "started", "stopped"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 template <>
@@ -261,6 +268,33 @@ struct StatementOutputAssembler<DropQueryStatementResult>
     }
 };
 
+template <>
+struct StatementOutputAssembler<WorkerStatusStatementResult>
+{
+    using OutputRowType = WorkerStatusOutputRowType;
+
+    auto convert(const WorkerStatusStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        const auto& status = result.status;
+        output.reserve(status.activeQueries.size() + status.terminatedQueries.size());
+        for (const auto& activeQuery : status.activeQueries)
+        {
+            output.emplace_back(activeQuery.queryId.getRawValue(), QueryState::Running, std::nullopt, activeQuery.started, std::nullopt);
+        }
+        for (const auto& terminatedQuery : status.terminatedQueries)
+        {
+            output.emplace_back(
+                terminatedQuery.queryId.getRawValue(),
+                terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
+                terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
+                terminatedQuery.started,
+                terminatedQuery.terminated);
+        }
+        return std::make_pair(workerStatusOutputColumns, output);
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 
@@ -275,6 +309,7 @@ static_assert(AssemblembleStatementResult<DropPhysicalSourceStatementResult>);
 static_assert(AssemblembleStatementResult<DropSinkStatementResult>);
 static_assert(AssemblembleStatementResult<QueryStatementResult>);
 static_assert(AssemblembleStatementResult<ShowQueriesStatementResult>);
+static_assert(AssemblembleStatementResult<WorkerStatusStatementResult>);
 static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
 
 }

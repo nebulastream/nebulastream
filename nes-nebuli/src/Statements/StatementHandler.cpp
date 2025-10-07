@@ -226,6 +226,16 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     std::unreachable();
 }
 
+TopologyStatementHandler::TopologyStatementHandler(SharedPtr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+{
+}
+
+std::expected<WorkerStatusStatementResult, Exception> TopologyStatementHandler::operator()(const WorkerStatusStatement&)
+{
+    return this->queryManager->workerStatus(std::chrono::system_clock::time_point{})
+        .transform([](WorkerStatus status) { return WorkerStatusStatementResult{std::move(status)}; });
+}
+
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
 {
     if (not statement.id.has_value())
