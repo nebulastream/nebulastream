@@ -42,15 +42,20 @@ public:
         Zstd
     };
 
+    enum class DecodeReturnType : uint8_t
+    {
+        FINISHED_ENCODING_CURRENT_BUFFER,
+        REQUIRES_CURRENT_BUFFER_AGAIN
+    };
+
     Decoder() = default;
     virtual ~Decoder() = default;
 
     /// Decode the data in encodedBuffer starting from positionInCurrentBuffer and write the decoded data in the provided emptyDecodedBuffer.
-    /// Returns true, if the whole encodedBuffer was decoded.
-    /// Returns false, if the emptyDecodedBuffer did not provide enough space to decode all the remaining data.
-    /// In this case, decode should be called again with the same encoded buffer and a new emptyDecodedBuffer.
+    /// Returns DecodeReturnType depending on whether the whole encodedBuffer was decoded or not.
+    /// If not, decode should be called again with the same encoded buffer and a new emptyDecodedBuffer.
     /// Will update positionInCurrentBuffer to the index of the first byte in encodedBuffer that was not decoded yet.
-    virtual bool decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) = 0;
+    virtual DecodeReturnType decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) = 0;
 
     [[nodiscard]] static std::string getCodecOptionsAsString();
 

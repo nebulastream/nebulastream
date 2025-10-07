@@ -140,14 +140,14 @@ SourceImplementationTermination dataSourceThreadRoutine(
             /// If a decoder implementation is given, the source produces encoded data. We must decode the empty buffer and emit the result.
             if (decoder.has_value())
             {
-                bool decodingComplete = false;
+                Decoder::DecodeReturnType decodeStatus;
                 do
                 {
                     /// Get a new buffer for the decoded data
                     auto decodedBuffer = bufferProvider.getBufferBlocking();
-                    decodingComplete = decoder.value()->decode(emptyBuffer, decodedBuffer);
+                    decodeStatus = decoder.value()->decode(emptyBuffer, decodedBuffer);
                     emit(decodedBuffer, true);
-                } while (!decodingComplete);
+                } while (decodeStatus == Decoder::DecodeReturnType::REQUIRES_CURRENT_BUFFER_AGAIN);
             }
             else
             {

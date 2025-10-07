@@ -33,7 +33,7 @@ public:
     LZ4Decoder(LZ4Decoder&&) = delete;
     LZ4Decoder& operator=(LZ4Decoder&&) = delete;
 
-    bool decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) override;
+    DecodeReturnType decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) override;
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:

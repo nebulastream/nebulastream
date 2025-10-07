@@ -32,7 +32,7 @@ public:
     ZstdDecoder(ZstdDecoder&&) = delete;
     ZstdDecoder& operator=(ZstdDecoder&&) = delete;
 
-    bool decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) override;
+    DecodeReturnType decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) override;
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:

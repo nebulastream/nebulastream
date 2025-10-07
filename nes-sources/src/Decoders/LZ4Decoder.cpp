@@ -46,7 +46,7 @@ LZ4Decoder::~LZ4Decoder()
     }
 }
 
-bool LZ4Decoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer)
+Decoder::DecodeReturnType LZ4Decoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer)
 {
     /// The amount of bytes in the encoded buffer
     const size_t encodedBytes = encodedBuffer.getNumberOfTuples();
@@ -79,13 +79,13 @@ bool LZ4Decoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuf
 
     if (positionInCurrentBuffer >= encodedBytes)
     {
-        /// We decoded all bytes in encodedTupleBuffer and signalize this by returning true
+        /// We decoded all bytes in encodedTupleBuffer and signalize this by returning the corresponding DecodeReturnType
         /// Reset positionInCurrentBuffer
         positionInCurrentBuffer = 0;
-        return true;
+        return DecodeReturnType::FINISHED_ENCODING_CURRENT_BUFFER;
     }
     /// There are still bytes in the encoded buffer that were not decoded yet.
-    return false;
+    return DecodeReturnType::REQUIRES_CURRENT_BUFFER_AGAIN;
 }
 
 std::ostream& LZ4Decoder::toString(std::ostream& str) const

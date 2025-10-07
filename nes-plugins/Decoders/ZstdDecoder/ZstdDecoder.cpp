@@ -41,7 +41,7 @@ ZstdDecoder::~ZstdDecoder()
     }
 }
 
-bool ZstdDecoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer)
+Decoder::DecodeReturnType ZstdDecoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer)
 {
     /// Create Zstd input buffer of the encoded buffer. We take into consideration, how many bytes already have been decoded.
     /// Its a bit hacky to create a new input buffer for every call. It would be better, if we would provide a "submit encoded buffer"
@@ -59,13 +59,18 @@ bool ZstdDecoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBu
         NES_ERROR("Failed to decompress zstd-encoded buffer.");
     }
 
-    /// If the returned code is 0, the whole buffer was decoded. We reset our position member. Otherwise, we adapt the updated pos value
-    /// of the input buffer.
-    positionInCurrentBuffer = returnedCode == 0 ? 0 : src.pos;
-
     /// Set number of tuples using the output buffer pos
     emptyDecodedBuffer.setNumberOfTuples(dst.pos);
-    return returnedCode == 0;
+
+    /// If the returned code is 0, the whole buffer was decoded. We reset our position member. Otherwise, we adapt the updated pos value
+    /// of the input buffer.
+    if (returnedCode == 0)
+    {
+        positionInCurrentBuffer = 0;
+        return DecodeReturnType::FINISHED_ENCODING_CURRENT_BUFFER;
+    }
+    positionInCurrentBuffer = src.pos;
+    return DecodeReturnType::REQUIRES_CURRENT_BUFFER_AGAIN;
 }
 
 std::ostream& ZstdDecoder::toString(std::ostream& str) const
