@@ -15,26 +15,18 @@
 #pragma once
 
 #include <expected>
-#include <vector>
-
 #include <future>
+#include <vector>
 #include <Listeners/QueryLog.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryPlanning.hpp>
 #include <Thread.hpp>
+#include <WorkerConfig.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
 {
-
-using HostAddr = NESStrongStringType<struct HostAddr_, "INVALID">;
-using GrpcAddr = NESStrongStringType<struct GrpcAddr_, "INVALID">;
-
-struct WorkerConfig
-{
-    HostAddr host;
-    GrpcAddr grpc;
-};
 
 class QuerySubmissionBackend
 {
@@ -48,9 +40,11 @@ public:
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
 };
 
+using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(const WorkerConfig&)>;
+
 struct QueryManagerState
 {
-    std::unordered_set<LocalQueryId> queries;
+    std::unordered_map<DistributedQueryId, DistributedQuery> queries;
 };
 
 class QueryManager;
@@ -63,32 +57,74 @@ struct QueryStatusNotifier
         std::promise<void> promise;
     };
 
-    std::future<void> waitForQuery(LocalQueryId queryId, QueryState state);
-    folly::Synchronized<std::unordered_map<std::tuple<LocalQueryId, QueryState>, std::vector<Notifier>>> notifiers;
+    std::future<void> waitForQuery(DistributedQueryId queryId, QueryState state);
+    folly::Synchronized<std::unordered_map<std::tuple<GrpcAddr, LocalQueryId, QueryState>, std::vector<Notifier>>> notifiers;
     QueryManager& owner;
     Thread thread;
 
     explicit QueryStatusNotifier(QueryManager& owner);
 };
 
+class WorkerCatalog;
+
 class QueryManager
 {
+    class QueryManagerBackends
+    {
+        SharedPtr<WorkerCatalog> workerCatalog;
+        mutable BackendProvider backendProvider;
+        mutable std::unordered_map<GrpcAddr, UniquePtr<QuerySubmissionBackend>> backends;
+        mutable uint64_t cachedWorkerCatalogVersion = 0;
+        static std::unordered_map<GrpcAddr, UniquePtr<QuerySubmissionBackend>>
+        createBackends(const std::vector<WorkerConfig>& workers, BackendProvider& provider);
+        void rebuildBackendsIfNeeded() const;
+
+    public:
+        QueryManagerBackends(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
+
+        auto begin() const
+        {
+            rebuildBackendsIfNeeded();
+            return backends.begin();
+        }
+
+        auto end() const { return backends.end(); }
+
+        bool contains(const GrpcAddr& grpc) const
+        {
+            rebuildBackendsIfNeeded();
+            return backends.contains(grpc);
+        }
+
+        const QuerySubmissionBackend& at(const GrpcAddr& grpc) const
+        {
+            rebuildBackendsIfNeeded();
+            return *backends.at(grpc);
+        }
+
+        QuerySubmissionBackend& at(const GrpcAddr& grpc)
+        {
+            rebuildBackendsIfNeeded();
+            return *backends.at(grpc);
+        }
+    };
+
     QueryManagerState state;
-    UniquePtr<QuerySubmissionBackend> backend;
+    QueryManagerBackends backends;
     QueryStatusNotifier notifier;
 
 public:
-    QueryManager(UniquePtr<QuerySubmissionBackend> provider, QueryManagerState state);
-    explicit QueryManager(UniquePtr<QuerySubmissionBackend> provider);
-    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(const PlanStage::OptimizedLogicalPlan& plan);
-    std::expected<void, Exception> start(LocalQueryId query);
-    std::expected<void, Exception> stop(LocalQueryId query);
-    std::expected<void, Exception> unregister(LocalQueryId query);
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId query) const;
-    [[nodiscard]] std::vector<LocalQueryId> queries() const;
-    [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
-    std::vector<LocalQueryId> getRunningQueries() const;
-    std::expected<LocalQueryId, Exception> getQuery(LocalQueryId query) const;
+    QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
+    QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
+    [[nodiscard]] std::expected<DistributedQueryId, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
+    std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>> unregister(DistributedQueryId query);
+    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(DistributedQueryId query) const;
+    [[nodiscard]] std::vector<DistributedQueryId> queries() const;
+    [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
+    std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
+    std::vector<DistributedQueryId> getRunningQueries() const;
 };
 
 }

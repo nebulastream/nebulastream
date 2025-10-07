@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <Listeners/QueryLog.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryPlanning.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
@@ -38,5 +39,7 @@ public:
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 };
+
+BackendProvider createGRPCBackend();
 
 }

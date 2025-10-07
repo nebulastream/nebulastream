@@ -29,17 +29,17 @@ class QuerySubmitter
 {
 public:
     explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
-    std::expected<LocalQueryId, Exception> registerQuery(const LogicalPlan& plan);
-    void startQuery(LocalQueryId query);
-    void stopQuery(LocalQueryId query);
-    void unregisterQuery(LocalQueryId query);
-    LocalQueryStatus waitForQueryTermination(LocalQueryId query);
+    std::expected<DistributedQueryId, Exception> registerQuery(const PlanStage::DistributedLogicalPlan& plan);
+    void startQuery(DistributedQueryId query);
+    void stopQuery(DistributedQueryId query);
+    void unregisterQuery(DistributedQueryId query);
+    DistributedQueryStatus waitForQueryTermination(DistributedQueryId query);
 
     /// Blocks until atleast one query has finished (or potentially failed)
-    std::vector<LocalQueryStatus> finishedQueries();
+    std::vector<DistributedQueryStatus> finishedQueries();
 
 private:
     UniquePtr<QueryManager> queryManager;
-    std::unordered_set<LocalQueryId> ids;
+    std::unordered_set<DistributedQueryId> ids;
 };
 }
