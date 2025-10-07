@@ -57,7 +57,6 @@
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <utils.hpp>
 
 #ifdef EMBED_ENGINE
@@ -204,10 +203,12 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
+            NES::TopologyStatementHandler topologyStatementHandler{queryManager};
             auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
+                std::move(topologyStatementHandler),
                 queryStatementHandler,
                 std::move(binder),
                 errorBehaviour,
