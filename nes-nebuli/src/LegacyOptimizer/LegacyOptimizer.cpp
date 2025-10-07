@@ -15,19 +15,27 @@
 
 #include <LegacyOptimizer.hpp>
 
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <LegacyOptimizer/BottomUpPlacement.hpp>
 #include <LegacyOptimizer/InlineSinkBindingPhase.hpp>
 #include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/QueryDecomposition.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
 #include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <DistributedQuery.hpp>
+#include <ErrorHandling.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
-LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
+DistributedLogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
@@ -55,6 +63,20 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     originIdInferencePhase.apply(newPlan);
     typeInference.apply(newPlan);
-    return newPlan;
+
+
+    BottomUpOperatorPlacer(workerCatalog).place(newPlan);
+    DecomposedLogicalPlan<HostAddr> decomposed = QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(newPlan);
+
+    /// Swap out host addr to grpc to identify workers
+    auto swapped = std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{};
+    for (auto& [host, plans] : decomposed.localPlans)
+    {
+        auto conf = workerCatalog->getWorker(host);
+        INVARIANT(conf.has_value(), "Worker with hostname {} not present in the worker catalog", host);
+        swapped.emplace(conf->grpc, std::move(plans));
+    }
+
+    return DistributedLogicalPlan(DecomposedLogicalPlan{std::move(swapped)}, std::move(newPlan));
 }
 }
