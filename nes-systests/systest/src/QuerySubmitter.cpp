@@ -25,6 +25,7 @@
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Systest
