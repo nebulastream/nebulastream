@@ -184,8 +184,7 @@ struct StatementOutputAssembler<DropLogicalSourceStatementResult>
 
     auto convert(const DropLogicalSourceStatementResult& result)
     {
-        return std::make_pair(
-            logicalSourceOutputColumns, std::vector{std::make_tuple(result.dropped.getLogicalSourceName(), *result.dropped.getSchema())});
+        return std::make_pair(logicalSourceOutputColumns, std::vector{std::make_tuple(result.dropped.getRawValue(), result.schema)});
     }
 };
 
