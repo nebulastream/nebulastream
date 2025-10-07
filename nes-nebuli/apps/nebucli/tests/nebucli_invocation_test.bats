@@ -19,12 +19,6 @@ setup_file() {
     exit 1
   fi
 
-  if [ -z "$HEALTH_PROBE" ]; then
-    echo "ERROR: NEBUCLI environment variable must be set" >&2
-    echo "Usage: NEBUCLI=/path/to/nebucli bats nebucli.bats" >&2
-    exit 1
-  fi
-
   if [ -z "$NEBULASTREAM" ]; then
     echo "ERROR: NEBULASTREAM environment variable must be set" >&2
     echo "Usage: NEBULASTREAM=/path/to/nes-single-node-worker bats nebucli.bats" >&2
@@ -66,6 +60,39 @@ teardown_file() {
   # Clean up any global resources if needed
   echo "# Test suite completed" >&3
 }
+setup_file() {
+  docker build -t worker-image -f - $(dirname $(realpath $NEBULASTREAM)) <<EOF
+    FROM ubuntu:24.04 AS app
+    ENV LLVM_TOOLCHAIN_VERSION=19
+    RUN apt update -y && apt install curl wget gpg -y
+    RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
+    && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
+    && echo "deb [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
+    && echo "deb-src [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
+    && apt update -y \
+    && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
+
+    RUN GRPC_HEALTH_PROBE_VERSION=v0.4.40 && \
+    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/\${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
+    chmod +x /bin/grpc_health_probe
+
+    COPY nes-single-node-worker /usr/bin
+    ENTRYPOINT ["nes-single-node-worker"]
+EOF
+  docker build -t nebucli-image -f - $(dirname $(realpath $NEBUCLI)) <<EOF
+    FROM ubuntu:24.04 AS app
+    ENV LLVM_TOOLCHAIN_VERSION=19
+    RUN apt update -y && apt install curl wget gpg -y
+    RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
+    && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
+    && echo "deb [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
+    && echo "deb-src [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
+    && apt update -y \
+    && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
+
+    COPY nebucli /usr/bin
+EOF
+}
 
 INSTANCE_PID=0
 setup() {
@@ -73,64 +100,84 @@ setup() {
 
   cp -r "$NEBUCLI_TESTDATA" "$TMP_DIR"
   cd "$TMP_DIR" || exit
-  INSTANCE_PID=0
 
   echo "# Using TEST_DIR: $TMP_DIR" >&3
 }
 teardown() {
-  if [ "$INSTANCE_PID" -ne 0 ]; then
-    kill -SIGTERM $INSTANCE_PID
-    wait $INSTANCE_PID
-  fi
-  INSTANCE_PID=0
+  docker compose down -v || true
+}
+function setup_distributed() {
+  tests/create_compose.sh "$1" >docker-compose.yaml
+  docker compose up -d --wait
 }
 
-start_nes() {
-  $NEBULASTREAM >/dev/null &
-  INSTANCE_PID=$!
-  $HEALTH_PROBE -addr localhost:8080 -connect-timeout 5s
+DOCKER_NEBUCLI() {
+  docker compose run --rm nebucli nebucli "$@"
 }
 
 @test "nebucli shows help" {
   run $NEBUCLI --help
   [ "$status" -eq 0 ]
 }
+@test "nebucli dump" {
+  run $NEBUCLI -t tests/good/crazy-join.yaml dump
+  [ "$status" -eq 0 ]
+}
 
+@test "nebucli dump with debug" {
+  run $NEBUCLI -d -t tests/good/crazy-join.yaml dump
+  [ "$status" -eq 0 ]
+}
+
+@test "nebucli dump using environment" {
+
+  NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NEBUCLI dump
+  [ "$status" -eq 0 ]
+}
+
+@test "nebucli dump using environment and adhoc query" {
+
+  NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NEBUCLI dump "SELECT * FROM stream INTO void_sink"
+  [ "$status" -eq 0 ]
+}
+
+# bats file_tags=docker
 @test "launch query from topology" {
-  start_nes
-  run $NEBUCLI -t tests/good/select-gen-into-void.yaml start
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
 }
 @test "launch multiple query from topology" {
-  start_nes
-  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml start
+  setup_distributed tests/good/multiple-select-gen-into-void.yaml
+
+  run DOCKER_NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
   [ ${#lines[@]} -eq 8 ]
 
   query_ids=("${lines[@]}")
 
-  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[0]}"
+  run DOCKER_NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[0]}"
   [ "$status" -eq 0 ]
 
-  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[1]}" "${query_ids[2]}" "${query_ids[3]}" "${query_ids[4]}" "${query_ids[5]}"
+  run DOCKER_NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[1]}" "${query_ids[2]}" "${query_ids[3]}" "${query_ids[4]}" "${query_ids[5]}"
   [ "$status" -eq 0 ]
 
-  run $NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[6]}" "${query_ids[7]}"
+  run DOCKER_NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[6]}" "${query_ids[7]}"
   [ "$status" -eq 0 ]
 }
 @test "launch query from commandline" {
-  start_nes
-  run $NEBUCLI -t tests/good/select-gen-into-void.yaml start "select double from generator_source INTO void_sink"
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start "select double from generator_source INTO void_sink"
   [ "$status" -eq 0 ]
 }
 @test "launch bad query from commandline" {
-  start_nes
-  run $NEBUCLI -t tests/good/select-gen-into-void.yaml start "selectaa double * UINT64(2) from generator_source INTO void_sink"
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start "selectaa double * UINT64(2) from generator_source INTO void_sink"
   [ "$status" -eq 1 ]
 }
 @test "launch and stop query" {
-  start_nes
-  run $NEBUCLI -t tests/good/select-gen-into-void.yaml start "select double from generator_source INTO void_sink"
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start "select double from generator_source INTO void_sink"
   [ "$status" -eq 0 ]
 
   [ -f "$output" ]
@@ -138,12 +185,12 @@ start_nes() {
 
   sleep 1
 
-  run $NEBUCLI -t tests/good/select-gen-into-void.yaml stop "$QUERY_ID"
+  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 @test "launch and monitor query" {
-  start_nes
-  run $NEBUCLI -t tests/good/select-gen-into-void.yaml start "select double from generator_source INTO void_sink"
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start "select double from generator_source INTO void_sink"
   [ "$status" -eq 0 ]
 
   [ -f "$output" ]
@@ -151,10 +198,66 @@ start_nes() {
 
   sleep 1
 
-  run $NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
-  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.local_query_id == $query_id) | .query_status')
-  echo "Status: $QUERY_STATUS" >&3
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
+}
+
+@test "launch and monitor distributed queries" {
+  setup_distributed tests/good/distributed-query-deployment.yaml
+
+  run DOCKER_NEBUCLI -t tests/good/distributed-query-deployment.yaml start "select double from generator_source INTO void_sink"
+  [ "$status" -eq 0 ]
+  [ -f "$output" ]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run DOCKER_NEBUCLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
+  [ "$status" -eq 0 ]
+  echo "${output}" | jq -e '(. | length) == 3' # 1 global + 2 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+}
+
+@test "launch and monitor distributed queries crazy join" {
+  setup_distributed tests/good/crazy-join.yaml
+
+  run DOCKER_NEBUCLI start
+  echo $output
+  [ "$status" -eq 0 ]
+  [ -f "$output" ]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run DOCKER_NEBUCLI status "$QUERY_ID"
+  echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+
+  run DOCKER_NEBUCLI stop "$QUERY_ID"
+  [ "$status" -eq 0 ]
+}
+
+@test "launch and monitor distributed queries crazy join with a fast source" {
+  setup_distributed tests/good/crazy-join-one-fast-source.yaml
+
+  run DOCKER_NEBUCLI start
+  echo $output
+  [ "$status" -eq 0 ]
+  [ -f "$output" ]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run DOCKER_NEBUCLI status "$QUERY_ID"
+  echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "PartiallyStopped" ]
+
+  run DOCKER_NEBUCLI stop "$QUERY_ID"
+  [ "$status" -eq 0 ]
 }

@@ -50,8 +50,10 @@
 #include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <WorkerCatalog.hpp>
 
 namespace
 {
@@ -87,6 +89,7 @@ struct Sink
     std::string name;
     std::vector<SchemaField> schema;
     std::string type;
+    std::string host;
     std::unordered_map<std::string, std::string> config;
 };
 
@@ -100,8 +103,17 @@ struct PhysicalSource
 {
     std::string logical;
     std::string type;
+    std::string host;
     std::unordered_map<std::string, std::string> parserConfig;
     std::unordered_map<std::string, std::string> sourceConfig;
+};
+
+struct WorkerConfig
+{
+    std::string host;
+    std::string grpc;
+    size_t capacity;
+    std::vector<std::string> downstream;
 };
 
 struct QueryConfig
@@ -110,6 +122,7 @@ struct QueryConfig
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
+    std::vector<WorkerConfig> workers;
 };
 }
 
@@ -134,6 +147,7 @@ struct convert<NES::CLI::Sink>
         rhs.name = node["name"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
+        rhs.host = node["host"].as<std::string>();
         rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
@@ -157,8 +171,26 @@ struct convert<NES::CLI::PhysicalSource>
     {
         rhs.logical = node["logical"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
+        rhs.host = node["host"].as<std::string>();
         rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
+        return true;
+    }
+};
+
+template <>
+struct convert<NES::CLI::WorkerConfig>
+{
+    static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
+    {
+        rhs.capacity = node["capacity"].as<size_t>();
+        if (node["downstream"].IsDefined())
+        {
+            rhs.downstream = node["downstream"].as<std::vector<std::string>>();
+        }
+        rhs.grpc = node["grpc"].as<std::string>();
+        rhs.host = node["host"].as<std::string>();
+
         return true;
     }
 };
@@ -183,6 +215,7 @@ struct convert<NES::CLI::QueryConfig>
                 rhs.query.emplace_back(node["query"].as<std::string>());
             }
         }
+        rhs.workers = node["workers"].as<std::vector<NES::CLI::WorkerConfig>>();
         return true;
     }
 };
@@ -249,8 +282,12 @@ loadQueries(const argparse::ArgumentParser& parser, const argparse::ArgumentPars
 
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
-    const auto& [query, sinks, logical, physical] = topologyConfig;
+    const auto& [query, sinks, logical, physical, workers] = topologyConfig;
     std::vector<NES::Statement> statements;
+    for (const auto& [host, grpc, capacity, downstream] : workers)
+    {
+        statements.emplace_back(NES::CreateWorkerStatement{.host = host, .grpc = grpc, .capacity = capacity, .downstream = downstream});
+    }
     for (const auto& [name, schemaFields] : logical)
     {
         NES::Schema schema;
@@ -262,16 +299,16 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
     }
 
-    for (const auto& [logical, type, parserConfig, sourceConfig] : physical)
+    for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(logical),
             .sourceType = type,
-            .workerId = "",
+            .workerId = host,
             .sourceConfig = sourceConfig,
             .parserConfig = parserConfig});
     }
-    for (const auto& [name, schemaFields, type, config] : sinks)
+    for (const auto& [name, schemaFields, type, host, config] : sinks)
     {
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
@@ -280,17 +317,30 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         }
 
         statements.emplace_back(
-            NES::CreateSinkStatement{.name = name, .sinkType = type, .workerId = "", .schema = schema, .sinkConfig = config});
+            NES::CreateSinkStatement{.name = name, .sinkType = type, .workerId = host, .schema = schema, .sinkConfig = config});
     }
     return statements;
 }
 
 namespace NES
 {
+template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+void to_json(BasicJsonType& nlohmann_json_j, const LocalQuery& nlohmann_json_t)
+{
+    nlohmann_json_j["id"] = nlohmann_json_t.id.getRawValue();
+    nlohmann_json_j["grpcAddr"] = nlohmann_json_t.grpcAddr.getRawValue();
+}
+
+template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+void from_json(const BasicJsonType& nlohmann_json_j, LocalQuery& nlohmann_json_t)
+{
+    nlohmann_json_t.id = LocalQueryId(nlohmann_json_j.at("id").template get<LocalQueryId::Underlying>());
+    nlohmann_json_t.grpcAddr = GrpcAddr(nlohmann_json_j.at("grpcAddr").template get<GrpcAddr::Underlying>());
+};
 
 struct PersistentQueryId
 {
-    LocalQueryId query;
+    std::vector<LocalQuery> query;
 
     std::string store()
     {
@@ -302,8 +352,7 @@ struct PersistentQueryId
         }
         std::filesystem::path path(result);
         std::ofstream output(path);
-        nlohmann::json j;
-        j["local_query_id"] = query;
+        nlohmann::json j(query);
         output << j.dump(4);
         return filename;
     }
@@ -320,7 +369,7 @@ struct PersistentQueryId
         {
             throw InvalidConfigParameter(fmt::format("Could not open file: {}", path));
         }
-        PersistentQueryId result(nlohmann::json::parse(file)["local_query_id"].get<LocalQueryId>());
+        PersistentQueryId result(nlohmann::json::parse(file).get<std::vector<LocalQuery>>());
         return result;
     }
 };
@@ -329,11 +378,11 @@ struct PersistentQueryId
 void doStatus(
     NES::QueryStatementHandler& queryStatementHandler,
     NES::TopologyStatementHandler& topologyStatementHandler,
-    const std::unordered_map<NES::LocalQueryId, std::string>& queries)
+    const std::unordered_map<NES::DistributedQueryId, std::string>& queries)
 {
     if (queries.empty())
     {
-        auto result = topologyStatementHandler(NES::WorkerStatusStatement{});
+        auto result = topologyStatementHandler(NES::WorkerStatusStatement{{}});
         std::cout << nlohmann::json(NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value())).dump(4)
                   << '\n';
     }
@@ -347,17 +396,17 @@ void doStatus(
             result.insert(result.end(), results.begin(), results.end());
         }
 
-        /// Patch local query ids for persistent id
-        for (auto& query : result)
+        /// Patch distributed Query Ids with persistent queryIds
+        for (auto& jsonQuery : result)
         {
-            query["local_query_id"] = queries.at(query["local_query_id"]);
+            jsonQuery["global_query_id"] = queries.at(jsonQuery["global_query_id"]);
         }
 
         std::cout << result.dump(4) << '\n';
     }
 }
 
-void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unordered_map<NES::LocalQueryId, std::string>& queries)
+void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unordered_map<NES::DistributedQueryId, std::string>& queries)
 {
     auto result = nlohmann::json::array();
     for (const auto& query : queries | std::views::keys)
@@ -371,22 +420,13 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
         nlohmann::json results(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
         result.insert(result.end(), results.begin(), results.end());
     }
-
-    /// Patch local query ids for persistent id
-    for (auto& query : result)
+    /// Patch distributed Query Ids with persistent queryIds
+    for (auto& jsonQuery : result)
     {
-        query["local_query_id"] = queries.at(query["local_query_id"]);
+        jsonQuery["global_query_id"] = queries.at(jsonQuery["global_query_id"]);
     }
 
     std::cout << result.dump(4) << '\n';
-}
-
-static NES::HostAddr hostAddr{"localhost:9090"};
-static NES::GrpcAddr grpcAddr{"localhost:8080"};
-
-NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend()
-{
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.host = hostAddr, .grpc = grpcAddr});
 }
 
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
@@ -395,20 +435,25 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
 
     const auto mapping = NES::views::enumerate(subcommand.get<std::vector<std::string>>("queryId"))
         | std::views::transform(
-                             [](const auto& pair) -> std::pair<NES::LocalQueryId, std::string>
-                             { return {NES::LocalQueryId(std::get<0>(pair) + 1), std::get<1>(pair)}; })
+                             [](const auto& pair) -> std::pair<NES::DistributedQueryId, std::string>
+                             { return {NES::DistributedQueryId(std::get<0>(pair) + 1), std::get<1>(pair)}; })
         | std::ranges::to<std::unordered_map>();
-    const auto state = mapping | std::views::keys | std::ranges::to<std::unordered_set>();
+    const auto state = mapping
+        | std::views::transform(
+                           [](const auto& pair) -> std::pair<NES::DistributedQueryId, NES::DistributedQuery>
+                           { return {std::get<0>(pair), NES::DistributedQuery{NES::PersistentQueryId::load(std::get<1>(pair)).query}}; })
+        | std::ranges::to<std::unordered_map>();
 
     auto statements = loadStatements(topologyConfig);
+    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-    const auto queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend(), NES::QueryManagerState{state});
+    const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
-    NES::TopologyStatementHandler topologyHandler{queryManager};
+    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    NES::QueryStatementHandler queryHandler{queryManager, sourceCatalog, sinkCatalog};
+    NES::QueryStatementHandler queryHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
 
@@ -436,18 +481,19 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         throw NES::InvalidConfigParameter("No queries");
     }
 
+    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-    auto queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend());
+    auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
-    NES::TopologyStatementHandler topologyHandler{queryManager};
+    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
         for (const auto& query : queries)
         {
             auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
@@ -455,7 +501,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
                 INVARIANT(queryDescriptor.has_value(), "Query should exist in the query manager if statement handler succeed");
-                NES::PersistentQueryId persistentId(*queryDescriptor);
+                NES::PersistentQueryId persistentId(queryDescriptor->getLocalQueries());
                 std::cout << persistentId.store() << '\n';
             }
             else
@@ -466,7 +512,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, sourceCatalog, sinkCatalog, workerCatalog};
         for (const auto& query : queries)
         {
             auto result

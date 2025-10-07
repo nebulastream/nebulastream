@@ -30,6 +30,8 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
+#include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
@@ -52,12 +54,86 @@ struct OptimizedLogicalPlan
     OptimizedLogicalPlan& operator=(OptimizedLogicalPlan&&) = default;
     OptimizedLogicalPlan& operator=(const OptimizedLogicalPlan&) = default;
 };
+
+struct PlacedLogicalPlan
+{
+    LogicalPlan plan;
+
+    explicit PlacedLogicalPlan(LogicalPlan placedPlan) : plan{std::move(placedPlan)} { }
+
+    PlacedLogicalPlan(PlacedLogicalPlan&&) = default;
+    PlacedLogicalPlan(const PlacedLogicalPlan&) = default;
+    PlacedLogicalPlan& operator=(PlacedLogicalPlan&&) = default;
+    PlacedLogicalPlan& operator=(const PlacedLogicalPlan&) = default;
+};
+
+template <typename AddressType>
+struct DecomposedLogicalPlan
+{
+    std::unordered_map<AddressType, std::vector<LogicalPlan>> localPlans;
+
+    explicit DecomposedLogicalPlan(std::unordered_map<AddressType, std::vector<LogicalPlan>> plans) : localPlans{std::move(plans)} { }
+
+    DecomposedLogicalPlan(DecomposedLogicalPlan&&) = default;
+    DecomposedLogicalPlan(const DecomposedLogicalPlan&) = default;
+    DecomposedLogicalPlan& operator=(DecomposedLogicalPlan&&) = default;
+    DecomposedLogicalPlan& operator=(const DecomposedLogicalPlan&) = default;
+};
+
+struct DistributedLogicalPlan
+{
+    DistributedLogicalPlan(DecomposedLogicalPlan<GrpcAddr>&& plan, OptimizedLogicalPlan globalPlan)
+        : plan(std::move(plan)), globalPlan(std::move(globalPlan))
+    {
+        PRECONDITION(not this->plan.localPlans.empty(), "Input plan should not be empty");
+    }
+
+    const LogicalPlan& operator*() const { return plan.localPlans.begin()->second.front(); }
+
+    const LogicalPlan& operator*() { return plan.localPlans.begin()->second.front(); }
+
+    const LogicalPlan* operator->() const { return &(**this); }
+
+    /// Subscript operator for accessing plans by its grpc addr
+    const std::vector<LogicalPlan>& operator[](const GrpcAddr& grpc) const
+    {
+        const auto it = plan.localPlans.find(grpc);
+        if (it == plan.localPlans.end())
+        {
+            throw std::out_of_range(fmt::format("No plan found in decomposed plan under addr {}", grpc));
+        }
+        return it->second;
+    }
+
+    std::vector<LogicalPlan>& operator[](const GrpcAddr& connection) { return plan.localPlans.at(connection); }
+
+    size_t size() const
+    {
+        return std::ranges::fold_left(
+            plan.localPlans | std::views::values | std::views::transform(&std::vector<LogicalPlan>::size), 0, std::plus{});
+    }
+
+    auto view() const { return plan; }
+
+    const LogicalPlan& getGlobalPlan() const { return globalPlan.plan; }
+
+    auto begin() const { return plan.localPlans.cbegin(); }
+
+    auto end() const { return plan.localPlans.cend(); }
+
+private:
+    DecomposedLogicalPlan<GrpcAddr> plan;
+    OptimizedLogicalPlan globalPlan;
+};
 }
 
 struct QueryPlanningContext
 {
+    LocalQueryId id;
+    std::string sqlString;
     SharedPtr<SourceCatalog> sourceCatalog;
     SharedPtr<SinkCatalog> sinkCatalog;
+    SharedPtr<WorkerCatalog> workerCatalog;
 };
 
 class QueryPlanner
@@ -76,7 +152,15 @@ public:
 
     static QueryPlanner with(QueryPlanningContext& context) { return QueryPlanner{context}; }
 
-    PlanStage::OptimizedLogicalPlan plan(PlanStage::BoundLogicalPlan&& boundPlan) &&;
+    PlanStage::DistributedLogicalPlan plan(PlanStage::BoundLogicalPlan&& boundPlan) &&;
 };
+
+template <class T>
+[[nodiscard]] std::vector<TypedLogicalOperator<T>> getOperatorByType(const PlanStage::DistributedLogicalPlan& distributedPlan)
+{
+    return distributedPlan | std::views::values | std::views::join
+        | std::views::transform([](const auto& localPlan) { return getOperatorByType<T>(localPlan); }) | std::views::join
+        | std::ranges::to<std::vector>();
+}
 
 }
