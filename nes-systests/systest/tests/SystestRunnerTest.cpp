@@ -102,20 +102,21 @@ public:
     SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
 };
 
-class MockQueryManager final : public QueryManager
+class MockQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (const LogicalPlan&), (override));
-    MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (noexcept, override));
-    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, noexcept, override));
+    MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (LogicalPlan), (override));
+    MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (override));
+    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, override));
+    MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
 };
 
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
-    QuerySubmitter submitter{std::make_unique<MockQueryManager>()};
+    QuerySubmitter submitter{std::make_unique<QueryManager>(std::make_unique<MockQuerySubmissionBackend>())};
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
@@ -131,15 +132,14 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     constexpr QueryId id{7};
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
-
-    auto mockManager = std::make_unique<MockQueryManager>();
-    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(*mockManager, start(id));
-    EXPECT_CALL(*mockManager, status(id))
+    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockBackend, start(id));
+    EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
 
-    QuerySubmitter submitter{std::move(mockManager)};
+    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
@@ -164,14 +164,14 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const testing::InSequence seq;
     constexpr QueryId id{11};
 
-    auto mockManager = std::make_unique<MockQueryManager>();
-    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(*mockManager, start(id));
-    EXPECT_CALL(*mockManager, status(id))
+    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockBackend, start(id));
+    EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
 
-    QuerySubmitter submitter{std::move(mockManager)};
+    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
