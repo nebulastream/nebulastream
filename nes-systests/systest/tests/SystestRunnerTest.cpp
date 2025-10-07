@@ -15,7 +15,6 @@
 #include <SystestRunner.hpp>
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <memory>
@@ -46,7 +45,6 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerStatus.hpp>
 
