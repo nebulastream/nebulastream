@@ -204,10 +204,12 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
+            NES::TopologyStatementHandler topologyStatementHandler{queryManager};
             auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog, sinkCatalog);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
+                std::move(topologyStatementHandler),
                 queryStatementHandler,
                 std::move(binder),
                 errorBehaviour,
