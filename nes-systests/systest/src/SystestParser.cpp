@@ -329,25 +329,29 @@ std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vecto
 
     while (currentLine < lines.size())
     {
-        const std::string line = lines[currentLine];
+        const std::string line = lines[currentLine++];
         if (emptyOrComment(line))
         {
-            currentLine++;
             continue;
         }
+
         createQuery += line;
         if (createQuery.ends_with(';'))
         {
             break;
         }
         createQuery += '\n';
+    }
+
+    while (currentLine < lines.size() && emptyOrComment(lines[currentLine]))
+    {
         currentLine++;
     }
 
-    if (currentLine + 1 < lines.size() && lines[currentLine + 1].starts_with("ATTACH INLINE"))
+    if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH INLINE"))
     {
         testData = std::make_pair(TestDataIngestionType::INLINE, std::vector<std::string>{});
-        currentLine += 2;
+        currentLine++;
         while (currentLine < lines.size() && !lines[currentLine].empty())
         {
             testData.value().second.push_back(lines[currentLine]);
@@ -355,13 +359,15 @@ std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vecto
         }
         currentLine--;
     }
-    else if (currentLine + 1 < lines.size() && lines[currentLine + 1].starts_with("ATTACH FILE"))
+    else if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH FILE"))
     {
         testData = std::make_pair(TestDataIngestionType::FILE, std::vector<std::string>{});
-        currentLine += 1;
         testData->second.push_back(lines[currentLine].substr(std::strlen("ATTACH FILE") + 1));
     }
-
+    else
+    {
+        currentLine--;
+    }
 
     return std::make_pair(createQuery, testData);
 }
@@ -402,6 +408,12 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
             {
                 if (stopTokens.contains(tokenType.value()))
                 {
+                    const auto trimmedQuerySoFar = Util::trimWhiteSpaces(std::string_view(queryString));
+
+                    if (trimmedQuerySoFar.back() != ';')
+                    {
+                        throw InvalidQuerySyntax("Queries must end with a semicolon: \"{}\"", trimmedQuerySoFar);
+                    }
                     break;
                 }
             }

@@ -350,4 +350,81 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(errorCallbackCalled);
 }
+
+TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "create_statement_format.dummy";
+    const SystestParser::SystestLogicalSource input1{
+        .name = "input1", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
+    const SystestParser::SystestLogicalSource input2{
+        .name = "input2", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
+    const SystestParser::SystestLogicalSource input3{
+        .name = "input3", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
+
+    const auto expectedQueries = std::to_array<std::string>(
+        {R"(SELECT id AS id FROM input1 INTO output)",
+         R"(SELECT id AS id FROM input2 INTO output)",
+         R"(SELECT id AS id FROM input3 INTO output)"});
+
+    const std::vector<std::vector<std::string>> expectedData = {{"1", "2", "3"}};
+
+
+    bool queryCallbackCalled = false;
+    bool createLogicalSourceCallbackCalled = false;
+    bool createPhysicalSourceCallbackCalled = false;
+    bool createSinkCallbackCalled = false;
+
+    SystestParser parser{};
+    std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
+
+    parser.registerOnCreateCallback(
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        {
+            if (query.starts_with("CREATE LOGICAL SOURCE"))
+            {
+                createLogicalSourceCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
+            if (query.starts_with("CREATE PHYSICAL SOURCE"))
+            {
+                createPhysicalSourceCallbackCalled = true;
+                EXPECT_TRUE(testData.has_value());
+                EXPECT_EQ(TestDataIngestionType::INLINE, testData.value().first);
+                EXPECT_EQ(expectedData.at(0).size(), testData.value().second.size());
+                ASSERT_TRUE(testData.value().second == expectedData.at(0));
+            }
+            if (query.starts_with("CREATE SINK"))
+            {
+                createSinkCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
+        });
+
+
+    parser.registerOnQueryCallback(
+        [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
+        {
+            queryCallbackCalled = true;
+            /// Query numbers start at QueryId::INITIAL, which is 1
+            ASSERT_LT(currentQueryIdInTest.getRawValue(), expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
+        });
+
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    EXPECT_NO_THROW(parser.parse());
+    ASSERT_TRUE(createLogicalSourceCallbackCalled);
+    ASSERT_TRUE(createPhysicalSourceCallbackCalled);
+    ASSERT_TRUE(createSinkCallbackCalled);
+    ASSERT_TRUE(queryCallbackCalled);
+    ASSERT_TRUE(queryResultMap.size() == 3);
+    ASSERT_TRUE(std::ranges::all_of(
+        expectedData,
+        [&queryResultMap](const auto& expectedResult)
+        { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
+}
+
+
 }
