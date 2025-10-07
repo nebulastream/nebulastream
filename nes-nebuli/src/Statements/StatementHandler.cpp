@@ -18,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <ranges>
+#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -29,6 +30,7 @@
 #include <Util/Common.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
@@ -199,11 +201,34 @@ QueryStatementHandler::QueryStatementHandler(
 {
 }
 
+std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)
+{
+    CPPTRACE_TRY
+    {
+        auto boundPlan = PlanStage::BoundLogicalPlan{statement.plan};
+        std::stringstream explainMessage;
+        fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
+        fmt::println(explainMessage, "Initial Logical Plan:\n{}", boundPlan.plan);
+        const auto optimized
+            = QueryPlanner::with({.sourceCatalog = Util::copyPtr(sourceCatalog), .sinkCatalog = Util::copyPtr(sinkCatalog)})
+                  .plan(std::move(boundPlan));
+
+        fmt::println(explainMessage, "Optimized Global Plan:\n{}", optimized.plan);
+
+        return ExplainQueryStatementResult{explainMessage.str()};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
 {
     CPPTRACE_TRY
     {
-        auto boundPlan = PlanStage::BoundLogicalPlan{statement};
+        auto boundPlan = PlanStage::BoundLogicalPlan{statement.plan};
         const auto optimizedPlan
             = QueryPlanner::with({.sourceCatalog = Util::copyPtr(sourceCatalog), .sinkCatalog = Util::copyPtr(sinkCatalog)})
 

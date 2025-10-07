@@ -14,7 +14,10 @@
 
 #pragma once
 #include <array>
+#include <chrono>
 #include <concepts>
+#include <cstddef>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -25,6 +28,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -71,8 +75,14 @@ constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name
 using QueryIdOutputRowType = std::tuple<QueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
-using QueryStatusOutputRowType = std::tuple<QueryId, std::string>;
-constexpr std::array<std::string_view, 2> queryStatusOutputColumns{"query_id", "query_status"};
+using QueryStatusOutputRowType = std::tuple<
+    QueryId,
+    QueryState,
+    std::optional<std::string>,
+    std::optional<std::chrono::system_clock::time_point>,
+    std::optional<std::chrono::system_clock::time_point>,
+    std::optional<std::chrono::system_clock::time_point>>;
+constexpr std::array<std::string_view, 6> queryStatusOutputColumns{"query_id", "query_status", "error", "started", "running", "stopped"};
 using WorkerStatusOutputRowType = std::tuple<
     size_t,
     QueryState,
@@ -250,7 +260,14 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
         output.reserve(result.queries.size());
         for (const auto& [id, query] : result.queries)
         {
-            output.emplace_back(id, magic_enum::enum_name(query.state));
+            auto globalMetrics = query.metrics;
+            output.emplace_back(
+                id,
+                query.state,
+                globalMetrics.error.transform([](const auto& exception) { return exception.what(); }),
+                globalMetrics.start,
+                globalMetrics.running,
+                globalMetrics.stop);
         }
         return std::make_pair(queryStatusOutputColumns, output);
     }
@@ -265,6 +282,17 @@ struct StatementOutputAssembler<DropQueryStatementResult>
     auto convert(const DropQueryStatementResult& result)
     {
         return std::make_pair(queryIdOutputColumns, std::vector{std::make_tuple(result.id)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ExplainQueryStatementResult>
+{
+    using OutputRowType = std::tuple<std::string>;
+
+    auto convert(const ExplainQueryStatementResult& result)
+    {
+        return std::make_pair(std::to_array<std::string_view>({"explain"}), std::vector{std::make_tuple(result.explainString)});
     }
 };
 

@@ -113,7 +113,15 @@ struct DropSinkStatement
     std::string name;
 };
 
-using QueryStatement = LogicalPlan;
+struct QueryStatement
+{
+    LogicalPlan plan;
+};
+
+struct ExplainQueryStatement
+{
+    LogicalPlan plan;
+};
 
 struct ShowQueriesStatement
 {
@@ -141,6 +149,7 @@ using Statement = std::variant<
     DropPhysicalSourceStatement,
     DropSinkStatement,
     QueryStatement,
+    ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     DropQueryStatement>;
@@ -224,3 +233,4 @@ FMT_OSTREAM(NES::DropLogicalSourceStatement);
 FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
 FMT_OSTREAM(NES::WorkerStatusStatement);
+FMT_OSTREAM(NES::ExplainQueryStatement);
