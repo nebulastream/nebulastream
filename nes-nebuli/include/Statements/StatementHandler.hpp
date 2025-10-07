@@ -17,7 +17,7 @@
 #include <concepts>
 #include <expected>
 #include <memory>
-#include <mutex>
+#include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -88,6 +88,11 @@ struct QueryStatementResult
     QueryId id;
 };
 
+struct ExplainQueryStatementResult
+{
+    std::string explainString;
+};
+
 struct WorkerStatusStatementResult
 {
     WorkerStatus status;
@@ -115,6 +120,7 @@ using StatementResult = std::variant<
     DropSinkStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
+    ExplainQueryStatementResult,
     DropQueryStatementResult,
     WorkerStatusStatementResult>;
 
@@ -175,6 +181,7 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
 public:
     explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
+    std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
 };
@@ -250,3 +257,4 @@ FMT_OSTREAM(NES::DropPhysicalSourceStatementResult);
 FMT_OSTREAM(NES::DropQueryStatementResult);
 FMT_OSTREAM(NES::QueryStatementResult);
 FMT_OSTREAM(NES::WorkerStatusStatementResult);
+FMT_OSTREAM(NES::ExplainQueryStatementResult);

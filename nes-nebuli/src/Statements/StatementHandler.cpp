@@ -18,6 +18,7 @@
 #include <expected>
 #include <memory>
 #include <ranges>
+#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -26,9 +27,9 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <Util/Common.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
@@ -200,11 +201,32 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
     return stopResult;
 }
 
+std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)
+{
+    CPPTRACE_TRY
+    {
+        std::stringstream explainMessage;
+        fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
+        fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
+
+        const auto optimizedPlan = optimizer->optimize(statement.plan);
+
+        fmt::println(explainMessage, "Optimized Global Plan:\n{}", optimizedPlan);
+
+        return ExplainQueryStatementResult{explainMessage.str()};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
 {
     CPPTRACE_TRY
     {
-        const auto optimizedPlan = optimizer->optimize(statement);
+        const auto optimizedPlan = optimizer->optimize(statement.plan);
         const auto queryResult = queryManager->registerQuery(optimizedPlan);
         return queryResult
             .and_then(
