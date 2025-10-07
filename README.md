@@ -114,7 +114,7 @@ Append worker configuration overrides after `--` (for example `-- --worker.defau
 Build the client and worker binaries, start the worker in one terminal, and submit a short-lived query from another terminal using `nebuli`:
 
 ```shell
-cmake --build cmake-build-debug -j --target nes-single-node-worker nes-nebuli
+cmake --build cmake-build-debug -j --target nes-single-node-worker nes-frontend
 
 # Terminal 1: start the worker (listens on localhost:8080 by default)
 cmake-build-debug/nes-single-node-worker/nes-single-node-worker
@@ -129,7 +129,7 @@ CREATE SINK result(demo.value UINT64) TYPE File SET('./demo-output.csv' AS `SINK
 SELECT value FROM demo INTO result;
 EOF
 
-cmake-build-debug/nes-nebuli/nes-nebuli -s localhost:8080 -w < demo.sql
+cmake-build-debug/nes-frontend/nes-frontend -s localhost:8080 -w < demo.sql
 ```
 
 The generated CSV appears at `demo-output.csv`. Inspect or retire the query with additional `nebuli` subcommands such as `show`, `stop`, or `unregister` as needed.
