@@ -32,7 +32,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<RowLayout> rowMemoryLayout)
-    : rowMemoryLayout(std::move(rowMemoryLayout)) { };
+    : rowMemoryLayout(std::move(rowMemoryLayout)){};
 
 std::shared_ptr<MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout() const
 {
@@ -90,6 +90,11 @@ void RowTupleBufferMemoryProvider::writeRecord(
         const auto& value = rec.read(schema.getFieldAt(i).name);
         storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
+}
+
+nautilus::val<uint64_t> RowTupleBufferMemoryProvider::getNumberOfRecords(const RecordBuffer& recordBuffer) const
+{
+    return recordBuffer.getNumRecords();
 }
 
 }

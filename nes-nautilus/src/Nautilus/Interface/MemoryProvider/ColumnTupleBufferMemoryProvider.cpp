@@ -30,7 +30,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr)
-    : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) { };
+    : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))){};
 
 std::shared_ptr<MemoryLayout> ColumnTupleBufferMemoryProvider::getMemoryLayout() const
 {
@@ -86,6 +86,11 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
         const auto value = rec.read(schema.getFieldAt(i).name);
         storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
+}
+
+nautilus::val<uint64_t> ColumnTupleBufferMemoryProvider::getNumberOfRecords(const RecordBuffer& recordBuffer) const
+{
+    return recordBuffer.getNumRecords();
 }
 
 }

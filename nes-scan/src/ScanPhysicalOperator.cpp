@@ -44,10 +44,12 @@ OpenReturnState ScanPhysicalOperator::open(ExecutionContext& executionCtx, Recor
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
+
+    memoryProvider->open(recordBuffer, executionCtx.pipelineMemoryProvider.arena);
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
     /// iterate over records in buffer
-    auto numberOfRecords = recordBuffer.getNumRecords();
+    auto numberOfRecords = memoryProvider->getNumberOfRecords(recordBuffer);
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);
