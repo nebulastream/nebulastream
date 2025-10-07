@@ -427,16 +427,6 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
     return os << op.explain(ExplainVerbosity::Short);
 }
 
-/// Adds additional traits to the given operator, returning a new operator
-/// If the same trait (with the same data) is already present, the new trait will not be added.
-template <IsTrait... TraitType>
-LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitType&... traits)
-{
-    auto result = op.getTraitSet();
-    (result.tryInsert(traits), ...);
-    return op.withTraitSet(std::move(result));
-}
-
 }
 
 /// Hash is based solely on unique identifier (needed for e.g. unordered_set)
