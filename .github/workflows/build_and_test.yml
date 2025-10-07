@@ -34,7 +34,7 @@ jobs:
         stdlib: [ 'libstdcxx', 'libcxx' ]
         # To reduce the load on our CI, we do not run all our tests with Benchmark.
         # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
-        build_type: [ 'Debug', 'RelWithDebInfo', 'Release']
+        build_type: [ 'Debug', 'RelWithDebInfo', 'Release' ]
         sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
         exclude:
           # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
@@ -222,3 +222,63 @@ jobs:
         run: cmake -GNinja -B build -DNES_ENABLES_TESTS=0
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
+
+  build-test-with-flags:
+    name: "Test with ${{ matrix.additional_build_flags.name }}"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'Debug' ]
+        sanitizer: [ 'none' ]
+        additional_build_flags:
+          - flags: -DNES_DEBUG_TUPLE_BUFFER_LEAKS=ON
+            name: tuple-buffer-leak
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Configure NebulaStream
+        run: cmake -GNinja -B build ${{ matrix.additional_build_flags.flags }}
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        # Upload all log and stats files if any of the tests has failed.
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-${{ matrix.additional_build_flags.name }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && !github.event.act }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}-${{ matrix.additional_build_flags.name }}
+          file: /junit.xml
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-${{ matrix.additional_build_flags.name }}.xml
+          path: /junit.xml
