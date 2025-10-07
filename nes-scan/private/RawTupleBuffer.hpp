@@ -78,11 +78,10 @@ public:
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
 
+    /// Used by InputFormatterTask to pass an arena-allocated spanning tuple to an InputFormatIndexer
+    explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple) : bufferView(rawDataPtr, sizeOfSpanningTuple) { };
 private:
     TupleBuffer rawBuffer;
     std::string_view bufferView;
-
-    /// Used by InputFormatterTask to pass an arena-allocated spanning tuple to an InputFormatIndexer
-    explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple) : bufferView(rawDataPtr, sizeOfSpanningTuple) { };
 };
 }
