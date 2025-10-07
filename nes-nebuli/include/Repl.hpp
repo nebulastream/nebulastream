@@ -38,6 +38,7 @@ public:
     explicit Repl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        TopologyStatementHandler topologyStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         ErrorBehaviour errorBehaviour,
