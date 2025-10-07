@@ -43,7 +43,7 @@ std::expected<QueryId, Exception> QuerySubmitter::registerQuery(const LogicalPla
     const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
     if (deserialized == plan)
     {
-        return queryManager->registerQuery(deserialized);
+        return queryManager->registerQuery(PlanStage::OptimizedLogicalPlan(deserialized));
     }
     const auto exception = CannotSerialize(
         "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and deserialize(serialize(plan)):\n{}",
