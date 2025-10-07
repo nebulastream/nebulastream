@@ -68,13 +68,6 @@
     #include <SingleNodeWorkerConfiguration.hpp>
 #endif
 
-static NES::HostAddr hostAddr{"localhost:9090"};
-static NES::GrpcAddr grpcAddr{"localhost:8080"};
-
-NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend()
-{
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.host = hostAddr, .grpc = grpcAddr});
-}
 
 int main(int argc, char** argv)
 {
@@ -142,13 +135,14 @@ int main(int argc, char** argv)
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+        auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
             sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend());
+            queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
         }
         else
         {
@@ -167,8 +161,13 @@ int main(int argc, char** argv)
             auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
                                               .value_or(NES::SingleNodeWorkerConfiguration{});
 
-            queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(
-                NES::WorkerConfig{.host = NES::HostAddr(""), .grpc = NES::GrpcAddr("localhost:8080")}, singleNodeWorkerConfig));
+            NES::WorkerConfig workerConfig{
+                .host = NES::HostAddr(""),
+                .grpc = NES::GrpcAddr(singleNodeWorkerConfig.grpcAddressUri),
+                .capacity = 10000,
+                .downstream = {}};
+            workerCatalog->addWorker(workerConfig.host, workerConfig.grpc, workerConfig.capacity, workerConfig.downstream);
+            queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
                       "single node worker.")
@@ -178,8 +177,8 @@ int main(int argc, char** argv)
 
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
-        NES::TopologyStatementHandler topologyStatementHandler{queryManager};
-        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog, sinkCatalog);
+        NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
+        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog, sinkCatalog, workerCatalog);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),

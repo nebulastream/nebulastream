@@ -80,7 +80,7 @@ fromQuery: AS query;
 
 dropStatement: DROP dropSubject;
 dropSubject: dropQuery | dropSource | dropSink;
-dropQuery: QUERY id=UUID;
+dropQuery: QUERY id=strictIdentifier;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE name=strictIdentifier;
 dropPhysicalSourceSubject: PHYSICAL SOURCE id=unsignedIntegerLiteral;

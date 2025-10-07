@@ -42,6 +42,7 @@
 namespace NES
 {
 
+using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">;
 using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
 
 enum class StatementOutputFormat : uint8_t
@@ -127,22 +128,38 @@ struct ExplainQueryStatement
 
 struct ShowQueriesStatement
 {
-    std::optional<LocalQueryId> id;
+    std::optional<DistributedQueryId> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    LocalQueryId id;
+    DistributedQueryId id;
     bool blocking = true;
 };
 
 struct WorkerStatusStatement
 {
+    std::vector<std::string> host;
+};
+
+struct CreateWorkerStatement
+{
+    std::string host;
+    std::string grpc;
+    size_t capacity;
+    std::vector<std::string> downstream;
+};
+
+struct DropWorkerStatement
+{
+    std::string host;
 };
 
 using Statement = std::variant<
     WorkerStatusStatement,
+    CreateWorkerStatement,
+    DropWorkerStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
@@ -237,3 +254,5 @@ FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
 FMT_OSTREAM(NES::WorkerStatusStatement);
 FMT_OSTREAM(NES::ExplainQueryStatement);
+FMT_OSTREAM(NES::CreateWorkerStatement);
+FMT_OSTREAM(NES::DropWorkerStatement);

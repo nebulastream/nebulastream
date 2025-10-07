@@ -492,7 +492,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
             }
-            return ShowQueriesStatement{.id = LocalQueryId{std::get<std::string>(value)}, .format = format};
+            return ShowQueriesStatement{.id = DistributedQueryId{std::get<std::string>(value)}, .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -546,7 +546,7 @@ public:
         }
         else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
         {
-            const auto id = LocalQueryId{dropQueryAst->id->getText()};
+            const auto id = DistributedQueryId{bindIdentifier(dropQueryAst->id)};
             return DropQueryStatement{id};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
