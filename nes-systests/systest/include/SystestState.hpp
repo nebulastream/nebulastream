@@ -38,18 +38,13 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <LegacyOptimizer/QueryPlanning.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <magic_enum/magic_enum.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
-
-#include <Identifiers/NESStrongType.hpp>
 
 namespace NES::Systest
 {
@@ -106,7 +101,7 @@ struct SystestQuery
 
     struct PlanInfo
     {
-        LogicalPlan queryPlan;
+        PlanStage::DistributedLogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
     };
@@ -114,15 +109,15 @@ struct SystestQuery
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
-    std::optional<LogicalPlan> differentialQueryPlan;
+    std::optional<PlanStage::DistributedLogicalPlan> differentialQueryPlan;
 };
 
 struct RunningQuery
 {
     SystestQuery systestQuery;
-    LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
-    std::optional<LocalQueryId> differentialQueryPair;
-    LocalQueryStatus queryStatus{};
+    DistributedQueryId queryId{DistributedQueryId::INVALID};
+    std::optional<DistributedQueryId> differentialQueryPair;
+    DistributedQueryStatus queryStatus;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;

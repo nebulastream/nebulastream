@@ -43,29 +43,6 @@ find_program(BATS bats)
 if (${BATS} STREQUAL BATS-NOTFOUND)
     message(WARNING "Bats not found. Disabling Bats based e2e tests. You can install Bats via apt install bats")
 else ()
-
-    include(FetchContent)
-    set(VERSION "v0.4.40")
-    if (NES_ARCH STREQUAL "x64")
-        set(ARCH "amd64")
-    elseif (NES_ARCH STREQUAL "arm64")
-        set(ARCH "arm64")
-    endif ()
-
-    set(BINARY_NAME "grpc_health_probe")
-    set(BINARY_SUFFIX "linux-${ARCH}")
-    set(HASH_arm64 "ac7b46065a9faf15a9ddca4cbdb145442f858fd430cf245fc4f31c33bdc61143")
-    set(HASH_amd64 "36f1e2bade1672ba7f3ddb4a14e5035c06856cc5fd4e9e538dd1d4878871edeb")
-    FetchContent_Declare(
-            grpc_health_probe
-            URL https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${VERSION}/${BINARY_NAME}-${BINARY_SUFFIX}
-            URL_HASH SHA256=${HASH_${ARCH}}
-            DOWNLOAD_NO_EXTRACT TRUE
-    )
-    FetchContent_MakeAvailable(grpc_health_probe)
-    file(CHMOD ${grpc_health_probe_SOURCE_DIR}/${BINARY_NAME}-${BINARY_SUFFIX}
-            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
-
     add_test(
             NAME "nebuli-test"
             COMMAND
@@ -87,7 +64,18 @@ else ()
             env NEBUCLI=$<TARGET_FILE:nebucli>
             env NEBUCLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests
             env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-            env HEALTH_PROBE=${grpc_health_probe_SOURCE_DIR}/${BINARY_NAME}-${BINARY_SUFFIX}
-            ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests/nebucli_invocation_test.bats
+            ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests/nebucli_test.bats
     )
+
+    if (ENABLE_DOCKER_TESTS)
+        add_test(
+                NAME nebucli-docker-test
+                COMMAND
+                env NEBUCLI=$<TARGET_FILE:nebucli>
+                env NEBUCLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests
+                env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+                ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests/nebucli_docker_test.bats
+        )
+        set_tests_properties(nebucli-docker-test PROPERTIES LABELS "DockerCompose")
+    endif ()
 endif ()

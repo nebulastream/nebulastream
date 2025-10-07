@@ -14,17 +14,35 @@
 
 #include <LegacyOptimizer/QueryPlanning.hpp>
 
+#include <unordered_map>
 #include <utility>
+#include <vector>
+
+#include <LegacyOptimizer/BottomUpPlacement.hpp>
 #include <LegacyOptimizer/LegacyOptimizer.hpp>
+#include <LegacyOptimizer/QueryDecomposition.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <ErrorHandling.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
 
-PlanStage::OptimizedLogicalPlan QueryPlanner::plan(PlanStage::BoundLogicalPlan&& boundPlan) &&
+PlanStage::DistributedLogicalPlan QueryPlanner::plan(PlanStage::BoundLogicalPlan&& boundPlan) &&
 {
-    PlanStage::OptimizedLogicalPlan optimized = LegacyOptimizer::with(context).optimize(std::move(boundPlan));
+    const PlanStage::OptimizedLogicalPlan optimized = LegacyOptimizer::with(context).optimize(std::move(boundPlan));
+    PlanStage::PlacedLogicalPlan placed = BottomUpOperatorPlacer::with(context).place(PlanStage::OptimizedLogicalPlan(optimized));
+    PlanStage::DecomposedLogicalPlan<HostAddr> decomposed = QueryDecomposer::with(context).decompose(std::move(placed));
 
-    return optimized;
+    /// Swap out host addr to grpc to identify workers
+    auto swapped = std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{};
+    for (auto& [host, plans] : decomposed.localPlans)
+    {
+        auto conf = context.workerCatalog->getWorker(host);
+        INVARIANT(conf.has_value(), "Worker with hostname {} not present in the worker catalog", host);
+        swapped.emplace(conf->grpc, std::move(plans));
+    }
+    return PlanStage::DistributedLogicalPlan{PlanStage::DecomposedLogicalPlan{std::move(swapped)}, optimized};
 }
 
 }

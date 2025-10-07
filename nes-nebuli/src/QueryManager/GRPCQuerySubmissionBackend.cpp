@@ -230,4 +230,9 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(LocalQuery
     }
 }
 
+BackendProvider createGRPCBackend()
+{
+    return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
+}
+
 }

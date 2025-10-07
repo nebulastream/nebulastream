@@ -13,5 +13,8 @@
 add_subdirectory(Phases)
 add_source_files(nes-legacy-optimizer
         LegacyOptimizer.cpp
+        BottomUpPlacement.cpp
         QueryPlanning.cpp
+        OperatorPlacement.cpp
+        QueryDecomposition.cpp
 )
