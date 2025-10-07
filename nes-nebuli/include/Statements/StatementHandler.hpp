@@ -171,9 +171,59 @@ public:
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
-
-    [[nodiscard]] std::vector<QueryId> getRunningQueries() const;
 };
+
+template <typename HandlerT>
+bool tryCall(const Statement& statement, HandlerT& handler)
+{
+    return std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+}
+
+template <typename HandlerT, typename... HandlerTs>
+bool tryCall(const Statement& statement, HandlerT& handler, HandlerTs&... handlers)
+{
+    auto couldHandle = std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+    if (couldHandle)
+    {
+        return true;
+    }
+    return tryCall(statement, handlers...);
+}
+
+template <typename... HandlerT>
+void handleStatements(const std::vector<Statement>& statements, HandlerT&... handler)
+{
+    for (const auto& statement : statements)
+    {
+        tryCall(statement, handler...);
+    }
+}
 
 }
 
