@@ -13,10 +13,11 @@
 */
 
 #pragma once
-
 #include <QueryManager/QueryManager.hpp>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -37,5 +38,7 @@ public:
 private:
     SingleNodeWorker worker;
 };
+
+BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);
 
 }

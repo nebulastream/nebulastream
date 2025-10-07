@@ -20,6 +20,15 @@
 
 namespace NES
 {
+std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQueryId query) const
+{
+    const auto it = state.queries.find(query);
+    if (it == state.queries.end())
+    {
+        return std::unexpected(QueryNotFound("Query {} is not known to the QueryManager", query));
+    }
+    return it->second;
+}
 
 QueryStatusNotifier::QueryStatusNotifier(QueryManager& owner) : owner(owner)
 {
@@ -30,39 +39,51 @@ QueryStatusNotifier::QueryStatusNotifier(QueryManager& owner) : owner(owner)
             std::chrono::time_point<std::chrono::system_clock> nextUpdate{std::chrono::microseconds(0)};
             while (!token.stop_requested())
             {
+                if (this->notifiers.rlock()->empty())
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    continue;
+                }
+
                 auto lastUpdate = std::exchange(nextUpdate, std::chrono::system_clock::now());
                 auto result = this->owner.workerStatus(lastUpdate);
                 auto state = this->notifiers.wlock();
                 if (result)
                 {
-                    for (const auto& activeQuery : result->activeQueries)
+                    for (const auto& [grpc, workerStatusResult] : result->workerStatus)
                     {
-                        auto it = state->find({activeQuery.queryId, QueryState::Running});
-                        if (it != state->end())
+                        if (workerStatusResult)
                         {
-                            for (auto& notifier : it->second)
+                            for (const auto& activeQuery : workerStatusResult->activeQueries)
                             {
-                                if (--notifier.waiting == 0)
+                                auto it = state->find({grpc, activeQuery.queryId, QueryState::Running});
+                                if (it != state->end())
                                 {
-                                    notifier.promise.set_value();
+                                    for (auto& notifier : it->second)
+                                    {
+                                        if (--notifier.waiting == 0)
+                                        {
+                                            notifier.promise.set_value();
+                                        }
+                                    }
+                                    state->erase(it);
                                 }
                             }
-                            state->erase(it);
-                        }
-                    }
-                    for (const auto& terminatedQuery : result->terminatedQueries)
-                    {
-                        auto it = state->find({terminatedQuery.queryId, QueryState::Stopped});
-                        if (it != state->end())
-                        {
-                            for (auto& notifier : it->second)
+                            for (const auto& terminatedQuery : workerStatusResult->terminatedQueries)
                             {
-                                if (--notifier.waiting == 0)
+                                auto it = state->find({grpc, terminatedQuery.queryId, QueryState::Stopped});
+                                if (it != state->end())
                                 {
-                                    notifier.promise.set_value();
+                                    for (auto& notifier : it->second)
+                                    {
+                                        if (--notifier.waiting == 0)
+                                        {
+                                            notifier.promise.set_value();
+                                        }
+                                    }
+                                    state->erase(it);
                                 }
                             }
-                            state->erase(it);
                         }
                     }
                 }
@@ -70,148 +91,266 @@ QueryStatusNotifier::QueryStatusNotifier(QueryManager& owner) : owner(owner)
         });
 }
 
-QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend, QueryManagerState state)
-    : state(std::move(state)), backend(std::move(backend)), notifier(*this)
+std::unordered_map<GrpcAddr, UniquePtr<QuerySubmissionBackend>>
+QueryManager::QueryManagerBackends::createBackends(const std::vector<WorkerConfig>& workers, BackendProvider& provider)
 {
-}
-
-QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend) : backend(std::move(backend)), notifier(*this)
-{
-}
-
-std::expected<LocalQueryId, Exception> QueryManager::registerQuery(const PlanStage::OptimizedLogicalPlan& plan)
-{
-    try
+    std::unordered_map<GrpcAddr, UniquePtr<QuerySubmissionBackend>> backends;
+    for (const auto& workerConfig : workers)
     {
-        const auto result = backend->registerQuery(plan.plan);
-        if (result)
+        backends.emplace(workerConfig.grpc, provider(workerConfig));
+    }
+    return backends;
+}
+
+QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
+    : workerCatalog(std::move(workerCatalog)), backendProvider(std::move(provider))
+{
+    rebuildBackendsIfNeeded();
+}
+
+QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state)
+    : state(std::move(state)), backends(std::move(workerCatalog), std::move(provider)), notifier(*this)
+{
+}
+
+QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
+    : backends(std::move(workerCatalog), std::move(provider)), notifier(*this)
+{
+}
+
+void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
+{
+    const auto currentVersion = workerCatalog->getVersion();
+    if (currentVersion != cachedWorkerCatalogVersion)
+    {
+        NES_DEBUG("WorkerCatalog version changed from {} to {}, rebuilding backends", cachedWorkerCatalogVersion, currentVersion);
+        backends = createBackends(workerCatalog->getAllWorkers(), backendProvider);
+        cachedWorkerCatalogVersion = currentVersion;
+    }
+}
+
+static DistributedQueryId uniqueDistributedQueryId(const QueryManagerState& state)
+{
+    auto uniqueId = getNextDistributedQueryId();
+    size_t counter = 0;
+    while (state.queries.contains(uniqueId))
+    {
+        uniqueId = DistributedQueryId(getNextDistributedQueryId().getRawValue() + std::to_string(counter++));
+    }
+    return uniqueId;
+}
+
+std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
+{
+    std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries;
+
+    auto id = plan.getQueryId();
+    if (id == DistributedQueryId(DistributedQueryId::INVALID.value))
+    {
+        id = uniqueDistributedQueryId(state);
+    }
+    else if (this->state.queries.contains(plan.getQueryId()))
+    {
+        throw QueryAlreadyRegistered("{}", plan.getQueryId());
+    }
+
+    for (const auto& [grpcAddr, localPlans] : plan)
+    {
+        INVARIANT(backends.contains(grpcAddr), "Plan was assigned to a node ({}) that is not part of the cluster", grpcAddr);
+        for (const auto& localPlan : localPlans)
         {
-            NES_DEBUG("Registration of local query {} was successful.", *result);
-            state.queries.emplace(*result);
-            return *result;
+            try
+            {
+                const auto result = backends.at(grpcAddr).registerQuery(localPlan);
+                if (result)
+                {
+                    NES_DEBUG("Registration to node {} was successful.", grpcAddr);
+                    localQueries[grpcAddr].emplace_back(*result);
+                    continue;
+                }
+                return std::unexpected{result.error()};
+            }
+            catch (const std::exception& e)
+            {
+                return std::unexpected{QueryRegistrationFailed("Message from external exception: {}", e.what())};
+            }
         }
-        return std::unexpected{result.error()};
     }
-    catch (const std::exception& e)
-    {
-        return std::unexpected{QueryRegistrationFailed("Message from external exception: {}", e.what())};
-    }
+
+    this->state.queries.emplace(id, std::move(localQueries));
+    return id;
 }
 
-std::expected<void, Exception> QueryManager::start(LocalQueryId queryId)
+std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQueryId queryId)
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
-        return std::unexpected(queryResult.error());
+        return std::unexpected(std::vector{queryResult.error()});
     }
+    auto query = queryResult.value();
+    std::vector<Exception> exceptions;
 
-    try
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
     {
-        const auto result = backend->start(queryId);
-        if (result)
+        try
         {
-            NES_DEBUG("Starting query {} was successful.", queryId);
-            return {};
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
+            const auto result = backends.at(grpcAddr).start(localQueryId);
+            if (result)
+            {
+                NES_DEBUG("Starting query {} on node {} was successful.", localQueryId, grpcAddr);
+                continue;
+            }
+
+            exceptions.emplace_back(result.error());
         }
-        return std::unexpected{result.error()};
+        catch (std::exception& e)
+        {
+            exceptions.emplace_back(QueryStartFailed("Message from external exception: {} ", e.what()));
+        }
     }
-    catch (std::exception& e)
+
+    if (not exceptions.empty())
     {
-        return std::unexpected{QueryStartFailed("Message from external exception: {} ", e.what())};
+        return std::unexpected{exceptions};
     }
+    return {};
 }
 
-std::expected<LocalQueryStatus, Exception> QueryManager::status(LocalQueryId queryId) const
+std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::status(DistributedQueryId queryId) const
 {
-    return getQuery(queryId).and_then([this](auto validatedQueryId) { return backend->status(validatedQueryId); });
+    auto queryResult = getQuery(queryId);
+    if (!queryResult.has_value())
+    {
+        return std::unexpected(std::vector{queryResult.error()});
+    }
+    auto query = queryResult.value();
+
+    std::unordered_map<GrpcAddr, std::unordered_map<LocalQueryId, std::expected<LocalQueryStatus, Exception>>> localStatusResults;
+
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
+    {
+        try
+        {
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
+            const auto result = backends.at(grpcAddr).status(localQueryId);
+            localStatusResults[grpcAddr].emplace(localQueryId, result);
+        }
+        catch (std::exception& e)
+        {
+            localStatusResults[grpcAddr].emplace(
+                localQueryId, std::unexpected(QueryStatusFailed("Message from external exception: {} ", e.what())));
+        }
+    }
+
+    return DistributedQueryStatus{.localStatusSnapshots = localStatusResults, .queryId = queryId};
 }
 
-std::vector<LocalQueryId> QueryManager::queries() const
+std::vector<DistributedQueryId> QueryManager::queries() const
 {
-    return state.queries | std::ranges::to<std::vector>();
+    return state.queries | std::views::keys | std::ranges::to<std::vector>();
 }
 
-std::expected<WorkerStatus, Exception> QueryManager::workerStatus(std::chrono::system_clock::time_point after) const
+std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std::chrono::system_clock::time_point after) const
 {
-    return backend->workerStatus(after);
+    DistributedWorkerStatus distributedStatus;
+    for (const auto& [grpcAddr, backend] : backends)
+    {
+        distributedStatus.workerStatus.try_emplace(grpcAddr, backend->workerStatus(after));
+    }
+    return distributedStatus;
 }
 
-std::vector<LocalQueryId> QueryManager::getRunningQueries() const
+std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
 {
-    return state.queries
+    return state.queries | std::views::keys
         | std::views::transform(
-               [this](const auto& id) -> std::optional<std::pair<LocalQueryId, LocalQueryStatus>>
+               [this](const auto& id) -> std::optional<std::pair<DistributedQueryId, DistributedQueryStatus>>
                {
                    auto result = status(id);
                    if (result)
                    {
-                       return std::optional<std::pair<LocalQueryId, LocalQueryStatus>>{{id, *result}};
+                       return std::optional<std::pair<DistributedQueryId, DistributedQueryStatus>>{{id, *result}};
                    }
                    return std::nullopt;
                })
         | std::views::filter([](auto idAndStatus) { return idAndStatus.has_value(); })
-        | std::views::filter(
-               [](auto idAndStatus)
-               { return idAndStatus->second.state == QueryState::Started || idAndStatus->second.state == QueryState::Running; })
+        | std::views::filter([](auto idAndStatus) { return idAndStatus->second.getGlobalQueryState() == DistributedQueryState::Running; })
         | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
 }
 
-std::expected<LocalQueryId, Exception> QueryManager::getQuery(LocalQueryId query) const
-{
-    if (state.queries.contains(query))
-    {
-        return query;
-    }
-    return std::unexpected(QueryNotFound("Query {} not found", query));
-}
-
-std::expected<void, Exception> QueryManager::stop(LocalQueryId queryId)
+std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryId queryId)
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
-        return std::unexpected(queryResult.error());
+        return std::unexpected(std::vector{queryResult.error()});
+    }
+    auto query = queryResult.value();
+
+    std::vector<Exception> exceptions{};
+
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
+    {
+        try
+        {
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
+            auto result = backends.at(grpcAddr).stop(localQueryId);
+            if (result)
+            {
+                NES_DEBUG("Stopping query {} on node {} was successful.", localQueryId, grpcAddr);
+                continue;
+            }
+            exceptions.push_back(result.error());
+        }
+        catch (std::exception& e)
+        {
+            exceptions.push_back(QueryStopFailed("Message from external exception: {} ", e.what()));
+        }
     }
 
-    try
+    if (not exceptions.empty())
     {
-        auto result = backend->stop(queryId);
-        if (result)
-        {
-            NES_DEBUG("Stopping query {} was successful.", queryId);
-            return {};
-        }
-        return std::unexpected{result.error()};
+        return std::unexpected{exceptions};
     }
-    catch (std::exception& e)
-    {
-        return std::unexpected{QueryStopFailed("Message from external exception: {} ", e.what())};
-    }
+    return {};
 }
 
-std::expected<void, Exception> QueryManager::unregister(LocalQueryId queryId)
+std::expected<void, std::vector<Exception>> QueryManager::unregister(DistributedQueryId queryId)
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
-        return std::unexpected(queryResult.error());
+        return std::unexpected(std::vector{queryResult.error()});
+    }
+    auto query = queryResult.value();
+    std::vector<Exception> exceptions{};
+
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
+    {
+        try
+        {
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
+            auto result = backends.at(grpcAddr).unregister(localQueryId);
+            if (result)
+            {
+                NES_DEBUG("Unregister of query {} on node {} was successful.", localQueryId, grpcAddr);
+                continue;
+            }
+            exceptions.push_back(result.error());
+        }
+        catch (std::exception& e)
+        {
+            exceptions.push_back(QueryUnregistrationFailed("Message from external exception: {} ", e.what()));
+        }
     }
 
-    try
+    if (not exceptions.empty())
     {
-        auto result = backend->unregister(queryId);
-        if (result)
-        {
-            NES_DEBUG("Unregister of query {} was successful.", queryId);
-            return {};
-        }
-        return std::unexpected{result.error()};
+        return std::unexpected{exceptions};
     }
-    catch (std::exception& e)
-    {
-        return std::unexpected{QueryUnregistrationFailed("Message from external exception: {} ", e.what())};
-    }
+    return {};
 }
 
 }

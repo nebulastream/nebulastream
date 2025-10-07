@@ -38,6 +38,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <grpcpp/security/credentials.h>
+#include <DistributedQuery.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <WorkerStatus.hpp>
@@ -231,6 +232,11 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(LocalQuery
     {
         return std::unexpected{QueryUnregistrationFailed("Message from external exception: {} ", e.what())};
     }
+}
+
+BackendProvider createGRPCBackend()
+{
+    return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
 }
 
 }

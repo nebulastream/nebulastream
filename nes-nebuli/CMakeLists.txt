@@ -24,6 +24,7 @@ add_library(nes-nebuli-embedded-lib STATIC ${COORDINATOR_SOURCE_FILES} ${QUERY_M
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
 find_package(replxx CONFIG REQUIRED)
+find_package(ortools CONFIG REQUIRED)
 
 target_include_directories(nes-nebuli-lib
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -31,7 +32,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-logical-operators nes-sql-parser nes-single-node-worker-interface
-        PRIVATE yaml-cpp::yaml-cpp
+        PRIVATE yaml-cpp::yaml-cpp ortools::ortools
 )
 
 target_compile_definitions(nes-nebuli-embedded-lib PUBLIC
@@ -44,7 +45,9 @@ target_include_directories(nes-nebuli-embedded-lib
 
 target_link_libraries(nes-nebuli-embedded-lib
         PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser nes-single-node-worker-interface
-        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp
+        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp ortools::ortools
 )
+
+add_tests_if_enabled(tests)
 
 add_subdirectory(apps)
