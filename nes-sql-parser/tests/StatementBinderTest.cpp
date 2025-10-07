@@ -104,7 +104,7 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 
-    const auto plan = std::get<QueryStatement>(*statement);
+    const auto plan = std::get<QueryStatement>(*statement).plan;
 
     const auto inlineSinkOperatorList = getOperatorByType<InlineSinkLogicalOperator>(plan);
     ASSERT_EQ(1, inlineSinkOperatorList.size());
@@ -134,7 +134,7 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 
-    const auto plan = std::get<QueryStatement>(*statement);
+    const auto plan = std::get<QueryStatement>(*statement).plan;
 
     const auto inlineSourceOperatorList = getOperatorByType<InlineSourceLogicalOperator>(plan);
     ASSERT_EQ(1, inlineSourceOperatorList.size());
