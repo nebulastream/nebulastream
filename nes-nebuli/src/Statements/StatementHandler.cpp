@@ -14,6 +14,7 @@
 
 #include <Statements/StatementHandler.hpp>
 
+#include <chrono>
 #include <expected>
 #include <memory>
 #include <ranges>
@@ -31,6 +32,7 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -219,6 +221,16 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
         return std::unexpected{wrapExternalException()};
     }
     std::unreachable();
+}
+
+TopologyStatementHandler::TopologyStatementHandler(SharedPtr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+{
+}
+
+std::expected<WorkerStatusStatementResult, Exception> TopologyStatementHandler::operator()(const WorkerStatusStatement&)
+{
+    return this->queryManager->workerStatus(std::chrono::system_clock::time_point{})
+        .transform([](WorkerStatus status) { return WorkerStatusStatementResult{std::move(status)}; });
 }
 
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
