@@ -110,12 +110,7 @@ public:
     CreatePhysicalSourceStatement
     bindCreatePhysicalSourceStatement(AntlrSQLParser::CreatePhysicalSourceDefinitionContext* physicalSourceDefAST) const
     {
-        const auto logicalSourceName = bindIdentifier(physicalSourceDefAST->logicalSource->strictIdentifier());
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(logicalSourceName);
-        if (not logicalSourceOpt.has_value())
-        {
-            throw UnknownSourceName("{}", logicalSourceName);
-        }
+        const auto logicalSourceName = LogicalSourceName(bindIdentifier(physicalSourceDefAST->logicalSource->strictIdentifier()));
         /// TODO #764 use normal identifiers for types
         const std::string type = physicalSourceDefAST->type->getText();
         auto configOptions = [&]()
@@ -131,7 +126,7 @@ public:
         const auto sourceConfig = getSourceConfig(configOptions);
 
         return CreatePhysicalSourceStatement{
-            .attachedTo = logicalSourceOpt.value(), .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
+            .attachedTo = logicalSourceName, .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
     }
 
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
@@ -204,17 +199,12 @@ public:
         const AntlrSQLParser::ShowPhysicalSourcesSubjectContext* physicalSourcesSubject,
         AntlrSQLParser::ShowFormatContext* showFormat) const
     {
-        std::optional<LogicalSource> logicalSource{};
+        std::optional<LogicalSourceName> logicalSourceName{};
         const std::optional<StatementOutputFormat> format
             = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
         if (physicalSourcesSubject->logicalSourceName != nullptr)
         {
-            const auto logicalSourceName = bindIdentifier(physicalSourcesSubject->logicalSourceName);
-            logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
-            if (not logicalSource.has_value())
-            {
-                throw UnknownSourceName("There is no logical source with name {}", logicalSourceName);
-            }
+            logicalSourceName = LogicalSourceName(bindIdentifier(physicalSourcesSubject->logicalSourceName));
         }
         if (showFilter != nullptr)
         {
@@ -227,9 +217,9 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW PHYSICAL SOURCES must be an unsigned integer");
             }
-            return ShowPhysicalSourcesStatement{.logicalSource = logicalSource, .id = std::get<uint64_t>(value), .format = format};
+            return ShowPhysicalSourcesStatement{.logicalSource = logicalSourceName, .id = std::get<uint64_t>(value), .format = format};
         }
-        return ShowPhysicalSourcesStatement{.logicalSource = logicalSource, .id = std::nullopt, .format = format};
+        return ShowPhysicalSourcesStatement{.logicalSource = logicalSourceName, .id = std::nullopt, .format = format};
     }
 
     ShowSinksStatement
@@ -307,15 +297,8 @@ public:
         {
             if (const auto* const logicalSourceSubject = dropSourceAst->dropLogicalSourceSubject(); logicalSourceSubject != nullptr)
             {
-                if (const auto logicalSourceName = bindIdentifier(logicalSourceSubject->name);
-                    sourceCatalog->containsLogicalSource(logicalSourceName))
-                {
-                    if (const auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName); logicalSource.has_value())
-                    {
-                        return DropLogicalSourceStatement{*logicalSource};
-                    }
-                    throw UnknownSourceName(logicalSourceSubject->name->getText());
-                }
+                const auto logicalSourceName = LogicalSourceName(bindIdentifier(logicalSourceSubject->name));
+                return DropLogicalSourceStatement{logicalSourceName};
             }
             if (const auto* const physicalSourceSubject = dropSourceAst->dropPhysicalSourceSubject(); physicalSourceSubject != nullptr)
             {
@@ -345,7 +328,7 @@ public:
     {
         if (statementAST->query() != nullptr)
         {
-            return queryBinder(statementAST->query());
+            return QueryStatement{queryBinder(statementAST->query())};
         }
         try
         {
@@ -363,7 +346,7 @@ public:
             }
             if (auto* const queryAst = statementAST->query(); queryAst != nullptr)
             {
-                return queryBinder(queryAst);
+                return QueryStatement{queryBinder(queryAst)};
             }
 
             throw InvalidStatement(statementAST->toString());

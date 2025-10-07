@@ -53,8 +53,14 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
 std::expected<CreatePhysicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement)
 {
+    auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
+    if (!logicalSource)
+    {
+        return std::unexpected{UnknownSourceName(statement.attachedTo.getRawValue())};
+    }
+
     if (const auto created
-        = sourceCatalog->addPhysicalSource(statement.attachedTo, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, statement.sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -88,7 +94,13 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
     }
     if (not statement.id and statement.logicalSource)
     {
-        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue());
+        if (!logicalSource)
+        {
+            return std::unexpected{UnknownSourceName(statement.logicalSource->getRawValue())};
+        }
+
+        if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
         {
             return ShowPhysicalSourcesStatementResult{*foundSources | std::ranges::to<std::vector>()};
         }
@@ -96,7 +108,13 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
     }
     if (statement.logicalSource and statement.id)
     {
-        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue());
+        if (!logicalSource)
+        {
+            return std::unexpected{UnknownSourceName(statement.logicalSource->getRawValue())};
+        }
+
+        if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
         {
             return ShowPhysicalSourcesStatementResult{
                 foundSources.value()
@@ -113,11 +131,13 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
 
 std::expected<DropLogicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropLogicalSourceStatement& statement)
 {
-    if (sourceCatalog->removeLogicalSource(statement.source))
+    const auto logicalSource = sourceCatalog->getLogicalSource(statement.source.getRawValue());
+    if (!logicalSource)
     {
-        return DropLogicalSourceStatementResult{statement.source};
+        return std::unexpected{UnknownSourceName(statement.source.getRawValue())};
     }
-    return std::unexpected{UnknownSourceName(statement.source.getLogicalSourceName())};
+    [[maybe_unused]] auto wasRemoved = sourceCatalog->removeLogicalSource(*logicalSource);
+    return DropLogicalSourceStatementResult{.dropped = statement.source, .schema = *logicalSource->getSchema()};
 }
 
 std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropPhysicalSourceStatement& statement)

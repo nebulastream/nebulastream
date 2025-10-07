@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -69,7 +70,8 @@ struct ShowSinksStatementResult
 
 struct DropLogicalSourceStatementResult
 {
-    LogicalSource dropped;
+    LogicalSourceName dropped;
+    Schema schema;
 };
 
 struct DropPhysicalSourceStatementResult
