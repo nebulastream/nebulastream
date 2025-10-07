@@ -15,7 +15,6 @@
 #include <SystestRunner.hpp>
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <memory>
