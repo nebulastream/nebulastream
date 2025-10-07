@@ -13,6 +13,7 @@
 */
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -36,13 +37,13 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <StatementHandler.hpp>
 
 namespace NES
 {
@@ -223,8 +224,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_TRUE(std::holds_alternative<DropLogicalSourceStatement>(*statement4));
     const auto dropped2Result = sourceStatementHandler->apply(std::get<DropLogicalSourceStatement>(*statement4));
     ASSERT_TRUE(dropped2Result.has_value());
-    const auto [dropped2, schema] = dropped2Result.value();
-    ASSERT_EQ(dropped2.getRawValue(), "TESTSOURCE");
+    const auto [sourceName, schema] = dropped2Result.value();
+    ASSERT_EQ(sourceName.getRawValue(), "TESTSOURCE");
     auto remainingLogicalSources = sourceCatalog->getLogicalToPhysicalSourceMapping();
     ASSERT_EQ(remainingLogicalSources.size(), 0);
 }

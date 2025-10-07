@@ -26,8 +26,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <StatementHandler.hpp>
 
 namespace NES
 {
