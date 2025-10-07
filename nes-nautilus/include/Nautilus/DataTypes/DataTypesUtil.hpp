@@ -37,25 +37,33 @@ nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T:
     return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
 }
 
-template <typename T>
-static nautilus::val<T*> getMemberWithOffset(nautilus::val<int8_t*> objectReference, const size_t memberOffset)
+template <typename ObjectType, typename MemberType>
+static nautilus::val<MemberType*> getMemberAsPtr(const nautilus::val<ObjectType*>& objectReference, MemberType ObjectType::* member)
 {
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return static_cast<nautilus::val<T*>>(objectReference + memberOffset); /// NOLINT
+    return static_cast<nautilus::val<MemberType*>>(getMemberRef<ObjectType, MemberType>(objectReference, member)); /// NOLINT
+}
+
+template <typename ObjectType, typename MemberType>
+static nautilus::val<MemberType**> getMemberAsPtrPtr(const nautilus::val<ObjectType*>& objectReference, MemberType ObjectType::* member)
+{
+#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
+    return static_cast<nautilus::val<MemberType*>>(getMemberRef<ObjectType, MemberType>(objectReference, member)); /// NOLINT
 }
 
 template <typename T>
-static nautilus::val<T**> getMemberPtrWithOffset(nautilus::val<T*> objectReference, const size_t memberOffset)
-{
-#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return static_cast<nautilus::val<T**>>(objectReference + memberOffset); /// NOLINT
-}
-
-template <typename T>
-nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
+nautilus::val<T> readValueFromMemRef(const nautilus::val<T*>& memRef)
 {
     return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
 }
+
+template <typename ObjectType, typename MemberType>
+nautilus::val<MemberType> readValueFromMemRef(const nautilus::val<ObjectType*>& memRef, MemberType ObjectType::* member)
+{
+    auto memRefWithOffset = getMemberRef<ObjectType, MemberType>(memRef, member);
+    return readValueFromMemRef<MemberType>(memRefWithOffset);
+}
+
 
 inline const std::unordered_map<DataType::Type, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>> storeValueFunctionMap
     = {
