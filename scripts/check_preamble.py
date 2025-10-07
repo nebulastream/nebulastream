@@ -76,7 +76,8 @@ INGORED_ENDINGS = {
     "bin",
     "nes",
     "jsonl",
-    "lz4"
+    "lz4",
+    "zst"
 }
 
 VENDORED_FILES = {

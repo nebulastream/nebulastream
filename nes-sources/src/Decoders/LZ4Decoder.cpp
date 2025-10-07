@@ -37,7 +37,7 @@ LZ4Decoder::LZ4Decoder()
     }
 }
 
- LZ4Decoder::~LZ4Decoder()
+LZ4Decoder::~LZ4Decoder()
 {
     if (decompCtx)
     {
@@ -45,7 +45,6 @@ LZ4Decoder::LZ4Decoder()
         decompCtx = nullptr;
     }
 }
-
 
 bool LZ4Decoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer)
 {
@@ -92,7 +91,7 @@ bool LZ4Decoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuf
 std::ostream& LZ4Decoder::toString(std::ostream& str) const
 {
     /// Simply returns name due to lack of other meaningful debug information.
-    str << "LZ4Decoder";
+    str << "LZ4Decoder: Current position in encoded buffer: " << positionInCurrentBuffer;
     return str;
 }
 
