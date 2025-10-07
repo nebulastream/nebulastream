@@ -43,6 +43,7 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -58,7 +59,6 @@
 #include <ErrorHandling.hpp>
 #include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
-#include <StatementHandler.hpp>
 #include <utils.hpp>
 
 #ifdef EMBED_ENGINE

@@ -24,7 +24,7 @@
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <StatementHandler.hpp>
+#include <Statements/StatementHandler.hpp>
 
 namespace NES
 {

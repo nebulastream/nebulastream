@@ -14,5 +14,5 @@ add_subdirectory(GlobalOptimizer)
 add_subdirectory(YAML)
 add_subdirectory(QueryManager)
 
-add_source_files(nes-coordinator StatementHandler.cpp JsonOutputFormatter.cpp)
+add_source_files(nes-coordinator Statements/StatementHandler.cpp Statements/JsonOutputFormatter.cpp)
 add_source_files(nes-global-optimizer QueryPlanning.cpp)
