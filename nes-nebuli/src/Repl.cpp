@@ -33,16 +33,15 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Statements/JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
+#include <Statements/StatementHandler.hpp>
+#include <Statements/StatementOutputAssembler.hpp>
+#include <Statements/TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Logger/Logger.hpp>
-#include <YAML/YAMLBinder.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <LegacyOptimizer.hpp>
-#include <StatementHandler.hpp>
-#include <StatementOutputAssembler.hpp>
-#include <TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <replxx.hxx>
 
 namespace NES
