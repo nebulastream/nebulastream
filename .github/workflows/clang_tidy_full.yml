@@ -1,4 +1,4 @@
-# This workflow computes a complete clang-tidy analysis based on the input ref.
+# This workflow computes a complete clang-tidy analysis based on the input head_sha.
 # This workflow output a list of clang-tidy warnings and their frequency and fails if we encounter any clang-tidy
 # warnings which have been flagged as errors.
 
@@ -10,7 +10,7 @@ on:
         required: true
         type: string
         description: "Docker image tag of the development image"
-      ref:
+      head_sha:
         required: true
         description: "target commit"
         type: string
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: Configure CMake
         run: cmake -B build
       - name: Build to generate required code (e.g. grpc, ANTLR headers)

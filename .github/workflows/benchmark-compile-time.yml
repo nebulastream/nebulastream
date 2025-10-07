@@ -6,10 +6,10 @@ on:
         required: true
         type: string
         description: "Reason why benchmark suite is being run"
-      ref:
+      head_sha:
         type: string
         required: true
-        description: "ref of the branch"
+        description: "head_sha of the branch"
       dev_image_tag:
         required: true
         type: string
@@ -23,7 +23,7 @@ jobs:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
     timeout-minutes: 40
     env:
-      CONBENCH_PROJECT_COMMIT: ${{ inputs.ref }}
+      CONBENCH_PROJECT_COMMIT: ${{ inputs.head_sha }}
       CONBENCH_URL: "https://bench.nebula.stream"
       CONBENCH_EMAIL: ${{ secrets.CONBENCH_USR }}
       CONBENCH_PASSWORD: ${{ secrets.CONBENCH_PWD }}

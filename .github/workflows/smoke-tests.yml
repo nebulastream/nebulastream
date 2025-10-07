@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: Choose a number of concurrent jobs
         id: number-of-jobs
         shell: bash

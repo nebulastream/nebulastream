@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch (or ref) to build docker executable images for'
+        description: 'Branch (or head_sha) to build docker executable images for'
         required: true
         default: 'main'
 
@@ -18,5 +18,5 @@ jobs:
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
-      ref: ${{ inputs.branch }}
+      head_sha: ${{ inputs.branch }}
       dockerhub-tag: ${{ inputs.branch }}

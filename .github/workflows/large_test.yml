@@ -1,4 +1,4 @@
-# This workflow builds and tests a ref, on a combination of different architectures and standard libraries.
+# This workflow builds and tests a head_sha, on a combination of different architectures and standard libraries.
 name: Build and Run Large Tests
 on:
   workflow_call:
@@ -7,10 +7,10 @@ on:
         required: true
         type: string
         description: "Docker image tag of the development image"
-      ref:
+      head_sha:
         type: string
         required: true
-        description: "ref of the branch"
+        description: "head_sha of the branch"
       number_of_worker_threads:
         type: string
         description: "Number of worker threads the large scale tests should be run with"
@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: Configure NebulaStream
         run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream

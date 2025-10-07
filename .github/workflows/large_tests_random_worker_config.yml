@@ -1,4 +1,4 @@
-# This workflow builds and tests a ref over our large tests with random worker configurations
+# This workflow builds and tests a head_sha over our large tests with random worker configurations
 name: Large Tests Random Worker Config
 on:
   workflow_call:
@@ -7,10 +7,10 @@ on:
         required: true
         type: string
         description: "Docker image tag of the development image"
-      ref:
+      head_sha:
         type: string
         required: true
-        description: "ref of the branch"
+        description: "head_sha of the branch"
 jobs:
   create_random_worker_config:
     runs-on: [ self-hosted, linux, Build ]
@@ -55,7 +55,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/large_test.yml
     with:
-      ref: ${{ inputs.ref }}
+      head_sha: ${{ inputs.head_sha }}
       dev_image_tag: ${{ inputs.dev_image_tag }}
       number_of_worker_threads: ${{ needs.create_random_worker_config.outputs.number_of_worker_threads }}
       buffer_size: ${{ needs.create_random_worker_config.outputs.buffer_size }}
