@@ -184,6 +184,7 @@
           ninja
           pkg-config
           git
+          ccache
         ];
 
         # LLVM 19 toolchain with versioned symlinks for vcpkg
@@ -229,6 +230,8 @@
           '';
 
           cmakeFlags = [
+            "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
+            "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
             "-DCMAKE_BUILD_TYPE=Release"
             "-DUSE_LOCAL_MLIR=ON"
             "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
@@ -298,6 +301,8 @@
             VCPKG_ENV_PASSTHROUGH = "MLIR_DIR;LLVM_DIR;CMAKE_PREFIX_PATH";
             NES_USE_SYSTEM_DEPS = "ON";
             cmakeFlags = [
+              "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
+              "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
               "-DCMAKE_PROJECT_INCLUDE=${devCmakePrelude}"
               "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
               "-DNES_USE_SYSTEM_DEPS=ON"
@@ -311,6 +316,11 @@
             ];
             shellHook = ''
               unset NES_PREBUILT_VCPKG_ROOT
+              export CCACHE_DIR="$PWD/.ccache"
+              export CCACHE_BASEDIR="$PWD"
+              mkdir -p "$CCACHE_DIR"
+              export CMAKE_C_COMPILER_LAUNCHER=ccache
+              export CMAKE_CXX_COMPILER_LAUNCHER=ccache
             '';
           }
         );
