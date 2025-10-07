@@ -39,11 +39,11 @@
 #include <replxx.hxx>
 
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Statements/JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
+#include <Statements/StatementHandler.hpp>
+#include <Statements/StatementOutputAssembler.hpp>
+#include <Statements/TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Logger/Logger.hpp>
-#include <JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
-#include <StatementHandler.hpp>
-#include <StatementOutputAssembler.hpp>
-#include <TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 
 namespace NES
 {
