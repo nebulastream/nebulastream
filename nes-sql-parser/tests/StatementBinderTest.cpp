@@ -141,8 +141,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_TRUE(std::holds_alternative<DropLogicalSourceStatement>(*statement4));
     const auto dropped2Result = sourceStatementHandler->apply(std::get<DropLogicalSourceStatement>(*statement4));
     ASSERT_TRUE(dropped2Result.has_value());
-    const auto [dropped2] = dropped2Result.value();
-    ASSERT_EQ(dropped2.getLogicalSourceName(), "TESTSOURCE");
+    const auto [dropped2, schema] = dropped2Result.value();
+    ASSERT_EQ(dropped2.getRawValue(), "TESTSOURCE");
     auto remainingLogicalSources = sourceCatalog->getLogicalToPhysicalSourceMapping();
     ASSERT_EQ(remainingLogicalSources.size(), 0);
 }
@@ -166,12 +166,6 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('/dev/null' AS `SOURCE`.FILE_PATH, 'INVALID PARSER' AS PARSER.`TYPE`))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement2);
     ASSERT_FALSE(statement2.has_value());
-
-    /// Invalid logical source
-    const std::string createPhysicalSourceStatement3
-        = "CREATE PHYSICAL SOURCE FOR invalidSource TYPE File SET ('/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`)";
-    const auto statement3 = binder->parseAndBindSingle(createPhysicalSourceStatement3);
-    ASSERT_FALSE(statement3.has_value());
 }
 
 TEST_F(StatementBinderTest, BindCreateSink)
@@ -361,7 +355,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     auto showPhysicalSourceForLogicalSource = std::get<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementExp);
     const auto [logicalSource3, id3, format3] = showPhysicalSourceForLogicalSource;
     ASSERT_TRUE(logicalSource3.has_value());
-    ASSERT_EQ(logicalSource3->getLogicalSourceName(), "TESTSOURCE1");
+    ASSERT_EQ(logicalSource3->getRawValue(), "TESTSOURCE1");
     ASSERT_FALSE(id3.has_value());
     ASSERT_TRUE(format3 == StatementOutputFormat::TEXT);
     const auto physicalSourceForLogicalSourceStatementResult = sourceStatementHandler->apply(showPhysicalSourceForLogicalSource);
@@ -378,7 +372,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
         = std::get<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementFilteredExp);
     const auto [logicalSource4, id4, format4] = showPhysicalSourceForLogicalSourceFiltered;
     ASSERT_TRUE(logicalSource4.has_value());
-    ASSERT_EQ(logicalSource4->getLogicalSourceName(), "TESTSOURCE2");
+    ASSERT_EQ(logicalSource4->getRawValue(), "TESTSOURCE2");
     ASSERT_TRUE(id4.has_value());
     ASSERT_TRUE(*id4 == 3);
     ASSERT_TRUE(format4 == std::nullopt);
