@@ -17,7 +17,7 @@
 
 /grpc/ @nebulastream/QuerySubmission
 /nes-data-types/ @nebulastream/QuerySubmission
-/nes-nebuli/ @nebulastream/QuerySubmission
+/nes-frontend/ @nebulastream/QuerySubmission
 /nes-sql-parser/ @nebulastream/QuerySubmission
 
 /nes-physical-operators/ @nebulastream/Execution

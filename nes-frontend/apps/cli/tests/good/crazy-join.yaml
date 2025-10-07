@@ -1,0 +1,215 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+query: |
+  SELECT start, end, id FROM (
+  SELECT * FROM (SELECT * FROM stream)
+  INNER JOIN (SELECT * FROM stream2)
+  ON id = id2
+  WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream3)
+  ON id2 = id3
+  WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4)
+  ON id3 = id4
+  WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream5)
+  ON id4 = id5
+  WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream6)
+  ON id5 = id6
+  WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream7)
+  ON id6 = id7
+  WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream8)
+  ON id7 = id8
+  WINDOW TUMBLING (timestamp, size 1 sec)
+  )
+  INTO sink;
+sinks:
+  - name: sink
+    schema:
+      - name: streamstream2stream3stream4stream5stream6stream7stream8$START
+        type: UINT64
+      - name: streamstream2stream3stream4stream5stream6stream7stream8$END
+        type: UINT64
+      - name: stream$id
+        type: UINT64
+    type: File
+    config:
+      file_path: out.csv
+      input_format: CSV
+  - name: VOID_SINK
+    schema:
+      - name: stream$timestamp
+        type: UINT64
+      - name: stream$id
+        type: UINT64
+    type: Void
+    config: { }
+
+logical:
+  - name: stream
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id
+        type: UINT64
+  - name: stream8
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id8
+        type: UINT64
+  - name: stream7
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id7
+        type: UINT64
+  - name: stream6
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id6
+        type: UINT64
+  - name: stream5
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id5
+        type: UINT64
+  - name: stream4
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id4
+        type: UINT64
+  - name: stream3
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id3
+        type: UINT64
+  - name: stream2
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: id2
+        type: UINT64
+
+physical:
+  - logical: stream
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
+  - logical: stream2
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
+  - logical: stream3
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
+  - logical: stream4
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
+  - logical: stream5
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
+  - logical: stream6
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
+  - logical: stream7
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
+  - logical: stream8
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1000
+        SEQUENCE UINT64 0 100 1
