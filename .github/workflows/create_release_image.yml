@@ -1,6 +1,6 @@
-name: Create container for ref
+name: Create container for head_sha
 
-# builds images for nebuli, worker for the given ref (brach, tag, or commit sha)
+# builds images for nebuli, worker for the given head_sha (brach, tag, or commit sha)
 # and publishes the images to nebulastream/nebuli and nebulastream/worker,
 # tagged as specified via the parameter.
 
@@ -8,8 +8,8 @@ name: Create container for ref
 on:
   workflow_call:
     inputs:
-      ref:
-        description: 'ref to build docker executable images for'
+      head_sha:
+        description: 'head_sha to build docker executable images for'
         required: true
         type: string
       dockerhub-tag:
@@ -22,7 +22,7 @@ jobs:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
-      ref: ${{ inputs.ref }}
+      head_sha: ${{ inputs.head_sha }}
 
   build-image:
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]

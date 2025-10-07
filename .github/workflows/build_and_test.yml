@@ -1,4 +1,4 @@
-# This workflow builds and tests a ref, on a combination of different architectures and standard libraries.
+# This workflow builds and tests a head_sha, on a combination of different architectures and standard libraries.
 name: Build and Test
 on:
   workflow_call:
@@ -7,10 +7,10 @@ on:
         required: true
         type: string
         description: "Docker image tag of the development image"
-      ref:
+      head_sha:
         type: string
         required: true
-        description: "ref of the branch"
+        description: "head_sha of the branch"
 
 jobs:
   build-and-test-linux:
@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: Choose a number of concurrent jobs
         id: number-of-jobs
         shell: bash
@@ -217,7 +217,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: Configure NebulaStream
         run: cmake -GNinja -B build -DNES_ENABLES_TESTS=0
       - name: Build NebulaStream

@@ -10,7 +10,7 @@ on:
         required: true
         type: string
         description: "Docker image tag of the development image"
-      ref:
+      head_sha:
         required: true
         description: "target commit"
         type: string
@@ -20,7 +20,7 @@ on:
         required: true
         type: string
         description: "Docker image tag of the development image"
-      ref:
+      head_sha:
         required: true
         description: "target commit"
         type: string
@@ -38,12 +38,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: analyze-build
         run: |
           mkdir /tmp/compile-time-logs
 
-          echo "# Compile Time Summary for branch ${{ inputs.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "# Compile Time Summary for branch ${{ inputs.head_sha }}" >> $GITHUB_STEP_SUMMARY
           echo '## CMake Configuration Time' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           bash -c "time cmake -GNinja -DENABLE_FTIME_TRACE=ON -DUSE_CCACHE_IF_AVAILABLE=OFF -DNES_LOG_LEVEL=DEBUG -B build --profiling-output=/tmp/compile-time-logs/cmake-trace.json --profiling-format=google-trace" 2>> $GITHUB_STEP_SUMMARY
