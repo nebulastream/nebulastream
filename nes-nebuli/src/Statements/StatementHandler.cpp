@@ -184,6 +184,27 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
                           .transform_error([](auto error) { return QueryStopFailed("Could not stop query: {}", error.what()); })
                           .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 
+    if (statement.blocking)
+    {
+        while (true)
+        {
+            auto statusResult = queryManager->status(statement.id)
+                                    .transform([](const LocalQueryStatus& status)
+                                               { return status.state == QueryState::Failed || status.state == QueryState::Stopped; });
+            if (!statusResult)
+            {
+                return std::unexpected(
+                    QueryStopFailed("while waiting for query status to change to stopped or failed: {}", statusResult.error().what()));
+            }
+            if (*statusResult)
+            {
+                return stopResult;
+            }
+            NES_DEBUG("Query has not been stopped yet. Waiting...");
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+
     return stopResult;
 }
 
