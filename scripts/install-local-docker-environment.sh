@@ -164,7 +164,6 @@ if [ $BUILD_LOCAL -eq 1 ]; then
 
   docker build -f docker/dependency/Development.dockerfile \
             --build-arg TAG=local \
-            --build-arg BUILDKIT_SYNTAX=docker/dockerfile:1 \
             -t nebulastream/nes-development:default .
 
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
