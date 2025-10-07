@@ -126,7 +126,12 @@ struct DropQueryStatement
     QueryId id;
 };
 
+struct WorkerStatusStatement
+{
+};
+
 using Statement = std::variant<
+    WorkerStatusStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
@@ -218,3 +223,4 @@ FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
 FMT_OSTREAM(NES::DropLogicalSourceStatement);
 FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
+FMT_OSTREAM(NES::WorkerStatusStatement);
