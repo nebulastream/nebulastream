@@ -31,7 +31,7 @@
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sinks/SinkDescriptor.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -41,6 +41,8 @@
 
 namespace NES
 {
+
+using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
 
 enum class StatementOutputFormat : uint8_t
 {
@@ -58,7 +60,7 @@ struct CreateLogicalSourceStatement
 
 struct CreatePhysicalSourceStatement
 {
-    LogicalSource attachedTo;
+    LogicalSourceName attachedTo;
     std::string sourceType;
     std::unordered_map<std::string, std::string> sourceConfig;
     std::unordered_map<std::string, std::string> parserConfig;
@@ -85,7 +87,7 @@ struct ShowLogicalSourcesStatement
 /// referencing a dms object
 struct ShowPhysicalSourcesStatement
 {
-    std::optional<LogicalSource> logicalSource;
+    std::optional<LogicalSourceName> logicalSource;
     std::optional<uint32_t> id;
     std::optional<StatementOutputFormat> format;
 };
@@ -98,7 +100,7 @@ struct ShowSinksStatement
 
 struct DropLogicalSourceStatement
 {
-    LogicalSource source;
+    LogicalSourceName source;
 };
 
 struct DropPhysicalSourceStatement
