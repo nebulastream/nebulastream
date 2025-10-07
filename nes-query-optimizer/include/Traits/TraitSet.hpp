@@ -74,7 +74,7 @@ public:
     }
 
     template <IsTrait TraitType>
-    [[nodiscard]] bool tryInsert(TraitType trait)
+    bool tryInsert(TraitType trait)
     {
         const auto [iter, success] = traitMap.try_emplace(typeid(TraitType), std::move(trait));
         return success;
