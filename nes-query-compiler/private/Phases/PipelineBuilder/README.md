@@ -8,8 +8,11 @@ flowchart LR
     D(SourceCreated)
     E(SinkCreated)
     F{Success}
+    G(SourceContext)
 
-    A --> | EncounterSource | D
+    A --> | EncounterSource | G
+    
+    G --> | DescendChild | D
 
     B --> | DescendChild | B
     B --> | ChildDone | B

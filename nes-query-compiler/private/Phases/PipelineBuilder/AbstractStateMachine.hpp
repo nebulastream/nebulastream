@@ -15,11 +15,9 @@
 #pragma once
 
 #include <functional>
-#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <fmt/base.h>
 #include <magic_enum/magic_enum.hpp>
 
 namespace NES
