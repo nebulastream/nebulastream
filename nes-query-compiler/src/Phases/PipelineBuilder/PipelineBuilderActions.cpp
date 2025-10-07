@@ -17,14 +17,9 @@
 namespace NES
 {
 
-inline void ensureCurrentPipeline(const BuilderContext& ctx)
-{
-    INVARIANT(ctx.currentPipeline, "Action requires an active pipeline but none is set.");
-}
-
 void addDefaultScan(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedOp)
 {
-    ensureCurrentPipeline(ctx);
+    INVARIANT(ctx.currentPipeline, "Action requires an active pipeline but none is set.");
     PRECONDITION(ctx.currentPipeline->isOperatorPipeline(), "Default scan inserted only into operator pipelines.");
 
     auto schema = wrappedOp.getInputSchema();
@@ -38,7 +33,7 @@ void addDefaultScan(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedO
 
 void addDefaultEmit(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedOp)
 {
-    ensureCurrentPipeline(ctx);
+    INVARIANT(ctx.currentPipeline, "Action requires an active pipeline but none is set.");
     PRECONDITION(ctx.currentPipeline->isOperatorPipeline(), "Default emit inserted only into operator pipelines.");
 
     auto schema = wrappedOp.getOutputSchema();
@@ -134,7 +129,7 @@ void appendSink(BuilderContext& ctx) noexcept
 
 void appendOperator(NES::BuilderContext& ctx) noexcept
 {
-    ensureCurrentPipeline(ctx);
+    INVARIANT(ctx.currentPipeline, "Action requires an active pipeline but none is set.");
 
     ctx.currentPipeline->appendOperator(ctx.currentOp->getPhysicalOperator());
 
@@ -177,7 +172,7 @@ void registerHandler(NES::BuilderContext& ctx) noexcept
 
 void addSuccessor(BuilderContext& ctx) noexcept
 {
-    ensureCurrentPipeline(ctx);
+    INVARIANT(ctx.currentPipeline, "Action requires an active pipeline but none is set.");
 
     const auto opId = ctx.currentOp->getPhysicalOperator().getId();
     auto it = ctx.op2Pipeline.find(opId);
