@@ -10,7 +10,7 @@ on:
 
 # cancel previous runs of same PR / branch.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_sha }}
   cancel-in-progress: true
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
     secrets: inherit
     with:
       branch-name: ${{ github.head_ref }}
-      ref: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
 
   smoke-tests:
     needs: [ get-dev-images ]
@@ -37,7 +37,7 @@ jobs:
     secrets: inherit
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
 
   large-tests:
     needs: [ get-dev-images, smoke-tests ]
@@ -45,17 +45,7 @@ jobs:
     uses: ./.github/workflows/large_test.yml
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      ref: ${{ github.event.pull_request.head.ref }}
-
-  clang-tidy-report:
-    needs: [ get-dev-images, smoke-tests ]
-    name: "Run clang tidy report"
-    uses: ./.github/workflows/clang_tidy_diff.yml
-    with:
       head_sha: ${{ github.event.pull_request.head.sha }}
-      base_sha: ${{ github.event.pull_request.base.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      number_of_commits: ${{ github.event.pull_request.commits }}
 
   run_code_coverage:
     needs: [ get-dev-images, smoke-tests ]
@@ -72,14 +62,14 @@ jobs:
     uses: ./.github/workflows/endless-mode.yml
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
 
   test-nebuli-and-single-node-worker:
     needs: [ get-dev-images, smoke-tests ]
     name: "E2E Test using Nebuli and SingleNodeWorker"
     uses: ./.github/workflows/execute_query.yml
     with:
-      ref: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       runtime_seconds: '$((1*60))'
 

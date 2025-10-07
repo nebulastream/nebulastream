@@ -9,10 +9,10 @@ name: NES Nightly
 on:
   workflow_dispatch:
     inputs:
-      ref:
+      head_sha:
         required: false
         default: 'main'
-        description: "which branch/ref to use for running the nightly job"
+        description: "which branch/head_sha to use for running the nightly job"
   schedule:
     - cron: '30 2 * * *' # gets executed every night at 4:30 AM CEST
 
@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref || 'main' }}
+          ref: ${{ inputs.head_sha || 'main' }}
       - name: Fetch SHA
         id: fetch-sha
         run: |
@@ -36,14 +36,14 @@ jobs:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
 
   full-clang-tidy:
     needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/clang_tidy_full.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   compile-time-regression:
@@ -51,7 +51,7 @@ jobs:
     uses: ./.github/workflows/compile_time_regression.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   check-format:
@@ -59,7 +59,7 @@ jobs:
     name: "Check format"
     uses: ./.github/workflows/format.yml
     with:
-      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       # since there is no merge base to compare against, just check last 10 commits
       number_of_commits: 10

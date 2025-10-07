@@ -2,10 +2,10 @@ name: Execute Query
 on:
   workflow_call:
     inputs:
-      ref:
+      head_sha:
         type: string
         required: true
-        description: "ref of the branch"
+        description: "head_sha of the branch"
       dev_image_tag:
         required: true
         type: string
@@ -68,7 +68,7 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
 
       - name: Configure NebulaStream
         run: |
