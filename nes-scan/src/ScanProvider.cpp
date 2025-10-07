@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
+
+
 #include <InputFormatters/ScanProvider.hpp>
 
 #include <memory>
@@ -23,8 +26,12 @@
 #include <InputFormatters/ScanPhysicalOperator.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
+
+#include <Util/Strings.hpp>
+#include <CSVTupleBufferMemoryProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
+#include <JSONTupleBufferMemoryProvider.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -35,10 +42,15 @@ PhysicalOperator provideScan(
 {
     if (rawScanConfig.has_value())
     {
-        if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
-                rawScanConfig.value().parserType, InputFormatIndexerRegistryArguments(rawScanConfig.value(), std::move(memoryProvider))))
+        if (NES::Util::toUpperCase(rawScanConfig->parserType) == "CSV")
         {
-            return RawScanPhysicalOperator(std::move(inputFormatter.value()));
+            return ScanPhysicalOperator(std::make_shared<Interface::MemoryProvider::CSVTupleBufferMemoryProvider>(
+                *rawScanConfig, memoryProvider->getMemoryLayout()));
+        }
+        else if (NES::Util::toUpperCase(rawScanConfig->parserType) == "JSON")
+        {
+            return ScanPhysicalOperator(std::make_shared<Interface::MemoryProvider::JSONTupleBufferMemoryProvider>(
+                *rawScanConfig, memoryProvider->getMemoryLayout()));
         }
         throw UnknownParserType("unknown type of input formatter: {}", rawScanConfig.value().parserType);
     }

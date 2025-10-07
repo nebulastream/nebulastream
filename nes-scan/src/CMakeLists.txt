@@ -17,6 +17,8 @@ add_source_files(nes-scan
         SequenceShredder.cpp
         RawValueParser.cpp
         RawInputFormatScanWrapper.cpp
+        CSVTupleBufferMemoryProvider.cpp
+        JSONTupleBufferMemoryProvider.cpp
 )
 
 # Register plugins
