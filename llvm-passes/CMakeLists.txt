@@ -25,6 +25,17 @@ endfunction()
 
 does_clang_support_inline_pass(NAUTILUS_INLINE_SUPPORTED)
 if (NAUTILUS_INLINE_SUPPORTED)
+
+    string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSTEM_PROCESSOR)
+
+    if (SYSTEM_PROCESSOR MATCHES "arm" OR SYSTEM_PROCESSOR MATCHES "aarch64")
+        message(STATUS "Detected ARM architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+        set(IS_ARM_VALUE 1)
+    else ()
+        set(IS_ARM_VALUE 0)
+    endif ()
+
+
     # Match llvm to the clang version
     find_package(LLVM ${CMAKE_CXX_COMPILER_VERSION} CONFIG REQUIRED)
 
@@ -53,6 +64,7 @@ if (NAUTILUS_INLINE_SUPPORTED)
     target_link_libraries(llvm-passes "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")
 
     set_target_properties(llvm-passes PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+    target_compile_definitions(llvm-passes PRIVATE IS_ARM=${IS_ARM_VALUE})
 
     add_custom_target(PassDependency DEPENDS $<TARGET_FILE:llvm-passes>)
 endif ()

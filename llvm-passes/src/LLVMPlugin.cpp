@@ -16,7 +16,7 @@
 #include <llvm/IR/PassManager.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/PassPlugin.h>
-#include <nautilus/llvm-passes/FunctionInliningPass.hpp>
+#include "FunctionInliningPass.h"
 
 extern "C" LLVM_ATTRIBUTE_WEAK LLVM_ATTRIBUTE_VISIBILITY_DEFAULT PassPluginLibraryInfo llvmGetPassPluginInfo()
 {
