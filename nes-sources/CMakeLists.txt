@@ -10,11 +10,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(FetchContent)
 add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
+# Get codec libraries
+# LZ4
+FetchContent_Declare(lz4
+        URL            https://github.com/lz4/lz4/archive/refs/tags/v1.9.4.tar.gz
+        URL_HASH
+        SHA256=0b0e3aa07c8c063ddf40b082bdf7e37a1562bda40a0ff5272957f3e987e0e54b
+        SOURCE_SUBDIR  build/cmake
+)
+FetchContent_MakeAvailable(lz4)
+
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-systest-sources)
+target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-systest-sources PRIVATE lz4)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

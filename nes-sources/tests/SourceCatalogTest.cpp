@@ -75,7 +75,7 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     ASSERT_TRUE(sourceOpt.has_value());
     const auto physical1Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}}, ParserConfig{});
     const auto physical2Opt
-        = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}, {"codec", "None"}}, ParserConfig{});
+        = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}, {"codec", "LZ4"}}, ParserConfig{});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -123,7 +123,7 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
     const auto& logicalSource = sourceOpt.value();
     const auto physical1Opt = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, ParserConfig{});
     const auto physical2Opt
-        = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}, {"codec", "None"}}, ParserConfig{});
+        = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}, {"codec", "LZ4"}}, ParserConfig{});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());

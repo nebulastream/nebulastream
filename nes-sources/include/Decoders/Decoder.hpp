@@ -37,7 +37,8 @@ public:
     /// decoder.
     enum class Codec : uint8_t
     {
-        None
+        None,
+        LZ4
     };
 
     Decoder() = default;
