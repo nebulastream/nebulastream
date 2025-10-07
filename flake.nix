@@ -283,8 +283,8 @@
             mkdir -p $out/bin
             for binary in \
               nes-single-node-worker/nes-single-node-worker \
-              nes-nebuli/nes-nebuli \
-              nes-nebuli/nes-nebuli-embedded \
+              nes-frontend/nes-frontend \
+              nes-frontend/nes-frontend-embedded \
               nes-systests/systest/systest
             do
               if [ -x "$binary" ]; then
