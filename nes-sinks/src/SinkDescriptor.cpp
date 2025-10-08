@@ -32,6 +32,7 @@
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 
+#include <Identifiers/NESStrongTypeReflection.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
@@ -134,7 +135,7 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
 {
-    auto [name, schema, type,workerId, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    auto [name, schema, type, workerId, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
     return SinkDescriptor{name, schema, type, workerId, Descriptor::unreflectConfig(config)};
 }
 

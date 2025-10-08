@@ -101,7 +101,7 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
     SinkDescriptor dummySinkDescriptor
-        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", "localhost", {{"input_format", "CSV"}}).value();
+        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", WorkerId("localhost"), {{"input_format", "CSV"}}).value();
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
@@ -151,8 +151,8 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, parserConfig);
+    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
+        testLogicalSource.value(), "File", WorkerId("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_LOCAL_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
 
@@ -182,8 +182,8 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, parserConfig);
+    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
+        testLogicalSource.value(), "File", WorkerId("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_LOCAL_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
 
