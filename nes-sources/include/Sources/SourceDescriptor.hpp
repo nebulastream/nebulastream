@@ -71,6 +71,7 @@ public:
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] ParserConfig getParserConfig() const;
 
+    [[nodiscard]] std::string getWorkerId() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
     [[nodiscard]] SerializableSourceDescriptor serialize() const;
@@ -83,6 +84,7 @@ private:
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
+    std::string workerId;
     ParserConfig parserConfig;
 
     /// Used by Sources to create a valid SourceDescriptor.
@@ -90,6 +92,7 @@ private:
         PhysicalSourceId physicalSourceId,
         LogicalSource logicalSource,
         std::string_view sourceType,
+        std::string workerId,
         DescriptorConfig::Config config,
         ParserConfig parserConfig);
 
