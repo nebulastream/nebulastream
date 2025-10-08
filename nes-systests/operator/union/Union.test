@@ -37,7 +37,7 @@ ATTACH INLINE
 CREATE SINK sink(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
 
 # Simple Union
-SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink
+SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink;
 ----
 1,1,1000
 1,1,1001
@@ -49,7 +49,7 @@ SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink
 2,2,2003
 
 # Union with projection to fixup the schema
-SELECT * FROM stream UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink
+SELECT * FROM stream UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink;
 ----
 1,1,1000
 1,1,1001
@@ -62,7 +62,7 @@ SELECT * FROM stream UNION SELECT id2 as id, value, timestamp FROM stream3 INTO 
 
 CREATE SINK sink2(stream.timestamp UINT64, origin UINT8)  TYPE File;
 # Union with selection to fixup the schema and projection of constant into the schema
-SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2) as origin FROM stream WHERE timestamp < UINT64(1002) INTO sink2
+SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2) as origin FROM stream WHERE timestamp < UINT64(1002) INTO sink2;
 ----
 1000,1
 1001,1
@@ -72,7 +72,7 @@ SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2
 1001,2
 
 # nested union with projection to fixup the schema
-SELECT * FROM stream UNION SELECT * FROM stream2 UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink
+SELECT * FROM stream UNION SELECT * FROM stream2 UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink;
 ----
 1,1,1000
 1,1,1001
@@ -94,7 +94,7 @@ SELECT timestamp
 FROM (
     SELECT * FROM stream UNION SELECT * FROM stream
 )
-INTO sink3
+INTO sink3;
 ----
 1000
 1001
@@ -129,7 +129,7 @@ FROM (
     SELECT * FROM stream4 UNION SELECT * FROM stream5
 )
 WINDOW TUMBLING(timestamp, size 1 sec)
-INTO sink4
+INTO sink4;
 ----
 65
 2
@@ -185,7 +185,7 @@ FROM (
     SELECT * FROM stream6 UNION SELECT * FROM stream7
 )
 WINDOW TUMBLING(timestamp, size 1 sec)
-INTO sink4
+INTO sink4;
 ----
 65
 2
@@ -213,7 +213,7 @@ FROM (
     SELECT * FROM (SELECT * FROM stream8 UNION SELECT * FROM stream9)
 )
 WINDOW TUMBLING(timestamp, size 1 sec)
-INTO sink6
+INTO sink6;
 ----
 65
 2
@@ -224,7 +224,7 @@ SELECT timestamp
 FROM (
     SELECT * FROM stream UNION SELECT * FROM stream UNION SELECT * FROM stream
 )
-INTO subquery_sink
+INTO subquery_sink;
 ----
 1000
 1001

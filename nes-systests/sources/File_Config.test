@@ -11,7 +11,7 @@ CREATE LOGICAL SOURCE noConfSourceFile(id UINT64, value UINT64, timestamp UINT64
 CREATE PHYSICAL SOURCE FOR noConfSourceFile TYPE File SET('CSV' AS PARSER.`TYPE`);
 ATTACH FILE small/stream8.csv
 
-SELECT * FROM noConfSourceFile INTO noConfFileSink
+SELECT * FROM noConfSourceFile INTO noConfFileSink;
 ----
 1,1,12
 1,2,23
@@ -28,7 +28,7 @@ ATTACH INLINE
 1,8,89
 1,9,100
 
-SELECT * FROM noConfSourceInline INTO noConfInlineSink
+SELECT * FROM noConfSourceInline INTO noConfInlineSink;
 ----
 1,6,67
 1,7,78
@@ -44,7 +44,7 @@ CREATE LOGICAL SOURCE sourceConfSourceFile(id UINT64, value UINT64, timestamp UI
 CREATE PHYSICAL SOURCE FOR sourceConfSourceFile TYPE File;
 ATTACH FILE small/stream8.csv
 
-SELECT * FROM sourceConfSourceFile INTO sourceConfFileSink
+SELECT * FROM sourceConfSourceFile INTO sourceConfFileSink;
 ----
 1,1,12
 1,2,23
@@ -61,7 +61,7 @@ ATTACH INLINE
 1,8,89
 1,9,100
 
-SELECT * FROM sourceConfSourceInline INTO sourceConfInlineSink
+SELECT * FROM sourceConfSourceInline INTO sourceConfInlineSink;
 ----
 1,6,67
 1,7,78
@@ -82,7 +82,7 @@ ATTACH INLINE
 1|8|89
 1|9|100
 
-SELECT * FROM inputFormatterConfSourceInline INTO inputFormatterConfInlineSink
+SELECT * FROM inputFormatterConfSourceInline INTO inputFormatterConfInlineSink;
 ----
 1,6,67
 1,7,78
@@ -103,7 +103,7 @@ ATTACH INLINE
 1|8|89
 1|9|100
 
-SELECT * FROM sourceAndInputFormatterConfSourceInline INTO sourceAndInputFormatterConfInlineSink
+SELECT * FROM sourceAndInputFormatterConfSourceInline INTO sourceAndInputFormatterConfInlineSink;
 ----
 1,6,67
 1,7,78

@@ -90,7 +90,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     SystestParser parser{};
 
     static constexpr std::string_view TestFileName = "testCallbackQuery";
-    const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
+    const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK;";
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
@@ -146,8 +146,8 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
 {
     SystestParser parser{};
 
-    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink";
-    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink";
+    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;";
+    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;";
 
     bool mainQueryCallbackCalled = false;
     bool differentialQueryCallbackCalled = false;
@@ -194,8 +194,8 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
 {
     SystestParser parser{};
 
-    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink";
-    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink";
+    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;";
+    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;";
 
     bool mainQueryCallbackCalled = false;
     bool differentialQueryCallbackCalled = false;
@@ -238,9 +238,9 @@ ATTACH INLINE
 
 CREATE SINK streamSink(id INT64, stream.value INT64, stream.timestamp INT64) TYPE File;
 
-SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink
+SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;
 ====
-SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink
+SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;
 )";
 
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));

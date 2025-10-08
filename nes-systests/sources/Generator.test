@@ -74,7 +74,7 @@ CREATE SINK stop_all_checksum(generatorStopAll.id UINT64, generatorStopAll.field
 CREATE SINK stop_one_checksum(generatorStopOne.id UINT64, generatorStopOne.field2 UINT64) TYPE Checksum;
 CREATE SINK generator_sink_inline(generatorInline.id UINT64) TYPE File;
 
-SELECT * FROM generatorDefault INTO generator_sink
+SELECT * FROM generatorDefault INTO generator_sink;
 ----
 0 0
 1 1
@@ -87,7 +87,7 @@ SELECT * FROM generatorDefault INTO generator_sink
 8 5
 9 5
 
-SELECT * FROM generatorDifferentDataTypes INTO generator_data_types_sink
+SELECT * FROM generatorDifferentDataTypes INTO generator_data_types_sink;
 ----
 0 0 0 0 0 0 0 0 0 0
 1 1 1 1 1 1 1 1 1 1
@@ -102,23 +102,23 @@ SELECT * FROM generatorDifferentDataTypes INTO generator_data_types_sink
 
 
 
-SELECT * FROM generator10K INTO checksum_10K
+SELECT * FROM generator10K INTO checksum_10K;
 ----
 10000 4032240
 
-SELECT * FROM generator10KSinus INTO checksum_10K_Sinus
+SELECT * FROM generator10KSinus INTO checksum_10K_Sinus;
 ----
 10000 4032240
 
-SELECT * FROM generatorStopAll INTO stop_all_checksum
+SELECT * FROM generatorStopAll INTO stop_all_checksum;
 ----
 200 60740
 
-SELECT * FROM generatorStopOne INTO stop_one_checksum
+SELECT * FROM generatorStopOne INTO stop_one_checksum;
 ----
 100 25440
 
-SELECT * FROM generatorInline INTO generator_sink_inline
+SELECT * FROM generatorInline INTO generator_sink_inline;
 ----
 0
 1

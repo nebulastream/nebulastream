@@ -16,10 +16,10 @@ CREATE SINK noTupleSink(noTuple.field_1 UINT64)  TYPE File;
 CREATE SINK oneTupleSink(oneTuple.field_1 UINT64)  TYPE File;
 
 # Description: check if we run into an error if we process a single tuple.
-SELECT field_1 FROM noTuple INTO noTupleSink
+SELECT field_1 FROM noTuple INTO noTupleSink;
 ----
 
 # Description: check if we run into an error if we process a single tuple.
-SELECT field_1 FROM oneTuple INTO oneTupleSink
+SELECT field_1 FROM oneTuple INTO oneTupleSink;
 ----
 1

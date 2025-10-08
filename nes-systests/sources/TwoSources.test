@@ -26,7 +26,7 @@ CREATE SINK fiveTuplesSink(fiveTuples.field_1 UINT64)  TYPE File;
 CREATE SINK sixTuplesSink(sixTuples.field_1 UINT64)  TYPE File;
 
 # Description: simply reads in five tuples with a single value and produces the same tuples
-SELECT field_1 FROM fiveTuples INTO fiveTuplesSink
+SELECT field_1 FROM fiveTuples INTO fiveTuplesSink;
 ----
 1
 2
@@ -35,7 +35,7 @@ SELECT field_1 FROM fiveTuples INTO fiveTuplesSink
 5
 
 # Description: simply reads in six tuples with a single value and produces the same tuples
-SELECT field_1 FROM sixTuples INTO sixTuplesSink
+SELECT field_1 FROM sixTuples INTO sixTuplesSink;
 ----
 1
 2
