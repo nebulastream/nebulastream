@@ -55,7 +55,8 @@ protected:
                   const std::unordered_map<std::string, std::string> dummyParserConfig
                       = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
                   auto dummySourceDescriptor
-                      = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig).value();
+                      = sourceCatalog.addPhysicalSource(logicalSource, "File", "localhost", {{"file_path", "/dev/null"}}, dummyParserConfig)
+                            .value();
                   return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
               }())
         , selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"))}

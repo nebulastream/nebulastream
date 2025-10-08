@@ -30,7 +30,11 @@ class SinkCatalog
 {
 public:
     std::optional<SinkDescriptor> addSinkDescriptor(
-        std::string sinkName, const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
+        std::string sinkName,
+        const Schema& schema,
+        std::string_view sinkType,
+        std::string workerId,
+        std::unordered_map<std::string, std::string> config);
 
     std::optional<SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
 
