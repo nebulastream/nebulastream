@@ -12,36 +12,36 @@
     limitations under the License.
 */
 
-#include <SliceCache/SliceCacheSecondChance.hpp>
+#include <PredictionCache/PredictionCacheSecondChance.hpp>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 
 namespace NES
 {
-SliceCacheSecondChance::SliceCacheSecondChance(
+PredictionCacheSecondChance::PredictionCacheSecondChance(
     const nautilus::val<OperatorHandler*>& operatorHandler,
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<uint64_t*>& hitsRef,
     const nautilus::val<uint64_t*>& missesRef)
-    : SliceCacheFIFO(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
+    : PredictionCacheFIFO(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
 {
 }
 
-nautilus::val<bool*> SliceCacheSecondChance::getSecondChanceBit(const nautilus::val<uint64_t>& pos)
+nautilus::val<bool*> PredictionCacheSecondChance::getSecondChanceBit(const nautilus::val<uint64_t>& pos)
 {
-    const auto sliceCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto secondChanceBitRef = Nautilus::Util::getMemberRef(sliceCacheEntry, &SliceCacheEntrySecondChance::secondChanceBit);
+    const auto PredictionCacheEntry = startOfEntries + pos * sizeOfEntry;
+    const auto secondChanceBitRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntrySecondChance::secondChanceBit);
     return secondChanceBitRef;
 }
 
 
-nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
-    const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
+nautilus::val<int8_t*> PredictionCacheSecondChance::getDataStructureRef(
+    const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.
-    if (const auto dataStructurePos = SliceCache::searchInCache(timestamp); dataStructurePos != SliceCache::NOT_FOUND)
+    if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
     {
         incrementNumberOfHits();
         auto secondChanceBit = getSecondChanceBit(dataStructurePos);
@@ -62,8 +62,8 @@ nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
     }
 
     /// Replacing the slice and returning the data structure.
-    const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
-    const auto dataStructure = replacementFunction(sliceCacheEntryToReplace, replacementIndex);
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    const auto dataStructure = replacementFunction(PredictionCacheEntryToReplace, replacementIndex);
     *secondChanceBit = true;
     return getDataStructure(replacementIndex);
 }

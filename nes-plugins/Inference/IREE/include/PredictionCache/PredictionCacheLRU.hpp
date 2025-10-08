@@ -13,31 +13,32 @@
 */
 
 #pragma once
-#include <SliceCache/SliceCache.hpp>
+#include <PredictionCache/PredictionCache.hpp>
 
 namespace NES
 {
-struct SliceCacheEntryFIFO : SliceCacheEntry
+struct PredictionCacheEntryLRU : PredictionCacheEntry
 {
-    ~SliceCacheEntryFIFO() override = default;
+    /// Stores the age of each entry in the cache. With 32-bits, we can store 4 billion entries.
+    uint64_t ageBit;
+    ~PredictionCacheEntryLRU() override = default;
 };
 
-class SliceCacheFIFO : public SliceCache
+class PredictionCacheLRU final : public PredictionCache
 {
 public:
-    SliceCacheFIFO(
+    PredictionCacheLRU(
         const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<uint64_t*>& hitsRef,
         const nautilus::val<uint64_t*>& missesRef);
-    ~SliceCacheFIFO() override = default;
+    ~PredictionCacheLRU() override = default;
     nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;
+    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
 
-protected:
-    /// Stores the index of the entry that should be replaced next
-    nautilus::val<uint64_t> replacementIndex;
+private:
+    nautilus::val<uint64_t*> getAgeBit(const nautilus::val<uint64_t>& pos);
 };
 }

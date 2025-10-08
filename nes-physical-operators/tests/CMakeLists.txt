@@ -18,4 +18,3 @@ endfunction()
 
 add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)
-add_nes_physical_operator_test(SliceMicroBenchmark microbenchmark/SliceMicroBenchmark.cpp)
