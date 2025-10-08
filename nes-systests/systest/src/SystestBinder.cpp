@@ -74,7 +74,11 @@ class SLTSinkFactory
 public:
     explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const Schema& schema)
+    bool registerSink(
+        const std::string& sinkType,
+        const std::string_view sinkNameInFile,
+        const Schema& schema,
+        const std::unordered_map<std::string, std::string>& config)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
@@ -86,7 +90,14 @@ public:
                 {
                     config["input_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+
+                std::string host = "localhost";
+                if (auto hostIt = config.find("host"); hostIt != config.end())
+                {
+                    host = hostIt->second;
+                }
+
+                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, host, std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -386,6 +397,7 @@ struct SystestBinder::Impl
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<SystestQuery> queries;
         uint64_t loadedFiles = 0;
+
         for (const auto& testfile : discoveredTestFiles | std::views::values)
         {
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
@@ -495,11 +507,19 @@ struct SystestBinder::Impl
         const CreatePhysicalSourceStatement& statement,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
+        std::string host = "localhost";
+        auto sourceConfigCopy = statement.sourceConfig;
+        if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
+        {
+            host = hostIt->second;
+            sourceConfigCopy.erase(hostIt);
+        }
+
         PhysicalSourceConfig physicalSourceConfig{
             .logical = statement.attachedTo.getRawValue(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
-            .sourceConfig = statement.sourceConfig};
+            .sourceConfig = sourceConfigCopy};
 
         std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
@@ -516,7 +536,7 @@ struct SystestBinder::Impl
         }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                *logicalSource, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
+                *logicalSource, physicalSourceConfig.type, host, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
         {
             return;
         }
@@ -531,7 +551,7 @@ struct SystestBinder::Impl
         {
             schema.addField(field.name, field.dataType);
         }
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema, statement.sinkConfig);
     }
 
     void createCallback(
@@ -597,6 +617,8 @@ struct SystestBinder::Impl
                 sourceConfig.emplace("file_path", filePath);
             }
 
+            sourceConfig.try_emplace("host", "localhost");
+
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
                 const InlineSourceLogicalOperator newOperator{
@@ -631,6 +653,7 @@ struct SystestBinder::Impl
         auto schema = sinkOperator->getSchema();
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
+        sinkConfig.try_emplace("host", "localhost");
 
         if (sinkOperator->getSinkType() == "FILE")
         {
