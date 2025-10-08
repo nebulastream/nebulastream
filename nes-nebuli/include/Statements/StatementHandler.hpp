@@ -148,12 +148,25 @@ public:
     friend HandlerImpl;
 };
 
+struct DefaultHost
+{
+    std::string hostName;
+};
+
+struct RequireHostConfig
+{
+};
+
+using HostPolicy = std::variant<RequireHostConfig, DefaultHost>;
+
 class SourceStatementHandler final : public StatementHandler<SourceStatementHandler>
 {
     std::shared_ptr<SourceCatalog> sourceCatalog;
+    HostPolicy hostPolicy;
 
 public:
-    explicit SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog);
+    SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy);
+
     std::expected<CreateLogicalSourceStatementResult, Exception> operator()(const CreateLogicalSourceStatement& statement);
     std::expected<CreatePhysicalSourceStatementResult, Exception> operator()(const CreatePhysicalSourceStatement& statement);
     std::expected<ShowLogicalSourcesStatementResult, Exception> operator()(const ShowLogicalSourcesStatement& statement) const;
@@ -165,9 +178,10 @@ public:
 class SinkStatementHandler final : public StatementHandler<SinkStatementHandler>
 {
     std::shared_ptr<SinkCatalog> sinkCatalog;
+    HostPolicy hostPolicy;
 
 public:
-    explicit SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog);
+    SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog, HostPolicy hostPolicy);
     std::expected<CreateSinkStatementResult, Exception> operator()(const CreateSinkStatement& statement);
     std::expected<ShowSinksStatementResult, Exception> operator()(const ShowSinksStatement& statement) const;
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
