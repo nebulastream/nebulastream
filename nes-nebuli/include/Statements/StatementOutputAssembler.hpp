@@ -64,11 +64,11 @@ using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
 using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config, std::string>;
+    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config, WorkerId>;
 constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config", "host"};
 
-using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, std::string>;
+using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, WorkerId>;
 constexpr std::array<std::string_view, 5> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config", "host"};
 
 using QueryIdOutputRowType = std::tuple<QueryId>;
