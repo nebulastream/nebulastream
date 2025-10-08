@@ -23,6 +23,7 @@
 #include <vector>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -88,11 +89,11 @@ requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + inp
     }
     if (ec == std::errc::invalid_argument)
     {
-        throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, typeid(T).name());
+        throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, NAMEOF_TYPE(T));
     }
     if (ec == std::errc::result_out_of_range)
     {
-        throw CannotFormatMalformedStringValue("Value '{}', is too large for type: {}.", input, typeid(T).name());
+        throw CannotFormatMalformedStringValue("Value '{}', is too large for type: {}.", input, NAMEOF_TYPE(T));
     }
     throw CannotFormatMalformedStringValue("Unknown from_chars error.");
 }

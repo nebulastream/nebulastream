@@ -19,6 +19,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -82,7 +83,7 @@ struct PhysicalFunction
         {
             return p->data;
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(FunctionType).name(), typeid(self).name());
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(FunctionType), NAMEOF_TYPE_EXPR(self));
     }
 
     PhysicalFunction(PhysicalFunction&&) noexcept = default;
