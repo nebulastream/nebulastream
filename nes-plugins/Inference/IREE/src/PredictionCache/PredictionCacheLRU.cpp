@@ -12,32 +12,32 @@
     limitations under the License.
 */
 
-#include <SliceCache/SliceCacheLRU.hpp>
+#include <PredictionCache/PredictionCacheLRU.hpp>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 
 namespace NES
 {
-SliceCacheLRU::SliceCacheLRU(
+PredictionCacheLRU::PredictionCacheLRU(
     const nautilus::val<OperatorHandler*>& operatorHandler,
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<uint64_t*>& hitsRef,
     const nautilus::val<uint64_t*>& missesRef)
-    : SliceCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
+    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
 {
 }
 
-nautilus::val<uint64_t*> SliceCacheLRU::getAgeBit(const nautilus::val<uint64_t>& pos)
+nautilus::val<uint64_t*> PredictionCacheLRU::getAgeBit(const nautilus::val<uint64_t>& pos)
 {
-    const auto sliceCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto ageBitRef = Nautilus::Util::getMemberRef(sliceCacheEntry, &SliceCacheEntryLRU::ageBit);
+    const auto PredictionCacheEntry = startOfEntries + pos * sizeOfEntry;
+    const auto ageBitRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntryLRU::ageBit);
     return ageBitRef;
 }
 
 nautilus::val<int8_t*>
-SliceCacheLRU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
+PredictionCacheLRU::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we have to increment all age bits by one.
     nautilus::val<uint64_t> maxAge = 0;
@@ -55,7 +55,7 @@ SliceCacheLRU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, co
     }
 
     /// Second, we check if the timestamp is already in the cache. If this is the case, we reset its age bit
-    if (const auto dataStructurePos = SliceCache::searchInCache(timestamp); dataStructurePos != SliceCache::NOT_FOUND)
+    if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
     {
         incrementNumberOfHits();
         auto ageBit = getAgeBit(dataStructurePos);
@@ -69,8 +69,8 @@ SliceCacheLRU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, co
 
     /// Third, we have to replace the entry with the highest age bit, as we are in the LRU cache.
     /// Additionally, we have to reset the age bit of the replaced entry.
-    const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + maxAgeIndex * sizeOfEntry;
-    const auto dataStructure = replacementFunction(sliceCacheEntryToReplace, maxAgeIndex);
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfEntries + maxAgeIndex * sizeOfEntry;
+    const auto dataStructure = replacementFunction(PredictionCacheEntryToReplace, maxAgeIndex);
     *getAgeBit(maxAgeIndex) = 0;
     return dataStructure;
 }

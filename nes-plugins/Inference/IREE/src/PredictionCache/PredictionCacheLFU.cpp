@@ -12,26 +12,26 @@
     limitations under the License.
 */
 
-#include <SliceCache/SliceCacheLFU.hpp>
+#include <PredictionCache/PredictionCacheLFU.hpp>
 
 namespace NES
 {
-SliceCacheLFU::SliceCacheLFU(
+PredictionCacheLFU::PredictionCacheLFU(
     const nautilus::val<OperatorHandler*>& operatorHandler,
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<uint64_t*>& hitsRef,
     const nautilus::val<uint64_t*>& missesRef)
-    : SliceCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
+    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
 {
 }
 
 nautilus::val<int8_t*>
-SliceCacheLFU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
+PredictionCacheLFU::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.
-    if (const auto dataStructurePos = SliceCache::searchInCache(timestamp); dataStructurePos != SliceCache::NOT_FOUND)
+    if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
     {
         incrementNumberOfHits();
         auto frequency = getFrequency(dataStructurePos);
@@ -55,17 +55,17 @@ SliceCacheLFU::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, co
     }
 
     /// Third, we have to replace the entry at the minFrequencyIndex
-    const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + minFrequencyIndex * sizeOfEntry;
-    const auto dataStructure = replacementFunction(sliceCacheEntryToReplace, minFrequency);
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfEntries + minFrequencyIndex * sizeOfEntry;
+    const auto dataStructure = replacementFunction(PredictionCacheEntryToReplace, minFrequency);
     *getFrequency(minFrequencyIndex) = 1;
     return dataStructure;
 
 }
 
-nautilus::val<uint64_t*> SliceCacheLFU::getFrequency(const nautilus::val<uint64_t>& pos)
+nautilus::val<uint64_t*> PredictionCacheLFU::getFrequency(const nautilus::val<uint64_t>& pos)
 {
-    const auto sliceCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto frequencyRef = Nautilus::Util::getMemberRef(sliceCacheEntry, &SliceCacheEntryLFU::frequency);
+    const auto PredictionCacheEntry = startOfEntries + pos * sizeOfEntry;
+    const auto frequencyRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntryLFU::frequency);
     return frequencyRef;
 }
 

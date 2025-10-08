@@ -14,7 +14,7 @@
 
 #include <ExecutionContext.hpp>
 #include <IREEAdapter.hpp>
-#include <IREEBatchInferenceOperator.hpp>
+#include <IREEBatchCacheInferenceOperator.hpp>
 #include <IREEBatchInferenceOperatorHandler.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -28,7 +28,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalInferModelOperator;
 }
 
-namespace NES::IREEBatchInference
+namespace NES::IREEBatchCacheInference
 {
 template <class T>
 void addValueToModelProxy(int index, float value, void* inferModelHandler, WorkerThreadId thread)
@@ -82,25 +82,28 @@ void garbageCollectBatchesProxy(void* inferModelHandler)
 namespace NES
 {
 
-IREEBatchInferenceOperator::IREEBatchInferenceOperator(
+IREEBatchCacheInferenceOperator::IREEBatchCacheInferenceOperator(
     const OperatorHandlerId operatorHandlerId,
     std::vector<PhysicalFunction> inputs,
     std::vector<std::string> outputFieldNames,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+    Configurations::PredictionCacheOptions predictionCacheOptions)
     : WindowProbePhysicalOperator(operatorHandlerId)
     , inputs(std::move(inputs))
     , outputFieldNames(std::move(outputFieldNames))
     , memoryProvider(std::move(memoryProvider))
+    , predictionCacheOptions(predictionCacheOptions)
 {
 }
 
-void IREEBatchInferenceOperator::performInference(
+void IREEBatchCacheInferenceOperator::performInference(
     const Interface::PagedVectorRef& pagedVectorRef,
     Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
     ExecutionContext& executionCtx) const
 {
     const auto fields = memoryProvider.getMemoryLayout()->getSchema().getFieldNames();
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    nautilus::val<uint64_t> numberOfEntries = predictionCacheOptions.numberOfEntries;
 
     nautilus::val<int> rowIdx(0);
     for (auto it = pagedVectorRef.begin(fields); it != pagedVectorRef.end(fields); ++it)
@@ -112,7 +115,7 @@ void IREEBatchInferenceOperator::performInference(
             for (nautilus::static_val<size_t> i = 0; i < inputs.size(); ++i)
             {
                 nautilus::invoke(
-                    IREEBatchInference::addValueToModelProxy<float>,
+                    IREEBatchCacheInference::addValueToModelProxy<float>,
                     rowIdx,
                     inputs.at(i).execute(record, executionCtx.pipelineMemoryProvider.arena).cast<nautilus::val<float>>(),
                     operatorHandler,
@@ -125,16 +128,16 @@ void IREEBatchInferenceOperator::performInference(
             VarVal value = inputs.at(0).execute(record, executionCtx.pipelineMemoryProvider.arena);
             auto varSizedValue = value.cast<VariableSizedData>();
             nautilus::invoke(
-                IREEBatchInference::copyVarSizedToModelProxy,
+                IREEBatchCacheInference::copyVarSizedToModelProxy,
                 varSizedValue.getContent(),
-                IREEBatchInference::min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
+                IREEBatchCacheInference::min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
                 operatorHandler,
                 executionCtx.workerThreadId);
             ++rowIdx;
         }
     }
 
-    nautilus::invoke(IREEBatchInference::applyModelProxy, operatorHandler, executionCtx.workerThreadId);
+    nautilus::invoke(IREEBatchCacheInference::applyModelProxy, operatorHandler, executionCtx.workerThreadId);
 
     rowIdx = nautilus::val<int>(0);
     for (auto it = pagedVectorRef.begin(fields); it != pagedVectorRef.end(fields); ++it)
@@ -145,7 +148,7 @@ void IREEBatchInferenceOperator::performInference(
         {
             for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
             {
-                VarVal result = VarVal(nautilus::invoke(IREEBatchInference::getValueFromModelProxy, rowIdx, operatorHandler, executionCtx.workerThreadId));
+                VarVal result = VarVal(nautilus::invoke(IREEBatchCacheInference::getValueFromModelProxy, rowIdx, operatorHandler, executionCtx.workerThreadId));
                 record.write(outputFieldNames.at(i), result);
                 ++rowIdx;
             }
@@ -153,7 +156,7 @@ void IREEBatchInferenceOperator::performInference(
         else
         {
             auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-            nautilus::invoke(IREEBatchInference::copyVarSizedFromModelProxy, output.getContent(), output.getContentSize(), operatorHandler, executionCtx.workerThreadId);
+            nautilus::invoke(IREEBatchCacheInference::copyVarSizedFromModelProxy, output.getContent(), output.getContentSize(), operatorHandler, executionCtx.workerThreadId);
             record.write(outputFieldNames.at(0), output);
             ++rowIdx;
         }
@@ -161,7 +164,7 @@ void IREEBatchInferenceOperator::performInference(
     }
 }
 
-void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IREEBatchCacheInferenceOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -203,15 +206,15 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
         }, operatorHandlerMemRef, emittedBatch);
 }
 
-void IREEBatchInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IREEBatchCacheInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    nautilus::invoke(IREEBatchInference::garbageCollectBatchesProxy, operatorHandlerMemRef);
+    nautilus::invoke(IREEBatchCacheInference::garbageCollectBatchesProxy, operatorHandlerMemRef);
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
 Record
-IREEBatchInferenceOperator::createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const
+IREEBatchCacheInferenceOperator::createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const
 {
     Record record;
     for (const auto& fieldName : nautilus::static_iterable(projections))

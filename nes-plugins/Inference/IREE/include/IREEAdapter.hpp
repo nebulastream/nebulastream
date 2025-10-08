@@ -56,11 +56,12 @@ public:
     }
 
     void infer();
-
-private:
     std::unique_ptr<std::byte[]> inputData{};
+    std::unique_ptr<std::byte[]> inputDataCache{};
     std::unique_ptr<std::byte[]> outputData{};
     size_t inputSize;
+
+private:
     size_t outputSize;
     std::string functionName;
     IREERuntimeWrapper runtimeWrapper;

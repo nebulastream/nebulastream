@@ -13,24 +13,24 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 #pragma once
-#include <SliceCache/SliceCache.hpp>
+#include <PredictionCache/PredictionCache.hpp>
 
 namespace NES
 {
-struct SliceCacheEntry2Q : SliceCacheEntry
+struct PredictionCacheEntry2Q : PredictionCacheEntry
 {
     /// Stores the age of each entry in the cache. With 32-bits, we can store 4 billion entries.
     uint64_t ageBit;
-    ~SliceCacheEntry2Q() override = default;
+    ~PredictionCacheEntry2Q() override = default;
 };
 
 
 /// This slice cache uses the replacement algorithm of "2Q: A Low Overhead High Performance Buffer Management Replacement Algorithm" by Johnson et al.
 /// Simplified it contains an LRU and a FIFO queue. In the memory area of the slice cache, we first store the LRU queue and then the FIFO queue.
-class SliceCache2Q final : public SliceCache
+class PredictionCache2Q final : public PredictionCache
 {
 public:
-    SliceCache2Q(
+    PredictionCache2Q(
         const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
@@ -41,13 +41,13 @@ public:
         const nautilus::val<int8_t*>& startOfLRUEntries,
         const uint64_t fifoQueueSize,
         const uint64_t lruQueueSize);
-    ~SliceCache2Q() override = default;
+    ~PredictionCache2Q() override = default;
     nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;
+    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
 
 private:
     /// Moves the entry from fifoPos to lruPos and sets the age bit to 0
-    void moveSliceCacheEntryToLRUQueue(const nautilus::val<uint64_t>& fifoPos, const nautilus::val<uint64_t>& lruPos);
+    void movePredictionCacheEntryToLRUQueue(const nautilus::val<uint64_t>& fifoPos, const nautilus::val<uint64_t>& lruPos);
     nautilus::val<uint64_t*> getAgeBit(const nautilus::val<uint64_t>& pos);
 
     // todo add docs to the members

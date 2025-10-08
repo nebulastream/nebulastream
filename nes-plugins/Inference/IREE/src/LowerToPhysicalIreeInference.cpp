@@ -20,8 +20,10 @@
 #include <RewriteRuleRegistry.hpp>
 #include <BatchingPhysicalOperator.hpp>
 #include <IREEBatchInferenceOperator.hpp>
+#include <IREEBatchCacheInferenceOperator.hpp>
 #include <IREEBatchInferenceOperatorHandler.hpp>
 #include <IREEInferenceOperator.hpp>
+#include <IREECacheInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
 
 struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
@@ -29,7 +31,6 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
     explicit LowerToPhysicalIREEInferenceOperator(NES::QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
     NES::RewriteRuleResultSubgraph apply(NES::LogicalOperator logicalOperator) override
     {
-
         auto inferModelOperator = logicalOperator.get<NES::InferModel::InferModelLogicalOperator>();
 
         const auto& model = inferModelOperator.getModel();
@@ -47,37 +48,74 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
         /// else, add the batching operator (custom emit) and batch inference operator (custom scan)
         if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
         {
-            NES_INFO("Lower InferModel operator to IREEInferenceOperator");
-            auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames);
-
-            if (inferModelOperator.getInputFields().size() == 1
-                && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
-            {
-                ireeOperator.isVarSizedInput = true;
-            }
-
-            if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
-            {
-                ireeOperator.isVarSizedOutput = true;
-            }
-            ireeOperator.outputSize = model.outputSize();
-            ireeOperator.inputSize = model.inputSize();
-
+            std::shared_ptr<NES::PhysicalOperatorWrapper> wrapper = nullptr;
             auto handler = std::make_shared<NES::IREEInferenceOperatorHandler>(model);
 
-            auto wrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
-                ireeOperator,
-                logicalOperator.getInputSchemas().at(0),
-                logicalOperator.getOutputSchema(),
-                handlerId,
-                std::move(handler),
-                NES::PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+            switch (conf.predictionCacheConfiguration.predictionCacheType.getValue())
+            {
+                case NES::Configurations::PredictionCacheType::NONE: {
+                    NES_INFO("Lower InferModel operator to IREEInferenceOperator");
+                    auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames);
+                    if (inferModelOperator.getInputFields().size() == 1
+                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedInput = true;
+                    }
 
-            return {wrapper, {wrapper}};
+                    if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedOutput = true;
+                    }
+                    ireeOperator.outputSize = model.outputSize();
+                    ireeOperator.inputSize = model.inputSize();
+
+                    auto wrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
+                        ireeOperator,
+                        logicalOperator.getInputSchemas().at(0),
+                        logicalOperator.getOutputSchema(),
+                        handlerId,
+                        std::move(handler),
+                        NES::PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+                    return {wrapper, {wrapper}};
+                }
+
+                case NES::Configurations::PredictionCacheType::TWO_QUEUES:
+                case NES::Configurations::PredictionCacheType::FIFO:
+                case NES::Configurations::PredictionCacheType::LFU:
+                case NES::Configurations::PredictionCacheType::LRU:
+                case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
+                    NES_INFO("Lower InferModel operator to IREECacheInferenceOperator");
+                    NES::Configurations::PredictionCacheOptions predictionCacheOptions{
+                        conf.predictionCacheConfiguration.predictionCacheType.getValue(),
+                        conf.predictionCacheConfiguration.numberOfEntriesPredictionCache.getValue()};
+                    auto ireeOperator = NES::IREECacheInferenceOperator(handlerId, inputFunctions, outputNames, predictionCacheOptions);
+
+                    if (inferModelOperator.getInputFields().size() == 1
+                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedInput = true;
+                    }
+
+                    if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedOutput = true;
+                    }
+                    ireeOperator.outputSize = model.outputSize();
+                    ireeOperator.inputSize = model.inputSize();
+
+                    auto wrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
+                        ireeOperator,
+                        logicalOperator.getInputSchemas().at(0),
+                        logicalOperator.getOutputSchema(),
+                        handlerId,
+                        std::move(handler),
+                        NES::PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+                    return {wrapper, {wrapper}};
+                }
+            }
         }
         else
         {
-            NES_INFO("Lower InferModel operator to IREEBatchInferenceOperator");
             auto nested = logicalOperator.getInputOriginIds();
             auto flatView = nested | std::views::join;
             const std::vector inputOriginIds(flatView.begin(), flatView.end());
@@ -85,41 +123,79 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             const auto pageSize = conf.pageSize.getValue();
 
             auto memoryProvider = NES::Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, inputSchema);
-            auto batchingOperator = NES::BatchingPhysicalOperator(handlerId, memoryProvider);
-
-            auto ireeOperator = NES::IREEBatchInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider);
-
             auto handler = std::make_shared<NES::IREEBatchInferenceOperatorHandler>(inputOriginIds, outputOriginId, model);
 
-            if (inferModelOperator.getInputFields().size() == 1
-                && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
-            {
-                ireeOperator.isVarSizedInput = true;
-            }
-
-            if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
-            {
-                ireeOperator.isVarSizedOutput = true;
-            }
-            ireeOperator.outputSize = model.outputSize();
-            ireeOperator.inputSize = model.inputSize();
-
+            auto batchingOperator = NES::BatchingPhysicalOperator(handlerId, memoryProvider);
             auto batchingWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
                 batchingOperator, inputSchema, inputSchema, handlerId, handler, NES::PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
-            auto ireeWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
-                ireeOperator,
-                inputSchema,
-                logicalOperator.getOutputSchema(),
-                handlerId,
-                handler,
-                NES::PhysicalOperatorWrapper::PipelineLocation::SCAN,
-                std::vector{batchingWrapper});
+            std::shared_ptr<NES::PhysicalOperatorWrapper> ireeWrapper = nullptr;
+            switch (conf.predictionCacheConfiguration.predictionCacheType.getValue())
+            {
+                case NES::Configurations::PredictionCacheType::NONE: {
+                    NES_INFO("Lower InferModel operator to IREEBatchInferenceOperator");
+                    auto ireeOperator = NES::IREEBatchInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider);
 
-            return {ireeWrapper, {batchingWrapper}};
+                    if (inferModelOperator.getInputFields().size() == 1
+                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedInput = true;
+                    }
+
+                    if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedOutput = true;
+                    }
+                    ireeOperator.outputSize = model.outputSize();
+                    ireeOperator.inputSize = model.inputSize();
+
+                    auto ireeWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
+                        ireeOperator,
+                        inputSchema,
+                        logicalOperator.getOutputSchema(),
+                        handlerId,
+                        handler,
+                        NES::PhysicalOperatorWrapper::PipelineLocation::SCAN,
+                        std::vector{batchingWrapper});
+                    return {ireeWrapper, {batchingWrapper}};
+                }
+                case NES::Configurations::PredictionCacheType::TWO_QUEUES:
+                case NES::Configurations::PredictionCacheType::FIFO:
+                case NES::Configurations::PredictionCacheType::LFU:
+                case NES::Configurations::PredictionCacheType::LRU:
+                case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
+                    NES_INFO("Lower InferModel operator to IREEBatchCacheInferenceOperator");
+                    NES::Configurations::PredictionCacheOptions predictionCacheOptions{
+                        conf.predictionCacheConfiguration.predictionCacheType.getValue(),
+                        conf.predictionCacheConfiguration.numberOfEntriesPredictionCache.getValue()};
+                    auto ireeOperator = NES::IREEBatchCacheInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions);
+
+                    if (inferModelOperator.getInputFields().size() == 1
+                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedInput = true;
+                    }
+
+                    if (model.getOutputs().size() == 1 && model.getOutputs().at(0).second.type == NES::DataType::Type::VARSIZED)
+                    {
+                        ireeOperator.isVarSizedOutput = true;
+                    }
+                    ireeOperator.outputSize = model.outputSize();
+                    ireeOperator.inputSize = model.inputSize();
+
+                    auto ireeWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
+                        ireeOperator,
+                        inputSchema,
+                        logicalOperator.getOutputSchema(),
+                        handlerId,
+                        handler,
+                        NES::PhysicalOperatorWrapper::PipelineLocation::SCAN,
+                        std::vector{batchingWrapper});
+                    return {ireeWrapper, {batchingWrapper}};
+                }
+            }
         }
     }
-
 private:
     NES::QueryExecutionConfiguration conf;
 };

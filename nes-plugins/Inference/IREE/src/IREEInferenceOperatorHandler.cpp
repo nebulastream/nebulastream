@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include "IREEInferenceOperatorHandler.hpp"
-#include <Util/Logger/Logger.hpp>
+#include <IREEAdapter.hpp>
+#include <IREEInferenceOperatorHandler.hpp>
 #include <PipelineExecutionContext.hpp>
-#include "IREEAdapter.hpp"
+#include <PredictionCache/PredictionCache.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -45,6 +46,38 @@ const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
 const std::shared_ptr<IREEAdapter>& IREEInferenceOperatorHandler::getIREEAdapter(WorkerThreadId threadId) const
 {
     return threadLocalAdapters[threadId % threadLocalAdapters.size()];
+}
+
+void IREEInferenceOperatorHandler::allocatePredictionCacheEntries(
+    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, AbstractBufferProvider* bufferProvider)
+{
+    if (hasPredictionCacheCreated.exchange(true))
+    {
+        return;
+    }
+
+    PRECONDITION(bufferProvider != nullptr, "Buffer provider should not be null");
+    for (uint64_t i = 0; i < threadLocalAdapters.size(); ++i)
+    {
+        const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
+        INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
+
+        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
+        INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
+        std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
+        predictionCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
+    }
+}
+
+const int8_t* IREEInferenceOperatorHandler::getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const
+{
+    PRECONDITION(threadLocalAdapters.size() > 0, "Number of worker threads should be set before calling this method");
+    const auto startPredictionCacheEntriesIREE = dynamic_cast<const StartPredictionCacheEntriesIREEInference&>(startPredictionCacheEntriesArgs);
+    const auto pos = startPredictionCacheEntriesIREE.workerThreadId % predictionCacheEntriesBufferForWorkerThreads.size();
+    INVARIANT(
+        not predictionCacheEntriesBufferForWorkerThreads.empty() and pos < predictionCacheEntriesBufferForWorkerThreads.size(),
+        "Position should be smaller than the size of the predictionCacheEntriesBufferForWorkerThreads");
+    return predictionCacheEntriesBufferForWorkerThreads.at(pos).getBuffer();
 }
 
 }

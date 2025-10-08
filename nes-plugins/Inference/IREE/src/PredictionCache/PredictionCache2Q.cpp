@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -12,14 +12,14 @@ Licensed under the Apache License, Version 2.0 (the "License");
     limitations under the License.
 */
 
-#include <SliceCache/SliceCache2Q.hpp>
+#include <PredictionCache/PredictionCache2Q.hpp>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <nautilus/std/cstring.h>
 
 namespace NES
 {
-SliceCache2Q::SliceCache2Q(
+PredictionCache2Q::PredictionCache2Q(
     const nautilus::val<OperatorHandler*>& operatorHandler,
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
@@ -30,7 +30,7 @@ SliceCache2Q::SliceCache2Q(
     const nautilus::val<int8_t*>& startOfLRUEntries,
     const uint64_t fifoQueueSize,
     const uint64_t lruQueueSize)
-    : SliceCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
+    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
     , fifoQueueSize(fifoQueueSize)
     , lruQueueSize(lruQueueSize)
     , startOfFifoEntries(startOfFifoEntries)
@@ -39,7 +39,7 @@ SliceCache2Q::SliceCache2Q(
 {
 }
 
-void SliceCache2Q::moveSliceCacheEntryToLRUQueue(const nautilus::val<uint64_t>& fifoPos, const nautilus::val<uint64_t>& lruPos)
+void PredictionCache2Q::movePredictionCacheEntryToLRUQueue(const nautilus::val<uint64_t>& fifoPos, const nautilus::val<uint64_t>& lruPos)
 {
     /// Moving by copying the data from the fifoPos to the lruPos
     const auto fifoPosRef = startOfFifoEntries + (fifoPos * sizeOfEntry);
@@ -52,7 +52,7 @@ void SliceCache2Q::moveSliceCacheEntryToLRUQueue(const nautilus::val<uint64_t>& 
 }
 
 nautilus::val<int8_t*>
-SliceCache2Q::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
+PredictionCache2Q::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we have to increment all age bits by one.
     nautilus::val<uint64_t> maxAge = 0;
@@ -74,7 +74,7 @@ SliceCache2Q::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, con
     for (nautilus::val<uint64_t> i = 0; i < lruQueueSize; i = i + 1)
     {
         /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
-        if (foundSlice(i, timestamp))
+        if (foundRecord(i, record))
         {
             incrementNumberOfHits();
             auto ageBit = getAgeBit(i);
@@ -89,10 +89,10 @@ SliceCache2Q::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, con
     for (nautilus::val<uint64_t> i = lruQueueSize; i < lruQueueSize + fifoQueueSize; i = i + 1)
     {
         /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
-        if (foundSlice(i, timestamp))
+        if (foundRecord(i, record))
         {
             incrementNumberOfHits();
-            moveSliceCacheEntryToLRUQueue(i, maxAgeIndex);
+            movePredictionCacheEntryToLRUQueue(i, maxAgeIndex);
             return getDataStructure(i);
         }
     }
@@ -101,18 +101,18 @@ SliceCache2Q::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, con
     /// If the timestamp is not in the cache, we have a cache miss.
     incrementNumberOfMisses();
     const nautilus::val<uint64_t> fifoReplacementOffset = fifoReplacementIndex * sizeOfEntry;
-    const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfFifoEntries + fifoReplacementOffset;
-    const auto dataStructure = replacementFunction(sliceCacheEntryToReplace, lruQueueSize + fifoReplacementIndex);
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfFifoEntries + fifoReplacementOffset;
+    const auto dataStructure = replacementFunction(PredictionCacheEntryToReplace, lruQueueSize + fifoReplacementIndex);
 
     /// Before returning the data structure, we need to update the replacement index.
     fifoReplacementIndex = (fifoReplacementIndex + 1) % fifoQueueSize;
     return dataStructure;
 }
 
-nautilus::val<uint64_t*> SliceCache2Q::getAgeBit(const nautilus::val<uint64_t>& pos)
+nautilus::val<uint64_t*> PredictionCache2Q::getAgeBit(const nautilus::val<uint64_t>& pos)
 {
-    const auto sliceCacheEntry = startOfLRUEntries + pos * sizeOfEntry;
-    const auto ageBitRef = Nautilus::Util::getMemberRef(sliceCacheEntry, &SliceCacheEntry2Q::ageBit);
+    const auto PredictionCacheEntry = startOfLRUEntries + pos * sizeOfEntry;
+    const auto ageBitRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntry2Q::ageBit);
     return ageBitRef;
 }
 }
