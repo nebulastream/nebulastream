@@ -83,6 +83,7 @@ teardown() {
     wait $INSTANCE_PID
   fi
   INSTANCE_PID=0
+  docker compose down -v || true
 }
 
 start_nes() {
@@ -154,6 +155,34 @@ start_nes() {
   run $NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+}
+
+function setup_distributed() {
+  tests/create_compose.sh "$1" > docker-compose.yaml
+  docker compose --profile build-only build
+  docker compose up -d --wait
+}
+
+DOCKER_NEBUCLI() {
+  docker compose run -q --rm nebucli nebucli "$@"
+}
+
+# bats test_tags=docker
+@test "launch and monitor distributed queries" {
+  setup_distributed tests/good/distributed-query-deployment.yaml
+
+  run DOCKER_NEBUCLI -t tests/good/distributed-query-deployment.yaml start "select double from generator_source INTO void_sink"
+  [ "$status" -eq 0 ]
+  [ -f "$output" ]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run DOCKER_NEBUCLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
+  [ "$status" -eq 0 ]
+  echo "${output}" | jq -e '(. | length) == 3' # 1 global + 2 local
   QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }

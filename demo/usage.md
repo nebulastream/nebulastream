@@ -34,7 +34,7 @@ You can enter the networking namespace using `nsenter`, but you have to get the 
 first.
 
 ```bash 
-sudo nsenter -t $(docker inspect -f "{{.State.Pid}}" $(docker ps -q | head -n1)) <your-command>
+sudo nsenter -t $(docker inspect -f "{{.State.Pid}}" $(docker ps -q | head -n1)) -n <your-command>
 ```
 
 ```bash

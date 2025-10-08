@@ -69,5 +69,15 @@ add_test(
         env NEBUCLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests
         env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
         env HEALTH_PROBE=${grpc_health_probe_SOURCE_DIR}/${BINARY_NAME}-${BINARY_SUFFIX}
-        bats -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests/nebucli_invocation_test.bats
+        bats --filter-tags !docker -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests/nebucli_invocation_test.bats
+)
+
+add_test(
+        NAME nebucli-test-docker
+        COMMAND
+        env NEBUCLI=$<TARGET_FILE:nebucli>
+        env NEBUCLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests
+        env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+        env HEALTH_PROBE=${grpc_health_probe_SOURCE_DIR}/${BINARY_NAME}-${BINARY_SUFFIX}
+        bats --filter-tags docker -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/nebucli/tests/nebucli_invocation_test.bats
 )
