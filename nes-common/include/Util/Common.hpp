@@ -18,8 +18,8 @@
 #include <ostream>
 #include <string>
 #include <vector>
-
 #include <experimental/propagate_const>
+#include <nameof.hpp>
 
 #include <ErrorHandling.hpp>
 
@@ -75,7 +75,7 @@ std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
     {
         return ptr;
     }
-    throw InvalidDynamicCast("Invalid dynamic cast: from {} to {}", std::string(typeid(In).name()), std::string(typeid(Out).name()));
+    throw InvalidDynamicCast("Invalid dynamic cast: from {} to {}", NAMEOF_TYPE(In), NAMEOF_TYPE(Out));
 }
 
 /// cast the given object to the specified type.
