@@ -35,6 +35,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Thread.hpp>
+#include <scope_guard.hpp>
 
 namespace NES
 {
@@ -77,35 +78,6 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 
 using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
 
-/// RAII-Wrapper around source open and close
-struct SourceHandle
-{
-    explicit SourceHandle(Source& source, std::shared_ptr<AbstractBufferProvider> bufferProvider) : source(source)
-    {
-        source.open(std::move(bufferProvider));
-    }
-
-    SourceHandle(const SourceHandle& other) = delete;
-    SourceHandle(SourceHandle&& other) noexcept = delete;
-    SourceHandle& operator=(const SourceHandle& other) = delete;
-    SourceHandle& operator=(SourceHandle&& other) noexcept = delete;
-
-    ~SourceHandle()
-    {
-        /// Throwing in a destructor would terminate the application
-        CPPTRACE_TRY
-        {
-            source.close();
-        }
-        CPPTRACE_CATCH(...)
-        {
-            tryLogCurrentException();
-        }
-    }
-
-    Source& source; ///NOLINT Source handle should never outlive the source
-};
-
 SourceImplementationTermination dataSourceThreadRoutine(
     const std::stop_token& stopToken,
     BackpressureListener backpressureListener,
@@ -113,7 +85,12 @@ SourceImplementationTermination dataSourceThreadRoutine(
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
     const EmitFn& emit)
 {
-    const SourceHandle sourceHandle(source, bufferProvider);
+    source.open(bufferProvider);
+    SCOPE_EXIT
+    {
+        source.close();
+    };
+
     const bool requiresMetadata = !source.addsMetadata();
     while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
