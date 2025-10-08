@@ -17,11 +17,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <BaseUnitTest.hpp>
+#include <nameof.hpp>
 
 #define ASSERT_INSTANCE_OF(node, instance) \
     if (!(node)->instanceOf<instance>()) \
     { \
-        auto message = (node)->toString() + " is not of instance " + std::string(typeid(instance).name()); \
+        auto message = (node)->toString() + " is not of instance " + NAMEOF_TYPE(instance); \
         GTEST_FATAL_FAILURE_(message.c_str()); \
     }
 
