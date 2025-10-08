@@ -30,9 +30,9 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <boost/core/demangle.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -150,7 +150,7 @@ struct PhysicalOperator
         {
             return p->data;
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(OperatorType).name(), typeid(self).name());
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(OperatorType), NAMEOF_TYPE_EXPR(self));
     }
 
 private:
@@ -198,11 +198,7 @@ private:
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
 
-        [[nodiscard]] std::string toString() const override
-        {
-            const auto nameDemangled = boost::core::demangle(typeid(OperatorType).name());
-            return "PhysicalOperator(" + nameDemangled + ")";
-        }
+        [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
     };
 
     std::shared_ptr<const Concept> self;
