@@ -48,7 +48,7 @@ SELECT * FROM consumers WHERE consumedPower >= FLOAT64(1) AND consumedPower < FL
 4271223, 10579920660
 
 # Query 4 - Filter with complex expression
-SELECT consumedPower / FLOAT64(1000) AS consumedPower FROM consumers INTO q4Checksum
+SELECT consumedPower / FLOAT64(1000) AS consumedPower FROM consumers INTO q4Checksum;
 ----
 42700000, 15336467257
 
@@ -86,7 +86,7 @@ FROM (
     SELECT *, UINT64(2) AS source
     FROM solarPanels
 )
-INTO q6Checksum
+INTO q6Checksum;
 ----
 42900001,79036140333
 

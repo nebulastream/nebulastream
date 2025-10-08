@@ -25,7 +25,7 @@ CREATE SINK sinkStream1Stream2(stream1stream2.start UINT64, stream1stream2.end U
 
 # Check if variable sized data support the equals operation for a tumbling stream with event time
 SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON key1_s1 == key1_s2
-  WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
+  WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
 ----
 0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
 0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,2,2,2,2,2,2,2,2,2,2,501
@@ -37,7 +37,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON key1_s1 ==
 
 # Check if variable sized data support the equals operation for a tumbling stream with event time for multiple keys
 SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON key1_s1 == key1_s2 AND key2_s1 == key2_s2
-  WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
+  WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
 ----
 0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
 0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,7,7,7,7,7,7,7,7,7,7,506

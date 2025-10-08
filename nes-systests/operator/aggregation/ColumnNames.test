@@ -18,7 +18,7 @@ CREATE SINK out(input.start UINT64, input.end UINT64, input.i_count UINT64, inpu
 
 SELECT start, end,COUNT(i), MIN(i), MAX(i), SUM(i), AVG(i), MEDIAN(i)
 FROM input WINDOW TUMBLING(timestamp, size 100 ms)
-INTO out
+INTO out;
 ----
 100, 200, 2,1,2,3,1.5,1.5
 200, 300, 2,1,2,3,1.5,1.5

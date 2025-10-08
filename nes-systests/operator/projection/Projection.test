@@ -37,7 +37,7 @@ CREATE SINK sinkNewIdIdValueTimestamp(new_id UINT64, stream.id UINT64, value UIN
 
 
 # 1: [id]
-SELECT id FROM stream INTO sinkId
+SELECT id FROM stream INTO sinkId;
 ----
 1
 2
@@ -49,7 +49,7 @@ SELECT id FROM stream INTO sinkId
 
 
 # 2: [value]
-SELECT value FROM stream INTO sinkValue
+SELECT value FROM stream INTO sinkValue;
 ----
 1
 1
@@ -60,7 +60,7 @@ SELECT value FROM stream INTO sinkValue
 21
 
 # 3: [timestamp]
-SELECT timestamp FROM stream INTO sinkTimestamp
+SELECT timestamp FROM stream INTO sinkTimestamp;
 ----
 1000
 1001
@@ -71,7 +71,7 @@ SELECT timestamp FROM stream INTO sinkTimestamp
 21000
 
 # 4: [id, value]
-SELECT id, value FROM stream INTO sinkIdValue
+SELECT id, value FROM stream INTO sinkIdValue;
 ----
 1,1
 2,1
@@ -82,7 +82,7 @@ SELECT id, value FROM stream INTO sinkIdValue
 7,21
 
 # 5: [id, timestamp]
-SELECT id, timestamp FROM stream INTO sinkIdTimestamp
+SELECT id, timestamp FROM stream INTO sinkIdTimestamp;
 ----
 1,1000
 2,1001
@@ -93,7 +93,7 @@ SELECT id, timestamp FROM stream INTO sinkIdTimestamp
 7,21000
 
 # 6: [value, timestamp]
-SELECT value, timestamp FROM stream INTO sinkValueTimestamp
+SELECT value, timestamp FROM stream INTO sinkValueTimestamp;
 ----
 1,1000
 1,1001
@@ -104,7 +104,7 @@ SELECT value, timestamp FROM stream INTO sinkValueTimestamp
 21,21000
 
 # 7: [id, value, timestamp]
-SELECT id, value, timestamp FROM stream INTO sinkIdValueTimestamp
+SELECT id, value, timestamp FROM stream INTO sinkIdValueTimestamp;
 ----
 1,1,1000
 2,1,1001
@@ -115,7 +115,7 @@ SELECT id, value, timestamp FROM stream INTO sinkIdValueTimestamp
 7,21,21000
 
 # 8: [id, timestamp, value]
-SELECT id, timestamp, value FROM stream INTO sinkIdTimestampValue
+SELECT id, timestamp, value FROM stream INTO sinkIdTimestampValue;
 ----
 1,1000,1
 2,1001,1
@@ -126,7 +126,7 @@ SELECT id, timestamp, value FROM stream INTO sinkIdTimestampValue
 7,21000,21
 
 # 9: [value, id, timestamp]
-SELECT value, id, timestamp FROM stream INTO sinkValueIdTimestamp
+SELECT value, id, timestamp FROM stream INTO sinkValueIdTimestamp;
 ----
 1,1,1000
 1,2,1001
@@ -137,7 +137,7 @@ SELECT value, id, timestamp FROM stream INTO sinkValueIdTimestamp
 21,7,21000
 
 # 10: [value, timestamp, id]
-SELECT value, timestamp, id FROM stream INTO sinkValueTimestampId
+SELECT value, timestamp, id FROM stream INTO sinkValueTimestampId;
 ----
 1,1000,1
 1,1001,2
@@ -148,7 +148,7 @@ SELECT value, timestamp, id FROM stream INTO sinkValueTimestampId
 21,21000,7
 
 # 11: [timestamp, id, value]
-SELECT timestamp, id, value FROM stream INTO sinkTimestampIdValue
+SELECT timestamp, id, value FROM stream INTO sinkTimestampIdValue;
 ----
 1000,1,1
 1001,2,1
@@ -159,7 +159,7 @@ SELECT timestamp, id, value FROM stream INTO sinkTimestampIdValue
 21000,7,21
 
 # 12: [timestamp, value, id]
-SELECT timestamp, value, id FROM stream INTO sinkTimestampValueId
+SELECT timestamp, value, id FROM stream INTO sinkTimestampValueId;
 ----
 1000,1,1
 1001,1,2
@@ -171,7 +171,7 @@ SELECT timestamp, value, id FROM stream INTO sinkTimestampValueId
 
 # [id]
 # Just a rename
-SELECT id AS new_id FROM stream INTO sinkRenamedId
+SELECT id AS new_id FROM stream INTO sinkRenamedId;
 ----
 1
 2
@@ -195,7 +195,7 @@ SELECT id AS new_id, value FROM stream INTO sinkRenamedIdValue;
 7,21
 
 # 12: [id, id -> new_field]
-SELECT id, id AS new_field FROM stream INTO sinkIdIdNew
+SELECT id, id AS new_field FROM stream INTO sinkIdIdNew;
 ----
 1,1
 2,2
@@ -206,7 +206,7 @@ SELECT id, id AS new_field FROM stream INTO sinkIdIdNew
 7,7
 
 # 13: [id, value, id -> new_field]
-SELECT id, value, id AS new_field FROM stream INTO sinkIdValueIdNew
+SELECT id, value, id AS new_field FROM stream INTO sinkIdValueIdNew;
 ----
 1,1,1
 2,1,2
@@ -217,7 +217,7 @@ SELECT id, value, id AS new_field FROM stream INTO sinkIdValueIdNew
 7,21,7
 
 ## 14: [id, value, timestamp, id -> new_field]
-SELECT id, value, timestamp, id AS new_field FROM stream INTO sinkIdValueTimestampIdNew
+SELECT id, value, timestamp, id AS new_field FROM stream INTO sinkIdValueTimestampIdNew;
 ----
 1,1,1000,1
 2,1,1001,2
@@ -228,7 +228,7 @@ SELECT id, value, timestamp, id AS new_field FROM stream INTO sinkIdValueTimesta
 7,21,21000,7
 
 # 15: [id -> new_field, id, value, timestamp]
-SELECT id AS new_field, id, value, timestamp FROM stream INTO sinkNewIdValueTimestamp
+SELECT id AS new_field, id, value, timestamp FROM stream INTO sinkNewIdValueTimestamp;
 ----
 1,1,1,1000
 2,2,1,1001
@@ -239,7 +239,7 @@ SELECT id AS new_field, id, value, timestamp FROM stream INTO sinkNewIdValueTime
 7,7,21,21000
 
 ## 17: [id -> new_field_1, id, value -> new_field_2, value, timestamp -> new_field_3, timestamp]
-SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_field_3, timestamp FROM stream INTO sinkNewIdNewValueNewTimestamp
+SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_field_3, timestamp FROM stream INTO sinkNewIdNewValueNewTimestamp;
 ----
 1,1,1,1,1000,1000
 2,2,1,1,1001,1001
@@ -251,22 +251,22 @@ SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_fiel
 
 
 # 6: filter -> map ->  project [id, id * 2 -> new_id, value, timestamp]
-SELECT id, id * UINT64(2) AS new_id, value, timestamp FROM stream WHERE id == UINT64(1) INTO sinkIdNewIdValueTimeStamp
+SELECT id, id * UINT64(2) AS new_id, value, timestamp FROM stream WHERE id == UINT64(1) INTO sinkIdNewIdValueTimeStamp;
 ----
 1 2 1 1000
 
 # 7: filter -> map -> project -> map -> map [new_id -> id, value, timestamp]
-SELECT id * UINT64(2) AS new_id, id, id AS value, id * UINT64(1000) AS timestamp FROM stream WHERE id == UINT64(1) INTO sinkNewIdIdValueTimestamp
+SELECT id * UINT64(2) AS new_id, id, id AS value, id * UINT64(1000) AS timestamp FROM stream WHERE id == UINT64(1) INTO sinkNewIdIdValueTimestamp;
 ----
 2 1 1 1000
 
 
 # Negative test, mismatch sink schema and input
-SELECT id, value FROM stream INTO sinkId
+SELECT id, value FROM stream INTO sinkId;
 ----
 ERROR 2003
 
 
-SELECT doesnotexist FROM stream INTO sinkId
+SELECT doesnotexist FROM stream INTO sinkId;
 ----
 ERROR 2003

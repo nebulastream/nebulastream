@@ -13,22 +13,22 @@ CREATE SINK valueSink(jsonStream.value UINT64) TYPE File;
 CREATE SINK nameSink(jsonStream.name VARSIZED) TYPE File;
 CREATE SINK allFieldsSink(jsonStream.key UINT64, jsonStream.value UINT64, jsonStream.name VARSIZED) TYPE File;
 
-SELECT KEY FROM jsonStream INTO keySink
+SELECT KEY FROM jsonStream INTO keySink;
 ----
 1
 1
 
-SELECT value FROM jsonStream INTO valueSink
+SELECT value FROM jsonStream INTO valueSink;
 ----
 1
 2
 
-SELECT name FROM jsonStream INTO nameSink
+SELECT name FROM jsonStream INTO nameSink;
 ----
 john
 max
 
-SELECT * FROM jsonStream INTO allFieldsSink
+SELECT * FROM jsonStream INTO allFieldsSink;
 ----
 1,1,john
 1,2,max
