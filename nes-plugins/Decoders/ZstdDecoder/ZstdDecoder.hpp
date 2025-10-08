@@ -40,6 +40,8 @@ private:
     /// We use the stream decompression functions because we do not know the size of the original data in the encoded
     /// buffers, which is required to use the frame decompression methods
     ZSTD_DStream* decompCtx = nullptr;
+    /// Position of next byte that has to be decoded in the expected encoded buffer
+    size_t positionInCurrentBuffer = 0;
 };
 
 };

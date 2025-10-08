@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <vector>
 #include <Decoders/Decoder.hpp>
 #include <lz4frame.h>
@@ -39,5 +40,7 @@ public:
 private:
     /// Decompression context to keep track of decompression metadata during buffer decoding
     LZ4F_decompressionContext_t decompCtx;
+    /// Position of next byte that has to be decoded in the expected encoded buffer
+    size_t positionInCurrentBuffer = 0;
 };
 }

@@ -25,22 +25,4 @@ std::ostream& operator<<(std::ostream& out, const Decoder& decoder)
 {
     return decoder.toString(out);
 }
-
-std::string Decoder::getCodecOptionsAsString()
-{
-    constexpr auto codecNames = magic_enum::enum_names<Codec>();
-
-    std::string output;
-    for (size_t i = 0; i < codecNames.size(); ++i)
-    {
-        output += std::string(codecNames[i]);
-        if (i + 1 < codecNames.size())
-        {
-            output += ", ";
-        }
-    }
-    return output;
-}
-
-
 }

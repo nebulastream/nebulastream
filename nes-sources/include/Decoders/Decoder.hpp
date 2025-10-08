@@ -33,15 +33,6 @@ namespace NES
 class Decoder
 {
 public:
-    /// Helper enum class which contains all codecs for which we provide a decoder. None is a special case and does not have a
-    /// decoder.
-    enum class Codec : uint8_t
-    {
-        None,
-        LZ4,
-        Zstd
-    };
-
     enum class DecodeReturnType : uint8_t
     {
         FINISHED_ENCODING_CURRENT_BUFFER,
@@ -57,15 +48,10 @@ public:
     /// Will update positionInCurrentBuffer to the index of the first byte in encodedBuffer that was not decoded yet.
     virtual DecodeReturnType decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) = 0;
 
-    [[nodiscard]] static std::string getCodecOptionsAsString();
-
     friend std::ostream& operator<<(std::ostream& out, const Decoder& decoder);
 
 protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
-    /// Index of first not-decoded byte in the tuple buffer that is being decoded currently
-    /// Will be set back to 0 if decode returns with true
-    size_t positionInCurrentBuffer = 0;
 };
 }
 
