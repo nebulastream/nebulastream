@@ -128,7 +128,7 @@ public:
         }();
 
         const auto parserConfig = getParserConfig(configOptions);
-        const auto sourceConfig = getSourceConfig(configOptions);
+        auto sourceConfig = getSourceConfig(configOptions);
 
         return CreatePhysicalSourceStatement{
             .attachedTo = logicalSourceName, .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
