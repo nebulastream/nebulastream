@@ -267,6 +267,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(logical),
             .sourceType = type,
+            .workerId = "",
             .sourceConfig = sourceConfig,
             .parserConfig = NES::ParserConfig::create(parserConfig)});
     }
@@ -278,7 +279,8 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             schema.addField(schemaField.name, schemaField.type);
         }
 
-        statements.emplace_back(NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config});
+        statements.emplace_back(
+            NES::CreateSinkStatement{.name = name, .sinkType = type, .workerId = "", .schema = schema, .sinkConfig = config});
     }
     return statements;
 }
