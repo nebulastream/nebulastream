@@ -30,6 +30,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -104,7 +105,7 @@ struct LogicalFunction
         {
             return model->data;
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
     }
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;

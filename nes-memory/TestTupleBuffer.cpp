@@ -27,6 +27,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <nameof.hpp>
 
 #include <span>
 #include <DataTypes/DataType.hpp>
@@ -91,7 +92,7 @@ void DynamicTuple::writeVarSized(
             else
             {
                 PRECONDITION(
-                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
+                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", NAMEOF_TYPE_EXPR(key));
             }
         },
         field);
@@ -112,7 +113,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
             else
             {
                 PRECONDITION(
-                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
+                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", NAMEOF_TYPE_EXPR(key));
             }
         },
         field);

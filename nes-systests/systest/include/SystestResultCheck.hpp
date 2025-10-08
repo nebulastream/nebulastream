@@ -28,6 +28,7 @@
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+#include <nameof.hpp>
 
 namespace NES::Systest
 {
@@ -86,7 +87,7 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
     }
     else
     {
-        throw InvalidDynamicCast("Unknown type {}", typeid(T).name());
+        throw InvalidDynamicCast("Unknown type {}", NAMEOF_TYPE(T));
     }
 }
 }
