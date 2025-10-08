@@ -49,7 +49,7 @@
 
 namespace
 {
-constexpr NES::GrpcAddr grpcAddr{"localhost:8080"};
+const NES::GrpcAddr grpcAddr{"localhost:8080"};
 
 NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend()
 {
