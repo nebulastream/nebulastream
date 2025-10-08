@@ -13,11 +13,15 @@ into a docker compose file
 
 In bash, you can directly invoke it like this:
 
-> docker compose -f <(./create_compose.sh query.yaml) up
+```bash 
+docker compose -f <(./create_compose.sh query.yaml) up
+```
 
 assuming you have previously built a recent worker image like this:
 
-> docker compose -f <(./create_compose.sh query.yaml) --profile build-only build
+```bash 
+docker compose -f <(./create_compose.sh query.yaml) --profile build-only build
+```
 
 By default, it picks the `cmake-build-debug` build directory which is the default debug cmake build directory, when
 using CLion.
