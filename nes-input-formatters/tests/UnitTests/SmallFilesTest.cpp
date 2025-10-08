@@ -36,7 +36,6 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Util/FileUtil.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -44,6 +43,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <FileUtil.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
