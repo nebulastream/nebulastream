@@ -210,7 +210,7 @@ CREATE SINK out(multiBuffer.field_1 UINT64, multiBuffer.field_2 UINT64, multiBuf
 
 # Description: Checks if we the formatter correctly handles data that exactly fits one raw buffer.
 # Source contains 4096 bytes.
-SELECT * FROM multiBuffer INTO out
+SELECT * FROM multiBuffer INTO out;
 ----
 1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1

@@ -32,7 +32,7 @@ FROM (
     SELECT * FROM stream UNION SELECT * FROM stream2
 )
 WINDOW TUMBLING(timestamp, size 1 sec)
-INTO sink4
+INTO sink4;
 ----
 1
 2
@@ -43,7 +43,7 @@ FROM (
     SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2)
 )
 WINDOW TUMBLING(timestamp, size 1 sec)
-INTO sink5
+INTO sink5;
 ----
 1
 2

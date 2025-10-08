@@ -24,7 +24,7 @@ FROM ysb1k
 WHERE event_type < UINT64(1)
 GROUP BY campaign_id
 WINDOW TUMBLING(current_ms, SIZE 30 SEC)
-INTO ysb1kChecksum
+INTO ysb1kChecksum;
 ----
 167167, 232106578
 
@@ -39,6 +39,6 @@ FROM ysb10k
 WHERE event_type < UINT64(1)
 GROUP BY campaign_id
 WINDOW TUMBLING(current_ms, SIZE 30 SEC)
-INTO ysb10kChecksum
+INTO ysb10kChecksum;
 ----
 1517953,2109797738

@@ -23,7 +23,7 @@ CREATE SINK sinkStreamWithText(streamWithText.id UINT64, streamWithText.value UI
 
 
 # Simple text query
-SELECT * FROM streamWithText INTO sinkStreamWithText
+SELECT * FROM streamWithText INTO sinkStreamWithText;
 ----
 1,1,test1,test1
 12,1,test1,test2

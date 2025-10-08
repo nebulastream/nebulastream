@@ -19,22 +19,22 @@ CREATE SINK sinkNewId(new_id UINT64)  TYPE File;
 
 
 # 0: first filter on 'timestamp', then project on 'id'
-SELECT id FROM stream WHERE timestamp == UINT64(1002) INTO sinkId
+SELECT id FROM stream WHERE timestamp == UINT64(1002) INTO sinkId;
 ----
 3
 
 # 1: first filter on 'timestamp' and 'value', then project on 'id'
-SELECT id FROM stream WHERE timestamp == UINT64(1002) AND value == UINT64(1) INTO sinkId
+SELECT id FROM stream WHERE timestamp == UINT64(1002) AND value == UINT64(1) INTO sinkId;
 ----
 3
 
 # 2: filter -> project [id]
-SELECT id FROM stream WHERE id == UINT64(1) INTO sinkId
+SELECT id FROM stream WHERE id == UINT64(1) INTO sinkId;
 ----
 1
 
 # 3: project -> filter -> map [id]
-SELECT id * UINT64(2) AS id FROM stream WHERE id == UINT64(1) INTO sinkId2
+SELECT id * UINT64(2) AS id FROM stream WHERE id == UINT64(1) INTO sinkId2;
 ----
 2
 
@@ -44,11 +44,11 @@ SELECT id * UINT64(2) AS id FROM stream WHERE id == UINT64(1) INTO sinkId2
 # 4: map -> filter -> project [id]
 SELECT new_id FROM
     (SELECT id * UINT64(2) AS new_id FROM stream)
-WHERE new_id == UINT64(2) INTO sinkNewId
+WHERE new_id == UINT64(2) INTO sinkNewId;
 ----
 2
 
 # 5: filter -> map -> project [id -> new_id]
-SELECT id * UINT64(2) AS new_id FROM stream WHERE id == UINT64(1) INTO sinkNewId
+SELECT id * UINT64(2) AS new_id FROM stream WHERE id == UINT64(1) INTO sinkNewId;
 ----
 2

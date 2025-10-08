@@ -36,14 +36,14 @@ ATTACH INLINE
 CREATE SINK sinkWindow(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
 
 # Filter equal
-SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow
+SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;
 ----
 1,1,1000
 12,1,1001
 4,1,1002
 
 # Filter greater than or equal
-SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow
+SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow;
 ----
 12,1,1001
 11,2,2001
@@ -51,7 +51,7 @@ SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow
 11,3,3001
 
 # Filter less than or equal
-SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow
+SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow;
 ----
 1,1,1000
 12,1,1001
@@ -72,7 +72,7 @@ SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow
 1,10,10000
 
 # Filter between
-SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow
+SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow;
 ----
 1,5,5000
 1,6,6000
@@ -87,7 +87,7 @@ SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(150
 1,15,15000
 
 # Filter not equal
-SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow
+SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow;
 ----
 1,2,2000
 11,2,2001

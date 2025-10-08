@@ -20,7 +20,7 @@ SELECT start, end, value, COUNT(id) AS id_count, SUM(id) AS id_sum, MIN(id) AS i
 FROM stream
 GROUP BY (value)
 WINDOW SLIDING(timestamp, size 3 sec, advance by 4 sec)
-INTO sinkStreamAgg
+INTO sinkStreamAgg;
 ----
 0,3000,1,3,17,1
 0,3000,2,3,28,1

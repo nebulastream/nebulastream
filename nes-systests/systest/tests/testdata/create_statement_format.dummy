@@ -39,19 +39,19 @@ ATTACH INLINE
 CREATE SINK output(id UINT64) TYPE File;
 
 
-SELECT id AS id FROM input1 INTO output
+SELECT id AS id FROM input1 INTO output;
 ----
 1
 2
 3
 
-SELECT id AS id FROM input2 INTO output
+SELECT id AS id FROM input2 INTO output;
 ----
 1
 2
 3
 
-SELECT id AS id FROM input3 INTO output
+SELECT id AS id FROM input3 INTO output;
 ----
 1
 2

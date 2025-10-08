@@ -13,7 +13,7 @@ ATTACH INLINE
 1,8,89
 1,9,100
 
-SELECT * FROM inlineCSVSource INTO inlineCSVSink
+SELECT * FROM inlineCSVSource INTO inlineCSVSink;
 ----
 1,6,67
 1,7,78
@@ -27,7 +27,7 @@ CREATE LOGICAL SOURCE fileCSVSource(id UINT64, value UINT64, timestamp UINT64);
 CREATE PHYSICAL SOURCE FOR fileCSVSource TYPE File;
 ATTACH FILE small/stream8.csv
 
-SELECT * FROM fileCSVSource INTO fileCSVSink
+SELECT * FROM fileCSVSource INTO fileCSVSink;
 ----
 1,1,12
 1,2,23
@@ -45,7 +45,7 @@ ATTACH INLINE
 1|8|89
 1|9|100
 
-SELECT * FROM inlinePipeCSVSource INTO inlinePipeCSVSink
+SELECT * FROM inlinePipeCSVSource INTO inlinePipeCSVSink;
 ----
 1,6,67
 1,7,78
@@ -58,7 +58,7 @@ CREATE LOGICAL SOURCE filePipeCSVSource(id UINT64, value UINT64, timestamp UINT6
 CREATE PHYSICAL SOURCE FOR filePipeCSVSource TYPE File SET('|' as PARSER.FIELD_DELIMITER);
 ATTACH FILE small/stream8_pipe.csv
 
-SELECT * FROM filePipeCSVSource INTO filePipeCSVSink
+SELECT * FROM filePipeCSVSource INTO filePipeCSVSink;
 ----
 1,1,12
 1,2,23

@@ -34,7 +34,7 @@ SELECT
 
     f32 > FLOAT32(42.0) AS f32,
     f64 > FLOAT64(42.0) AS f64
-FROM stream INTO sinkConstant
+FROM stream INTO sinkConstant;
 ----
 0,0,0,0,0,1,1,1,0,1
 
@@ -63,7 +63,7 @@ SELECT
     i8 > f32 + FLOAT32(1) AS i8_f32_plus_1,
     i8 > f64 AS i8_f64,
     i8 > f64 + FLOAT64(1) AS i8_f64_plus_1
-FROM stream INTO sinkI8
+FROM stream INTO sinkI8;
 ----
 0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0
 
@@ -92,7 +92,7 @@ SELECT
     i16 > f32 + FLOAT32(1) AS i16_f32_plus_1,
     i16 > f64 AS i16_f64,
     i16 > f64 + FLOAT64(1) AS i16_f64_plus_1
-FROM stream INTO sinkI16
+FROM stream INTO sinkI16;
 ----
 0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0
 
@@ -121,7 +121,7 @@ SELECT
     i32 > f32 + FLOAT32(1) AS i32_f32_plus_1,
     i32 > f64 AS i32_f64,
     i32 > f64 + FLOAT64(1) AS i32_f64_plus_1
-FROM stream INTO sinkI32
+FROM stream INTO sinkI32;
 ----
 0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,0,0,0,0
 
@@ -150,7 +150,7 @@ SELECT
     i64 > f32 + FLOAT32(1) AS i64_f32_plus_1,
     i64 > f64 AS i64_f64,
     i64 > f64 + FLOAT64(1) AS i64_f64_plus_1
-FROM stream INTO sinkI64
+FROM stream INTO sinkI64;
 ----
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0
 
@@ -180,7 +180,7 @@ SELECT
     u8 > f32 + FLOAT32(1) AS u8_f32_plus_1,
     u8 > f64 AS u8_f64,
     u8 > f64 + FLOAT64(1) AS u8_f64_plus_1
-FROM stream INTO sinkU8
+FROM stream INTO sinkU8;
 ----
 1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,0,0
 
@@ -209,7 +209,7 @@ SELECT
     u16 > f32 + FLOAT32(1) AS u16_f32_plus_1,
     u16 > f64 AS u16_f64,
     u16 > f64 + FLOAT64(1) AS u16_f64_plus_1
-FROM stream INTO sinkU16
+FROM stream INTO sinkU16;
 ----
 1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1
 
@@ -238,7 +238,7 @@ SELECT
     u32 > f32 + FLOAT32(1) AS u32_f32_plus_1,
     u32 > f64 AS u32_f64,
     u32 > f64 + FLOAT64(1) AS u32_f64_plus_1
-FROM stream INTO sinkU32
+FROM stream INTO sinkU32;
 ----
 0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1
 
@@ -267,6 +267,6 @@ SELECT
     u64 > f32 + FLOAT32(1) AS u64_f32_plus_1,
     u64 > f64 AS u64_f64,
     u64 > f64 + FLOAT64(1) AS u64_f64_plus_1
-FROM stream INTO sinkU64
+FROM stream INTO sinkU64;
 ----
 0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1

@@ -19,7 +19,7 @@ SELECT
     (i32 == INT32(2)) and (i64 == INT32(1)) AS b,
     (u8 == INT32(2)) and (i64 == INT32(2)) AS c,
     (u8 == INT32(2)) and (u16 == INT32(2)) AS d
-FROM stream INTO sink4Booleans
+FROM stream INTO sink4Booleans;
 ----
 0,0,0,1
 
@@ -34,7 +34,7 @@ SELECT
     (i32 == INT32(1)) and not ((i64 == INT32(1)) and (u8 == INT32(2))) AS f,
     (u8 == INT32(2)) and not ((u16 == INT32(1)) and (u32 == INT32(2))) AS g,
     (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
-FROM stream INTO sink8Booleans
+FROM stream INTO sink8Booleans;
 ----
 1,1,0,0,0,0,1,1
 
@@ -48,7 +48,7 @@ SELECT
     (i32 == INT32(1)) and not (i64 == INT32(1)) AS f,
     (u8 == INT32(2)) and not (u16 == INT32(1)) AS g,
     (u8 == INT32(2)) and not (u16 == INT32(2)) AS h
-FROM stream INTO sink8Booleans
+FROM stream INTO sink8Booleans;
 ----
 1,1,1,1,0,0,1,0
 
@@ -63,6 +63,6 @@ SELECT
     (i32 == INT32(1)) and not ((i64 == INT32(1)) and (u8 == INT32(2))) AS f,
     (u8 == INT32(2)) and not ((u16 == INT32(1)) and (u32 == INT32(2))) AS g,
     (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
-FROM stream INTO sink8Booleans
+FROM stream INTO sink8Booleans;
 ----
 1,1,1,1,0,0,1,1

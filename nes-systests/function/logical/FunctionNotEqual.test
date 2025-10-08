@@ -26,7 +26,7 @@ SELECT
 
     f32 != FLOAT32(42.42) AS bool9,
     f64 != FLOAT64(42.42) AS bool10
-FROM stream INTO sink10Booleans
+FROM stream INTO sink10Booleans;
 ----
 1,1,1,1,0,1,1,1,1,0
 
@@ -55,7 +55,7 @@ SELECT
     i8 != f32 + FLOAT32(1) AS bool18,
     i8 != f64 AS bool19,
     i8 != f64 + FLOAT64(1) AS bool20
-FROM stream INTO sink20Booleans
+FROM stream INTO sink20Booleans;
 ----
 0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
@@ -84,7 +84,7 @@ SELECT
     i16 != f32 + FLOAT32(1) AS bool18,
     i16 != f64 AS bool19,
     i16 != f64 + FLOAT64(1) AS bool20
-FROM stream INTO sink20Booleans
+FROM stream INTO sink20Booleans;
 ----
 1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
@@ -113,7 +113,7 @@ SELECT
     i32 != f32 + FLOAT32(1) AS bool18,
     i32 != f64 AS bool19,
     i32 != f64 + FLOAT64(1) AS bool20
-FROM stream INTO sink20Booleans
+FROM stream INTO sink20Booleans;
 ----
 1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
@@ -142,6 +142,6 @@ SELECT
     i64 != f32 + FLOAT32(1) AS bool18,
     i64 != f64 AS bool19,
     i64 != f64 + FLOAT64(1) AS bool20
-FROM stream INTO sink20Booleans
+FROM stream INTO sink20Booleans;
 ----
 1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1

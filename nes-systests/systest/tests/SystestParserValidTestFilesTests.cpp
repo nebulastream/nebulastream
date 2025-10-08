@@ -98,11 +98,11 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
             "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
 
     const auto expectedQueries = std::to_array<std::string>(
-        {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow)"});
+        {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow;)"});
 
     std::vector<std::vector<std::string>> expectedResults
         = {{"1,1,1000", "12,1,1001", "4,1,1002"},
@@ -206,12 +206,12 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}}};
 
     const auto expectedQueries = std::to_array<std::string>(
-        {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow)",
-         R"(SELECT * FROM window WHERE id = id - UINT64(1) INTO sinkWindow)"});
+        {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE id = id - UINT64(1) INTO sinkWindow;)"});
 
     std::vector<std::vector<std::string>> expectedResults
         = {{"1,1,1000", "12,1,1001", "4,1,1002"},
@@ -362,9 +362,9 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
         .name = "input3", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
 
     const auto expectedQueries = std::to_array<std::string>(
-        {R"(SELECT id AS id FROM input1 INTO output)",
-         R"(SELECT id AS id FROM input2 INTO output)",
-         R"(SELECT id AS id FROM input3 INTO output)"});
+        {R"(SELECT id AS id FROM input1 INTO output;)",
+         R"(SELECT id AS id FROM input2 INTO output;)",
+         R"(SELECT id AS id FROM input3 INTO output;)"});
 
     const std::vector<std::vector<std::string>> expectedData = {{"1", "2", "3"}};
 

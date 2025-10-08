@@ -21,13 +21,13 @@ ATTACH INLINE
 
 SELECT * FROM
 # Commenting parts of the query
-e123 WHERE id >= UINT32(10) INTO sink
+e123 WHERE id >= UINT32(10) INTO sink;
 ----
 1,1,1
 1,1,1
 1,1,1
 
-SELECT * FROM e124 WHERE i >= INT8(10) INTO sink
+SELECT * FROM e124 WHERE i >= INT8(10) INTO sink;
 ----
 # Result, comma-separated
 2,2,2

@@ -11,19 +11,19 @@ Michael,Stonebraker
 
 CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED) TYPE File;
 
-SELECT CONCAT(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink
+SELECT CONCAT(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----
 EdgarCodd
 JimGrey
 MichaelStonebraker
 
-SELECT CONCAT(CONCAT(firstName, VARSIZED(" ")), lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink
+SELECT CONCAT(CONCAT(firstName, VARSIZED(" ")), lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----
 Edgar Codd
 Jim Grey
 Michael Stonebraker
 
-SELECT CONCAT(firstName, CONCAT(VARSIZED(" "), lastName)) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink
+SELECT CONCAT(firstName, CONCAT(VARSIZED(" "), lastName)) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----
 Edgar Codd
 Jim Grey
