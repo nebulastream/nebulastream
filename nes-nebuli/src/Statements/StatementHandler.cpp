@@ -82,7 +82,7 @@ SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statemen
     }();
 
     if (const auto created
-        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, host, sourceConfig, statement.parserConfig))
+        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, WorkerId(host), sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -190,7 +190,8 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
             hostPolicy);
     }();
 
-    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, host, sinkConfig))
+    if (const auto created
+        = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, WorkerId(host), sinkConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }

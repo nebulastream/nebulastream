@@ -146,6 +146,7 @@ struct ReflectedSinkDescriptor
     std::variant<std::string, uint64_t> sinkName;
     Schema schema;
     std::string sinkType;
+    WorkerId workerId;
     Reflected config;
 };
 }

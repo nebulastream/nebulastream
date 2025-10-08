@@ -97,7 +97,8 @@ public:
                     host = hostIt->second;
                 }
 
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, host, std::move(config));
+                const auto sink
+                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, WorkerId(host), std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -536,7 +537,11 @@ struct SystestBinder::Impl
         }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                *logicalSource, physicalSourceConfig.type, host, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
+                *logicalSource,
+                physicalSourceConfig.type,
+                WorkerId(host),
+                physicalSourceConfig.sourceConfig,
+                physicalSourceConfig.parserConfig))
         {
             return;
         }

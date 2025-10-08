@@ -23,6 +23,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeReflection.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
