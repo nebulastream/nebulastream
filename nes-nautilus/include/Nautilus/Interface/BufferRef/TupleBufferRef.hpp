@@ -24,6 +24,8 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <val_ptr.hpp>
 
+#include "Arena.hpp"
+
 namespace NES::Nautilus::Interface::BufferRef
 {
 
@@ -60,6 +62,10 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
+
+    virtual void open(RecordBuffer&, ArenaRef&) = 0;
+
+    // virtual nautilus::val<uint64_t> getNumberOfRecords(const RecordBuffer& recordBuffer) const = 0;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

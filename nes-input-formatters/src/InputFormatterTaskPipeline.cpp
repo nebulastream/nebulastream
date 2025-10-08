@@ -22,15 +22,38 @@
 
 namespace NES
 {
-OpenReturnState
-InputFormatterTaskPipeline::scan(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child) const
+// OpenReturnState
+// InputFormatterTaskPipeline::scan(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child) const
+// {
+//     return this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child);
+// }
+
+std::shared_ptr<MemoryLayout> InputFormatterTaskPipeline::getMemoryLayout() const
 {
-    return this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child);
+    return this->inputFormatterTask->getMemoryLayout();
 }
 
-void InputFormatterTaskPipeline::stop(PipelineExecutionContext&) const
+Record InputFormatterTaskPipeline::readRecord(
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const RecordBuffer& recordBuffer,
+    nautilus::val<uint64_t>& recordIndex) const
 {
-    this->inputFormatterTask->stopTask();
+    return this->inputFormatterTask->readRecord(projections, recordBuffer, recordIndex);
+}
+
+void InputFormatterTaskPipeline::open(RecordBuffer& recordBuffer, ArenaRef& arenaRef)
+{
+    this->inputFormatterTask->open(recordBuffer, arenaRef);
+}
+
+// nautilus::val<uint64_t> InputFormatterTaskPipeline::getNumberOfRecords(const RecordBuffer& recordBuffer) const
+// {
+//     return this->inputFormatterTask->getNumberOfRecords(recordBuffer);
+// }
+
+void InputFormatterTaskPipeline::close(PipelineExecutionContext&) const
+{
+    this->inputFormatterTask->close();
 }
 
 std::ostream& InputFormatterTaskPipeline::toString(std::ostream& os) const

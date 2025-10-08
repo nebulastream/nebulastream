@@ -88,4 +88,9 @@ void ColumnTupleBufferRef::writeRecord(
     }
 }
 
+// nautilus::val<uint64_t> ColumnTupleBufferRef::getNumberOfRecords(const RecordBuffer& recordBuffer) const
+// {
+//     return recordBuffer.getNumRecords();
+// }
+
 }

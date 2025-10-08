@@ -90,4 +90,9 @@ void RowTupleBufferRef::writeRecord(
     }
 }
 
+// nautilus::val<uint64_t> RowTupleBufferRef::getNumberOfRecords(const RecordBuffer& recordBuffer) const
+// {
+//     return recordBuffer.getNumRecords();
+// }
+
 }

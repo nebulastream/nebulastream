@@ -20,7 +20,6 @@
 #include <vector>
 
 #include <Functions/FunctionProvider.hpp>
-#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>

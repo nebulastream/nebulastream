@@ -43,6 +43,10 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
+    void open(RecordBuffer&, ArenaRef&) override { INVARIANT(false, "Does not implement open."); }
+
+    // nautilus::val<uint64_t> getNumberOfRecords(const RecordBuffer& recordBuffer) const override;
+
 private:
     [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
 

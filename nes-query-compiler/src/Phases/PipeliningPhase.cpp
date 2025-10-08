@@ -20,7 +20,6 @@
 #include <utility>
 
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/FormatScanPhysicalOperator.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>

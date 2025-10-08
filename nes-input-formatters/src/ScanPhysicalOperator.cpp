@@ -31,7 +31,7 @@ namespace NES
 {
 
 ScanPhysicalOperator::ScanPhysicalOperator(std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef)
-    : bufferRef(std::move(bufferRef)), projections(this->bufferRef->getMemoryLayout()->getKeyFieldNames())
+    : bufferRef(std::move(bufferRef)), projections(this->bufferRef->getMemoryLayout()->getSchema().getFieldNames())
 {
 }
 
@@ -44,10 +44,16 @@ OpenReturnState ScanPhysicalOperator::open(ExecutionContext& executionCtx, Recor
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
+
+    // Todo: handle 'outOfRange' case
+    this->bufferRef->open(recordBuffer, executionCtx.pipelineMemoryProvider.arena);
+
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
+
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
+
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
