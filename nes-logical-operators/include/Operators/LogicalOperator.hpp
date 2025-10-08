@@ -34,6 +34,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -271,7 +272,7 @@ struct TypedLogicalOperator
         {
             return TypedLogicalOperator<T>{std::static_pointer_cast<const detail::ErasedLogicalOperator>(model)};
         }
-        PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
         std::unreachable();
     }
 
@@ -290,7 +291,7 @@ struct TypedLogicalOperator
                 return std::shared_ptr<const Castable<T>>{self, ptr};
             }
         }
-        PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
         std::unreachable();
     }
 

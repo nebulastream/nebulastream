@@ -20,6 +20,7 @@
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -153,11 +154,8 @@ void TypedBaseOption<T>::isValid(std::string pValue)
     {
         if (!(validator->isValid(pValue)))
         {
-            std::string validatorName;
-            std::string message;
-            validatorName = typeid(validator).name();
-            message = "Validator (" + validatorName + ") failed for " + this->name + " with value: " + pValue;
-            failureMessages[validatorName] = message;
+            failureMessages[std::string(NAMEOF_TYPE_EXPR(validator))]
+                = fmt::format("Validator ({}) failed for {} with value: {}", NAMEOF_TYPE_EXPR(validator), this->name, pValue);
         }
     }
     if (!failureMessages.empty())
