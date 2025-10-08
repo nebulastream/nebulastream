@@ -11,10 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        SliceCache.cpp
-        SliceCache2Q.cpp
-        SliceCacheFIFO.cpp
-        SliceCacheLFU.cpp
-        SliceCacheLRU.cpp
-        SliceCacheSecondChance.cpp
+        PredictionCache.cpp
+        PredictionCache2Q.cpp
+        PredictionCacheFIFO.cpp
+        PredictionCacheLFU.cpp
+        PredictionCacheLRU.cpp
+        PredictionCacheSecondChance.cpp
+        PredictionCacheUtil.cpp
 )

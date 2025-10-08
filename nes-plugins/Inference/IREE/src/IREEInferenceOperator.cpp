@@ -12,28 +12,24 @@
     limitations under the License.
 */
 
-#include "IREEInferenceOperator.hpp"
-
-#include <ranges>
-
-#include <QueryExecutionConfiguration.hpp>
+#include <ExecutionContext.hpp>
+#include <IREEAdapter.hpp>
+#include <IREEInferenceOperator.hpp>
+#include <IREEInferenceOperatorHandler.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Util/Common.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <nautilus/function.hpp>
-
-#include <ExecutionContext.hpp>
-
-#include "IREEAdapter.hpp"
-#include "IREEInferenceOperatorHandler.hpp"
+#include <ranges>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 class PhysicalInferModelOperator;
 }
-namespace NES
-{
 
+
+namespace NES::IREEInference
+{
 template <class T>
 void addValueToModel(int index, float value, void* inferModelHandler, WorkerThreadId thread)
 {
@@ -69,11 +65,16 @@ float getValueFromModel(int index, void* inferModelHandler, WorkerThreadId threa
     auto adapter = handler->getIREEAdapter(thread);
     return adapter->getResultAt(index);
 }
+
 template <typename T>
 nautilus::val<T> min(const nautilus::val<T>& lhs, const nautilus::val<T>& rhs)
 {
     return lhs < rhs ? lhs : rhs;
 }
+}
+
+namespace NES
+{
 
 void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const
 {
@@ -84,7 +85,7 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
         for (nautilus::static_val<size_t> i = 0; i < inputs.size(); ++i)
         {
             nautilus::invoke(
-                addValueToModel<float>,
+                IREEInference::addValueToModel<float>,
                 nautilus::val<int>(i),
                 inputs.at(i).execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<float>>(),
                 inferModelHandler,
@@ -96,27 +97,27 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
         VarVal value = inputs.at(0).execute(record, ctx.pipelineMemoryProvider.arena);
         auto varSizedValue = value.cast<VariableSizedData>();
         nautilus::invoke(
-            copyVarSizedToModel,
+            IREEInference::copyVarSizedToModel,
             varSizedValue.getContent(),
-            min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
+            IREEInference::min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
             inferModelHandler,
             ctx.workerThreadId);
     }
 
-    nautilus::invoke(applyModel, inferModelHandler, ctx.workerThreadId);
+    nautilus::invoke(IREEInference::applyModel, inferModelHandler, ctx.workerThreadId);
 
     if (!this->isVarSizedOutput)
     {
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            VarVal result = VarVal(nautilus::invoke(getValueFromModel, nautilus::val<int>(i), inferModelHandler, ctx.workerThreadId));
+            VarVal result = VarVal(nautilus::invoke(IREEInference::getValueFromModel, nautilus::val<int>(i), inferModelHandler, ctx.workerThreadId));
             record.write(outputFieldNames.at(i), result);
         }
     }
     else
     {
         auto output = ctx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-        nautilus::invoke(copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, ctx.workerThreadId);
+        nautilus::invoke(IREEInference::copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, ctx.workerThreadId);
         record.write(outputFieldNames.at(0), output);
     }
 

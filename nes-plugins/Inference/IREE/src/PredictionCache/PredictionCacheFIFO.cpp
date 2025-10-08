@@ -12,32 +12,32 @@
     limitations under the License.
 */
 
-#include <SliceCache/SliceCacheFIFO.hpp>
+#include <PredictionCache/PredictionCacheFIFO.hpp>
 
 #include <cstdint>
-#include <SliceCache/SliceCache.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <PredictionCache/PredictionCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val.hpp>
 
 namespace NES
 {
-SliceCacheFIFO::SliceCacheFIFO(
+PredictionCacheFIFO::PredictionCacheFIFO(
     const nautilus::val<OperatorHandler*>& operatorHandler,
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<uint64_t*>& hitsRef,
     const nautilus::val<uint64_t*>& missesRef)
-    : SliceCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef), replacementIndex(0)
+    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef), replacementIndex(0)
 {
 }
 
 nautilus::val<int8_t*>
-SliceCacheFIFO::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction)
+PredictionCacheFIFO::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.
-    if (const auto dataStructurePos = SliceCache::searchInCache(timestamp); dataStructurePos != SliceCache::NOT_FOUND)
+    if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
     {
         incrementNumberOfHits();
         return getDataStructure(dataStructurePos);
@@ -47,8 +47,8 @@ SliceCacheFIFO::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, c
     incrementNumberOfMisses();
 
     /// As we are in the FIFO cache, we need to replace the oldest entry with the new one.
-    const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
-    const auto dataStructure = replacementFunction(sliceCacheEntryToReplace, replacementIndex);
+    const nautilus::val<PredictionCacheEntry*> predictionCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    const auto dataStructure = replacementFunction(predictionCacheEntryToReplace, replacementIndex);
 
     /// Before returning the data structure, we need to update the replacement index.
     replacementIndex = (replacementIndex + 1) % numberOfEntries;

@@ -13,33 +13,33 @@
 */
 
 #pragma once
-#include <SliceCache/SliceCache.hpp>
+#include <PredictionCache/PredictionCacheFIFO.hpp>
 
 namespace NES
 {
-struct SliceCacheEntryLFU : SliceCacheEntry
+struct PredictionCacheEntrySecondChance : PredictionCacheEntryFIFO
 {
-    /// Stores the frequency of each cache item
-    uint64_t frequency;
+    /// Stores the second chance bit for each entry in the cache.
+    bool secondChanceBit;
+    ~PredictionCacheEntrySecondChance() override = default;
 };
 
-class SliceCacheLFU : public SliceCache
+class PredictionCacheSecondChance final : public PredictionCacheFIFO
 {
 public:
-    SliceCacheLFU(
+    PredictionCacheSecondChance(
         const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<uint64_t*>& hitsRef,
         const nautilus::val<uint64_t*>& missesRef);
-
-    ~SliceCacheLFU() override = default;
+    ~PredictionCacheSecondChance() override = default;
     nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;
+    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
 
 private:
-    nautilus::val<uint64_t*> getFrequency(const nautilus::val<uint64_t>& pos);
+    nautilus::val<bool*> getSecondChanceBit(const nautilus::val<uint64_t>& pos);
 };
 
 }

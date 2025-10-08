@@ -25,7 +25,9 @@ namespace NES
 
 std::shared_ptr<IREEAdapter> IREEAdapter::create()
 {
-    return std::make_shared<IREEAdapter>();
+    auto adapter = std::make_shared<IREEAdapter>();
+    adapter->inputDataCache = std::make_unique<std::byte[]>(adapter->inputSize);
+    return adapter;
 }
 
 namespace

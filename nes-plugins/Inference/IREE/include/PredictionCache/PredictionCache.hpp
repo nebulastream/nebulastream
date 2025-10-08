@@ -14,53 +14,50 @@
 
 #pragma once
 #include <functional>
-#include <WindowBuildPhysicalOperator.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <IREEInferenceLocalState.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
-#include <Time/Timestamp.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 
 namespace NES
 {
 /// Represents the C++ struct that is stored in the operator handler vector
-struct SliceCacheEntry
+struct PredictionCacheEntry
 {
-    SliceCacheEntry(Timestamp sliceStart, Timestamp sliceEnd)
-        : sliceStart(std::move(sliceStart)), sliceEnd(std::move(sliceEnd)), dataStructure(nullptr)
+    PredictionCacheEntry(std::byte* record)
+        : record(record), dataStructure(nullptr)
     {
     }
 
-    virtual ~SliceCacheEntry() = default;
-    Timestamp sliceStart;
-    Timestamp sliceEnd;
+    virtual ~PredictionCacheEntry() = default;
+    std::byte* record;
     int8_t* dataStructure;
 };
-/// Represents the C++ struct that is stored in the operator handler vector before all SliceCacheEntry structs
+/// Represents the C++ struct that is stored in the operator handler vector before all PredictionCacheEntry structs
 struct HitsAndMisses
 {
     uint64_t hits;
     uint64_t misses;
 };
 
-class SliceCache : public WindowOperatorBuildLocalState
+class PredictionCache : public IREEInferenceLocalState
 {
 public:
-    explicit SliceCache(
+    explicit PredictionCache(
         const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<uint64_t*>& hitsRef,
         const nautilus::val<uint64_t*>& missesRef);
-    ~SliceCache() override = default;
+    ~PredictionCache() override = default;
 
-    using SliceCacheReplacement = std::function<nautilus::val<int8_t*>(const nautilus::val<SliceCacheEntry*>& sliceCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
+    using PredictionCacheReplacement = std::function<nautilus::val<int8_t*>(const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
     virtual nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) = 0;
+    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) = 0;
 
-    virtual nautilus::val<Timestamp> getSliceStart(const nautilus::val<uint64_t>& pos);
-    virtual nautilus::val<Timestamp> getSliceEnd(const nautilus::val<uint64_t>& pos);
+    virtual nautilus::val<std::byte*> getRecord(const nautilus::val<uint64_t>& pos);
 protected:
     virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
     void incrementNumberOfHits();
@@ -68,10 +65,10 @@ protected:
 
     /// Helper function to search for a timestamp in the cache. If the timestamp is found, the position is returned, otherwise, we return UINT64_MAX
     static constexpr uint64_t NOT_FOUND = UINT64_MAX;
-    nautilus::val<uint64_t> searchInCache(const nautilus::val<Timestamp>& timestamp);
+    nautilus::val<uint64_t> searchInCache(const nautilus::val<std::byte*>& record);
 
     /// Helper function to check if a timestamp is in the cache. We assume a timestamp is in the cache if it is in the range [sliceStart, sliceEnd).
-    nautilus::val<bool> foundSlice(const nautilus::val<uint64_t>& pos, const nautilus::val<Timestamp>& timestamp);
+    nautilus::val<bool> foundRecord(const nautilus::val<uint64_t>& pos, const nautilus::val<std::byte*>& record);
 
     /// Members for iterating over the cache
     nautilus::val<int8_t*> startOfEntries;

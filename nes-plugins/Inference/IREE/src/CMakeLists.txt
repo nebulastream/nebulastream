@@ -13,15 +13,24 @@
 add_plugin_as_library(InferenceModel RewriteRule nes-query-optimizer iree_inference_plugin_library
         LowerToPhysicalIreeInference.cpp
         IREEBatchInferenceOperator.cpp
+        IREEBatchCacheInferenceOperator.cpp
         IREEBatchInferenceOperatorHandler.cpp
         IREEInferenceOperator.cpp
+        IREECacheInferenceOperator.cpp
         IREEInferenceOperatorHandler.cpp
         IREEAdapter.cpp
         IREERuntimeWrapper.cpp
         BatchingPhysicalOperator.cpp
+        PredictionCache/PredictionCache.cpp
+        PredictionCache/PredictionCache2Q.cpp
+        PredictionCache/PredictionCacheFIFO.cpp
+        PredictionCache/PredictionCacheLFU.cpp
+        PredictionCache/PredictionCacheLRU.cpp
+        PredictionCache/PredictionCacheSecondChance.cpp
+        PredictionCache/PredictionCacheUtil.cpp
 )
 find_package(IREERuntime CONFIG REQUIRED)
-target_include_directories(iree_inference_plugin_library PRIVATE ../include)
+target_include_directories(iree_inference_plugin_library PRIVATE ../include ../include/PredictionCache)
 target_include_directories(iree_inference_plugin_library SYSTEM PRIVATE ${_IREE_COMPILER_API})
 
 target_link_libraries(iree_inference_plugin_library PRIVATE
@@ -30,3 +39,5 @@ target_link_libraries(iree_inference_plugin_library PRIVATE
         nes-query-optimizer
         nes-runtime
 )
+
+add_subdirectory(PredictionCache)

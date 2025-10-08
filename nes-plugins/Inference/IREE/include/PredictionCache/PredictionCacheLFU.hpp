@@ -13,32 +13,33 @@
 */
 
 #pragma once
-#include <SliceCache/SliceCache.hpp>
+#include <PredictionCache/PredictionCache.hpp>
 
 namespace NES
 {
-struct SliceCacheEntryLRU : SliceCacheEntry
+struct PredictionCacheEntryLFU : PredictionCacheEntry
 {
-    /// Stores the age of each entry in the cache. With 32-bits, we can store 4 billion entries.
-    uint64_t ageBit;
-    ~SliceCacheEntryLRU() override = default;
+    /// Stores the frequency of each cache item
+    uint64_t frequency;
 };
 
-class SliceCacheLRU final : public SliceCache
+class PredictionCacheLFU : public PredictionCache
 {
 public:
-    SliceCacheLRU(
+    PredictionCacheLFU(
         const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<uint64_t*>& hitsRef,
         const nautilus::val<uint64_t*>& missesRef);
-    ~SliceCacheLRU() override = default;
+
+    ~PredictionCacheLFU() override = default;
     nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCache::SliceCacheReplacement& replacementFunction) override;
+    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
 
 private:
-    nautilus::val<uint64_t*> getAgeBit(const nautilus::val<uint64_t>& pos);
+    nautilus::val<uint64_t*> getFrequency(const nautilus::val<uint64_t>& pos);
 };
+
 }
