@@ -41,6 +41,7 @@
 #include <MemoryTestUtils.hpp>
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -142,7 +143,7 @@ void verify_last_event(RecordingEmitFunction& recorder, std::source_location loc
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_last_event");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(::testing::Gt(0))) << "Expected source events to be emitted";
     auto& lastEvent = recorder.recordedEmits.lock()->back();
-    EXPECT_TRUE(std::holds_alternative<T>(lastEvent)) << "Last event was not a `" << typeid(T).name() << "` event";
+    EXPECT_TRUE(std::holds_alternative<T>(lastEvent)) << "Last event was not a `" << NAMEOF_TYPE(T) << "` event";
 }
 
 void verify_number_of_emits(
