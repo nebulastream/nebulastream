@@ -27,6 +27,8 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Util/Overloaded.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/ostream.h>
@@ -38,7 +40,8 @@
 namespace NES
 {
 
-SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog)
+SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy)
+    : sourceCatalog(sourceCatalog), hostPolicy(std::move(hostPolicy))
 {
 }
 
@@ -61,8 +64,25 @@ SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statemen
         return std::unexpected{UnknownSourceName(statement.attachedTo.getRawValue())};
     }
 
+    auto sourceConfig = statement.sourceConfig;
+    const auto host = [&]
+    {
+        if (auto it = sourceConfig.find("host"); it != sourceConfig.end())
+        {
+            const auto host = it->second;
+            sourceConfig.erase(it);
+            return host;
+        }
+        return std::visit(
+            Overloaded{
+                [](const DefaultHost& defaultHost) -> std::string { return defaultHost.hostName; },
+                [](const RequireHostConfig&) -> std::string
+                { throw InvalidStatement("Could not handle source statement. `SOURCE`.`HOST` was not set"); }},
+            hostPolicy);
+    }();
+
     if (const auto created
-        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, host, sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -146,13 +166,31 @@ std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandl
     return std::unexpected{UnknownSourceName("Unknown physical source: {}", statement.descriptor)};
 }
 
-SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog) : sinkCatalog(sinkCatalog)
+SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog, HostPolicy hostPolicy)
+    : sinkCatalog(sinkCatalog), hostPolicy(std::move(hostPolicy))
 {
 }
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, statement.sinkConfig))
+    auto sinkConfig = statement.sinkConfig;
+    const auto host = [&]
+    {
+        if (auto it = sinkConfig.find("host"); it != sinkConfig.end())
+        {
+            const auto host = it->second;
+            sinkConfig.erase(it);
+            return host;
+        }
+        return std::visit(
+            Overloaded{
+                [](const DefaultHost& defaultHost) -> std::string { return defaultHost.hostName; },
+                [](const RequireHostConfig&) -> std::string
+                { throw InvalidStatement("Could not handle sink statement. `SINK`.`HOST` was not set"); }},
+            hostPolicy);
+    }();
+
+    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, host, sinkConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }
