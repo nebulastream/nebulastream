@@ -21,6 +21,7 @@
 #include <utility>
 #include <Traits/Trait.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -60,7 +61,7 @@ public:
     [[nodiscard]] TraitType get() const
     {
         const auto found = traitMap.find(typeid(TraitType));
-        INVARIANT(found != traitMap.end(), "Trait {} not found", typeid(TraitType).name());
+        INVARIANT(found != traitMap.end(), "Trait {} not found", NAMEOF_TYPE(TraitType));
         return found->second.get<TraitType>();
     }
 

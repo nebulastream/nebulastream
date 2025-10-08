@@ -23,6 +23,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_set>
+#include <nameof.hpp>
 
 #include <ErrorHandling.hpp>
 #include <SerializableTrait.pb.h>
@@ -129,7 +130,7 @@ struct Trait
         {
             return p->data;
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
     }
 
     Trait& operator=(const Trait& other);
