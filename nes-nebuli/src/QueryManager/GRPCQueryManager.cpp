@@ -127,7 +127,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const QueryI
         /// Convert the gRPC object to a C++ one
         /// Creating a new local query status
         LocalQueryStatus queryStatus;
-
+        queryStatus.queryId = queryId;
         const auto responseMetrics = response.metrics();
         if (responseMetrics.has_startunixtimeinms())
         {
