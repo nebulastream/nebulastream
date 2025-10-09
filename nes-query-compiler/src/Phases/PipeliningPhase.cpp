@@ -36,6 +36,8 @@
 #include <PipelinedQueryPlan.hpp>
 #include <SinkPhysicalOperator.hpp>
 
+#include "ScanPhysicalOperator.hpp"
+
 namespace NES::QueryCompilation::PipeliningPhase
 {
 
@@ -57,7 +59,7 @@ createScanOperator(const Pipeline& prevPipeline, const std::optional<Schema>& in
     const auto formatScanConfig = (prevPipeline.isSourcePipeline())
         ? std::optional{prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig()}
         : std::nullopt;
-    return provideInputFormatter(formatScanConfig, memoryProvider);
+    return ScanPhysicalOperator(provideInputFormatterTupleBufferRef(formatScanConfig, memoryProvider));
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline

@@ -26,7 +26,7 @@
 namespace NES
 {
 
-PhysicalOperator provideInputFormatter(
+std::unique_ptr<InputFormatterTupleBufferRef> provideInputFormatterTupleBufferRef(
     const std::optional<ParserConfig>& formatScanConfig,
     std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider)
 {
@@ -34,8 +34,7 @@ PhysicalOperator provideInputFormatter(
             formatScanConfig.value().parserType,
             InputFormatIndexerRegistryArguments(formatScanConfig.value(), std::move(memoryProvider))))
     {
-        // auto bufferRef = std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter.value()));
-        return ScanPhysicalOperator(std::move(inputFormatter.value()));
+        return std::move(inputFormatter.value());
     }
     throw UnknownParserType("unknown type of input formatter: {}", formatScanConfig.value().parserType);
 }

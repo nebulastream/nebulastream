@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
-        InputFormatterProvider.cpp
+        InputFormatterTupleBufferRefProvider.cpp
         SequenceShredder.cpp
         RawValueParser.cpp
         InputFormatterTupleBufferRef.cpp

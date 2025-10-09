@@ -32,6 +32,8 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 
+#include "ScanPhysicalOperator.hpp"
+
 namespace
 {
 std::optional<NES::ParserConfig> getParserConfig(const NES::LogicalOperator& projectionOp)
@@ -60,7 +62,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto bufferSize = conf.pageSize.getValue();
 
     const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(bufferSize, inputSchema);
-    auto scan = provideInputFormatter(getParserConfig(projectionLogicalOperator), memoryProvider);
+    auto scan = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(getParserConfig(projectionLogicalOperator), memoryProvider));
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
