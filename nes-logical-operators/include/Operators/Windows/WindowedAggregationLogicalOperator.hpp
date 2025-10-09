@@ -83,11 +83,6 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
-            "TimeMs",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIME_MS, config); }};
-
         static inline const DescriptorConfig::ConfigParameter<AggregationFunctionList> WINDOW_AGGREGATIONS{
             "windowAggregations",
             std::nullopt,
@@ -118,7 +113,7 @@ public:
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(
-                TIME_MS, WINDOW_AGGREGATIONS, WINDOW_INFOS, WINDOW_KEYS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
+                WINDOW_AGGREGATIONS, WINDOW_INFOS, WINDOW_KEYS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
     };
 
 private:
