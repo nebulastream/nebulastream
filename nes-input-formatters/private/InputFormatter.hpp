@@ -182,13 +182,26 @@ public:
         typename FormatterType::FieldIndexFunctionType rawBufferFIF;
     };
 
+    /// We currently require two thread_local states here
+    /// First, 'SpanningTuplePOD' only becomes active during execution, not during tracing, which is extremely important, since
+    /// otherwise we hardcode the address of the tracing thread into the nautilus generated code, causing 'race conditions'
+    /// We set SpanningTuplePOD at the end of the indexing proxy function call.
+    /// Second, State, which is essentially a container to 'move' the spanningTuple and the arena from the open call to the readRecord call.
+    /// We can't use 'SpanningTuplePOD' for that directly, since it would become bound to the tracing thread.
+    /// The nautilus::val<SpanningTuplePOD*> spanningTuple only 'moves' the information about a nautilus result from the index proxy function
+    /// call to the readRecord, which is valid at execution time (after tracing). The address of ArenaRef is stable.
+    /// Todo: problems:
+    /// - State must be a unique_ptr, if not, nautilus traces 'nautilus::val<SpanningTuplePOD*> spanningTuple', causing a crash
+    /// - for the same reason, it is not possible to copy assign 'nautilus::val<SpanningTuplePOD*> spanningTuple'
+    /// - since it is difficult to copy assign 'nautilus::val<SpanningTuplePOD*> spanningTuple', it is also difficult to merge
+    ///   the two thread_locals
     struct State
     {
         nautilus::val<SpanningTuplePOD*> spanningTuple;
         ArenaRef& arena;
     };
-
     static thread_local std::unique_ptr<State> state;
+    static thread_local SpanningTuplePOD spanningTuple;
 
     // static State& setThreadLocalState(std::optional<State> newState)
     // {
@@ -205,28 +218,24 @@ public:
     class SpanningTupleData
     {
     public:
-        explicit SpanningTupleData() = default;
+        explicit SpanningTupleData() { spanningTuple = SpanningTuplePOD{}; };
 
         std::pair<FieldIndex, FieldIndex> indexRawBuffer(InputFormatter& InputFormatter, const TupleBuffer& tupleBuffer)
         {
             InputFormatter.inputFormatIndexer.indexRawBuffer(
-                spanningTuplePOD.rawBufferFIF, RawTupleBuffer{tupleBuffer}, InputFormatter.indexerMetaData);
-            this->spanningTuplePOD.totalNumberOfTuples = this->spanningTuplePOD.rawBufferFIF.getTotalNumberOfTuples();
+                spanningTuple.rawBufferFIF, RawTupleBuffer{tupleBuffer}, InputFormatter.indexerMetaData);
+            spanningTuple.totalNumberOfTuples = spanningTuple.rawBufferFIF.getTotalNumberOfTuples();
             return {
-                spanningTuplePOD.rawBufferFIF.getOffsetOfFirstTupleDelimiter(),
-                spanningTuplePOD.rawBufferFIF.getOffsetOfLastTupleDelimiter()};
+                spanningTuple.rawBufferFIF.getOffsetOfFirstTupleDelimiter(), spanningTuple.rawBufferFIF.getOffsetOfLastTupleDelimiter()};
         }
 
-        void setIsRepeat(bool isRepeat) { this->spanningTuplePOD.isRepeat = isRepeat; }
+        void setIsRepeat(bool isRepeat) { spanningTuple.isRepeat = isRepeat; }
 
-        SpanningTuplePOD* getThreadLocalSpanningTuplePODPtr() //todo: make const again? improve numTuples calculation?
+        SpanningTuplePOD* finalize()
         {
-            /// each thread sets up a static address for a POD struct that contains all relevent data that the indexing phase produces
-            /// this allows this proxy function to return a, guaranteed to be valid, reference to the POD tho the compiled query pipeline
-            thread_local SpanningTuplePOD spanningTuple{};
-            this->spanningTuplePOD.totalNumberOfTuples += static_cast<uint64_t>(this->spanningTuplePOD.hasLeadingSpanningTupleBool)
-                + static_cast<uint64_t>(this->spanningTuplePOD.hasTrailingSpanningTupleBool);
-            spanningTuple = std::move(spanningTuplePOD);
+            // Todo: could do in destructor and get rid of 'finalize'
+            spanningTuple.totalNumberOfTuples += static_cast<uint64_t>(spanningTuple.hasLeadingSpanningTupleBool)
+                + static_cast<uint64_t>(spanningTuple.hasTrailingSpanningTupleBool);
             return &spanningTuple;
         }
 
@@ -239,38 +248,35 @@ public:
             calculateSizeOfSpanningTuplesWithDelimiter(
                 stagedBuffers, indexOfSequenceNumberInStagedBuffers, InputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
 
-            if (spanningTuplePOD.leadingSpanningTupleSizeInBytes > 0)
+            if (spanningTuple.leadingSpanningTupleSizeInBytes > 0)
             {
                 allocateForLeadingSpanningTuple(arenaRef);
                 const auto leadingSpanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
                 processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                    leadingSpanningTupleBuffers, spanningTuplePOD.leadingSpanningTuplePtr, InputFormatter.indexerMetaData);
+                    leadingSpanningTupleBuffers, spanningTuple.leadingSpanningTuplePtr, InputFormatter.indexerMetaData);
                 InputFormatter.inputFormatIndexer.indexRawBuffer(
-                    spanningTuplePOD.leadingSpanningTupleFIF,
+                    spanningTuple.leadingSpanningTupleFIF,
                     RawTupleBuffer{
-                        std::bit_cast<const char*>(spanningTuplePOD.leadingSpanningTuplePtr),
-                        spanningTuplePOD.leadingSpanningTupleSizeInBytes},
+                        std::bit_cast<const char*>(spanningTuple.leadingSpanningTuplePtr), spanningTuple.leadingSpanningTupleSizeInBytes},
                     InputFormatter.indexerMetaData);
             }
-            if (spanningTuplePOD.trailingSpanningTupleSizeInBytes > 0)
+            if (spanningTuple.trailingSpanningTupleSizeInBytes > 0)
             {
                 allocateForTrailingSpanningTuple(arenaRef);
                 const auto trailingSpanningTupleBuffers
                     = std::span(stagedBuffers)
                           .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
                 processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                    trailingSpanningTupleBuffers, spanningTuplePOD.trailingSpanningTuplePtr, InputFormatter.indexerMetaData);
+                    trailingSpanningTupleBuffers, spanningTuple.trailingSpanningTuplePtr, InputFormatter.indexerMetaData);
                 InputFormatter.inputFormatIndexer.indexRawBuffer(
-                    spanningTuplePOD.trailingSpanningTupleFIF,
+                    spanningTuple.trailingSpanningTupleFIF,
                     RawTupleBuffer{
-                        std::bit_cast<const char*>(spanningTuplePOD.trailingSpanningTuplePtr),
-                        spanningTuplePOD.trailingSpanningTupleSizeInBytes},
+                        std::bit_cast<const char*>(spanningTuple.trailingSpanningTuplePtr), spanningTuple.trailingSpanningTupleSizeInBytes},
                     InputFormatter.indexerMetaData);
             }
         }
 
-        void handleWithoutDelimiter(
-            const std::vector<StagedBuffer>& spanningTupleBuffers, InputFormatter& InputFormatter, Arena& arenaRef)
+        void handleWithoutDelimiter(const std::vector<StagedBuffer>& spanningTupleBuffers, InputFormatter& InputFormatter, Arena& arenaRef)
         {
             calculateSizeOfSpanningTuple(
                 [this](const size_t bytes) { increaseLeadingSpanningTupleSize(bytes); },
@@ -279,37 +285,37 @@ public:
             allocateForLeadingSpanningTuple(arenaRef);
 
             processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                spanningTupleBuffers, spanningTuplePOD.leadingSpanningTuplePtr, InputFormatter.indexerMetaData);
+                spanningTupleBuffers, spanningTuple.leadingSpanningTuplePtr, InputFormatter.indexerMetaData);
             InputFormatter.inputFormatIndexer.indexRawBuffer(
-                spanningTuplePOD.leadingSpanningTupleFIF,
+                spanningTuple.leadingSpanningTupleFIF,
                 RawTupleBuffer{
-                    std::bit_cast<const char*>(spanningTuplePOD.leadingSpanningTuplePtr), spanningTuplePOD.leadingSpanningTupleSizeInBytes},
+                    std::bit_cast<const char*>(spanningTuple.leadingSpanningTuplePtr), spanningTuple.leadingSpanningTupleSizeInBytes},
                 InputFormatter.indexerMetaData);
         }
 
     private:
-        SpanningTuplePOD spanningTuplePOD;
+        // SpanningTuplePOD spanningTuple;
 
         void allocateForLeadingSpanningTuple(Arena& arenaRef)
         {
-            this->spanningTuplePOD.hasLeadingSpanningTupleBool = true;
-            this->spanningTuplePOD.leadingSpanningTuplePtr = arenaRef.allocateMemory(spanningTuplePOD.leadingSpanningTupleSizeInBytes);
+            spanningTuple.hasLeadingSpanningTupleBool = true;
+            spanningTuple.leadingSpanningTuplePtr = arenaRef.allocateMemory(spanningTuple.leadingSpanningTupleSizeInBytes);
         }
 
         void allocateForTrailingSpanningTuple(Arena& arenaRef)
         {
-            this->spanningTuplePOD.hasTrailingSpanningTupleBool = true;
-            this->spanningTuplePOD.trailingSpanningTuplePtr = arenaRef.allocateMemory(spanningTuplePOD.trailingSpanningTupleSizeInBytes);
+            spanningTuple.hasTrailingSpanningTupleBool = true;
+            spanningTuple.trailingSpanningTuplePtr = arenaRef.allocateMemory(spanningTuple.trailingSpanningTupleSizeInBytes);
         }
 
         void increaseLeadingSpanningTupleSize(const size_t additionalBytes)
         {
-            spanningTuplePOD.leadingSpanningTupleSizeInBytes += additionalBytes;
+            spanningTuple.leadingSpanningTupleSizeInBytes += additionalBytes;
         }
 
         void increaseTrailingSpanningTupleSize(const size_t additionalBytes)
         {
-            spanningTuplePOD.trailingSpanningTupleSizeInBytes += additionalBytes;
+            spanningTuple.trailingSpanningTupleSizeInBytes += additionalBytes;
         }
 
         template <typename IncreaseFunc>
@@ -399,7 +405,7 @@ public:
 
             if (stagedBuffers.size() < 2)
             {
-                return spanningTupleData.getThreadLocalSpanningTuplePODPtr();
+                return spanningTupleData.finalize();
             }
             spanningTupleData.handleWithDelimiter(stagedBuffers, indexOfSequenceNumberInStagedBuffers, *InputFormatter, *arenaRef);
         }
@@ -416,14 +422,14 @@ public:
 
             if (stagedBuffers.size() < 3)
             {
-                return spanningTupleData.getThreadLocalSpanningTuplePODPtr();
+                return spanningTupleData.finalize();
             }
 
             /// The buffer has no delimiter, but connects two buffers with delimiters, forming one spanning tuple
             /// We arbitrarily treat it as a 'leading' spanning tuple (technically, it is both leading and trailing)
             spanningTupleData.handleWithoutDelimiter(stagedBuffers, *InputFormatter, *arenaRef);
         }
-        return spanningTupleData.getThreadLocalSpanningTuplePODPtr();
+        return spanningTupleData.finalize();
     }
 
     void open(RecordBuffer& recordBuffer, ArenaRef& arenaRef)
@@ -519,8 +525,7 @@ public:
     std::ostream& taskToString(std::ostream& os) const
     {
         /// Not using fmt::format, because it fails during build, trying to pass sequenceShredder as a const value
-        os << "InputFormatter(" << ", inputFormatIndexer: " << inputFormatIndexer << ", sequenceShredder: " << *sequenceShredder
-           << ")\n";
+        os << "InputFormatter(" << ", inputFormatIndexer: " << inputFormatIndexer << ", sequenceShredder: " << *sequenceShredder << ")\n";
         return os;
     }
 
@@ -532,7 +537,9 @@ private:
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
 };
 
-template<InputFormatIndexerType T>
+template <InputFormatIndexerType T>
 thread_local std::unique_ptr<typename InputFormatter<T>::State> InputFormatter<T>::state{};
+template <InputFormatIndexerType T>
+thread_local typename InputFormatter<T>::SpanningTuplePOD InputFormatter<T>::spanningTuple{};
 
 }
