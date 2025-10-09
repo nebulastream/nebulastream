@@ -12,6 +12,7 @@ RUN apt-get update -y && apt-get install -y \
         gdb \
         python3-venv \
         python3-bs4 \
+        bats \
         openjdk-21-jre-headless
 
 # The vcpkg port of antlr requires the jar to be available somewhere
