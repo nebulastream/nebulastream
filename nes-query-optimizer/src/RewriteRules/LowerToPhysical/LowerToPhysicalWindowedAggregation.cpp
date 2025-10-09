@@ -69,7 +69,7 @@ getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
     }
     for (const auto& descriptor : logicalOperator.getWindowAggregation())
     {
-        const auto aggregationResultFieldIdentifier = descriptor->onField.getFieldName();
+        const auto aggregationResultFieldIdentifier = descriptor->getOnField().getFieldName();
         fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
     }
     return {fieldKeyNames, fieldValueNames};
@@ -117,8 +117,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         auto physicalInputType = DataTypeProvider::provideDataType(descriptor->getInputStamp().type);
         auto physicalFinalType = DataTypeProvider::provideDataType(descriptor->getFinalAggregateStamp().type);
 
-        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
-        const auto resultFieldIdentifier = descriptor->asField.getFieldName();
+        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->getOnField());
+        const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
         auto layout = std::make_shared<ColumnLayout>(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
         auto bufferRef = std::make_shared<Interface::BufferRef::ColumnTupleBufferRef>(layout);
 
