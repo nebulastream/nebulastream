@@ -81,6 +81,7 @@ NES::Systest::SystestQuery makeQuery(
         .planInfoOrException = planInfoOrException,
         .expectedResultsOrExpectedError = std::move(expected),
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
+        .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt};
 }
 }
@@ -116,12 +117,16 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
     QuerySubmitter submitter{std::make_unique<MockQueryManager>()};
-
+    SystestProgressTracker progressTracker;
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     const auto result = runQueries(
-        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})}, 1, submitter, discardPerformanceMessage);
+        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})},
+        1,
+        submitter,
+        progressTracker,
+        discardPerformanceMessage);
     EXPECT_TRUE(result.empty()) << "query should pass because error was expected";
 }
 
@@ -138,6 +143,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     EXPECT_CALL(*mockManager, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+    SystestProgressTracker progressTracker;
 
     QuerySubmitter submitter{std::move(mockManager)};
     SourceCatalog sourceCatalog;
@@ -152,6 +158,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
         {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
         1,
         submitter,
+        progressTracker,
         discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
@@ -170,6 +177,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     EXPECT_CALL(*mockManager, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+    SystestProgressTracker progressTracker;
 
     QuerySubmitter submitter{std::move(mockManager)};
     SourceCatalog sourceCatalog;
@@ -186,6 +194,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
+        progressTracker,
         discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);

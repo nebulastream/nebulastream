@@ -14,6 +14,7 @@
 
 #include <SystestRunner.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <chrono>
@@ -70,20 +71,22 @@ namespace
 template <typename ErrorCallable>
 void reportResult(
     std::shared_ptr<RunningQuery>& runningQuery,
-    std::size_t& finishedCount,
-    std::size_t total,
+    SystestProgressTracker& progressTracker,
     std::vector<std::shared_ptr<RunningQuery>>& failed,
     ErrorCallable&& errorBuilder,
     const QueryPerformanceMessageBuilder& performanceMessageBuilder)
 {
     std::string msg = errorBuilder();
     runningQuery->passed = msg.empty();
+
     std::string performanceMessage;
     if (performanceMessageBuilder)
     {
         performanceMessage = performanceMessageBuilder(*runningQuery);
     }
-    printQueryResultToStdOut(*runningQuery, msg, finishedCount++, total, performanceMessage);
+
+    printQueryResultToStdOut(*runningQuery, msg, progressTracker, performanceMessage);
+    progressTracker.incrementQueryCounter();
     if (!msg.empty())
     {
         failed.push_back(runningQuery);
@@ -97,8 +100,7 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
 
 void processQueryWithError(
     std::shared_ptr<RunningQuery> runningQuery,
-    std::size_t& finished,
-    const size_t numQueries,
+    SystestProgressTracker& progressTracker,
     std::vector<std::shared_ptr<RunningQuery>>& failed,
     const std::optional<Exception>& exception,
     const QueryPerformanceMessageBuilder& performanceMessageBuilder)
@@ -106,8 +108,7 @@ void processQueryWithError(
     runningQuery->exception = exception;
     reportResult(
         runningQuery,
-        finished,
-        numQueries,
+        progressTracker,
         failed,
         [&]
         {
@@ -129,6 +130,7 @@ std::vector<RunningQuery> runQueries(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
+    SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     std::queue<SystestQuery> pending;
@@ -140,7 +142,6 @@ std::vector<RunningQuery> runQueries(
     std::unordered_map<QueryId, std::shared_ptr<RunningQuery>> active;
     std::unordered_map<QueryId, LocalQueryStatus> finishedDifferentialQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
-    std::size_t finished = 0;
 
     const auto startMoreQueries = [&] -> bool
     {
@@ -166,12 +167,7 @@ std::vector<RunningQuery> runQueries(
                 else
                 {
                     processQueryWithError(
-                        std::make_shared<RunningQuery>(nextQuery),
-                        finished,
-                        queries.size(),
-                        failed,
-                        {reg.error()},
-                        queryPerformanceMessage);
+                        std::make_shared<RunningQuery>(nextQuery), progressTracker, failed, {reg.error()}, queryPerformanceMessage);
                 }
             }
             else if (nextQuery.planInfoOrException.has_value())
@@ -186,12 +182,7 @@ std::vector<RunningQuery> runQueries(
                 else
                 {
                     processQueryWithError(
-                        std::make_shared<RunningQuery>(nextQuery),
-                        finished,
-                        queries.size(),
-                        failed,
-                        {reg.error()},
-                        queryPerformanceMessage);
+                        std::make_shared<RunningQuery>(nextQuery), progressTracker, failed, {reg.error()}, queryPerformanceMessage);
                 }
             }
             else
@@ -199,8 +190,7 @@ std::vector<RunningQuery> runQueries(
                 /// There was an error during query parsing, report the result and don't register the query
                 processQueryWithError(
                     std::make_shared<RunningQuery>(nextQuery),
-                    finished,
-                    queries.size(),
+                    progressTracker,
                     failed,
                     {nextQuery.planInfoOrException.error()},
                     queryPerformanceMessage);
@@ -224,73 +214,36 @@ std::vector<RunningQuery> runQueries(
             if (queryStatus.state == QueryState::Failed)
             {
                 INVARIANT(queryStatus.metrics.error.has_value(), "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, finished, queries.size(), failed, queryStatus.metrics.error, queryPerformanceMessage);
+                processQueryWithError(it->second, progressTracker, failed, queryStatus.metrics.error, queryPerformanceMessage);
                 active.erase(it);
+                continue;
             }
-            else
+
+            /// Update the query summary
+            runningQuery->queryStatus = queryStatus;
+
+            /// For differential queries, check if both queries in the pair have finished
+            if (runningQuery->differentialQueryPair.has_value())
             {
-                /// Update the query summary
-                runningQuery->queryStatus = queryStatus;
+                /// Store this query's summary
+                finishedDifferentialQueries[queryStatus.queryId] = queryStatus;
 
-                /// For differential queries, check if both queries in the pair have finished
-                if (runningQuery->differentialQueryPair.has_value())
+                /// Check if the other query in the pair has also finished
+                const auto otherQueryId = runningQuery->differentialQueryPair.value();
+                const auto otherSummaryIt = finishedDifferentialQueries.find(otherQueryId);
+
+                if (otherSummaryIt != finishedDifferentialQueries.end())
                 {
-                    /// Store this query's summary
-                    finishedDifferentialQueries[queryStatus.queryId] = queryStatus;
-
-                    /// Check if the other query in the pair has also finished
-                    auto otherQueryId = runningQuery->differentialQueryPair.value();
-                    auto otherSummaryIt = finishedDifferentialQueries.find(otherQueryId);
-
-                    if (otherSummaryIt != finishedDifferentialQueries.end())
+                    /// Both queries have finished, process the differential comparison
+                    auto otherRunningQueryIt = active.find(otherQueryId);
+                    if (otherRunningQueryIt != active.end())
                     {
-                        /// Both queries have finished, process the differential comparison
-                        auto otherRunningQueryIt = active.find(otherQueryId);
-                        if (otherRunningQueryIt != active.end())
-                        {
-                            otherRunningQueryIt->second->queryStatus = otherSummaryIt->second;
-
-                            reportResult(
-                                runningQuery,
-                                finished,
-                                queries.size(),
-                                failed,
-                                [&]
-                                {
-                                    if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
-                                    {
-                                        return fmt::format(
-                                            "expected error {} but query succeeded",
-                                            std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
-                                    }
-                                    if (auto err = checkResult(*runningQuery))
-                                    {
-                                        return *err;
-                                    }
-                                    return std::string{};
-                                },
-                                queryPerformanceMessage);
-
-                            /// Remove both queries from active and clear their summaries
-                            active.erase(otherRunningQueryIt);
-                            finishedDifferentialQueries.erase(otherSummaryIt);
-                        }
-                        active.erase(it);
-                        finishedDifferentialQueries.erase(queryStatus.queryId);
+                        otherRunningQueryIt->second->queryStatus = otherSummaryIt->second;
                     }
-                    else
-                    {
-                        /// The other query hasn't finished yet, just wait
-                        /// Don't remove from active yet
-                    }
-                }
-                else
-                {
-                    /// Regular query (not differential), process immediately
+
                     reportResult(
                         runningQuery,
-                        finished,
-                        queries.size(),
+                        progressTracker,
                         failed,
                         [&]
                         {
@@ -307,9 +260,40 @@ std::vector<RunningQuery> runQueries(
                             return std::string{};
                         },
                         queryPerformanceMessage);
+
+                    if (otherRunningQueryIt != active.end())
+                    {
+                        active.erase(otherRunningQueryIt);
+                    }
+                    finishedDifferentialQueries.erase(otherSummaryIt);
                     active.erase(it);
+                    finishedDifferentialQueries.erase(queryStatus.queryId);
                 }
+
+                continue;
             }
+
+            /// Regular query (not differential), process immediately
+            reportResult(
+                runningQuery,
+                progressTracker,
+                failed,
+                [&]
+                {
+                    if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                    {
+                        return fmt::format(
+                            "expected error {} but query succeeded",
+                            std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                    }
+                    if (auto err = checkResult(*runningQuery))
+                    {
+                        return *err;
+                    }
+                    return std::string{};
+                },
+                queryPerformanceMessage);
+            active.erase(it);
         }
     }
 
@@ -343,13 +327,15 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
 }
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, nlohmann::json& resultJson)
+    const std::vector<SystestQuery>& queries,
+    const SingleNodeWorkerConfiguration& configuration,
+    nlohmann::json& resultJson,
+    SystestProgressTracker& progressTracker)
 {
     auto worker = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
-    std::size_t queryFinishedCounter = 0;
-    const auto totalQueries = queries.size();
+    progressTracker.reset(queries.size());
     for (const auto& queryToRun : queries)
     {
         if (not queryToRun.planInfoOrException.has_value())
@@ -421,10 +407,9 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         ranQueries.back()->passed = not errorMessage.has_value();
         const auto queryPerformanceMessage
             = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
-        printQueryResultToStdOut(
-            *ranQueries.back(), errorMessage.value_or(""), queryFinishedCounter, totalQueries, queryPerformanceMessage);
+        printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), progressTracker, queryPerformanceMessage);
 
-        queryFinishedCounter += 1;
+        progressTracker.incrementQueryCounter();
     }
 
     return serializeExecutionResults(
@@ -434,22 +419,37 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 void printQueryResultToStdOut(
     const RunningQuery& runningQuery,
     const std::string& errorMessage,
-    const size_t queryCounter,
-    const size_t totalQueries,
+    SystestProgressTracker& progressTracker,
     const std::string_view queryPerformanceMessage)
 {
     const auto queryNameLength = runningQuery.systestQuery.testName.size();
     const auto queryNumberAsString = runningQuery.systestQuery.queryIdInFile.toString();
     const auto queryNumberLength = queryNumberAsString.size();
-    const auto queryCounterAsString = std::to_string(queryCounter + 1);
+    const auto queryCounterAsString = std::to_string(progressTracker.getQueryCounter() + 1);
 
-    /// spd logger cannot handle multiline prints with proper color and pattern.
-    /// And as this is only for test runs we use stdout here.
-    std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
-    std::cout << queryCounterAsString << "/" << totalQueries << " ";
-    std::cout << runningQuery.systestQuery.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0')
-              << queryNumberAsString;
-    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
+    std::string overrideStr;
+    if (not runningQuery.systestQuery.configurationOverride.overrideParameters.empty())
+    {
+        std::vector<std::string> kvs;
+        kvs.reserve(runningQuery.systestQuery.configurationOverride.overrideParameters.size());
+        for (const auto& [key, value] : runningQuery.systestQuery.configurationOverride.overrideParameters)
+        {
+            kvs.push_back(fmt::format("{}={}", key, value));
+        }
+        overrideStr = fmt::format(" [{}]", fmt::join(kvs, ", "));
+    }
+    const auto counterPad = padSizeQueryCounter > queryCounterAsString.size() ? padSizeQueryCounter - queryCounterAsString.size() : 0;
+    std::cout << std::string(counterPad, ' ');
+    std::cout << queryCounterAsString << "/" << progressTracker.getTotalQueries() << " ";
+    const auto numberPad = padSizeQueryNumber > queryNumberLength ? padSizeQueryNumber - queryNumberLength : 0;
+    std::cout << runningQuery.systestQuery.testName << ":" << std::string(numberPad, '0') << queryNumberAsString;
+    std::cout << overrideStr;
+
+    const auto totalUsedSpace = queryNameLength + padSizeQueryNumber + overrideStr.size();
+    const auto paddingDots = (totalUsedSpace >= padSizeSuccess) ? 0 : (padSizeSuccess - totalUsedSpace);
+    const auto maxPadding = 1000;
+    const auto finalPadding = std::min<size_t>(paddingDots, maxPadding);
+    std::cout << std::string(finalPadding, '.');
     if (runningQuery.passed)
     {
         fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
@@ -466,19 +466,25 @@ void printQueryResultToStdOut(
 }
 
 std::vector<RunningQuery> runQueriesAtLocalWorker(
-    const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const SingleNodeWorkerConfiguration& configuration)
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const SingleNodeWorkerConfiguration& configuration,
+    SystestProgressTracker& progressTracker)
 {
     auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
     QuerySubmitter submitter(std::move(embeddedQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
 
-std::vector<RunningQuery>
-runQueriesAtRemoteWorker(const std::vector<SystestQuery>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
+std::vector<RunningQuery> runQueriesAtRemoteWorker(
+    const std::vector<SystestQuery>& queries,
+    const uint64_t numConcurrentQueries,
+    const std::string& serverURI,
+    SystestProgressTracker& progressTracker)
 {
     auto remoteQueryManager = std::make_unique<GRPCQueryManager>(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
     QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, discardPerformanceMessage);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
 
 }

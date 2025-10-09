@@ -38,6 +38,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -146,6 +147,8 @@ public:
         this->additionalSourceThreads = std::move(additionalSourceThreads);
     }
 
+    void setConfigurationOverrides(std::vector<ConfigurationOverride> overrides) { configurationOverrides = std::move(overrides); }
+
     void setQueryDefinition(std::string queryDefinition) { this->queryDefinition = std::move(queryDefinition); }
 
     void setBoundPlan(LogicalPlan boundPlan) { this->boundPlan = std::move(boundPlan); }
@@ -164,33 +167,34 @@ public:
     void setOptimizedPlan(LogicalPlan optimizedPlan)
     {
         this->optimizedPlan = std::move(optimizedPlan);
-        std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+        std::unordered_map<PhysicalSourceId, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
         std::ranges::for_each(
             getOperatorByType<SourceDescriptorLogicalOperator>(*this->optimizedPlan),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
+                const auto& sourceDescriptor = logicalSourceOperator->getSourceDescriptor();
                 if (const auto path
                     = logicalSourceOperator->getSourceDescriptor().template tryGetFromConfig<std::string>(std::string{"file_path"});
                     path.has_value())
                 {
-                    if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
-                        entry.empty())
+                    const auto physicalSourceId = sourceDescriptor.getPhysicalSourceId();
+                    if (auto it = sourceNamesToFilepathAndCountForQuery.find(physicalSourceId);
+                        it == sourceNamesToFilepathAndCountForQuery.end())
                     {
                         sourceNamesToFilepathAndCountForQuery.emplace(
-                            logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{*path}, 1));
+                            physicalSourceId, std::make_pair(SourceInputFile{*path}, uint64_t{1}));
                     }
                     else
                     {
-                        entry.mapped().second++;
-                        sourceNamesToFilepathAndCountForQuery.insert(std::move(entry));
+                        it->second.second++;
                     }
                 }
                 else
                 {
                     NES_INFO(
                         "No file found for physical source {} for logical source {}",
-                        logicalSourceOperator->getSourceDescriptor().getPhysicalSourceId(),
-                        logicalSourceOperator->getSourceDescriptor().getLogicalSource().getLogicalSourceName());
+                        sourceDescriptor.getPhysicalSourceId(),
+                        sourceDescriptor.getLogicalSource().getLogicalSourceName());
                 }
             });
         this->sourcesToFilePathsAndCounts = std::move(sourceNamesToFilepathAndCountForQuery);
@@ -241,7 +245,7 @@ public:
     }
 
     /// NOLINTBEGIN(bugprone-unchecked-optional-access)
-    SystestQuery build() &&
+    std::vector<SystestQuery> build() &&
     {
         PRECONDITION(not built, "Cannot build a SystestQuery twice");
         built = true;
@@ -271,20 +275,29 @@ public:
             }
             return std::unexpected{exception.value()};
         };
-        auto expectedResultsValue = expectedResultsOrError.has_value()
-            ? std::move(expectedResultsOrError.value())
+        const auto expectedResultsValue = expectedResultsOrError.has_value()
+            ? expectedResultsOrError.value()
             : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}};
 
-        return SystestQuery{
-            .testName = std::move(testName.value()),
-            .queryIdInFile = queryIdInFile,
-            .testFilePath = std::move(testFilePath.value()),
-            .workingDir = std::move(workingDir.value()),
-            .queryDefinition = std::move(queryDefinition.value()),
-            .planInfoOrException = createPlanInfoOrException(),
-            .expectedResultsOrExpectedError = std::move(expectedResultsValue),
-            .additionalSourceThreads = std::move(additionalSourceThreads.value()),
-            .differentialQueryPlan = std::move(differentialQueryPlan)};
+        auto planInfoTemplate = createPlanInfoOrException();
+
+        std::vector<SystestQuery> queries;
+        queries.reserve(configurationOverrides.size());
+        for (const auto& configurationOverride : configurationOverrides)
+        {
+            queries.push_back(
+                {.testName = testName.value(),
+                 .queryIdInFile = queryIdInFile,
+                 .testFilePath = testFilePath.value(),
+                 .workingDir = workingDir.value(),
+                 .queryDefinition = queryDefinition.value(),
+                 .planInfoOrException = planInfoTemplate,
+                 .expectedResultsOrExpectedError = expectedResultsValue,
+                 .additionalSourceThreads = additionalSourceThreads.value(),
+                 .configurationOverride = std::move(configurationOverride),
+                 .differentialQueryPlan = differentialQueryPlan});
+        }
+        return queries;
     }
 
     /// NOLINTEND(bugprone-unchecked-optional-access)
@@ -299,10 +312,11 @@ private:
     std::optional<LogicalPlan> boundPlan;
     std::optional<Exception> exception;
     std::optional<LogicalPlan> optimizedPlan;
-    std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
+    std::optional<std::unordered_map<PhysicalSourceId, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
+    std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
     bool built = false;
 };
@@ -312,6 +326,56 @@ struct SystestBinder::Impl
     explicit Impl(std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir)
         : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), configDir(std::move(configDir))
     {
+    }
+
+    static std::vector<ConfigurationOverride>
+    mergeConfigurations(const std::vector<ConfigurationOverride>& overrides, const std::vector<ConfigurationOverride>& otherOverrides)
+    {
+        std::unordered_map<std::string, std::vector<std::string>> valuesByKey;
+
+        const auto collectValues = [&valuesByKey](const std::vector<ConfigurationOverride>& source)
+        {
+            for (const auto& override : source)
+            {
+                for (const auto& [key, value] : override.overrideParameters)
+                {
+                    auto& bucket = valuesByKey[key];
+                    if (std::ranges::find(bucket, value) == bucket.end())
+                    {
+                        bucket.push_back(value);
+                    }
+                }
+            }
+        };
+
+        collectValues(overrides);
+        collectValues(otherOverrides);
+
+        if (valuesByKey.empty())
+        {
+            return {ConfigurationOverride{}};
+        }
+
+        std::vector<ConfigurationOverride> combinations{ConfigurationOverride{}};
+        for (const auto& [key, values] : valuesByKey)
+        {
+            std::vector<ConfigurationOverride> next;
+            next.reserve(combinations.size() * values.size());
+
+            for (const auto& partial : combinations)
+            {
+                for (const auto& value : values)
+                {
+                    auto extended = partial;
+                    extended.overrideParameters[key] = value;
+                    next.emplace_back(std::move(extended));
+                }
+            }
+
+            combinations = std::move(next);
+        }
+
+        return combinations;
     }
 
     std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
@@ -324,7 +388,7 @@ struct SystestBinder::Impl
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
             try
             {
-                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testfile); auto& query : testsForFile)
+                for (auto queriesForFile = loadOptimizeQueriesFromTestFile(testfile); auto& query : queriesForFile)
                 {
                     queries.emplace_back(std::move(query));
                 }
@@ -364,7 +428,7 @@ struct SystestBinder::Impl
                                      systest.optimizeQueries(optimizer);
                                      return std::move(systest).build();
                                  })
-            | std::ranges::to<std::vector>();
+            | std::views::join | std::ranges::to<std::vector>();
 
         /// Warn about queries specified via the command line that were not found in the test file
         std::ranges::for_each(
@@ -567,7 +631,8 @@ struct SystestBinder::Impl
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
         SLTSinkFactory& sltSinkProvider,
         std::string query,
-        const SystestQueryId& currentQueryNumberInTest)
+        const SystestQueryId& currentQueryNumberInTest,
+        const std::vector<ConfigurationOverride>& configOverrides)
     {
         /// We have to get all sink names from the query and then create custom paths for each sink.
         /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
@@ -602,6 +667,7 @@ struct SystestBinder::Impl
 
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
+        currentBuilder.setConfigurationOverrides(configOverrides);
         if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
@@ -651,6 +717,9 @@ struct SystestBinder::Impl
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
+        std::vector configOverrides{ConfigurationOverride{}};
+        std::vector globalConfigOverrides{ConfigurationOverride{}};
+        std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
         SystestParser parser{};
 
         parser.registerSubstitutionRule(
@@ -680,12 +749,43 @@ struct SystestBinder::Impl
             [&](std::string query, const SystestQueryId currentQueryNumberInTest)
             {
                 lastParsedQueryId = currentQueryNumberInTest;
-                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest);
+                auto mergedConfigOverrides = mergeConfigurations(configOverrides, globalConfigOverrides);
+                lastMergedConfigOverrides = mergedConfigOverrides;
+                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest, mergedConfigOverrides);
+                configOverrides = {ConfigurationOverride{}};
             });
 
         parser.registerOnErrorExpectationCallback(
             [&](const SystestParser::ErrorExpectation& errorExpectation, const SystestQueryId correspondingQueryId)
             { errorExpectationCallback(plans, errorExpectation, correspondingQueryId); });
+
+        parser.registerOnConfigurationCallback(
+            [&](const std::vector<ConfigurationOverride>& overrides)
+            {
+                const bool isDefault = configOverrides.size() == 1 && configOverrides.front().overrideParameters.empty();
+                if (isDefault)
+                {
+                    configOverrides = overrides;
+                }
+                else
+                {
+                    configOverrides = mergeConfigurations(overrides, configOverrides);
+                }
+            });
+
+        parser.registerOnGlobalConfigurationCallback(
+            [&](const std::vector<ConfigurationOverride>& overrides)
+            {
+                const bool isDefault = globalConfigOverrides.size() == 1 && globalConfigOverrides.front().overrideParameters.empty();
+                if (isDefault)
+                {
+                    globalConfigOverrides = overrides;
+                }
+                else
+                {
+                    globalConfigOverrides = mergeConfigurations(overrides, globalConfigOverrides);
+                }
+            });
 
         parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                               { resultTuplesCallback(plans, std::move(resultTuples), correspondingQueryId); });
@@ -732,6 +832,7 @@ struct SystestBinder::Impl
                 const auto rightResultFile = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
 
                 auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
+                currentTest.setConfigurationOverrides(lastMergedConfigOverrides);
 
                 if (auto leftSinkExpected = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
                     not leftSinkExpected.has_value())

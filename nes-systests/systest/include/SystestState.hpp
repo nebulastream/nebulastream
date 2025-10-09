@@ -15,11 +15,13 @@
 #pragma once
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
+#include <initializer_list>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -33,6 +35,7 @@
 #include <variant>
 #include <vector>
 
+#include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/base.h>
@@ -43,7 +46,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -51,6 +53,47 @@
 #include <SystestConfiguration.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
+
+namespace NES::Systest
+{
+struct ConfigurationOverride
+{
+    std::unordered_map<std::string, std::string> overrideParameters;
+    ConfigurationOverride() = default;
+
+    ConfigurationOverride(std::initializer_list<std::pair<std::string_view, std::string_view>> init)
+    {
+        for (const auto& [key, value] : init)
+        {
+            overrideParameters.emplace(std::string{key}, std::string{value});
+        }
+    }
+
+    std::string& operator[](std::string_view key) { return overrideParameters[std::string{key}]; }
+
+    [[nodiscard]] const std::string& at(std::string_view key) const { return overrideParameters.at(std::string{key}); }
+
+    bool operator==(const ConfigurationOverride& other) const = default;
+    bool operator!=(const ConfigurationOverride& other) const = default;
+};
+}
+
+namespace std
+{
+template <>
+struct hash<NES::Systest::ConfigurationOverride>
+{
+    std::size_t operator()(const NES::Systest::ConfigurationOverride& co) const noexcept
+    {
+        std::string repr;
+        for (const auto& [key, value] : co.overrideParameters)
+        {
+            repr += key + ":" + value + ";";
+        }
+        return std::hash<std::string>{}(repr);
+    }
+};
+}
 
 namespace NES::Systest
 {
@@ -108,13 +151,14 @@ struct SystestQuery
     struct PlanInfo
     {
         LogicalPlan queryPlan;
-        std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
+        std::unordered_map<PhysicalSourceId, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
     };
 
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    ConfigurationOverride configurationOverride;
     std::optional<LogicalPlan> differentialQueryPlan;
 };
 
@@ -149,7 +193,6 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
-    std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
 };
@@ -162,6 +205,28 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const SystestConfiguration& config);
+
+class SystestProgressTracker
+{
+public:
+    SystestProgressTracker();
+    explicit SystestProgressTracker(size_t totalQueries);
+
+    void incrementQueryCounter();
+    [[nodiscard]] size_t getQueryCounter() const;
+    void setTotalQueries(size_t total);
+
+    [[nodiscard]] size_t getTotalQueries() const;
+
+    [[nodiscard]] double getProgress() const;
+
+    void reset();
+    void reset(size_t newTotalQueries);
+
+private:
+    std::atomic<size_t> queryCounter{0};
+    size_t totalQueries{0};
+};
 
 }
 

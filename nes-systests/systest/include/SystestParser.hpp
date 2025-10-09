@@ -46,6 +46,8 @@ enum class TokenType : uint8_t
     QUERY,
     RESULT_DELIMITER,
     ERROR_EXPECTATION,
+    CONFIGURATION,
+    GLOBAL_CONFIGURATION,
     DIFFERENTIAL
 };
 
@@ -152,6 +154,8 @@ public:
     using SystestAttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
+    using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
+    using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using DifferentialQueryBlockCallback
         = std::function<void(std::string, std::string, SystestQueryId correspondingQueryId, SystestQueryId diffQueryId)>;
 
@@ -162,6 +166,8 @@ public:
     void registerOnSystestAttachSourceCallback(SystestAttachSourceCallback callback);
     void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
+    void registerOnConfigurationCallback(ConfigurationCallback callback);
+    void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
     void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
 
     void parse();
@@ -190,6 +196,8 @@ private:
     [[nodiscard]] std::string expectQuery(const std::unordered_set<TokenType>& stopTokens);
     [[nodiscard]] std::pair<std::string, std::string> expectDifferentialBlock();
     [[nodiscard]] ErrorExpectation expectError() const;
+    [[nodiscard]] std::vector<ConfigurationOverride> expectConfiguration();
+    [[nodiscard]] std::vector<ConfigurationOverride> expectGlobalConfiguration();
     [[nodiscard]] std::pair<SystestLogicalSource, std::optional<SystestAttachSource>>
     expectInlineGeneratorSource(SystestLogicalSource& source, const std::vector<std::string>& attachSourceTokens);
 
@@ -199,6 +207,8 @@ private:
     SystestAttachSourceCallback onAttachSourceCallback;
     SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
+    ConfigurationCallback onConfigurationCallback;
+    GlobalConfigurationCallback onGlobalConfigurationCallback;
     DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;
 
     std::optional<std::string> lastParsedQuery;

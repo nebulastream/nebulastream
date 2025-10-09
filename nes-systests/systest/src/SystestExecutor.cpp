@@ -62,7 +62,15 @@ using namespace std::literals;
 
 namespace NES
 {
-SystestConfiguration readConfiguration(int argc, const char** argv)
+SystestExecutor::SystestExecutor(SystestConfiguration config) : config(std::move(config))
+{
+}
+
+SystestExecutor::SystestExecutor(int argc, const char** argv) : SystestExecutor(parseConfiguration(argc, argv))
+{
+}
+
+SystestConfiguration SystestExecutor::parseConfiguration(int argc, const char** argv)
 {
     using argparse::ArgumentParser;
     ArgumentParser program("systest");
@@ -367,12 +375,11 @@ SystestConfiguration readConfiguration(int argc, const char** argv)
     return config;
 }
 
-void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfiguration& config)
+void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& queries)
 {
-    std::cout << std::format("Running endlessly over a total of {} queries.", queries.size()) << '\n';
+    std::cout << std::format("Running endlessly over a total of {} queries (across all configuration overrides).", queries.size()) << '\n';
 
     const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
-
     auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
     if (not config.workerConfig.getValue().empty())
     {
@@ -383,37 +390,79 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
         singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
     }
 
+    std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
+    for (const auto& query : queries)
+    {
+        queriesByOverride[query.configurationOverride].push_back(query);
+    }
 
     std::mt19937 rng(std::random_device{}());
-
     const auto grpcURI = config.grpcAddressUri.getValue();
-    const auto runRemote = not grpcURI.empty();
+    const bool runRemote = not grpcURI.empty();
+    progressTracker.reset(queries.size());
 
-    auto queryManager = [&]() -> std::unique_ptr<QueryManager>
+    if (runRemote)
     {
-        if (runRemote)
+        auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
+        Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+
+        while (true)
         {
-            return std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
+            progressTracker.reset(queries.size());
+            for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
+            {
+                auto shuffledQueries = queriesForConfig;
+                std::ranges::shuffle(shuffledQueries, rng);
+                const auto failedQueries = runQueries(
+                    shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+                if (!failedQueries.empty())
+                {
+                    std::stringstream outputMessage;
+                    outputMessage << fmt::format(
+                        "The following queries ({} of {}) failed:\n[Name, Command]\n- {}",
+                        failedQueries.size(),
+                        shuffledQueries.size(),
+                        fmt::join(failedQueries, "\n- "));
+                    NES_ERROR("{}", outputMessage.str());
+                    std::cout << '\n' << outputMessage.str() << '\n';
+                    std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+                }
+            }
         }
-        return std::make_unique<EmbeddedWorkerQueryManager>(singleNodeWorkerConfiguration);
-    }();
-    Systest::QuerySubmitter querySubmitter(std::move(queryManager));
-
-    while (true)
+    }
+    else
     {
-        std::ranges::shuffle(queries, rng);
-        const auto failedQueries = runQueries(queries, numberConcurrentQueries, querySubmitter, Systest::discardPerformanceMessage);
-        if (!failedQueries.empty())
+        while (true)
         {
-            std::stringstream outputMessage;
-            outputMessage << fmt::format(
-                "The following queries ({} of {}) failed:\n[Name, Command]\n- {}",
-                failedQueries.size(),
-                queries.size(),
-                fmt::join(failedQueries, "\n- "));
-            NES_ERROR("{}", outputMessage.str());
-            std::cout << '\n' << outputMessage.str() << '\n';
-            std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+            progressTracker.reset(queries.size());
+            for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
+            {
+                auto configCopy = singleNodeWorkerConfiguration;
+                for (const auto& [key, value] : overrideConfig.overrideParameters)
+                {
+                    configCopy.overwriteConfigWithCommandLineInput({{key, value}});
+                }
+
+                auto queryManager = std::make_unique<EmbeddedWorkerQueryManager>(configCopy);
+                Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+
+                auto shuffledQueries = queriesForConfig;
+                std::ranges::shuffle(shuffledQueries, rng);
+                const auto failedQueries = runQueries(
+                    shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+                if (!failedQueries.empty())
+                {
+                    std::stringstream outputMessage;
+                    outputMessage << fmt::format(
+                        "The following queries ({} of {}) failed:\n[Name, Command]\n- {}",
+                        failedQueries.size(),
+                        shuffledQueries.size(),
+                        fmt::join(failedQueries, "\n- "));
+                    NES_ERROR("{}", outputMessage.str());
+                    std::cout << '\n' << outputMessage.str() << '\n';
+                    std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+                }
+            }
         }
     }
 }
@@ -421,14 +470,14 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
 {
     std::error_code errorCode;
-    const auto relativeLogPath = std::filesystem::relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
+    const auto relativeLogPath = relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
     if (errorCode)
     {
         std::cerr << "Error calculating relative path during logger setup: " << errorCode.message() << "\n";
         return;
     }
 
-    if (std::filesystem::exists(symlinkPath) || std::filesystem::is_symlink(symlinkPath))
+    if (exists(symlinkPath) || is_symlink(symlinkPath))
     {
         std::filesystem::remove(symlinkPath, errorCode);
         if (errorCode)
@@ -439,7 +488,7 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
 
     try
     {
-        std::filesystem::create_symlink(relativeLogPath, symlinkPath);
+        create_symlink(relativeLogPath, symlinkPath);
     }
     catch (const std::filesystem::filesystem_error& e)
     {
@@ -486,7 +535,7 @@ void setupLogging(const SystestConfiguration& config)
     createSymlink(absoluteLogPath, symlinkPath);
 }
 
-SystestExecutorResult executeSystests(SystestConfiguration config)
+SystestExecutorResult SystestExecutor::executeSystests()
 {
     setupLogging(config);
 
@@ -515,9 +564,11 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
                 .errorCode = ErrorCode::TestException};
         }
 
+        progressTracker.reset(queries.size());
+
         if (config.endlessMode)
         {
-            runEndlessMode(queries, config);
+            runEndlessMode(queries);
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
                 .outputMessage = "Endless mode should not stop.",
@@ -533,7 +584,9 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
         {
-            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI);
+            progressTracker.reset(queries.size());
+            auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, progressTracker);
+            failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
         }
         else
         {
@@ -549,7 +602,9 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
-                failedQueries = Systest::runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults);
+                progressTracker.reset(queries.size());
+                auto failed = runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults, progressTracker);
+                failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
@@ -558,7 +613,24 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
             }
             else
             {
-                failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+                std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
+                for (const auto& query : queries)
+                {
+                    queriesByOverride[query.configurationOverride].push_back(query);
+                }
+
+                progressTracker.reset(queries.size());
+                for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
+                {
+                    auto configCopy = singleNodeWorkerConfiguration;
+                    for (const auto& [key, value] : overrideConfig.overrideParameters)
+                    {
+                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
+                    }
+
+                    auto failed = runQueriesAtLocalWorker(queriesForConfig, numberConcurrentQueries, configCopy, progressTracker);
+                    failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+                }
             }
         }
         if (not failedQueries.empty())
@@ -574,13 +646,13 @@ SystestExecutorResult executeSystests(SystestConfiguration config)
         outputMessage << '\n' << "All queries passed.";
         return {.returnType = SystestExecutorResult::ReturnType::SUCCESS, .outputMessage = outputMessage.str()};
     }
-    CPPTRACE_CATCH(...)
+    CPPTRACE_CATCH(Exception & e)
     {
         tryLogCurrentException();
         const auto currentErrorCode = getCurrentErrorCode();
         return {
             .returnType = SystestExecutorResult::ReturnType::FAILED,
-            .outputMessage = fmt::format("Failed with exception code: {}", currentErrorCode),
+            .outputMessage = fmt::format("Failed with exception: {}, {}", currentErrorCode, e.what()),
             .errorCode = currentErrorCode};
     }
     return {
