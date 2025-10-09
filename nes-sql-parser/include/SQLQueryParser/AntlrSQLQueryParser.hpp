@@ -70,6 +70,7 @@ private:
     antlr4::CommonTokenStream tokens;
     AntlrSQLParser parser;
     std::string originalQuery;
+    std::shared_ptr<antlr4::ANTLRErrorListener> errorListener;
 };
 
 }
