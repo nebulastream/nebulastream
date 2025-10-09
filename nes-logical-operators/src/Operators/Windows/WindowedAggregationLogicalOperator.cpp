@@ -321,11 +321,6 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     }
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = descriptorConfigTypeToProto(windowInfo);
 
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
-
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
@@ -335,8 +330,6 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
     auto aggregationsVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_AGGREGATIONS];
     auto keysVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_KEYS];
     auto windowInfoVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_INFOS];
-    auto windowStartVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
-    auto windowEndVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
 
     if (!std::holds_alternative<AggregationFunctionList>(aggregationsVariant))
     {
