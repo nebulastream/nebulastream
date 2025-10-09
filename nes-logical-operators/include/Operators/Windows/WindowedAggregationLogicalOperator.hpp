@@ -94,18 +94,6 @@ public:
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_KEYS, config); }};
 
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
-            "windowStartFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
-            "windowEndFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
-
         static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_INFOS{
             "windowInfos",
             std::nullopt,
@@ -113,7 +101,7 @@ public:
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(
-                WINDOW_AGGREGATIONS, WINDOW_INFOS, WINDOW_KEYS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
+                WINDOW_AGGREGATIONS, WINDOW_INFOS, WINDOW_KEYS);
     };
 
 private:
