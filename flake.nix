@@ -283,12 +283,44 @@
           nautilus = nautilusPkg;
         };
 
-        apps = {
-          clion-setup = {
-            type = "app";
-            program = "${clionSetupScript}/bin/clion-setup";
+        apps =
+          let
+            formatRunner = pkgs.writeShellApplication {
+              name = "nes-format";
+              runtimeInputs =
+                [
+                  pkgs.git
+                  pkgs.coreutils
+                  pkgs.findutils
+                  pkgs.gnugrep
+                  pkgs.gawk
+                  pkgs.python3
+                  pkgs.util-linux
+                ]
+                ++ llvmTools;
+              text = ''
+                set -euo pipefail
+                if [ ! -x ./scripts/format.sh ]; then
+                  echo "nes-format: run this command from the NebulaStream repository root" >&2
+                  exit 1
+                fi
+                if [ "$#" -gt 0 ]; then
+                  echo "nes-format: always runs with -i; ignoring extra arguments: $*" >&2
+                fi
+                ./scripts/format.sh -i
+              '';
+            };
+          in
+          {
+            clion-setup = {
+              type = "app";
+              program = "${clionSetupScript}/bin/clion-setup";
+            };
+            format = {
+              type = "app";
+              program = "${formatRunner}/bin/nes-format";
+            };
           };
-        };
 
         devShells.default = mkShellClang (
           commonCmakeEnv
