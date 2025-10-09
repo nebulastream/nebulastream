@@ -26,17 +26,22 @@
 namespace NES
 {
 
-std::unique_ptr<InputFormatterTupleBufferRef> provideInputFormatterTupleBufferRef(
+std::shared_ptr<Interface::BufferRef::TupleBufferRef> provideInputFormatterTupleBufferRef(
     const std::optional<ParserConfig>& formatScanConfig,
     std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider)
 {
-    if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
-            formatScanConfig.value().parserType,
-            InputFormatIndexerRegistryArguments(formatScanConfig.value(), std::move(memoryProvider))))
+    if (formatScanConfig.has_value())
     {
-        return std::move(inputFormatter.value());
+        if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
+                formatScanConfig.value().parserType,
+                InputFormatIndexerRegistryArguments(formatScanConfig.value(), std::move(memoryProvider))))
+        {
+            return std::move(inputFormatter.value());
+        }
+        throw UnknownParserType("unknown type of input formatter: {}", formatScanConfig.value().parserType);
     }
-    throw UnknownParserType("unknown type of input formatter: {}", formatScanConfig.value().parserType);
+    return Interface::BufferRef::TupleBufferRef::create(
+        memoryProvider->getMemoryLayout()->getBufferSize(), memoryProvider->getMemoryLayout()->getSchema());
 }
 
 bool contains(const std::string& parserType)

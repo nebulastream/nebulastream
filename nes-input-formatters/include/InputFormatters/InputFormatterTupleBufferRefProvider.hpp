@@ -25,7 +25,7 @@
 namespace NES
 {
 
-std::unique_ptr<InputFormatterTupleBufferRef> provideInputFormatterTupleBufferRef(
+std::shared_ptr<Interface::BufferRef::TupleBufferRef> provideInputFormatterTupleBufferRef(
     const std::optional<ParserConfig>& formatScanConfig,
     std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider);
 

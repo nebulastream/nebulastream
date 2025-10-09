@@ -13,7 +13,7 @@
 */
 
 
-#include <../../nes-physical-operators/include/ScanPhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -26,6 +26,7 @@
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <val.hpp>
 
 namespace NES
 {

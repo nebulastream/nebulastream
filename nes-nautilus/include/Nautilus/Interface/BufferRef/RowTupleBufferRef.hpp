@@ -43,7 +43,7 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
-    void open(RecordBuffer&, ArenaRef&) override { INVARIANT(false, "Does not implement open."); }
+    void open(RecordBuffer&, ArenaRef&) override { }
 
     // nautilus::val<uint64_t> getNumberOfRecords(const RecordBuffer& recordBuffer) const override;
 
