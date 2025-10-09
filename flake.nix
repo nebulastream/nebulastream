@@ -47,6 +47,7 @@
           libdwarf.dev
           libffi
           libxml2
+          gdb
           gflags
           glog
           gtest
@@ -166,7 +167,7 @@
             fi
 
             created_list=""
-            for tool in cc c++ clang clang++ ctest ninja; do
+            for tool in cc c++ clang clang++ ctest ninja gdb; do
               link="$bin_dir/$tool"
               ln -sf "$link_target" "$link"
               created_list="$created_list\n  - $link -> $link_target"
