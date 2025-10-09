@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <fmt/format.h>
 
 namespace NES
@@ -62,6 +63,41 @@ DataType WindowAggregationLogicalFunction::getPartialAggregateStamp() const
 DataType WindowAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return finalAggregateStamp;
+}
+
+FieldAccessLogicalFunction WindowAggregationLogicalFunction::getOnField() const
+{
+    return onField;
+}
+
+FieldAccessLogicalFunction WindowAggregationLogicalFunction::getAsField() const
+{
+    return asField;
+}
+
+void WindowAggregationLogicalFunction::setInputStamp(DataType inputStamp)
+{
+    this->inputStamp = std::move(inputStamp);
+}
+
+void WindowAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
+{
+    this->partialAggregateStamp = std::move(partialAggregateStamp);
+}
+
+void WindowAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
+{
+    this->finalAggregateStamp = std::move(finalAggregateStamp);
+}
+
+void WindowAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
+{
+    this->onField = std::move(onField);
+}
+
+void WindowAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
+{
+    this->asField = std::move(asField);
 }
 
 bool WindowAggregationLogicalFunction::operator==(

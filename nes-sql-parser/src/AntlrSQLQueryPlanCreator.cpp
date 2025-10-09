@@ -386,13 +386,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     {
         auto aggFunc = helpers.top().windowAggs.back();
         helpers.top().windowAggs.pop_back();
-        aggFunc->asField = (FieldAccessLogicalFunction(context->getText()));
+        aggFunc->setAsField(FieldAccessLogicalFunction(context->getText()));
         helpers.top().windowAggs.push_back(aggFunc);
         INVARIANT(
             std::nullopt != helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>(),
             "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
         helpers.top().functionBuilder.pop_back();
-        helpers.top().addProjection(std::nullopt, aggFunc->asField);
+        helpers.top().addProjection(std::nullopt, aggFunc->getAsField());
         helpers.top().hasUnnamedAggregation = false;
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -585,7 +585,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         const auto lastAggregation = helpers.top().windowAggs.back();
         const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), lastAggregation->getName());
         const auto asField = FieldAccessLogicalFunction(newName);
-        lastAggregation->asField = asField;
+        lastAggregation->setAsField(asField);
         helpers.top().windowAggs.pop_back();
         helpers.top().windowAggs.push_back(lastAggregation);
         helpers.top().addProjection(std::nullopt, asField);

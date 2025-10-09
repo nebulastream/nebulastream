@@ -33,6 +33,14 @@ public:
     [[nodiscard]] DataType getInputStamp() const;
     [[nodiscard]] DataType getPartialAggregateStamp() const;
     [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
+    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
+
+    void setInputStamp(DataType inputStamp);
+    void setPartialAggregateStamp(DataType partialAggregateStamp);
+    void setFinalAggregateStamp(DataType finalAggregateStamp);
+    void setOnField(FieldAccessLogicalFunction onField);
+    void setAsField(FieldAccessLogicalFunction asField);
 
     [[nodiscard]] std::string toString() const;
     bool operator==(const std::shared_ptr<WindowAggregationLogicalFunction>& otherWindowAggregationLogicalFunction) const;
@@ -44,8 +52,6 @@ public:
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
-    DataType inputStamp, partialAggregateStamp, finalAggregateStamp;
-    FieldAccessLogicalFunction onField, asField;
 
 protected:
     explicit WindowAggregationLogicalFunction(
@@ -57,5 +63,12 @@ protected:
 
     explicit WindowAggregationLogicalFunction(
         DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField);
+
+private:
+    DataType inputStamp;
+    DataType partialAggregateStamp;
+    DataType finalAggregateStamp;
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
 };
 }
