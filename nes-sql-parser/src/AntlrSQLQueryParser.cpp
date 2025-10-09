@@ -24,16 +24,53 @@
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
 #include <BailErrorStrategy.h>
+#include <BaseErrorListener.h>
 #include <CommonTokenStream.h>
 #include <Exceptions.h>
+#include <Lexer.h>
+#include <Parser.h>
+#include <Recognizer.h>
+#include <Token.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
 
+namespace
+{
+class ThrowingErrorListener final : public antlr4::BaseErrorListener
+{
+public:
+    explicit ThrowingErrorListener(std::string_view query) : query(query) { }
+
+    void syntaxError(
+        antlr4::Recognizer*, antlr4::Token*, size_t line, size_t charPositionInLine, const std::string& msg, std::exception_ptr) override
+    {
+        throw InvalidQuerySyntax(
+            "Antlr exception during parsing: {} in {}", fmt::format("line {}:{} {}", line, charPositionInLine, msg), query);
+    }
+
+private:
+    std::string_view query;
+};
+
+/// Stops ANTLR from recovering and raises the exception without printing to std::cerr.
+std::shared_ptr<antlr4::ANTLRErrorListener>
+installErrorListenerAndHandler(std::string_view query, antlr4::Lexer& lexer, antlr4::Parser& parser)
+{
+    lexer.removeErrorListeners();
+    parser.removeErrorListeners();
+    auto listener = std::make_shared<ThrowingErrorListener>(query);
+    lexer.addErrorListener(listener.get());
+    parser.addErrorListener(listener.get());
+    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+    return listener;
+}
+}
 
 LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
 {
@@ -59,8 +96,7 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
-        /// Enable that antlr throws exceptions on parsing errors
-        parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+        [[maybe_unused]] auto listener = installErrorListenerAndHandler(queryString, lexer, parser);
         AntlrSQLParser::QueryContext* tree = parser.query();
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
@@ -83,8 +119,7 @@ std::shared_ptr<ManagedAntlrParser> ManagedAntlrParser::create(std::string_view 
 ManagedAntlrParser::ManagedAntlrParser(Private, const std::string_view input)
     : inputStream{input.data(), input.length()}, lexer{&inputStream}, tokens{&lexer}, parser(&tokens), originalQuery(input)
 {
-    /// Enable that antlr throws exceptions on parsing errors
-    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+    errorListener = installErrorListenerAndHandler(originalQuery, lexer, parser);
 }
 
 std::expected<ManagedAntlrParser::ManagedContext<AntlrSQLParser::StatementContext>, Exception> ManagedAntlrParser::parseSingle()
