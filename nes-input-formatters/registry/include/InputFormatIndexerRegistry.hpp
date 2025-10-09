@@ -21,7 +21,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 #include <Concepts.hpp>
@@ -31,7 +31,7 @@ namespace NES
 {
 
 
-using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTaskPipeline>;
+using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTupleBufferRef>;
 
 /// Allows specific InputFormatter to construct templated Formatter using the 'createInputFormatterWithIndexer()' method.
 /// Calls constructor of specific InputFormatter and exposes public members to it.
@@ -49,7 +49,7 @@ struct InputFormatIndexerRegistryArguments
     {
         auto inputFormatterTask
             = InputFormatterTask<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
-        return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
+        return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatterTask));
     }
 
 private:

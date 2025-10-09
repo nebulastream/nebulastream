@@ -26,7 +26,7 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>

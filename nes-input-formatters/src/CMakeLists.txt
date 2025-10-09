@@ -11,11 +11,10 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
-        ScanPhysicalOperator.cpp
         InputFormatterProvider.cpp
         SequenceShredder.cpp
         RawValueParser.cpp
-        InputFormatterTaskPipeline.cpp
+        InputFormatterTupleBufferRef.cpp
 )
 
 # Register plugins

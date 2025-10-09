@@ -15,10 +15,12 @@
 
 #include <memory>
 #include <ostream>
+#include <vector>
 #include <utility>
 
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ExecutionContext.hpp>
@@ -30,17 +32,17 @@ namespace NES
 class RawTupleBuffer;
 
 /// Type-erased wrapper around InputFormatterTask
-class InputFormatterTaskPipeline final : public NES::Nautilus::Interface::BufferRef::TupleBufferRef
+class InputFormatterTupleBufferRef final : public NES::Nautilus::Interface::BufferRef::TupleBufferRef
 {
 public:
     template <typename T>
-    requires(not std::same_as<std::decay_t<T>, InputFormatterTaskPipeline>)
-    explicit InputFormatterTaskPipeline(T&& inputFormatterTask)
+    requires(not std::same_as<std::decay_t<T>, InputFormatterTupleBufferRef>)
+    explicit InputFormatterTupleBufferRef(T&& inputFormatterTask)
         : inputFormatterTask(std::make_unique<InputFormatterTaskModel<T>>(std::forward<T>(inputFormatterTask)))
     {
     }
 
-    ~InputFormatterTaskPipeline() override = default;
+    ~InputFormatterTupleBufferRef() override = default;
 
     [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
 
@@ -59,21 +61,13 @@ public:
     }
 
     void open(RecordBuffer& recordBuffer, ArenaRef& arenaRef) override;
-    // nautilus::val<uint64_t> getNumberOfRecords(const RecordBuffer& recordBuffer) const override;
-
-    // OpenReturnState scan(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child) const;
 
     /// Attempts to flush out a final (spanning) tuple that ends in the last byte of the last seen raw buffer.
     void close(PipelineExecutionContext&) const;
-    /// (concurrently) executes an InputFormatterTask.
-    /// First, uses the concrete InputFormatIndexer implementation to determine the indexes of all fields of all full tuples.
-    /// Second, uses the SequenceShredder to find spanning tuples.
-    /// Third, processes (leading) spanning tuple and if it contains at least two tuple delimiters and therefore one complete tuple,
-    /// process all complete tuples and trailing spanning tuple.
 
     std::ostream& toString(std::ostream& os) const;
 
-    /// Describes what a InputFormatterTask that is in the InputFormatterTaskPipeline does (interface).
+    /// Describes what a InputFormatterTask that is in the InputFormatterTupleBufferRef does (interface).
     struct InputFormatterTaskConcept
     {
         virtual ~InputFormatterTaskConcept() = default;
@@ -122,4 +116,4 @@ public:
 
 }
 
-FMT_OSTREAM(NES::InputFormatterTaskPipeline);
+FMT_OSTREAM(NES::InputFormatterTupleBufferRef);

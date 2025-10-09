@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 
 #include <ostream>
 #include <Runtime/TupleBuffer.hpp>
@@ -23,17 +23,17 @@
 namespace NES
 {
 // OpenReturnState
-// InputFormatterTaskPipeline::scan(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child) const
+// InputFormatterTupleBufferRef::scan(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer, const PhysicalOperator& child) const
 // {
 //     return this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child);
 // }
 
-std::shared_ptr<MemoryLayout> InputFormatterTaskPipeline::getMemoryLayout() const
+std::shared_ptr<MemoryLayout> InputFormatterTupleBufferRef::getMemoryLayout() const
 {
     return this->inputFormatterTask->getMemoryLayout();
 }
 
-Record InputFormatterTaskPipeline::readRecord(
+Record InputFormatterTupleBufferRef::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
@@ -41,22 +41,22 @@ Record InputFormatterTaskPipeline::readRecord(
     return this->inputFormatterTask->readRecord(projections, recordBuffer, recordIndex);
 }
 
-void InputFormatterTaskPipeline::open(RecordBuffer& recordBuffer, ArenaRef& arenaRef)
+void InputFormatterTupleBufferRef::open(RecordBuffer& recordBuffer, ArenaRef& arenaRef)
 {
     this->inputFormatterTask->open(recordBuffer, arenaRef);
 }
 
-// nautilus::val<uint64_t> InputFormatterTaskPipeline::getNumberOfRecords(const RecordBuffer& recordBuffer) const
+// nautilus::val<uint64_t> InputFormatterTupleBufferRef::getNumberOfRecords(const RecordBuffer& recordBuffer) const
 // {
 //     return this->inputFormatterTask->getNumberOfRecords(recordBuffer);
 // }
 
-void InputFormatterTaskPipeline::close(PipelineExecutionContext&) const
+void InputFormatterTupleBufferRef::close(PipelineExecutionContext&) const
 {
     this->inputFormatterTask->close();
 }
 
-std::ostream& InputFormatterTaskPipeline::toString(std::ostream& os) const
+std::ostream& InputFormatterTupleBufferRef::toString(std::ostream& os) const
 {
     return this->inputFormatterTask->toString(os);
 }

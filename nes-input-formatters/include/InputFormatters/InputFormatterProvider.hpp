@@ -18,7 +18,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 

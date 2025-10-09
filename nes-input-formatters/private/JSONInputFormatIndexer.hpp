@@ -22,7 +22,7 @@
 #include <unordered_map>
 
 #include <Configurations/Descriptor.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>

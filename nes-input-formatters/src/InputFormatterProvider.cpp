@@ -17,8 +17,8 @@
 #include <memory>
 #include <utility>
 
+#include <../../nes-physical-operators/include/ScanPhysicalOperator.hpp>
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/ScanPhysicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
@@ -34,7 +34,7 @@ PhysicalOperator provideInputFormatterTask(
             formatScanConfig.value().parserType,
             InputFormatIndexerRegistryArguments(formatScanConfig.value(), std::move(memoryProvider))))
     {
-        // auto bufferRef = std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatter.value()));
+        // auto bufferRef = std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter.value()));
         return ScanPhysicalOperator(std::move(inputFormatter.value()));
     }
     throw UnknownParserType("unknown type of input formatter: {}", formatScanConfig.value().parserType);

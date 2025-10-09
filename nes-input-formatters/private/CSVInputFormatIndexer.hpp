@@ -19,7 +19,7 @@
 #include <string_view>
 
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>

@@ -20,7 +20,7 @@
 #include <string_view>
 #include <utility>
 
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
