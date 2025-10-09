@@ -46,30 +46,30 @@ std::string_view MaxAggregationLogicalFunction::getName() const noexcept
 void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    if (not onField.getDataType().isNumeric())
+    this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
+    if (not this->getOnField().getDataType().isNumeric())
     {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", onField.getDataType());
+        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", this->getOnField().getDataType());
     }
 
     ///Set fully qualified name for the as Field
-    auto onFieldName = onField.getFieldName();
-    auto asFieldName = asField.getFieldName();
+    auto onFieldName = this->getOnField().getFieldName();
+    auto asFieldName = this->getAsField().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    inputStamp = onField.getDataType();
-    finalAggregateStamp = onField.getDataType();
-    asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
+    this->setInputStamp(this->getOnField().getDataType());
+    this->setFinalAggregateStamp(this->getOnField().getDataType());
+    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
 }
 
 SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() const
@@ -78,10 +78,10 @@ SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() const
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(onField.serialize());
+    onFieldFuc.CopyFrom(this->getOnField().serialize());
 
     auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(asField.serialize());
+    asFieldFuc.CopyFrom(this->getAsField().serialize());
 
     serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
     serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);

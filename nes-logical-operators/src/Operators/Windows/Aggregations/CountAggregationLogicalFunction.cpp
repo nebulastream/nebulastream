@@ -59,22 +59,24 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
-        const auto asFieldName = asField.getFieldName();
+        const auto asFieldName = this->getAsField().getFieldName();
 
         ///If on and as field name are different then append the attribute name resolver from on field to the as field
         if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
         {
-            asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
         }
         else
         {
             const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-            asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
         }
 
         /// a count aggregation is always on an uint 64
-        this->onField = onField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
-        this->asField = asField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+        this->setOnField(
+            this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>());
+        this->setAsField(
+            this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>());
     }
     else
     {
@@ -88,10 +90,10 @@ SerializableAggregationFunction CountAggregationLogicalFunction::serialize() con
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(onField.serialize());
+    onFieldFuc.CopyFrom(this->getOnField().serialize());
 
     auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(asField.serialize());
+    asFieldFuc.CopyFrom(this->getAsField().serialize());
 
     serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
     serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);

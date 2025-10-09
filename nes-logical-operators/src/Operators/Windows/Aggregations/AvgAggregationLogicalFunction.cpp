@@ -56,16 +56,16 @@ std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
+    auto newOnField = this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>();
     if (not newOnField.getDataType().isNumeric())
     {
         throw CannotDeserialize("aggregations on non numeric fields is not supported.");
     }
 
     /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
-    if (onField.getDataType().isInteger())
+    if (this->getOnField().getDataType().isInteger())
     {
-        if (onField.getDataType().isSignedInteger())
+        if (this->getOnField().getDataType().isSignedInteger())
         {
             newOnField
                 = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64)).get<FieldAccessLogicalFunction>();
@@ -83,23 +83,23 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = newOnField.getFieldName();
-    const auto asFieldName = asField.getFieldName();
+    const auto asFieldName = this->getAsField().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    auto newAsField = asField.withDataType(getFinalAggregateStamp());
-    asField = newAsField.get<FieldAccessLogicalFunction>();
-    onField = newOnField;
-    inputStamp = newOnField.getDataType();
+    auto newAsField = this->getAsField().withDataType(getFinalAggregateStamp());
+    this->setAsField(newAsField.get<FieldAccessLogicalFunction>());
+    this->setOnField(newOnField);
+    this->setInputStamp(newOnField.getDataType());
 }
 
 SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
@@ -108,10 +108,10 @@ SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(onField.serialize());
+    onFieldFuc.CopyFrom(this->getOnField().serialize());
 
     auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(asField.serialize());
+    asFieldFuc.CopyFrom(this->getAsField().serialize());
 
     serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
     serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);

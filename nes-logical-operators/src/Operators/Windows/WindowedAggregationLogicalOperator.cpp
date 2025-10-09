@@ -173,7 +173,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     }
     for (const auto& agg : copy.aggregationFunctions)
     {
-        copy.outputSchema.addField(agg->asField.getFieldName(), agg->asField.getDataType());
+        copy.outputSchema.addField(agg->getAsField().getFieldName(), agg->getAsField().getDataType());
     }
     return copy;
 }
