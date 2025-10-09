@@ -27,6 +27,7 @@
 #include <memory>
 #include <ostream>
 #include <ranges>
+#include <span>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -38,6 +39,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
@@ -56,14 +58,9 @@ namespace NES::Testing
 
 std::vector<std::byte> identifiableData(size_t identifier)
 {
-    std::vector<std::byte> data(DEFAULT_BUFFER_SIZE);
-    const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
-    for (size_t index = 0; index < data.size() / stepSize; index += stepSize)
-    {
-        *std::bit_cast<size_t*>(&data[stepSize]) = identifier;
-    }
-
-    return data;
+    std::vector data(DEFAULT_BUFFER_SIZE / sizeof(size_t), identifier);
+    auto bytes = std::as_bytes(std::span{data.begin(), data.end()});
+    return {bytes.begin(), bytes.end()};
 }
 
 bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier)
@@ -73,14 +70,7 @@ bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier)
         return false;
     }
 
-    const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
-    bool allMatch = true;
-    for (size_t index = 0; index < buffer.getBufferSize() / stepSize; index += stepSize)
-    {
-        allMatch |= *std::bit_cast<size_t*>(&buffer.getAvailableMemoryArea<std::byte>()[stepSize]) == identifier;
-    }
-
-    return allMatch;
+    return std::ranges::all_of(buffer.getAvailableMemoryArea<size_t>(), [&](const auto& element) { return element == identifier; });
 }
 
 std::ostream& TestPipeline::toString(std::ostream& os) const
@@ -120,7 +110,12 @@ void TestSinkController::insertBuffer(TupleBuffer&& buffer)
 
 std::vector<TupleBuffer> TestSinkController::takeBuffers()
 {
-    return receivedBuffers.exchange({});
+    auto buffers = receivedBuffers.exchange({});
+    std::ranges::sort(
+        buffers,
+        std::less{},
+        [](const auto& buffer) { return SequenceData{buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()}; });
+    return buffers;
 }
 
 std::ostream& TestSink::toString(std::ostream& os) const

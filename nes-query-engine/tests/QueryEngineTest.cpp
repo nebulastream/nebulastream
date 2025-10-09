@@ -141,7 +141,7 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
     }
 
     auto buffers = sinkCtrl->takeBuffers();
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
     test.stop();
 
     ASSERT_TRUE(ctrl->waitUntilDestroyed());
@@ -199,7 +199,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
 
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_EQ(buffers.size(), 4);
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
 /// System Stop: Meaning the Query was stopped internally from the query manager via the stop query
@@ -255,7 +255,7 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
 
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_GE(buffers.size(), 1) << "Expected at least one buffer";
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
 TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
@@ -295,7 +295,7 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
 
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_GE(buffers.size(), 1) << "Expected at least one buffer";
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
 /// Shutdown of the Query Engine will `HardStop` all query plans.
