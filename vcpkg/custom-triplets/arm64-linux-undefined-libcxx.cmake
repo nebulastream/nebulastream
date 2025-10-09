@@ -13,3 +13,9 @@
 include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/arm64.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/ubsan.cmake)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libcxx.cmake)
+
+# ortools does not compile with ubsan on arm
+if (PORT STREQUAL ortools)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+endif ()
