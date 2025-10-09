@@ -25,7 +25,7 @@
 
 namespace NES
 {
-/// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
+/// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatter
 template <typename T>
 concept IndexerMetaDataType
     = requires(ParserConfig config, const MemoryLayout& memoryLayout, T indexerMetaData, std::ostream& spanningTuple) {

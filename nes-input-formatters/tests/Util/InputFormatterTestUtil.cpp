@@ -194,23 +194,23 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
     }
 }
 
-std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatterTask(
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     std::unordered_map<std::string, std::string> parserConfiguration,
     const Schema& schema,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)
 {
     const auto validatedParserConfiguration = validateAndFormatParserConfig(std::move(parserConfiguration));
-    return createInputFormatterTask(validatedParserConfiguration, schema, sizeOfFormattedBuffers, isCompiled);
+    return createInputFormatter(validatedParserConfiguration, schema, sizeOfFormattedBuffers, isCompiled);
 }
 
-std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatterTask(
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const ParserConfig& parserConfiguration, const Schema& schema, const size_t sizeOfFormattedBuffers, const bool isCompiled)
 {
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
     auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(sizeOfFormattedBuffers, schema);
-    auto formatScanPhysicalOp = provideInputFormatterTask(parserConfiguration, std::move(memoryProvider));
+    auto formatScanPhysicalOp = provideInputFormatter(parserConfiguration, std::move(memoryProvider));
     auto tupleBufferMemoryProvider = Interface::BufferRef::TupleBufferRef::create(sizeOfFormattedBuffers, schema);
 
     auto emitPhysicalOp = EmitPhysicalOperator(emitOperatorHandlerId, tupleBufferMemoryProvider);

@@ -139,16 +139,16 @@ flowchart TB
     subgraph InputFormatterTupleBufferRef
         subgraph Phase 1 - Indexing
             direction LR
-            B[InputFormatIndexer] --->|field indexes| A(InputFormatterTask)
-            A[InputFormatterTask] --->|raw buffer/spanning tuple| B(InputFormatIndexer)
-            C[InputFormatterTask] --->|" raw buffers (with complete spanning tuple(s)) "| A(SequenceShredder)
-            A[InputFormatterTask] --->|raw buffer| C(SequenceShredder)
+            B[InputFormatIndexer] --->|field indexes| A(InputFormatter)
+            A[InputFormatter] --->|raw buffer/spanning tuple| B(InputFormatIndexer)
+            C[InputFormatter] --->|" raw buffers (with complete spanning tuple(s)) "| A(SequenceShredder)
+            A[InputFormatter] --->|raw buffer| C(SequenceShredder)
             B[InputFormatIndexer]
         end
         subgraph "Phase 2 - Parsing"
             direction LR
-            N[InputFormatterTask] --->|formatted field value| M(RawInputDataParser)
-            M[InputFormatterTask] --->|raw field value| N(RawInputDataParser)
+            N[InputFormatter] --->|formatted field value| M(RawInputDataParser)
+            M[InputFormatter] --->|raw field value| N(RawInputDataParser)
             M --->|" iterate over indexed buffer/spanning tuples(s) "| M
             N[RawInputDataParser]
         end
@@ -158,7 +158,7 @@ flowchart TB
 
 ### Class Hierarchy
 
-The InputFormatterTask implements the InputFormatterTupleBufferRef and executes the two phases outlined above. First, it
+The InputFormatter implements the InputFormatterTupleBufferRef and executes the two phases outlined above. First, it
 uses the InputFormatIndexer to determine the indexes of all fields in the raw buffer. The concrete InputFormatIndexer
 initializes a concrete FieldIndexFunction, so that the FieldIndexFunction allows to access all fields of a raw buffer,
 e.g., via offsets. Second, it uses the SequenceShredder to determine whether the indexed raw buffer completes any
@@ -169,10 +169,10 @@ the native representation of NebulaStream.
 
 ```mermaid
 classDiagram
-    InputFormatterTupleBufferRef <|-- InputFormatterTask
-    InputFormatterTask --> InputFormatIndexer: 1. uses to index fields of raw buffer (2.5 and spanning tuples)
-    InputFormatterTask --> SequenceShredder: 2. uses to resolve tuples spanning buffers
-    InputFormatterTask --> FieldIndexFunction: 3. uses indexed fields, to parse fields of raw buffer
+    InputFormatterTupleBufferRef <|-- InputFormatter
+    InputFormatter --> InputFormatIndexer: 1. uses to index fields of raw buffer (2.5 and spanning tuples)
+    InputFormatter --> SequenceShredder: 2. uses to resolve tuples spanning buffers
+    InputFormatter --> FieldIndexFunction: 3. uses indexed fields, to parse fields of raw buffer
     CSVInputFormatIndexer --> FieldOffsets: uses and sees only InputFormatIndexer functions
     JSONInputFormatIndexer --> FieldOffsets: uses and sees only InputFormatIndexer functions
     NativeInputFormatIndexer --> NativeFieldAccessFunction: sees and uses only InputFormatIndexer functions
@@ -183,9 +183,9 @@ classDiagram
     InputFormatIndexer <|-- NativeInputFormatIndexer
     class InputFormatterTupleBufferRef {
         <<Interface>>
-        +InputFormatterTask
+        +InputFormatter
     }
-    class InputFormatterTask {
+    class InputFormatter {
         +FieldIndexFunction fieldIndexFunction
         +FieldIndexFunction sequenceShredder
         +execute(rawBuffer)
@@ -196,7 +196,7 @@ classDiagram
     }
     class FieldIndexFunction {
         <<CRTP_Interface>>
-        InputFormatterTask Functions
+        InputFormatter Functions
         + readFieldAt
         + getOffsetOfFirstTupleDelimiter
         + getOffsetOfLastTupleDelimiter
@@ -253,7 +253,7 @@ The three main could be as follows:
   formatting via (proxy) function calls. We change the interface of the InputFormatterTupleBufferRef, which does not need
   to implement the interface of the 'ExecutablePipelineStage' anymore, to match the two phases
   described [above](#architecture).
-- Second, we change the 'InputFormatterTask interface' of the **FieldIndexFunction** and its concrete implementations to
+- Second, we change the 'InputFormatter interface' of the **FieldIndexFunction** and its concrete implementations to
   Nautilus functions. That is, calling 'readFieldAt' on the FieldIndexFunction calls the concrete Nautilus readFieldAt
   function of the derived FieldIndexFunction. Since these functions are traced, accessing specific fields via the
   FieldIndexFunction ends up in the compiled code.
@@ -271,7 +271,7 @@ Or an InputFormatterTupleBufferRef object already exists as part of the state of
 The second step during tracing is essentially one proxy function call, that executes the first phase:\
 The CompiledInputFormatter calls a proxy function of the InputFormatterTupleBufferRef, which takes the concrete '
 InputFormatterTupleBufferRef' object as an argument. The InputFormatterTupleBufferRef delegates the function call to its '
-InputFormatterTask' object. The InputFormatterTask creates a FieldIndexFunction and uses the SequenceShredder (if
+InputFormatter' object. The InputFormatter creates a FieldIndexFunction and uses the SequenceShredder (if
 needed) and the InputFormatIndexer to determine spanning tuples and to determine the indexes of all fields of the raw
 buffer and the spanning tuples. The function then returns the FieldIndexFunction.
 
@@ -347,7 +347,7 @@ explicitly mark all child fields as null.
 
 ### Repeated Fields/Arrays
 
-If the size of the repeated field is known, the formatter can determine all indexes and the InputFormatterTask can
+If the size of the repeated field is known, the formatter can determine all indexes and the InputFormatter can
 utilize the size to read the correct number of indexes (and potentially perform validation). Repeated fields that may
 appear zero times share the optional/null problem.
 
@@ -508,7 +508,7 @@ implement this phase. Each InputFormatIndexer chooses a concrete FieldIndexFunct
 it is necessary to determine the start and the end of each field. For a format with fixed-size values, e.g., the Native
 format, it is sufficient to determine the offset of the first field of the first tuple, the rest can be calculated.
 
-The second interface is for accessing specific fields in a raw data buffer. Only InputFormatterTask has access to that
+The second interface is for accessing specific fields in a raw data buffer. Only InputFormatter has access to that
 interface. It uses it when iterating over indexed raw buffers and passes the fields to the RawValueParser, to convert
 the raw values into our internal representation.
 

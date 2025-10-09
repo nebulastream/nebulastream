@@ -156,9 +156,9 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpe
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
 std::shared_ptr<CompiledExecutablePipelineStage>
-createInputFormatterTask(const ParserConfig& parserConfiguration, const Schema& schema, size_t sizeOfFormattedBuffers, bool isCompiled);
+createInputFormatter(const ParserConfig& parserConfiguration, const Schema& schema, size_t sizeOfFormattedBuffers, bool isCompiled);
 
-std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatterTask(
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     std::unordered_map<std::string, std::string> parserConfiguration, const Schema& schema, size_t sizeOfFormattedBuffers, bool isCompiled);
 
 template <typename TupleSchemaTemplate>
@@ -436,13 +436,13 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    auto inputFormatterTask = createInputFormatterTask(
+    auto InputFormatter = createInputFormatter(
         testHandle.testConfig.parserConfig, testHandle.schema, testHandle.formattedBufferManager->getBufferSize(), false);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
-        tasks.emplace_back(TestPipelineTask{WorkerThreadId(0), inputBuffer, inputFormatterTask});
+        tasks.emplace_back(TestPipelineTask{WorkerThreadId(0), inputBuffer, InputFormatter});
     }
     return tasks;
 }

@@ -28,7 +28,7 @@ namespace NES
 // Todo: probably change to:
 // std::unique_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef>
 // -> create 'on demand'
-PhysicalOperator provideInputFormatterTask(
+PhysicalOperator provideInputFormatter(
     const std::optional<ParserConfig>& formatScanConfig,
     std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider);
 

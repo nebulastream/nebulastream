@@ -120,19 +120,19 @@ void processSpanningTuple(
         indexerMetaData.getTupleDelimitingBytes().size());
 }
 
-/// InputFormatterTasks concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
-/// individual InputFormatterTasks see during execution.
-/// The only point of synchronization is a call to the SequenceShredder data structure, which determines which buffers the InputFormatterTask
+/// InputFormatters concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
+/// individual InputFormatters see during execution.
+/// The only point of synchronization is a call to the SequenceShredder data structure, which determines which buffers the InputFormatter
 /// needs to process (resolving tuples that span multiple raw buffers).
-/// An InputFormatterTask belongs to exactly one source. The source reads raw data into buffers, constructs a Task from the
-/// raw buffer and its successor (the InputFormatterTask) and writes it to the task queue of the QueryEngine.
-/// The QueryEngine concurrently executes InputFormatterTasks. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
+/// An InputFormatter belongs to exactly one source. The source reads raw data into buffers, constructs a Task from the
+/// raw buffer and its successor (the InputFormatter) and writes it to the task queue of the QueryEngine.
+/// The QueryEngine concurrently executes InputFormatters. Thus, even if the source writes the InputFormatters to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
 template <InputFormatIndexerType FormatterType>
-class InputFormatterTask
+class InputFormatter
 {
 public:
-    explicit InputFormatterTask(
+    explicit InputFormatter(
         FormatterType inputFormatIndexer,
         std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider,
         const ParserConfig& parserConfig)
@@ -145,16 +145,16 @@ public:
     {
     }
 
-    ~InputFormatterTask() = default;
+    ~InputFormatter() = default;
 
-    InputFormatterTask(const InputFormatterTask&) = delete;
-    InputFormatterTask& operator=(const InputFormatterTask&) = delete;
-    InputFormatterTask(InputFormatterTask&&) = default;
-    InputFormatterTask& operator=(InputFormatterTask&&) = delete;
+    InputFormatter(const InputFormatter&) = delete;
+    InputFormatter& operator=(const InputFormatter&) = delete;
+    InputFormatter(InputFormatter&&) = default;
+    InputFormatter& operator=(InputFormatter&&) = delete;
 
     void close()
     {
-        /// If the InputFormatterTask needs to handle spanning tuples, it uses the SequenceShredder.
+        /// If the InputFormatter needs to handle spanning tuples, it uses the SequenceShredder.
         /// The logs of 'validateState()' allow us to detect whether something went wrong during formatting and specifically, whether the
         /// SequenceShredder still owns TupleBuffers, that it should have given back to its corresponding source.
         INVARIANT(sequenceShredder != nullptr, "The SequenceShredder handles spanning tuples, thus it must not be null.");
@@ -205,10 +205,10 @@ public:
     public:
         explicit SpanningTupleData() = default;
 
-        std::pair<FieldIndex, FieldIndex> indexRawBuffer(InputFormatterTask& inputFormatterTask, const TupleBuffer& tupleBuffer)
+        std::pair<FieldIndex, FieldIndex> indexRawBuffer(InputFormatter& InputFormatter, const TupleBuffer& tupleBuffer)
         {
-            inputFormatterTask.inputFormatIndexer.indexRawBuffer(
-                spanningTuplePOD.rawBufferFIF, RawTupleBuffer{tupleBuffer}, inputFormatterTask.indexerMetaData);
+            InputFormatter.inputFormatIndexer.indexRawBuffer(
+                spanningTuplePOD.rawBufferFIF, RawTupleBuffer{tupleBuffer}, InputFormatter.indexerMetaData);
             this->spanningTuplePOD.totalNumberOfTuples = this->spanningTuplePOD.rawBufferFIF.getTotalNumberOfTuples();
             return {
                 spanningTuplePOD.rawBufferFIF.getOffsetOfFirstTupleDelimiter(),
@@ -231,24 +231,24 @@ public:
         void handleWithDelimiter(
             const std::vector<StagedBuffer>& stagedBuffers,
             const size_t indexOfSequenceNumberInStagedBuffers,
-            InputFormatterTask& inputFormatterTask,
+            InputFormatter& InputFormatter,
             Arena& arenaRef)
         {
             calculateSizeOfSpanningTuplesWithDelimiter(
-                stagedBuffers, indexOfSequenceNumberInStagedBuffers, inputFormatterTask.indexerMetaData.getTupleDelimitingBytes().size());
+                stagedBuffers, indexOfSequenceNumberInStagedBuffers, InputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
 
             if (spanningTuplePOD.leadingSpanningTupleSizeInBytes > 0)
             {
                 allocateForLeadingSpanningTuple(arenaRef);
                 const auto leadingSpanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
                 processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                    leadingSpanningTupleBuffers, spanningTuplePOD.leadingSpanningTuplePtr, inputFormatterTask.indexerMetaData);
-                inputFormatterTask.inputFormatIndexer.indexRawBuffer(
+                    leadingSpanningTupleBuffers, spanningTuplePOD.leadingSpanningTuplePtr, InputFormatter.indexerMetaData);
+                InputFormatter.inputFormatIndexer.indexRawBuffer(
                     spanningTuplePOD.leadingSpanningTupleFIF,
                     RawTupleBuffer{
                         std::bit_cast<const char*>(spanningTuplePOD.leadingSpanningTuplePtr),
                         spanningTuplePOD.leadingSpanningTupleSizeInBytes},
-                    inputFormatterTask.indexerMetaData);
+                    InputFormatter.indexerMetaData);
             }
             if (spanningTuplePOD.trailingSpanningTupleSizeInBytes > 0)
             {
@@ -257,32 +257,32 @@ public:
                     = std::span(stagedBuffers)
                           .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
                 processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                    trailingSpanningTupleBuffers, spanningTuplePOD.trailingSpanningTuplePtr, inputFormatterTask.indexerMetaData);
-                inputFormatterTask.inputFormatIndexer.indexRawBuffer(
+                    trailingSpanningTupleBuffers, spanningTuplePOD.trailingSpanningTuplePtr, InputFormatter.indexerMetaData);
+                InputFormatter.inputFormatIndexer.indexRawBuffer(
                     spanningTuplePOD.trailingSpanningTupleFIF,
                     RawTupleBuffer{
                         std::bit_cast<const char*>(spanningTuplePOD.trailingSpanningTuplePtr),
                         spanningTuplePOD.trailingSpanningTupleSizeInBytes},
-                    inputFormatterTask.indexerMetaData);
+                    InputFormatter.indexerMetaData);
             }
         }
 
         void handleWithoutDelimiter(
-            const std::vector<StagedBuffer>& spanningTupleBuffers, InputFormatterTask& inputFormatterTask, Arena& arenaRef)
+            const std::vector<StagedBuffer>& spanningTupleBuffers, InputFormatter& InputFormatter, Arena& arenaRef)
         {
             calculateSizeOfSpanningTuple(
                 [this](const size_t bytes) { increaseLeadingSpanningTupleSize(bytes); },
                 spanningTupleBuffers,
-                inputFormatterTask.indexerMetaData.getTupleDelimitingBytes().size());
+                InputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
             allocateForLeadingSpanningTuple(arenaRef);
 
             processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                spanningTupleBuffers, spanningTuplePOD.leadingSpanningTuplePtr, inputFormatterTask.indexerMetaData);
-            inputFormatterTask.inputFormatIndexer.indexRawBuffer(
+                spanningTupleBuffers, spanningTuplePOD.leadingSpanningTuplePtr, InputFormatter.indexerMetaData);
+            InputFormatter.inputFormatIndexer.indexRawBuffer(
                 spanningTuplePOD.leadingSpanningTupleFIF,
                 RawTupleBuffer{
                     std::bit_cast<const char*>(spanningTuplePOD.leadingSpanningTuplePtr), spanningTuplePOD.leadingSpanningTupleSizeInBytes},
-                inputFormatterTask.indexerMetaData);
+                InputFormatter.indexerMetaData);
         }
 
     private:
@@ -367,12 +367,12 @@ public:
     static SpanningTuplePOD* indexTuplesProxy(
         const TupleBuffer* tupleBuffer,
         // PipelineExecutionContext* pec,
-        InputFormatterTask* inputFormatterTask,
+        InputFormatter* InputFormatter,
         const size_t configuredBufferSize,
         Arena* arenaRef)
     {
         SpanningTupleData spanningTupleData{};
-        if (not inputFormatterTask->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
+        if (not InputFormatter->sequenceShredder->isInRange(tupleBuffer->getSequenceNumber().getRawValue()))
         {
             INVARIANT(false, "input sequence number is out of range");
             // pec->repeatTask(*tupleBuffer, std::chrono::milliseconds(0));
@@ -381,13 +381,13 @@ public:
         }
 
         const auto [offsetOfFirstTupleDelimiter, offsetOfSecondTupleDelimiter]
-            = spanningTupleData.indexRawBuffer(*inputFormatterTask, *tupleBuffer);
+            = spanningTupleData.indexRawBuffer(*InputFormatter, *tupleBuffer);
 
 
         if (/* hasTupleDelimiter */ offsetOfFirstTupleDelimiter < configuredBufferSize)
         {
             const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers]
-                = inputFormatterTask->sequenceShredder->processSequenceNumber<true>(
+                = InputFormatter->sequenceShredder->processSequenceNumber<true>(
                     StagedBuffer{
                         RawTupleBuffer{*tupleBuffer},
                         tupleBuffer->getNumberOfTuples(), /// size in bytes
@@ -399,12 +399,12 @@ public:
             {
                 return spanningTupleData.getThreadLocalSpanningTuplePODPtr();
             }
-            spanningTupleData.handleWithDelimiter(stagedBuffers, indexOfSequenceNumberInStagedBuffers, *inputFormatterTask, *arenaRef);
+            spanningTupleData.handleWithDelimiter(stagedBuffers, indexOfSequenceNumberInStagedBuffers, *InputFormatter, *arenaRef);
         }
         else /* has no tuple delimiter */
         {
             const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers]
-                = inputFormatterTask->sequenceShredder->processSequenceNumber<false>(
+                = InputFormatter->sequenceShredder->processSequenceNumber<false>(
                     StagedBuffer{
                         RawTupleBuffer{*tupleBuffer},
                         tupleBuffer->getNumberOfTuples(), /// size in bytes
@@ -419,7 +419,7 @@ public:
 
             /// The buffer has no delimiter, but connects two buffers with delimiters, forming one spanning tuple
             /// We arbitrarily treat it as a 'leading' spanning tuple (technically, it is both leading and trailing)
-            spanningTupleData.handleWithoutDelimiter(stagedBuffers, *inputFormatterTask, *arenaRef);
+            spanningTupleData.handleWithoutDelimiter(stagedBuffers, *InputFormatter, *arenaRef);
         }
         return spanningTupleData.getThreadLocalSpanningTuplePODPtr();
     }
@@ -440,7 +440,7 @@ public:
             indexTuplesProxy,
             recordBuffer.getReference(),
             // executionCtx.pipelineContext,
-            nautilus::val<InputFormatterTask*>(this),
+            nautilus::val<InputFormatter*>(this),
             nautilus::val<size_t>(memoryProvider->getMemoryLayout()->getBufferSize()),
             arenaRef.getArena());
         auto state = setThreadLocalState(State{spanningTuplePOD, arenaRef});
@@ -582,7 +582,7 @@ public:
     std::ostream& taskToString(std::ostream& os) const
     {
         /// Not using fmt::format, because it fails during build, trying to pass sequenceShredder as a const value
-        os << "InputFormatterTask(" << ", inputFormatIndexer: " << inputFormatIndexer << ", sequenceShredder: " << *sequenceShredder
+        os << "InputFormatter(" << ", inputFormatIndexer: " << inputFormatIndexer << ", sequenceShredder: " << *sequenceShredder
            << ")\n";
         return os;
     }

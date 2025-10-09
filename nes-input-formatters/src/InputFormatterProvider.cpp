@@ -26,7 +26,7 @@
 namespace NES
 {
 
-PhysicalOperator provideInputFormatterTask(
+PhysicalOperator provideInputFormatter(
     const std::optional<ParserConfig>& formatScanConfig,
     std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider)
 {

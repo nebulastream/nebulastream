@@ -27,7 +27,7 @@ namespace NES
 
 using FieldIndex = uint32_t;
 
-/// CRTP Interface that enables InputFormatters to define specialized functions to access fields that the InputFormatterTask can call directly
+/// CRTP Interface that enables InputFormatters to define specialized functions to access fields that the InputFormatter can call directly
 /// (templated) without the overhead of a virtual function call (or a lambda function/std::function)
 /// Different possible kinds of FieldIndexFunctions(FieldOffsets(index raw data), Internal, ZStdCompressed, Arrow, ...)
 /// A FieldIndexFunction may also combine different kinds of field access variants for the different fields of one schema
@@ -35,9 +35,9 @@ template <typename Derived>
 class FieldIndexFunction
 {
 public:
-    /// Expose the FieldIndexFunction interface functions only to the InputFormatterTask
+    /// Expose the FieldIndexFunction interface functions only to the InputFormatter
     template <InputFormatIndexerType FormatterType>
-    friend class InputFormatterTask;
+    friend class InputFormatter;
 
     friend Derived;
 
@@ -45,7 +45,7 @@ private:
     FieldIndexFunction()
     {
         /// Cannot use Concepts / requires because of the cyclic nature of the CRTP pattern.
-        /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
+        /// The InputFormatter (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives the FieldIndexFunction
         static_assert(std::is_constructible_v<Derived>, "Derived class must have a default constructor");
     };
 

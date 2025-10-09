@@ -24,7 +24,7 @@
 #include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
-#include <InputFormatterTask.hpp>
+#include <InputFormatter.hpp>
 
 inline bool includesField(
     const std::vector<NES::Nautilus::Record::RecordFieldIdentifier>& projections,

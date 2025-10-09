@@ -288,7 +288,7 @@ public:
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
             const std::unordered_map<std::string, std::string> parserConfiguration{
                 {"type", std::move(testConfig.formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
-            auto testStage = InputFormatterTestUtil::createInputFormatterTask(
+            auto testStage = InputFormatterTestUtil::createInputFormatter(
                 parserConfiguration, setupResult.schema, setupResult.sizeOfFormattedBuffers, testConfig.isCompiled);
 
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);

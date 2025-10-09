@@ -60,7 +60,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto bufferSize = conf.pageSize.getValue();
 
     const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(bufferSize, inputSchema);
-    auto scan = provideInputFormatterTask(getParserConfig(projectionLogicalOperator), memoryProvider);
+    auto scan = provideInputFormatter(getParserConfig(projectionLogicalOperator), memoryProvider);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 

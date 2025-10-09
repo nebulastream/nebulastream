@@ -35,7 +35,7 @@
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatterTask.hpp>
+#include <InputFormatter.hpp>
 #include <RawValueParser.hpp>
 
 namespace
@@ -106,7 +106,7 @@ void JSONInputFormatIndexer::indexRawBuffer(
     const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(TUPLE_DELIMITER));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
-    /// the InputFormatterTask that there was no tuple delimiter in the buffer and return
+    /// the InputFormatter that there was no tuple delimiter in the buffer and return
     if (offsetOfFirstTupleDelimiter == static_cast<FieldIndex>(std::string::npos))
     {
         fieldOffsets.markNoTupleDelimiters();

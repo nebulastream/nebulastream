@@ -25,7 +25,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 #include <Concepts.hpp>
-#include <InputFormatterTask.hpp>
+#include <InputFormatter.hpp>
 
 namespace NES
 {
@@ -47,13 +47,13 @@ struct InputFormatIndexerRegistryArguments
     template <InputFormatIndexerType IndexerType>
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
     {
-        auto inputFormatterTask
-            = InputFormatterTask<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
-        return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatterTask));
+        auto inputFormatter
+            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
+        return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));
     }
 
 private:
-    /// We discourage keeping state in an indexer implementation, since the InputFormatterTask uses its indexer concurrently
+    /// We discourage keeping state in an indexer implementation, since the InputFormatter uses its indexer concurrently
     /// As a result, we don't hand the config and memory provider to the indexer in its registry-constructor
     /// Instead, an indexer receives it as a const meta-data object in its main 'indexRawBuffer' function
     /// While this does not prevent an indexer implementation from accessing the state of the meta-data object it helps to discourage it

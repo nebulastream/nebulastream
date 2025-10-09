@@ -57,7 +57,7 @@ createScanOperator(const Pipeline& prevPipeline, const std::optional<Schema>& in
     const auto formatScanConfig = (prevPipeline.isSourcePipeline())
         ? std::optional{prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig()}
         : std::nullopt;
-    return provideInputFormatterTask(formatScanConfig, memoryProvider);
+    return provideInputFormatter(formatScanConfig, memoryProvider);
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline

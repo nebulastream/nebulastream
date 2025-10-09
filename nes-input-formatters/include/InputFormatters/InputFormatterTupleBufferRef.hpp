@@ -31,14 +31,14 @@ namespace NES
 {
 class RawTupleBuffer;
 
-/// Type-erased wrapper around InputFormatterTask
+/// Type-erased wrapper around InputFormatter
 class InputFormatterTupleBufferRef final : public NES::Nautilus::Interface::BufferRef::TupleBufferRef
 {
 public:
     template <typename T>
     requires(not std::same_as<std::decay_t<T>, InputFormatterTupleBufferRef>)
-    explicit InputFormatterTupleBufferRef(T&& inputFormatterTask)
-        : inputFormatterTask(std::make_unique<InputFormatterTaskModel<T>>(std::forward<T>(inputFormatterTask)))
+    explicit InputFormatterTupleBufferRef(T&& InputFormatter)
+        : InputFormatter(std::make_unique<InputFormatterModel<T>>(std::forward<T>(InputFormatter)))
     {
     }
 
@@ -67,10 +67,10 @@ public:
 
     std::ostream& toString(std::ostream& os) const;
 
-    /// Describes what a InputFormatterTask that is in the InputFormatterTupleBufferRef does (interface).
-    struct InputFormatterTaskConcept
+    /// Describes what a InputFormatter that is in the InputFormatterTupleBufferRef does (interface).
+    struct InputFormatterConcept
     {
-        virtual ~InputFormatterTaskConcept() = default;
+        virtual ~InputFormatterConcept() = default;
         virtual void close() = 0;
         virtual Record readRecord(
             const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -83,35 +83,35 @@ public:
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
-    /// Defines the concrete behavior of the InputFormatterTaskConcept, i.e., which specific functions from T to call.
+    /// Defines the concrete behavior of the InputFormatterConcept, i.e., which specific functions from T to call.
     template <typename T>
-    struct InputFormatterTaskModel final : InputFormatterTaskConcept
+    struct InputFormatterModel final : InputFormatterConcept
     {
-        explicit InputFormatterTaskModel(T&& inputFormatterTask) : inputFormatterTask(std::move(inputFormatterTask)) { }
+        explicit InputFormatterModel(T&& InputFormatter) : InputFormatter(std::move(InputFormatter)) { }
 
         // Todo: what to do with 'stopTask'? <-- close?
-        void close() override { inputFormatterTask.close(); }
+        void close() override { InputFormatter.close(); }
 
-        void open(RecordBuffer& recordBuffer, ArenaRef& arena) override { inputFormatterTask.open(recordBuffer, arena); }
-        // nautilus::val<uint64_t> getNumberOfRecords(const RecordBuffer& recordBuffer) const override{ return inputFormatterTask.getNumberOfRecords(recordBuffer); };
+        void open(RecordBuffer& recordBuffer, ArenaRef& arena) override { InputFormatter.open(recordBuffer, arena); }
+        // nautilus::val<uint64_t> getNumberOfRecords(const RecordBuffer& recordBuffer) const override{ return InputFormatter.getNumberOfRecords(recordBuffer); };
 
-        std::ostream& toString(std::ostream& os) const override { return inputFormatterTask.taskToString(os); }
+        std::ostream& toString(std::ostream& os) const override { return InputFormatter.taskToString(os); }
 
         Record readRecord(
             const std::vector<Record::RecordFieldIdentifier>& projections,
             const RecordBuffer& recordBuffer,
             nautilus::val<uint64_t>& recordIndex) const override
         {
-            return inputFormatterTask.readRecord(projections,recordBuffer, recordIndex);
+            return InputFormatter.readRecord(projections,recordBuffer, recordIndex);
         }
 
-        [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override { return inputFormatterTask.getMemoryLayout(); }
+        [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override { return InputFormatter.getMemoryLayout(); }
 
     private:
-        T inputFormatterTask;
+        T InputFormatter;
     };
 
-    std::unique_ptr<InputFormatterTaskConcept> inputFormatterTask;
+    std::unique_ptr<InputFormatterConcept> InputFormatter;
 };
 
 }

@@ -34,12 +34,12 @@ namespace NES
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
 
 template <InputFormatIndexerType FormatterType>
-class InputFormatterTask;
+class InputFormatter;
 
 class RawTupleBuffer
 {
     template <InputFormatIndexerType FormatterType>
-    friend class InputFormatterTask;
+    friend class InputFormatter;
 
 public:
     RawTupleBuffer() = default;
@@ -84,7 +84,7 @@ private:
     TupleBuffer rawBuffer;
     std::string_view bufferView;
 
-    /// Used by InputFormatterTask to pass an arena-allocated spanning tuple to an InputFormatIndexer
+    /// Used by InputFormatter to pass an arena-allocated spanning tuple to an InputFormatIndexer
     explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple) : bufferView(rawDataPtr, sizeOfSpanningTuple) { };
 };
 }

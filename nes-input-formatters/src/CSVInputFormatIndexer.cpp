@@ -26,7 +26,7 @@
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatterTask.hpp>
+#include <InputFormatter.hpp>
 
 namespace
 {
