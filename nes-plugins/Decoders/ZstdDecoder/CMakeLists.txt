@@ -34,8 +34,7 @@ add_custom_target(BuildZstd DEPENDS ${ZSTD_LIBRARY})
 # Specify where the built libraries and headers are locatedS
 set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
 
-# The registry library is nes-sources-registry, since currently, the decoder is located in nes-sources
-add_plugin_as_library(Zstd Decoder nes-sources-registry zstd_decoder_plugin_library ZstdDecoder.cpp)
+add_plugin_as_library(Zstd Decoder nes-codecs-registry zstd_decoder_plugin_library ZstdDecoder.cpp)
 
 add_dependencies(zstd_decoder_plugin_library BuildZstd)
 target_include_directories(zstd_decoder_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ PRIVATE ${ZSTD_INCLUDE_DIR})

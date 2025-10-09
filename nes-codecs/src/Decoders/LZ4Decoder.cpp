@@ -18,11 +18,11 @@
 #include <memory>
 #include <utility>
 
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <../../../nes-common/include/ErrorHandling.hpp>
+#include <../../../nes-common/include/Util/Logger/Logger.hpp>
+#include <../../../nes-memory/include/Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <DecoderRegistry.hpp>
-#include <ErrorHandling.hpp>
 #include <lz4frame.h>
 
 namespace NES

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <zstd.h>
 #include <Decoders/Decoder.hpp>
 
