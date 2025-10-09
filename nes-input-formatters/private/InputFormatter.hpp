@@ -188,15 +188,17 @@ public:
         ArenaRef& arena;
     };
 
-    static State& setThreadLocalState(std::optional<State> newState)
-    {
-        thread_local std::unique_ptr<State> state{};
-        if (newState)
-        {
-            state = std::make_unique<State>(newState.value());
-        }
-        return *state;
-    }
+    static thread_local std::unique_ptr<State> state;
+
+    // static State& setThreadLocalState(std::optional<State> newState)
+    // {
+    //     thread_local std::unique_ptr<State> state{};
+    //     if (newState)
+    //     {
+    //         state = std::make_unique<State>(newState.value());
+    //     }
+    //     return *state;
+    // }
 
     /// accumulates all data produced during the indexing phase, which the parsing phase requires
     /// on calling 'createSpanningTuplePOD()' it returns this data
@@ -426,15 +428,6 @@ public:
 
     void open(RecordBuffer& recordBuffer, ArenaRef& arenaRef)
     {
-        /// initialize global state variables to keep track of the watermark ts and the origin id
-        // executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-        // executionCtx.originId = recordBuffer.getOriginId();
-        // executionCtx.currentTs = recordBuffer.getCreatingTs();
-        // executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-        // executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-        // executionCtx.lastChunk = recordBuffer.isLastChunk();
-
-
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist;
         auto spanningTuplePOD = nautilus::invoke(
             indexTuplesProxy,
@@ -443,12 +436,9 @@ public:
             nautilus::val<InputFormatter*>(this),
             nautilus::val<size_t>(memoryProvider->getMemoryLayout()->getBufferSize()),
             arenaRef.getArena());
-        auto state = setThreadLocalState(State{spanningTuplePOD, arenaRef});
+        state = std::make_unique<State>(spanningTuplePOD, arenaRef);
         const nautilus::val<uint64_t> totalNumberOfTuples
             = *Nautilus::Util::getMemberWithOffset<uint64_t>(spanningTuplePOD, offsetof(SpanningTuplePOD, totalNumberOfTuples));
-        // const auto totalNumberOfTuples = numberOfNonSpanningTuples
-        //     + *Nautilus::Util::getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasLeadingSpanningTupleBool))
-        //     + *Nautilus::Util::getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasTrailingSpanningTupleBool));
         recordBuffer.setNumRecords(totalNumberOfTuples);
 
         // Todo: handle 'isRepeat'
@@ -459,58 +449,6 @@ public:
 
         // /// call open on all child operators
         // child.open(executionCtx, recordBuffer);
-
-        /// parse leading spanning tuple if exists
-        // if (const nautilus::val<bool> hasLeadingPtr
-        //     = *Nautilus::Util::getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasLeadingSpanningTupleBool));
-        //     hasLeadingPtr)
-        // {
-        //     /// Get leading field index function and a pointer to the spanning tuple 'record'
-        //     auto leadingFIF = Nautilus::Util::getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-        //         spanningTuplePOD, offsetof(SpanningTuplePOD, leadingSpanningTupleFIF));
-        //     auto spanningRecordPtr
-        //         = *Nautilus::Util::getMemberPtrWithOffset<int8_t>(spanningTuplePOD, offsetof(SpanningTuplePOD, leadingSpanningTuplePtr));
-        //
-        //     /// 'leadingFIF.value' is essentially the static function FormatterType::readsSpanningRecord
-        //     auto recordIndex = nautilus::val<uint64_t>(0);
-        //     auto record = leadingFIF.value->readSpanningRecord(
-        //         projections, spanningRecordPtr, recordIndex, indexerMetaData, leadingFIF, arenaRef);
-        //     // child.execute(executionCtx, record);
-        // }
-        //
-        // /// parse raw tuple buffer (if there are complete tuples in it)
-        // const nautilus::val<uint64_t> totalNumberOfTuples
-        //     = *Nautilus::Util::getMemberWithOffset<uint64_t>(spanningTuplePOD, offsetof(SpanningTuplePOD, totalNumberOfTuples));
-        // auto rawFieldAccessFunction = Nautilus::Util::getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-        //     spanningTuplePOD, offsetof(SpanningTuplePOD, rawBufferFIF));
-        //
-        // for (nautilus::val<uint64_t> i = static_cast<uint64_t>(0); i < totalNumberOfTuples; i = i + static_cast<uint64_t>(1))
-        // {
-        //     auto record = rawFieldAccessFunction.value->readSpanningRecord(
-        //         projections,
-        //         recordBuffer.getMemArea(),
-        //         i,
-        //         indexerMetaData,
-        //         rawFieldAccessFunction,
-        //         arenaRef);
-        //     // child.execute(executionCtx, record);
-        // }
-        //
-        // /// parse trailing spanning tuple if exists
-        // if (const nautilus::val<bool> hasTrailingPtr
-        //     = *Nautilus::Util::getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasTrailingSpanningTupleBool));
-        //     hasTrailingPtr)
-        // {
-        //     auto trailingFIF = Nautilus::Util::getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-        //         spanningTuplePOD, offsetof(SpanningTuplePOD, trailingSpanningTupleFIF));
-        //     auto spanningRecordPtr
-        //         = *Nautilus::Util::getMemberPtrWithOffset<int8_t>(spanningTuplePOD, offsetof(SpanningTuplePOD, trailingSpanningTuplePtr));
-        //
-        //     auto recordIndex = nautilus::val<uint64_t>(0);
-        //     auto record = trailingFIF.value->readSpanningRecord(
-        //         projections, spanningRecordPtr, recordIndex, indexerMetaData, trailingFIF, arenaRef);
-        //     // child.execute(executionCtx, record);
-        // }
         // return OpenReturnState::FINISHED;
     }
 
@@ -520,8 +458,7 @@ public:
         nautilus::val<uint64_t>& recordIndex) const
     {
         // Todo: improve handling 'state' <-- only one thread-local
-        auto state = setThreadLocalState(std::nullopt);
-        auto spanningTuplePOD = state.spanningTuple;
+        auto spanningTuplePOD = state->spanningTuple;
         auto hasLeading
             = *Nautilus::Util::getMemberWithOffset<bool>(spanningTuplePOD, offsetof(SpanningTuplePOD, hasLeadingSpanningTupleBool));
         auto hasTrailing
@@ -555,7 +492,7 @@ public:
                 /// 'leadingFIF.value' is essentially the static function FormatterType::readsSpanningRecord
                 auto recordIndex = nautilus::val<uint64_t>(0);
                 return typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                    projections, spanningRecordPtr, recordIndex, indexerMetaData, leadingFIF, state.arena);
+                    projections, spanningRecordPtr, recordIndex, indexerMetaData, leadingFIF, state->arena);
             }
         }
         else if (recordIndex + 1 == totalNumberOfTuples)
@@ -570,13 +507,13 @@ public:
 
                 auto recordIndex = nautilus::val<uint64_t>(0);
                 return trailingFIF.value->readSpanningRecord(
-                    projections, spanningRecordPtr, recordIndex, indexerMetaData, trailingFIF, state.arena);
+                    projections, spanningRecordPtr, recordIndex, indexerMetaData, trailingFIF, state->arena);
             }
         }
 
         auto actualRecordIndex = recordIndex - offset;
         return typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-            projections, recordBuffer.getMemArea(), actualRecordIndex, indexerMetaData, rawFieldAccessFunction, state.arena);
+            projections, recordBuffer.getMemArea(), actualRecordIndex, indexerMetaData, rawFieldAccessFunction, state->arena);
     }
 
     std::ostream& taskToString(std::ostream& os) const
@@ -594,5 +531,8 @@ private:
     std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider;
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
 };
+
+template<InputFormatIndexerType T>
+thread_local std::unique_ptr<typename InputFormatter<T>::State> InputFormatter<T>::state{};
 
 }
