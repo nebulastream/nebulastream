@@ -107,7 +107,7 @@ jobs:
       matrix:
         cmake_args:
           - name: tupleBuffer_debugging
-            arg: -DCMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS=ON
+            arg: -DNES_DEBUG_TUPLE_BUFFER_LEAKS=ON
         stdlib: [ libcxx, libstdcxx ]
         sanitizer: [ none, address, undefined, thread ]
         build_type: [ RelWithDebInfo, Debug ]

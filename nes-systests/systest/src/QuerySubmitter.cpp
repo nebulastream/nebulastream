@@ -56,7 +56,7 @@ void QuerySubmitter::startQuery(QueryId query)
 {
     if (auto started = queryManager->start(query); !started.has_value())
     {
-        throw started.error();
+        throw std::move(started.error());
     }
     ids.emplace(query);
 }
@@ -65,7 +65,7 @@ void QuerySubmitter::stopQuery(const QueryId query)
 {
     if (auto stopped = queryManager->stop(query); !stopped.has_value())
     {
-        throw stopped.error();
+        throw std::move(stopped.error());
     }
 }
 
@@ -73,7 +73,7 @@ void QuerySubmitter::unregisterQuery(const QueryId query)
 {
     if (auto unregistered = queryManager->unregister(query); !unregistered.has_value())
     {
-        throw unregistered.error();
+        throw std::move(unregistered.error());
     }
 }
 
