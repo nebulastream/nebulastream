@@ -31,7 +31,11 @@ namespace NES
 {
 
 std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
-    std::string sinkName, const Schema& schema, const std::string_view sinkType, std::unordered_map<std::string, std::string> config)
+    std::string sinkName,
+    const Schema& schema,
+    const std::string_view sinkType,
+    std::string workerId,
+    std::unordered_map<std::string, std::string> config)
 {
     if (std::ranges::all_of(sinkName, [](const char character) { return std::isdigit(character); }))
     {
@@ -46,7 +50,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     }
 
     const auto lockedSinks = sinks.wlock();
-    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(workerId), std::move(descriptorConfigOpt.value())};
     lockedSinks->emplace(std::move(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }

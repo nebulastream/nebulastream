@@ -36,7 +36,7 @@ public:
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<BufferManager> bm,
         WorkerId workerId);
-    void stop(QueryId queryId);
+    void stop(LocalQueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();
 

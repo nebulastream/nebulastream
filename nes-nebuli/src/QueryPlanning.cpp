@@ -17,16 +17,29 @@
 #include <unordered_map>
 #include <utility>
 
+#include <GlobalOptimizer/BottomUpPlacement.hpp>
 #include <GlobalOptimizer/GlobalOptimizer.hpp>
+#include <GlobalOptimizer/QueryDecomposition.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
 
-PlanStage::OptimizedLogicalPlan QueryPlanner::plan(PlanStage::BoundLogicalPlan&& boundPlan) &&
+PlanStage::DistributedLogicalPlan QueryPlanner::plan(PlanStage::BoundLogicalPlan&& boundPlan) &&
 {
     PlanStage::OptimizedLogicalPlan optimized = GlobalOptimizer::with(context).optimize(std::move(boundPlan));
+    PlanStage::PlacedLogicalPlan placed = BottomUpOperatorPlacer::with(context).place(PlanStage::OptimizedLogicalPlan(optimized));
+    PlanStage::DecomposedLogicalPlan<HostAddr> decomposed = QueryDecomposer::with(context).decompose(std::move(placed));
 
-    return optimized;
+    /// Swap out host addr to grpc to identify workers
+    auto swapped = std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{};
+    for (auto& [host, plans] : decomposed.localPlans)
+    {
+        auto conf = context.workerCatalog->getWorker(host);
+        INVARIANT(conf.has_value(), "Worker with hostname {} not present in the worker catalog", host);
+        swapped.emplace(conf->grpc, std::move(plans));
+    }
+    return PlanStage::DistributedLogicalPlan{PlanStage::DecomposedLogicalPlan{std::move(swapped)}, optimized};
 }
 
 }

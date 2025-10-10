@@ -54,7 +54,7 @@ namespace
 
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 
-NES::LocalQueryStatus makeSummary(const NES::QueryId id, const NES::QueryState currState, const std::shared_ptr<NES::Exception>& err)
+NES::LocalQueryStatus makeSummary(const NES::LocalQueryId id, const NES::QueryState currState, const std::shared_ptr<NES::Exception>& err)
 {
     NES::LocalQueryStatus queryStatus;
     queryStatus.queryId = id;
@@ -99,24 +99,41 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor
+        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", "localhost", {{"input_format", "CSV"}}).value();
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (LogicalPlan), (override));
-    MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (override));
-    MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
-    MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (override));
-    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, override));
+    MOCK_METHOD((std::expected<LocalQueryId, Exception>), registerQuery, (LogicalPlan), (override));
+    MOCK_METHOD((std::expected<void, Exception>), start, (LocalQueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), stop, (LocalQueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), unregister, (LocalQueryId), (override));
+    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (LocalQueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
 };
+
+std::pair<QuerySubmitter, MockQuerySubmissionBackend*> createQuerySubmitter()
+{
+    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
+    auto mockBackendPtr = mockBackend.get();
+    auto workerCatalog = std::make_unique<WorkerCatalog>();
+    workerCatalog->addWorker(HostAddr("localhost:9090"), GrpcAddr("localhost:8080"), 10000, {});
+    QuerySubmitter submitter{std::make_unique<QueryManager>(
+        std::move(workerCatalog),
+        [mockBackend = std::move(mockBackend)](const WorkerConfig&) mutable
+        {
+            INVARIANT(mockBackend != nullptr, "mockBackend should only be moved once");
+            return std::move(mockBackend);
+        })};
+    return {std::move(submitter), mockBackendPtr};
+}
 
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::make_unique<MockQuerySubmissionBackend>())};
+    auto [submitter, _] = createQuerySubmitter();
 
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
@@ -129,60 +146,65 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{7};
+    constexpr LocalQueryId id{7};
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
-    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    auto [submitter, mockBackend] = createQuerySubmitter();
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
 
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     auto sourceOperator
         = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withTraitSet(TraitSet{OutputOriginIdsTrait{{OriginId{1}}}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    PlanStage::DecomposedLogicalPlan decomposedPlan{
+        std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost:8080"), std::vector{plan}}}};
+    PlanStage::DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), PlanStage::OptimizedLogicalPlan{plan}};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
+        {makeQuery(
+            SystestQuery::PlanInfo{.queryPlan = distributedPlan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}}, {})},
         1,
         submitter,
         discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
-    EXPECT_EQ(result.front().exception->code(), 10000);
+    EXPECT_THAT(result.front().exception->what(), ::testing::HasSubstr("runtime boom(10000)"));
 }
 
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{11};
+    constexpr LocalQueryId id{11};
 
-    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    auto [submitter, mockBackend] = createQuerySubmitter();
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)))
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
 
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     auto sourceOperator
         = SourceDescriptorLogicalOperator{testPhysicalSource.value()}.withTraitSet(TraitSet{OutputOriginIdsTrait{{OriginId{1}}}});
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    PlanStage::DecomposedLogicalPlan decomposedPlan{
+        std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost:8080"), std::vector{plan}}}};
+    PlanStage::DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), PlanStage::OptimizedLogicalPlan{plan}};
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{.queryPlan = plan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
+            SystestQuery::PlanInfo{.queryPlan = distributedPlan, .sourcesToFilePathsAndCounts = {}, .sinkOutputSchema = Schema{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,

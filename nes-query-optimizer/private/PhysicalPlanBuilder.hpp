@@ -31,7 +31,7 @@ class PhysicalPlanBuilder final
     using Roots = std::vector<std::shared_ptr<PhysicalOperatorWrapper>>;
 
 public:
-    explicit PhysicalPlanBuilder(QueryId id);
+    explicit PhysicalPlanBuilder(LocalQueryId id);
     void addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink);
     void setExecutionMode(ExecutionMode mode);
     void setOperatorBufferSize(uint64_t bufferSize);
@@ -40,7 +40,7 @@ public:
     [[nodiscard]] PhysicalPlan finalize() &&;
 
 private:
-    QueryId queryId;
+    LocalQueryId queryId;
     Roots sinks;
     ExecutionMode executionMode;
     uint64_t operatorBufferSize{};

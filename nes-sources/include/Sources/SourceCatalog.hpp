@@ -59,6 +59,7 @@ public:
     [[nodiscard]] std::optional<SourceDescriptor> addPhysicalSource(
         const LogicalSource& logicalSource,
         std::string_view sourceType,
+        std::string workerId,
         std::unordered_map<std::string, std::string> descriptorConfig,
         const std::unordered_map<std::string, std::string>& parserConfig);
 

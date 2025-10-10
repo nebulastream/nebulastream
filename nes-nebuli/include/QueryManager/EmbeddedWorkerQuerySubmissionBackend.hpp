@@ -13,10 +13,11 @@
 */
 
 #pragma once
-
 #include <QueryManager/QueryManager.hpp>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -27,15 +28,17 @@ class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
     EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
-    std::expected<void, Exception> start(QueryId) override;
-    std::expected<void, Exception> stop(QueryId) override;
-    std::expected<void, Exception> unregister(QueryId) override;
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId) const override;
+    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(LogicalPlan) override;
+    std::expected<void, Exception> start(LocalQueryId) override;
+    std::expected<void, Exception> stop(LocalQueryId) override;
+    std::expected<void, Exception> unregister(LocalQueryId) override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 
 private:
     SingleNodeWorker worker;
 };
+
+BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);
 
 }

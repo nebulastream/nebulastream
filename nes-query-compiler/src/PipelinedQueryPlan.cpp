@@ -27,7 +27,7 @@
 namespace NES
 {
 
-PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, ExecutionMode executionMode) : queryId(id), executionMode(executionMode) { };
+PipelinedQueryPlan::PipelinedQueryPlan(LocalQueryId id, ExecutionMode executionMode) : queryId(id), executionMode(executionMode) { };
 
 static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indentLevel)
 {
@@ -61,7 +61,7 @@ std::vector<std::shared_ptr<Pipeline>> PipelinedQueryPlan::getSourcePipelines() 
         | std::ranges::to<std::vector>();
 }
 
-QueryId PipelinedQueryPlan::getQueryId() const
+LocalQueryId PipelinedQueryPlan::getQueryId() const
 {
     return queryId;
 }
