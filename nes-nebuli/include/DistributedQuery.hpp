@@ -86,17 +86,21 @@ class DistributedQuery
     std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries;
 
 public:
-    [[nodiscard]] auto getLocalQueries() const
+    [[nodiscard]] auto iterate() const
     {
         return localQueries
-            | std::views::transform([](auto& queriesPerWorker) {
-                return queriesPerWorker.second
-                    | std::views::transform([&queriesPerWorker](auto& localQueryId) -> decltype(auto) {
-                        return std::tie(queriesPerWorker.first, localQueryId);
-                    });
-            })
+            | std::views::transform(
+                   [](auto& queriesPerWorker)
+                   {
+                       return queriesPerWorker.second
+                           | std::views::transform(
+                                  [&queriesPerWorker](auto& localQueryId) -> decltype(auto)
+                                  { return std::tie(queriesPerWorker.first, localQueryId); });
+                   })
             | std::views::join;
     }
+
+    const auto& getLocalQueries() { return localQueries; }
 
     bool operator==(const DistributedQuery& other) const = default;
 
@@ -106,8 +110,9 @@ public:
     explicit DistributedQuery(std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries);
 };
 
-std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);
+std::ostream& operator<<(std::ostream& ostream, const DistributedQuery& query);
 std::ostream& operator<<(std::ostream& ostream, const DistributedQueryState& status);
+std::ostream& operator<<(std::ostream& ostream, const DistributedQueryStatus& status);
 }
 
 FMT_OSTREAM(NES::DistributedQueryState);

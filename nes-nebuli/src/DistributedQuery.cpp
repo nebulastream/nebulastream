@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include <DistributedQuery.hpp>
+
 #include <algorithm>
 #include <initializer_list>
 #include <optional>
 #include <sstream>
 #include <vector>
 #include <Listeners/QueryLog.hpp>
-#include <DistributedQuery.hpp>
+#include <fmt/chrono.h>
 #include <ErrorHandling.hpp>
 
 NES::DistributedQueryId NES::getNextDistributedQueryId()
@@ -33,10 +35,10 @@ NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() co
     {
         return std::ranges::any_of(
             localStatusSnapshots | std::views::values,
-            [&](const std::vector<std::expected<LocalQueryStatus, Exception>>& local)
+            [&](const std::unordered_map<LocalQueryId, std::expected<LocalQueryStatus, Exception>>& localMap)
             {
                 return std::ranges::any_of(
-                    local,
+                    localMap | std::views::values,
                     [&](const std::expected<LocalQueryStatus, Exception>& local)
                     { return local.has_value() && std::ranges::contains(state, local.value().state); });
             });
@@ -45,10 +47,10 @@ NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() co
     {
         return std::ranges::all_of(
             localStatusSnapshots | std::views::values,
-            [&](const std::vector<std::expected<LocalQueryStatus, Exception>>& local)
+            [&](const std::unordered_map<LocalQueryId, std::expected<LocalQueryStatus, Exception>>& localMap)
             {
                 return std::ranges::all_of(
-                    local,
+                    localMap | std::views::values,
                     [&](const std::expected<LocalQueryStatus, Exception>& local)
                     { return local.has_value() && std::ranges::contains(state, local.value().state); });
             });
@@ -85,9 +87,9 @@ NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() co
 std::unordered_map<NES::GrpcAddr, std::vector<NES::Exception>> NES::DistributedQueryStatus::getExceptions() const
 {
     std::unordered_map<GrpcAddr, std::vector<Exception>> exceptions;
-    for (const auto& [grpc, localStatusResults] : localStatusSnapshots)
+    for (const auto& [grpc, localStatusMap] : localStatusSnapshots)
     {
-        for (const auto& result : localStatusResults)
+        for (const auto& [localQueryId, result] : localStatusMap)
         {
             if (result.has_value() && result->metrics.error)
             {
@@ -128,16 +130,17 @@ NES::QueryMetrics NES::DistributedQueryStatus::coalesceQueryMetrics() const
     {
         return std::ranges::all_of(
             localStatusSnapshots | std::views::values,
-            [&](const std::vector<std::expected<LocalQueryStatus, Exception>>& local)
+            [&](const std::unordered_map<LocalQueryId, std::expected<LocalQueryStatus, Exception>>& localMap)
             {
                 return std::ranges::all_of(
-                    local,
+                    localMap | std::views::values,
                     [&](const std::expected<LocalQueryStatus, Exception>& local) { return local.has_value() && predicate(local.value()); });
             });
     };
     auto get = [&](auto projection)
     {
-        return localStatusSnapshots | std::views::values | std::views::join
+        return localStatusSnapshots | std::views::values
+            | std::views::transform([](const auto& localMap) { return localMap | std::views::values; }) | std::views::join
             | std::views::transform([&](const std::expected<LocalQueryStatus, Exception>& local) { return projection(local.value()); });
     };
 
@@ -161,7 +164,8 @@ NES::QueryMetrics NES::DistributedQueryStatus::coalesceQueryMetrics() const
     return metrics;
 }
 
-NES::DistributedQuery::DistributedQuery(std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries) : localQueries(std::move(localQueries))
+NES::DistributedQuery::DistributedQuery(std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries)
+    : localQueries(std::move(localQueries))
 {
 }
 

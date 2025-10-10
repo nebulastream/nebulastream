@@ -324,23 +324,9 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
 namespace NES
 {
-template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
-void to_json(BasicJsonType& nlohmann_json_j, const LocalQuery& nlohmann_json_t)
-{
-    nlohmann_json_j["id"] = nlohmann_json_t.id.getRawValue();
-    nlohmann_json_j["grpcAddr"] = nlohmann_json_t.grpcAddr.getRawValue();
-}
-
-template <typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
-void from_json(const BasicJsonType& nlohmann_json_j, LocalQuery& nlohmann_json_t)
-{
-    nlohmann_json_t.id = LocalQueryId(nlohmann_json_j.at("id").template get<LocalQueryId::Underlying>());
-    nlohmann_json_t.grpcAddr = GrpcAddr(nlohmann_json_j.at("grpcAddr").template get<GrpcAddr::Underlying>());
-};
-
 struct PersistentQueryId
 {
-    std::vector<LocalQuery> query;
+    DistributedQuery query;
 
     std::string store()
     {
@@ -352,7 +338,7 @@ struct PersistentQueryId
         }
         std::filesystem::path path(result);
         std::ofstream output(path);
-        nlohmann::json j(query);
+        nlohmann::json j(query.getLocalQueries());
         output << j.dump(4);
         return filename;
     }
@@ -369,7 +355,8 @@ struct PersistentQueryId
         {
             throw InvalidConfigParameter(fmt::format("Could not open file: {}", path));
         }
-        PersistentQueryId result(nlohmann::json::parse(file).get<std::vector<LocalQuery>>());
+        PersistentQueryId result(DistributedQuery(
+            nlohmann::json::parse(file).get<std::remove_cvref_t<decltype(std::declval<DistributedQuery>().getLocalQueries())>>()));
         return result;
     }
 };
@@ -501,7 +488,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
                 INVARIANT(queryDescriptor.has_value(), "Query should exist in the query manager if statement handler succeed");
-                NES::PersistentQueryId persistentId(queryDescriptor->getLocalQueries());
+                NES::PersistentQueryId persistentId(*queryDescriptor);
                 std::cout << persistentId.store() << '\n';
             }
             else

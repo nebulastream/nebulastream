@@ -171,14 +171,11 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     auto query = queryResult.value();
     std::vector<Exception> exceptions;
 
-    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
     {
         try
         {
-            INVARIANT(
-                backends.contains(grpcAddr),
-                "Local query references node ({}) that is not part of the cluster",
-                grpcAddr);
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
             const auto result = backends.at(grpcAddr).start(localQueryId);
             if (result)
             {
@@ -210,23 +207,20 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
     }
     auto query = queryResult.value();
 
-    std::unordered_map<GrpcAddr, std::vector<std::expected<LocalQueryStatus, Exception>>> localStatusResults;
+    std::unordered_map<GrpcAddr, std::unordered_map<LocalQueryId, std::expected<LocalQueryStatus, Exception>>> localStatusResults;
 
-    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
     {
         try
         {
-            INVARIANT(
-                backends.contains(grpcAddr),
-                "Local query references node ({}) that is not part of the cluster",
-                grpcAddr);
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
             const auto result = backends.at(grpcAddr).status(localQueryId);
-            localStatusResults[grpcAddr].emplace_back(result);
+            localStatusResults[grpcAddr].emplace(localQueryId, result);
         }
         catch (std::exception& e)
         {
-            localStatusResults[grpcAddr].emplace_back(
-                std::unexpected(QueryStatusFailed("Message from external exception: {} ", e.what())));
+            localStatusResults[grpcAddr].emplace(
+                localQueryId, std::unexpected(QueryStatusFailed("Message from external exception: {} ", e.what())));
         }
     }
 
@@ -277,14 +271,11 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
 
     std::vector<Exception> exceptions{};
 
-    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
     {
         try
         {
-            INVARIANT(
-                backends.contains(grpcAddr),
-                "Local query references node ({}) that is not part of the cluster",
-                grpcAddr);
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
             auto result = backends.at(grpcAddr).stop(localQueryId);
             if (result)
             {
@@ -316,14 +307,11 @@ std::expected<void, std::vector<Exception>> QueryManager::unregister(Distributed
     auto query = queryResult.value();
     std::vector<Exception> exceptions{};
 
-    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
+    for (const auto& [grpcAddr, localQueryId] : query.iterate())
     {
         try
         {
-            INVARIANT(
-                backends.contains(grpcAddr),
-                "Local query references node ({}) that is not part of the cluster",
-                grpcAddr);
+            INVARIANT(backends.contains(grpcAddr), "Local query references node ({}) that is not part of the cluster", grpcAddr);
             auto result = backends.at(grpcAddr).unregister(localQueryId);
             if (result)
             {
