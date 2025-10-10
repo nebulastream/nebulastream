@@ -24,8 +24,9 @@ PredictionCacheSecondChance::PredictionCacheSecondChance(
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<uint64_t*>& hitsRef,
-    const nautilus::val<uint64_t*>& missesRef)
-    : PredictionCacheFIFO(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
+    const nautilus::val<uint64_t*>& missesRef,
+    const nautilus::val<size_t>& inputSize)
+    : PredictionCacheFIFO(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef, inputSize)
 {
 }
 

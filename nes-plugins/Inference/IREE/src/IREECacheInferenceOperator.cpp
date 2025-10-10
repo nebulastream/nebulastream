@@ -204,15 +204,24 @@ void IREECacheInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
 {
     PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex);
+
     const auto startOfEntries = nautilus::invoke(
         +[](const IREEInferenceOperatorHandler* opHandler, const WorkerThreadId workerThreadId)
         {
             return opHandler->getStartOfPredictionCacheEntries(
                 IREEInferenceOperatorHandler::StartPredictionCacheEntriesIREEInference{workerThreadId});
-        },
-        globalOperatorHandler,
-        executionCtx.workerThreadId);
-    auto predictionCache = NES::Util::createPredictionCache(predictionCacheOptions, globalOperatorHandler, startOfEntries);
+        }, globalOperatorHandler, executionCtx.workerThreadId);
+
+    const auto inputSize = nautilus::invoke(
+        +[](void* inferModelHandler, WorkerThreadId thread)
+        {
+            auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
+            auto adapter = handler->getIREEAdapter(thread);
+            return adapter->inputSize;
+        }, globalOperatorHandler, executionCtx.workerThreadId);
+
+    auto predictionCache = NES::Util::createPredictionCache(
+        predictionCacheOptions, globalOperatorHandler, startOfEntries, inputSize);
     executionCtx.setLocalOperatorState(id, std::move(predictionCache));
 }
 

@@ -29,8 +29,9 @@ PredictionCache2Q::PredictionCache2Q(
     const nautilus::val<int8_t*>& startOfFifoEntries,
     const nautilus::val<int8_t*>& startOfLRUEntries,
     const uint64_t fifoQueueSize,
-    const uint64_t lruQueueSize)
-    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
+    const uint64_t lruQueueSize,
+    const nautilus::val<size_t>& inputSize)
+    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef, inputSize)
     , fifoQueueSize(fifoQueueSize)
     , lruQueueSize(lruQueueSize)
     , startOfFifoEntries(startOfFifoEntries)

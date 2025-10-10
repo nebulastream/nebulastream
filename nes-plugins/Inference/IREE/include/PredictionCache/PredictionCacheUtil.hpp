@@ -25,6 +25,7 @@ namespace NES::Util
 std::unique_ptr<PredictionCache> createPredictionCache(
     const Configurations::PredictionCacheOptions& predictionCacheOptions,
     nautilus::val<OperatorHandler*> globalOperatorHandler,
-    const nautilus::val<int8_t*>& startOfEntries);
+    const nautilus::val<int8_t*>& startOfEntries,
+    const nautilus::val<size_t>& inputSize);
 
 }
