@@ -21,6 +21,7 @@
         mlirBinary = nautilusPackages.mlirBinary;
         nautilusPkg = nautilusPackages.nautilus;
 
+        nlohmann_jsonPkg = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
         cpptracePkg = pkgs.callPackage ./.nix/cpptrace/package.nix { };
         argparsePkg = pkgs.callPackage ./.nix/argparse/package.nix { };
         libcuckooPkg = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
@@ -36,7 +37,6 @@
           grpc
           protobuf
           abseil-cpp
-          nlohmann_json
           yaml-cpp
           replxx
           magic-enum
@@ -118,6 +118,7 @@
           argparsePkg
           libcuckooPkg
           nautilusPkg
+          nlohmann_jsonPkg
         ];
 
         cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;
