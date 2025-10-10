@@ -258,6 +258,7 @@ if (CODE_COVERAGE)
     list(REMOVE_ITEM NES_DIRECTORIES "nes-single-node-worker")
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
     list(REMOVE_ITEM NES_DIRECTORIES "nes-plugins")
+    list(REMOVE_ITEM NES_DIRECTORIES "nes-network")
 
     foreach (NES_DIR ${NES_DIRECTORIES})
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
