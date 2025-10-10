@@ -14,6 +14,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-docs-changes:
+    runs-on: ubuntu-22.04
+    outputs:
+      docs_changed: ${{ steps.changed.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: changed
+        uses: tj-actions/changed-files@v46.0.1
+        with:
+          files: |
+            docs/website/**
+
+  build-docs-website:
+    needs: detect-docs-changes
+    if: ${{ needs.detect-docs-changes.outputs.docs_changed == 'true' }}
+    uses: ./.github/workflows/docs_website_sync.yml
+    with:
+      deploy: false
+    secrets: inherit
+
   get-dev-images:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
