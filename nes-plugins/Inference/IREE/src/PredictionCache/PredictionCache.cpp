@@ -24,13 +24,15 @@ PredictionCache::PredictionCache(
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<uint64_t*>& hitsRef,
-    const nautilus::val<uint64_t*>& missesRef)
+    const nautilus::val<uint64_t*>& missesRef,
+    const nautilus::val<size_t>& inputSize)
     : IREEInferenceLocalState(operatorHandler)
     , startOfEntries(startOfEntries)
     , numberOfEntries(numberOfEntries)
     , sizeOfEntry(sizeOfEntry)
     , numberOfHits(hitsRef)
     , numberOfMisses(missesRef)
+    , inputSize(inputSize)
 {
 }
 
@@ -38,6 +40,7 @@ void PredictionCache::incrementNumberOfHits()
 {
     auto currentNumberOfHits = static_cast<nautilus::val<uint64_t>>(*numberOfHits);
     currentNumberOfHits = currentNumberOfHits + 1;
+    nautilus::invoke(+[](uint64_t n){ std::cout << "Hits: " << n << '\n'; }, currentNumberOfHits);
     *numberOfHits = currentNumberOfHits;
 }
 
@@ -45,6 +48,7 @@ void PredictionCache::incrementNumberOfMisses()
 {
     auto currentNumberOfMisses = static_cast<nautilus::val<uint64_t>>(*numberOfMisses);
     currentNumberOfMisses = currentNumberOfMisses + 1;
+    nautilus::invoke(+[](uint64_t n){ std::cout << "Misses: " << n << '\n'; }, currentNumberOfMisses);
     *numberOfMisses = currentNumberOfMisses;
 }
 
@@ -74,7 +78,7 @@ nautilus::val<bool> PredictionCache::foundRecord(const nautilus::val<uint64_t>& 
             return std::memcmp(candidate, cache, size) == 0;
         }
         return false;
-    }, candidateRecord, cacheRecord, nautilus::val<size_t>(sizeOfEntry));
+    }, candidateRecord, cacheRecord, nautilus::val(inputSize));
     if (isEqual)
     {
         return true;

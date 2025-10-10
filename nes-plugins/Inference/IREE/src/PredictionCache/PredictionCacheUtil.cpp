@@ -24,7 +24,8 @@ namespace NES::Util
 std::unique_ptr<PredictionCache> createPredictionCache(
     const Configurations::PredictionCacheOptions& predictionCacheOptions,
     nautilus::val<OperatorHandler*> globalOperatorHandler,
-    const nautilus::val<int8_t*>& startOfEntries)
+    const nautilus::val<int8_t*>& startOfEntries,
+    const nautilus::val<size_t>& inputSize)
 {
     /// Calculating the correct starting memory refs
     const auto hitsRef = startOfEntries;
@@ -50,7 +51,8 @@ std::unique_ptr<PredictionCache> createPredictionCache(
                 sizeof(PredictionCacheEntryFIFO),
                 predictionCacheEntries,
                 hitsRef,
-                missesRef);
+                missesRef,
+                inputSize);
         case NES::Configurations::PredictionCacheType::LFU:
             return std::make_unique<PredictionCacheLFU>(
                 globalOperatorHandler,
@@ -58,7 +60,8 @@ std::unique_ptr<PredictionCache> createPredictionCache(
                 sizeof(PredictionCacheEntryLFU),
                 predictionCacheEntries,
                 hitsRef,
-                missesRef);
+                missesRef,
+                inputSize);
         case NES::Configurations::PredictionCacheType::LRU:
             return std::make_unique<PredictionCacheLRU>(
                 globalOperatorHandler,
@@ -66,7 +69,8 @@ std::unique_ptr<PredictionCache> createPredictionCache(
                 sizeof(PredictionCacheEntryLRU),
                 predictionCacheEntries,
                 hitsRef,
-                missesRef);
+                missesRef,
+                inputSize);
         case NES::Configurations::PredictionCacheType::SECOND_CHANCE:
             return std::make_unique<PredictionCacheSecondChance>(
                 globalOperatorHandler,
@@ -74,7 +78,8 @@ std::unique_ptr<PredictionCache> createPredictionCache(
                 sizeof(PredictionCacheEntrySecondChance),
                 predictionCacheEntries,
                 hitsRef,
-                missesRef);
+                missesRef,
+                inputSize);
         case NES::Configurations::PredictionCacheType::TWO_QUEUES: {
             /// We want to have a minimum size of one for both queues
             if (predictionCacheOptions.numberOfEntries < 2)
@@ -105,7 +110,8 @@ std::unique_ptr<PredictionCache> createPredictionCache(
                 startOfFifoEntries,
                 startOfLRUEntries,
                 fifoQueueSize,
-                lruQueueSize);
+                lruQueueSize,
+                inputSize);
         }
     }
     std::unreachable();
