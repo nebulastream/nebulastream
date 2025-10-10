@@ -32,12 +32,9 @@
 #include <unistd.h>
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <YAML/YAMLBinder.hpp>
-#ifndef EOF
-    #define EOF (-1)
-#endif
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <YAML/YAMLBinder.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>

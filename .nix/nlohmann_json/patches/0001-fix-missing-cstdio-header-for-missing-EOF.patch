@@ -1,0 +1,24 @@
+From 81515bfb5f31259d95f37c8b831671621e1b4e7a Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Fri, 10 Oct 2025 15:50:30 +0200
+Subject: [PATCH] fix missing cstdio header for missing EOF
+
+---
+ include/nlohmann/detail/meta/type_traits.hpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/nlohmann/detail/meta/type_traits.hpp b/include/nlohmann/detail/meta/type_traits.hpp
+index d834a0d56..d33f092da 100644
+--- a/include/nlohmann/detail/meta/type_traits.hpp
++++ b/include/nlohmann/detail/meta/type_traits.hpp
+@@ -8,6 +8,7 @@
+ 
+ #pragma once
+ 
++#include <cstdio>
+ #include <limits> // numeric_limits
+ #include <string> // char_traits
+ #include <tuple> // tuple
+-- 
+2.50.0
+
