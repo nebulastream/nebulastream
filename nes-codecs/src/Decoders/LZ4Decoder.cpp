@@ -15,14 +15,17 @@
 #include <LZ4Decoder.hpp>
 
 #include <cstdio>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <ostream>
 #include <utility>
 
-#include <../../../nes-common/include/ErrorHandling.hpp>
-#include <../../../nes-common/include/Util/Logger/Logger.hpp>
-#include <../../../nes-memory/include/Runtime/TupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <DecoderRegistry.hpp>
+#include <ErrorHandling.hpp>
 #include <lz4frame.h>
 
 namespace NES
@@ -46,52 +49,62 @@ LZ4Decoder::~LZ4Decoder()
     }
 }
 
-Decoder::DecodeReturnType LZ4Decoder::decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer)
+void LZ4Decoder::decodeAndEmit(
+    TupleBuffer& encodedBuffer,
+    TupleBuffer& emptyDecodedBuffer,
+    const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
 {
-    /// The amount of bytes in the encoded buffer
+    TupleBuffer currentDecodedBuffer = emptyDecodedBuffer;
+
+    /// Create variables to hold the encoded bytes in the tuple buffer and the already decoded bytes
     const size_t encodedBytes = encodedBuffer.getNumberOfTuples();
-    PRECONDITION(positionInCurrentBuffer < encodedBuffer, "PositionInCurrentBuffer is out of bounds.");
+    size_t amountOfDecodedBytes = 0;
 
-    /// Create size_t variables of the buffer capacities, which will be overwritten by LZ4F_decompress
-    size_t remainingEncodedBytes = encodedBytes - positionInCurrentBuffer;
-    size_t tupleBufferSize = emptyDecodedBuffer.getBufferSize();
-
-    /// Decode data from the encoded buffer starting from positionInCurrentBuffer and write the result into emptyDecodedBuffer
-    /// until we either decoded all of the data (return true) or emptyDecodedBuffer was filled up completely (return false).
-    const auto errorCode = LZ4F_decompress(
-        decompCtx,
-        emptyDecodedBuffer.getMemArea(),
-        &tupleBufferSize,
-        encodedBuffer.getMemArea() + positionInCurrentBuffer,
-        &remainingEncodedBytes,
-        nullptr);
-
-    if (LZ4F_isError(errorCode))
+    while (amountOfDecodedBytes < encodedBytes)
     {
-        NES_ERROR("Failed to decompress lz4-encoded buffer.");
+        /// Create size_t variables of the buffer capacities, which will be overwritten by LZ4F_decompress
+        size_t remainingEncodedBytes = encodedBytes - amountOfDecodedBytes;
+        size_t tupleBufferSize = currentDecodedBuffer.getBufferSize();
+
+        /// Decode data from the encoded buffer starting from amountOfDecodedBytes and write the result into currentDecodedBuffer
+        /// until we either decoded all of the data or the decodedBuffer is completely filled.
+        const auto errorCode = LZ4F_decompress(
+            decompCtx,
+            currentDecodedBuffer.getMemArea(),
+            &tupleBufferSize,
+            encodedBuffer.getMemArea() + amountOfDecodedBytes,
+            &remainingEncodedBytes,
+            nullptr);
+
+        if (LZ4F_isError(errorCode))
+        {
+            NES_ERROR("Failed to decompress lz4-encoded buffer.");
+        }
+
+        /// TupleBufferSize now yields the amount of bytes that were written in the currentDecodedBuffer
+        currentDecodedBuffer.setNumberOfTuples(tupleBufferSize);
+
+        /// RemainingEncodedBytes now yields the amount of bytes that were decoded
+        amountOfDecodedBytes += remainingEncodedBytes;
+
+        if (amountOfDecodedBytes < encodedBytes)
+        {
+            /// We still have encoded bytes left. We emit the filled decodedBuffer and obtain a new, empty buffer
+            auto emptyBuffer = emitAndProvide(currentDecodedBuffer, DecodeStatusType::DECODING_REQUIRES_ANOTHER_BUFFER);
+            PRECONDITION(emptyBuffer.has_value(), "emitAndProvide did not provide a new empty tuple buffer!");
+            currentDecodedBuffer = emptyBuffer.value();
+        }
+        else
+        {
+            auto result = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
+        }
     }
-
-    /// TupleBufferSize now yields the amount of bytes that were written in the emptyDecodedBuffer
-    emptyDecodedBuffer.setNumberOfTuples(tupleBufferSize);
-
-    /// RemainingEncodedBytes now yields the amount of bytes that were decoded
-    positionInCurrentBuffer += remainingEncodedBytes;
-
-    if (positionInCurrentBuffer >= encodedBytes)
-    {
-        /// We decoded all bytes in encodedTupleBuffer and signalize this by returning the corresponding DecodeReturnType
-        /// Reset positionInCurrentBuffer
-        positionInCurrentBuffer = 0;
-        return DecodeReturnType::FINISHED_ENCODING_CURRENT_BUFFER;
-    }
-    /// There are still bytes in the encoded buffer that were not decoded yet.
-    return DecodeReturnType::REQUIRES_CURRENT_BUFFER_AGAIN;
 }
 
 std::ostream& LZ4Decoder::toString(std::ostream& str) const
 {
     /// Simply returns name due to lack of other meaningful debug information.
-    str << "LZ4Decoder: Current position in encoded buffer: " << positionInCurrentBuffer;
+    str << "LZ4Decoder";
     return str;
 }
 

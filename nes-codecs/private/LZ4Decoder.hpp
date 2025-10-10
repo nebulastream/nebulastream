@@ -34,13 +34,15 @@ public:
     LZ4Decoder(LZ4Decoder&&) = delete;
     LZ4Decoder& operator=(LZ4Decoder&&) = delete;
 
-    DecodeReturnType decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) override;
+    void decodeAndEmit(
+        TupleBuffer& encodedBuffer,
+        TupleBuffer& emptyDecodedBuffer,
+        const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide) override;
+
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     /// Decompression context to keep track of decompression metadata during buffer decoding
     LZ4F_decompressionContext_t decompCtx;
-    /// Position of next byte that has to be decoded in the expected encoded buffer
-    size_t positionInCurrentBuffer = 0;
 };
 }

@@ -33,7 +33,11 @@ public:
     ZstdDecoder(ZstdDecoder&&) = delete;
     ZstdDecoder& operator=(ZstdDecoder&&) = delete;
 
-    DecodeReturnType decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) override;
+    void decodeAndEmit(
+        TupleBuffer& encodedBuffer,
+        TupleBuffer& emptyDecodedBuffer,
+        const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide) override;
+
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
@@ -41,8 +45,6 @@ private:
     /// We use the stream decompression functions because we do not know the size of the original data in the encoded
     /// buffers, which is required to use the frame decompression methods
     ZSTD_DStream* decompCtx = nullptr;
-    /// Position of next byte that has to be decoded in the expected encoded buffer
-    size_t positionInCurrentBuffer = 0;
 };
 
 };

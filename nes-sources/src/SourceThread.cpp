@@ -140,14 +140,21 @@ SourceImplementationTermination dataSourceThreadRoutine(
             /// If a decoder implementation is given, the source produces encoded data. We must decode the empty buffer and emit the result.
             if (decoder.has_value())
             {
-                Decoder::DecodeReturnType decodeStatus;
-                do
+                /// Lambda function to emit a decoded buffer and optionally provide an empty, new one.
+                auto emitAndProvide = [&emit, &bufferProvider](
+                                          const TupleBuffer& filledDecodedBuffer,
+                                          const Decoder::DecodeStatusType decodeStatus) -> std::optional<TupleBuffer>
                 {
-                    /// Get a new buffer for the decoded data
-                    auto decodedBuffer = bufferProvider.getBufferBlocking();
-                    decodeStatus = decoder.value()->decode(emptyBuffer, decodedBuffer);
-                    emit(decodedBuffer, true);
-                } while (decodeStatus == Decoder::DecodeReturnType::REQUIRES_CURRENT_BUFFER_AGAIN);
+                    /// Emit the filled buffer.
+                    emit(filledDecodedBuffer, true);
+                    /// If required, provide a new, empty buffer.
+                    return decodeStatus == Decoder::DecodeStatusType::DECODING_REQUIRES_ANOTHER_BUFFER ? std::optional(bufferProvider.getBufferBlocking())
+                                                                                                       : std::nullopt;
+                };
+
+                /// Get an initial empty buffer for the decoded data
+                auto decodedBuffer = bufferProvider.getBufferBlocking();
+                decoder.value()->decodeAndEmit(emptyBuffer, decodedBuffer, emitAndProvide);
             }
             else
             {

@@ -26,27 +26,30 @@ namespace NES
 {
 
 /// Decoder is an interface for all specific decoder classes that obtain a tuple buffer filled with data that has been encoded following
-/// a certain codec, for example the compression codec LZ4. A decoder can decode the contents of the buffer with decode() and return
-/// a vector of tuple buffers filled with the decoded data
-/// (Vector, since the size of the decoded data rarely corresponds to the size of the encoded data).
+/// a certain codec, for example the compression codec LZ4. A decoder can decode and emit the contents of the buffer with decodeAndEmit().
 
 class Decoder
 {
 public:
-    enum class DecodeReturnType : uint8_t
+    /// Enum used to signalize if the decode method needs a new, empty buffer.
+    enum class DecodeStatusType : uint8_t
     {
-        FINISHED_ENCODING_CURRENT_BUFFER,
-        REQUIRES_CURRENT_BUFFER_AGAIN
+        FINISHED_DECODING_CURRENT_BUFFER,
+        DECODING_REQUIRES_ANOTHER_BUFFER
     };
 
     Decoder() = default;
     virtual ~Decoder() = default;
 
-    /// Decode the data in encodedBuffer starting from positionInCurrentBuffer and write the decoded data in the provided emptyDecodedBuffer.
-    /// Returns DecodeReturnType depending on whether the whole encodedBuffer was decoded or not.
-    /// If not, decode should be called again with the same encoded buffer and a new emptyDecodedBuffer.
-    /// Will update positionInCurrentBuffer to the index of the first byte in encodedBuffer that was not decoded yet.
-    virtual DecodeReturnType decode(TupleBuffer& encodedBuffer, TupleBuffer& emptyDecodedBuffer) = 0;
+    /// Decodes the data in encodedBuffer and writes the decoded data in the provided emptyDecodedBuffer.
+    /// If the space in the decodedBuffer does not suffice to decode all the data, the emitAndProvide function will emit the decodedBuffer
+    /// and provide a new, empty buffer to further write decoded data to.
+    /// If called with the FINISHED_DECODING_CURRENT_BUFFER enum, emitAndProvide should only emit and not provide a new buffer.
+    virtual void decodeAndEmit(
+        TupleBuffer& encodedBuffer,
+        TupleBuffer& emptyDecodedBuffer,
+        const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
+        = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const Decoder& decoder);
 
