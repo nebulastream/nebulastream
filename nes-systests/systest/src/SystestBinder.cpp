@@ -41,6 +41,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -471,13 +472,13 @@ struct SystestBinder::Impl
         const auto parseResult = managedParser->parseSingle();
         if (not parseResult.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", Util::replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", NES::Util::replaceAll(query, "\n", " "));
         }
 
         const auto binding = binder.bind(parseResult.value().get());
         if (not binding.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", Util::replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", NES::Util::replaceAll(query, "\n", " "));
         }
 
         if (const auto& statement = binding.value(); std::holds_alternative<CreateLogicalSourceStatement>(statement))
@@ -519,7 +520,7 @@ struct SystestBinder::Impl
                 return "";
             }
             const auto intoLength = std::string("INTO").length();
-            auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+            auto trimmedSinkName = std::string(NES::Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
 
             /// As the sink name might have a semicolon at the end, we remove it
             if (trimmedSinkName.back() == ';')
@@ -530,7 +531,7 @@ struct SystestBinder::Impl
         }();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
+        const auto sinkForQuery = NES::Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
         query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
@@ -538,7 +539,7 @@ struct SystestBinder::Impl
 
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
-        if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
+        if (auto sinkExpected = sltSinkProvider.createActualSink(NES::Util::toUpperCase(sinkName), sinkForQuery, resultFile);
             not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
@@ -592,7 +593,7 @@ struct SystestBinder::Impl
             std::string token;
             while (stream >> token)
             {
-                if (Util::toLowerCase(token) == "into")
+                if (NES::Util::toLowerCase(token) == "into")
                 {
                     std::string sink;
                     if (!(stream >> sink))
@@ -626,15 +627,15 @@ struct SystestBinder::Impl
 
         auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
 
-        if (auto leftSinkExpected
-            = sltSinkProvider.createActualSink(Util::toUpperCase(leftSinkName), Util::toUpperCase(leftSinkForQuery), leftResultFile);
+        if (auto leftSinkExpected = sltSinkProvider.createActualSink(
+                NES::Util::toUpperCase(leftSinkName), NES::Util::toUpperCase(leftSinkForQuery), leftResultFile);
             not leftSinkExpected.has_value())
         {
             currentTest.setException(leftSinkExpected.error());
             return;
         }
-        if (auto rightSinkExpected
-            = sltSinkProvider.createActualSink(Util::toUpperCase(rightSinkName), Util::toUpperCase(rightSinkForQuery), rightResultFile);
+        if (auto rightSinkExpected = sltSinkProvider.createActualSink(
+                NES::Util::toUpperCase(rightSinkName), NES::Util::toUpperCase(rightSinkForQuery), rightResultFile);
             not rightSinkExpected.has_value())
         {
             currentTest.setException(rightSinkExpected.error());

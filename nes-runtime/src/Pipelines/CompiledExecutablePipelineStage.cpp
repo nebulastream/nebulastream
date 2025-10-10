@@ -61,15 +61,24 @@ CompiledExecutablePipelineStage::compilePipeline() const
         /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
         /// Additionally, we can NOT use const or const references for the parameters of the lambda function
         /// NOLINTBEGIN(performance-unnecessary-value-param)
-        const std::function compiledFunction = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                                   nautilus::val<const TupleBuffer*> recordBufferRef,
-                                                   nautilus::val<const Arena*> arenaRef)
+        const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
+            compiledFunction = [this](
+                                   nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
+                                   nautilus::val<const TupleBuffer*> recordBufferRef,
+                                   nautilus::val<const Arena*> arenaRef)
         {
             auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
             RecordBuffer recordBuffer(recordBufferRef);
 
-            pipeline->getRootOperator().open(ctx, recordBuffer);
-            pipeline->getRootOperator().close(ctx, recordBuffer);
+            switch (pipeline->getRootOperator().open(ctx, recordBuffer))
+            {
+                case OpenReturnState::FINISHED: {
+                    pipeline->getRootOperator().close(ctx, recordBuffer);
+                }
+                case OpenReturnState::NOT_FINISHED: {
+                    break;
+                }
+            }
         };
         /// NOLINTEND(performance-unnecessary-value-param)
         return engine.registerFunction(compiledFunction);

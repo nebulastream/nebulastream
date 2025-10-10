@@ -34,7 +34,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
@@ -206,7 +205,7 @@ void SystestParser::parse()
 std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (Util::toLowerCase(line).starts_with(Util::toLowerCase(QueryToken)))
+    if (NES::Util::toLowerCase(line).starts_with(NES::Util::toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
     }
@@ -217,7 +216,8 @@ std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 
     /// Lookup in map
     const auto* it = std::ranges::find_if(
-        stringToToken, [&potentialToken](const auto& pair) { return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken); });
+        stringToToken,
+        [&potentialToken](const auto& pair) { return NES::Util::toLowerCase(pair.first) == NES::Util::toLowerCase(potentialToken); });
     if (it != stringToToken.end())
     {
         return it->second;
@@ -294,7 +294,8 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
     std::vector<std::string> tuples;
     /// skip the result line `----`
-    if (currentLine < lines.size() && (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter) || ignoreFirst))
+    if (currentLine < lines.size()
+        && (NES::Util::toLowerCase(lines[currentLine]) == NES::Util::toLowerCase(ResultDelimiter) || ignoreFirst))
     {
         currentLine++;
     }
@@ -389,7 +390,7 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
         {
             if (!queryString.empty())
             {
-                const auto trimmedQuerySoFar = Util::trimWhiteSpaces(std::string_view(queryString));
+                const auto trimmedQuerySoFar = NES::Util::trimWhiteSpaces(std::string_view(queryString));
                 if (!trimmedQuerySoFar.empty() && trimmedQuerySoFar.back() == ';')
                 {
                     break;
@@ -419,8 +420,8 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
             }
             else
             {
-                const auto trimmedLineView = Util::trimWhiteSpaces(std::string_view(line));
-                if (!trimmedLineView.empty() && Util::toLowerCase(trimmedLineView) == "differential")
+                const auto trimmedLineView = NES::Util::trimWhiteSpaces(std::string_view(line));
+                if (!trimmedLineView.empty() && NES::Util::toLowerCase(trimmedLineView) == "differential")
                 {
                     throw SLTUnexpectedToken(
                         "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
@@ -490,7 +491,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     /// Skip the ERROR token
     std::string token;
     stream >> token;
-    INVARIANT(Util::toLowerCase(token) == Util::toLowerCase(ErrorToken), "Expected ERROR token");
+    INVARIANT(NES::Util::toLowerCase(token) == NES::Util::toLowerCase(ErrorToken), "Expected ERROR token");
 
     /// Read the error code
     std::string errorStr;

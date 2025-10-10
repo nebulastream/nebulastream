@@ -24,6 +24,8 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -41,7 +43,7 @@ public:
         std::shared_ptr<TupleBufferRef> leftMemoryProvider,
         std::shared_ptr<TupleBufferRef> rightMemoryProvider);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    OpenReturnState open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 protected:
     void performNLJ(

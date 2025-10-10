@@ -77,7 +77,7 @@ endforeach ()
 if (NOT CODE_COVERAGE)
     ExternalData_Add_Test(test-data
             NAME systest_compiler
-            COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=COMPILER --enable_google_eventTrace=true)
+            COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large CompilationIntensive --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=COMPILER --enable_google_eventTrace=true)
 endif (NOT CODE_COVERAGE)
 
 
@@ -118,7 +118,7 @@ if (NOT CODE_COVERAGE)
                     --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.join_strategy=${joinStrategy})
             ExternalData_Add_Test(test-data
                     NAME systest_join_${workerThreads}_${joinStrategy}_compiler
-                    COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
+                    COMMAND systest -n 6 --groups Join --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
                     --
                     --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.join_strategy=${joinStrategy})
         endforeach ()
@@ -129,7 +129,7 @@ if (NOT CODE_COVERAGE)
                 --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000)
         ExternalData_Add_Test(test-data
                 NAME systest_agg_${workerThreads}_compiler
-                COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
+                COMMAND systest -n 6 --groups Aggregation --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                 --
                 --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000)
     endforeach ()

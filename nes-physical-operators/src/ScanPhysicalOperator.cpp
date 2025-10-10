@@ -26,17 +26,17 @@
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <val.hpp>
 
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
-    : bufferRef(std::move(bufferRef)), projections(std::move(projections))
+ScanPhysicalOperator::ScanPhysicalOperator(std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef)
+    : bufferRef(std::move(bufferRef)), projections(this->bufferRef->getMemoryLayout()->getSchema().getFieldNames())
 {
 }
 
-void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+OpenReturnState ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -45,15 +45,25 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
+
+    if (const auto indexBufferResult = this->bufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena);
+        indexBufferResult == Interface::BufferRef::IndexBufferResult::REQUIRES_REPEAT)
+    {
+        return OpenReturnState::NOT_FINISHED;
+    }
+
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
+
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
+
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
+    return OpenReturnState::FINISHED;
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

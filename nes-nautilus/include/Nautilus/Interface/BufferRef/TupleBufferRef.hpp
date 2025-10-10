@@ -22,10 +22,17 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Arena.hpp>
 #include <val_ptr.hpp>
 
 namespace NES::Nautilus::Interface::BufferRef
 {
+
+enum class IndexBufferResult : uint8_t
+{
+    INITIALIZED = 0,
+    REQUIRES_REPEAT = 1,
+};
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferRef is closely coupled with a memory layout, and we support row and column layouts, currently.
@@ -60,6 +67,8 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
+
+    virtual IndexBufferResult indexBuffer(RecordBuffer&, ArenaRef&) = 0;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <unordered_map>
@@ -34,6 +35,20 @@ nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T:
 {
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
     return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
+}
+
+template <typename T>
+static nautilus::val<T*> getMemberWithOffset(nautilus::val<int8_t*> objectReference, const size_t memberOffset)
+{
+#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
+    return static_cast<nautilus::val<T*>>(objectReference + memberOffset); /// NOLINT
+}
+
+template <typename T>
+static nautilus::val<T**> getMemberPtrWithOffset(nautilus::val<T*> objectReference, const size_t memberOffset)
+{
+#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
+    return static_cast<nautilus::val<T**>>(objectReference + memberOffset); /// NOLINT
 }
 
 template <typename T>

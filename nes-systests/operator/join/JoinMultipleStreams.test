@@ -1,6 +1,6 @@
 # name: join/JoinMultipleStreams.test
 # description: Test join operator
-# groups: [WindowOperators, Join]
+# groups: [WindowOperators, Join, CompilationIntensive]
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
