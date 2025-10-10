@@ -261,3 +261,35 @@ DOCKER_NEBUCLI() {
   run DOCKER_NEBUCLI stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
+
+@test "test worker not available" {
+  setup_distributed tests/good/crazy-join.yaml
+
+  docker compose stop worker-1
+
+  run DOCKER_NEBUCLI -d start
+  grep "(6002) : query registration call failed; Status: UNAVAILABLE" nebucli.log
+  grep "worker-1:8080: Domain name not found" nebucli.log
+  [ "$status" -eq 1 ]
+
+  docker compose start worker-1
+  # now it should work
+  run DOCKER_NEBUCLI start
+  [ "$status" -eq 0 ]
+}
+
+# bats test_tags=bats:focus
+@test "worker goes offline during processing" {
+  setup_distributed tests/good/crazy-join.yaml
+
+  run DOCKER_NEBUCLI start
+  [ "$status" -eq 0 ]
+  QUERY_ID=$output
+
+  sleep 1
+
+  docker compose stop worker-1
+  run DOCKER_NEBUCLI status "$QUERY_ID"
+  echo $output
+  [ "$status" -eq 1 ]
+}

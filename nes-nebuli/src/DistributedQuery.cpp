@@ -12,7 +12,14 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <initializer_list>
+#include <optional>
+#include <sstream>
+#include <vector>
+#include <Listeners/QueryLog.hpp>
 #include <DistributedQuery.hpp>
+#include <ErrorHandling.hpp>
 
 NES::DistributedQueryId NES::getNextDistributedQueryId()
 {
@@ -26,13 +33,25 @@ NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() co
     {
         return std::ranges::any_of(
             localStatusSnapshots | std::views::values,
-            [&](const LocalQueryStatus& local) { return std::ranges::contains(state, local.state); });
+            [&](const std::vector<std::expected<LocalQueryStatus, Exception>>& local)
+            {
+                return std::ranges::any_of(
+                    local,
+                    [&](const std::expected<LocalQueryStatus, Exception>& local)
+                    { return local.has_value() && std::ranges::contains(state, local.value().state); });
+            });
     };
     auto all = [&](std::initializer_list<QueryState> state)
     {
         return std::ranges::all_of(
             localStatusSnapshots | std::views::values,
-            [&](const LocalQueryStatus& local) { return std::ranges::contains(state, local.state); });
+            [&](const std::vector<std::expected<LocalQueryStatus, Exception>>& local)
+            {
+                return std::ranges::all_of(
+                    local,
+                    [&](const std::expected<LocalQueryStatus, Exception>& local)
+                    { return local.has_value() && std::ranges::contains(state, local.value().state); });
+            });
     };
 
     if (any({QueryState::Failed}))
@@ -63,14 +82,21 @@ NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() co
     INVARIANT(false, "unreachable. i think");
 }
 
-std::unordered_map<NES::GrpcAddr, NES::Exception> NES::DistributedQueryStatus::getExceptions() const
+std::unordered_map<NES::GrpcAddr, std::vector<NES::Exception>> NES::DistributedQueryStatus::getExceptions() const
 {
-    std::unordered_map<GrpcAddr, Exception> exceptions;
-    for (const auto& [grpc, localStatus] : localStatusSnapshots)
+    std::unordered_map<GrpcAddr, std::vector<Exception>> exceptions;
+    for (const auto& [grpc, localStatusResults] : localStatusSnapshots)
     {
-        if (auto err = localStatus.metrics.error)
+        for (const auto& result : localStatusResults)
         {
-            exceptions.emplace(grpc, *err);
+            if (result.has_value() && result->metrics.error)
+            {
+                exceptions[grpc].emplace_back(result.value().metrics.error.value());
+            }
+            else if (!result.has_value())
+            {
+                exceptions[grpc].emplace_back(result.error());
+            }
         }
     }
     return exceptions;
@@ -84,87 +110,72 @@ std::optional<NES::Exception> NES::DistributedQueryStatus::coalesceException() c
         return std::nullopt;
     }
 
-    return DistributedFailure(fmt::format(
-        "\n\t{}",
-        fmt::join(
-            exceptions
-                | std::views::transform(
-                    [](const auto& exception)
-                    { return fmt::format("{}: {}({})", exception.first, exception.second.what(), exception.second.code()); }),
-            "\n\t")));
+    std::stringstream builder;
+    for (const auto& [grpc, localExceptions] : exceptions)
+    {
+        for (const auto& exception : localExceptions)
+        {
+            builder << fmt::format("\n\t{}: {}({})", grpc, exception.what(), exception.code());
+        }
+    }
+
+    return DistributedFailure(builder.str());
 }
 
 NES::QueryMetrics NES::DistributedQueryStatus::coalesceQueryMetrics() const
 {
+    auto all = [&](auto predicate)
+    {
+        return std::ranges::all_of(
+            localStatusSnapshots | std::views::values,
+            [&](const std::vector<std::expected<LocalQueryStatus, Exception>>& local)
+            {
+                return std::ranges::all_of(
+                    local,
+                    [&](const std::expected<LocalQueryStatus, Exception>& local) { return local.has_value() && predicate(local.value()); });
+            });
+    };
+    auto get = [&](auto projection)
+    {
+        return localStatusSnapshots | std::views::values | std::views::join
+            | std::views::transform([&](const std::expected<LocalQueryStatus, Exception>& local) { return projection(local.value()); });
+    };
+
     QueryMetrics metrics;
-    if (std::ranges::all_of(
-            localStatusSnapshots | std::views::values, [](const LocalQueryStatus& local) { return local.metrics.start.has_value(); }))
+    if (all([](const LocalQueryStatus& local) { return local.metrics.start.has_value(); }))
     {
-        for (const auto& localStatus : localStatusSnapshots | std::views::values)
-        {
-            if (!metrics.start.has_value())
-            {
-                metrics.start = localStatus.metrics.start.value();
-            }
-
-            if (*metrics.start > localStatus.metrics.start.value())
-            {
-                metrics.start = localStatus.metrics.start.value();
-            }
-        }
+        metrics.start = std::ranges::min(get([](const LocalQueryStatus& local) { return local.metrics.start.value(); }));
     }
 
-    if (std::ranges::all_of(
-            localStatusSnapshots | std::views::values, [](const LocalQueryStatus& local) { return local.metrics.running.has_value(); }))
+    if (all([](const LocalQueryStatus& local) { return local.metrics.running.has_value(); }))
     {
-        for (const auto& localStatus : localStatusSnapshots | std::views::values)
-        {
-            if (!metrics.running.has_value())
-            {
-                metrics.running = localStatus.metrics.running.value();
-            }
-
-            if (*metrics.running > localStatus.metrics.running.value())
-            {
-                metrics.running = localStatus.metrics.running.value();
-            }
-        }
+        metrics.running = std::ranges::max(get([](const LocalQueryStatus& local) { return local.metrics.running.value(); }));
     }
 
-    if (std::ranges::all_of(
-            localStatusSnapshots | std::views::values, [](const LocalQueryStatus& local) { return local.metrics.stop.has_value(); }))
+    if (all([](const LocalQueryStatus& local) { return local.metrics.stop.has_value(); }))
     {
-        for (const auto& localStatus : localStatusSnapshots | std::views::values)
-        {
-            if (!metrics.stop.has_value())
-            {
-                metrics.stop = localStatus.metrics.stop.value();
-            }
-
-            if (*metrics.stop < localStatus.metrics.stop.value())
-            {
-                metrics.stop = localStatus.metrics.stop.value();
-            }
-        }
+        metrics.stop = std::ranges::max(get([](const LocalQueryStatus& local) { return local.metrics.stop.value(); }));
     }
 
     metrics.error = coalesceException();
     return metrics;
 }
 
-NES::DistributedQuery::DistributedQuery(std::vector<LocalQuery> localQueries) : localQueries(std::move(localQueries))
+NES::DistributedQuery::DistributedQuery(std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries) : localQueries(std::move(localQueries))
 {
 }
 
 std::ostream& NES::operator<<(std::ostream& os, const DistributedQuery& query)
 {
-    fmt::print(
-        os,
-        "Query [{}]",
-        fmt::join(
-            query.localQueries
-                | std::views::transform([](const auto& localQuery) { return fmt::format("{}@{}", localQuery.id, localQuery.grpcAddr); }),
-            ", "));
+    std::vector<std::string> entries;
+    for (const auto& [grpc, ids] : query.localQueries)
+    {
+        for (const auto& id : ids)
+        {
+            entries.push_back(fmt::format("{}@{}", id, grpc));
+        }
+    }
+    fmt::print(os, "Query [{}]", fmt::join(entries, ", "));
     return os;
 }
 

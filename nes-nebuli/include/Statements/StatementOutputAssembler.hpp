@@ -273,18 +273,36 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
                 globalMetrics.start,
                 globalMetrics.running,
                 globalMetrics.stop);
-            for (const auto& [grpc, status] : query.localStatusSnapshots)
+            for (const auto& [grpc, statusResults] : query.localStatusSnapshots)
             {
-                const auto& [localId, state, metrics] = status;
-                output.emplace_back(
-                    id,
-                    localId,
-                    grpc,
-                    magic_enum::enum_name(state),
-                    metrics.error.transform([](const auto& exception) { return exception.what(); }),
-                    metrics.start,
-                    metrics.running,
-                    metrics.stop);
+                for (const auto& [localQueryId, statusResult] : statusResults)
+                {
+                    if (statusResult)
+                    {
+                        const auto& [_, state, metrics] = *statusResult;
+                        output.emplace_back(
+                            id,
+                            localQueryId,
+                            grpc,
+                            magic_enum::enum_name(state),
+                            metrics.error.transform([](const auto& exception) { return exception.what(); }),
+                            metrics.start,
+                            metrics.running,
+                            metrics.stop);
+                    }
+                    else
+                    {
+                        output.emplace_back(
+                            id,
+                            localQueryId,
+                            grpc,
+                            "ConnectionError",
+                            statusResult.error().what(),
+                            std::nullopt,
+                            std::nullopt,
+                            std::nullopt);
+                    }
+                }
             }
         }
         return std::make_pair(queryStatusOutputColumns, output);

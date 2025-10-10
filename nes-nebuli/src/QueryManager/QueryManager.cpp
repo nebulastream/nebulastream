@@ -131,8 +131,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
 std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const PlanStage::DistributedLogicalPlan& plan)
 {
-    std::vector<LocalQuery> localQueries;
-    localQueries.reserve(plan.size());
+    std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries;
 
     for (const auto& [grpcAddr, localPlans] : plan)
     {
@@ -145,7 +144,7 @@ std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const P
                 if (result)
                 {
                     NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), grpcAddr);
-                    localQueries.emplace_back(*result, grpcAddr);
+                    localQueries[grpcAddr].emplace_back(*result);
                     continue;
                 }
                 return std::unexpected{result.error()};
@@ -158,7 +157,7 @@ std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const P
     }
 
     auto id = getNextDistributedQueryId();
-    state.queries.emplace(id, localQueries);
+    state.queries.emplace(id, std::move(localQueries));
     return id;
 }
 
@@ -172,18 +171,18 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     auto query = queryResult.value();
     std::vector<Exception> exceptions;
 
-    for (const auto& localQuery : query)
+    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
     {
         try
         {
             INVARIANT(
-                backends.contains(localQuery.grpcAddr),
+                backends.contains(grpcAddr),
                 "Local query references node ({}) that is not part of the cluster",
-                localQuery.grpcAddr);
-            const auto result = backends.at(localQuery.grpcAddr).start(localQuery.id);
+                grpcAddr);
+            const auto result = backends.at(grpcAddr).start(localQueryId);
             if (result)
             {
-                NES_DEBUG("Starting query {} on node {} was successful.", localQuery.id, localQuery.grpcAddr);
+                NES_DEBUG("Starting query {} on node {} was successful.", localQueryId, grpcAddr);
                 continue;
             }
 
@@ -211,37 +210,26 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
     }
     auto query = queryResult.value();
 
-    std::unordered_map<GrpcAddr, LocalQueryStatus> localStatusResults;
-    std::vector<Exception> exceptions;
+    std::unordered_map<GrpcAddr, std::vector<std::expected<LocalQueryStatus, Exception>>> localStatusResults;
 
-    for (const auto& localQuery : query)
+    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
     {
         try
         {
             INVARIANT(
-                backends.contains(localQuery.grpcAddr),
+                backends.contains(grpcAddr),
                 "Local query references node ({}) that is not part of the cluster",
-                localQuery.grpcAddr);
-            const auto result = backends.at(localQuery.grpcAddr).status(localQuery.id);
-            if (result)
-            {
-                localStatusResults.emplace(localQuery.grpcAddr, *result);
-            }
-            else
-            {
-                exceptions.push_back(result.error());
-            }
+                grpcAddr);
+            const auto result = backends.at(grpcAddr).status(localQueryId);
+            localStatusResults[grpcAddr].emplace_back(result);
         }
         catch (std::exception& e)
         {
-            exceptions.push_back(QueryStatusFailed("Message from external exception: {} ", e.what()));
+            localStatusResults[grpcAddr].emplace_back(
+                std::unexpected(QueryStatusFailed("Message from external exception: {} ", e.what())));
         }
     }
 
-    if (not exceptions.empty())
-    {
-        return std::unexpected{exceptions};
-    }
     return DistributedQueryStatus{.localStatusSnapshots = localStatusResults, .queryId = queryId};
 }
 
@@ -289,18 +277,18 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
 
     std::vector<Exception> exceptions{};
 
-    for (const auto& localQuery : query)
+    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
     {
         try
         {
             INVARIANT(
-                backends.contains(localQuery.grpcAddr),
+                backends.contains(grpcAddr),
                 "Local query references node ({}) that is not part of the cluster",
-                localQuery.grpcAddr);
-            auto result = backends.at(localQuery.grpcAddr).stop(localQuery.id);
+                grpcAddr);
+            auto result = backends.at(grpcAddr).stop(localQueryId);
             if (result)
             {
-                NES_DEBUG("Stopping query {} on node {} was successful.", localQuery.id, localQuery.grpcAddr);
+                NES_DEBUG("Stopping query {} on node {} was successful.", localQueryId, grpcAddr);
                 continue;
             }
             exceptions.push_back(result.error());
@@ -328,18 +316,18 @@ std::expected<void, std::vector<Exception>> QueryManager::unregister(Distributed
     auto query = queryResult.value();
     std::vector<Exception> exceptions{};
 
-    for (const auto& localQuery : query)
+    for (const auto& [grpcAddr, localQueryId] : query.getLocalQueries())
     {
         try
         {
             INVARIANT(
-                backends.contains(localQuery.grpcAddr),
+                backends.contains(grpcAddr),
                 "Local query references node ({}) that is not part of the cluster",
-                localQuery.grpcAddr);
-            auto result = backends.at(localQuery.grpcAddr).unregister(localQuery.id);
+                grpcAddr);
+            auto result = backends.at(grpcAddr).unregister(localQueryId);
             if (result)
             {
-                NES_DEBUG("Unregister of query {} on node {} was successful.", localQuery.id, localQuery.grpcAddr);
+                NES_DEBUG("Unregister of query {} on node {} was successful.", localQueryId, grpcAddr);
                 continue;
             }
             exceptions.push_back(result.error());

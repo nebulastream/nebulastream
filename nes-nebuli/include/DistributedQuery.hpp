@@ -52,13 +52,20 @@ struct DistributedWorkerStatus
 
 struct DistributedQueryStatus
 {
-    std::unordered_map<GrpcAddr, LocalQueryStatus> localStatusSnapshots;
+    /// A Distributed Query is deployed onto multiple Worker nodes, referenced by their GRPC Address.
+    /// Each worker may host multiple independent local queries for the same distributed query.
+    /// There are two kinds of failures per query that are used here. The Expected may contain an exception
+    /// encountered when fetching the query status (i.e., the worker is not reachable). The LocalQueryStatus
+    /// may include a failure encountered by the worker node during query processing (i.e., bad input format)
+    std::unordered_map<GrpcAddr, std::unordered_map<LocalQueryId, std::expected<LocalQueryStatus, Exception>>> localStatusSnapshots;
     DistributedQueryId queryId = INVALID<DistributedQueryId>;
 
-    /// Reports a global query state based on the individual query states.
+    /// Reports a distributed query state based on the individual query states. See @DistributedQueryState for more information.
     DistributedQueryState getGlobalQueryState() const;
 
-    std::unordered_map<GrpcAddr, Exception> getExceptions() const;
+    /// Reports the encountered exception per worker node. There might be multiple local queries running on a single worker, so there
+    /// might be multiple errors per worker.
+    std::unordered_map<GrpcAddr, std::vector<Exception>> getExceptions() const;
 
     /// Combines all exceptions into a single exception. In the case where there are multiple
     /// exceptions, they are grouped into a single DistributedFailure exception which contains
@@ -74,36 +81,29 @@ struct DistributedQueryStatus
     QueryMetrics coalesceQueryMetrics() const;
 };
 
-struct LocalQuery
-{
-    LocalQueryId id = INVALID<LocalQueryId>;
-    GrpcAddr grpcAddr = GrpcAddr(GrpcAddr::INVALID.value);
-
-    LocalQuery(const LocalQueryId id, const GrpcAddr& addr) : id{id}, grpcAddr{addr} { }
-
-    LocalQuery() = default;
-
-    bool operator==(const LocalQuery& other) const = default;
-};
-
 class DistributedQuery
 {
-    std::vector<LocalQuery> localQueries;
+    std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries;
 
 public:
-    [[nodiscard]] const std::vector<LocalQuery>& getLocalQueries() const { return localQueries; }
-
-    /// Iteration support - only works in cluster mode
-    [[nodiscard]] auto begin() const { return localQueries.begin(); }
-
-    [[nodiscard]] auto end() const { return localQueries.end(); }
+    [[nodiscard]] auto getLocalQueries() const
+    {
+        return localQueries
+            | std::views::transform([](auto& queriesPerWorker) {
+                return queriesPerWorker.second
+                    | std::views::transform([&queriesPerWorker](auto& localQueryId) -> decltype(auto) {
+                        return std::tie(queriesPerWorker.first, localQueryId);
+                    });
+            })
+            | std::views::join;
+    }
 
     bool operator==(const DistributedQuery& other) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);
     DistributedQuery() = default;
 
-    explicit DistributedQuery(std::vector<LocalQuery> localQueries);
+    explicit DistributedQuery(std::unordered_map<GrpcAddr, std::vector<LocalQueryId>> localQueries);
 };
 
 std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);
