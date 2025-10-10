@@ -50,7 +50,8 @@ public:
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
         const nautilus::val<uint64_t*>& hitsRef,
-        const nautilus::val<uint64_t*>& missesRef);
+        const nautilus::val<uint64_t*>& missesRef,
+        const nautilus::val<size_t>& inputSize);
     ~PredictionCache() override = default;
 
     using PredictionCacheReplacement = std::function<nautilus::val<int8_t*>(const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
@@ -79,5 +80,6 @@ private:
     /// Statistics of how many hits and misses we have. This is useful to see how efficient the cache is by comparing the hits and misses for a clairvoyant cache.
     nautilus::val<uint64_t*> numberOfHits;
     nautilus::val<uint64_t*> numberOfMisses;
+    nautilus::val<size_t> inputSize;
 };
 }

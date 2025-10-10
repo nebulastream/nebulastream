@@ -24,8 +24,9 @@ PredictionCacheLRU::PredictionCacheLRU(
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<uint64_t*>& hitsRef,
-    const nautilus::val<uint64_t*>& missesRef)
-    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef)
+    const nautilus::val<uint64_t*>& missesRef,
+    const nautilus::val<size_t>& inputSize)
+    : PredictionCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, hitsRef, missesRef, inputSize)
 {
 }
 
