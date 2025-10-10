@@ -35,6 +35,7 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -154,6 +155,36 @@ std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(Quer
         return std::unexpected(wrapExternalException());
     }
     std::unreachable();
+}
+
+WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
+{
+    std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
+    const auto summaries = nodeEngine->getQueryLog()->getStatus();
+    WorkerStatus status;
+    status.after = after;
+    status.until = until;
+    for (const auto& [queryId, state, metrics] : summaries)
+    {
+        if (state == QueryState::Running)
+        {
+            INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
+            if (metrics.running.value() >= after)
+            {
+                status.activeQueries.emplace_back(queryId, metrics.running.value());
+            }
+        }
+        else if (state == QueryState::Stopped)
+        {
+            INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+            INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a stopped timestamp");
+            if (metrics.stop.value() >= after)
+            {
+                status.terminatedQueries.emplace_back(queryId, metrics.running.value(), metrics.stop.value(), std::move(metrics.error));
+            }
+        }
+    }
+    return status;
 }
 
 std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
