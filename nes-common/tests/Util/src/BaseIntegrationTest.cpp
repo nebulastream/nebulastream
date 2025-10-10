@@ -19,6 +19,7 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <nameof.hpp>
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
@@ -51,7 +52,7 @@ void BaseIntegrationTest::SetUp()
     }
     else
     {
-        NES_ERROR("SetUp called twice in {}", typeid(*this).name());
+        NES_ERROR("SetUp called twice in {}", NAMEOF_TYPE_EXPR(*this));
     }
 }
 
@@ -62,8 +63,8 @@ std::filesystem::path BaseIntegrationTest::getTestResourceFolder() const
 
 BaseIntegrationTest::~BaseIntegrationTest()
 {
-    INVARIANT(setUpCalled, "SetUp not called for test {}", typeid(*this).name());
-    INVARIANT(tearDownCalled, "TearDown not called for test {}", typeid(*this).name());
+    INVARIANT(setUpCalled, "SetUp not called for test {}", NAMEOF_TYPE_EXPR(*this));
+    INVARIANT(tearDownCalled, "TearDown not called for test {}", NAMEOF_TYPE_EXPR(*this));
 }
 
 void BaseIntegrationTest::TearDown()
@@ -76,7 +77,7 @@ void BaseIntegrationTest::TearDown()
     }
     else
     {
-        NES_ERROR("TearDown called twice in {}", typeid(*this).name());
+        NES_ERROR("TearDown called twice in {}", NAMEOF_TYPE_EXPR(*this));
     }
 }
 

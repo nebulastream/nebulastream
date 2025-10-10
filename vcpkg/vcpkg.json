@@ -40,6 +40,8 @@
     "nautilus",
     "replxx",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "nameof",
+    "scope-guard"
   ]
 }

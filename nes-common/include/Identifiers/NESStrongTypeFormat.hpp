@@ -30,4 +30,13 @@ struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::
         return fmt::format_to(ctx.out(), "{}", t.getRawValue());
     }
 };
+
+template <typename Tag, NES::StringLiteral invalid>
+struct formatter<NES::NESStrongStringType<Tag, invalid>> : formatter<std::string>
+{
+    auto format(const NES::NESStrongStringType<Tag, invalid>& t, format_context& ctx) const -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "{}", t.getRawValue());
+    }
+};
 }

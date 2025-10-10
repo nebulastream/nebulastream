@@ -27,6 +27,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 #include <val_concepts.hpp>
 
 namespace NES::Nautilus
@@ -225,5 +226,67 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
         },
         varVal.value);
 }
+
+#define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
+    VarVal VarVal::operatorName(const VarVal& rhs) const \
+    { \
+        return std::visit( \
+            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
+            { \
+                if constexpr (requires(LHS l, RHS r) { l op r; }) \
+                { \
+                    return detail::var_val_t(lhsVal op rhsVal); \
+                } \
+                else \
+                { \
+                    throw UnknownOperation("VarVal operation not implemented: {} " #op " {}", NAMEOF_TYPE(LHS), NAMEOF_TYPE(RHS)); \
+                    return detail::var_val_t(lhsVal); \
+                } \
+            }, \
+            this->value, \
+            rhs.value); \
+    }
+#define DEFINE_OPERATOR_VAR_VAL_UNARY(operatorName, op) \
+    VarVal VarVal::operatorName() const \
+    { \
+        return std::visit( \
+            [&]<typename RHS>(const RHS& rhsVal) \
+            { \
+                if constexpr (!requires(RHS r) { op r; }) \
+                { \
+                    throw UnknownOperation("VarVal operation not implemented: " #op "{}", NAMEOF_TYPE(RHS)); \
+                    return detail::var_val_t(rhsVal); \
+                } \
+                else \
+                { \
+                    detail::var_val_t result = op rhsVal; \
+                    return result; \
+                } \
+            }, \
+            this->value); \
+    }
+
+/// Defining operations on VarVal. In the macro, we use std::variant and std::visit to automatically call the already
+/// existing operations on the underlying nautilus::val<> data types.
+/// For the VarSizedDataType, we define custom operations in the class itself.
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator+, +);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator-, -);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator*, *);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator/, /);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator%, %);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator==, ==);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator!=, !=);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator&&, &&);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator||, ||);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator<, <);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator>, >);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator<=, <=);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator>=, >=);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator&, &);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator|, |);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator^, ^);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator<<, <<);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator>>, >>);
+DEFINE_OPERATOR_VAR_VAL_UNARY(operator!, !);
 
 }
