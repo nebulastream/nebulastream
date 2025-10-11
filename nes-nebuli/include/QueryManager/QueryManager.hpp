@@ -40,17 +40,17 @@ class QuerySubmissionBackend
 {
 public:
     virtual ~QuerySubmissionBackend() = default;
-    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(LogicalPlan) = 0;
-    virtual std::expected<void, Exception> start(QueryId) = 0;
-    virtual std::expected<void, Exception> stop(QueryId) = 0;
-    virtual std::expected<void, Exception> unregister(QueryId) = 0;
-    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(QueryId) const = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryId, Exception> registerQuery(LogicalPlan) = 0;
+    virtual std::expected<void, Exception> start(LocalQueryId) = 0;
+    virtual std::expected<void, Exception> stop(LocalQueryId) = 0;
+    virtual std::expected<void, Exception> unregister(LocalQueryId) = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(LocalQueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
 };
 
 struct QueryManagerState
 {
-    std::unordered_set<QueryId> queries;
+    std::unordered_set<LocalQueryId> queries;
 };
 
 class QueryManager
@@ -61,16 +61,16 @@ class QueryManager
 public:
     QueryManager(UniquePtr<QuerySubmissionBackend> backend, QueryManagerState state);
     explicit QueryManager(UniquePtr<QuerySubmissionBackend> backend);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan);
+    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(const LogicalPlan& plan);
     /// Starts a pre-registered query. Start may potentially block waiting for the query state to change.
-    std::expected<void, Exception> start(QueryId query);
-    std::expected<void, Exception> stop(QueryId query);
-    std::expected<void, Exception> unregister(QueryId query);
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId query) const;
-    [[nodiscard]] std::vector<QueryId> queries() const;
+    std::expected<void, Exception> start(LocalQueryId query);
+    std::expected<void, Exception> stop(LocalQueryId query);
+    std::expected<void, Exception> unregister(LocalQueryId query);
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId query) const;
+    [[nodiscard]] std::vector<LocalQueryId> queries() const;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
-    std::vector<QueryId> getRunningQueries() const;
-    std::expected<QueryId, Exception> getQuery(QueryId query) const;
+    std::vector<LocalQueryId> getRunningQueries() const;
+    std::expected<LocalQueryId, Exception> getQuery(LocalQueryId query) const;
 };
 
 }

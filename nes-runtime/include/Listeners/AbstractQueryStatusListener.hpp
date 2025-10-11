@@ -28,10 +28,11 @@ struct AbstractQueryStatusListener
 {
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool logSourceTermination(QueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point) = 0;
+    virtual bool logSourceTermination(LocalQueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point)
+        = 0;
 
-    virtual bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point) = 0;
+    virtual bool logQueryFailure(LocalQueryId queryId, Exception exception, std::chrono::system_clock::time_point) = 0;
 
-    virtual bool logQueryStatusChange(QueryId queryId, QueryState status, std::chrono::system_clock::time_point) = 0;
+    virtual bool logQueryStatusChange(LocalQueryId queryId, QueryState status, std::chrono::system_clock::time_point) = 0;
 };
 }

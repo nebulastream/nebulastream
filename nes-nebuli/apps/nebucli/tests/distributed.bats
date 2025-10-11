@@ -298,7 +298,7 @@ assert_json_contains() {
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
   {
-    "query_id": "$QUERY_ID",
+    "local_query_id": "$QUERY_ID",
     "query_status": "Failed"
   }
 ]
@@ -331,7 +331,7 @@ EOF
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
   {
-    "query_id": "$QUERY_ID",
+    "local_query_id": "$QUERY_ID",
     "query_status": "Failed"
   }
 ]

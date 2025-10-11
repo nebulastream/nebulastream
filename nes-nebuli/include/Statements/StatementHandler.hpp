@@ -85,7 +85,7 @@ struct DropSinkStatementResult
 
 struct QueryStatementResult
 {
-    QueryId id;
+    LocalQueryId id;
 };
 
 struct ExplainQueryStatementResult
@@ -100,12 +100,12 @@ struct WorkerStatusStatementResult
 
 struct ShowQueriesStatementResult
 {
-    std::unordered_map<QueryId, LocalQueryStatus> queries;
+    std::unordered_map<LocalQueryId, LocalQueryStatus> queries;
 };
 
 struct DropQueryStatementResult
 {
-    QueryId id;
+    LocalQueryId id;
 };
 
 using StatementResult = std::variant<

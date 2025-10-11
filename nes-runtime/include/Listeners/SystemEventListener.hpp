@@ -34,27 +34,27 @@ struct BaseSystemEvent
 
 struct SubmitQuerySystemEvent : BaseSystemEvent
 {
-    SubmitQuerySystemEvent(QueryId queryId, std::string query) : queryId(queryId), query(std::move(query)) { }
+    SubmitQuerySystemEvent(LocalQueryId queryId, std::string query) : queryId(queryId), query(std::move(query)) { }
 
     SubmitQuerySystemEvent() = default;
-    QueryId queryId = INVALID<QueryId>;
+    LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
     std::string query;
 };
 
 struct StartQuerySystemEvent : BaseSystemEvent
 {
-    explicit StartQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
+    explicit StartQuerySystemEvent(LocalQueryId queryId) : queryId(queryId) { }
 
     StartQuerySystemEvent() = default;
-    QueryId queryId = INVALID<QueryId>;
+    LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
 };
 
 struct StopQuerySystemEvent : BaseSystemEvent
 {
-    explicit StopQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
+    explicit StopQuerySystemEvent(LocalQueryId queryId) : queryId(queryId) { }
 
     StopQuerySystemEvent() = default;
-    QueryId queryId = INVALID<QueryId>;
+    LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
 };
 
 using SystemEvent = std::variant<SubmitQuerySystemEvent, StartQuerySystemEvent, StopQuerySystemEvent>;

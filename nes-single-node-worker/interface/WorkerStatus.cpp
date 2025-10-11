@@ -75,7 +75,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                              [&](const auto& activeQuery)
                              {
                                  return WorkerStatus::ActiveQuery{
-                                     .queryId = QueryId(activeQuery.queryid()),
+                                     .queryId = LocalQueryId(activeQuery.queryid()),
                                      .started = fromMillis(activeQuery.startedunixtimestampinms())};
                              })
             | std::ranges::to<std::vector>(),
@@ -85,7 +85,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                 [&](const auto& terminatedQuery)
                 {
                     return WorkerStatus::TerminatedQuery{
-                        .queryId = QueryId(terminatedQuery.queryid()),
+                        .queryId = LocalQueryId(terminatedQuery.queryid()),
                         .started = fromMillis(terminatedQuery.startedunixtimestampinms()),
                         .terminated = fromMillis(terminatedQuery.terminatedunixtimestampinms()),
                         .error = terminatedQuery.has_error()

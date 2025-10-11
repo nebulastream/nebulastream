@@ -22,6 +22,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -40,7 +41,7 @@ QueryManager::QueryManager(UniquePtr<QuerySubmissionBackend> backend) : backend(
 {
 }
 
-std::expected<QueryId, Exception> QueryManager::registerQuery(const LogicalPlan& plan)
+std::expected<LocalQueryId, Exception> QueryManager::registerQuery(const LogicalPlan& plan)
 {
     try
     {
@@ -59,7 +60,7 @@ std::expected<QueryId, Exception> QueryManager::registerQuery(const LogicalPlan&
     }
 }
 
-std::expected<void, Exception> QueryManager::start(QueryId queryId)
+std::expected<void, Exception> QueryManager::start(LocalQueryId queryId)
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
@@ -99,12 +100,12 @@ std::expected<void, Exception> QueryManager::start(QueryId queryId)
     }
 }
 
-std::expected<LocalQueryStatus, Exception> QueryManager::status(QueryId queryId) const
+std::expected<LocalQueryStatus, Exception> QueryManager::status(LocalQueryId queryId) const
 {
     return getQuery(queryId).and_then([this](auto validatedQueryId) { return backend->status(validatedQueryId); });
 }
 
-std::vector<QueryId> QueryManager::queries() const
+std::vector<LocalQueryId> QueryManager::queries() const
 {
     return state.queries | std::ranges::to<std::vector>();
 }
@@ -114,16 +115,16 @@ std::expected<WorkerStatus, Exception> QueryManager::workerStatus(std::chrono::s
     return backend->workerStatus(after);
 }
 
-std::vector<QueryId> QueryManager::getRunningQueries() const
+std::vector<LocalQueryId> QueryManager::getRunningQueries() const
 {
     return state.queries
         | std::views::transform(
-               [this](const auto& id) -> std::optional<std::pair<QueryId, LocalQueryStatus>>
+               [this](const auto& id) -> std::optional<std::pair<LocalQueryId, LocalQueryStatus>>
                {
                    auto result = status(id);
                    if (result)
                    {
-                       return std::optional<std::pair<QueryId, LocalQueryStatus>>{{id, *result}};
+                       return std::optional<std::pair<LocalQueryId, LocalQueryStatus>>{{id, *result}};
                    }
                    return std::nullopt;
                })
@@ -134,7 +135,7 @@ std::vector<QueryId> QueryManager::getRunningQueries() const
         | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
 }
 
-std::expected<QueryId, Exception> QueryManager::getQuery(QueryId query) const
+std::expected<LocalQueryId, Exception> QueryManager::getQuery(LocalQueryId query) const
 {
     if (state.queries.contains(query))
     {
@@ -143,7 +144,7 @@ std::expected<QueryId, Exception> QueryManager::getQuery(QueryId query) const
     return std::unexpected(QueryNotFound("Query {} not found", query));
 }
 
-std::expected<void, Exception> QueryManager::stop(QueryId queryId)
+std::expected<void, Exception> QueryManager::stop(LocalQueryId queryId)
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
@@ -167,7 +168,7 @@ std::expected<void, Exception> QueryManager::stop(QueryId queryId)
     }
 }
 
-std::expected<void, Exception> QueryManager::unregister(QueryId queryId)
+std::expected<void, Exception> QueryManager::unregister(LocalQueryId queryId)
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
