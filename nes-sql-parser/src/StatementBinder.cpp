@@ -54,6 +54,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -491,11 +492,11 @@ public:
             {
                 throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
             }
-            if (not std::holds_alternative<uint64_t>(value))
+            if (not std::holds_alternative<std::string>(value))
             {
-                throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be an unsigned integer");
+                throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
             }
-            return ShowQueriesStatement{.id = QueryId{std::get<uint64_t>(value)}, .format = format};
+            return ShowQueriesStatement{.id = LocalQueryId{std::get<std::string>(value)}, .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -572,12 +573,12 @@ public:
             {
                 throw InvalidQuerySyntax("Filter for DROP QUERY must be on ID attribute");
             }
-            if (not std::holds_alternative<uint64_t>(value))
+            if (not std::holds_alternative<std::string>(value))
             {
-                throw InvalidQuerySyntax("Filter value for DROP QUERY must be a number");
+                throw InvalidQuerySyntax("Filter value for DROP QUERY must be a string");
             }
-            const auto id = QueryId{std::get<uint64_t>(value)};
-            return DropQueryStatement{id};
+            const auto id = LocalQueryId{std::get<std::string>(value)};
+            return DropQueryStatement{.id = id};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
         {
@@ -613,7 +614,7 @@ public:
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {
-                std::optional<size_t> queryId;
+                std::optional<std::string> queryId;
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
@@ -621,11 +622,12 @@ public:
                     {
                         if (auto idIter = optionsIter->second.find("ID"); idIter != optionsIter->second.end())
                         {
-                            if (!std::holds_alternative<size_t>(idIter->second))
+                            if (!std::holds_alternative<std::string>(idIter->second)
+                                || !stringToUUID(std::get<std::string>(idIter->second)).has_value())
                             {
-                                throw InvalidQuerySyntax("Query id must be a number");
+                                throw InvalidQuerySyntax("Query id must be a uuid string");
                             }
-                            queryId = std::get<size_t>(idIter->second);
+                            queryId = std::get<std::string>(idIter->second);
                         }
                     }
                 }

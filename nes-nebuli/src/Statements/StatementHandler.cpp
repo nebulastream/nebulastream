@@ -233,7 +233,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
                                  .plan(std::move(boundPlan));
         if (statement.id)
         {
-            optimizedPlan.plan.setQueryId(QueryId(*statement.id));
+            optimizedPlan.plan.setQueryId(LocalQueryId(*statement.id));
         }
         const auto queryResult = queryManager->registerQuery(optimizedPlan);
         return queryResult
@@ -269,7 +269,7 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
     {
         auto statusResults = queryManager->queries()
             | std::views::transform(
-                                 [&](const auto& queryId) -> std::pair<QueryId, std::expected<LocalQueryStatus, Exception>>
+                                 [&](const auto& queryId) -> std::pair<LocalQueryId, std::expected<LocalQueryStatus, Exception>>
                                  {
                                      auto statusResult = queryManager->status(queryId).transform_error(
                                          [](auto error) { return QueryStopFailed("Could not stop query: {}", error); });
@@ -279,12 +279,12 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
 
         auto failedStatusResults = statusResults
             | std::views::filter([](const auto& idAndStatusResult) { return !idAndStatusResult.second.has_value(); })
-            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<QueryId, Exception>
+            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<LocalQueryId, Exception>
                                     { return {idAndStatusResult.first, idAndStatusResult.second.error()}; });
 
         auto goodQueryStatusResults = statusResults
             | std::views::filter([](const auto& idAndStatusResult) { return idAndStatusResult.second.has_value(); })
-            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<QueryId, LocalQueryStatus>
+            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<LocalQueryId, LocalQueryStatus>
                                     { return {idAndStatusResult.first, idAndStatusResult.second.value()}; });
         if (!failedStatusResults.empty())
         {
@@ -292,12 +292,12 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
                 QueryStatusFailed("Could not retrieve query status for some queries: ", fmt::join(failedStatusResults, "\n")));
         }
 
-        return ShowQueriesStatementResult{goodQueryStatusResults | std::ranges::to<std::unordered_map<QueryId, LocalQueryStatus>>()};
+        return ShowQueriesStatementResult{goodQueryStatusResults | std::ranges::to<std::unordered_map<LocalQueryId, LocalQueryStatus>>()};
     }
 
     if (const auto statusOpt = queryManager->status(statement.id.value()); statusOpt.has_value())
     {
-        return ShowQueriesStatementResult{std::unordered_map<QueryId, LocalQueryStatus>{{statement.id.value(), statusOpt.value()}}};
+        return ShowQueriesStatementResult{std::unordered_map<LocalQueryId, LocalQueryStatus>{{statement.id.value(), statusOpt.value()}}};
     }
     return ShowQueriesStatementResult{.queries = {}};
 }

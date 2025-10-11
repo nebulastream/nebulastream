@@ -61,9 +61,12 @@ struct CompiledQueryPlan
     };
 
     static std::unique_ptr<CompiledQueryPlan> create(
-        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
+        LocalQueryId localQueryId,
+        std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+        std::vector<Sink> sinks,
+        std::vector<Source> sources);
 
-    QueryId queryId;
+    LocalQueryId localQueryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<Sink> sinks;
     std::vector<Source> sources;

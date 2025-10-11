@@ -57,7 +57,7 @@ expect_json_equal {[]} "SHOW QUERIES (empty)"
 send "SELECT TS FROM ENDLESS INTO SOMESINK;\r"
 set json [expect_json "Timeout waiting for SELECT response"]
 # Extract the query ID using jq
-set query_id [exec echo $json | jq -r ".\[0\].query_id"]
+set query_id [exec echo $json | jq -r ".\[0\].local_query_id"]
 
 send "SHOW QUERIES;\r"
 set json [expect_json "Timeout waiting for SHOW QUERIES response"]
@@ -67,7 +67,7 @@ if {$count != "1"} {
     fail "SHOW QUERIES - expected 1 query, got $count"
 }
 # Check that query_id matches
-set returned_id [exec echo $json | jq -r ".\[0\].query_id"]
+set returned_id [exec echo $json | jq -r ".\[0\].local_query_id"]
 if {$returned_id ne $query_id} {
     fail "SHOW QUERIES - query_id mismatch" $query_id $returned_id
 }
@@ -78,18 +78,18 @@ if {$status_match ne "true"} {
 }
 
 puts "$query_id"
-send "SHOW QUERIES WHERE ID = $query_id;\r"
+send "SHOW QUERIES WHERE ID = '$query_id';\r"
 set json [expect_json "Timeout waiting for SHOW QUERIES WHERE response"]
 # Verify we get exactly the query we asked for
-set returned_id [exec echo $json | jq -r ".\[0\].query_id"]
+set returned_id [exec echo $json | jq -r ".\[0\].local_query_id"]
 if {$returned_id ne $query_id} {
     fail "SHOW QUERIES WHERE - query_id mismatch" $query_id $returned_id
 }
 
-send "DROP QUERY WHERE ID = $query_id;\r"
+send "DROP QUERY WHERE ID = '$query_id';\r"
 set json [expect_json "Timeout waiting for DROP QUERY response"]
 # Check that the response contains the query ID
-set returned_id [exec echo $json | jq -r ".\[0\].query_id"]
+set returned_id [exec echo $json | jq -r ".\[0\].local_query_id"]
 if {$returned_id ne $query_id} {
     fail "DROP QUERY - query_id mismatch" $query_id $returned_id
 }

@@ -155,7 +155,7 @@ start_nes() {
   run $NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
-  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id) | .query_status')
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.local_query_id == $query_id) | .query_status')
   echo "Status: $QUERY_STATUS" >&3
   [ "$QUERY_STATUS" = "Running" ]
 }

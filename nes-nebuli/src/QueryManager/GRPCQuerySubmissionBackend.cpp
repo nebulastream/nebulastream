@@ -47,7 +47,7 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
 {
 }
 
-std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(LogicalPlan localPlan)
+std::expected<LocalQueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(LogicalPlan localPlan)
 {
     try
     {
@@ -58,8 +58,8 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
         const auto status = stub->RegisterQuery(&context, request, &reply);
         if (status.ok())
         {
-            NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), workerConfig.grpc);
-            return QueryId{reply.queryid()};
+            NES_DEBUG("Registration to node {} was successful.", workerConfig.grpc);
+            return LocalQueryId{reply.queryid()};
         }
         return std::unexpected{QueryRegistrationFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
@@ -73,7 +73,7 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
     }
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::start(LocalQueryId queryId)
 {
     try
     {
@@ -100,7 +100,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId
     }
 }
 
-std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(QueryId queryId) const
+std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(LocalQueryId queryId) const
 {
     try
     {
@@ -143,7 +143,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
             metrics.error = exception;
         }
 
-        return LocalQueryStatus(QueryId{response.queryid()}, static_cast<QueryState>(static_cast<uint8_t>(response.state())), metrics);
+        return LocalQueryStatus(LocalQueryId{response.queryid()}, static_cast<QueryState>(static_cast<uint8_t>(response.state())), metrics);
     }
     catch (std::exception& e)
     {
@@ -173,7 +173,7 @@ std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(
     std::unreachable();
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(LocalQueryId queryId)
 {
     try
     {
@@ -202,7 +202,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
     }
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(QueryId queryId)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(LocalQueryId queryId)
 {
     try
     {

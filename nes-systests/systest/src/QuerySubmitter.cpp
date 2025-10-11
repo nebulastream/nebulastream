@@ -37,7 +37,7 @@ QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : que
 {
 }
 
-std::expected<QueryId, Exception> QuerySubmitter::registerQuery(const LogicalPlan& plan)
+std::expected<LocalQueryId, Exception> QuerySubmitter::registerQuery(const LogicalPlan& plan)
 {
     /// Make sure the queryplan is passed through serialization logic.
     const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
@@ -53,7 +53,7 @@ std::expected<QueryId, Exception> QuerySubmitter::registerQuery(const LogicalPla
     return std::unexpected(exception);
 }
 
-void QuerySubmitter::startQuery(QueryId query)
+void QuerySubmitter::startQuery(LocalQueryId query)
 {
     if (auto started = queryManager->start(query); !started.has_value())
     {
@@ -62,7 +62,7 @@ void QuerySubmitter::startQuery(QueryId query)
     ids.emplace(query);
 }
 
-void QuerySubmitter::stopQuery(const QueryId query)
+void QuerySubmitter::stopQuery(const LocalQueryId query)
 {
     if (auto stopped = queryManager->stop(query); !stopped.has_value())
     {
@@ -70,7 +70,7 @@ void QuerySubmitter::stopQuery(const QueryId query)
     }
 }
 
-void QuerySubmitter::unregisterQuery(const QueryId query)
+void QuerySubmitter::unregisterQuery(const LocalQueryId query)
 {
     if (auto unregistered = queryManager->unregister(query); !unregistered.has_value())
     {
@@ -78,7 +78,7 @@ void QuerySubmitter::unregisterQuery(const QueryId query)
     }
 }
 
-LocalQueryStatus QuerySubmitter::waitForQueryTermination(const QueryId query)
+LocalQueryStatus QuerySubmitter::waitForQueryTermination(const LocalQueryId query)
 {
     while (true)
     {
@@ -98,7 +98,7 @@ std::vector<LocalQueryStatus> QuerySubmitter::finishedQueries()
     while (true)
     {
         std::vector<LocalQueryStatus> results;
-        for (const auto id : ids)
+        for (const auto& id : ids)
         {
             if (auto queryStatus = queryManager->status(id))
             {
