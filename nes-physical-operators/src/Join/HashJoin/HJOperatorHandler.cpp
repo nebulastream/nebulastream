@@ -160,20 +160,8 @@ void HJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
-    /// Writing all necessary information for the probe to the buffer
-    auto* bufferMemory = tupleBuffer.getMemArea<EmittedHJWindowTrigger>();
-    bufferMemory->windowInfo = windowInfo;
-    bufferMemory->leftNumberOfHashMaps = leftHashMaps.size();
-    bufferMemory->rightNumberOfHashMaps = rightHashMaps.size();
-
-    /// Copying the left and right hashmap pointer to the buffer
-    const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(Nautilus::Interface::HashMap*);
-    auto* addressFirstLeftHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger);
-    auto* addressFirstRightHashMapPtr = std::bit_cast<int8_t*>(bufferMemory) + sizeof(EmittedHJWindowTrigger) + leftHashMapPtrSizeInByte;
-    bufferMemory->leftHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr);
-    bufferMemory->rightHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr);
-    std::ranges::copy(leftHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr));
-    std::ranges::copy(rightHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr));
+    /// Writing all necessary information for the probe to the buffer via the placement constructor
+    new (tupleBuffer.getAvailableMemoryArea().data()) EmittedHJWindowTrigger{windowInfo, leftHashMaps, rightHashMaps};
 
     /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);

@@ -29,6 +29,11 @@ namespace NES
 /// This task models the information for a join window trigger
 struct EmittedNLJWindowTrigger
 {
+    EmittedNLJWindowTrigger(const WindowInfo& windowInfo, const SliceEnd leftSliceEnd, const SliceEnd rightSliceEnd)
+        : leftSliceEnd(leftSliceEnd), rightSliceEnd(rightSliceEnd), windowInfo(windowInfo)
+    {
+    }
+
     SliceEnd leftSliceEnd;
     SliceEnd rightSliceEnd;
     WindowInfo windowInfo;

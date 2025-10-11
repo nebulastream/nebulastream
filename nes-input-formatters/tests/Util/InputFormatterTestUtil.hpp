@@ -283,7 +283,7 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (leftBuffer.getNumberOfTuples() != rightBuffer.getNumberOfTuples())
     {
-        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        NES_ERROR("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
@@ -298,9 +298,9 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
                 continue;
             }
 
-            const auto* const startPosBuffer1 = leftBuffer.getMemArea() + (schemaSizeInByte * idxBuffer1);
-            const auto* const startPosBuffer2 = rightBuffer.getMemArea() + (schemaSizeInByte * idxBuffer2);
-            if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
+            const auto leftFieldSpan = leftBuffer.getAvailableMemoryArea().subspan(schemaSizeInByte * idxBuffer1, schemaSizeInByte);
+            const auto rightFieldSpan = rightBuffer.getAvailableMemoryArea().subspan(schemaSizeInByte * idxBuffer2, schemaSizeInByte);
+            if (std::ranges::equal(leftFieldSpan, rightFieldSpan))
             {
                 sameTupleIndices.insert(idxBuffer2);
                 idxFoundInBuffer2 = true;
@@ -310,7 +310,7 @@ inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuf
 
         if (!idxFoundInBuffer2)
         {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
+            NES_ERROR("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
             return false;
         }
     }
@@ -325,7 +325,7 @@ inline TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, T
         "{} < {}, size of TupleBuffer is not sufficient to contain string",
         tupleBuffer.getBufferSize(),
         rawData.size());
-    std::memcpy(tupleBuffer.getMemArea(), rawData.data(), rawData.size());
+    std::ranges::copy(rawData, reinterpret_cast<char*>(tupleBuffer.getAvailableMemoryArea().data()));
     tupleBuffer.setNumberOfTuples(rawData.size());
     return tupleBuffer;
 }

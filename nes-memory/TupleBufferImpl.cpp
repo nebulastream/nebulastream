@@ -316,9 +316,9 @@ VariableSizedAccess::Index BufferControlBlock::storeChildBuffer(BufferControlBlo
 bool BufferControlBlock::loadChildBuffer(
     const VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
-    PRECONDITION(index.getRawIndex() < children.size(), "Index={} is out of range={}", index, children.size());
+    PRECONDITION(index.index < children.size(), "Index={} is out of range={}", index, children.size());
 
-    auto* child = children[index.getRawIndex()];
+    auto* child = children[index.index];
     control = child->controlBlock->retain();
     ptr = child->ptr;
     size = child->size;

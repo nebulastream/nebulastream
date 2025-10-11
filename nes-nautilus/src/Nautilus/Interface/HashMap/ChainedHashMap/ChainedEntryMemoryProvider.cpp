@@ -13,8 +13,10 @@
 */
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <span>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
@@ -117,9 +119,10 @@ void storeVarSized(
             const int8_t* varSizedData,
             const uint64_t varSizedDataSize)
         {
-            auto* const spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize);
-            std::memcpy(spaceForVarSizedData, varSizedData, varSizedDataSize);
-            *memoryAddressInEntry = spaceForVarSizedData;
+            auto spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize);
+            const std::span<const int8_t> varSizedSpan{varSizedData, varSizedData + varSizedDataSize};
+            std::ranges::copy(std::as_bytes(varSizedSpan), spaceForVarSizedData.begin());
+            *memoryAddressInEntry = reinterpret_cast<const signed char*>(spaceForVarSizedData.data());
         },
         hashMapRef,
         bufferProviderRef,
