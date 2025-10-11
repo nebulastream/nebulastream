@@ -24,8 +24,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -68,7 +66,6 @@ TEST_F(LogicalPlanTest, DefaultConstructor)
 {
     const LogicalPlan plan;
     EXPECT_TRUE(plan.getRootOperators().empty());
-    EXPECT_EQ(plan.getQueryId(), INVALID_QUERY_ID);
 }
 
 TEST_F(LogicalPlanTest, SingleRootConstructor)
@@ -81,10 +78,8 @@ TEST_F(LogicalPlanTest, SingleRootConstructor)
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 {
     const std::vector roots = {sourceOp, selectionOp};
-    const auto queryId = QueryId(1);
-    LogicalPlan plan(queryId, roots);
+    LogicalPlan plan(roots);
     EXPECT_EQ(plan.getRootOperators().size(), 2);
-    EXPECT_EQ(plan.getQueryId(), queryId);
     EXPECT_EQ(plan.getRootOperators()[0], sourceOp);
     EXPECT_EQ(plan.getRootOperators()[1], selectionOp);
 }

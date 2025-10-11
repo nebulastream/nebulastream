@@ -125,13 +125,13 @@ struct ExplainQueryStatement
 
 struct ShowQueriesStatement
 {
-    std::optional<QueryId> id;
+    std::optional<LocalQueryId> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    QueryId id;
+    LocalQueryId id;
     bool blocking = true;
 };
 

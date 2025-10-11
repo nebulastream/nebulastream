@@ -94,7 +94,7 @@ void TaskCallback::processArgs(OnFailure onFailure)
     onFailureCallback = std::move(onFailure.callback);
 }
 
-BaseTask::BaseTask(QueryId queryId, TaskCallback callback) : queryId(queryId), callback(std::move(callback))
+BaseTask::BaseTask(LocalQueryId queryId, TaskCallback callback) : queryId(queryId), callback(std::move(callback))
 {
 }
 
@@ -114,23 +114,23 @@ void BaseTask::fail(Exception exception)
 }
 
 WorkTask::WorkTask(
-    QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
+    LocalQueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
     : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline)), pipelineId(pipelineId), buf(std::move(buf))
 {
 }
 
 StartPipelineTask::StartPipelineTask(
-    QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline)
+    LocalQueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline)
     : BaseTask(std::move(queryId), std::move(callback)), pipeline(std::move(pipeline)), pipelineId(std::move(pipelineId))
 {
 }
 
-StopPipelineTask::StopPipelineTask(QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept
+StopPipelineTask::StopPipelineTask(LocalQueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept
     : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline))
 {
 }
 
-StopSourceTask::StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, size_t attempts, TaskCallback callback)
+StopSourceTask::StopSourceTask(LocalQueryId queryId, std::weak_ptr<RunningSource> target, size_t attempts, TaskCallback callback)
     : BaseTask(queryId, std::move(callback)), attempts(attempts), target(std::move(target))
 {
 }
@@ -139,24 +139,24 @@ FailSourceTask::FailSourceTask() : exception(nullptr)
 {
 }
 
-FailSourceTask::FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback)
+FailSourceTask::FailSourceTask(LocalQueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback)
     : BaseTask(queryId, std::move(callback)), target(std::move(target)), exception(std::make_unique<Exception>(std::move(exception)))
 {
 }
 
-StopQueryTask::StopQueryTask(QueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
+StopQueryTask::StopQueryTask(LocalQueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
     : BaseTask(std::move(queryId), std::move(callback)), catalog(std::move(catalog))
 {
 }
 
 StartQueryTask::StartQueryTask(
-    QueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
+    LocalQueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
     : BaseTask(std::move(queryId), std::move(callback)), queryPlan(std::move(queryPlan)), catalog(std::move(catalog))
 {
 }
 
 PendingPipelineStopTask::PendingPipelineStopTask(
-    QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback)
+    LocalQueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback)
     : BaseTask(std::move(queryId), std::move(callback)), attempts(attempts), pipeline(std::move(pipeline))
 {
 }

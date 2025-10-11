@@ -35,11 +35,6 @@
 namespace NES
 {
 
-QueryId LogicalPlan::getQueryId() const
-{
-    return queryId;
-}
-
 std::string LogicalPlan::getOriginalSql() const
 {
     return originalSql;
@@ -48,11 +43,6 @@ std::string LogicalPlan::getOriginalSql() const
 void LogicalPlan::setOriginalSql(const std::string& sql)
 {
     originalSql = sql;
-}
-
-void LogicalPlan::setQueryId(QueryId id)
-{
-    queryId = id;
 }
 
 std::vector<LogicalOperator> LogicalPlan::getRootOperators() const
@@ -71,7 +61,6 @@ LogicalPlan& LogicalPlan::operator=(const LogicalPlan& other)
 {
     if (this != &other)
     {
-        queryId = other.queryId;
         originalSql = other.originalSql;
         rootOperators = other.rootOperators;
     }
@@ -79,7 +68,7 @@ LogicalPlan& LogicalPlan::operator=(const LogicalPlan& other)
 }
 
 LogicalPlan::LogicalPlan(LogicalPlan&& other) noexcept
-    : queryId(other.queryId), rootOperators(std::move(other.rootOperators)), originalSql(std::move(other.originalSql))
+    : rootOperators(std::move(other.rootOperators)), originalSql(std::move(other.originalSql))
 {
 }
 
@@ -89,30 +78,28 @@ LogicalPlan& LogicalPlan::operator=(LogicalPlan&& other) noexcept
     {
         rootOperators = std::move(other.rootOperators);
         originalSql = std::move(other.originalSql);
-        queryId = other.queryId;
     }
     return *this;
 }
 
-LogicalPlan::LogicalPlan(LogicalOperator rootOperator) : queryId(INVALID_QUERY_ID)
+LogicalPlan::LogicalPlan(LogicalOperator rootOperator)
 {
     rootOperators.push_back(std::move(rootOperator));
 }
 
-LogicalPlan::LogicalPlan(const QueryId queryId, std::vector<LogicalOperator> rootOperators)
-    : queryId(queryId), rootOperators(std::move(rootOperators))
+LogicalPlan::LogicalPlan(std::vector<LogicalOperator> rootOperators) : rootOperators(std::move(rootOperators))
 {
 }
 
-LogicalPlan::LogicalPlan(const QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql)
-    : queryId(queryId), rootOperators(std::move(rootOperators)), originalSql(std::move(originalSql))
+LogicalPlan::LogicalPlan(std::vector<LogicalOperator> rootOperators, std::string originalSql)
+    : rootOperators(std::move(rootOperators)), originalSql(std::move(originalSql))
 {
 }
 
 LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot)
 {
     auto root = newRoot.withChildren(plan.getRootOperators());
-    return LogicalPlan(plan.getQueryId(), {std::move(root)}, plan.getOriginalSql());
+    return LogicalPlan({std::move(root)}, plan.getOriginalSql());
 }
 
 LogicalPlan addRootOperators(const LogicalPlan& plan, const std::vector<LogicalOperator>& rootsToAdd)
@@ -169,7 +156,7 @@ std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, const Operat
     }
     if (replaced)
     {
-        return LogicalPlan(plan.getQueryId(), std::move(newRoots), plan.getOriginalSql());
+        return LogicalPlan(std::move(newRoots), plan.getOriginalSql());
     }
     return std::nullopt;
 }
@@ -218,7 +205,7 @@ std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, const Operato
     }
     if (replaced)
     {
-        return LogicalPlan(plan.getQueryId(), std::move(newRoots), plan.getOriginalSql());
+        return LogicalPlan(std::move(newRoots), plan.getOriginalSql());
     }
     return std::nullopt;
 }

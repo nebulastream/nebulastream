@@ -60,10 +60,9 @@ struct CompiledQueryPlan
         std::vector<std::variant<OperatorId, std::weak_ptr<ExecutablePipeline>>> predecessor;
     };
 
-    static std::unique_ptr<CompiledQueryPlan> create(
-        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
+    static std::unique_ptr<CompiledQueryPlan>
+    create(std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
 
-    QueryId queryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<Sink> sinks;
     std::vector<Source> sources;
