@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # The development image adds common development tools we use during development and the CI uses for the pre-build-check
 ARG TAG=latest
 FROM nebulastream/nes-development-dependency:${TAG}
