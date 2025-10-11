@@ -3,7 +3,7 @@ name: Nix Build
 on:
   workflow_call:
     inputs:
-      ref:
+      head_sha:
         type: string
         required: true
         description: "ref of the branch"
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
           fetch-depth: 0
           submodules: recursive
 
