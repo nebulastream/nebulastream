@@ -60,4 +60,22 @@ struct as_if<NES::NESStrongStringType<Tag, invalid>, void>
         return NES::NESStrongStringType<Tag, invalid>{node.as<std::string>()};
     }
 };
+
+template <typename Tag>
+struct as_if<NES::NESStrongUUIDType<Tag>, void>
+{
+    explicit as_if(const Node& node_) : node(node_) { }
+
+    const Node& node;
+
+    NES::NESStrongUUIDType<Tag> operator()() const
+    {
+        if (!node.m_pNode)
+        {
+            throw TypedBadConversion<std::string>(node.Mark());
+        }
+
+        return NES::NESStrongUUIDType<Tag>{node.as<std::string>()};
+    }
+};
 }
