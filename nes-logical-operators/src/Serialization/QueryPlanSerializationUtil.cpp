@@ -40,7 +40,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
-    serializableQueryPlan.set_queryid(queryPlan.getQueryId().getRawValue());
+    serializableQueryPlan.set_queryid(queryPlan.getQueryId().getLocalQueryId().getRawValue());
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;
     for (auto itr : BFSRange(rootOperator))
@@ -55,6 +55,11 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         auto reflectedOperator = OperatorSerializationUtil::serializeOperator(itr);
         const auto serializedString = rfl::json::write(reflectedOperator);
         serializableQueryPlan.add_reflectedoperators(serializedString);
+    }
+
+    if (queryPlan.getQueryId().isValid())
+    {
+        serializableQueryPlan.set_queryid(queryPlan.getQueryId().getLocalQueryId().getRawValue());
     }
 
     /// Serialize the root operator ids
@@ -187,10 +192,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     }
 
     /// 4) Finalize plan
-    auto queryId = INVALID_QUERY_ID;
+    auto queryId = QueryId();
     if (serializedQueryPlan.has_queryid())
     {
-        queryId = QueryId(serializedQueryPlan.queryid());
+        queryId = QueryId(LocalQueryId(serializedQueryPlan.queryid()));
     }
     return LogicalPlan(queryId, std::move(rootOperators));
 }

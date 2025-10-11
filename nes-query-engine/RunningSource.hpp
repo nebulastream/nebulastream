@@ -21,6 +21,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -50,8 +51,8 @@ public:
         WorkEmitter& emitter);
 
     RunningSource(const RunningSource& other) = delete;
-    RunningSource& operator=(const RunningSource& other) = delete;
     RunningSource(RunningSource&& other) noexcept = delete;
+    RunningSource& operator=(const RunningSource& other) = delete;
     RunningSource& operator=(RunningSource&& other) noexcept = delete;
 
     ~RunningSource();

@@ -12,14 +12,22 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+#include <QueryId.hpp>
 
-/*
-The serializable wrapper definition for query plan
- */
-message SerializableQueryPlan{
-  repeated string reflectedOperators = 1;
-  repeated uint64 rootOperatorIds = 2;
-  optional string queryId = 3;
+#include <Util/UUID.hpp>
+
+namespace NES
+{
+
+QueryId QueryId::createLocal()
+{
+    return QueryId(LocalQueryId(UUIDToString(generateUUID())));
+}
+
+std::ostream& operator<<(std::ostream& os, const QueryId& queryId)
+{
+    os << queryId.localQueryId;
+    return os;
+}
+
 }

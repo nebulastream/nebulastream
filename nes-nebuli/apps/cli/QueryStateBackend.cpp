@@ -28,17 +28,19 @@ namespace NES::CLI
 
 std::string PersistedQueryId::toString() const
 {
-    return queryId.toString();
+    return queryId.getLocalQueryId().getRawValue();
 }
 
 PersistedQueryId PersistedQueryId::fromString(std::string_view input)
 {
-    auto maybeValue = from_chars<uint64_t>(input);
-    if (!maybeValue)
+    try
+    {
+        return PersistedQueryId{QueryId(LocalQueryId(std::string(input)))};
+    }
+    catch (const std::exception& e)
     {
         throw InvalidConfigParameter("Invalid query ID format: {}", input);
     }
-    return PersistedQueryId{QueryId(*maybeValue)};
 }
 
 QueryStateBackend::QueryStateBackend() : stateDirectory(getStateDirectory())
@@ -85,7 +87,7 @@ std::filesystem::path QueryStateBackend::getStateDirectory()
 
 std::filesystem::path QueryStateBackend::getQueryFilePath(QueryId queryId)
 {
-    return stateDirectory / fmt::format("{}.json", queryId.getRawValue());
+    return stateDirectory / fmt::format("{}.json", queryId.getLocalQueryId().getRawValue());
 }
 
 PersistedQueryId QueryStateBackend::store(QueryId queryId)
@@ -93,7 +95,7 @@ PersistedQueryId QueryStateBackend::store(QueryId queryId)
     auto filePath = getQueryFilePath(queryId);
 
     nlohmann::json jsonObject;
-    jsonObject["query_id"] = queryId.getRawValue();
+    jsonObject["query_id"] = queryId.getLocalQueryId().getRawValue();
 
     auto now = std::chrono::system_clock::now();
     jsonObject["created_at"] = fmt::format("{:%Y-%m-%dT%H:%M:%S%z}", now);
@@ -146,7 +148,7 @@ QueryId QueryStateBackend::load(PersistedQueryId persistedId)
         throw InvalidConfigParameter("State file {} is missing query_id field", filePath.string());
     }
 
-    auto queryId = QueryId(jsonObject["query_id"].get<uint64_t>());
+    auto queryId = QueryId(LocalQueryId(jsonObject["query_id"].get<std::string>()));
     NES_DEBUG("Loaded query state from: {}", filePath.string());
     return queryId;
 }
