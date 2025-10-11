@@ -71,24 +71,25 @@ constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
 using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
-using QueryIdOutputRowType = std::tuple<QueryId>;
-constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
+using QueryIdOutputRowType = std::tuple<LocalQueryId>;
+constexpr std::array<std::string_view, 1> queryIdOutputColumns{"local_query_id"};
 
 using QueryStatusOutputRowType = std::tuple<
-    QueryId,
+    LocalQueryId,
     QueryState,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 6> queryStatusOutputColumns{"query_id", "query_status", "error", "started", "running", "stopped"};
+constexpr std::array<std::string_view, 6> queryStatusOutputColumns{
+    "local_query_id", "query_status", "error", "started", "running", "stopped"};
 using WorkerStatusOutputRowType = std::tuple<
-    size_t,
+    std::string,
     QueryState,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 5> workerStatusOutputColumns{"query_id", "query_status", "error", "started", "stopped"};
+constexpr std::array<std::string_view, 5> workerStatusOutputColumns{"local_query_id", "query_status", "error", "started", "stopped"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 template <>
