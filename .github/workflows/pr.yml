@@ -10,7 +10,7 @@ on:
 
 # cancel previous runs of same PR / branch.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_sha }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
@@ -77,4 +77,4 @@ jobs:
     name: "Run Nix Build"
     uses: ./.github/workflows/nix-build.yml
     with:
-      ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
