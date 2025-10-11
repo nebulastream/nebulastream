@@ -44,4 +44,12 @@ struct adl_serializer<NES::NESStrongStringType<Tag, invalid>>
 
     static void to_json(json& j, NES::NESStrongStringType<Tag, invalid> t) { j = t.getRawValue(); }
 };
+
+template <typename Tag>
+struct adl_serializer<NES::NESStrongUUIDType<Tag>>
+{
+    static NES::NESStrongUUIDType<Tag> from_json(const json& j) { return NES::NESStrongUUIDType<Tag>{j.get<std::string>()}; }
+
+    static void to_json(json& j, NES::NESStrongUUIDType<Tag> t) { j = t.getRawValue(); }
+};
 }
