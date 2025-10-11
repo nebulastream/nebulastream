@@ -22,5 +22,5 @@ The serializable wrapper definition for query plan
 message SerializableQueryPlan{
   repeated SerializableOperator operators = 1;
   repeated uint64 rootOperatorIds = 2;
-  optional uint64 queryId = 3;
+  optional string queryId = 3;
 }
