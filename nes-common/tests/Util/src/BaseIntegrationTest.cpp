@@ -31,7 +31,7 @@
 namespace NES::Testing
 {
 
-BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / generateUUID())
+BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / UUIDToString(generateUUID()))
 {
 }
 

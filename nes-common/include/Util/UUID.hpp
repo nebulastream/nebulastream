@@ -13,11 +13,29 @@
 */
 
 #pragma once
+#include <array>
 #include <cstddef>
+#include <functional>
+#include <optional>
 #include <string>
 
 namespace NES
 {
 constexpr size_t UUID_STRING_LENGTH = 36;
-std::string generateUUID();
+constexpr size_t UUID_BYTES = 16;
+using UUID = std::array<std::byte, UUID_BYTES>;
+
+UUID generateUUID();
+std::string UUIDToString(const UUID& uuid);
+std::optional<UUID> stringToUUID(const std::string&);
+UUID stringToUUIDOrThrow(const std::string&);
+}
+
+namespace std
+{
+template <>
+struct hash<NES::UUID>
+{
+    size_t operator()(const NES::UUID& uuid) const noexcept;
+};
 }

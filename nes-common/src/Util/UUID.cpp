@@ -14,16 +14,51 @@
 
 #include <Util/UUID.hpp>
 
+#include <array>
+#include <bit>
+#include <optional>
 #include <string>
+#include <folly/hash/Hash.h>
 #include <uuid/uuid.h>
+#include <ErrorHandling.hpp>
 
-std::string NES::generateUUID()
+NES::UUID NES::generateUUID()
 {
-    uuid_t bytes;
+    UUID bytes;
+
+    uuid_generate(std::bit_cast<unsigned char*>(bytes.data()));
+    return bytes;
+}
+
+std::string NES::UUIDToString(const UUID& uuid)
+{
     std::string uuidString;
     uuidString.resize(UUID_STRING_LENGTH);
-
-    uuid_generate(bytes);
-    uuid_unparse(bytes, uuidString.data());
+    uuid_unparse(std::bit_cast<unsigned char*>(uuid.data()), uuidString.data());
     return uuidString;
+}
+
+std::optional<NES::UUID> NES::stringToUUID(const std::string& uuidString)
+{
+    UUID uuid;
+    if (uuid_parse(uuidString.c_str(), std::bit_cast<unsigned char*>(uuid.data())) == 0)
+    {
+        return uuid;
+    }
+    return std::nullopt;
+}
+
+NES::UUID NES::stringToUUIDOrThrow(const std::string& uuidString)
+{
+    if (auto result = stringToUUID(uuidString))
+    {
+        return *result;
+    }
+    throw InvalidUUID("'{}'", uuidString);
+}
+
+size_t std::hash<NES::UUID>::operator()(const NES::UUID& uuid) const noexcept
+{
+    return folly::hash::hash_combine(
+        *std::bit_cast<const size_t*>(uuid.data()), *std::bit_cast<const size_t*>(uuid.data() + sizeof(size_t)));
 }
