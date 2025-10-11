@@ -26,6 +26,7 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
+#include <QueryId.hpp>
 #include <RunningSource.hpp>
 
 namespace NES
@@ -47,7 +48,7 @@ struct RunningQueryPlanNode
     struct RunningQueryPlanNodeDeleter
     {
         WorkEmitter& emitter; ///NOLINT The WorkEmitter (a.k.a. ThreadPool) always outlives the RunningQueryPlan and its nodes
-        QueryId queryId = INVALID_QUERY_ID;
+        QueryId queryId;
 
         void operator()(RunningQueryPlanNode* ptr);
     };

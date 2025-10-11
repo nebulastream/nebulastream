@@ -96,7 +96,7 @@ std::vector<LocalQueryStatus> QuerySubmitter::finishedQueries()
     while (true)
     {
         std::vector<LocalQueryStatus> results;
-        for (const auto id : ids)
+        for (const auto& id : ids)
         {
             if (auto queryStatus = queryManager->status(id))
             {

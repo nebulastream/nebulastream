@@ -72,7 +72,7 @@ using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string,
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
 using QueryIdOutputRowType = std::tuple<QueryId>;
-constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
+constexpr std::array<std::string_view, 1> queryIdOutputColumns{"local_query_id"};
 
 using QueryStatusOutputRowType = std::tuple<
     QueryId,
@@ -81,14 +81,15 @@ using QueryStatusOutputRowType = std::tuple<
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 6> queryStatusOutputColumns{"query_id", "query_status", "error", "started", "running", "stopped"};
+constexpr std::array<std::string_view, 6> queryStatusOutputColumns{
+    "local_query_id", "query_status", "error", "started", "running", "stopped"};
 using WorkerStatusOutputRowType = std::tuple<
-    size_t,
+    std::string,
     QueryState,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 5> workerStatusOutputColumns{"query_id", "query_status", "error", "started", "stopped"};
+constexpr std::array<std::string_view, 5> workerStatusOutputColumns{"local_query_id", "query_status", "error", "started", "stopped"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 template <>
@@ -307,12 +308,13 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
         output.reserve(status.activeQueries.size() + status.terminatedQueries.size());
         for (const auto& activeQuery : status.activeQueries)
         {
-            output.emplace_back(activeQuery.queryId.getRawValue(), QueryState::Running, std::nullopt, activeQuery.started, std::nullopt);
+            output.emplace_back(
+                activeQuery.queryId.getLocalQueryId().getRawValue(), QueryState::Running, std::nullopt, activeQuery.started, std::nullopt);
         }
         for (const auto& terminatedQuery : status.terminatedQueries)
         {
             output.emplace_back(
-                terminatedQuery.queryId.getRawValue(),
+                terminatedQuery.queryId.getLocalQueryId().getRawValue(),
                 terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
                 terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
                 terminatedQuery.started,

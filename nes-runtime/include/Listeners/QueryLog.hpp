@@ -40,7 +40,7 @@ struct QueryMetrics
 /// Summary structure of the query log for a query
 struct LocalQueryStatus
 {
-    QueryId queryId = INVALID_QUERY_ID;
+    QueryId queryId = QueryId();
     QueryState state = QueryState::Registered;
     QueryMetrics metrics{};
 };
