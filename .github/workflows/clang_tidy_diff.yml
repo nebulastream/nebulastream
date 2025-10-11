@@ -23,15 +23,17 @@ on:
         default: -1
 
   # We need to use pull_request to run this workflow starting from our base repo and pull_request_target to run this
-  # workflow in our base repo, as. clang-tidy-pr-comments needs 'write' permissions to our repo. This is solely possible
-  # with pull_request_target as pull_request solely gives 'read' permissions.
+  # workflow in our base repo (but starting from a fork), as clang-tidy-pr-comments needs 'write' permissions to our repo. This is solely possible
+  # with pull_request_target as pull_request provides 'read' permissions.
   pull_request:
     types: [ opened, synchronize, reopened ]
   pull_request_target:
     types: [ opened, synchronize, reopened ]
 
 permissions:
-    pull-requests: write
+  contents: read
+  pull-requests: write
+  checks: write
 
 jobs:
   get-dev-images:
@@ -71,10 +73,14 @@ jobs:
           fi
 
   check-clang-tidy:
+    timeout-minutes: 90
     name: Clang-Tidy Diff
     needs: [setup, get-dev-images]
     # Due to limited ARM server capacity we only run on x64
     runs-on: [ self-hosted, linux, Build, x64]
+    if: >
+      (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     container:
       image: nebulastream/nes-ci:${{ needs.setup.outputs.dev_image_tag }}
       options: --user root
@@ -92,6 +98,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: ${{ steps.increment.outputs.result }}
+          ref: ${{ needs.setup.outputs.head_sha }}
       - name: Configure NebulaStream for Clang-Tidy
         run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       # We need to build the project, as some headers are only created during the build.
