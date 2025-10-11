@@ -109,13 +109,13 @@ struct RunningQueryPlanNode
     struct RunningQueryPlanNodeDeleter
     {
         WorkEmitter& emitter; ///NOLINT The WorkEmitter (a.k.a. ThreadPool) always outlives the RunningQueryPlan and its nodes
-        QueryId queryId = INVALID_QUERY_ID;
+        LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
 
         void operator()(RunningQueryPlanNode* ptr);
     };
 
     static std::shared_ptr<RunningQueryPlanNode> create(
-        QueryId queryId,
+        LocalQueryId queryId,
         PipelineId pipelineId,
         WorkEmitter& emitter,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
@@ -179,7 +179,7 @@ struct RunningQueryPlan final
     /// AS LONG AS THE CallbackRef IS ALIVE onRunning WILL NOT BE CALLED.
     /// The main purpose is to allow the owner of the RQP to release locks before the listeners can be called.
     static std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> start(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::unique_ptr<ExecutableQueryPlan> plan,
         QueryLifetimeController&,
         WorkEmitter&,
