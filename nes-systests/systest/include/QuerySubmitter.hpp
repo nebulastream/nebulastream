@@ -15,9 +15,14 @@
 #pragma once
 
 #include <expected>
+#include <memory>
 #include <unordered_set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Systest
@@ -28,17 +33,17 @@ class QuerySubmitter
 {
 public:
     explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
-    std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan);
-    void startQuery(QueryId query);
-    void stopQuery(QueryId query);
-    void unregisterQuery(QueryId query);
-    LocalQueryStatus waitForQueryTermination(QueryId query);
+    std::expected<LocalQueryId, Exception> registerQuery(const LogicalPlan& plan);
+    void startQuery(LocalQueryId query);
+    void stopQuery(LocalQueryId query);
+    void unregisterQuery(LocalQueryId query);
+    LocalQueryStatus waitForQueryTermination(LocalQueryId query);
 
     /// Blocks until atleast one query has finished (or potentially failed)
     std::vector<LocalQueryStatus> finishedQueries();
 
 private:
     UniquePtr<QueryManager> queryManager;
-    std::unordered_set<QueryId> ids;
+    std::unordered_set<LocalQueryId> ids;
 };
 }

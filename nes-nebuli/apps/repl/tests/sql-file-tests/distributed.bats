@@ -143,13 +143,13 @@ assert_json_contains() {
   assert_json_equal '[{"parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
   assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"input_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
-  QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
+  QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].local_query_id')
 
   # One global and one local query
   echo "${lines[5]}" | jq -e '(. | length) == 1'
   echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
 
-  assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[6]}"
+  assert_json_equal "[{\"local_query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
   assert_json_contains "[]" "${lines[7]}"
 }
 
@@ -195,9 +195,9 @@ assert_json_contains() {
 
   # Verify that the implicit STOP QUERY statement was executed and its result matches the query that was created
   # lines[2] is the SELECT query result with query_id
-  QUERY_ID=$(echo ${lines[2]} | jq -r '.[0].query_id')
+  QUERY_ID=$(echo ${lines[2]} | jq -r '.[0].local_query_id')
   # The last line should contain the result of the implicit STOP QUERY command with the same query_id
-  assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[-1]}"
+  assert_json_equal "[{\"local_query_id\": \"${QUERY_ID}\"}]" "${lines[-1]}"
 }
 
 @test "default on-exit behavior should keep queries alive" {

@@ -36,13 +36,13 @@ class PhysicalPlan final
 public:
     friend std::ostream& operator<<(std::ostream& os, const PhysicalPlan& plan);
 
-    [[nodiscard]] QueryId getQueryId() const;
+    [[nodiscard]] LocalQueryId getQueryId() const;
     [[nodiscard]] const Roots& getRootOperators() const;
     [[nodiscard]] ExecutionMode getExecutionMode() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
 
 private:
-    QueryId queryId;
+    LocalQueryId localQueryId;
     Roots rootOperators;
     ExecutionMode executionMode;
     uint64_t operatorBufferSize;
@@ -50,7 +50,7 @@ private:
     [[nodiscard]] std::string toString() const;
 
     friend class PhysicalPlanBuilder;
-    PhysicalPlan(QueryId id, Roots rootOperators, ExecutionMode executionMode, uint64_t operatorBufferSize);
+    PhysicalPlan(LocalQueryId id, Roots rootOperators, ExecutionMode executionMode, uint64_t operatorBufferSize);
 };
 }
 

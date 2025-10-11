@@ -37,8 +37,10 @@ class LogicalPlan
 public:
     LogicalPlan() = delete;
     explicit LogicalPlan(LogicalOperator rootOperator);
-    explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
-    explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql);
+    explicit LogicalPlan(std::vector<LogicalOperator> rootOperators);
+    explicit LogicalPlan(std::vector<LogicalOperator> rootOperators, std::string originalSql);
+    explicit LogicalPlan(LocalQueryId localQueryId, std::vector<LogicalOperator> rootOperators);
+    explicit LogicalPlan(LocalQueryId localQueryId, std::vector<LogicalOperator> rootOperators, std::string originalSql);
 
     LogicalPlan(const LogicalPlan& other) = default;
     LogicalPlan& operator=(const LogicalPlan& other);
@@ -48,17 +50,17 @@ public:
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan);
 
-    [[nodiscard]] QueryId getQueryId() const;
+    [[nodiscard]] const LocalQueryId& getQueryId() const;
     [[nodiscard]] std::string getOriginalSql() const;
     [[nodiscard]] std::vector<LogicalOperator> getRootOperators() const;
 
     [[nodiscard]] LogicalPlan withRootOperators(const std::vector<LogicalOperator>& operators) const;
 
     void setOriginalSql(const std::string& sql);
-    void setQueryId(QueryId id);
+    void setQueryId(LocalQueryId id);
 
 private:
-    QueryId queryId = INVALID_QUERY_ID;
+    LocalQueryId localQueryId = INVALID_LOCAL_QUERY_ID;
     std::vector<LogicalOperator> rootOperators;
     std::string originalSql; /// Holds the original SQL string
 };

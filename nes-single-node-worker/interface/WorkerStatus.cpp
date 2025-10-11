@@ -83,7 +83,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                              [&](const auto& activeQuery)
                              {
                                  return WorkerStatus::ActiveQuery{
-                                     .queryId = QueryId(activeQuery.query_id()),
+                                     .queryId = LocalQueryId(activeQuery.query_id()),
                                      .started = activeQuery.has_started_unix_timestamp_in_milli_seconds()
                                          ? std::make_optional(fromMillis(activeQuery.started_unix_timestamp_in_milli_seconds()))
                                          : std::nullopt};
@@ -95,7 +95,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                 [&](const auto& terminatedQuery)
                 {
                     return WorkerStatus::TerminatedQuery{
-                        .queryId = QueryId(terminatedQuery.query_id()),
+                        .queryId = LocalQueryId(terminatedQuery.query_id()),
                         .started = terminatedQuery.has_started_unix_timestamp_in_milli_seconds()
                             ? std::make_optional(fromMillis(terminatedQuery.started_unix_timestamp_in_milli_seconds()))
                             : std::nullopt,
