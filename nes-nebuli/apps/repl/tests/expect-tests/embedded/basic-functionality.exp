@@ -57,7 +57,7 @@ expect_json_equal {[]} "SHOW QUERIES (empty)"
 send_sql {SELECT TS FROM ENDLESS INTO SOMESINK;}
 set json [expect_json "Timeout waiting for SELECT response"]
 # Extract the query ID using jq
-set query_id [jq $json {.[0].query_id}]
+set query_id [jq $json {.[0].local_query_id}]
 
 send_sql {SHOW QUERIES;}
 set json [expect_json "Timeout waiting for SHOW QUERIES response"]
@@ -67,7 +67,7 @@ if {$count != "2"} {
     fail "SHOW QUERIES - expected 2 queries (one global, and one local), got $count"
 }
 # Check that query_id matches
-set returned_id [jq $json {.[0].query_id}]
+set returned_id [jq $json {.[0].local_query_id}]
 if {$returned_id ne $query_id} {
     fail "SHOW QUERIES - query_id mismatch" $query_id $returned_id
 }
@@ -77,7 +77,7 @@ assert_jq_test $json {.[0].query_status | test("^Running|Registered|Started$")} 
 send_sql {SHOW QUERIES WHERE ID = '$query_id';}
 set json [expect_json "Timeout waiting for SHOW QUERIES WHERE response"]
 # Verify we get exactly the query we asked for
-set returned_id [jq $json {.[0].query_id}]
+set returned_id [jq $json {.[0].local_query_id}]
 if {$returned_id ne $query_id} {
     fail "SHOW QUERIES WHERE - query_id mismatch" $query_id $returned_id
 }
@@ -85,7 +85,7 @@ if {$returned_id ne $query_id} {
 send_sql {DROP QUERY WHERE ID = '$query_id';}
 set json [expect_json "Timeout waiting for DROP QUERY response"]
 # Check that the response contains the query ID
-set returned_id [jq $json {.[0].query_id}]
+set returned_id [jq $json {.[0].local_query_id}]
 if {$returned_id ne $query_id} {
     fail "DROP QUERY - query_id mismatch" $query_id $returned_id
 }
