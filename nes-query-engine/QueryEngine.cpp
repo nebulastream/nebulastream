@@ -793,10 +793,10 @@ void QueryEngine::stop(QueryId queryId)
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
+void QueryEngine::start(QueryId queryId, std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
     threadPool->taskQueue.addAdmissionTaskBlocking(
-        {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+        {}, StartQueryTask{queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
 
 QueryEngine::~QueryEngine()

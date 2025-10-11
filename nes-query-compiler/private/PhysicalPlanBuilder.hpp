@@ -41,10 +41,10 @@ public:
     [[nodiscard]] PhysicalPlan finalize() &&;
 
 private:
-    QueryId queryId;
     Roots sinks;
     ExecutionMode executionMode;
     uint64_t operatorBufferSize{};
+    QueryId queryId = INVALID_LOCAL_QUERY_ID;
 
     /// Used internally to flip the plan from sink->source tstatic o source->sink
     static Roots flip(const Roots& roots);

@@ -37,7 +37,7 @@ static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indent
 
 std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& plan)
 {
-    os << "PipelinedQueryPlan for Query: " << plan.getQueryId() << "\n";
+    os << "PipelinedQueryPlan:\n";
     os << "Number of root pipelines: " << plan.getPipelines().size() << "\n";
     for (size_t i = 0; i < plan.getPipelines().size(); ++i)
     {

@@ -38,7 +38,7 @@ public:
         std::shared_ptr<BufferManager> bm,
         Host host);
     void stop(QueryId queryId);
-    void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
+    void start(QueryId queryId, std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();
 
     /// Order of Member construction is top to bottom and order of destruction is reversed

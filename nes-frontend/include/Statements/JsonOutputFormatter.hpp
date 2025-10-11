@@ -30,6 +30,7 @@
 #include <google/protobuf/message_lite.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <QueryId.hpp>
 
 namespace nlohmann
 {
@@ -80,6 +81,13 @@ struct adl_serializer<EnumType>
 {
     ///NOLINTNEXTLINE(readability-identifier-naming)
     static void to_json(json& jsonObject, const EnumType& enumValue) { jsonObject = magic_enum::enum_name(enumValue); }
+};
+
+template <>
+struct adl_serializer<NES::QueryId>
+{
+    ///NOLINTNEXTLINE(readability-identifier-naming)
+    static void to_json(json& jsonObject, const NES::QueryId& queryId) { jsonObject = queryId.getLocalQueryId().getRawValue(); }
 };
 
 template <typename T>

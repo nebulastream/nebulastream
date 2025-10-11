@@ -18,6 +18,7 @@
 #include <string>
 #include <string_view>
 #include <Identifiers/Identifiers.hpp>
+#include <QueryId.hpp>
 
 namespace NES::CLI
 {
