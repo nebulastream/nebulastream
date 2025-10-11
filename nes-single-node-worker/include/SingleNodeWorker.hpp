@@ -62,27 +62,27 @@ public:
     /// returned the query can be started with the QueryId. The registered Query will be in the StoppedState
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the registered Query
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan plan) noexcept;
+    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(LogicalPlan plan) noexcept;
 
     /// Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
     /// of the query.
     /// @param queryId identifies the registered query
-    std::expected<void, Exception> startQuery(QueryId queryId) noexcept;
+    std::expected<void, Exception> startQuery(LocalQueryId queryId) noexcept;
 
     /// Stops the Query and moves it into the StoppedState. The exact semantics and guarantees depend on the chosen
     ///  QueryTerminationType
     /// @param queryId identifies the registered query
     /// @param terminationType dictates what happens with in in-flight data
-    std::expected<void, Exception> stopQuery(QueryId queryId, QueryTerminationType terminationType) noexcept;
+    std::expected<void, Exception> stopQuery(LocalQueryId queryId, QueryTerminationType terminationType) noexcept;
 
     /// Unregisters a stopped Query.
     /// @param queryId identifies the registered stopped query
-    std::expected<void, Exception> unregisterQuery(QueryId queryId) noexcept;
+    std::expected<void, Exception> unregisterQuery(LocalQueryId queryId) noexcept;
 
     /// Complete history of query status changes.
-    [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
+    [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(LocalQueryId queryId) const;
     /// Summary structure for query.
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> getQueryStatus(QueryId queryId) const noexcept;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> getQueryStatus(LocalQueryId queryId) const noexcept;
     [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
 };
 }

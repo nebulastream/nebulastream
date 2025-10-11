@@ -30,8 +30,8 @@ class QueryLifetimeController
 {
 public:
     virtual ~QueryLifetimeController() = default;
-    virtual void initializeSourceFailure(QueryId, OriginId, std::weak_ptr<RunningSource>, Exception exception) = 0;
-    virtual void initializeSourceStop(QueryId, OriginId, std::weak_ptr<RunningSource>) = 0;
+    virtual void initializeSourceFailure(LocalQueryId, OriginId, std::weak_ptr<RunningSource>, Exception exception) = 0;
+    virtual void initializeSourceStop(LocalQueryId, OriginId, std::weak_ptr<RunningSource>) = 0;
 };
 
 class WorkEmitter
@@ -43,14 +43,14 @@ public:
     /// If the `potentiallyProcessTheWorkInPlace` parameter is set, the task may be executed in place if it cannot be submitted to the task queue.
     /// This function may return false if the `potentiallyProcessTheWorkInPlace` parameter is disabled and the task cannot be submitted.
     virtual bool emitWork(
-        QueryId,
+        LocalQueryId,
         const std::shared_ptr<RunningQueryPlanNode>& target,
         TupleBuffer,
         TaskCallback,
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;
-    virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
-    virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
-    virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
+    virtual void emitPipelineStart(LocalQueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
+    virtual void emitPendingPipelineStop(LocalQueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
+    virtual void emitPipelineStop(LocalQueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
 };
 }
