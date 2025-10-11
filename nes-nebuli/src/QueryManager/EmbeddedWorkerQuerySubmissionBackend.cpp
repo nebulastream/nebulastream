@@ -39,27 +39,27 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 {
 }
 
-std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
+std::expected<LocalQueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
 {
     return worker.registerQuery(plan);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(QueryId queryId)
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LocalQueryId queryId)
 {
     return worker.startQuery(queryId);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(LocalQueryId queryId)
 {
     return worker.stopQuery(queryId, QueryTerminationType::Graceful);
 }
 
-std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::unregister(QueryId queryId)
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::unregister(LocalQueryId queryId)
 {
     return worker.unregisterQuery(queryId);
 }
 
-std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
+std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::status(LocalQueryId queryId) const
 {
     return worker.getQueryStatus(queryId);
 }

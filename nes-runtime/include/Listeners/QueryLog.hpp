@@ -40,7 +40,7 @@ struct QueryMetrics
 /// Summary structure of the query log for a query
 struct LocalQueryStatus
 {
-    QueryId queryId = INVALID_QUERY_ID;
+    LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
     QueryState state = QueryState::Registered;
     QueryMetrics metrics{};
 };
@@ -66,16 +66,16 @@ inline std::ostream& operator<<(std::ostream& os, const QueryStateChange& status
 struct QueryLog : AbstractQueryStatusListener
 {
     using Log = std::vector<QueryStateChange>;
-    using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStateChange>>;
+    using QueryStatusLog = std::unordered_map<LocalQueryId, std::vector<QueryStateChange>>;
 
     /// TODO #241: we should use the new unique sourceId/hash once implemented here instead
     bool logSourceTermination(
-        QueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryStatusChange(QueryId queryId, QueryState status, std::chrono::system_clock::time_point timestamp) override;
+        LocalQueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
+    bool logQueryFailure(LocalQueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
+    bool logQueryStatusChange(LocalQueryId queryId, QueryState status, std::chrono::system_clock::time_point timestamp) override;
 
-    [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
-    [[nodiscard]] std::optional<LocalQueryStatus> getQueryStatus(QueryId queryId) const;
+    [[nodiscard]] std::optional<Log> getLogForQuery(LocalQueryId queryId) const;
+    [[nodiscard]] std::optional<LocalQueryStatus> getQueryStatus(LocalQueryId queryId) const;
 
     [[nodiscard]] std::vector<LocalQueryStatus> getStatus() const;
 
