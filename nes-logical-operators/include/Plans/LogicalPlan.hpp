@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -37,6 +38,8 @@ class LogicalPlan
 public:
     LogicalPlan() = delete;
     explicit LogicalPlan(LogicalOperator rootOperator);
+    explicit LogicalPlan(std::vector<LogicalOperator> rootOperators);
+    explicit LogicalPlan(std::vector<LogicalOperator> rootOperators, std::string originalSql);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql);
 
@@ -48,7 +51,7 @@ public:
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan);
 
-    [[nodiscard]] QueryId getQueryId() const;
+    [[nodiscard]] const QueryId& getQueryId() const;
     [[nodiscard]] std::string getOriginalSql() const;
     [[nodiscard]] std::vector<LogicalOperator> getRootOperators() const;
 
@@ -58,7 +61,7 @@ public:
     void setQueryId(QueryId id);
 
 private:
-    QueryId queryId = INVALID_QUERY_ID;
+    QueryId queryId = QueryId();
     std::vector<LogicalOperator> rootOperators;
     std::string originalSql; /// Holds the original SQL string
 };

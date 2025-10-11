@@ -33,7 +33,7 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
     for (const auto& activeQuery : status.activeQueries)
     {
         auto* activeQueryGRPC = response->add_active_queries();
-        activeQueryGRPC->set_query_id(activeQuery.queryId.getRawValue());
+        activeQueryGRPC->set_query_id(activeQuery.queryId.getLocalQueryId().getRawValue());
         if (activeQuery.started)
         {
             activeQueryGRPC->set_started_unix_timestamp_in_milli_seconds(
@@ -44,7 +44,7 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
     for (const auto& terminatedQuery : status.terminatedQueries)
     {
         auto* terminatedQueryGRPC = response->add_terminated_queries();
-        terminatedQueryGRPC->set_query_id(terminatedQuery.queryId.getRawValue());
+        terminatedQueryGRPC->set_query_id(terminatedQuery.queryId.getLocalQueryId().getRawValue());
         if (terminatedQuery.started)
         {
             terminatedQueryGRPC->set_started_unix_timestamp_in_milli_seconds(
@@ -83,7 +83,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                              [&](const auto& activeQuery)
                              {
                                  return WorkerStatus::ActiveQuery{
-                                     .queryId = QueryId(activeQuery.query_id()),
+                                     .queryId = QueryId(LocalQueryId(activeQuery.query_id())),
                                      .started = activeQuery.has_started_unix_timestamp_in_milli_seconds()
                                          ? std::make_optional(fromMillis(activeQuery.started_unix_timestamp_in_milli_seconds()))
                                          : std::nullopt};
@@ -95,7 +95,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                 [&](const auto& terminatedQuery)
                 {
                     return WorkerStatus::TerminatedQuery{
-                        .queryId = QueryId(terminatedQuery.query_id()),
+                        .queryId = QueryId(LocalQueryId(terminatedQuery.query_id())),
                         .started = terminatedQuery.has_started_unix_timestamp_in_milli_seconds()
                             ? std::make_optional(fromMillis(terminatedQuery.started_unix_timestamp_in_milli_seconds()))
                             : std::nullopt,

@@ -15,9 +15,14 @@
 #pragma once
 
 #include <expected>
+#include <memory>
 #include <unordered_set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Systest

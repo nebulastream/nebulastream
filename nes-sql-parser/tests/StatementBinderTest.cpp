@@ -294,13 +294,13 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
 
 TEST_F(StatementBinderTest, BindDropQuery)
 {
-    const std::string queryString = "DROP QUERY WHERE ID = 12";
+    const std::string queryString = "DROP QUERY WHERE ID = \"bc86c8a9-5f6b-4022-a83f-b598acbbe6db\"";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
-    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), 12);
+    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getLocalQueryId().getRawValue(), "bc86c8a9-5f6b-4022-a83f-b598acbbe6db");
 
-    const std::string queryString2 = "DROP QUERY 1";
+    const std::string queryString2 = "DROP QUERY \"bc86c8a9-5f6b-4022-a83f-b598acbbe6db\"";
     const auto statement2 = binder->parseAndBindSingle(queryString2);
     ASSERT_FALSE(statement2.has_value());
     ASSERT_EQ(statement2.error().code(), ErrorCode::InvalidQuerySyntax);
