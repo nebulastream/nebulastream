@@ -54,7 +54,7 @@ namespace
 
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 
-NES::LocalQueryStatus makeSummary(const NES::QueryId id, const NES::QueryState currState, const std::shared_ptr<NES::Exception>& err)
+NES::LocalQueryStatus makeSummary(const NES::LocalQueryId id, const NES::QueryState currState, const std::shared_ptr<NES::Exception>& err)
 {
     NES::LocalQueryStatus queryStatus;
     queryStatus.queryId = id;
@@ -105,11 +105,11 @@ public:
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (LogicalPlan), (override));
-    MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (override));
-    MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
-    MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (override));
-    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, override));
+    MOCK_METHOD((std::expected<LocalQueryId, Exception>), registerQuery, (LogicalPlan), (override));
+    MOCK_METHOD((std::expected<void, Exception>), start, (LocalQueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), stop, (LocalQueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), unregister, (LocalQueryId), (override));
+    MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (LocalQueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
 };
 
@@ -129,11 +129,11 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{7};
+    const LocalQueryId id(UUIDToString(generateUUID()));
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
     auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)))
@@ -162,10 +162,10 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{11};
+    const LocalQueryId id(UUIDToString(generateUUID()));
 
     auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)))

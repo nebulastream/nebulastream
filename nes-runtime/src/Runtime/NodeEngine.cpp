@@ -47,18 +47,15 @@ class QueryTracker
     };
 
     using QueryState = AtomicState<Idle, Executing>;
-    folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
+    folly::Synchronized<std::unordered_map<LocalQueryId, std::unique_ptr<QueryState>>> queries;
 
 public:
-    QueryId registerQuery(std::unique_ptr<CompiledQueryPlan> qep)
+    void registerQuery(std::unique_ptr<CompiledQueryPlan> qep, LocalQueryId queryId)
     {
-        NES_INFO("Register {}", qep->queryId);
-        QueryId queryId = qep->queryId;
-        queries.wlock()->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
-        return queryId;
+        queries.wlock()->emplace(std::move(queryId), std::make_unique<QueryState>(Idle{std::move(qep)}));
     }
 
-    std::unique_ptr<CompiledQueryPlan> moveToExecuting(QueryId qid)
+    std::unique_ptr<CompiledQueryPlan> moveToExecuting(LocalQueryId qid)
     {
         auto rlocked = queries.rlock();
         std::unique_ptr<CompiledQueryPlan> qep;
@@ -95,21 +92,20 @@ NodeEngine::NodeEngine(
 {
 }
 
-QueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
+void NodeEngine::registerCompiledQueryPlan(LocalQueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
-    auto queryId = queryTracker->registerQuery(std::move(compiledQueryPlan));
+    queryTracker->registerQuery(std::move(compiledQueryPlan), queryId);
     queryLog->logQueryStatusChange(queryId, QueryState::Registered, std::chrono::system_clock::now());
-    return queryId;
 }
 
-void NodeEngine::startQuery(QueryId queryId)
+void NodeEngine::startQuery(LocalQueryId queryId)
 {
-    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    PRECONDITION(queryId != INVALID_LOCAL_QUERY_ID, "QueryId must be not invalid!");
 
     if (auto qep = queryTracker->moveToExecuting(queryId))
     {
         systemEventListener->onEvent(StartQuerySystemEvent(queryId));
-        queryEngine->start(ExecutableQueryPlan::instantiate(*qep, *sourceProvider));
+        queryEngine->start(std::move(queryId), ExecutableQueryPlan::instantiate(*qep, *sourceProvider));
     }
     else
     {
@@ -117,16 +113,16 @@ void NodeEngine::startQuery(QueryId queryId)
     }
 }
 
-void NodeEngine::unregisterQuery(QueryId queryId)
+void NodeEngine::unregisterQuery(LocalQueryId queryId)
 {
-    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    PRECONDITION(queryId != INVALID_LOCAL_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Unregister {}", queryId);
     queryEngine->stop(queryId);
 }
 
-void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
+void NodeEngine::stopQuery(LocalQueryId queryId, QueryTerminationType)
 {
-    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    PRECONDITION(queryId != INVALID_LOCAL_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Stop {}", queryId);
     systemEventListener->onEvent(StopQuerySystemEvent(queryId));
     queryEngine->stop(queryId);

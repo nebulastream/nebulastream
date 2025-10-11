@@ -134,10 +134,11 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfigurati
     }
 
     INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
-    auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
+    auto physicalPlanBuilder = PhysicalPlanBuilder();
     physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
     physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());
     physicalPlanBuilder.setOperatorBufferSize(conf.operatorBufferSize.getValue());
+    physicalPlanBuilder.setLocalQueryId(queryPlan.getLocalQueryId());
     return std::move(physicalPlanBuilder).finalize();
 }
 }

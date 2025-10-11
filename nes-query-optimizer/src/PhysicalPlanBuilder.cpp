@@ -30,7 +30,7 @@
 namespace NES
 {
 
-PhysicalPlanBuilder::PhysicalPlanBuilder(QueryId id) : queryId(id)
+PhysicalPlanBuilder::PhysicalPlanBuilder()
 {
 }
 
@@ -50,10 +50,15 @@ void PhysicalPlanBuilder::setOperatorBufferSize(uint64_t bufferSize)
     operatorBufferSize = bufferSize;
 }
 
+void PhysicalPlanBuilder::setLocalQueryId(LocalQueryId id)
+{
+    localQueryId = id;
+}
+
 PhysicalPlan PhysicalPlanBuilder::finalize() &&
 {
     auto sources = flip(sinks);
-    return {queryId, std::move(sources), executionMode, operatorBufferSize};
+    return {localQueryId, std::move(sources), executionMode, operatorBufferSize};
 }
 
 using PhysicalOpPtr = std::shared_ptr<PhysicalOperatorWrapper>;

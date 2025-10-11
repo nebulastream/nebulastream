@@ -28,6 +28,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
@@ -70,22 +71,21 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
 }
 
-/// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
-/// We might want to move this to the engine.
-static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
-
-std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
+std::expected<LocalQueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        plan.setQueryId(QueryId(queryIdCounter++));
+        auto queryId = LocalQueryId(generateUUID());
+        LogContext context("queryId", queryId);
+
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
+        listener->onEvent(SubmitQuerySystemEvent{queryId, explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         request->dumpCompilationResult = configuration.workerConfiguration.dumpQueryCompilationIntermediateRepresentations.getValue();
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successfull query compilation or exception, but got nothing");
-        return nodeEngine->registerCompiledQueryPlan(std::move(result));
+        nodeEngine->registerCompiledQueryPlan(queryId, std::move(result));
+        return queryId;
     }
     CPPTRACE_CATCH(...)
     {
@@ -94,11 +94,11 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::startQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
-        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+        PRECONDITION(queryId != INVALID_LOCAL_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->startQuery(queryId);
         return {};
     }
@@ -109,11 +109,11 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
+std::expected<void, Exception> SingleNodeWorker::stopQuery(LocalQueryId queryId, QueryTerminationType type) noexcept
 {
     CPPTRACE_TRY
     {
-        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+        PRECONDITION(queryId != INVALID_LOCAL_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId, type);
         return {};
     }
@@ -124,11 +124,11 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::unregisterQuery(LocalQueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
-        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+        PRECONDITION(queryId != INVALID_LOCAL_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->unregisterQuery(queryId);
         return {};
     }
@@ -139,7 +139,7 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     std::unreachable();
 }
 
-std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(LocalQueryId queryId) const noexcept
 {
     CPPTRACE_TRY
     {
@@ -187,7 +187,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     return status;
 }
 
-std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
+std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(LocalQueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }

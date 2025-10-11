@@ -34,9 +34,11 @@ struct ExecutableQueryPlan
     static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
 
     ExecutableQueryPlan(
-        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);
+        LocalQueryId localQueryId,
+        std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+        std::vector<SourceWithSuccessor> instantiatedSources);
 
-    QueryId queryId;
+    LocalQueryId localQueryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<SourceWithSuccessor> sources;
     friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan);

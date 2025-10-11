@@ -480,11 +480,11 @@ public:
             {
                 throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
             }
-            if (not std::holds_alternative<uint64_t>(value))
+            if (not std::holds_alternative<std::string>(value))
             {
-                throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be an unsigned integer");
+                throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
             }
-            return ShowQueriesStatement{.id = QueryId{std::get<uint64_t>(value)}, .format = format};
+            return ShowQueriesStatement{.id = LocalQueryId{std::get<std::string>(value)}, .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -538,7 +538,7 @@ public:
         }
         else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
         {
-            const auto id = QueryId{std::stoul(dropQueryAst->id->getText())};
+            const auto id = LocalQueryId{dropQueryAst->id->getText()};
             return DropQueryStatement{id};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
