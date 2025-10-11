@@ -55,8 +55,8 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
     const auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {
-        NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), workerConfig.grpc);
-        return QueryId{reply.queryid()};
+        NES_DEBUG("Registration to node {} was successful.", workerConfig.grpc);
+        return QueryId{LocalQueryId(reply.queryid())};
     }
     return std::unexpected{QueryRegistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
@@ -67,7 +67,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId
     grpc::ClientContext context;
     StartQueryRequest request;
     google::protobuf::Empty response;
-    request.set_queryid(queryId.getRawValue());
+    request.set_queryid(queryId.getLocalQueryId().getRawValue());
     const auto status = stub->StartQuery(&context, request, &response);
     if (status.ok())
     {
@@ -83,7 +83,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
 {
     grpc::ClientContext context;
     QueryStatusRequest request;
-    request.set_queryid(queryId.getRawValue());
+    request.set_queryid(queryId.getLocalQueryId().getRawValue());
     QueryStatusReply response;
 
     if (const auto status = stub->RequestQueryStatus(&context, request, &response); status.ok())
@@ -135,7 +135,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
         return std::unexpected{
             QueryStatusFailed("Unknown query state `{}` for query: {}", magic_enum::enum_name(response.state()), queryId)};
     }
-    return LocalQueryStatus(QueryId{response.queryid()}, *state, metrics);
+    return LocalQueryStatus(QueryId{LocalQueryId(response.queryid())}, *state, metrics);
 }
 
 std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
@@ -157,7 +157,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
 {
     grpc::ClientContext context;
     StopQueryRequest request;
-    request.set_queryid(queryId.getRawValue());
+    request.set_queryid(queryId.getLocalQueryId().getRawValue());
     request.set_terminationtype(StopQueryRequest::Graceful);
     google::protobuf::Empty response;
 
@@ -177,7 +177,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(QueryId qu
     grpc::ClientContext context;
     UnregisterQueryRequest request;
     google::protobuf::Empty response;
-    request.set_queryid(queryId.getRawValue());
+    request.set_queryid(queryId.getLocalQueryId().getRawValue());
 
     const auto status = stub->UnregisterQuery(&context, request, &response);
     if (status.ok())

@@ -39,6 +39,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/UUID.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
@@ -133,7 +134,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{7};
+    const QueryId id(LocalQueryId(UUIDToString(generateUUID())));
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
     auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
@@ -165,7 +166,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{11};
+    const QueryId id(LocalQueryId(UUIDToString(generateUUID())));
 
     auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
     EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));

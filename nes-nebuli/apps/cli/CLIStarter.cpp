@@ -323,12 +323,6 @@ void doStatus(
         }
 
         auto jsonResult = nlohmann::json(NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value()));
-
-        for (auto& query : jsonResult)
-        {
-            query["local_query_id"] = query["query_id"];
-            query.erase("query_id");
-        }
         std::cout << jsonResult.dump(4) << '\n';
     }
     else
@@ -350,8 +344,10 @@ void doStatus(
         /// Patch local query ids for persistent id
         for (auto& query : result)
         {
-            query["local_query_id"] = query["query_id"];
-            query["query_id"] = queries.at(query["query_id"]);
+            auto localIdStr = query["local_query_id"].get<std::string>();
+            auto queryId = NES::QueryId(NES::LocalQueryId(localIdStr));
+            query["query_id"] = queries.at(queryId);
+            query.erase("local_query_id");
         }
 
         std::cout << result.dump(4) << '\n';
@@ -376,8 +372,10 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
     /// Patch local query ids for persistent id
     for (auto& query : result)
     {
-        query["local_query_id"] = query["query_id"];
-        query["query_id"] = queries.at(query["query_id"]);
+        auto localIdStr = query["local_query_id"].get<std::string>();
+        auto queryId = NES::QueryId(NES::LocalQueryId(localIdStr));
+        query["query_id"] = queries.at(queryId);
+        query.erase("local_query_id");
     }
 
     std::cout << result.dump(4) << '\n';

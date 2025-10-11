@@ -73,7 +73,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
         auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
         if (result.has_value())
         {
-            response->set_queryid(result->getRawValue());
+            response->set_queryid(result->getLocalQueryId().getRawValue());
             return grpc::Status::OK;
         }
         return handleError(result.error(), context);
@@ -87,7 +87,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
 
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
-    const auto queryId = QueryId(request->queryid());
+    const auto queryId = QueryId(LocalQueryId(request->queryid()));
     CPPTRACE_TRY
     {
         getValueOrThrow(delegate.unregisterQuery(queryId));
@@ -106,7 +106,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
 
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
-    const auto queryId = QueryId(request->queryid());
+    const auto queryId = QueryId(LocalQueryId(request->queryid()));
     CPPTRACE_TRY
     {
         getValueOrThrow(delegate.startQuery(queryId));
@@ -125,7 +125,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
-    const auto queryId = QueryId(request->queryid());
+    const auto queryId = QueryId(LocalQueryId(request->queryid()));
     const auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     CPPTRACE_TRY
     {
@@ -147,8 +147,8 @@ grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const 
 {
     CPPTRACE_TRY
     {
-        const auto queryId = QueryId{request->queryid()};
-        reply->set_queryid(queryId.getRawValue());
+        const auto queryId = QueryId{LocalQueryId(request->queryid())};
+        reply->set_queryid(queryId.getLocalQueryId().getRawValue());
         if (const auto queryStatus = delegate.getQueryStatus(queryId); queryStatus.has_value())
         {
             const auto& [start, running, stop, error] = queryStatus->metrics;
@@ -199,7 +199,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
 {
     CPPTRACE_TRY
     {
-        auto queryId = QueryId(request->queryid());
+        auto queryId = QueryId(LocalQueryId(request->queryid()));
         auto log = delegate.getQueryLog(queryId);
         if (log.has_value())
         {

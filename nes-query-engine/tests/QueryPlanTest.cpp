@@ -32,6 +32,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/UUID.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
@@ -417,16 +418,17 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
     auto setups = Setups::setup(std::vector<ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
 
     /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a setup task has been submitted
-    auto sink
-        = RunningQueryPlanNode::create(QueryId(1), PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef);
+    auto queryId = QueryId::createLocal();
+    auto sink = RunningQueryPlanNode::create(
+        queryId, PipelineId(1), emitter, {}, std::move(stage2), [](const auto&) { }, expirationRef, setupRef);
     EXPECT_THAT(*setups, testing::SizeIs(1));
     auto pipeline = RunningQueryPlanNode::create(
-        QueryId(1),
+        queryId,
         PipelineId(2),
         emitter,
         {std::move(sink)},
         std::move(stage1),
-        [](auto) { },
+        [](const auto&) { },
         std::move(expirationRef),
         std::move(setupRef));
     EXPECT_THAT(*setups, testing::SizeIs(2));
@@ -450,7 +452,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanDefaultDestructor)
     auto source = builder.addSource();
     auto pipeline = builder.addPipeline({source});
     builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
     auto srcCtrl = test.sourceControls[source];
 
     TestQueryLifetimeController controller;
@@ -462,7 +464,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanDefaultDestructor)
     EXPECT_CALL(*listener, onDestruction()).Times(1);
     EXPECT_CALL(*listener, onRunning()).Times(0);
     {
-        auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
+        auto runningQueryPlan = RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener);
     }
     EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
     EXPECT_FALSE(srcCtrl->wasOpened());
@@ -476,7 +478,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanDispose)
     auto source = builder.addSource();
     auto pipeline = builder.addPipeline({source});
     builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
     auto srcCtrl = test.sourceControls[source];
 
     TestQueryLifetimeController controller;
@@ -489,7 +491,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanDispose)
     EXPECT_CALL(*listener, onRunning()).Times(0);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan
+            = dropRef(RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener));
         RunningQueryPlan::dispose(std::move(runningQueryPlan));
     }
 
@@ -504,7 +507,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestInitialPipelineSetup)
     auto source = builder.addSource();
     auto pipeline = builder.addPipeline({source});
     builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
     auto srcCtrl = test.sourceControls[source];
 
     TestQueryLifetimeController controller;
@@ -518,7 +521,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestInitialPipelineSetup)
     EXPECT_CALL(*listener, onRunning()).Times(0);
 
     {
-        auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
+        auto runningQueryPlan = RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener);
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_FALSE(srcCtrl->waitUntilOpened());
     }
@@ -547,7 +550,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
     auto source = builder.addSource();
     auto pipeline = builder.addPipeline({source});
     auto sink = builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
     auto srcCtrl = test.sourceControls[source];
 
     TestQueryLifetimeController controller;
@@ -563,7 +566,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
 
     std::unique_ptr<StoppingQueryPlan> stopping;
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan
+            = dropRef(RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener));
         EXPECT_FALSE(srcCtrl->wasOpened());
         EXPECT_FALSE(srcCtrl->wasClosed());
 
@@ -593,7 +597,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
     auto pipeline = builder.addPipeline({source});
     auto pipeline1 = builder.addPipeline({pipeline});
     builder.addSink({pipeline1});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
     auto srcCtrl = test.sourceControls[source];
 
     TestQueryLifetimeController controller;
@@ -610,7 +614,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
 
     std::unique_ptr<StoppingQueryPlan> stopping;
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan
+            = dropRef(RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener));
         EXPECT_FALSE(srcCtrl->waitUntilOpened());
 
         EXPECT_TRUE(setups->waitForTasks(3));
@@ -641,7 +646,7 @@ TEST_F(QueryPlanTest, RefCountTestSourceEoS)
     auto source = builder.addSource();
     auto pipeline = builder.addPipeline({source});
     auto sink = builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
 
     /// Verify running query plan terminates
     auto listener = std::make_shared<TestQueryLifetimeListener>();
@@ -658,7 +663,8 @@ TEST_F(QueryPlanTest, RefCountTestSourceEoS)
     auto terminations = Terminations::setup(stdv::values(test.stages), emitter);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan
+            = dropRef(RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener));
 
         EXPECT_TRUE(setups->handleAll());
         EXPECT_TRUE(test.sourceControls[source]->waitUntilOpened());
@@ -686,7 +692,7 @@ TEST_F(QueryPlanTest, RefCountTestMultipleSourceOneOfThemEoS)
     auto source1 = builder.addSource();
     auto pipeline = builder.addPipeline({source, source1});
     builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
 
     /// Verify running query plan does not terminates
     auto listener = std::make_shared<TestQueryLifetimeListener>();
@@ -701,7 +707,8 @@ TEST_F(QueryPlanTest, RefCountTestMultipleSourceOneOfThemEoS)
     auto sourceStops = SourceStops::setup(std::vector{test.sourceIds.at(source)}, controller);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan
+            = dropRef(RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener));
         EXPECT_TRUE(setups->handleAll());
         EXPECT_TRUE(test.sourceControls[source]->waitUntilOpened());
         EXPECT_TRUE(test.sourceControls[source1]->waitUntilOpened());
@@ -721,7 +728,7 @@ TEST_F(QueryPlanTest, DisposingQueryPlanWhileSourceIsAboutToBeTerminated)
     auto source = builder.addSource();
     auto pipeline = builder.addPipeline({source});
     builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
     auto srcCtrl = test.sourceControls[source];
 
     TestQueryLifetimeController controller;
@@ -736,7 +743,8 @@ TEST_F(QueryPlanTest, DisposingQueryPlanWhileSourceIsAboutToBeTerminated)
     EXPECT_CALL(*listener, onRunning()).Times(1);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan
+            = dropRef(RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener));
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_TRUE(setups->handleAll());
         srcCtrl->injectEoS();
@@ -755,7 +763,7 @@ TEST_F(QueryPlanTest, DestroyingQueryPlanWhileSourceIsAboutToBeTerminated)
     auto source = builder.addSource();
     auto pipeline = builder.addPipeline({source});
     builder.addSink({pipeline});
-    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto [_, queryPlan] = test.addNewQuery(std::move(builder));
     auto srcCtrl = test.sourceControls[source];
 
     TestQueryLifetimeController controller;
@@ -771,7 +779,8 @@ TEST_F(QueryPlanTest, DestroyingQueryPlanWhileSourceIsAboutToBeTerminated)
     EXPECT_CALL(*listener, onDestruction()).Times(1);
 
     {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        auto runningQueryPlan
+            = dropRef(RunningQueryPlan::start(INVALID_LOCAL_QUERY_ID, std::move(queryPlan), controller, emitter, listener));
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_TRUE(setups->handleAll());
         srcCtrl->injectEoS();
