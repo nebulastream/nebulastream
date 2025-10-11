@@ -103,7 +103,7 @@ auto injectQueryFailure(std::weak_ptr<RunningQueryPlanNode> node, TaskCallback::
 }
 
 auto injectReferenceCountReducer(
-    ENGINE_IF_LOG_DEBUG(QueryId qid, ) std::weak_ptr<RunningQueryPlanNode> node, TaskCallback::onComplete innerFunction)
+    ENGINE_IF_LOG_DEBUG(LocalQueryId qid, ) std::weak_ptr<RunningQueryPlanNode> node, TaskCallback::onComplete innerFunction)
 {
     return [ENGINE_IF_LOG_DEBUG(qid, ) innerFunction = std::move(innerFunction), node = std::weak_ptr(std::move(node))]() mutable
     {
@@ -176,13 +176,13 @@ public:
     using StateRef = State::element_type;
 
     void start(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::unique_ptr<ExecutableQueryPlan> plan,
         const std::shared_ptr<AbstractQueryStatusListener>& listener,
         const std::shared_ptr<QueryEngineStatisticListener>& statistic,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
-    void stopQuery(QueryId queryId);
+    void stopQuery(LocalQueryId queryId);
 
     void clear()
     {
@@ -191,9 +191,8 @@ public:
     }
 
 private:
-    std::atomic<QueryId::Underlying> queryIdCounter = QueryId::INITIAL;
     std::recursive_mutex mutex;
-    std::unordered_map<QueryId, State> queryStates;
+    std::unordered_map<LocalQueryId, State> queryStates;
 };
 
 namespace detail
@@ -302,7 +301,7 @@ public:
     void addThread(WorkerId workerId);
 
     bool emitWork(
-        QueryId qid,
+        LocalQueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
         TupleBuffer buffer,
         TaskCallback callback,
@@ -338,7 +337,7 @@ public:
         std::unreachable();
     }
 
-    void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
+    void emitPipelineStart(LocalQueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
     {
         auto [complete, failure, success] = std::move(callback).take();
         auto wrappedCallback = TaskCallback{
@@ -349,7 +348,7 @@ public:
         addInternalTask(StartPipelineTask(qid, node->id, std::move(wrappedCallback), node));
     }
 
-    void emitPipelineStop(QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
+    void emitPipelineStop(LocalQueryId qid, std::unique_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
     {
         auto [complete, failure, success] = std::move(callback).take();
         auto wrappedCallback = TaskCallback{
@@ -362,7 +361,7 @@ public:
         addInternalTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
     }
 
-    void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
+    void initializeSourceFailure(LocalQueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
         taskQueue.addAdmissionTaskBlocking(
@@ -376,7 +375,7 @@ public:
                     { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); })}});
     }
 
-    void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
+    void initializeSourceStop(LocalQueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
         taskQueue.addAdmissionTaskBlocking(
@@ -390,7 +389,7 @@ public:
                     { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); })}});
     }
 
-    void emitPendingPipelineStop(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
+    void emitPendingPipelineStop(LocalQueryId queryId, std::shared_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
     {
         ENGINE_LOG_DEBUG("Inserting Pending Pipeline Stop for {}-{}", queryId, node->id);
         addInternalTask(PendingPipelineStopTask{queryId, std::move(node), 0, std::move(callback)});
@@ -777,17 +776,17 @@ QueryEngine::QueryEngine(
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::stop(QueryId queryId)
+void QueryEngine::stop(LocalQueryId queryId)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
     threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, queryCatalog, TaskCallback{}});
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
+void QueryEngine::start(LocalQueryId queryId, std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
     threadPool->taskQueue.addAdmissionTaskBlocking(
-        {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+        {}, StartQueryTask{queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
 
 QueryEngine::~QueryEngine()
@@ -797,7 +796,7 @@ QueryEngine::~QueryEngine()
 }
 
 void QueryCatalog::start(
-    QueryId queryId,
+    LocalQueryId queryId,
     std::unique_ptr<ExecutableQueryPlan> plan,
     const std::shared_ptr<AbstractQueryStatusListener>& listener,
     const std::shared_ptr<QueryEngineStatisticListener>& statistic,
@@ -809,7 +808,9 @@ void QueryCatalog::start(
     struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
         RealQueryLifeTimeListener(
-            QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener, std::shared_ptr<QueryEngineStatisticListener> statistic)
+            LocalQueryId queryId,
+            std::shared_ptr<AbstractQueryStatusListener> listener,
+            std::shared_ptr<QueryEngineStatisticListener> statistic)
             : listener(std::move(listener)), statistic(std::move(statistic)), queryId(queryId)
         {
         }
@@ -921,7 +922,7 @@ void QueryCatalog::start(
 
         std::shared_ptr<AbstractQueryStatusListener> listener;
         std::shared_ptr<QueryEngineStatisticListener> statistic;
-        QueryId queryId;
+        LocalQueryId queryId;
         WeakStateRef state;
     };
 
@@ -949,7 +950,7 @@ void QueryCatalog::start(
     }
 }
 
-void QueryCatalog::stopQuery(QueryId id)
+void QueryCatalog::stopQuery(LocalQueryId id)
 {
     const std::unique_ptr<RunningQueryPlan> toBeDeleted;
     {

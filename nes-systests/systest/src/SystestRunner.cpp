@@ -39,6 +39,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -130,8 +131,8 @@ std::vector<RunningQuery> runQueries(
         pending.push(*it);
     }
 
-    std::unordered_map<QueryId, std::shared_ptr<RunningQuery>> active;
-    std::unordered_map<QueryId, LocalQueryStatus> finishedDifferentialQueries;
+    std::unordered_map<LocalQueryId, std::shared_ptr<RunningQuery>> active;
+    std::unordered_map<LocalQueryId, LocalQueryStatus> finishedDifferentialQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
 
     const auto startMoreQueries = [&] -> bool

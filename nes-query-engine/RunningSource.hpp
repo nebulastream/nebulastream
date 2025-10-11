@@ -41,7 +41,7 @@ public:
     /// once the last reference to the RunningSource is destroyed the source is stopped.
     /// The onSourceStopped callback is invoked after the source has been successfully stopped.
     static std::shared_ptr<RunningSource> create(
-        QueryId queryId,
+        LocalQueryId queryId,
         std::unique_ptr<SourceHandle> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped,
@@ -50,8 +50,8 @@ public:
         WorkEmitter& emitter);
 
     RunningSource(const RunningSource& other) = delete;
-    RunningSource& operator=(const RunningSource& other) = delete;
     RunningSource(RunningSource&& other) noexcept = delete;
+    RunningSource& operator=(const RunningSource& other) = delete;
     RunningSource& operator=(RunningSource&& other) noexcept = delete;
 
     ~RunningSource();

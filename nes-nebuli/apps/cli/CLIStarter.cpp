@@ -218,13 +218,13 @@ namespace NES
 
 struct PersistentQueryId
 {
-    QueryId query;
+    LocalQueryId query;
 
     std::string store()
     {
         auto [file, filename] = createTemporaryFile("query-");
         nlohmann::json jsonObject;
-        jsonObject["query_id"] = query;
+        jsonObject["local_query_id"] = query;
         file << jsonObject.dump(4);
         return filename;
     }
@@ -241,7 +241,7 @@ struct PersistentQueryId
         {
             throw InvalidConfigParameter(fmt::format("Could not open file: {}", path));
         }
-        PersistentQueryId result(nlohmann::json::parse(file)["query_id"].get<QueryId>());
+        PersistentQueryId result(nlohmann::json::parse(file)["local_query_id"].get<LocalQueryId>());
         return result;
     }
 };
@@ -345,7 +345,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 void doStatus(
     NES::QueryStatementHandler& queryStatementHandler,
     NES::TopologyStatementHandler& topologyStatementHandler,
-    const std::unordered_map<NES::QueryId, std::string>& queries)
+    const std::unordered_map<NES::LocalQueryId, std::string>& queries)
 {
     if (queries.empty())
     {
@@ -384,14 +384,14 @@ void doStatus(
         for (auto& query : result)
         {
             query["local_query_id"] = query["query_id"];
-            query["query_id"] = queries.at(query["query_id"]);
+            query["local_query_id"] = queries.at(query["local_query_id"]);
         }
 
         std::cout << result.dump(4) << '\n';
     }
 }
 
-void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unordered_map<NES::QueryId, std::string>& queries)
+void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unordered_map<NES::LocalQueryId, std::string>& queries)
 {
     auto result = nlohmann::json::array();
     for (const auto& query : queries | std::views::keys)
@@ -410,7 +410,7 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
     for (auto& query : result)
     {
         query["local_query_id"] = query["query_id"];
-        query["query_id"] = queries.at(query["query_id"]);
+        query["local_query_id"] = queries.at(query["local_query_id"]);
     }
 
     std::cout << result.dump(4) << '\n';
@@ -439,7 +439,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
 
     const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
         | std::views::transform(
-                             [](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
+                             [](const auto& persistentIdString) -> std::pair<NES::LocalQueryId, std::string>
                              { return {NES::PersistentQueryId::load(persistentIdString).query, persistentIdString}; })
         | std::ranges::to<std::unordered_map>();
     const auto state = mapping | std::views::keys | std::ranges::to<std::unordered_set>();
