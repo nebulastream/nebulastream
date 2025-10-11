@@ -57,6 +57,11 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         TraitSetSerializationUtil::serialize(itr.getTraitSet(), sOp->mutable_trait_set());
     }
 
+    if (queryPlan.getQueryId() != INVALID_LOCAL_QUERY_ID)
+    {
+        serializableQueryPlan.set_queryid(queryPlan.getQueryId().getRawValue());
+    }
+
     /// Serialize the root operator ids
     auto rootOperatorId = rootOperator.getId();
     serializableQueryPlan.add_rootoperatorids(rootOperatorId.getRawValue());
@@ -177,10 +182,10 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     }
 
     /// 4) Finalize plan
-    auto queryId = INVALID_QUERY_ID;
+    auto queryId = INVALID_LOCAL_QUERY_ID;
     if (serializedQueryPlan.has_queryid())
     {
-        queryId = QueryId(serializedQueryPlan.queryid());
+        queryId = LocalQueryId(serializedQueryPlan.queryid());
     }
     return LogicalPlan(queryId, std::move(rootOperators));
 }

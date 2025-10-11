@@ -47,13 +47,13 @@ inline std::ostream& operator<<(std::ostream& os, const QueryStateChange& status
     return os;
 }
 
-bool QueryLog::logSourceTermination(QueryId, OriginId, QueryTerminationType, std::chrono::system_clock::time_point)
+bool QueryLog::logSourceTermination(LocalQueryId, OriginId, QueryTerminationType, std::chrono::system_clock::time_point)
 {
     /// TODO #34: part of redesign of single node worker
     return true; /// nop
 }
 
-bool QueryLog::logQueryFailure(const QueryId queryId, const Exception exception, const std::chrono::system_clock::time_point timestamp)
+bool QueryLog::logQueryFailure(const LocalQueryId queryId, const Exception exception, const std::chrono::system_clock::time_point timestamp)
 {
     QueryStateChange statusChange(exception, timestamp);
 
@@ -68,7 +68,7 @@ bool QueryLog::logQueryFailure(const QueryId queryId, const Exception exception,
     return false;
 }
 
-bool QueryLog::logQueryStatusChange(const QueryId queryId, QueryState status, const std::chrono::system_clock::time_point timestamp)
+bool QueryLog::logQueryStatusChange(const LocalQueryId queryId, QueryState status, const std::chrono::system_clock::time_point timestamp)
 {
     QueryStateChange statusChange(std::move(status), timestamp);
 
@@ -80,7 +80,7 @@ bool QueryLog::logQueryStatusChange(const QueryId queryId, QueryState status, co
     return true;
 }
 
-std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId) const
+std::optional<QueryLog::Log> QueryLog::getLogForQuery(LocalQueryId queryId) const
 {
     const auto log = queryStatusLog.rlock();
     if (const auto it = log->find(queryId); it != log->end())
@@ -92,7 +92,7 @@ std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId) const
 
 namespace
 {
-std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId queryId)
+std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, LocalQueryId queryId)
 {
     if (const auto queryLog = log->find(queryId); queryLog != log->end())
     {
@@ -149,7 +149,7 @@ std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId quer
 }
 }
 
-std::optional<LocalQueryStatus> QueryLog::getQueryStatus(const QueryId queryId) const
+std::optional<LocalQueryStatus> QueryLog::getQueryStatus(const LocalQueryId queryId) const
 {
     const auto log = queryStatusLog.rlock();
     return getQueryStatusImpl(log, queryId);
@@ -160,7 +160,7 @@ std::vector<LocalQueryStatus> QueryLog::getStatus() const
     const auto queryStatusLogLocked = queryStatusLog.rlock();
     std::vector<LocalQueryStatus> summaries;
     summaries.reserve(queryStatusLogLocked->size());
-    for (const auto id : std::views::keys(*queryStatusLogLocked))
+    for (const auto& id : std::views::keys(*queryStatusLogLocked))
     {
         summaries.emplace_back(getQueryStatusImpl(queryStatusLogLocked, id).value());
     }
