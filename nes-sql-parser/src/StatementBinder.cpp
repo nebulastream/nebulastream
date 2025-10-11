@@ -185,6 +185,10 @@ public:
         {
             return bindBooleanLiteral(booleanLocation);
         }
+        if (auto* const uuidLiteral = dynamic_cast<AntlrSQLParser::UuidLiteralContext*>(literalAST))
+        {
+            return uuidLiteral->getText();
+        }
         INVARIANT(false, "Unknow literal type, is the binder out of sync or was a nullptr passed?");
         std::unreachable();
     }

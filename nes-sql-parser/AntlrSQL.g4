@@ -80,7 +80,7 @@ fromQuery: AS query;
 
 dropStatement: DROP dropSubject;
 dropSubject: dropQuery | dropSource | dropSink;
-dropQuery: QUERY id=unsignedIntegerLiteral;
+dropQuery: QUERY id=UUID;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE name=strictIdentifier;
 dropPhysicalSourceSubject: PHYSICAL SOURCE id=unsignedIntegerLiteral;
@@ -376,7 +376,8 @@ constant
     | identifier STRING                                                                        #typeConstructor
     | number                                                                                   #numericLiteral
     | booleanValue                                                                             #booleanLiteral
-    | STRING                                                                                  #stringLiteral
+    | STRING                                                                                   #stringLiteral
+    | UUID                                                                                     #uuidLiteral
     ;
 
 booleanValue
@@ -535,6 +536,9 @@ fragment DIGIT
     : [0-9]
     ;
 
+
+fragment HEX : [0-9a-fA-F] ;
+
 fragment LETTER
     : ('a'..'z'|'A'..'Z'|'_')
     ;
@@ -562,10 +566,13 @@ FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
 CHAR_TYPE: 'CHAR';
 VARSIZED_TYPE: 'VARSIZED';
 BOOLEAN_TYPE: 'BOOLEAN';
+UUID : HEX HEX HEX HEX HEX HEX HEX HEX '-'
+       HEX HEX HEX HEX '-'
+       HEX HEX HEX HEX '-'
+       HEX HEX HEX HEX '-'
+       HEX HEX HEX HEX HEX HEX HEX HEX HEX HEX HEX HEX ;
 
 UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
-
-
 
 SHOW : 'SHOW';
 FORMAT : 'FORMAT';

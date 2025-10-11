@@ -26,6 +26,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -47,6 +48,21 @@
 namespace NES
 {
 
+struct Preprocessor
+{
+    std::string process(const std::string& input)
+    {
+        std::string output = input;
+        for (const auto& [replace, with] : replacements)
+        {
+            output = Util::replaceAll(output, replace, with);
+        }
+        return output;
+    }
+
+    std::unordered_map<std::string, std::string> replacements;
+};
+
 struct Repl::Impl
 {
     SourceStatementHandler sourceStatementHandler;
@@ -54,6 +70,7 @@ struct Repl::Impl
     TopologyStatementHandler topologyStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
+    Preprocessor preprocessor;
 
     std::unique_ptr<replxx::Replxx> rx;
     std::vector<std::string> history;
@@ -368,7 +385,7 @@ struct Repl::Impl
 
     bool executeQuery(const std::string& query)
     {
-        auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
+        auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(preprocessor.process(query));
         auto parseResult = managedParser->parseMultiple();
         if (not parseResult.has_value())
         {
@@ -402,7 +419,15 @@ struct Repl::Impl
                 }
                 else if constexpr (requires { queryStatementHandler->apply(stmt); })
                 {
-                    return queryStatementHandler->apply(stmt);
+                    auto result = queryStatementHandler->apply(stmt);
+                    if constexpr (std::same_as<std::remove_cvref_t<decltype(stmt)>, QueryStatement>)
+                    {
+                        if (result)
+                        {
+                            preprocessor.replacements["%LAST_QUERY_ID%"] = result->id.getRawValue();
+                        }
+                    }
+                    return result;
                 }
                 else
                 {
