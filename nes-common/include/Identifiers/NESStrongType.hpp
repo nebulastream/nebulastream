@@ -22,6 +22,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <Util/UUID.hpp>
 
 namespace NES
 {
@@ -96,6 +97,32 @@ public:
     std::string_view view() const { return v; }
 };
 
+template <typename Tag>
+class NESStrongUUIDType
+{
+    UUID value;
+
+public:
+    using Underlying = std::string;
+    using TypeTag = Tag;
+    constexpr static UUID INVALID{};
+
+    explicit constexpr NESStrongUUIDType(const std::string& stringUUID) : value(stringToUUIDOrThrow(stringUUID)) { }
+
+    explicit constexpr NESStrongUUIDType(UUID uuid) : value(std::move(uuid)) { }
+
+    explicit constexpr NESStrongUUIDType(std::string_view view) : NESStrongUUIDType(std::string(view)) { }
+
+    [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongUUIDType& lhs, const NESStrongUUIDType& rhs) noexcept
+        = default;
+
+    friend std::ostream& operator<<(std::ostream& os, const NESStrongUUIDType& strongType) { return os << strongType.getRawValue(); }
+
+    [[nodiscard]] std::string getRawValue() const { return UUIDToString(value); }
+
+    [[nodiscard]] const UUID& view() const { return value; }
+};
+
 template <typename T>
 concept NESIdentifier = requires(T t) {
     requires(std::same_as<T, NESStrongType<typename T::Underlying, typename T::TypeTag, T::INVALID, T::INITIAL>>);
@@ -136,5 +163,11 @@ struct hash<NES::NESStrongStringType<Tag, invalid>>
     {
         return std::hash<std::string>()(strongType.getRawValue());
     }
+};
+
+template <typename Tag>
+struct hash<NES::NESStrongUUIDType<Tag>>
+{
+    size_t operator()(const NES::NESStrongUUIDType<Tag>& strongType) const { return std::hash<NES::UUID>()(strongType.view()); }
 };
 }

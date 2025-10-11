@@ -39,4 +39,13 @@ struct formatter<NES::NESStrongStringType<Tag, invalid>> : formatter<std::string
         return fmt::format_to(ctx.out(), "{}", t.getRawValue());
     }
 };
+
+template <typename Tag>
+struct formatter<NES::NESStrongUUIDType<Tag>> : formatter<std::string>
+{
+    auto format(const NES::NESStrongUUIDType<Tag>& t, format_context& ctx) const -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "{}", t.getRawValue());
+    }
+};
 }
