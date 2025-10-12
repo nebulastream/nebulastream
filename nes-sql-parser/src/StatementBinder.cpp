@@ -85,6 +85,11 @@ public:
         return {bindIdentifier(showFilterAST->attr), bindLiteral(showFilterAST->value)};
     }
 
+    std::pair<std::string, Literal> bindDropFilter(const AntlrSQLParser::DropFilterContext* dropFilterAST) const
+    {
+        return {bindIdentifier(dropFilterAST->attr), bindLiteral(dropFilterAST->value)};
+    }
+
     StatementOutputFormat bindFormat(AntlrSQLParser::ShowFormatContext* formatAST) const
     {
         if (formatAST->TEXT() != nullptr)
@@ -293,32 +298,67 @@ public:
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
+        const auto* const dropFilter = dropAst->dropFilter();
+        PRECONDITION(dropFilter != nullptr, "Drop statement must have a WHERE filter");
+        const auto [attr, value] = bindDropFilter(dropFilter);
+
         if (AntlrSQLParser::DropSourceContext* dropSourceAst = dropAst->dropSubject()->dropSource(); dropSourceAst != nullptr)
         {
             if (const auto* const logicalSourceSubject = dropSourceAst->dropLogicalSourceSubject(); logicalSourceSubject != nullptr)
             {
-                const auto logicalSourceName = LogicalSourceName(bindIdentifier(logicalSourceSubject->name));
+                if (attr != "NAME")
+                {
+                    throw InvalidQuerySyntax("Filter for DROP LOGICAL SOURCE must be on NAME attribute");
+                }
+                if (not std::holds_alternative<std::string>(value))
+                {
+                    throw InvalidQuerySyntax("Filter value for DROP LOGICAL SOURCE must be a string");
+                }
+                const auto logicalSourceName = LogicalSourceName(std::get<std::string>(value));
                 return DropLogicalSourceStatement{logicalSourceName};
             }
             if (const auto* const physicalSourceSubject = dropSourceAst->dropPhysicalSourceSubject(); physicalSourceSubject != nullptr)
             {
-                if (const auto physicalSource
-                    = sourceCatalog->getPhysicalSource(PhysicalSourceId{bindUnsignedIntegerLiteral(physicalSourceSubject->id)});
+                if (attr != "ID")
+                {
+                    throw InvalidQuerySyntax("Filter for DROP PHYSICAL SOURCE must be on ID attribute");
+                }
+                if (not std::holds_alternative<uint64_t>(value))
+                {
+                    throw InvalidQuerySyntax("Filter value for DROP PHYSICAL SOURCE must be an unsigned integer");
+                }
+                if (const auto physicalSource = sourceCatalog->getPhysicalSource(PhysicalSourceId{std::get<uint64_t>(value)});
                     physicalSource.has_value())
                 {
                     return DropPhysicalSourceStatement{*physicalSource};
                 }
-                throw UnknownSourceName("There is no physical source with id {}", physicalSourceSubject->id->getText());
+                throw UnknownSourceName("There is no physical source with id {}", std::get<uint64_t>(value));
             }
         }
         else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
         {
-            const auto id = QueryId{std::stoul(dropQueryAst->id->getText())};
+            if (attr != "ID")
+            {
+                throw InvalidQuerySyntax("Filter for DROP QUERY must be on ID attribute");
+            }
+            if (not std::holds_alternative<uint64_t>(value))
+            {
+                throw InvalidQuerySyntax("Filter value for DROP QUERY must be a number");
+            }
+            const auto id = QueryId{std::get<uint64_t>(value)};
             return DropQueryStatement{id};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
         {
-            const auto sinkName = bindIdentifier(dropSinkAst->name);
+            if (attr != "NAME")
+            {
+                throw InvalidQuerySyntax("Filter for DROP SINK must be on NAME attribute");
+            }
+            if (not std::holds_alternative<std::string>(value))
+            {
+                throw InvalidQuerySyntax("Filter value for DROP SINK must be a string");
+            }
+            const auto sinkName = std::get<std::string>(value);
             return DropSinkStatement{sinkName};
         }
         throw InvalidStatement("Unrecognized DROP statement");
