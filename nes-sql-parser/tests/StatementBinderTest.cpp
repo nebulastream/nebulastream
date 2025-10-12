@@ -207,7 +207,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(physicalSource.getConfig(), descriptorConfig);
     ASSERT_EQ(physicalSource.getPhysicalSourceId().getRawValue(), 1);
 
-    const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE 1";
+    const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE WHERE ID = 1";
     const auto statement3 = binder->parseAndBindSingle(dropPhysicalSourceStatement);
     ASSERT_TRUE(statement3.has_value());
     ASSERT_TRUE(std::holds_alternative<DropPhysicalSourceStatement>(*statement3));
@@ -219,7 +219,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_TRUE(remainingPhysicalSources.has_value());
     ASSERT_EQ(remainingPhysicalSources.value().size(), 0);
 
-    const std::string dropLogicalSourceStatement = "DROP LOGICAL SOURCE testSource";
+    const std::string dropLogicalSourceStatement = "DROP LOGICAL SOURCE WHERE NAME = 'TESTSOURCE'";
     const auto statement4 = binder->parseAndBindSingle(dropLogicalSourceStatement);
     ASSERT_TRUE(statement4.has_value());
     ASSERT_TRUE(std::holds_alternative<DropLogicalSourceStatement>(*statement4));
@@ -260,7 +260,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::INPUT_FORMAT), InputFormat::CSV);
 
-    const std::string dropSinkStatement = "DROP SINK testSink";
+    const std::string dropSinkStatement = "DROP SINK WHERE NAME = 'TESTSINK'";
     const auto statement2 = binder->parseAndBindSingle(dropSinkStatement);
     ASSERT_TRUE(statement2.has_value());
     ASSERT_TRUE(std::holds_alternative<DropSinkStatement>(*statement2));
@@ -295,13 +295,13 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
 
 TEST_F(StatementBinderTest, BindDropQuery)
 {
-    const std::string queryString = "DROP QUERY 12";
+    const std::string queryString = "DROP QUERY WHERE ID = 12";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
     ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), 12);
 
-    const std::string queryString2 = "DROP QUERY -5";
+    const std::string queryString2 = "DROP QUERY 1";
     const auto statement2 = binder->parseAndBindSingle(queryString2);
     ASSERT_FALSE(statement2.has_value());
     ASSERT_EQ(statement2.error().code(), ErrorCode::InvalidQuerySyntax);
