@@ -46,6 +46,7 @@
           bats
           jq
           yq
+          expect
           boost
           openssl.dev
           zstd.dev
