@@ -1,0 +1,346 @@
+name: Dependency Image
+description: |
+   NebulaStream (NES) Docker Image Hierarchy
+  
+   This workflow creates a set of multi-architecture Docker images for the NebulaStream (NES) project.
+   Here's how the images are structured:
+  
+   1. BASE IMAGES:
+      - nebulastream/nes-development-base - Foundation image with LLVM toolchain and CMake
+      - Available for both x64 and arm64 architectures
+  
+   2. SPECIALIZED IMAGES:
+      Four main image types built on top of the base image:
+      - development-dependency: Contains pre-built SDK based on vcpkg manifest
+      - development: Full development environment with dependencies and dev tools like clang-format
+      - ci: Optimized for continuous integration workflows
+      - benchmark: Configured for performance benchmarking
+  
+   3. BUILD VARIANTS:
+      Each specialized image has variants based on:
+      - Architecture: x64, arm64 (arm64 is not available for libstdcxx)
+      - Standard Library: libstdcxx, libcxx
+      - Sanitizer: none, address, thread, undefined
+  
+   4. TAGGING SCHEMA:
+      - Full tags: nebulastream/nes-[IMAGE_TYPE]:[TAG]-[ARCH]-[STDLIB]-[SANITIZER]
+      - Multi-arch tags: nebulastream/nes-[IMAGE_TYPE]:[TAG]-[STDLIB]-[SANITIZER]
+      - Branch-specific tags: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME]-[STDLIB]-[SANITIZER]
+      - Shortcuts: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME] (defaults to libstdcxx-none)
+  
+   5. BUILD CACHE SYSTEM:
+      - Each image build utilizes Docker's BuildKit cache to speed up builds
+      - Cache images are stored in the registry with the following naming pattern:
+        nebulastream/nes-[IMAGE_TYPE]-cache:[BRANCH_NAME]-[ARCH]-[STDLIB]-[SANITIZER]
+      - Cache hierarchy:
+        1. Branch-specific cache: Used for PR and feature branch builds
+        2. Latest cache: Fallback when branch-specific cache isn't available
+      - Cache is exported in "max" mode to include all intermediate layers
+  
+   The workflow creates multi-architecture manifests that combine x64 and arm64 images
+   where available, and adds convenience tags for common configurations.
+   This enables developers to easily select the appropriate image for their
+   development needs, CI pipelines, or benchmarking tasks.
+  
+   This workflow calculates the development image tag of a head_sha. If the development image does not exist yet
+   the workflow will build the new dependency image.
+
+
+
+on:
+  workflow_call:
+    inputs:
+      branch-name:
+        required: false
+        type: string
+        default: ${{ inputs.head_sha }}
+        description: "Branch name to tag the docker image with"
+      head_sha:
+        required: true
+        type: string
+    outputs:
+      image-tag:
+        description: "Docker image tag for the current dependencies"
+        value: ${{ jobs.detect-dependency-changes.outputs.tag }}
+      build-dependency:
+        description: "If the dependencies were built"
+        value: ${{ jobs.detect-dependency-changes.outputs.build-dependency }}
+
+jobs:
+
+  detect-dependency-changes:
+    # This job detects changes to files relevant for our dependency management by calculating a hash value
+    # and looking for existing development images with the same hash.
+    # If we find a development image matching the hash we skip building new docker images.
+    # This job also determines the development image tag used for building and testing
+    name: Detect changes to dependencies
+    outputs:
+      build-dependency: ${{steps.hash-and-lookup.outputs.build-dependency}}
+      tag: ${{ steps.hash-and-lookup.outputs.tag }}
+      hash: ${{ steps.hash-and-lookup.outputs.hash }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Calculate and lookup hash
+        id: hash-and-lookup
+        run: |
+          HASH=$(docker/dependency/hash_dependencies.sh)
+          echo "Using Hash: $HASH"
+          
+          # Output the tag (hash) to GitHub Actions
+          echo "tag=$HASH" >> "$GITHUB_OUTPUT"
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+          
+          # check if tag exists on dockerhub
+          DOCKERHUB_RESPONSE_CODE=$(curl --silent --output respose.txt --write-out '%{http_code}\n' "https://hub.docker.com/v2/namespaces/nebulastream/repositories/nes-ci/tags/$HASH")
+          echo dockerhub response code: $DOCKERHUB_RESPONSE_CODE
+
+          if [ "$DOCKERHUB_RESPONSE_CODE" -ge 500 ]; then
+            echo "dockerhub internal server error"
+            cat response.txt
+            exit 1
+          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 403 ]; then
+            echo "dockerhub responded with 403: Forbidden?!"
+            exit 2
+          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 404 ]; then
+            echo "Development image with $HASH does not exist in the docker registry"
+            echo "build-dependency=true" >> "$GITHUB_OUTPUT"
+          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 200 ]; then
+            echo "found image $HASH"
+            echo "build-dependency=false" >> "$GITHUB_OUTPUT"
+          else
+            echo unexpected docker response! HTTP Status $DOCKERHUB_RESPONSE_CODE
+            cat reponse.txt
+          fi
+
+  # Artificial mutex as we need to have the concurrency in a job and not in the workflow.
+  # GitHub applies a hidden "priority" rule to concurrency groups. If two workflow runs
+  # (one from pull_request, one from pull_request_target) have the same concurrency group,
+  # the lower-privilege (PR) run is cancelled. y moving concurrency control into this inner 'lock' job, both triggers
+  # share the same queue in the base repository but are no longer cancelled —
+  # instead, they wait their turn and run sequentially
+  lock:
+    if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
+    needs: [ detect-dependency-changes ]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: build-dev-image-lock-${{ needs.detect-dependency-changes.outputs.tag }}
+      cancel-in-progress: false
+    steps:
+      - run: echo "Acquired lock for ${{ needs.detect-dependency-changes.outputs.tag }}"
+
+  build-dev-images:
+    # We run the docker image build on separate machines and combine them into a single
+    # multi-arch docker image in the docker-development-images job.
+    # The Docker build uses a cache based on previous branch-specific images or the
+    # main branch
+    # This job builds a Base image which contains the llvm based toolchain and a recent
+    # CMake version
+    # The Dependency Image contains a pre-built sdk based on the vcpkg manifest
+    # The Development Image contains the dependencies and additional tooling like clang-format.
+    name: "Build Dev Images"
+    needs: [ detect-dependency-changes, lock ]
+    if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
+    concurrency:
+      group: build-dev-image-lock-${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+      # To reduce the amount of work, i.e., building the same deps multiple times, we only allow one job to continue.
+      # We do not cancel the in progress one, as it might have run for quite some time and is close to finishing.
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64, arm64 ]
+        stdlib: [ 'libstdcxx', 'libcxx' ]
+        sanitizer: [ 'address', 'thread', 'undefined', 'none' ]
+        exclude:
+          - arch: arm64
+            stdlib: 'libstdcxx'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.10.0
+      - name: Build Base Image
+        uses: Wandalen/wretry.action@v3.8.0
+        with:
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+            cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}},mode=max
+            cache-from: |
+              type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}}
+              type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
+            context: .
+            file: docker/dependency/Base.dockerfile
+      - name: Build Dependency Image
+        uses: Wandalen/wretry.action@v3.8.0
+        with:
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
+            cache-from: |
+              type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+              type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            build-args: |
+              TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+              ARCH=${{matrix.arch}}
+              STDLIB=${{matrix.stdlib}}
+              SANITIZER=${{matrix.sanitizer}}
+              VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
+            context: .
+            file: docker/dependency/Dependency.dockerfile
+      - name: Build Development Image
+        uses: Wandalen/wretry.action@v3.8.0
+        with:
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
+            cache-from: |
+              type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+              type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            context: .
+            file: docker/dependency/Development.dockerfile
+      - name: Build CI Image
+        uses: Wandalen/wretry.action@v3.8.0
+        with:
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+            context: .
+            file: docker/dependency/DevelopmentCI.dockerfile
+      - name: Build benchmark image
+        uses: Wandalen/wretry.action/main@v3.8.0
+        if: ${{matrix.sanitizer == 'none'}}
+        with:
+          action: docker/build-push-action@v6
+          with: |
+            push: true
+            tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-none
+            context: .
+            file: docker/dependency/Benchmark.dockerfile
+  merge-dev-images:
+    # This Job merges platform specific images into a single multi-platform image
+    name: "Merge Dev Images"
+    needs: [ build-dev-images, detect-dependency-changes ]
+    if: needs.detect-dependency-changes.outputs.build-dependency == 'true' && needs.build-dev-images.result == 'success'
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Login to Docker Hub
+        if: ${{ !github.event.act }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.10.0
+
+
+      - name: Combine Manifests
+        shell: bash
+        run: |
+          docker buildx imagetools create -t nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }} \
+            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
+            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
+          
+          for image_tag in development-dependency development ci; do
+          
+            for sanitizer in none address thread undefined; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx-$sanitizer
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx-$sanitizer 
+            done
+          
+          done
+          
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
+            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
+            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
+          
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx \
+            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx
+
+      - name: Combine Manifests for branch specific docker image
+        if: ${{ inputs.branch-name != '' }}
+        run: |
+          docker buildx imagetools create -t nebulastream/nes-development-base:${{ inputs.branch-name }} \
+            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}
+          
+          for image_tag in development-dependency development ci; do
+            for sanitizer in none address thread undefined; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libstdcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer
+            done
+          done
+          
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }}-libcxx \
+            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
+          
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }}-libstdcxx \
+            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx
+
+      - name: Create shortcut images
+        if: ${{ inputs.branch-name != '' }}
+        run: |
+          docker buildx imagetools create -t nebulastream/nes-development:${{ inputs.branch-name }} \
+            nebulastream/nes-development:${{ inputs.branch-name }}-libstdcxx-none
+          
+          docker buildx imagetools create -t nebulastream/nes-development:${{ inputs.branch-name }}-libcxx \
+            nebulastream/nes-development:${{ inputs.branch-name }}-libcxx-none
+          
+          for image_tag in development-dependency development ci; do
+          
+            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }} \
+              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-none \
+          
+            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }} \
+              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-none \
+          
+            for sanitizer in none address thread undefined; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libstdcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer
+            done
+          done
+          
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }} \
+            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
+          
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }} \
+            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
+          

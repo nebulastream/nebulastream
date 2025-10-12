@@ -1,0 +1,28 @@
+name: NES PR CI (Fork)
+description: |
+  This workflow is triggered for every pull request, however it is intended to be run from forks only, to give them 
+  additional permissions. Currently this includes only the clang-tidy-diff workflow which requires write permissions 
+  to add comments to the PR.
+on:
+  pull_request_target:
+    types: [ synchronize, opened, reopened ]
+
+jobs:
+  get-dev-images:
+    if: github.event.pull_request.head.repo.fork == true
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      branch-name: ${{ github.head_ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+
+  clang-tidy-diff:
+    if: github.event.pull_request.head.repo.fork == true
+    needs: [ get-dev-images ]
+    uses: ./.github/workflows/clang_tidy_diff.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
+    secrets: inherit

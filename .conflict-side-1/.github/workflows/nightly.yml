@@ -1,0 +1,206 @@
+name: NES Nightly
+description: |
+  This workflow is triggered every night at 2:30 AM UTC.
+  This is a good way to ensure that the main branch is always in a good state.
+  For now, this workflow file runs the same tests as `pr.yml` and then creates a docker image nes-executable-image:nightly, if the test pass.
+  For pushing an image to the docker hub, we build debian packages (nes-amd64.deb and nes-arm64.deb) and then use them to build the docker image.
+  We will add long-running test for stability and performance checks in the future.
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        required: false
+        default: 'main'
+        description: "which branch/head_sha to use for running the nightly job"
+  schedule:
+    - cron: '30 2 * * *' # gets executed every night at 4:30 AM CEST
+
+jobs:
+  fetch-current-main-commit:
+    runs-on: [ self-hosted ]
+    outputs:
+      sha: ${{ steps.fetch-sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha || 'main' }}
+      - name: Fetch SHA
+        id: fetch-sha
+        run: |
+          git rev-parse --verify HEAD
+          echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
+
+  get-dev-images:
+    needs: fetch-current-main-commit
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
+  full-clang-tidy:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/clang_tidy_full.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
+  compile-time-regression:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/compile_time_regression.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
+  check-format:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    name: "Check format"
+    uses: ./.github/workflows/format.yml
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      # since there is no merge base to compare against, just check last 10 commits
+      number_of_commits: 10
+
+  stress-test:
+    uses: ./.github/workflows/execute_query.yml
+    needs: [ get-dev-images ]
+    with:
+      head_sha: ${{ github.event.pull_request.head.ref }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      # We need to run them on our self-hosted machines, as otherwise there is a hard limit of 6h per job for GitHub runners
+      # c.f., https://docs.github.com/en/actions/reference/limits
+      arch: X64
+
+  build-and-test:
+    name: "Run build and test"
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
+  run_large_scale_tests_random_config:
+    name: Large Scale Tests Random Worker Config
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/large_tests_random_worker_config.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
+  test-other-configs:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    name: "Build and tests: ${{matrix.cmake_args.name}}"
+    container:
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        cmake_args:
+          - name: tupleBuffer_debugging
+            arg: -DNES_DEBUG_TUPLE_BUFFER_LEAKS=ON
+        stdlib: [ libcxx, libstdcxx ]
+        sanitizer: [ none, address, undefined, thread ]
+        build_type: [ RelWithDebInfo, Debug ]
+        exclude:
+          # TODO #808 libc++ has to be compiled with TSAN
+          - stdlib: libcxx
+            sanitizer: thread
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      - name: Configure NebulaStream
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_args.arg }}
+      - name: Build NebulaStream
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          cmake --build build -j -- -k 0
+      - name: Run Tests
+        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        # Upload all log and stats files if any of the tests has failed.
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-${{matrix.cmake_args.name}}
+          path: |
+            build/**/*.log
+            build/**/*.stats
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: junit-${{ matrix.cmake_args.name }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
+          path: /junit.xml
+
+  # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
+  long-running-tests:
+    needs: [ build-and-test ]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    steps:
+      - name: Print Placeholder Message
+        run: echo "Long running tests will be added in the future."
+
+  build-and-benchmark:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/build-and-benchmark.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      run_reason: "Nightly Benchmark"
+
+  benchmark-compile-time:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/benchmark-compile-time.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      run_reason: "Nightly Benchmark"
+
+  create-nightly-image:
+    needs: [ build-and-test ]
+    if: ${{ !github.event.act && inputs.ref == 'main' }}
+    uses: ./.github/workflows/create_release_image.yml
+    secrets: inherit
+    with:
+      head_sha: "main"
+      dockerhub-tag: "nightly"
+
+  send-zulip-msg-on-failure:
+    needs: [ compile-time-regression, create-nightly-image, long-running-tests, full-clang-tidy ]
+    runs-on: [ self-hosted ]
+    if: ${{ failure() && !github.event.act }}
+    steps:
+    - name: Notify Zulip
+      uses: zulip/github-actions-zulip/send-message@v1
+      with:
+        api-key: ${{ secrets.PRBOT_API_KEY }}
+        email: "pr-reminder-bot@nebulastream.zulipchat.com"
+        organization-url: "https://nebulastream.zulipchat.com"
+        to: "ci"
+        topic: "nightly ci status"
+        type: "stream"
+        content: |
+          @**ls-1801** @**Nils** [Nightly run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.
+          If there are novel faults, please open corresponding issues/topics and notify potential owners/investigators.
+          If applicable, please communicate workarounds and/or expected time-to-fix.

@@ -1,0 +1,37 @@
+# name: guide/guide1.test
+# description: Multiply FLOAT64 literal 3.141 with a FLOAT64 column
+# groups: [Function, FunctionFloat]
+
+# Simple source providing one FLOAT64 column r
+CREATE LOGICAL SOURCE stream(r FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+
+# Sink for the result of the multiplication
+CREATE SINK sink(result FLOAT64) TYPE File;
+
+# Test: SELECT FLOAT64(3.141) * r FROM stream INTO sink
+SELECT
+    FLOAT64(3.141) * r AS result
+FROM stream INTO sink;
+----
+3.141
+6.282
+9.423
+12.564
+15.705
+18.846
+21.987
+25.128
+28.269
+31.41

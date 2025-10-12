@@ -1,0 +1,28 @@
+# name: sources/FileMultiple.test
+# description: Combine two files sources with different input formatter configurations
+# groups: [Sources]
+
+CREATE LOGICAL SOURCE combinedSource(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR combinedSource TYPE File;
+ATTACH FILE small/stream8.csv
+
+CREATE PHYSICAL SOURCE FOR combinedSource TYPE File SET('|' AS PARSER.FIELD_DELIMITER);
+ATTACH INLINE
+1|6|67
+1|7|78
+1|8|89
+1|9|100
+
+CREATE SINK unifiedStreamSink(combinedSource.id UINT64, combinedSource.value UINT64, combinedSource.timestamp UINT64)  TYPE File;
+
+SELECT * FROM combinedSource INTO unifiedStreamSink;
+----
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+1,6,67
+1,7,78
+1,8,89
+1,9,100

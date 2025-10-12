@@ -1,0 +1,3 @@
+ancestorEntries = ["nes-single-node-worker/src/SingleNodeWorker.cpp"]
+ourEntries = ["nes-single-node-worker/src/SingleNodeWorker.cpp"]
+theirEntries = ["nes-single-node-worker/src/SingleNodeWorker.cpp"]

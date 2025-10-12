@@ -1,0 +1,10 @@
+CREATE LOGICAL SOURCE stream(text VARSIZED);
+CREATE PHYSICAL SOURCE FOR stream TYPE FILE;
+ATTACH FILE small/comma.csv
+
+CREATE SINK file_sink(stream.text VARSIZED) TYPE File;
+
+SELECT * FROM stream INTO file_sink;
+----
+"a"
+","

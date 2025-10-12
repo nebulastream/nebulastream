@@ -1,0 +1,4345 @@
+From f7ce1006877916c7239c7340473ef23a6fc459dc Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Fri, 28 Mar 2025 17:26:30 +0100
+Subject: [PATCH] Folly Patch
+
+---
+ CMake/FindCython.cmake                      |   47 -
+ CMake/FindDoubleConversion.cmake            |   31 -
+ CMake/FindFmt.cmake                         |   42 -
+ CMake/FindLZ4.cmake                         |   41 -
+ CMake/FindLibAIO.cmake                      |   29 -
+ CMake/FindLibDwarf.cmake                    |   32 -
+ CMake/FindLibUring.cmake                    |   29 -
+ CMake/FindLibiberty.cmake                   |   29 -
+ CMake/FindLibsodium.cmake                   |   30 -
+ CMake/FindSnappy.cmake                      |   36 -
+ CMake/FindZstd.cmake                        |   41 -
+ CMake/FollyCompilerMSVC.cmake               |  328 -----
+ CMake/FollyCompilerUnix.cmake               |   59 -
+ CMake/FollyConfigChecks.cmake               |  232 ----
+ CMake/FollyFunctions.cmake                  |  324 -----
+ CMake/GenPkgConfig.cmake                    |  110 --
+ CMake/folly-config.cmake.in                 |   47 -
+ CMake/folly-deps.cmake                      |  315 -----
+ CMake/libfolly.pc.in                        |   11 -
+ CMakeLists.txt                              | 1237 ++++---------------
+ cmake/FollyConfigChecks.cmake               |  182 +++
+ cmake/config.cmake                          |    5 +
+ {CMake => cmake}/folly-config.h.cmake       |   32 +-
+ folly/Exception.h                           |   12 +-
+ folly/Executor.cpp                          |   13 +-
+ folly/Function.h                            |    8 +-
+ folly/GLog.h                                |    3 +-
+ folly/Memory.h                              |    9 +-
+ folly/Portability.h                         |   28 -
+ folly/Range.h                               |    9 -
+ folly/Singleton.h                           |    2 +-
+ folly/String.cpp                            |    2 +-
+ folly/Synchronized.h                        |    2 +-
+ folly/concurrency/CacheLocality.cpp         |    9 +-
+ folly/concurrency/DynamicBoundedQueue.h     |    2 +-
+ folly/concurrency/UnboundedQueue.h          |    2 +-
+ folly/container/Access.h                    |    8 +-
+ folly/container/Foreach-inl.h               |  139 ++-
+ folly/detail/AtFork.cpp                     |    1 +
+ folly/detail/MemoryIdler.cpp                |    1 -
+ folly/detail/ThreadLocalDetail.h            |    2 +-
+ folly/detail/TurnSequencer.h                |    2 +-
+ folly/detail/UniqueInstance.cpp             |    6 +-
+ folly/functional/Invoke.h                   |   10 +-
+ folly/lang/SafeAssert.h                     |    1 +
+ folly/memory/MallctlHelper.cpp              |   20 +-
+ folly/stub/logging.h                        |   23 +
+ folly/synchronization/HazptrDomain.h        |    2 +
+ folly/synchronization/HazptrObj.h           |    5 +-
+ folly/synchronization/HazptrObjLinked.h     |    2 +-
+ folly/synchronization/HazptrThrLocal.h      |    2 +-
+ folly/synchronization/ParkingLot.h          |   22 +-
+ folly/synchronization/SaturatingSemaphore.h |    2 +-
+ folly/synchronization/detail/HazptrUtils.h  |    2 +-
+ 54 files changed, 617 insertions(+), 3003 deletions(-)
+ delete mode 100644 CMake/FindCython.cmake
+ delete mode 100644 CMake/FindDoubleConversion.cmake
+ delete mode 100644 CMake/FindFmt.cmake
+ delete mode 100644 CMake/FindLZ4.cmake
+ delete mode 100644 CMake/FindLibAIO.cmake
+ delete mode 100644 CMake/FindLibDwarf.cmake
+ delete mode 100644 CMake/FindLibUring.cmake
+ delete mode 100644 CMake/FindLibiberty.cmake
+ delete mode 100644 CMake/FindLibsodium.cmake
+ delete mode 100644 CMake/FindSnappy.cmake
+ delete mode 100644 CMake/FindZstd.cmake
+ delete mode 100644 CMake/FollyCompilerMSVC.cmake
+ delete mode 100644 CMake/FollyCompilerUnix.cmake
+ delete mode 100644 CMake/FollyConfigChecks.cmake
+ delete mode 100644 CMake/FollyFunctions.cmake
+ delete mode 100644 CMake/GenPkgConfig.cmake
+ delete mode 100644 CMake/folly-config.cmake.in
+ delete mode 100644 CMake/folly-deps.cmake
+ delete mode 100644 CMake/libfolly.pc.in
+ create mode 100644 cmake/FollyConfigChecks.cmake
+ create mode 100644 cmake/config.cmake
+ rename {CMake => cmake}/folly-config.h.cmake (74%)
+ create mode 100644 folly/stub/logging.h
+
+diff --git a/CMake/FindCython.cmake b/CMake/FindCython.cmake
+deleted file mode 100644
+index ee3996f33..000000000
+--- a/CMake/FindCython.cmake
++++ /dev/null
+@@ -1,47 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# Find Cython
+-#
+-# This module sets the following variables:
+-# - Cython_FOUND
+-# - CYTHON_EXE
+-# - CYTHON_VERSION_STRING
+-#
+-find_program(CYTHON_EXE
+-             NAMES cython cython3)
+-if (CYTHON_EXE)
+-  execute_process(COMMAND ${CYTHON_EXE} --version
+-                  RESULT_VARIABLE _cython_retcode
+-                  OUTPUT_VARIABLE _cython_output
+-                  ERROR_VARIABLE _cython_output
+-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+-
+-  if (${_cython_retcode} EQUAL 0)
+-    separate_arguments(_cython_output)
+-    list(GET _cython_output -1 CYTHON_VERSION_STRING)
+-    message(STATUS "Found Cython Version ${CYTHON_VERSION_STRING}")
+-  else ()
+-    message(STATUS "Failed to get Cython version")
+-  endif ()
+-else ()
+-  message(STATUS "Cython not found")
+-endif ()
+-
+-include(FindPackageHandleStandardArgs)
+-find_package_handle_standard_args(
+-  Cython
+-  REQUIRED_VARS CYTHON_EXE CYTHON_VERSION_STRING
+-  VERSION_VAR CYTHON_VERSION_STRING
+-)
+diff --git a/CMake/FindDoubleConversion.cmake b/CMake/FindDoubleConversion.cmake
+deleted file mode 100644
+index 63ec71e65..000000000
+--- a/CMake/FindDoubleConversion.cmake
++++ /dev/null
+@@ -1,31 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# Finds libdouble-conversion.
+-#
+-# This module defines:
+-# DOUBLE_CONVERSION_INCLUDE_DIR
+-# DOUBLE_CONVERSION_LIBRARY
+-#
+-
+-find_path(DOUBLE_CONVERSION_INCLUDE_DIR double-conversion/double-conversion.h)
+-find_library(DOUBLE_CONVERSION_LIBRARY NAMES double-conversion)
+-
+-include(FindPackageHandleStandardArgs)
+-find_package_handle_standard_args(
+-  DoubleConversion
+-  DEFAULT_MSG
+-  DOUBLE_CONVERSION_LIBRARY DOUBLE_CONVERSION_INCLUDE_DIR)
+-
+-mark_as_advanced(DOUBLE_CONVERSION_INCLUDE_DIR DOUBLE_CONVERSION_LIBRARY)
+diff --git a/CMake/FindFmt.cmake b/CMake/FindFmt.cmake
+deleted file mode 100644
+index 55175c66c..000000000
+--- a/CMake/FindFmt.cmake
++++ /dev/null
+@@ -1,42 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-find_path(LIBFMT_INCLUDE_DIR fmt/core.h)
+-mark_as_advanced(LIBFMT_INCLUDE_DIR)
+-
+-find_library(LIBFMT_LIBRARY NAMES fmt fmtd)
+-mark_as_advanced(LIBFMT_LIBRARY)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-    LIBFMT
+-    DEFAULT_MSG
+-    LIBFMT_LIBRARY LIBFMT_INCLUDE_DIR)
+-
+-if(LIBFMT_FOUND)
+-    set(LIBFMT_LIBRARIES ${LIBFMT_LIBRARY})
+-    set(LIBFMT_INCLUDE_DIRS ${LIBFMT_INCLUDE_DIR})
+-    message(STATUS "Found {fmt}: ${LIBFMT_LIBRARY}")
+-    add_library(fmt::fmt UNKNOWN IMPORTED)
+-    set_target_properties(
+-      fmt::fmt PROPERTIES
+-      INTERFACE_INCLUDE_DIRECTORIES "${LIBFMT_INCLUDE_DIR}"
+-    )
+-    set_target_properties(
+-      fmt::fmt PROPERTIES
+-      IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+-      IMPORTED_LOCATION "${LIBFMT_LIBRARY}"
+-    )
+-endif()
+-
+diff --git a/CMake/FindLZ4.cmake b/CMake/FindLZ4.cmake
+deleted file mode 100644
+index 7a6eaa50b..000000000
+--- a/CMake/FindLZ4.cmake
++++ /dev/null
+@@ -1,41 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# Finds liblz4.
+-#
+-# This module defines:
+-# LZ4_FOUND
+-# LZ4_INCLUDE_DIR
+-# LZ4_LIBRARY
+-#
+-
+-find_path(LZ4_INCLUDE_DIR NAMES lz4.h)
+-
+-find_library(LZ4_LIBRARY_DEBUG NAMES lz4d)
+-find_library(LZ4_LIBRARY_RELEASE NAMES lz4)
+-
+-include(SelectLibraryConfigurations)
+-SELECT_LIBRARY_CONFIGURATIONS(LZ4)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-    LZ4 DEFAULT_MSG
+-    LZ4_LIBRARY LZ4_INCLUDE_DIR
+-)
+-
+-if (LZ4_FOUND)
+-    message(STATUS "Found LZ4: ${LZ4_LIBRARY}")
+-endif()
+-
+-mark_as_advanced(LZ4_INCLUDE_DIR LZ4_LIBRARY)
+diff --git a/CMake/FindLibAIO.cmake b/CMake/FindLibAIO.cmake
+deleted file mode 100644
+index 72cc790b3..000000000
+--- a/CMake/FindLibAIO.cmake
++++ /dev/null
+@@ -1,29 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-find_path(LIBAIO_INCLUDE_DIR NAMES libaio.h)
+-mark_as_advanced(LIBAIO_INCLUDE_DIR)
+-
+-find_library(LIBAIO_LIBRARY NAMES aio)
+-mark_as_advanced(LIBAIO_LIBRARY)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-  LIBAIO
+-  REQUIRED_VARS LIBAIO_LIBRARY LIBAIO_INCLUDE_DIR)
+-
+-if(LIBAIO_FOUND)
+-  set(LIBAIO_LIBRARIES ${LIBAIO_LIBRARY})
+-  set(LIBAIO_INCLUDE_DIRS ${LIBAIO_INCLUDE_DIR})
+-endif()
+diff --git a/CMake/FindLibDwarf.cmake b/CMake/FindLibDwarf.cmake
+deleted file mode 100644
+index 44c83fab2..000000000
+--- a/CMake/FindLibDwarf.cmake
++++ /dev/null
+@@ -1,32 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# dwarf.h is typically installed in a libdwarf/ subdirectory on Debian-style
+-# Linux distributions.  It is not installed in a libdwarf/ subdirectory on Mac
+-# systems when installed with Homebrew.  Search for it in both locations.
+-find_path(LIBDWARF_INCLUDE_DIR NAMES dwarf.h PATH_SUFFIXES libdwarf)
+-mark_as_advanced(LIBDWARF_INCLUDE_DIR)
+-
+-find_library(LIBDWARF_LIBRARY NAMES dwarf)
+-mark_as_advanced(LIBDWARF_LIBRARY)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-  LIBDWARF
+-  REQUIRED_VARS LIBDWARF_LIBRARY LIBDWARF_INCLUDE_DIR)
+-
+-if(LIBDWARF_FOUND)
+-  set(LIBDWARF_LIBRARIES ${LIBDWARF_LIBRARY})
+-  set(LIBDWARF_INCLUDE_DIRS ${LIBDWARF_INCLUDE_DIR})
+-endif()
+diff --git a/CMake/FindLibUring.cmake b/CMake/FindLibUring.cmake
+deleted file mode 100644
+index 10bc1f205..000000000
+--- a/CMake/FindLibUring.cmake
++++ /dev/null
+@@ -1,29 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)
+-mark_as_advanced(LIBURING_INCLUDE_DIR)
+-
+-find_library(LIBURING_LIBRARY NAMES uring)
+-mark_as_advanced(LIBURING_LIBRARY)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-        LIBURING
+-        REQUIRED_VARS LIBURING_LIBRARY LIBURING_INCLUDE_DIR)
+-
+-if(LIBURING_FOUND)
+-  set(LIBURING_LIBRARIES ${LIBURING_LIBRARY})
+-  set(LIBURING_INCLUDE_DIRS ${LIBURING_INCLUDE_DIR})
+-endif()
+diff --git a/CMake/FindLibiberty.cmake b/CMake/FindLibiberty.cmake
+deleted file mode 100644
+index 32f9d54ed..000000000
+--- a/CMake/FindLibiberty.cmake
++++ /dev/null
+@@ -1,29 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-find_path(LIBIBERTY_INCLUDE_DIR NAMES libiberty.h PATH_SUFFIXES libiberty)
+-mark_as_advanced(LIBIBERTY_INCLUDE_DIR)
+-
+-find_library(LIBIBERTY_LIBRARY NAMES iberty)
+-mark_as_advanced(LIBIBERTY_LIBRARY)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-  LIBIBERTY
+-  REQUIRED_VARS LIBIBERTY_LIBRARY LIBIBERTY_INCLUDE_DIR)
+-
+-if(LIBIBERTY_FOUND)
+-  set(LIBIBERTY_LIBRARIES ${LIBIBERTY_LIBRARY})
+-  set(LIBIBERTY_INCLUDE_DIRS ${LIBIBERTY_INCLUDE_DIR})
+-endif()
+diff --git a/CMake/FindLibsodium.cmake b/CMake/FindLibsodium.cmake
+deleted file mode 100644
+index 18d4d0c01..000000000
+--- a/CMake/FindLibsodium.cmake
++++ /dev/null
+@@ -1,30 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-find_path(LIBSODIUM_INCLUDE_DIR NAMES sodium.h)
+-mark_as_advanced(LIBSODIUM_INCLUDE_DIR)
+-
+-find_library(LIBSODIUM_LIBRARY NAMES sodium)
+-mark_as_advanced(LIBSODIUM_LIBRARY)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-  LIBSODIUM
+-  REQUIRED_VARS LIBSODIUM_LIBRARY LIBSODIUM_INCLUDE_DIR)
+-
+-if(LIBSODIUM_FOUND)
+-  set(LIBSODIUM_LIBRARIES ${LIBSODIUM_LIBRARY})
+-  set(LIBSODIUM_INCLUDE_DIRS ${LIBSODIUM_INCLUDE_DIR})
+-  message(STATUS "Found Libsodium: ${LIBSODIUM_LIBRARY}")
+-endif()
+diff --git a/CMake/FindSnappy.cmake b/CMake/FindSnappy.cmake
+deleted file mode 100644
+index 999794636..000000000
+--- a/CMake/FindSnappy.cmake
++++ /dev/null
+@@ -1,36 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# Find the Snappy libraries
+-#
+-# This module defines:
+-# SNAPPY_FOUND
+-# SNAPPY_INCLUDE_DIR
+-# SNAPPY_LIBRARY
+-
+-find_path(SNAPPY_INCLUDE_DIR NAMES snappy.h)
+-
+-find_library(SNAPPY_LIBRARY_DEBUG NAMES snappyd)
+-find_library(SNAPPY_LIBRARY_RELEASE NAMES snappy)
+-
+-include(SelectLibraryConfigurations)
+-SELECT_LIBRARY_CONFIGURATIONS(SNAPPY)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-    SNAPPY DEFAULT_MSG
+-    SNAPPY_LIBRARY SNAPPY_INCLUDE_DIR
+-)
+-
+-mark_as_advanced(SNAPPY_INCLUDE_DIR SNAPPY_LIBRARY)
+diff --git a/CMake/FindZstd.cmake b/CMake/FindZstd.cmake
+deleted file mode 100644
+index 89300ddfd..000000000
+--- a/CMake/FindZstd.cmake
++++ /dev/null
+@@ -1,41 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-#
+-# - Try to find Facebook zstd library
+-# This will define
+-# ZSTD_FOUND
+-# ZSTD_INCLUDE_DIR
+-# ZSTD_LIBRARY
+-#
+-
+-find_path(ZSTD_INCLUDE_DIR NAMES zstd.h)
+-
+-find_library(ZSTD_LIBRARY_DEBUG NAMES zstdd zstd_staticd)
+-find_library(ZSTD_LIBRARY_RELEASE NAMES zstd zstd_static)
+-
+-include(SelectLibraryConfigurations)
+-SELECT_LIBRARY_CONFIGURATIONS(ZSTD)
+-
+-include(FindPackageHandleStandardArgs)
+-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+-    ZSTD DEFAULT_MSG
+-    ZSTD_LIBRARY ZSTD_INCLUDE_DIR
+-)
+-
+-if (ZSTD_FOUND)
+-    message(STATUS "Found Zstd: ${ZSTD_LIBRARY}")
+-endif()
+-
+-mark_as_advanced(ZSTD_INCLUDE_DIR ZSTD_LIBRARY)
+diff --git a/CMake/FollyCompilerMSVC.cmake b/CMake/FollyCompilerMSVC.cmake
+deleted file mode 100644
+index ec2ce1a1d..000000000
+--- a/CMake/FollyCompilerMSVC.cmake
++++ /dev/null
+@@ -1,328 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# Some additional configuration options.
+-option(MSVC_ENABLE_ALL_WARNINGS "If enabled, pass /Wall to the compiler." ON)
+-option(MSVC_ENABLE_DEBUG_INLINING "If enabled, enable inlining in the debug configuration. This allows /Zc:inline to be far more effective." OFF)
+-option(MSVC_ENABLE_FAST_LINK "If enabled, pass /DEBUG:FASTLINK to the linker. This makes linking faster, but the gtest integration for Visual Studio can't currently handle the .pdbs generated." OFF)
+-option(MSVC_ENABLE_LEAN_AND_MEAN_WINDOWS "If enabled, define WIN32_LEAN_AND_MEAN to include a smaller subset of Windows.h" ON)
+-option(MSVC_ENABLE_LTCG "If enabled, use Link Time Code Generation for Release builds." OFF)
+-option(MSVC_ENABLE_PARALLEL_BUILD "If enabled, build multiple source files in parallel." ON)
+-option(MSVC_ENABLE_STATIC_ANALYSIS "If enabled, do more complex static analysis and generate warnings appropriately." OFF)
+-option(MSVC_USE_STATIC_RUNTIME "If enabled, build against the static, rather than the dynamic, runtime." OFF)
+-option(MSVC_SUPPRESS_BOOST_CONFIG_OUTDATED "If enabled, suppress Boost's warnings about the config being out of date." ON)
+-
+-# Alas, option() doesn't support string values.
+-set(MSVC_FAVORED_ARCHITECTURE "blend" CACHE STRING "One of 'blend', 'AMD64', 'INTEL64', or 'ATOM'. This tells the compiler to generate code optimized to run best on the specified architecture.")
+-# Add a pretty drop-down selector for these values when using the GUI.
+-set_property(
+-  CACHE MSVC_FAVORED_ARCHITECTURE
+-  PROPERTY STRINGS
+-    blend
+-    AMD64
+-    ATOM
+-    INTEL64
+-)
+-# Validate, and then add the favored architecture.
+-if (NOT MSVC_FAVORED_ARCHITECTURE STREQUAL "blend" AND NOT MSVC_FAVORED_ARCHITECTURE STREQUAL "AMD64" AND NOT MSVC_FAVORED_ARCHITECTURE STREQUAL "INTEL64" AND NOT MSVC_FAVORED_ARCHITECTURE STREQUAL "ATOM")
+-  message(FATAL_ERROR "MSVC_FAVORED_ARCHITECTURE must be set to one of exactly, 'blend', 'AMD64', 'INTEL64', or 'ATOM'! Got '${MSVC_FAVORED_ARCHITECTURE}' instead!")
+-endif()
+-
+-set(MSVC_LANGUAGE_VERSION "c++17" CACHE STRING "One of 'c++17', or 'c++latest'. This determines which version of C++ to compile as.")
+-set_property(
+-  CACHE MSVC_LANGUAGE_VERSION
+-  PROPERTY STRINGS
+-    "c++17"
+-    "c++latest"
+-)
+-
+-############################################################
+-# We need to adjust a couple of the default option sets.
+-############################################################
+-
+-# If the static runtime is requested, we have to
+-# overwrite some of CMake's defaults.
+-if (MSVC_USE_STATIC_RUNTIME)
+-  foreach(flag_var
+-      CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+-      CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+-      CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+-      CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+-    if (${flag_var} MATCHES "/MD")
+-      string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+-    endif()
+-  endforeach()
+-endif()
+-
+-# The Ninja generator doesn't de-dup the exception mode flag, so remove the
+-# default flag so that MSVC doesn't warn about it on every single file.
+-if ("${CMAKE_GENERATOR}" STREQUAL "Ninja")
+-  foreach(flag_var
+-      CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+-      CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+-      CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+-      CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+-    if (${flag_var} MATCHES "/EHsc")
+-      string(REGEX REPLACE "/EHsc" "" ${flag_var} "${${flag_var}}")
+-    endif()
+-  endforeach()
+-endif()
+-
+-# In order for /Zc:inline, which speeds up the build significantly, to work
+-# we need to remove the /Ob0 parameter that CMake adds by default, because that
+-# would normally disable all inlining.
+-foreach(flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+-  if (${flag_var} MATCHES "/Ob0")
+-    string(REGEX REPLACE "/Ob0" "" ${flag_var} "${${flag_var}}")
+-  endif()
+-endforeach()
+-
+-# When building with Ninja, or with /MP enabled, there is the potential
+-# for multiple processes to need to lock the same pdb file.
+-# The /FS option (which is implicitly enabled by /MP) is widely believed
+-# to be the solution for this, but even with /FS enabled the problem can
+-# still randomly occur.
+-# https://stackoverflow.com/a/58020501/149111 suggests that /Z7 should be
+-# used; rather than placing the debug info into a .pdb file it embeds it
+-# into the object files in a similar way to gcc/clang which should reduce
+-# contention and potentially make the build faster... but at the cost of
+-# larger object files
+-foreach(flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+-  if (${flag_var} MATCHES "/Zi")
+-    string(REGEX REPLACE "/Zi" "/Z7" ${flag_var} "${${flag_var}}")
+-  endif()
+-endforeach()
+-
+-# Apply the option set for Folly to the specified target.
+-function(apply_folly_compile_options_to_target THETARGET)
+-  # The general options passed:
+-  target_compile_options(${THETARGET}
+-    PUBLIC
+-      /EHs # Don't catch structured exceptions with catch (...)
+-      /GF # There are bugs with constexpr StringPiece when string pooling is disabled.
+-      /Zc:referenceBinding # Disallow temporaries from binding to non-const lvalue references.
+-      /Zc:rvalueCast # Enforce the standard rules for explicit type conversion.
+-      /Zc:implicitNoexcept # Enable implicit noexcept specifications where required, such as destructors.
+-      /Zc:strictStrings # Don't allow conversion from a string literal to mutable characters.
+-      /Zc:threadSafeInit # Enable thread-safe function-local statics initialization.
+-      /Zc:throwingNew # Assume operator new throws on failure.
+-
+-      /permissive- # Be mean, don't allow bad non-standard stuff (C++/CLI, __declspec, etc. are all left intact).
+-      /std:${MSVC_LANGUAGE_VERSION} # Build in the requested version of C++
+-
+-    PRIVATE
+-      /bigobj # Support objects with > 65k sections. Needed due to templates.
+-      /favor:${MSVC_FAVORED_ARCHITECTURE} # Architecture to prefer when generating code.
+-      /Zc:inline # Have the compiler eliminate unreferenced COMDAT functions and data before emitting the object file.
+-
+-      $<$<BOOL:${MSVC_ENABLE_ALL_WARNINGS}>:/Wall> # Enable all warnings if requested.
+-      $<$<BOOL:${MSVC_ENABLE_PARALLEL_BUILD}>:/MP> # Enable multi-processor compilation if requested.
+-      $<$<BOOL:${MSVC_ENABLE_STATIC_ANALYSIS}>:/analyze> # Enable static analysis if requested.
+-
+-      # Debug builds
+-      $<$<CONFIG:DEBUG>:
+-        /Gy- # Disable function level linking.
+-
+-        $<$<BOOL:${MSVC_ENABLE_DEBUG_INLINING}>:/Ob2> # Add /Ob2 if allowing inlining in debug mode.
+-      >
+-
+-      # Non-debug builds
+-      $<$<NOT:$<CONFIG:DEBUG>>:
+-        /Gw # Optimize global data. (-fdata-sections)
+-        /Gy # Enable function level linking. (-ffunction-sections)
+-        /Qpar # Enable parallel code generation.
+-        /Oi # Enable intrinsic functions.
+-        /Ot # Favor fast code.
+-
+-        $<$<BOOL:${MSVC_ENABLE_LTCG}>:/GL> # Enable link time code generation.
+-      >
+-  )
+-
+-  target_compile_options(${THETARGET}
+-    PUBLIC
+-      /wd4191 # 'type cast' unsafe conversion of function pointers
+-      /wd4291 # no matching operator delete found
+-      /wd4309 # '=' truncation of constant value
+-      /wd4310 # cast truncates constant value
+-      /wd4366 # result of unary '&' operator may be unaligned
+-      /wd4587 # behavior change; constructor no longer implicitly called
+-      /wd4592 # symbol will be dynamically initialized (implementation limitation)
+-      /wd4628 # digraphs not supported with -Ze
+-      /wd4723 # potential divide by 0
+-      /wd4724 # potential mod by 0
+-      /wd4868 # compiler may not enforce left-to-right evaluation order
+-      /wd4996 # user deprecated
+-
+-      # The warnings that are disabled:
+-      /wd4068 # Unknown pragma.
+-      /wd4091 # 'typedef' ignored on left of '' when no variable is declared.
+-      /wd4146 # Unary minus applied to unsigned type, result still unsigned.
+-      /wd4800 # Values being forced to bool, this happens many places, and is a "performance warning".
+-
+-      # NOTE: glog/logging.h:1116 change to `size_t pcount() const { return size_t(pptr() - pbase()); }`
+-      # NOTE: gmock/gmock-spec-builders.h:1177 change to `*static_cast<const Action<F>*>(untyped_actions_[size_t(count - 1)]) :`
+-      # NOTE: gmock/gmock-spec-builders.h:1749 change to `const size_t count = untyped_expectations_.size();`
+-      # NOTE: gmock/gmock-spec-builders.h:1754 change to `for (size_t i = 0; i < count; i++) {`
+-      # NOTE: gtest/gtest-printers.h:173 change to `const internal::BiggestInt kBigInt = internal::BiggestInt(value);`
+-      # NOTE: gtest/internal/gtest-internal.h:890 add `GTEST_DISABLE_MSC_WARNINGS_PUSH_(4365)`
+-      # NOTE: gtest/internal/gtest-internal.h:894 ass `GTEST_DISABLE_MSC_WARNINGS_POP_()`
+-      # NOTE: boost/crc.hpp:578 change to `{ return static_cast<unsigned char>(x ^ rem); }`
+-      # NOTE: boost/regex/v4/match_results.hpp:126 change to `return m_subs[size_type(sub)].length();`
+-      # NOTE: boost/regex/v4/match_results.hpp:226 change to `return m_subs[size_type(sub)];`
+-      # NOTE: boost/date_time/adjust_functors.hpp:67 change to `origDayOfMonth_ = short(ymd.day);`
+-      # NOTE: boost/date_time/adjust_functors.hpp:75 change to `wrap_int2 wi(short(ymd.month));`
+-      # NOTE: boost/date_time/adjust_functors.hpp:82 change to `day_type resultingEndOfMonthDay(cal_type::end_of_month_day(static_cast<unsigned short>(year), static_cast<unsigned short>(wi.as_int())));`
+-      # NOTE: boost/date_time/adjust_functors.hpp:85 change to `return date_type(static_cast<unsigned short>(year), static_cast<unsigned short>(wi.as_int()), resultingEndOfMonthDay) - d;`
+-      # NOTE: boost/date_time/adjust_functors.hpp:87 change to `day_type dayOfMonth = static_cast<unsigned short>(origDayOfMonth_);`
+-      # NOTE: boost/date_time/adjust_functors.hpp:91 change to `return date_type(static_cast<unsigned short>(year), static_cast<unsigned short>(wi.as_int()), dayOfMonth) - d;`
+-      # NOTE: boost/date_time/adjust_functors.hpp:98 change to `origDayOfMonth_ = short(ymd.day);`
+-      # NOTE: boost/date_time/adjust_functors.hpp:106 change to `wrap_int2 wi(short(ymd.month));`
+-      # NOTE: boost/date_time/adjust_functors.hpp:111 change to `day_type resultingEndOfMonthDay(cal_type::end_of_month_day(static_cast<unsigned short>(year), static_cast<unsigned short>(wi.as_int())));`
+-      # NOTE: boost/date_time/adjust_functors.hpp:114 change to `return date_type(static_cast<unsigned short>(year), static_cast<unsigned short>(wi.as_int()), resultingEndOfMonthDay) - d;`
+-      # NOTE: boost/date_time/adjust_functors.hpp:116 change to `day_type dayOfMonth = static_cast<unsigned short>(origDayOfMonth_);`
+-      # NOTE: boost/date_time/adjust_functors.hpp:120 change to `return date_type(static_cast<unsigned short>(year), static_cast<unsigned short>(wi.as_int()), dayOfMonth) - d;`
+-      # NOTE: boost/date_time/gregorian_calendar.ipp:81 change to `unsigned long  d = static_cast<unsigned long>(ymd.day + ((153*m + 2)/5) + 365*y + (y/4) - (y/100) + (y/400) - 32045);`
+-      # NOTE: boost/date_time/gregorian/greg_date.hpp:122 change to `unsigned short eom_day =  gregorian_calendar::end_of_month_day(ymd.year, ymd.month);`
+-      # NOTE: boost/thread/future.hpp:1050 change to `locks[std::ptrdiff_t(i)]=BOOST_THREAD_MAKE_RV_REF(boost::unique_lock<boost::mutex>(futures[i].future_->mutex));`
+-      # NOTE: boost/thread/future.hpp:1063 change to `locks[std::ptrdiff_t(i)].unlock();`
+-      # NOTE: boost/thread/win32/basic_recursive_mutex.hpp:47 change to `long const current_thread_id=long(win32::GetCurrentThreadId());`
+-      # NOTE: boost/thread/win32/basic_recursive_mutex.hpp:53 change to `long const current_thread_id=long(win32::GetCurrentThreadId());`
+-      # NOTE: boost/thread/win32/basic_recursive_mutex.hpp:64 change to `long const current_thread_id=long(win32::GetCurrentThreadId());`
+-      # NOTE: boost/thread/win32/basic_recursive_mutex.hpp:78 change to `long const current_thread_id=long(win32::GetCurrentThreadId());`
+-      # NOTE: boost/thread/win32/basic_recursive_mutex.hpp:84 change to `long const current_thread_id=long(win32::GetCurrentThreadId());`
+-      # NOTE: boost/thread/win32/condition_variable.hpp:79 change to `detail::win32::ReleaseSemaphore(semaphore,long(count_to_release),0);`
+-      # NOTE: boost/thread/win32/condition_variable.hpp:84 change to `release(unsigned(detail::interlocked_read_acquire(&waiters)));`
+-      # NOTE: boost/algorithm/string/detail/classification.hpp:85 change to `std::size_t Size=std::size_t(::boost::distance(Range));`
+-      /wd4018 # Signed/unsigned mismatch.
+-      /wd4365 # Signed/unsigned mismatch.
+-      /wd4388 # Signed/unsigned mismatch on relative comparison operator.
+-      /wd4389 # Signed/unsigned mismatch on equality comparison operator.
+-
+-      # TODO:
+-      /wd4100 # Unreferenced formal parameter.
+-      /wd4459 # Declaration of parameter hides global declaration.
+-      /wd4505 # Unreferenced local function has been removed.
+-      /wd4701 # Potentially uninitialized local variable used.
+-      /wd4702 # Unreachable code.
+-
+-      # These warnings are disabled because we've
+-      # enabled all warnings. If all warnings are
+-      # not enabled, we still need to disable them
+-      # for consuming libs.
+-      /wd4061 # Enum value not handled by a case in a switch on an enum. This isn't very helpful because it is produced even if a default statement is present.
+-      /wd4127 # Conditional expression is constant.
+-      /wd4200 # Non-standard extension, zero sized array.
+-      /wd4201 # Non-standard extension used: nameless struct/union.
+-      /wd4296 # '<' Expression is always false.
+-      /wd4316 # Object allocated on the heap may not be aligned to 128.
+-      /wd4324 # Structure was padded due to alignment specifier.
+-      /wd4355 # 'this' used in base member initializer list.
+-      /wd4371 # Layout of class may have changed due to fixes in packing.
+-      /wd4435 # Object layout under /vd2 will change due to virtual base.
+-      /wd4514 # Unreferenced inline function has been removed. (caused by /Zc:inline)
+-      /wd4548 # Expression before comma has no effect. I wouldn't disable this normally, but malloc.h triggers this warning.
+-      /wd4571 # Semantics of catch(...) changed in VC 7.1
+-      /wd4574 # ifdef'd macro was defined to 0.
+-      /wd4582 # Constructor is not implicitly called.
+-      /wd4583 # Destructor is not implicitly called.
+-      /wd4619 # Invalid warning number used in #pragma warning.
+-      /wd4623 # Default constructor was implicitly defined as deleted.
+-      /wd4625 # Copy constructor was implicitly defined as deleted.
+-      /wd4626 # Assignment operator was implicitly defined as deleted.
+-      /wd4643 # Forward declaring standard library types is not permitted.
+-      /wd4647 # Behavior change in __is_pod.
+-      /wd4668 # Macro was not defined, replacing with 0.
+-      /wd4706 # Assignment within conditional expression.
+-      /wd4710 # Function was not inlined.
+-      /wd4711 # Function was selected for automated inlining.
+-      /wd4714 # Function marked as __forceinline not inlined.
+-      /wd4820 # Padding added after data member.
+-      /wd5026 # Move constructor was implicitly defined as deleted.
+-      /wd5027 # Move assignment operator was implicitly defined as deleted.
+-      /wd5031 # #pragma warning(pop): likely mismatch, popping warning state pushed in different file. This is needed because of how boost does things.
+-      /wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch is specified.
+-
+-      # Warnings to treat as errors:
+-      /we4099 # Mixed use of struct and class on same type names.
+-      /we4129 # Unknown escape sequence. This is usually caused by incorrect escaping.
+-      /we4566 # Character cannot be represented in current charset. This is remidied by prefixing string with "u8".
+-
+-    PRIVATE
+-      # Warnings disabled for /analyze
+-      $<$<BOOL:${MSVC_ENABLE_STATIC_ANALYSIS}>:
+-        /wd6001 # Using uninitialized memory. This is disabled because it is wrong 99% of the time.
+-        /wd6011 # Dereferencing potentially NULL pointer.
+-        /wd6031 # Return value ignored.
+-        /wd6235 # (<non-zero constant> || <expression>) is always a non-zero constant.
+-        /wd6237 # (<zero> && <expression>) is always zero. <expression> is never evaluated and may have side effects.
+-        /wd6239 # (<non-zero constant> && <expression>) always evaluates to the result of <expression>.
+-        /wd6240 # (<expression> && <non-zero constant>) always evaluates to the result of <expression>.
+-        /wd6246 # Local declaration hides declaration of same name in outer scope.
+-        /wd6248 # Setting a SECURITY_DESCRIPTOR's DACL to NULL will result in an unprotected object. This is done by one of the boost headers.
+-        /wd6255 # _alloca indicates failure by raising a stack overflow exception.
+-        /wd6262 # Function uses more than x bytes of stack space.
+-        /wd6271 # Extra parameter passed to format function. The analysis pass doesn't recognize %j or %z, even though the runtime does.
+-        /wd6285 # (<non-zero constant> || <non-zero constant>) is always true.
+-        /wd6297 # 32-bit value is shifted then cast to 64-bits. The places this occurs never use more than 32 bits.
+-        /wd6308 # Realloc might return null pointer: assigning null pointer to '<name>', which is passed as an argument to 'realloc', will cause the original memory to leak.
+-        /wd6326 # Potential comparison of a constant with another constant.
+-        /wd6330 # Unsigned/signed mismatch when passed as a parameter.
+-        /wd6340 # Mismatch on sign when passed as format string value.
+-        /wd6387 # '<value>' could be '0': This does not adhere to the specification for a function.
+-        /wd28182 # Dereferencing NULL pointer. '<value>' contains the same NULL value as '<expression>'.
+-        /wd28251 # Inconsistent annotation for function. This is because we only annotate the declaration and not the definition.
+-        /wd28278 # Function appears with no prototype in scope.
+-      >
+-  )
+-
+-  # And the extra defines:
+-  target_compile_definitions(${THETARGET}
+-    PUBLIC
+-      _CRT_NONSTDC_NO_WARNINGS # Don't deprecate posix names of functions.
+-      _CRT_SECURE_NO_WARNINGS # Don't deprecate the non _s versions of various standard library functions, because safety is for chumps.
+-      _SCL_SECURE_NO_WARNINGS # Don't deprecate the non _s versions of various standard library functions, because safety is for chumps.
+-      _ENABLE_EXTENDED_ALIGNED_STORAGE  #A type with an extended alignment in VS 15.8 or later
+-      _STL_EXTRA_DISABLED_WARNINGS=4774\ 4987
+-
+-      $<$<BOOL:${MSVC_ENABLE_CPP_LATEST}>:_HAS_AUTO_PTR_ETC=1> # We're building in C++ 17 or greater mode, but certain dependencies (Boost) still have dependencies on unary_function and binary_function, so we have to make sure not to remove them.
+-      $<$<BOOL:${MSVC_ENABLE_LEAN_AND_MEAN_WINDOWS}>:WIN32_LEAN_AND_MEAN> # Don't include most of Windows.h
+-      $<$<BOOL:${MSVC_SUPPRESS_BOOST_CONFIG_OUTDATED}>:BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE> # MSVC moves faster than boost, so add a quick way to disable the messages.
+-  )
+-
+-  # Ignore a warning about an object file not defining any symbols,
+-  # these are known, and we don't care.
+-  set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY STATIC_LIBRARY_FLAGS " /ignore:4221")
+-
+-  # The options to pass to the linker:
+-  set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY LINK_FLAGS_DEBUG " /INCREMENTAL") # Do incremental linking.
+-  if (NOT $<TARGET_PROPERTY:${THETARGET},TYPE> STREQUAL "STATIC_LIBRARY")
+-    set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY LINK_FLAGS_DEBUG " /OPT:NOREF") # No unreferenced data elimination.
+-    set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY LINK_FLAGS_DEBUG " /OPT:NOICF") # No Identical COMDAT folding.
+-
+-    set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY LINK_FLAGS_RELEASE " /OPT:REF") # Remove unreferenced functions and data.
+-    set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY LINK_FLAGS_RELEASE " /OPT:ICF") # Identical COMDAT folding.
+-  endif()
+-
+-  if (MSVC_ENABLE_FAST_LINK)
+-    set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY LINK_FLAGS_DEBUG " /DEBUG:FASTLINK") # Generate a partial PDB file that simply references the original object and library files.
+-  endif()
+-
+-  # Add /GL to the compiler, and /LTCG to the linker
+-  # if link time code generation is enabled.
+-  if (MSVC_ENABLE_LTCG)
+-    set_property(TARGET ${THETARGET} APPEND_STRING PROPERTY LINK_FLAGS_RELEASE " /LTCG")
+-  endif()
+-endfunction()
+-
+-list(APPEND FOLLY_LINK_LIBRARIES Iphlpapi.lib Ws2_32.lib)
+diff --git a/CMake/FollyCompilerUnix.cmake b/CMake/FollyCompilerUnix.cmake
+deleted file mode 100644
+index 8dcaf141a..000000000
+--- a/CMake/FollyCompilerUnix.cmake
++++ /dev/null
+@@ -1,59 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# Provide an option to control the -std argument for the C++ compiler.
+-# We don't use CMAKE_CXX_STANDARD since it requires at least CMake 3.8
+-# to support C++17.
+-#
+-# Most users probably want to stick with the default here.  However, gnu++1z
+-# does change the linkage of how some symbols are emitted (e.g., constexpr
+-# variables defined in headers).  In case this causes problems for downstream
+-# libraries that aren't using gnu++1z yet, provide an option to let them still
+-# override this with gnu++14 if they need to.
+-set(
+-  CXX_STD "gnu++1z"
+-  CACHE STRING
+-  "The C++ standard argument to pass to the compiler.  Defaults to gnu++1z"
+-)
+-mark_as_advanced(CXX_STD)
+-
+-set(CMAKE_CXX_FLAGS_COMMON "-g -Wall -Wextra")
+-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS_COMMON}")
+-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_COMMON} -O3")
+-
+-# Note that CMAKE_REQUIRED_FLAGS must be a string, not a list
+-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=${CXX_STD}")
+-list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
+-function(apply_folly_compile_options_to_target THETARGET)
+-  target_compile_definitions(${THETARGET}
+-    PRIVATE
+-      _REENTRANT
+-      _GNU_SOURCE
+-  )
+-  target_compile_options(${THETARGET}
+-    PRIVATE
+-      -g
+-      -std=${CXX_STD}
+-      -finput-charset=UTF-8
+-      -fsigned-char
+-      -Wall
+-      -Wno-deprecated
+-      -Wno-deprecated-declarations
+-      -Wno-sign-compare
+-      -Wno-unused
+-      -Wunused-label
+-      -Wunused-result
+-      ${FOLLY_CXX_FLAGS}
+-  )
+-endfunction()
+diff --git a/CMake/FollyConfigChecks.cmake b/CMake/FollyConfigChecks.cmake
+deleted file mode 100644
+index 4fec47284..000000000
+--- a/CMake/FollyConfigChecks.cmake
++++ /dev/null
+@@ -1,232 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-include(CheckCXXSourceCompiles)
+-include(CheckCXXSourceRuns)
+-include(CheckFunctionExists)
+-include(CheckIncludeFileCXX)
+-include(CheckSymbolExists)
+-include(CheckTypeSize)
+-include(CheckCXXCompilerFlag)
+-
+-if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+-  CHECK_INCLUDE_FILE_CXX(malloc_np.h FOLLY_USE_JEMALLOC)
+-else()
+-  CHECK_INCLUDE_FILE_CXX(jemalloc/jemalloc.h FOLLY_USE_JEMALLOC)
+-endif()
+-
+-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+-  # clang only rejects unknown warning flags if -Werror=unknown-warning-option
+-  # is also specified.
+-  check_cxx_compiler_flag(
+-    -Werror=unknown-warning-option
+-    COMPILER_HAS_UNKNOWN_WARNING_OPTION)
+-  if (COMPILER_HAS_UNKNOWN_WARNING_OPTION)
+-    set(CMAKE_REQUIRED_FLAGS
+-      "${CMAKE_REQUIRED_FLAGS} -Werror=unknown-warning-option")
+-  endif()
+-
+-  check_cxx_compiler_flag(-Wshadow-local COMPILER_HAS_W_SHADOW_LOCAL)
+-  check_cxx_compiler_flag(
+-    -Wshadow-compatible-local
+-    COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
+-  if (COMPILER_HAS_W_SHADOW_LOCAL AND COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
+-    set(FOLLY_HAVE_SHADOW_LOCAL_WARNINGS ON)
+-    list(APPEND FOLLY_CXX_FLAGS -Wshadow-compatible-local)
+-  endif()
+-
+-  check_cxx_compiler_flag(-Wnoexcept-type COMPILER_HAS_W_NOEXCEPT_TYPE)
+-  if (COMPILER_HAS_W_NOEXCEPT_TYPE)
+-    list(APPEND FOLLY_CXX_FLAGS -Wno-noexcept-type)
+-  endif()
+-
+-  check_cxx_compiler_flag(
+-      -Wnullability-completeness
+-      COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
+-  if (COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
+-    list(APPEND FOLLY_CXX_FLAGS -Wno-nullability-completeness)
+-  endif()
+-
+-  check_cxx_compiler_flag(
+-      -Winconsistent-missing-override
+-      COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
+-  if (COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
+-    list(APPEND FOLLY_CXX_FLAGS -Wno-inconsistent-missing-override)
+-  endif()
+-
+-  check_cxx_compiler_flag(-faligned-new COMPILER_HAS_F_ALIGNED_NEW)
+-  if (COMPILER_HAS_F_ALIGNED_NEW)
+-    list(APPEND FOLLY_CXX_FLAGS -faligned-new)
+-  endif()
+-
+-  check_cxx_compiler_flag(-fopenmp COMPILER_HAS_F_OPENMP)
+-  if (COMPILER_HAS_F_OPENMP)
+-      list(APPEND FOLLY_CXX_FLAGS -fopenmp)
+-  endif()
+-endif()
+-
+-set(FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+-string(REGEX REPLACE
+-  "-std=(c|gnu)\\+\\+.."
+-  ""
+-  CMAKE_REQUIRED_FLAGS
+-  "${CMAKE_REQUIRED_FLAGS}")
+-
+-check_symbol_exists(pthread_atfork pthread.h FOLLY_HAVE_PTHREAD_ATFORK)
+-
+-check_symbol_exists(accept4 sys/socket.h FOLLY_HAVE_ACCEPT4)
+-check_symbol_exists(getrandom sys/random.h FOLLY_HAVE_GETRANDOM)
+-check_symbol_exists(preadv sys/uio.h FOLLY_HAVE_PREADV)
+-check_symbol_exists(pwritev sys/uio.h FOLLY_HAVE_PWRITEV)
+-check_symbol_exists(clock_gettime time.h FOLLY_HAVE_CLOCK_GETTIME)
+-check_symbol_exists(pipe2 unistd.h FOLLY_HAVE_PIPE2)
+-check_symbol_exists(sendmmsg sys/socket.h FOLLY_HAVE_SENDMMSG)
+-check_symbol_exists(recvmmsg sys/socket.h FOLLY_HAVE_RECVMMSG)
+-
+-check_function_exists(malloc_usable_size FOLLY_HAVE_MALLOC_USABLE_SIZE)
+-
+-set(CMAKE_REQUIRED_FLAGS "${FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS}")
+-
+-check_cxx_source_compiles("
+-  #pragma GCC diagnostic error \"-Wattributes\"
+-  extern \"C\" void (*test_ifunc(void))() { return 0; }
+-  void func() __attribute__((ifunc(\"test_ifunc\")));
+-  int main() { return 0; }"
+-  FOLLY_HAVE_IFUNC
+-)
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  const bool val = std::is_trivially_copyable<bool>::value;
+-  int main() { return 0; }"
+-  FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE
+-)
+-check_cxx_source_runs("
+-  int main(int, char**) {
+-    char buf[64] = {0};
+-    unsigned long *ptr = (unsigned long *)(buf + 1);
+-    *ptr = 0xdeadbeef;
+-    return (*ptr & 0xff) == 0xef ? 0 : 1;
+-  }"
+-  FOLLY_HAVE_UNALIGNED_ACCESS
+-)
+-check_cxx_source_compiles("
+-  int main(int argc, char** argv) {
+-    unsigned size = argc;
+-    char data[size];
+-    return 0;
+-  }"
+-  FOLLY_HAVE_VLA
+-)
+-check_cxx_source_runs("
+-  extern \"C\" int folly_example_undefined_weak_symbol() __attribute__((weak));
+-  int main(int argc, char** argv) {
+-    auto f = folly_example_undefined_weak_symbol; // null pointer
+-    return f ? f() : 0; // must compile, link, and run with null pointer
+-  }"
+-  FOLLY_HAVE_WEAK_SYMBOLS
+-)
+-check_cxx_source_runs("
+-  #include <dlfcn.h>
+-  int main() {
+-    void *h = dlopen(\"linux-vdso.so.1\", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
+-    if (h == nullptr) {
+-      return -1;
+-    }
+-    dlclose(h);
+-    return 0;
+-  }"
+-  FOLLY_HAVE_LINUX_VDSO
+-)
+-
+-check_cxx_source_runs("
+-  #include <cstddef>
+-  #include <cwchar>
+-  int main(int argc, char** argv) {
+-    return wcstol(L\"01\", nullptr, 10) == 1 ? 0 : 1;
+-  }"
+-  FOLLY_HAVE_WCHAR_SUPPORT
+-)
+-
+-check_cxx_source_compiles("
+-  #include <ext/random>
+-  int main(int argc, char** argv) {
+-    __gnu_cxx::sfmt19937 rng;
+-    return 0;
+-  }"
+-  FOLLY_HAVE_EXTRANDOM_SFMT19937
+-)
+-
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  #if !_LIBCPP_VERSION
+-  #error No libc++
+-  #endif
+-  int main() { return 0; }"
+-  FOLLY_USE_LIBCPP
+-)
+-
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  #if !__GLIBCXX__
+-  #error No libstdc++
+-  #endif
+-  int main() { return 0; }"
+-  FOLLY_USE_LIBSTDCPP
+-)
+-
+-check_cxx_source_runs("
+-  #include <stdarg.h>
+-  #include <stdio.h>
+-
+-  int call_vsnprintf(const char* fmt, ...) {
+-    char buf[256];
+-    va_list ap;
+-    va_start(ap, fmt);
+-    int result = vsnprintf(buf, sizeof(buf), fmt, ap);
+-    va_end(ap);
+-    return result;
+-  }
+-
+-  int main(int argc, char** argv) {
+-    return call_vsnprintf(\"%\", 1) < 0 ? 0 : 1;
+-  }"
+-  HAVE_VSNPRINTF_ERRORS
+-)
+-
+-if (FOLLY_HAVE_LIBGFLAGS)
+-  # Older releases of gflags used the namespace "gflags"; newer releases
+-  # use "google" but also make symbols available in the deprecated "gflags"
+-  # namespace too.  The folly code internally uses "gflags" unless we tell it
+-  # otherwise.
+-  list(APPEND CMAKE_REQUIRED_LIBRARIES ${FOLLY_LIBGFLAGS_LIBRARY})
+-  list(APPEND CMAKE_REQUIRED_INCLUDES ${FOLLY_LIBGFLAGS_INCLUDE})
+-  check_cxx_source_compiles("
+-    #include <gflags/gflags.h>
+-    int main() {
+-      gflags::GetArgv();
+-      return 0;
+-    }
+-    "
+-    GFLAGS_NAMESPACE_IS_GFLAGS
+-  )
+-  list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${FOLLY_LIBGFLAGS_LIBRARY})
+-  list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES ${FOLLY_LIBGFLAGS_INCLUDE})
+-  if (GFLAGS_NAMESPACE_IS_GFLAGS)
+-    set(FOLLY_UNUSUAL_GFLAGS_NAMESPACE OFF)
+-    set(FOLLY_GFLAGS_NAMESPACE gflags)
+-  else()
+-    set(FOLLY_UNUSUAL_GFLAGS_NAMESPACE ON)
+-    set(FOLLY_GFLAGS_NAMESPACE google)
+-  endif()
+-endif()
+diff --git a/CMake/FollyFunctions.cmake b/CMake/FollyFunctions.cmake
+deleted file mode 100644
+index 306df17e2..000000000
+--- a/CMake/FollyFunctions.cmake
++++ /dev/null
+@@ -1,324 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-function(auto_sources RETURN_VALUE PATTERN SOURCE_SUBDIRS)
+-  if ("${SOURCE_SUBDIRS}" STREQUAL "RECURSE")
+-    SET(PATH ".")
+-    if (${ARGC} EQUAL 4)
+-      list(GET ARGV 3 PATH)
+-    endif ()
+-  endif()
+-
+-  if ("${SOURCE_SUBDIRS}" STREQUAL "RECURSE")
+-    unset(${RETURN_VALUE})
+-    file(GLOB SUBDIR_FILES "${PATH}/${PATTERN}")
+-    list(APPEND ${RETURN_VALUE} ${SUBDIR_FILES})
+-
+-    file(GLOB subdirs RELATIVE ${PATH} ${PATH}/*)
+-
+-    foreach(DIR ${subdirs})
+-      if (IS_DIRECTORY ${PATH}/${DIR})
+-        if (NOT "${DIR}" STREQUAL "CMakeFiles")
+-          file(GLOB_RECURSE SUBDIR_FILES "${PATH}/${DIR}/${PATTERN}")
+-          list(APPEND ${RETURN_VALUE} ${SUBDIR_FILES})
+-        endif()
+-      endif()
+-    endforeach()
+-  else()
+-    file(GLOB ${RETURN_VALUE} "${PATTERN}")
+-
+-    foreach (PATH ${SOURCE_SUBDIRS})
+-      file(GLOB SUBDIR_FILES "${PATH}/${PATTERN}")
+-      list(APPEND ${RETURN_VALUE} ${SUBDIR_FILES})
+-    endforeach()
+-  endif ()
+-
+-  set(${RETURN_VALUE} ${${RETURN_VALUE}} PARENT_SCOPE)
+-endfunction(auto_sources)
+-
+-# Remove all files matching a set of patterns, and,
+-# optionally, not matching a second set of patterns,
+-# from a set of lists.
+-#
+-# Example:
+-# This will remove all files in the CPP_SOURCES list
+-# matching "/test/" or "Test.cpp$", but not matching
+-# "BobTest.cpp$".
+-# REMOVE_MATCHES_FROM_LISTS(CPP_SOURCES MATCHES "/test/" "Test.cpp$" IGNORE_MATCHES "BobTest.cpp$")
+-#
+-# Parameters:
+-#
+-# [...]:
+-# The names of the lists to remove matches from.
+-#
+-# [MATCHES ...]:
+-# The matches to remove from the lists.
+-#
+-# [IGNORE_MATCHES ...]:
+-# The matches not to remove, even if they match
+-# the main set of matches to remove.
+-function(REMOVE_MATCHES_FROM_LISTS)
+-  set(LISTS_TO_SEARCH)
+-  set(MATCHES_TO_REMOVE)
+-  set(MATCHES_TO_IGNORE)
+-  set(argumentState 0)
+-  foreach (arg ${ARGN})
+-    if ("x${arg}" STREQUAL "xMATCHES")
+-      set(argumentState 1)
+-    elseif ("x${arg}" STREQUAL "xIGNORE_MATCHES")
+-      set(argumentState 2)
+-    elseif (argumentState EQUAL 0)
+-      list(APPEND LISTS_TO_SEARCH ${arg})
+-    elseif (argumentState EQUAL 1)
+-      list(APPEND MATCHES_TO_REMOVE ${arg})
+-    elseif (argumentState EQUAL 2)
+-      list(APPEND MATCHES_TO_IGNORE ${arg})
+-    else()
+-      message(FATAL_ERROR "Unknown argument state!")
+-    endif()
+-  endforeach()
+-
+-  foreach (theList ${LISTS_TO_SEARCH})
+-    foreach (entry ${${theList}})
+-      foreach (match ${MATCHES_TO_REMOVE})
+-        if (${entry} MATCHES ${match})
+-          set(SHOULD_IGNORE OFF)
+-          foreach (ign ${MATCHES_TO_IGNORE})
+-            if (${entry} MATCHES ${ign})
+-              set(SHOULD_IGNORE ON)
+-              break()
+-            endif()
+-          endforeach()
+-
+-          if (NOT SHOULD_IGNORE)
+-            list(REMOVE_ITEM ${theList} ${entry})
+-          endif()
+-        endif()
+-      endforeach()
+-    endforeach()
+-    set(${theList} ${${theList}} PARENT_SCOPE)
+-  endforeach()
+-endfunction()
+-
+-# Automatically create source_group directives for the sources passed in.
+-function(auto_source_group rootName rootDir)
+-  file(TO_CMAKE_PATH "${rootDir}" rootDir)
+-  string(LENGTH "${rootDir}" rootDirLength)
+-  set(sourceGroups)
+-  foreach (fil ${ARGN})
+-    file(TO_CMAKE_PATH "${fil}" filePath)
+-    string(FIND "${filePath}" "/" rIdx REVERSE)
+-    if (rIdx EQUAL -1)
+-      message(FATAL_ERROR "Unable to locate the final forward slash in '${filePath}'!")
+-    endif()
+-    string(SUBSTRING "${filePath}" 0 ${rIdx} filePath)
+-
+-    string(LENGTH "${filePath}" filePathLength)
+-    string(FIND "${filePath}" "${rootDir}" rIdx)
+-    if (rIdx EQUAL 0)
+-      math(EXPR filePathLength "${filePathLength} - ${rootDirLength}")
+-      string(SUBSTRING "${filePath}" ${rootDirLength} ${filePathLength} fileGroup)
+-
+-      string(REPLACE "/" "\\" fileGroup "${fileGroup}")
+-      set(fileGroup "\\${rootName}${fileGroup}")
+-
+-      list(FIND sourceGroups "${fileGroup}" rIdx)
+-      if (rIdx EQUAL -1)
+-        list(APPEND sourceGroups "${fileGroup}")
+-        source_group("${fileGroup}" REGULAR_EXPRESSION "${filePath}/[^/.]+.(cpp|h)$")
+-      endif()
+-    endif()
+-  endforeach()
+-endfunction()
+-
+-# CMake is a pain and doesn't have an easy way to install only the files
+-# we actually included in our build :(
+-function(auto_install_files rootName rootDir)
+-  file(TO_CMAKE_PATH "${rootDir}" rootDir)
+-  string(LENGTH "${rootDir}" rootDirLength)
+-  set(sourceGroups)
+-  foreach (fil ${ARGN})
+-    file(TO_CMAKE_PATH "${fil}" filePath)
+-    string(FIND "${filePath}" "/" rIdx REVERSE)
+-    if (rIdx EQUAL -1)
+-      message(FATAL_ERROR "Unable to locate the final forward slash in '${filePath}'!")
+-    endif()
+-    string(SUBSTRING "${filePath}" 0 ${rIdx} filePath)
+-
+-    string(LENGTH "${filePath}" filePathLength)
+-    string(FIND "${filePath}" "${rootDir}" rIdx)
+-    if (rIdx EQUAL 0)
+-      math(EXPR filePathLength "${filePathLength} - ${rootDirLength}")
+-      string(SUBSTRING "${filePath}" ${rootDirLength} ${filePathLength} fileGroup)
+-      install(FILES ${fil}
+-              DESTINATION ${INCLUDE_INSTALL_DIR}/${rootName}${fileGroup})
+-    endif()
+-  endforeach()
+-endfunction()
+-
+-function(folly_define_tests)
+-  set(directory_count 0)
+-  set(test_count 0)
+-  set(currentArg 0)
+-  while (currentArg LESS ${ARGC})
+-    if ("x${ARGV${currentArg}}" STREQUAL "xDIRECTORY")
+-      math(EXPR currentArg "${currentArg} + 1")
+-      if (NOT currentArg LESS ${ARGC})
+-        message(FATAL_ERROR "Expected base directory!")
+-      endif()
+-
+-      set(cur_dir ${directory_count})
+-      math(EXPR directory_count "${directory_count} + 1")
+-      set(directory_${cur_dir}_name "${ARGV${currentArg}}")
+-      # We need a single list of sources to get source_group to work nicely.
+-      set(directory_${cur_dir}_source_list)
+-
+-      math(EXPR currentArg "${currentArg} + 1")
+-      while (currentArg LESS ${ARGC})
+-        if ("x${ARGV${currentArg}}" STREQUAL "xDIRECTORY")
+-          break()
+-        elseif ("x${ARGV${currentArg}}" STREQUAL "xTEST")
+-          math(EXPR currentArg "${currentArg} + 1")
+-          if (NOT currentArg LESS ${ARGC})
+-            message(FATAL_ERROR "Expected test name!")
+-          endif()
+-
+-          set(cur_test ${test_count})
+-          math(EXPR test_count "${test_count} + 1")
+-          set(test_${cur_test}_name "${ARGV${currentArg}}")
+-          math(EXPR currentArg "${currentArg} + 1")
+-          set(test_${cur_test}_directory ${cur_dir})
+-          set(test_${cur_test}_content_dir)
+-          set(test_${cur_test}_headers)
+-          set(test_${cur_test}_sources)
+-          set(test_${cur_test}_tag)
+-
+-          set(argumentState 0)
+-          while (currentArg LESS ${ARGC})
+-            if ("x${ARGV${currentArg}}" STREQUAL "xHEADERS")
+-              set(argumentState 1)
+-            elseif ("x${ARGV${currentArg}}" STREQUAL "xSOURCES")
+-              set(argumentState 2)
+-            elseif ("x${ARGV${currentArg}}" STREQUAL "xCONTENT_DIR")
+-              math(EXPR currentArg "${currentArg} + 1")
+-              if (NOT currentArg LESS ${ARGC})
+-                message(FATAL_ERROR "Expected content directory name!")
+-              endif()
+-              set(test_${cur_test}_content_dir "${ARGV${currentArg}}")
+-            elseif ("x${ARGV${currentArg}}" STREQUAL "xTEST" OR
+-                    "x${ARGV${currentArg}}" STREQUAL "xDIRECTORY")
+-              break()
+-            elseif (argumentState EQUAL 0)
+-              if ("x${ARGV${currentArg}}" STREQUAL "xBROKEN")
+-                list(APPEND test_${cur_test}_tag "BROKEN")
+-              elseif ("x${ARGV${currentArg}}" STREQUAL "xHANGING")
+-                list(APPEND test_${cur_test}_tag "HANGING")
+-              elseif ("x${ARGV${currentArg}}" STREQUAL "xSLOW")
+-                list(APPEND test_${cur_test}_tag "SLOW")
+-              elseif ("x${ARGV${currentArg}}" STREQUAL "xWINDOWS_DISABLED")
+-                list(APPEND test_${cur_test}_tag "WINDOWS_DISABLED")
+-              elseif ("x${ARGV${currentArg}}" STREQUAL "xAPPLE_DISABLED")
+-                list(APPEND test_${cur_test}_tag "APPLE_DISABLED")
+-              else()
+-                message(FATAL_ERROR "Unknown test tag '${ARGV${currentArg}}'!")
+-              endif()
+-            elseif (argumentState EQUAL 1)
+-              list(APPEND test_${cur_test}_headers
+-                "${FOLLY_DIR}/${directory_${cur_dir}_name}${ARGV${currentArg}}"
+-              )
+-            elseif (argumentState EQUAL 2)
+-              list(APPEND test_${cur_test}_sources
+-                "${FOLLY_DIR}/${directory_${cur_dir}_name}${ARGV${currentArg}}"
+-              )
+-            else()
+-              message(FATAL_ERROR "Unknown argument state!")
+-            endif()
+-            math(EXPR currentArg "${currentArg} + 1")
+-          endwhile()
+-
+-          list(APPEND directory_${cur_dir}_source_list
+-            ${test_${cur_test}_sources} ${test_${cur_test}_headers})
+-        else()
+-          message(FATAL_ERROR "Unknown argument inside directory '${ARGV${currentArg}}'!")
+-        endif()
+-      endwhile()
+-    else()
+-      message(FATAL_ERROR "Unknown argument '${ARGV${currentArg}}'!")
+-    endif()
+-  endwhile()
+-
+-  set(cur_dir 0)
+-  while (cur_dir LESS directory_count)
+-    source_group("" FILES ${directory_${cur_dir}_source_list})
+-    math(EXPR cur_dir "${cur_dir} + 1")
+-  endwhile()
+-
+-  set(cur_test 0)
+-  while (cur_test LESS test_count)
+-    if (
+-      1
+-      # TODO: Use IN_LIST after cmake 3.3
+-      AND (test_${cur_test}_tag MATCHES "\\bBROKEN\\b" OR BUILD_BROKEN_TESTS)
+-      AND (test_${cur_test}_tag MATCHES "\\bSLOW\\b" OR BUILD_SLOW_TESTS)
+-      AND (test_${cur_test}_tag MATCHES "\\bHANGING\\b" OR BUILD_HANGING_TESTS)
+-      AND (test_${cur_test}_tag MATCHES "\\bWINDOWS_DISABLED\\b" OR NOT WIN32)
+-      AND (test_${cur_test}_tag MATCHES "\\bAPPLE_DISABLED\\b" OR NOT APPLE)
+-    )
+-      set(cur_test_name ${test_${cur_test}_name})
+-      set(cur_dir_name ${directory_${test_${cur_test}_directory}_name})
+-      add_executable(${cur_test_name}
+-        ${test_${cur_test}_headers}
+-        ${test_${cur_test}_sources}
+-      )
+-      if (HAVE_CMAKE_GTEST)
+-        # If we have CMake's built-in gtest support use it to add each test
+-        # function as a separate test.
+-        gtest_add_tests(TARGET ${cur_test_name}
+-                        WORKING_DIRECTORY "${TOP_DIR}"
+-                        TEST_PREFIX "${cur_test_name}."
+-                        TEST_LIST test_cases)
+-        set_tests_properties(${test_cases} PROPERTIES TIMEOUT 120)
+-      else()
+-        # Otherwise add each test executable as a single test.
+-        add_test(
+-          NAME ${cur_test_name}
+-          COMMAND ${cur_test_name}
+-          WORKING_DIRECTORY "${TOP_DIR}"
+-        )
+-        set_tests_properties(${cur_test_name} PROPERTIES TIMEOUT 120)
+-      endif()
+-      if (NOT "x${test_${cur_test}_content_dir}" STREQUAL "x")
+-        # Copy the content directory to the output directory tree so that
+-        # tests can be run easily from Visual Studio without having to change
+-        # the working directory for each test individually.
+-        file(
+-          COPY "${FOLLY_DIR}/${cur_dir_name}${test_${cur_test}_content_dir}"
+-          DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/folly/${cur_dir_name}${test_${cur_test}_content_dir}"
+-        )
+-        add_custom_command(TARGET ${cur_test_name} POST_BUILD COMMAND
+-          ${CMAKE_COMMAND} ARGS -E copy_directory
+-            "${FOLLY_DIR}/${cur_dir_name}${test_${cur_test}_content_dir}"
+-            "$<TARGET_FILE_DIR:${cur_test_name}>/folly/${cur_dir_name}${test_${cur_test}_content_dir}"
+-          COMMENT "Copying test content for ${cur_test_name}" VERBATIM
+-        )
+-      endif()
+-      # Strip the tailing test directory name for the folder name.
+-      string(REPLACE "test/" "" test_dir_name "${cur_dir_name}")
+-      set_property(TARGET ${cur_test_name} PROPERTY FOLDER "Tests/${test_dir_name}")
+-      target_link_libraries(${cur_test_name} PRIVATE folly_test_support)
+-      apply_folly_compile_options_to_target(${cur_test_name})
+-    endif()
+-    math(EXPR cur_test "${cur_test} + 1")
+-  endwhile()
+-endfunction()
+diff --git a/CMake/GenPkgConfig.cmake b/CMake/GenPkgConfig.cmake
+deleted file mode 100644
+index 59a0c9f57..000000000
+--- a/CMake/GenPkgConfig.cmake
++++ /dev/null
+@@ -1,110 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-# Generate variables that can be used to help emit a pkg-config file
+-# using configure_file().
+-#
+-# Usage: gen_pkgconfig_vars(VAR_PREFIX target)
+-#
+-# This will set two variables in the caller scope:
+-# ${VAR_PREFIX}_CFLAGS: set to the compile flags computed from the specified
+-#   target
+-# ${VAR_PREFIX}_PRIVATE_LIBS: set to the linker flags needed for static
+-#   linking computed from the specified target
+-function(gen_pkgconfig_vars)
+-  if (NOT ${ARGC} EQUAL 2)
+-    message(FATAL_ERROR "gen_pkgconfig_vars() requires exactly 2 arguments")
+-  endif()
+-  set(var_prefix "${ARGV0}")
+-  set(target "${ARGV1}")
+-
+-  get_target_property(target_cflags "${target}" INTERFACE_COMPILE_OPTIONS)
+-  if(target_cflags)
+-    list(APPEND cflags "${target_cflags}")
+-  endif()
+-  get_target_property(
+-    target_inc_dirs "${target}" INTERFACE_INCLUDE_DIRECTORIES)
+-  if(target_inc_dirs)
+-    list(APPEND include_dirs "${target_inc_dirs}")
+-  endif()
+-  get_target_property(target_defns "${target}" INTERFACE_COMPILE_DEFINITIONS)
+-  if(target_defns)
+-    list(APPEND definitions "${target_defns}")
+-  endif()
+-
+-  # The INTERFACE_LINK_LIBRARIES list is unfortunately somewhat awkward to
+-  # process.  Entries in this list may be any of
+-  # - target names
+-  # - absolute paths to a library file
+-  # - plain library names that need "-l" prepended
+-  # - other linker flags starting with "-"
+-  #
+-  # Walk through each entry and transform it into the desired arguments
+-  get_target_property(link_libs "${target}" INTERFACE_LINK_LIBRARIES)
+-  if(link_libs)
+-    foreach(lib_arg IN LISTS link_libs)
+-      if(TARGET "${lib_arg}")
+-        # Add any compile options specified in the targets
+-        # INTERFACE_COMPILE_OPTIONS.  We don't need to process its
+-        # INTERFACE_LINK_LIBRARIES property, since our INTERFACE_LINK_LIBRARIES
+-        # will already include its entries transitively.
+-        get_target_property(lib_cflags "${lib_arg}" INTERFACE_COMPILE_OPTIONS)
+-        if(lib_cflags)
+-          list(APPEND cflags "${lib_cflags}")
+-        endif()
+-        get_target_property(lib_defs "${lib_arg}"
+-          INTERFACE_COMPILE_DEFINITIONS)
+-        if(lib_defs)
+-          list(APPEND definitions "${lib_defs}")
+-        endif()
+-      elseif(lib_arg MATCHES "^[-/]")
+-        list(APPEND private_libs "${lib_arg}")
+-      else()
+-        list(APPEND private_libs "-l${lib_arg}")
+-      endif()
+-    endforeach()
+-  endif()
+-
+-  list(APPEND cflags "${CMAKE_REQUIRED_FLAGS}")
+-  if(definitions)
+-    list(REMOVE_DUPLICATES definitions)
+-    foreach(def_arg IN LISTS definitions)
+-      list(APPEND cflags "-D${def_arg}")
+-    endforeach()
+-  endif()
+-  if(include_dirs)
+-    list(REMOVE_DUPLICATES include_dirs)
+-    foreach(inc_dir IN LISTS include_dirs)
+-      list(APPEND cflags "-I${inc_dir}")
+-    endforeach()
+-  endif()
+-
+-  # Set the output variables
+-  string(REPLACE ";" " " cflags "${cflags}")
+-  string(REPLACE ";" " " private_libs "${private_libs}")
+-
+-  # Since CMake 3.18 FindThreads may include a generator expression requiring
+-  # a target, which gets propagated to us through INTERFACE_COMPILE_OPTIONS.
+-  # Before CMake 3.19 there's no way to solve this in a general way, so we
+-  # work around the specific case. See #1414 and CMake bug #21074.
+-  if(CMAKE_VERSION VERSION_LESS 3.19)
+-    string(REPLACE
+-      "<COMPILE_LANG_AND_ID:CUDA,NVIDIA>" "<COMPILE_LANGUAGE:CUDA>"
+-      cflags "${cflags}"
+-    )
+-  endif()
+-
+-  set("${var_prefix}_CFLAGS" "${cflags}" PARENT_SCOPE)
+-  set("${var_prefix}_PRIVATE_LIBS" "${private_libs}" PARENT_SCOPE)
+-endfunction()
+diff --git a/CMake/folly-config.cmake.in b/CMake/folly-config.cmake.in
+deleted file mode 100644
+index 1689f9a2d..000000000
+--- a/CMake/folly-config.cmake.in
++++ /dev/null
+@@ -1,47 +0,0 @@
+-# CMake configuration file for folly
+-#
+-# This provides the Folly::folly target, which you can depend on by adding it
+-# to your target_link_libraries().
+-#
+-# It also defines the following variables, although using these directly is not
+-# necessary if you use the Folly::folly target instead.
+-#  FOLLY_INCLUDE_DIRS
+-#  FOLLY_LIBRARIES
+-
+-@PACKAGE_INIT@
+-
+-include(CMakeFindDependencyMacro)
+-
+-set_and_check(FOLLY_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+-set_and_check(FOLLY_CMAKE_DIR "@PACKAGE_CMAKE_INSTALL_DIR@")
+-
+-# find_dependency() ends up changing PACKAGE_PREFIX_DIR, so save
+-# folly's prefix directory in the FOLLY_PREFIX_DIR variable
+-set(FOLLY_PREFIX_DIR "${PACKAGE_PREFIX_DIR}")
+-
+-# Include the folly-targets.cmake file, which is generated from our CMake rules
+-if (NOT TARGET Folly::folly)
+-  include("${FOLLY_CMAKE_DIR}/folly-targets.cmake")
+-endif()
+-
+-# Set FOLLY_LIBRARIES from our Folly::folly target
+-set(FOLLY_LIBRARIES Folly::folly)
+-
+-# Find folly's dependencies
+-find_dependency(fmt)
+-
+-set(Boost_USE_STATIC_LIBS "@FOLLY_BOOST_LINK_STATIC@")
+-find_dependency(Boost 1.51.0 MODULE
+-  COMPONENTS
+-    context
+-    filesystem
+-    program_options
+-    regex
+-    system
+-    thread
+-  REQUIRED
+-)
+-
+-if (NOT folly_FIND_QUIETLY)
+-  message(STATUS "Found folly: ${FOLLY_PREFIX_DIR}")
+-endif()
+diff --git a/CMake/folly-deps.cmake b/CMake/folly-deps.cmake
+deleted file mode 100644
+index e0e02c02e..000000000
+--- a/CMake/folly-deps.cmake
++++ /dev/null
+@@ -1,315 +0,0 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-include(CheckCXXSourceCompiles)
+-include(CheckCXXSymbolExists)
+-include(CheckIncludeFileCXX)
+-include(CheckFunctionExists)
+-include(CMakePushCheckState)
+-
+-set(
+-  BOOST_LINK_STATIC "auto"
+-  CACHE STRING
+-  "Whether to link against boost statically or dynamically."
+-)
+-if("${BOOST_LINK_STATIC}" STREQUAL "auto")
+-  # Default to linking boost statically on Windows with MSVC
+-  if(MSVC)
+-    set(FOLLY_BOOST_LINK_STATIC ON)
+-  else()
+-    set(FOLLY_BOOST_LINK_STATIC OFF)
+-  endif()
+-else()
+-  set(FOLLY_BOOST_LINK_STATIC "${BOOST_LINK_STATIC}")
+-endif()
+-set(Boost_USE_STATIC_LIBS "${FOLLY_BOOST_LINK_STATIC}")
+-
+-find_package(Boost 1.51.0 MODULE
+-  COMPONENTS
+-    context
+-    filesystem
+-    program_options
+-    regex
+-    system
+-    thread
+-  REQUIRED
+-)
+-list(APPEND FOLLY_LINK_LIBRARIES ${Boost_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
+-
+-find_package(DoubleConversion MODULE REQUIRED)
+-list(APPEND FOLLY_LINK_LIBRARIES ${DOUBLE_CONVERSION_LIBRARY})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${DOUBLE_CONVERSION_INCLUDE_DIR})
+-
+-find_package(Gflags MODULE)
+-set(FOLLY_HAVE_LIBGFLAGS ${LIBGFLAGS_FOUND})
+-if(LIBGFLAGS_FOUND)
+-  list(APPEND FOLLY_LINK_LIBRARIES ${LIBGFLAGS_LIBRARY})
+-  list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBGFLAGS_INCLUDE_DIR})
+-  set(FOLLY_LIBGFLAGS_LIBRARY ${LIBGFLAGS_LIBRARY})
+-  set(FOLLY_LIBGFLAGS_INCLUDE ${LIBGFLAGS_INCLUDE_DIR})
+-endif()
+-
+-find_package(Glog MODULE)
+-set(FOLLY_HAVE_LIBGLOG ${GLOG_FOUND})
+-list(APPEND FOLLY_LINK_LIBRARIES ${GLOG_LIBRARY})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${GLOG_INCLUDE_DIR})
+-
+-find_package(LibEvent MODULE REQUIRED)
+-list(APPEND FOLLY_LINK_LIBRARIES ${LIBEVENT_LIB})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBEVENT_INCLUDE_DIR})
+-
+-find_package(ZLIB MODULE)
+-set(FOLLY_HAVE_LIBZ ${ZLIB_FOUND})
+-if (ZLIB_FOUND)
+-  list(APPEND FOLLY_INCLUDE_DIRECTORIES ${ZLIB_INCLUDE_DIRS})
+-  list(APPEND FOLLY_LINK_LIBRARIES ${ZLIB_LIBRARIES})
+-  list(APPEND CMAKE_REQUIRED_LIBRARIES ${ZLIB_LIBRARIES})
+-endif()
+-
+-find_package(OpenSSL MODULE REQUIRED)
+-list(APPEND FOLLY_LINK_LIBRARIES ${OPENSSL_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${OPENSSL_INCLUDE_DIR})
+-list(APPEND CMAKE_REQUIRED_LIBRARIES ${OPENSSL_LIBRARIES})
+-list(APPEND CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
+-check_function_exists(ASN1_TIME_diff FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF)
+-list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${OPENSSL_LIBRARIES})
+-list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
+-if (ZLIB_FOUND)
+-    list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${ZLIB_LIBRARIES})
+-endif()
+-
+-find_package(BZip2 MODULE)
+-set(FOLLY_HAVE_LIBBZ2 ${BZIP2_FOUND})
+-if (BZIP2_FOUND)
+-  list(APPEND FOLLY_INCLUDE_DIRECTORIES ${BZIP2_INCLUDE_DIRS})
+-  list(APPEND FOLLY_LINK_LIBRARIES ${BZIP2_LIBRARIES})
+-endif()
+-
+-find_package(LibLZMA MODULE)
+-set(FOLLY_HAVE_LIBLZMA ${LIBLZMA_FOUND})
+-if (LIBLZMA_FOUND)
+-  list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBLZMA_INCLUDE_DIRS})
+-  list(APPEND FOLLY_LINK_LIBRARIES ${LIBLZMA_LIBRARIES})
+-endif()
+-
+-find_package(LZ4 MODULE)
+-set(FOLLY_HAVE_LIBLZ4 ${LZ4_FOUND})
+-if (LZ4_FOUND)
+-  list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LZ4_INCLUDE_DIR})
+-  list(APPEND FOLLY_LINK_LIBRARIES ${LZ4_LIBRARY})
+-endif()
+-
+-find_package(Zstd MODULE)
+-set(FOLLY_HAVE_LIBZSTD ${ZSTD_FOUND})
+-if(ZSTD_FOUND)
+-  list(APPEND FOLLY_INCLUDE_DIRECTORIES ${ZSTD_INCLUDE_DIR})
+-  list(APPEND FOLLY_LINK_LIBRARIES ${ZSTD_LIBRARY})
+-endif()
+-
+-find_package(Snappy MODULE)
+-set(FOLLY_HAVE_LIBSNAPPY ${SNAPPY_FOUND})
+-if (SNAPPY_FOUND)
+-  list(APPEND FOLLY_INCLUDE_DIRECTORIES ${SNAPPY_INCLUDE_DIR})
+-  list(APPEND FOLLY_LINK_LIBRARIES ${SNAPPY_LIBRARY})
+-endif()
+-
+-find_package(LibDwarf)
+-list(APPEND FOLLY_LINK_LIBRARIES ${LIBDWARF_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBDWARF_INCLUDE_DIRS})
+-
+-find_package(Libiberty)
+-list(APPEND FOLLY_LINK_LIBRARIES ${LIBIBERTY_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBIBERTY_INCLUDE_DIRS})
+-
+-find_package(LibAIO)
+-list(APPEND FOLLY_LINK_LIBRARIES ${LIBAIO_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBAIO_INCLUDE_DIRS})
+-
+-find_package(LibUring)
+-list(APPEND FOLLY_LINK_LIBRARIES ${LIBURING_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBURING_INCLUDE_DIRS})
+-
+-find_package(Libsodium)
+-list(APPEND FOLLY_LINK_LIBRARIES ${LIBSODIUM_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBSODIUM_INCLUDE_DIRS})
+-
+-list(APPEND FOLLY_LINK_LIBRARIES ${CMAKE_DL_LIBS})
+-list(APPEND CMAKE_REQUIRED_LIBRARIES ${CMAKE_DL_LIBS})
+-
+-if (PYTHON_EXTENSIONS)
+-  find_package(PythonInterp 3.6 REQUIRED)
+-  find_package(Cython 0.26 REQUIRED)
+-endif ()
+-
+-find_package(LibUnwind)
+-list(APPEND FOLLY_LINK_LIBRARIES ${LIBUNWIND_LIBRARIES})
+-list(APPEND FOLLY_INCLUDE_DIRECTORIES ${LIBUNWIND_INCLUDE_DIRS})
+-if (LIBUNWIND_FOUND)
+-  set(FOLLY_HAVE_LIBUNWIND ON)
+-endif()
+-if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+-  list(APPEND FOLLY_LINK_LIBRARIES "execinfo")
+-endif ()
+-
+-cmake_push_check_state()
+-set(CMAKE_REQUIRED_DEFINITIONS -D_XOPEN_SOURCE)
+-check_cxx_symbol_exists(swapcontext ucontext.h FOLLY_HAVE_SWAPCONTEXT)
+-cmake_pop_check_state()
+-
+-set(FOLLY_USE_SYMBOLIZER OFF)
+-CHECK_INCLUDE_FILE_CXX(elf.h FOLLY_HAVE_ELF)
+-find_package(Backtrace)
+-
+-set(FOLLY_HAVE_BACKTRACE ${Backtrace_FOUND})
+-set(FOLLY_HAVE_DWARF ${LIBDWARF_FOUND})
+-if (NOT WIN32 AND NOT APPLE)
+-  set(FOLLY_USE_SYMBOLIZER ON)
+-endif()
+-message(STATUS "Setting FOLLY_USE_SYMBOLIZER: ${FOLLY_USE_SYMBOLIZER}")
+-message(STATUS "Setting FOLLY_HAVE_ELF: ${FOLLY_HAVE_ELF}")
+-message(STATUS "Setting FOLLY_HAVE_DWARF: ${FOLLY_HAVE_DWARF}")
+-
+-# Using clang with libstdc++ requires explicitly linking against libatomic
+-check_cxx_source_compiles("
+-  #include <atomic>
+-  int main(int argc, char** argv) {
+-    struct Test { int val; };
+-    std::atomic<Test> s;
+-    return static_cast<int>(s.is_lock_free());
+-  }"
+-  FOLLY_CPP_ATOMIC_BUILTIN
+-)
+-if(NOT FOLLY_CPP_ATOMIC_BUILTIN)
+-  list(APPEND CMAKE_REQUIRED_LIBRARIES atomic)
+-  list(APPEND FOLLY_LINK_LIBRARIES atomic)
+-  check_cxx_source_compiles("
+-    #include <atomic>
+-    int main(int argc, char** argv) {
+-      struct Test { int val; };
+-      std::atomic<Test> s2;
+-      return static_cast<int>(s2.is_lock_free());
+-    }"
+-    FOLLY_CPP_ATOMIC_WITH_LIBATOMIC
+-  )
+-  if (NOT FOLLY_CPP_ATOMIC_WITH_LIBATOMIC)
+-    message(
+-      FATAL_ERROR "unable to link C++ std::atomic code: you may need \
+-      to install GNU libatomic"
+-    )
+-  endif()
+-endif()
+-
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  #if _GLIBCXX_RELEASE
+-  int main() {}
+-  #endif"
+-  FOLLY_STDLIB_LIBSTDCXX
+-)
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  #if _GLIBCXX_RELEASE >= 9
+-  int main() {}
+-  #endif"
+-  FOLLY_STDLIB_LIBSTDCXX_GE_9
+-)
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  #if _LIBCPP_VERSION
+-  int main() {}
+-  #endif"
+-  FOLLY_STDLIB_LIBCXX
+-)
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  #if _LIBCPP_VERSION >= 9000
+-  int main() {}
+-  #endif"
+-  FOLLY_STDLIB_LIBCXX_GE_9
+-)
+-check_cxx_source_compiles("
+-  #include <type_traits>
+-  #if _CPPLIB_VER
+-  int main() {}
+-  #endif"
+-  FOLLY_STDLIB_LIBCPP
+-)
+-
+-if (APPLE)
+-  list (APPEND CMAKE_REQUIRED_LIBRARIES c++abi)
+-  list (APPEND FOLLY_LINK_LIBRARIES c++abi)
+-endif ()
+-
+-if (FOLLY_STDLIB_LIBSTDCXX AND NOT FOLLY_STDLIB_LIBSTDCXX_GE_9)
+-  list (APPEND CMAKE_REQUIRED_LIBRARIES stdc++fs)
+-  list (APPEND FOLLY_LINK_LIBRARIES stdc++fs)
+-endif()
+-if (FOLLY_STDLIB_LIBCXX AND NOT FOLLY_STDLIB_LIBCXX_GE_9)
+-  list (APPEND CMAKE_REQUIRED_LIBRARIES c++fs)
+-  list (APPEND FOLLY_LINK_LIBRARIES c++fs)
+-endif ()
+-
+-option(
+-  FOLLY_LIBRARY_SANITIZE_ADDRESS
+-  "Build folly with Address Sanitizer enabled."
+-  OFF
+-)
+-
+-if ($ENV{WITH_ASAN})
+-  message(STATUS "ENV WITH_ASAN is set")
+-  set (FOLLY_LIBRARY_SANITIZE_ADDRESS ON)
+-endif()
+-
+-if (FOLLY_LIBRARY_SANITIZE_ADDRESS)
+-  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES GNU)
+-    set(FOLLY_LIBRARY_SANITIZE_ADDRESS ON)
+-    set(FOLLY_ASAN_FLAGS -fsanitize=address,undefined)
+-    list(APPEND FOLLY_CXX_FLAGS ${FOLLY_ASAN_FLAGS})
+-    # All of the functions in folly/detail/Sse.cpp are intended to be compiled
+-    # with ASAN disabled.  They are marked with attributes to disable the
+-    # sanitizer, but even so, gcc fails to compile them for some reason when
+-    # sanitization is enabled on the compile line.
+-    set_source_files_properties(
+-      "${PROJECT_SOURCE_DIR}/folly/detail/Sse.cpp"
+-      PROPERTIES COMPILE_FLAGS -fno-sanitize=address,undefined
+-    )
+-  elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES Clang)
+-    set(FOLLY_LIBRARY_SANITIZE_ADDRESS ON)
+-    set(
+-      FOLLY_ASAN_FLAGS
+-      -fno-common
+-      -fsanitize=address,undefined,integer,nullability
+-      -fno-sanitize=unsigned-integer-overflow
+-    )
+-    list(APPEND FOLLY_CXX_FLAGS ${FOLLY_ASAN_FLAGS})
+-  endif()
+-endif()
+-
+-add_library(folly_deps INTERFACE)
+-
+-find_package(fmt CONFIG)
+-if (NOT DEFINED fmt_CONFIG)
+-    # Fallback on a normal search on the current system
+-    find_package(Fmt MODULE REQUIRED)
+-endif()
+-target_link_libraries(folly_deps INTERFACE fmt::fmt)
+-
+-list(REMOVE_DUPLICATES FOLLY_INCLUDE_DIRECTORIES)
+-target_include_directories(folly_deps INTERFACE ${FOLLY_INCLUDE_DIRECTORIES})
+-target_link_libraries(folly_deps INTERFACE
+-  ${FOLLY_LINK_LIBRARIES}
+-  ${FOLLY_SHINY_DEPENDENCIES}
+-  ${FOLLY_ASAN_FLAGS}
+-)
+diff --git a/CMake/libfolly.pc.in b/CMake/libfolly.pc.in
+deleted file mode 100644
+index ffa043c1f..000000000
+--- a/CMake/libfolly.pc.in
++++ /dev/null
+@@ -1,11 +0,0 @@
+-prefix=@CMAKE_INSTALL_PREFIX@
+-exec_prefix=@CMAKE_INSTALL_PREFIX@
+-libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+-includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+-
+-Name: libfolly
+-Description: Facebook (Folly) C++ library
+-Version: @PACKAGE_VERSION@
+-Cflags: -I${includedir} @FOLLY_PKGCONFIG_CFLAGS@
+-Libs: -L${libdir} -lfolly
+-Libs.private: @FOLLY_PKGCONFIG_PRIVATE_LIBS@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fc9f56350..fc93f0c6f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,1001 +1,254 @@
+-# Copyright (c) Facebook, Inc. and its affiliates.
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
++cmake_minimum_required(VERSION 3.21)
++project(folly)
+ 
+-cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
+-# We use the GoogleTest module if it is available (only in CMake 3.9+)
+-# It requires CMP0054 and CMP0057 to be enabled.
+-if (POLICY CMP0054)
+-  cmake_policy(SET CMP0054 NEW)
+-endif()
+-if (POLICY CMP0057)
+-  cmake_policy(SET CMP0057 NEW)
+-endif()
++set(CMAKE_CXX_STANDARD 23)
+ 
+-# CMP0075 Include file check macros honor CMAKE_REQUIRED_LIBRARIES
+-if(POLICY CMP0075)
+-  cmake_policy(SET CMP0075 NEW)
+-endif()
+-
+-# includes
+-set(CMAKE_MODULE_PATH
+-  "${CMAKE_CURRENT_SOURCE_DIR}/CMake"
+-  # for in-fbsource builds
+-  "${CMAKE_CURRENT_SOURCE_DIR}/../opensource/fbcode_builder/CMake"
+-  # For shipit-transformed builds
+-  "${CMAKE_CURRENT_SOURCE_DIR}/build/fbcode_builder/CMake"
+-  ${CMAKE_MODULE_PATH})
+-
+-# package information
+-set(PACKAGE_NAME      "folly")
+-if (NOT DEFINED PACKAGE_VERSION)
+-  set(PACKAGE_VERSION   "0.58.0-dev")
+-endif()
+-set(PACKAGE_STRING    "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+-set(PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
+-set(PACKAGE_BUGREPORT "https://github.com/facebook/folly/issues")
+-
+-# 150+ tests in the root folder anyone? No? I didn't think so.
+-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+-
+-project(${PACKAGE_NAME} CXX C)
+-
+-set(INCLUDE_INSTALL_DIR include CACHE STRING
+-    "The subdirectory where header files should be installed")
+-set(LIB_INSTALL_DIR lib CACHE STRING
+-    "The subdirectory where libraries should be installed")
+-set(BIN_INSTALL_DIR bin CACHE STRING
+-    "The subdirectory where binaries should be installed")
+-set(CMAKE_INSTALL_DIR lib/cmake/folly CACHE STRING
+-    "The subdirectory where CMake package config files should be installed")
+-
+-option(BUILD_SHARED_LIBS
+-  "If enabled, build folly as a shared library.  \
+-  This is generally discouraged, since folly does not commit to having \
+-  a stable ABI."
+-  OFF
+-)
+-# Mark BUILD_SHARED_LIBS as an "advanced" option, since enabling it
+-# is generally discouraged.
+-mark_as_advanced(BUILD_SHARED_LIBS)
+-set(FOLLY_SUPPORT_SHARED_LIBRARY "${BUILD_SHARED_LIBS}")
+-
+-include(FBBuildOptions)
+-fb_activate_static_library_option()
+-
+-set(CMAKE_CXX_STANDARD 17)
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-
+-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+-  # Check target architecture
+-  if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+-    message(FATAL_ERROR "Folly requires a 64bit target architecture.")
+-  endif()
+-
+-  if (MSVC_VERSION LESS 1900)
+-    message(
+-      FATAL_ERROR
+-      "This build script only supports building Folly on 64-bit Windows with "
+-      "at least Visual Studio 2017. "
+-      "MSVC version '${MSVC_VERSION}' is not supported."
+-    )
+-  endif()
+-endif()
+-
+-set(TOP_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+-set(FOLLY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/folly")
+-set(
+-  FOLLY_DIR_PREFIXES
+-  "${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_BINARY_DIR}"
+-)
+-
+-include(GNUInstallDirs)
+-
+-set(CMAKE_THREAD_PREFER_PTHREAD ON)
+-set(THREADS_PREFER_PTHREAD_FLAG ON)
+-find_package(Threads REQUIRED)
+-set(FOLLY_HAVE_PTHREAD "${CMAKE_USE_PTHREADS_INIT}")
+-list(APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads)
+-list(APPEND FOLLY_LINK_LIBRARIES Threads::Threads)
+-
+-if(MSVC)
+-  include(FollyCompilerMSVC)
+-else()
+-  include(FollyCompilerUnix)
+-endif()
+-include(FollyFunctions)
+-
+-include(folly-deps) # Find the required packages
+-include(FollyConfigChecks)
+ configure_file(
+-  ${CMAKE_CURRENT_SOURCE_DIR}/CMake/folly-config.h.cmake
+-  ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
+-)
+-
+-# Define FOLLY_XLOG_STRIP_PREFIXES when compiling our sources so that
+-# folly/logging will automatically choose the correct log category names,
+-# using only the relative portion of the source file name inside the
+-# folly repository.
+-set_property(
+-  DIRECTORY
+-  ${CMAKE_CURRENT_SOURCE_DIR}
+-  APPEND
+-  PROPERTY
+-  COMPILE_DEFINITIONS
+-  "FOLLY_XLOG_STRIP_PREFIXES=\"${CMAKE_SOURCE_DIR}:${CMAKE_BINARY_DIR}\""
+-)
+-
+-# We currently build the main libfolly library by finding all sources
+-# and header files.  We then exclude specific files below.
+-#
+-# In the future it would perhaps be nicer to explicitly list the files we want
+-# to include, and to move the source lists in to separate per-subdirectory
+-# CMakeLists.txt files.
+-auto_sources(files "*.cpp" "RECURSE" "${FOLLY_DIR}")
+-auto_sources(hfiles "*.h" "RECURSE" "${FOLLY_DIR}")
+-
+-# Exclude tests, benchmarks, and other standalone utility executables from the
+-# library sources.  Test sources are listed separately below.
+-REMOVE_MATCHES_FROM_LISTS(files hfiles
+-  MATCHES
+-    "^${FOLLY_DIR}/build/"
+-    "^${FOLLY_DIR}/logging/example/"
+-    "^${FOLLY_DIR}/(.*/)?test/"
+-    "^${FOLLY_DIR}/tools/"
+-    "Benchmark.cpp$"
+-    "Test.cpp$"
+-)
+-list(REMOVE_ITEM files
+-  ${FOLLY_DIR}/experimental/JSONSchemaTester.cpp
+-  ${FOLLY_DIR}/experimental/io/HugePageUtil.cpp
+-  ${FOLLY_DIR}/python/error.cpp
+-  ${FOLLY_DIR}/python/executor.cpp
+-  ${FOLLY_DIR}/python/fibers.cpp
+-  ${FOLLY_DIR}/python/GILAwareManualExecutor.cpp
+-  ${FOLLY_DIR}/experimental/symbolizer/Addr2Line.cpp
+-)
+-list(REMOVE_ITEM hfiles
+-  ${FOLLY_DIR}/python/fibers.h
+-  ${FOLLY_DIR}/python/GILAwareManualExecutor.h
+-)
+-
+-# Explicitly include utility library code from inside
+-# test subdirs
+-list(APPEND files
+-  ${FOLLY_DIR}/io/async/test/ScopedBoundPort.cpp
+-  ${FOLLY_DIR}/io/async/test/SocketPair.cpp
+-  ${FOLLY_DIR}/io/async/test/TimeUtil.cpp
+-)
+-list(APPEND hfiles
+-  ${FOLLY_DIR}/container/test/F14TestUtil.h
+-  ${FOLLY_DIR}/container/test/TrackingTypes.h
+-  ${FOLLY_DIR}/io/async/test/AsyncSSLSocketTest.h
+-  ${FOLLY_DIR}/io/async/test/AsyncSocketTest.h
+-  ${FOLLY_DIR}/io/async/test/AsyncSocketTest2.h
+-  ${FOLLY_DIR}/io/async/test/BlockingSocket.h
+-  ${FOLLY_DIR}/io/async/test/MockAsyncSocket.h
+-  ${FOLLY_DIR}/io/async/test/MockAsyncServerSocket.h
+-  ${FOLLY_DIR}/io/async/test/MockAsyncSSLSocket.h
+-  ${FOLLY_DIR}/io/async/test/MockAsyncTransport.h
+-  ${FOLLY_DIR}/io/async/test/MockAsyncUDPSocket.h
+-  ${FOLLY_DIR}/io/async/test/MockTimeoutManager.h
+-  ${FOLLY_DIR}/io/async/test/ScopedBoundPort.h
+-  ${FOLLY_DIR}/io/async/test/SocketPair.h
+-  ${FOLLY_DIR}/io/async/test/TestSSLServer.h
+-  ${FOLLY_DIR}/io/async/test/TimeUtil.h
+-  ${FOLLY_DIR}/io/async/test/UndelayedDestruction.h
+-  ${FOLLY_DIR}/io/async/test/Util.h
+-  ${FOLLY_DIR}/synchronization/test/Semaphore.h
+-  ${FOLLY_DIR}/test/DeterministicSchedule.h
+-  ${FOLLY_DIR}/test/JsonTestUtil.h
+-  ${FOLLY_DIR}/test/TestUtils.h
+-)
+-
+-# Exclude specific sources if we do not have third-party libraries
+-# required to build them.
+-if (NOT ${LIBAIO_FOUND})
+-  list(REMOVE_ITEM files
+-    ${FOLLY_DIR}/experimental/io/AsyncIO.cpp
+-  )
+-  list(REMOVE_ITEM hfiles
+-    ${FOLLY_DIR}/experimental/io/AsyncIO.h
+-  )
+-endif()
+-if (NOT ${LIBURING_FOUND})
+-  list(REMOVE_ITEM files
+-    ${FOLLY_DIR}/experimental/io/IoUring.cpp
+-    ${FOLLY_DIR}/experimental/io/IoUringBackend.cpp
+-  )
+-  list(REMOVE_ITEM hfiles
+-    ${FOLLY_DIR}/experimental/io/IoUring.h
+-    ${FOLLY_DIR}/experimental/io/IoUringBackend.h
+-  )
+-endif()
+-if (NOT ${LIBAIO_FOUND} AND NOT ${LIBURING_FOUND})
+-  list(REMOVE_ITEM files
+-    ${FOLLY_DIR}/experimental/io/AsyncBase.cpp
+-    ${FOLLY_DIR}/experimental/io/PollIoBackend.cpp
+-    ${FOLLY_DIR}/experimental/io/SimpleAsyncIO.cpp
+-  )
+-  list(REMOVE_ITEM hfiles
+-    ${FOLLY_DIR}/experimental/io/AsyncBase.h
+-    ${FOLLY_DIR}/experimental/io/PollIoBackend.h
+-    ${FOLLY_DIR}/experimental/io/SimpleAsyncIO.h
+-  )
+-endif()
+-
+-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+-  check_cxx_compiler_flag(-fcoroutines COMPILER_HAS_F_COROUTINES)
+-  if (COMPILER_HAS_F_COROUTINES)
+-    message(
+-      STATUS
+-      "GCC has support for C++ coroutines, setting flag for Folly build."
+-    )
+-    add_compile_options(-fcoroutines)
+-  else()
+-    message(
+-      STATUS
+-      "GCC does not have support for C++ coroutines, "
+-      "disabling Folly coroutine support."
+-    )
+-  endif()
+-endif()
+-
+-if (${LIBSODIUM_FOUND})
+-  string(FIND "${CMAKE_LIBRARY_ARCHITECTURE}" "x86_64" IS_X86_64_ARCH)
+-  if (${IS_X86_64_ARCH} STREQUAL "-1")
+-    message(
+-      STATUS
+-      "arch ${CMAKE_LIBRARY_ARCHITECTURE} does not match x86_64, "
+-      "skipping setting SSE2/AVX2 compile flags for LtHash SIMD code"
+-    )
+-  else()
+-    message(
+-      STATUS
+-      "arch ${CMAKE_LIBRARY_ARCHITECTURE} matches x86_64, "
+-      "setting SSE2/AVX2 compile flags for LtHash SIMD code"
+-    )
+-    set_source_files_properties(
+-      ${FOLLY_DIR}/experimental/crypto/detail/MathOperation_AVX2.cpp
+-      PROPERTIES
+-      COMPILE_FLAGS
+-      -mavx -mavx2 -msse2
+-    )
+-    set_source_files_properties(
+-      ${FOLLY_DIR}/experimental/crypto/detail/MathOperation_Simple.cpp
+-      PROPERTIES
+-      COMPILE_FLAGS
+-      -mno-avx -mno-avx2 -mno-sse2
+-    )
+-    set_source_files_properties(
+-      ${FOLLY_DIR}/experimental/crypto/detail/MathOperation_SSE2.cpp
+-      PROPERTIES
+-      COMPILE_FLAGS
+-      -mno-avx -mno-avx2 -msse2
+-    )
+-  endif()
+-else()
+-  list(REMOVE_ITEM files
+-    ${FOLLY_DIR}/experimental/crypto/Blake2xb.cpp
+-    ${FOLLY_DIR}/experimental/crypto/detail/MathOperation_AVX2.cpp
+-    ${FOLLY_DIR}/experimental/crypto/detail/MathOperation_Simple.cpp
+-    ${FOLLY_DIR}/experimental/crypto/detail/MathOperation_SSE2.cpp
+-    ${FOLLY_DIR}/experimental/crypto/LtHash.cpp
+-  )
+-  list(REMOVE_ITEM hfiles
+-    ${FOLLY_DIR}/experimental/crypto/Blake2xb.h
+-    ${FOLLY_DIR}/experimental/crypto/detail/LtHashInternal.h
+-    ${FOLLY_DIR}/experimental/crypto/LtHash-inl.h
+-    ${FOLLY_DIR}/experimental/crypto/LtHash.h
+-  )
+-endif()
+-if (NOT ${LIBGFLAGS_FOUND})
+-  list(REMOVE_ITEM files
+-    ${FOLLY_DIR}/experimental/NestedCommandLineApp.cpp
+-    ${FOLLY_DIR}/experimental/ProgramOptions.cpp
+-  )
+-  list(REMOVE_ITEM hfiles
+-    ${FOLLY_DIR}/experimental/NestedCommandLineApp.h
+-    ${FOLLY_DIR}/experimental/ProgramOptions.h
+-  )
+-endif()
+-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+-  list(REMOVE_ITEM files
+-    ${FOLLY_DIR}/Poly.cpp
+-    ${FOLLY_DIR}/Subprocess.cpp
+-  )
+-  list(REMOVE_ITEM hfiles
+-    ${FOLLY_DIR}/Poly.h
+-    ${FOLLY_DIR}/Poly-inl.h
+-    ${FOLLY_DIR}/detail/PolyDetail.h
+-    ${FOLLY_DIR}/detail/TypeList.h
+-    ${FOLLY_DIR}/poly/Nullable.h
+-    ${FOLLY_DIR}/poly/Regular.h
+-  )
+-endif()
+-
+-set(PCLMUL_FILES
+-  ${FOLLY_DIR}/hash/detail/ChecksumDetail.cpp
+-  ${FOLLY_DIR}/hash/detail/Crc32CombineDetail.cpp
+-  ${FOLLY_DIR}/hash/detail/Crc32cDetail.cpp
+-)
+-check_cxx_compiler_flag(-mpclmul COMPILER_HAS_M_PCLMUL)
+-if (COMPILER_HAS_M_PCLMUL)
+-  message(
+-    STATUS
+-    "compiler has flag pclmul, setting compile flag for ${PCLMUL_FILES}"
+-  )
+-  set_source_files_properties(
+-    ${PCLMUL_FILES}
+-    PROPERTIES
+-    COMPILE_OPTIONS
+-    -mpclmul
+-  )
+-else()
+-  message(
+-    STATUS
+-    "compiler does not have flag pclmul, skipping setting compile flags for ${PCLMUL_FILES}"
+-  )
+-endif()
+-
+-add_library(folly_base OBJECT
+-  ${files} ${hfiles}
+-  ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
+-)
+-if (BUILD_SHARED_LIBS)
+-  set_property(TARGET folly_base PROPERTY POSITION_INDEPENDENT_CODE ON)
+-endif()
+-auto_source_group(folly ${FOLLY_DIR} ${files} ${hfiles})
+-apply_folly_compile_options_to_target(folly_base)
+-# Add the generated files to the correct source group.
+-source_group("folly" FILES ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h)
+-
+-# Generate pkg-config variables from folly_deps before we add our own
+-# build/install-time include directory generator expressions
+-include(GenPkgConfig)
+-gen_pkgconfig_vars(FOLLY_PKGCONFIG folly_deps)
+-
+-target_include_directories(folly_deps
+-  BEFORE
+-  INTERFACE
+-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+-)
+-target_include_directories(folly_deps
+-  INTERFACE
+-    $<INSTALL_INTERFACE:include>
+-)
+-
+-target_include_directories(folly_base
+-  PUBLIC
+-    $<TARGET_PROPERTY:folly_deps,INTERFACE_INCLUDE_DIRECTORIES>
+-)
+-target_compile_definitions(folly_base
+-  PUBLIC
+-    $<TARGET_PROPERTY:folly_deps,INTERFACE_COMPILE_DEFINITIONS>
+-)
+-
+-set(FOLLY_INSTALL_TARGETS folly folly_deps)
+-
+-option(PYTHON_EXTENSIONS
+-  "Build Python Bindings for Folly, requires Cython and (BUILD_SHARED_LIBS=ON)"
+-  OFF
++        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/folly-config.h.cmake
++        ${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h
+ )
+ 
+ add_library(folly
+-  $<TARGET_OBJECTS:folly_base>
+-)
+-set_property(TARGET folly PROPERTY VERSION ${PACKAGE_VERSION})
+-apply_folly_compile_options_to_target(folly)
+-target_compile_features(folly INTERFACE cxx_generic_lambdas)
+-
+-target_link_libraries(folly PUBLIC folly_deps)
+-
+-# Test utilities exported for use by downstream projects
+-add_library(folly_test_util
+-  ${FOLLY_DIR}/test/DeterministicSchedule.cpp
+-  ${FOLLY_DIR}/test/JsonTestUtil.cpp
+-)
+-set_property(TARGET folly_test_util PROPERTY VERSION ${PACKAGE_VERSION})
+-target_link_libraries(folly_test_util
+-  PUBLIC
+-    ${BOOST_LIBRARIES}
+-    folly
+-    ${LIBGMOCK_LIBRARIES}
+-)
+-apply_folly_compile_options_to_target(folly_test_util)
+-list(APPEND FOLLY_INSTALL_TARGETS folly_test_util)
++        folly/SharedMutex.cpp
++        folly/ScopeGuard.cpp
++        folly/concurrency/CacheLocality.cpp
++        folly/detail/Futex.cpp
++        folly/detail/ThreadLocalDetail.cpp
++        folly/detail/StaticSingletonManager.cpp
++        folly/detail/AtFork.cpp
++        folly/system/ThreadId.cpp
++        folly/synchronization/ParkingLot.cpp
++        folly/synchronization/SanitizeThread.cpp
++
++        # Required for MPMC
++        folly/synchronization/AsymmetricMemoryBarrier.cpp
++        folly/synchronization/Hazptr.cpp
++        folly/detail/MemoryIdler.cpp
++        folly/detail/UniqueInstance.cpp
++        folly/executors/QueuedImmediateExecutor.cpp
++        folly/Executor.cpp
++        folly/portability/SysMembarrier.cpp
++        folly/memory/MallctlHelper.cpp
++        folly/memory/detail/MallocImpl.cpp
++)
++
++target_compile_features(folly PRIVATE cxx_std_20)
++
++target_include_directories(folly PUBLIC
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/config>)
+ 
+-install(TARGETS ${FOLLY_INSTALL_TARGETS}
+-  EXPORT folly
+-  RUNTIME DESTINATION bin
+-  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+-  ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+-auto_install_files(folly ${FOLLY_DIR}
+-  ${hfiles}
+-)
+-install(
+-  FILES ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
+-  DESTINATION ${INCLUDE_INSTALL_DIR}/folly
+-  COMPONENT dev
+-)
+-
+-# Generate the folly-config.cmake file for installation so that
+-# downstream projects that use on folly can easily depend on it in their CMake
+-# files using "find_package(folly CONFIG)"
++include(GNUInstallDirs)
+ include(CMakePackageConfigHelpers)
+-configure_package_config_file(
+-  CMake/folly-config.cmake.in
+-  folly-config.cmake
+-  INSTALL_DESTINATION ${CMAKE_INSTALL_DIR}
+-  PATH_VARS
+-    INCLUDE_INSTALL_DIR
+-    CMAKE_INSTALL_DIR
+-)
+-install(
+-  FILES ${CMAKE_CURRENT_BINARY_DIR}/folly-config.cmake
+-  DESTINATION ${CMAKE_INSTALL_DIR}
+-  COMPONENT dev
+-)
+-install(
+-  EXPORT folly
+-  DESTINATION ${CMAKE_INSTALL_DIR}
+-  NAMESPACE Folly::
+-  FILE folly-targets.cmake
+-  COMPONENT dev
+-)
+-
+-# Generate a pkg-config file so that downstream projects that don't use
+-# CMake can depend on folly using pkg-config.
+-configure_file(
+-  ${CMAKE_CURRENT_SOURCE_DIR}/CMake/libfolly.pc.in
+-  ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc.gen
+-  @ONLY
+-)
+-
+-# Specify target to allow resolving generator expressions requiring
+-# a target for CMake >=3.19. See #1414.
+-# VERSION_GREATER_EQUAL isn't available before CMake 3.7.
+-if(NOT CMAKE_VERSION VERSION_LESS 3.19)
+-  set(target_arg TARGET folly_deps)
+-endif()
+-
+-file(
+-  GENERATE
+-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc
+-  INPUT ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc.gen
+-  ${target_arg}
+-)
+-install(
+-  FILES ${CMAKE_CURRENT_BINARY_DIR}/libfolly.pc
+-  DESTINATION ${LIB_INSTALL_DIR}/pkgconfig
+-  COMPONENT dev
+-)
+-
+-option(BUILD_TESTS "If enabled, compile the tests." OFF)
+-option(BUILD_BROKEN_TESTS "If enabled, compile tests that are known to be broken." OFF)
+-option(BUILD_HANGING_TESTS "If enabled, compile tests that are known to hang." OFF)
+-option(BUILD_SLOW_TESTS "If enabled, compile tests that take a while to run in debug mode." OFF)
+-if (BUILD_TESTS)
+-  option(USE_CMAKE_GOOGLE_TEST_INTEGRATION "If enabled, use the google test integration included in CMake." ON)
+-  find_package(GMock MODULE REQUIRED)
+-  find_package(GTest MODULE REQUIRED)
+-  if (USE_CMAKE_GOOGLE_TEST_INTEGRATION)
+-    include(GoogleTest OPTIONAL RESULT_VARIABLE HAVE_CMAKE_GTEST)
+-    enable_testing()
+-  else()
+-    set(HAVE_CMAKE_GTEST OFF)
+-  endif()
+-
+-  # The ThreadLocalTest code uses a helper shared library for one of its tests.
+-  # This can only be built if folly itself was built as a shared library.
+-  if (BUILD_SHARED_LIBS)
+-    add_library(thread_local_test_lib MODULE
+-      ${FOLLY_DIR}/test/ThreadLocalTestLib.cpp
+-    )
+-    set_target_properties(thread_local_test_lib PROPERTIES PREFIX "")
+-    apply_folly_compile_options_to_target(thread_local_test_lib)
+-    target_link_libraries(thread_local_test_lib PUBLIC folly)
+-    target_include_directories(
+-      thread_local_test_lib
+-      PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+-  endif()
+-
+-  add_library(folly_test_support
+-    ${FOLLY_DIR}/test/common/TestMain.cpp
+-    ${FOLLY_DIR}/test/FBVectorTestUtil.cpp
+-    ${FOLLY_DIR}/test/DeterministicSchedule.cpp
+-    ${FOLLY_DIR}/test/DeterministicSchedule.h
+-    ${FOLLY_DIR}/test/SingletonTestStructs.cpp
+-    ${FOLLY_DIR}/test/SocketAddressTestHelper.cpp
+-    ${FOLLY_DIR}/test/SocketAddressTestHelper.h
+-    ${FOLLY_DIR}/container/test/F14TestUtil.h
+-    ${FOLLY_DIR}/container/test/TrackingTypes.h
+-    ${FOLLY_DIR}/experimental/test/CodingTestUtils.cpp
+-    ${FOLLY_DIR}/futures/test/TestExecutor.cpp
+-    ${FOLLY_DIR}/futures/test/TestExecutor.h
+-    ${FOLLY_DIR}/io/async/test/BlockingSocket.h
+-    ${FOLLY_DIR}/io/async/test/MockAsyncServerSocket.h
+-    ${FOLLY_DIR}/io/async/test/MockAsyncSocket.h
+-    ${FOLLY_DIR}/io/async/test/MockAsyncSSLSocket.h
+-    ${FOLLY_DIR}/io/async/test/MockAsyncTransport.h
+-    ${FOLLY_DIR}/io/async/test/MockAsyncUDPSocket.h
+-    ${FOLLY_DIR}/io/async/test/MockTimeoutManager.h
+-    ${FOLLY_DIR}/io/async/test/ScopedBoundPort.cpp
+-    ${FOLLY_DIR}/io/async/test/ScopedBoundPort.h
+-    ${FOLLY_DIR}/io/async/test/SocketPair.cpp
+-    ${FOLLY_DIR}/io/async/test/SocketPair.h
+-    ${FOLLY_DIR}/io/async/test/SSLUtil.cpp
+-    ${FOLLY_DIR}/io/async/test/SSLUtil.h
+-    ${FOLLY_DIR}/io/async/test/TestSSLServer.cpp
+-    ${FOLLY_DIR}/io/async/test/TestSSLServer.h
+-    ${FOLLY_DIR}/io/async/test/TimeUtil.cpp
+-    ${FOLLY_DIR}/io/async/test/TimeUtil.h
+-    ${FOLLY_DIR}/io/async/test/UndelayedDestruction.h
+-    ${FOLLY_DIR}/io/async/test/Util.h
+-    ${FOLLY_DIR}/logging/test/ConfigHelpers.cpp
+-    ${FOLLY_DIR}/logging/test/ConfigHelpers.h
+-    ${FOLLY_DIR}/logging/test/TestLogHandler.cpp
+-    ${FOLLY_DIR}/logging/test/TestLogHandler.h
+-  )
+-  target_compile_definitions(folly_test_support
+-    PUBLIC
+-      ${LIBGMOCK_DEFINES}
+-  )
+-  target_include_directories(folly_test_support
+-    SYSTEM
+-    PUBLIC
+-      ${LIBGMOCK_INCLUDE_DIR}
+-      ${GTEST_INCLUDE_DIRS}
+-  )
+-  target_link_libraries(folly_test_support
+-    PUBLIC
+-      ${BOOST_LIBRARIES}
+-      follybenchmark
+-      folly
+-      ${LIBGMOCK_LIBRARIES}
+-      ${GLOG_LIBRARY}
+-  )
+-  apply_folly_compile_options_to_target(folly_test_support)
+-
+-  folly_define_tests(
+-    DIRECTORY chrono/test/
+-      TEST chrono_conv_test WINDOWS_DISABLED
+-        SOURCES ConvTest.cpp
+-
+-    DIRECTORY compression/test/
+-      TEST compression_test SLOW SOURCES CompressionTest.cpp
+-
+-    DIRECTORY container/test/
+-      TEST access_test SOURCES AccessTest.cpp
+-      TEST array_test SOURCES ArrayTest.cpp
+-      TEST bit_iterator_test SOURCES BitIteratorTest.cpp
+-      TEST enumerate_test SOURCES EnumerateTest.cpp
+-      TEST evicting_cache_map_test SOURCES EvictingCacheMapTest.cpp
+-      TEST f14_fwd_test SOURCES F14FwdTest.cpp
+-      TEST f14_map_test SOURCES F14MapTest.cpp
+-      TEST f14_set_test SOURCES F14SetTest.cpp
+-      TEST foreach_test SOURCES ForeachTest.cpp
+-      TEST merge_test SOURCES MergeTest.cpp
+-      TEST sparse_byte_set_test SOURCES SparseByteSetTest.cpp
+-      TEST util_test SOURCES UtilTest.cpp
+-
+-    DIRECTORY concurrency/test/
+-      TEST atomic_shared_ptr_test SOURCES AtomicSharedPtrTest.cpp
+-      TEST cache_locality_test SOURCES CacheLocalityTest.cpp
+-      TEST core_cached_shared_ptr_test SOURCES CoreCachedSharedPtrTest.cpp
+-      TEST concurrent_hash_map_test WINDOWS_DISABLED
+-        SOURCES ConcurrentHashMapTest.cpp
+-      TEST dynamic_bounded_queue_test WINDOWS_DISABLED
+-        SOURCES DynamicBoundedQueueTest.cpp
+-      TEST priority_unbounded_queue_set_test
+-        SOURCES PriorityUnboundedQueueSetTest.cpp
+-      TEST unbounded_queue_test SOURCES UnboundedQueueTest.cpp
+-
+-    DIRECTORY detail/test/
+-      TEST static_singleton_manager_test SOURCES StaticSingletonManagerTest.cpp
+-
+-    DIRECTORY executors/test/
+-      TEST async_helpers_test SOURCES AsyncTest.cpp
+-      TEST codel_test SOURCES CodelTest.cpp
+-      TEST executor_test SOURCES ExecutorTest.cpp
+-      TEST fiber_io_executor_test SOURCES FiberIOExecutorTest.cpp
+-      TEST global_executor_test SOURCES GlobalExecutorTest.cpp
+-      TEST serial_executor_test SOURCES SerialExecutorTest.cpp
+-      TEST thread_pool_executor_test WINDOWS_DISABLED
+-        SOURCES ThreadPoolExecutorTest.cpp
+-      TEST threaded_executor_test SOURCES ThreadedExecutorTest.cpp
+-      TEST timed_drivable_executor_test SOURCES TimedDrivableExecutorTest.cpp
+-
+-    DIRECTORY executors/task_queue/test/
+-      TEST priority_unbounded_blocking_queue_test
+-        SOURCES PriorityUnboundedBlockingQueueTest.cpp
+-      TEST unbounded_blocking_queue_test SOURCES UnboundedBlockingQueueTest.cpp
+-
+-    DIRECTORY experimental/test/
+-      TEST autotimer_test SOURCES AutoTimerTest.cpp
+-      TEST bits_test_2 SOURCES BitsTest.cpp
+-      TEST bitvector_test SOURCES BitVectorCodingTest.cpp
+-      TEST dynamic_parser_test SOURCES DynamicParserTest.cpp
+-      TEST eliasfano_test SOURCES EliasFanoCodingTest.cpp
+-      TEST event_count_test SOURCES EventCountTest.cpp
+-      # FunctionSchedulerTest has a lot of timing-dependent checks,
+-      # and tends to fail on heavily loaded systems.
+-      TEST function_scheduler_test BROKEN SOURCES FunctionSchedulerTest.cpp
+-      TEST future_dag_test SOURCES FutureDAGTest.cpp
+-      TEST json_schema_test SOURCES JSONSchemaTest.cpp
+-      TEST lock_free_ring_buffer_test SOURCES LockFreeRingBufferTest.cpp
+-      #TEST nested_command_line_app_test SOURCES NestedCommandLineAppTest.cpp
+-      #TEST program_options_test SOURCES ProgramOptionsTest.cpp
+-      TEST quotient_multiset_test SOURCES QuotientMultiSetTest.cpp
+-      # Depends on liburcu
+-      #TEST read_mostly_shared_ptr_test SOURCES ReadMostlySharedPtrTest.cpp
+-      #TEST ref_count_test SOURCES RefCountTest.cpp
+-      TEST select64_test SOURCES Select64Test.cpp
+-      TEST stringkeyed_test SOURCES StringKeyedTest.cpp
+-      TEST test_util_test SOURCES TestUtilTest.cpp
+-      TEST tuple_ops_test SOURCES TupleOpsTest.cpp
+-
+-    DIRECTORY experimental/io/test/
+-      TEST fs_util_test SOURCES FsUtilTest.cpp
+-
+-    DIRECTORY external/farmhash/test/
+-      TEST farmhash_test SOURCES farmhash_test.cpp
+-
+-    DIRECTORY logging/test/
+-      TEST async_file_writer_test SOURCES AsyncFileWriterTest.cpp
+-      TEST config_parser_test SOURCES ConfigParserTest.cpp
+-      TEST config_update_test SOURCES ConfigUpdateTest.cpp
+-      TEST file_handler_factory_test SOURCES FileHandlerFactoryTest.cpp
+-      TEST glog_formatter_test SOURCES GlogFormatterTest.cpp
+-      TEST immediate_file_writer_test SOURCES ImmediateFileWriterTest.cpp
+-      TEST log_category_test SOURCES LogCategoryTest.cpp
+-      TEST logger_db_test SOURCES LoggerDBTest.cpp
+-      TEST logger_test SOURCES LoggerTest.cpp
+-      TEST log_level_test SOURCES LogLevelTest.cpp
+-      TEST log_message_test SOURCES LogMessageTest.cpp
+-      TEST log_name_test SOURCES LogNameTest.cpp
+-      TEST log_stream_test SOURCES LogStreamTest.cpp
+-      TEST rate_limiter_test SOURCES RateLimiterTest.cpp
+-      TEST standard_log_handler_test SOURCES StandardLogHandlerTest.cpp
+-      TEST xlog_test
+-        HEADERS
+-          XlogHeader1.h
+-          XlogHeader2.h
+-        SOURCES
+-          XlogFile1.cpp
+-          XlogFile2.cpp
+-          XlogTest.cpp
+-
+-    DIRECTORY fibers/test/
+-      TEST fibers_test SOURCES FibersTest.cpp
+-
+-    DIRECTORY functional/test/
+-      TEST apply_tuple_test WINDOWS_DISABLED
+-        SOURCES ApplyTupleTest.cpp
+-      TEST partial_test SOURCES PartialTest.cpp
+-
+-    DIRECTORY futures/test/
+-      TEST barrier_test SOURCES BarrierTest.cpp
+-      TEST callback_lifetime_test SOURCES CallbackLifetimeTest.cpp
+-      TEST collect_test SOURCES CollectTest.cpp
+-      TEST context_test SOURCES ContextTest.cpp
+-      TEST core_test SOURCES CoreTest.cpp
+-      TEST ensure_test SOURCES EnsureTest.cpp
+-      TEST filter_test SOURCES FilterTest.cpp
+-      TEST future_splitter_test SOURCES FutureSplitterTest.cpp
+-      TEST future_test WINDOWS_DISABLED
+-        SOURCES FutureTest.cpp
+-      TEST header_compile_test SOURCES HeaderCompileTest.cpp
+-      TEST interrupt_test SOURCES InterruptTest.cpp
+-      TEST map_test SOURCES MapTest.cpp
+-      TEST non_copyable_lambda_test SOURCES NonCopyableLambdaTest.cpp
+-      TEST poll_test SOURCES PollTest.cpp
+-      TEST promise_test SOURCES PromiseTest.cpp
+-      TEST reduce_test SOURCES ReduceTest.cpp
+-      TEST retrying_test SOURCES RetryingTest.cpp
+-      TEST self_destruct_test SOURCES SelfDestructTest.cpp
+-      TEST shared_promise_test SOURCES SharedPromiseTest.cpp
+-      TEST test_executor_test SOURCES TestExecutorTest.cpp
+-      TEST then_compile_test
+-        HEADERS
+-          ThenCompileTest.h
+-        SOURCES
+-          ThenCompileTest.cpp
+-      TEST then_test SOURCES ThenTest.cpp
+-      TEST timekeeper_test SOURCES TimekeeperTest.cpp
+-      TEST times_test SOURCES TimesTest.cpp
+-      TEST unwrap_test SOURCES UnwrapTest.cpp
+-      TEST via_test SOURCES ViaTest.cpp
+-      TEST wait_test SOURCES WaitTest.cpp
+-      TEST when_test SOURCES WhenTest.cpp
+-      TEST while_do_test SOURCES WhileDoTest.cpp
+-      TEST will_equal_test SOURCES WillEqualTest.cpp
+-      TEST window_test WINDOWS_DISABLED
+-        SOURCES WindowTest.cpp
+-
+-    DIRECTORY gen/test/
+-      # MSVC bug can't resolve initializer_list constructor properly
+-      #TEST base_test SOURCES BaseTest.cpp
+-      TEST combine_test SOURCES CombineTest.cpp
+-      TEST parallel_map_test SOURCES ParallelMapTest.cpp
+-      TEST parallel_test SOURCES ParallelTest.cpp
+-
+-    DIRECTORY hash/test/
+-      TEST checksum_test SOURCES ChecksumTest.cpp
+-      TEST farm_hash_test SOURCES FarmHashTest.cpp
+-      TEST hash_test WINDOWS_DISABLED
+-        SOURCES HashTest.cpp
+-      TEST spooky_hash_v1_test SOURCES SpookyHashV1Test.cpp
+-      TEST spooky_hash_v2_test SOURCES SpookyHashV2Test.cpp
+-
+-    DIRECTORY io/test/
+-      TEST iobuf_test SOURCES IOBufTest.cpp
+-      TEST iobuf_cursor_test SOURCES IOBufCursorTest.cpp
+-      TEST iobuf_queue_test SOURCES IOBufQueueTest.cpp
+-      TEST record_io_test SOURCES RecordIOTest.cpp
+-      TEST ShutdownSocketSetTest HANGING
+-        SOURCES ShutdownSocketSetTest.cpp
+-
+-    DIRECTORY io/async/test/
+-      # A number of tests in the async_test binary are unfortunately flaky.
+-      # When run under Travis CI a number of the tests also hang (it looks
+-      # like they do not get expected socket accept events, causing them
+-      # to never break out of their event loops).
+-      TEST async_test BROKEN
+-        CONTENT_DIR certs/
+-        HEADERS
+-          AsyncSocketTest.h
+-          AsyncSSLSocketTest.h
+-        SOURCES
+-          AsyncPipeTest.cpp
+-          AsyncSocketExceptionTest.cpp
+-          AsyncSocketTest.cpp
+-          AsyncSocketTest2.cpp
+-          AsyncSSLSocketTest.cpp
+-          AsyncSSLSocketTest2.cpp
+-          AsyncSSLSocketWriteTest.cpp
+-          AsyncTransportTest.cpp
+-          # This is disabled because it depends on things that don't exist
+-          # on Windows.
+-          #EventHandlerTest.cpp
+-          # The async signal handler is not supported on Windows.
+-          #AsyncSignalHandlerTest.cpp
+-      TEST async_timeout_test SOURCES AsyncTimeoutTest.cpp
+-      TEST AsyncUDPSocketTest SOURCES AsyncUDPSocketTest.cpp
+-      TEST DelayedDestructionTest SOURCES DelayedDestructionTest.cpp
+-      TEST DelayedDestructionBaseTest SOURCES DelayedDestructionBaseTest.cpp
+-      TEST DestructorCheckTest SOURCES DestructorCheckTest.cpp
+-      TEST EventBaseTest SOURCES EventBaseTest.cpp
+-      TEST EventBaseLocalTest SOURCES EventBaseLocalTest.cpp
+-      TEST HHWheelTimerTest SOURCES HHWheelTimerTest.cpp
+-      TEST HHWheelTimerSlowTests SLOW
+-        SOURCES HHWheelTimerSlowTests.cpp
+-      TEST NotificationQueueTest SOURCES NotificationQueueTest.cpp
+-      TEST RequestContextTest SOURCES RequestContextTest.cpp
+-      TEST ScopedEventBaseThreadTest SOURCES ScopedEventBaseThreadTest.cpp
+-      TEST ssl_session_test
+-        CONTENT_DIR certs/
+-        SOURCES SSLSessionTest.cpp
+-      TEST writechain_test SOURCES WriteChainAsyncTransportWrapperTest.cpp
+-
+-    DIRECTORY io/async/ssl/test/
+-      TEST ssl_errors_test SOURCES SSLErrorsTest.cpp
+-
+-    DIRECTORY lang/test/
+-      TEST lang_aligned_test SOURCES AlignedTest.cpp
+-      TEST lang_bits_test SOURCES BitsTest.cpp
+-      TEST lang_byte_test SOURCES ByteTest.cpp
+-      TEST lang_c_string_test SOURCES CStringTest.cpp
+-      TEST lang_cast_test SOURCES CastTest.cpp
+-      TEST lang_checked_math_test SOURCES CheckedMathTest.cpp
+-      TEST lang_exception_test SOURCES ExceptionTest.cpp
+-      TEST lang_extern_test SOURCES ExternTest.cpp
+-      TEST lang_launder_test SOURCES LaunderTest.cpp
+-      TEST lang_ordering_test SOURCES OrderingTest.cpp
+-      TEST lang_pretty_test SOURCES PrettyTest.cpp
+-      TEST lang_propagate_const_test SOURCES PropagateConstTest.cpp
+-      TEST lang_r_value_reference_wrapper_test
+-        SOURCES RValueReferenceWrapperTest.cpp
+-      TEST lang_safe_assert_test SOURCES SafeAssertTest.cpp
+-      TEST lang_to_ascii_test SOURCES ToAsciiTest.cpp
+-      TEST lang_type_info_test SOURCES TypeInfoTest.cpp
+-      TEST lang_uncaught_exceptions_test SOURCES UncaughtExceptionsTest.cpp
+-
+-    DIRECTORY memory/test/
+-      TEST arena_test SOURCES ArenaTest.cpp
+-      TEST reentrant_allocator_test SOURCES ReentrantAllocatorTest.cpp
+-      TEST thread_cached_arena_test WINDOWS_DISABLED
+-        SOURCES ThreadCachedArenaTest.cpp
+-      TEST mallctl_helper_test SOURCES MallctlHelperTest.cpp
+-      TEST uninitialized_memory_hacks_test
+-        SOURCES UninitializedMemoryHacksTest.cpp
+-
+-    DIRECTORY net/detail/test/
+-      TEST socket_file_descriptor_map_test SOURCES SocketFileDescriptorMapTest.cpp
+-
+-    DIRECTORY portability/test/
+-      TEST constexpr_test SOURCES ConstexprTest.cpp
+-      TEST filesystem_test SOURCES FilesystemTest.cpp
+-      TEST libgen-test SOURCES LibgenTest.cpp
+-      TEST openssl_portability_test SOURCES OpenSSLPortabilityTest.cpp
+-      TEST pthread_test SOURCES PThreadTest.cpp
+-      TEST time-test SOURCES TimeTest.cpp
+-
+-    DIRECTORY ssl/test/
+-      TEST openssl_hash_test SOURCES OpenSSLHashTest.cpp
+-
+-    DIRECTORY stats/test/
+-      TEST buffered_stat_test SOURCES BufferedStatTest.cpp
+-      TEST digest_builder_test SOURCES DigestBuilderTest.cpp
+-      TEST histogram_test SOURCES HistogramTest.cpp
+-      TEST quantile_estimator_test SOURCES QuantileEstimatorTest.cpp
+-      TEST sliding_window_test SOURCES SlidingWindowTest.cpp
+-      TEST tdigest_test SOURCES TDigestTest.cpp
+-      TEST timeseries_histogram_test SOURCES TimeseriesHistogramTest.cpp
+-      TEST timeseries_test SOURCES TimeSeriesTest.cpp
+-
+-    DIRECTORY synchronization/test/
+-      TEST baton_test SOURCES BatonTest.cpp
+-      TEST call_once_test SOURCES CallOnceTest.cpp
+-      TEST lifo_sem_test SOURCES LifoSemTests.cpp
+-      TEST relaxed_atomic_test SOURCES RelaxedAtomicTest.cpp
+-      TEST rw_spin_lock_test SOURCES RWSpinLockTest.cpp
+-      TEST semaphore_test SOURCES SemaphoreTest.cpp
+-
+-    DIRECTORY synchronization/detail/test/
+-      TEST hardware_test SOURCES HardwareTest.cpp
+-
+-    DIRECTORY system/test/
+-      TEST memory_mapping_test SOURCES MemoryMappingTest.cpp
+-      TEST shell_test SOURCES ShellTest.cpp
+-      #TEST subprocess_test SOURCES SubprocessTest.cpp
+-      TEST thread_id_test SOURCES ThreadIdTest.cpp
+-      TEST thread_name_test SOURCES ThreadNameTest.cpp
+-
+-    DIRECTORY synchronization/test/
+-      TEST atomic_struct_test SOURCES AtomicStructTest.cpp
+-      TEST small_locks_test SOURCES SmallLocksTest.cpp
+-      TEST atomic_util_test SOURCES AtomicUtilTest.cpp
+-
+-    DIRECTORY test/
+-      TEST ahm_int_stress_test SOURCES AHMIntStressTest.cpp
+-      TEST arena_smartptr_test SOURCES ArenaSmartPtrTest.cpp
+-      TEST ascii_check_test SOURCES AsciiCaseInsensitiveTest.cpp
+-      TEST atomic_hash_array_test SOURCES AtomicHashArrayTest.cpp
+-      TEST atomic_hash_map_test HANGING
+-        SOURCES AtomicHashMapTest.cpp
+-      TEST atomic_linked_list_test SOURCES AtomicLinkedListTest.cpp
+-      TEST atomic_unordered_map_test SOURCES AtomicUnorderedMapTest.cpp
+-      TEST clock_gettime_wrappers_test SOURCES ClockGettimeWrappersTest.cpp
+-      TEST concurrent_bit_set_test SOURCES ConcurrentBitSetTest.cpp
+-      TEST concurrent_skip_list_test SOURCES ConcurrentSkipListTest.cpp
+-      TEST conv_test SOURCES ConvTest.cpp
+-      TEST cpu_id_test SOURCES CpuIdTest.cpp
+-      TEST demangle_test SOURCES DemangleTest.cpp
+-      TEST deterministic_schedule_test SOURCES DeterministicScheduleTest.cpp
+-      TEST discriminated_ptr_test SOURCES DiscriminatedPtrTest.cpp
+-      TEST dynamic_test SOURCES DynamicTest.cpp
+-      TEST dynamic_converter_test SOURCES DynamicConverterTest.cpp
+-      TEST dynamic_other_test SOURCES DynamicOtherTest.cpp
+-      TEST endian_test SOURCES EndianTest.cpp
+-      TEST exception_test SOURCES ExceptionTest.cpp
+-      TEST exception_wrapper_test SOURCES ExceptionWrapperTest.cpp
+-      TEST expected_test SOURCES ExpectedTest.cpp
+-      TEST fbstring_test SOURCES FBStringTest.cpp
+-      TEST fbvector_test SOURCES FBVectorTest.cpp
+-      TEST file_test SOURCES FileTest.cpp
+-      # Open-source linux build can't handle running this.
+-      #TEST file_lock_test SOURCES FileLockTest.cpp
+-      TEST file_util_test SOURCES FileUtilTest.cpp
+-      TEST fingerprint_test SOURCES FingerprintTest.cpp
+-      TEST fixed_string_test SOURCES FixedStringTest.cpp
+-      TEST format_other_test SOURCES FormatOtherTest.cpp
+-      TEST format_test SOURCES FormatTest.cpp
+-      TEST function_test BROKEN
+-        SOURCES FunctionTest.cpp
+-      TEST function_ref_test SOURCES FunctionRefTest.cpp
+-      TEST futex_test SOURCES FutexTest.cpp
+-      TEST glog_test SOURCES GLogTest.cpp
+-      TEST group_varint_test SOURCES GroupVarintTest.cpp
+-      TEST group_varint_test_ssse3 SOURCES GroupVarintTest.cpp
+-      TEST iterators_test SOURCES IteratorsTest.cpp
+-      TEST indestructible_test SOURCES IndestructibleTest.cpp
+-      TEST indexed_mem_pool_test BROKEN
+-        SOURCES IndexedMemPoolTest.cpp
+-      # MSVC Preprocessor stringizing raw string literals bug
+-      #TEST json_test SOURCES JsonTest.cpp
+-      TEST json_pointer_test SOURCES json_pointer_test.cpp
+-      TEST json_patch_test SOURCES json_patch_test.cpp
+-      TEST json_other_test SOURCES JsonOtherTest.cpp
+-      TEST lazy_test SOURCES LazyTest.cpp
+-      TEST lock_traits_test SOURCES LockTraitsTest.cpp
+-      TEST locks_test SOURCES SpinLockTest.cpp
+-      TEST math_test SOURCES MathTest.cpp
+-      TEST map_util_test SOURCES MapUtilTest.cpp
+-      TEST memcpy_test SOURCES MemcpyTest.cpp
+-      TEST memory_idler_test SOURCES MemoryIdlerTest.cpp
+-      TEST memory_test WINDOWS_DISABLED
+-        SOURCES MemoryTest.cpp
+-      TEST move_wrapper_test SOURCES MoveWrapperTest.cpp
+-      TEST mpmc_pipeline_test SOURCES MPMCPipelineTest.cpp
+-      TEST mpmc_queue_test SLOW
+-        SOURCES MPMCQueueTest.cpp
+-      TEST network_address_test HANGING
+-        SOURCES
+-          IPAddressTest.cpp
+-          MacAddressTest.cpp
+-          SocketAddressTest.cpp
+-      TEST optional_test SOURCES OptionalTest.cpp
+-      TEST packed_sync_ptr_test HANGING
+-        SOURCES PackedSyncPtrTest.cpp
+-      TEST padded_test SOURCES PaddedTest.cpp
+-      #TEST poly_test SOURCES PolyTest.cpp
+-      TEST portability_test SOURCES PortabilityTest.cpp
+-      TEST producer_consumer_queue_test SLOW
+-        SOURCES ProducerConsumerQueueTest.cpp
+-      TEST random_test SOURCES RandomTest.cpp
+-      TEST range_test SOURCES RangeTest.cpp
+-      TEST replaceable_test SOURCES ReplaceableTest.cpp
+-      TEST scope_guard_test SOURCES ScopeGuardTest.cpp
+-      # Heavily dependent on drand and srand48
+-      #TEST shared_mutex_test SOURCES SharedMutexTest.cpp
+-      # SingletonTest requires Subprocess
+-      #TEST singleton_test SOURCES SingletonTest.cpp
+-      TEST singleton_test_global SOURCES SingletonTestGlobal.cpp
+-      TEST small_vector_test WINDOWS_DISABLED
+-        SOURCES small_vector_test.cpp
+-      TEST sorted_vector_types_test SOURCES sorted_vector_test.cpp
+-      TEST string_test SOURCES StringTest.cpp
+-      TEST synchronized_test WINDOWS_DISABLED
+-        SOURCES SynchronizedTest.cpp
+-      TEST thread_cached_int_test SOURCES ThreadCachedIntTest.cpp
+-      TEST thread_local_test SOURCES ThreadLocalTest.cpp
+-      TEST timeout_queue_test SOURCES TimeoutQueueTest.cpp
+-      TEST token_bucket_test SOURCES TokenBucketTest.cpp
+-      TEST traits_test SOURCES TraitsTest.cpp
+-      TEST try_test SOURCES TryTest.cpp
+-      TEST unit_test SOURCES UnitTest.cpp
+-      TEST uri_test SOURCES UriTest.cpp
+-      TEST varint_test SOURCES VarintTest.cpp
+-  )
+-
+-  if (${LIBSODIUM_FOUND})
+-    folly_define_tests(
+-      DIRECTORY experimental/crypto/test/
+-        TEST blake2xb_test SOURCES Blake2xbTest.cpp
+-        TEST lt_hash_test SOURCES LtHashTest.cpp
+-    )
+-  endif()
+-
+-  if (${LIBAIO_FOUND})
+-    folly_define_tests(
+-      DIRECTORY experimental/io/test/
+-        TEST async_io_test SOURCES AsyncIOTest.cpp AsyncBaseTestLib.cpp IoTestTempFileUtil.cpp
+-    )
+-  endif()
+-
+-  get_target_property(pic folly POSITION_INDEPENDENT_CODE)
+-  if (pic)
+-    add_library(singleton_thread_local_overload
+-      SHARED ${FOLLY_DIR}/test/SingletonThreadLocalTestOverload.cpp)
+-    apply_folly_compile_options_to_target(singleton_thread_local_overload)
+-    set_target_properties(singleton_thread_local_overload PROPERTIES PREFIX "")
+-    target_link_libraries(singleton_thread_local_overload PRIVATE folly)
+-    folly_define_tests(
+-      DIRECTORY test/
+-        TEST singleton_thread_local_test SOURCES SingletonThreadLocalTest.cpp)
+-  endif()
+-endif()
+ 
+-add_subdirectory(folly)
++include(cmake/FollyConfigChecks.cmake)
++
++configure_package_config_file(cmake/config.cmake
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
++        INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME} NO_SET_AND_CHECK_MACRO) # share/
++
++# Version
++write_basic_package_version_file(
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
++        VERSION 0.0.1
++        COMPATIBILITY SameMajorVersion)
++
++# Install Config & Version
++install(FILES
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
++        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake # cmake_build-debug/
++        DESTINATION
++        ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}) # share/
++
++# Create export set to enable import in other CMake Projects
++install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets # create export set
++        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib/
++        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib/
++        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include/
++)
++# Install Export Set
++install(EXPORT ${PROJECT_NAME}-targets
++        NAMESPACE folly::
++        DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
++
++
++set(header_path "folly")
++set(header
++        ${header_path}/SharedMutex.h
++        ${header_path}/Synchronized.h
++        ${header_path}/MPMCQueue.h
++        ${header_path}/Function.h
++        ${header_path}/Traits.h
++        ${header_path}/CppAttributes.h
++        ${header_path}/Portability.h
++        ${header_path}/SingletonThreadLocal.h
++        ${header_path}/CPortability.h
++        ${header_path}/Indestructible.h
++        ${header_path}/Preprocessor.h
++        ${header_path}/Utility.h
++        ${header_path}/Likely.h
++        ${header_path}/Hash.h
++        ${header_path}/Memory.h
++        ${header_path}/ConstexprMath.h
++        ${header_path}/Unit.h
++        ${header_path}/Optional.h
++        ${header_path}/Executor.h
++        ${header_path}/Range.h
++        ${header_path}/CpuId.h
++        ${header_path}/ThreadLocal.h
++        ${header_path}/ScopeGuard.h
++        ${header_path}/Exception.h
++        ${header_path}/Conv.h
++        ${header_path}/FBString.h
++)
++
++
++set(header_path "folly/portability")
++set(portability
++        ${header_path}/Config.h
++        ${header_path}/Builtins.h
++        ${header_path}/Malloc.h
++        ${header_path}/Asm.h
++        ${header_path}/Unistd.h
++        ${header_path}/SysResource.h
++        ${header_path}/Constexpr.h
++        ${header_path}/PThread.h
++        ${header_path}/SysTypes.h
++)
++
++
++set(header_path "folly/memory")
++set(memory
++        ${header_path}/Malloc.h
++)
++
++set(header_path "folly/memory/detail")
++set(memory_detail
++        ${header_path}/MallocImpl.h
++)
++
++set(header_path "folly/concurrency")
++set(concurrency
++        ${header_path}/CacheLocality.h
++        ${header_path}/UnboundedQueue.h
++        ${header_path}/DynamicBoundedQueue.h
++)
++
++set(header_path "folly/functional")
++set(functional
++        ${header_path}/Invoke.h
++        ${header_path}/ApplyTuple.h
++)
++
++set(header_path "folly/lang")
++set(lang
++        ${header_path}/CustomizationPoint.h
++        ${header_path}/StaticConst.h
++        ${header_path}/Align.h
++        ${header_path}/Exception.h
++        ${header_path}/CArray.h
++        ${header_path}/CString.h
++        ${header_path}/TypeInfo.h
++        ${header_path}/Thunk.h
++        ${header_path}/Bits.h
++        ${header_path}/Assume.h
++        ${header_path}/Assume-inl.h
++        ${header_path}/CheckedMath.h
++        ${header_path}/UncaughtExceptions.h
++)
++
++set(header_path "folly/detail")
++set(detail
++        ${header_path}/StaticSingletonManager.h
++        ${header_path}/Singleton.h
++        ${header_path}/TurnSequencer.h
++        ${header_path}/Futex.h
++        ${header_path}/MemoryIdler.h
++        ${header_path}/Iterators.h
++        ${header_path}/UniqueInstance.h
++        ${header_path}/ThreadLocalDetail.h
++        ${header_path}/RangeCommon.h
++        ${header_path}/AtFork.h
++        ${header_path}/RangeSse42.h
++        ${header_path}/Futex-inl.h
++)
++
++
++set(header_path "folly/synchronization")
++set(synchronization
++        ${header_path}/RelaxedAtomic.h
++        ${header_path}/ParkingLot.h
++        ${header_path}/Lock.h
++        ${header_path}/AtomicStruct.h
++        ${header_path}/Hazptr.h
++        ${header_path}/Hazptr-fwd.h
++        ${header_path}/HazptrDomain.h
++        ${header_path}/HazptrObj.h
++        ${header_path}/HazptrObjLinked.h
++        ${header_path}/HazptrHolder.h
++        ${header_path}/HazptrRec.h
++        ${header_path}/HazptrThrLocal.h
++        ${header_path}/SanitizeThread.h
++        ${header_path}/MicroSpinLock.h
++        ${header_path}/SaturatingSemaphore.h
++        ${header_path}/AsymmetricMemoryBarrier.h
++        ${header_path}/WaitOptions.h
++        ${header_path}/AtomicUtil.h
++        ${header_path}/AtomicUtil-inl.h
++)
++
++set(header_path "folly/synchronization/detail")
++set(synchronization_detail
++        ${header_path}/Sleeper.h
++        ${header_path}/AtomicUtils.h
++        ${header_path}/HazptrUtils.h
++        ${header_path}/Spin.h
++)
++
++set(header_path "folly/hash")
++set(hash
++        ${header_path}/Hash.h
++        ${header_path}/SpookyHashV1.h
++        ${header_path}/SpookyHashV2.h
++)
++
++set(header_path "folly/executors")
++set(executors
++        ${header_path}/QueuedImmediateExecutor.h
++        ${header_path}/InlineExecutor.h
++)
++set(header_path "folly/container")
++set(container
++        ${header_path}/Foreach.h
++        ${header_path}/Foreach-inl.h
++        ${header_path}/Access.h
++)
++set(header_path "folly/system")
++set(system
++        ${header_path}/ThreadId.h
++)
++set(header_path "folly/chrono")
++set(chrono
++        ${header_path}/Hardware.h
++)
++
++# Install Headers
++set(include_dest ${CMAKE_INSTALL_INCLUDEDIR}/folly)
++# in src/CMakeLists.txt
++install(FILES ${header} DESTINATION "${include_dest}")
++install(FILES ${hash} DESTINATION "${include_dest}/hash")
++install(FILES ${portability} DESTINATION "${include_dest}/portability")
++install(FILES ${concurrency} DESTINATION "${include_dest}/concurrency")
++install(FILES ${functional} DESTINATION "${include_dest}/functional")
++install(FILES ${lang} DESTINATION "${include_dest}/lang")
++install(FILES ${memory} DESTINATION "${include_dest}/memory")
++install(FILES ${detail} DESTINATION "${include_dest}/detail")
++install(FILES ${synchronization} DESTINATION "${include_dest}/synchronization")
++install(FILES ${synchronization_detail} DESTINATION "${include_dest}/synchronization/detail")
++install(FILES ${executors} DESTINATION "${include_dest}/executors")
++install(FILES ${container} DESTINATION "${include_dest}/container")
++install(FILES ${system} DESTINATION "${include_dest}/system")
++install(FILES ${chrono} DESTINATION "${include_dest}/chrono")
++install(FILES ${memory_detail} DESTINATION "${include_dest}/memory/detail")
++install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h" DESTINATION "${include_dest}")
++install(FILES "folly/stub/logging.h" DESTINATION "${include_dest}/stub")
+diff --git a/cmake/FollyConfigChecks.cmake b/cmake/FollyConfigChecks.cmake
+new file mode 100644
+index 000000000..57b9e3f05
+--- /dev/null
++++ b/cmake/FollyConfigChecks.cmake
+@@ -0,0 +1,182 @@
++# Copyright (c) Meta Platforms, Inc. and affiliates.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++include(CheckCXXSourceCompiles)
++include(CheckCXXSourceRuns)
++include(CheckFunctionExists)
++include(CheckIncludeFileCXX)
++include(CheckSymbolExists)
++include(CheckTypeSize)
++include(CheckCXXCompilerFlag)
++
++if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
++    CHECK_INCLUDE_FILE_CXX(malloc_np.h FOLLY_USE_JEMALLOC)
++else()
++    CHECK_INCLUDE_FILE_CXX(jemalloc/jemalloc.h FOLLY_USE_JEMALLOC)
++endif()
++
++if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
++    # clang only rejects unknown warning flags if -Werror=unknown-warning-option
++    # is also specified.
++    check_cxx_compiler_flag(
++            -Werror=unknown-warning-option
++            COMPILER_HAS_UNKNOWN_WARNING_OPTION)
++    if (COMPILER_HAS_UNKNOWN_WARNING_OPTION)
++        set(CMAKE_REQUIRED_FLAGS
++                "${CMAKE_REQUIRED_FLAGS} -Werror=unknown-warning-option")
++    endif()
++
++    check_cxx_compiler_flag(-Wshadow-local COMPILER_HAS_W_SHADOW_LOCAL)
++    check_cxx_compiler_flag(
++            -Wshadow-compatible-local
++            COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
++    if (COMPILER_HAS_W_SHADOW_LOCAL AND COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
++        set(FOLLY_HAVE_SHADOW_LOCAL_WARNINGS ON)
++        list(APPEND FOLLY_CXX_FLAGS -Wshadow-compatible-local)
++    endif()
++
++    check_cxx_compiler_flag(-Wnoexcept-type COMPILER_HAS_W_NOEXCEPT_TYPE)
++    if (COMPILER_HAS_W_NOEXCEPT_TYPE)
++        list(APPEND FOLLY_CXX_FLAGS -Wno-noexcept-type)
++    endif()
++
++    check_cxx_compiler_flag(
++            -Wnullability-completeness
++            COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
++    if (COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
++        list(APPEND FOLLY_CXX_FLAGS -Wno-nullability-completeness)
++    endif()
++
++    check_cxx_compiler_flag(
++            -Winconsistent-missing-override
++            COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
++    if (COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
++        list(APPEND FOLLY_CXX_FLAGS -Wno-inconsistent-missing-override)
++    endif()
++
++    check_cxx_compiler_flag(-faligned-new COMPILER_HAS_F_ALIGNED_NEW)
++    if (COMPILER_HAS_F_ALIGNED_NEW)
++        list(APPEND FOLLY_CXX_FLAGS -faligned-new)
++    endif()
++
++    check_cxx_compiler_flag(-fopenmp COMPILER_HAS_F_OPENMP)
++    if (COMPILER_HAS_F_OPENMP)
++        list(APPEND FOLLY_CXX_FLAGS -fopenmp)
++    endif()
++endif()
++
++set(FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
++string(REGEX REPLACE
++        "-std=(c|gnu)\\+\\+.."
++        ""
++        CMAKE_REQUIRED_FLAGS
++        "${CMAKE_REQUIRED_FLAGS}")
++
++check_symbol_exists(pthread_atfork pthread.h FOLLY_HAVE_PTHREAD_ATFORK)
++
++list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
++check_symbol_exists(accept4 sys/socket.h FOLLY_HAVE_ACCEPT4)
++check_symbol_exists(getrandom sys/random.h FOLLY_HAVE_GETRANDOM)
++check_symbol_exists(preadv sys/uio.h FOLLY_HAVE_PREADV)
++check_symbol_exists(pwritev sys/uio.h FOLLY_HAVE_PWRITEV)
++check_symbol_exists(clock_gettime time.h FOLLY_HAVE_CLOCK_GETTIME)
++check_symbol_exists(pipe2 unistd.h FOLLY_HAVE_PIPE2)
++check_symbol_exists(sendmmsg sys/socket.h FOLLY_HAVE_SENDMMSG)
++check_symbol_exists(recvmmsg sys/socket.h FOLLY_HAVE_RECVMMSG)
++
++check_function_exists(malloc_usable_size FOLLY_HAVE_MALLOC_USABLE_SIZE)
++
++set(CMAKE_REQUIRED_FLAGS "${FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS}")
++
++check_cxx_source_compiles("
++  #pragma GCC diagnostic error \"-Wattributes\"
++  extern \"C\" void (*test_ifunc(void))() { return 0; }
++  void func() __attribute__((ifunc(\"test_ifunc\")));
++  int main() { return 0; }"
++        FOLLY_HAVE_IFUNC
++)
++check_cxx_source_runs("
++  int main(int, char**) {
++    char buf[64] = {0};
++    unsigned long *ptr = (unsigned long *)(buf + 1);
++    *ptr = 0xdeadbeef;
++    return (*ptr & 0xff) == 0xef ? 0 : 1;
++  }"
++        FOLLY_HAVE_UNALIGNED_ACCESS
++)
++check_cxx_source_compiles("
++  int main(int argc, char** argv) {
++    unsigned size = argc;
++    char data[size];
++    return 0;
++  }"
++        FOLLY_HAVE_VLA
++)
++check_cxx_source_runs("
++  extern \"C\" int folly_example_undefined_weak_symbol() __attribute__((weak));
++  int main(int argc, char** argv) {
++    auto f = folly_example_undefined_weak_symbol; // null pointer
++    return f ? f() : 0; // must compile, link, and run with null pointer
++  }"
++        FOLLY_HAVE_WEAK_SYMBOLS
++)
++check_cxx_source_runs("
++  #include <dlfcn.h>
++  int main() {
++    void *h = dlopen(\"linux-vdso.so.1\", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
++    if (h == nullptr) {
++      return -1;
++    }
++    dlclose(h);
++    return 0;
++  }"
++        FOLLY_HAVE_LINUX_VDSO
++)
++
++check_cxx_source_runs("
++  #include <cstddef>
++  #include <cwchar>
++  int main(int argc, char** argv) {
++    return wcstol(L\"01\", nullptr, 10) == 1 ? 0 : 1;
++  }"
++        FOLLY_HAVE_WCHAR_SUPPORT
++)
++
++check_cxx_source_compiles("
++  #include <ext/random>
++  int main(int argc, char** argv) {
++    __gnu_cxx::sfmt19937 rng;
++    return 0;
++  }"
++        FOLLY_HAVE_EXTRANDOM_SFMT19937
++)
++
++check_cxx_source_runs("
++  #include <stdarg.h>
++  #include <stdio.h>
++
++  int call_vsnprintf(const char* fmt, ...) {
++    char buf[256];
++    va_list ap;
++    va_start(ap, fmt);
++    int result = vsnprintf(buf, sizeof(buf), fmt, ap);
++    va_end(ap);
++    return result;
++  }
++
++  int main(int argc, char** argv) {
++    return call_vsnprintf(\"%\", 1) < 0 ? 0 : 1;
++  }"
++        HAVE_VSNPRINTF_ERRORS
++)
+\ No newline at end of file
+diff --git a/cmake/config.cmake b/cmake/config.cmake
+new file mode 100644
+index 000000000..0e267af7f
+--- /dev/null
++++ b/cmake/config.cmake
+@@ -0,0 +1,5 @@
++@PACKAGE_INIT@
++
++include(${CMAKE_CURRENT_LIST_DIR}/folly-targets.cmake)
++
++check_required_components(folly)
+diff --git a/CMake/folly-config.h.cmake b/cmake/folly-config.h.cmake
+similarity index 74%
+rename from CMake/folly-config.h.cmake
+rename to cmake/folly-config.h.cmake
+index ec6706a45..3572d73eb 100644
+--- a/CMake/folly-config.h.cmake
++++ b/cmake/folly-config.h.cmake
+@@ -1,24 +1,24 @@
+ /*
+- * Copyright (c) Facebook, Inc. and its affiliates.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
++* Copyright (c) Facebook, Inc. and its affiliates.
++*
++* Licensed under the Apache License, Version 2.0 (the "License");
++* you may not use this file except in compliance with the License.
++* You may obtain a copy of the License at
++*
++*     http://www.apache.org/licenses/LICENSE-2.0
++*
++* Unless required by applicable law or agreed to in writing, software
++* distributed under the License is distributed on an "AS IS" BASIS,
++* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++* See the License for the specific language governing permissions and
++* limitations under the License.
++*/
+ 
+ #pragma once
+ 
+ #if !defined(FOLLY_MOBILE)
+ #if defined(__ANDROID__) || \
+-    (defined(__APPLE__) &&  \
++(defined(__APPLE__) &&  \
+      (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
+ #define FOLLY_MOBILE 1
+ #else
+@@ -86,4 +86,4 @@
+ 
+ #cmakedefine FOLLY_SUPPORT_SHARED_LIBRARY 1
+ 
+-#cmakedefine01 FOLLY_HAVE_LIBRT
++#cmakedefine01 FOLLY_HAVE_LIBRT
+\ No newline at end of file
+diff --git a/folly/Exception.h b/folly/Exception.h
+index d446e29bf..db51d0fa3 100644
+--- a/folly/Exception.h
++++ b/folly/Exception.h
+@@ -22,7 +22,7 @@
+ #include <stdexcept>
+ #include <system_error>
+ 
+-#include <folly/Conv.h>
++// #include <folly/Conv.h>
+ #include <folly/FBString.h>
+ #include <folly/Likely.h>
+ #include <folly/Portability.h>
+@@ -53,11 +53,11 @@ inline std::system_error makeSystemErrorExplicit(int err, const char* msg) {
+   return std::system_error(err, errorCategoryForErrnoDomain(), msg);
+ }
+ 
+-template <class... Args>
+-std::system_error makeSystemErrorExplicit(int err, Args&&... args) {
+-  return makeSystemErrorExplicit(
+-      err, to<fbstring>(std::forward<Args>(args)...).c_str());
+-}
++// template <class... Args>
++// std::system_error makeSystemErrorExplicit(int err, Args&&... args) {
++//   return makeSystemErrorExplicit(
++//       err, to<fbstring>(std::forward<Args>(args)...).c_str());
++// }
+ 
+ inline std::system_error makeSystemError(const char* msg) {
+   return makeSystemErrorExplicit(errno, msg);
+diff --git a/folly/Executor.cpp b/folly/Executor.cpp
+index 39c6b151c..18300c4c1 100644
+--- a/folly/Executor.cpp
++++ b/folly/Executor.cpp
+@@ -18,9 +18,8 @@
+ 
+ #include <stdexcept>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+-#include <folly/ExceptionString.h>
+ #include <folly/Portability.h>
+ #include <folly/lang/Exception.h>
+ 
+@@ -28,7 +27,15 @@ namespace folly {
+ 
+ void Executor::invokeCatchingExnsLog(char const* const prefix) noexcept {
+   auto ep = std::current_exception();
+-  LOG(ERROR) << prefix << " threw unhandled " << exceptionStr(ep);
++        try
++        {
++            std::rethrow_exception(ep);
++        }
++        catch (const std::exception& e)
++        {
++            // This will be printed.
++           LOG(ERROR) << prefix << "threw unhandled : " << e.what() << std::endl;
++        }
+ }
+ 
+ void Executor::addWithPriority(Func, int8_t /* priority */) {
+diff --git a/folly/Function.h b/folly/Function.h
+index 1a4c496c1..9da1769ef 100644
+--- a/folly/Function.h
++++ b/folly/Function.h
+@@ -253,7 +253,7 @@ enum class Op { MOVE, NUKE, HEAP };
+ union Data {
+   Data() {}
+   void* big;
+-  std::aligned_storage<6 * sizeof(void*)>::type tiny;
++  std::byte tiny[6 * sizeof(void*)];
+ };
+ 
+ template <typename Fun, typename = Fun*>
+@@ -727,7 +727,7 @@ class Function final : private detail::function::FunctionTraits<FunctionType> {
+           std::enable_if_t<!detail::is_similar_instantiation_v<Function, Fun>>,
+       typename = typename Traits::template ResultOf<Fun>>
+   /* implicit */ Function(Fun fun) noexcept(
+-      IsSmall<Fun>::value&& noexcept(Fun(std::declval<Fun>())))
++      IsSmall<Fun>::value && noexcept(Fun(std::declval<Fun>())))
+       : Function(std::move(fun), IsSmall<Fun>{}) {}
+ 
+   /**
+@@ -756,7 +756,7 @@ class Function final : private detail::function::FunctionTraits<FunctionType> {
+       // Prevent this overload from being selected when `ptr` is not a
+       // compatible member function pointer.
+       typename = decltype(Function(std::mem_fn((Member Class::*)0)))>
+-  /* implicit */ Function(Member Class::*ptr) noexcept {
++  /* implicit */ Function(Member Class::* ptr) noexcept {
+     if (ptr) {
+       *this = std::mem_fn(ptr);
+     }
+@@ -843,7 +843,7 @@ class Function final : private detail::function::FunctionTraits<FunctionType> {
+    * operator is equivalent to `*this = std::mem_fn(ptr)`.
+    */
+   template <typename Member, typename Class>
+-  auto operator=(Member Class::*ptr) noexcept
++  auto operator=(Member Class::* ptr) noexcept
+       // Prevent this overload from being selected when `ptr` is not a
+       // compatible member function pointer.
+       -> decltype(operator=(std::mem_fn(ptr))) {
+diff --git a/folly/GLog.h b/folly/GLog.h
+index b2b3c0872..92ee5bc37 100644
+--- a/folly/GLog.h
++++ b/folly/GLog.h
+@@ -21,7 +21,8 @@
+ #include <atomic>
+ #include <chrono>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
++#define WARNING 0
+ 
+ #ifndef FB_LOG_EVERY_MS
+ /**
+diff --git a/folly/Memory.h b/folly/Memory.h
+index e8938d25a..9c607ccf5 100644
+--- a/folly/Memory.h
++++ b/folly/Memory.h
+@@ -111,7 +111,12 @@ void rawOverAlignedImpl(Alloc const& alloc, size_t n, void*& raw) {
+   // we can get it naturally, otherwise it is aligned as max_align_t.
+   // kBaseAlign is both the alignment and size of this type.
+   constexpr size_t kBaseAlign = constexpr_min(kAlign, alignof(max_align_t));
+-  using BaseType = std::aligned_storage_t<kBaseAlign, kBaseAlign>;
++  struct BaseType {
++    alignas(kBaseAlign) std::byte data[kBaseAlign];
++    std::byte& operator[](size_t index) { return data[index]; }
++    const std::byte& operator[](size_t index) const { return data[index]; }
++  };
++
+   using BaseAllocTraits =
+       typename AllocTraits::template rebind_traits<BaseType>;
+   using BaseAlloc = typename BaseAllocTraits::allocator_type;
+@@ -361,7 +366,7 @@ std::weak_ptr<T> to_weak_ptr(const std::shared_ptr<T>& ptr) {
+ namespace detail {
+ void weak_ptr_set_stored_ptr(std::weak_ptr<void>& w, void* ptr);
+ 
+-template <typename Tag, void* std::__weak_ptr<void>::*WeakPtr_Ptr_Field>
++template <typename Tag, void* std::__weak_ptr<void>::* WeakPtr_Ptr_Field>
+ struct GenerateWeakPtrInternalsAccessor {
+   friend void weak_ptr_set_stored_ptr(std::weak_ptr<void>& w, void* ptr) {
+     w.*WeakPtr_Ptr_Field = ptr;
+diff --git a/folly/Portability.h b/folly/Portability.h
+index c327cf8ba..0ed7ccd9f 100644
+--- a/folly/Portability.h
++++ b/folly/Portability.h
+@@ -534,35 +534,7 @@ constexpr auto kCpplibVer = 0;
+ #define FOLLY_STORAGE_CONSTEXPR constexpr
+ #endif
+ 
+-#if __cplusplus >= 201703L
+-// folly::coro requires C++17 support
+-#if defined(_WIN32) && defined(__clang__) && !defined(LLVM_COROUTINES)
+-// LLVM and MSVC coroutines are ABI incompatible, so for the MSVC implementation
+-// of <experimental/coroutine> on Windows we *don't* have coroutines.
+-//
+-// LLVM_COROUTINES indicates that LLVM compatible header is added to include
+-// path and can be used.
+-//
+-// Worse, if we define FOLLY_HAS_COROUTINES 1 we will include
+-// <experimental/coroutine> which will conflict with anyone who wants to load
+-// the LLVM implementation of coroutines on Windows.
+-#define FOLLY_HAS_COROUTINES 0
+-#elif (__cpp_coroutines >= 201703L || __cpp_impl_coroutine >= 201902L) && \
+-    (__has_include(<coroutine>) || __has_include(<experimental/coroutine>))
+-#define FOLLY_HAS_COROUTINES 1
+-// This is mainly to workaround bugs triggered by LTO, when stack allocated
+-// variables in await_suspend end up on a coroutine frame.
+-#define FOLLY_CORO_AWAIT_SUSPEND_NONTRIVIAL_ATTRIBUTES FOLLY_NOINLINE
+-#elif _MSC_VER && _RESUMABLE_FUNCTIONS_SUPPORTED
+-// NOTE: MSVC 2017 does not currently support the full Coroutines TS since it
+-// does not yet support symmetric-transfer.
+-#define FOLLY_HAS_COROUTINES 0
+-#else
+-#define FOLLY_HAS_COROUTINES 0
+-#endif
+-#else
+ #define FOLLY_HAS_COROUTINES 0
+-#endif // __cplusplus >= 201703L
+ 
+ // MSVC 2017.5 && C++17
+ #if __cpp_noexcept_function_type >= 201510 || \
+diff --git a/folly/Range.h b/folly/Range.h
+index 5758c3e83..82ef625a0 100644
+--- a/folly/Range.h
++++ b/folly/Range.h
+@@ -1439,15 +1439,6 @@ inline size_t qfind_first_of(
+   return detail::qfind_first_byte_of(haystack, needles);
+ }
+ 
+-// specialization for ByteRange
+-template <>
+-inline size_t qfind_first_of(
+-    const Range<const unsigned char*>& haystack,
+-    const Range<const unsigned char*>& needles) {
+-  return detail::qfind_first_byte_of(
+-      StringPiece(haystack), StringPiece(needles));
+-}
+-
+ template <class Key, class Enable>
+ struct hasher;
+ 
+diff --git a/folly/Singleton.h b/folly/Singleton.h
+index d7f094748..59d96bbde 100644
+--- a/folly/Singleton.h
++++ b/folly/Singleton.h
+@@ -151,7 +151,7 @@
+ #include <unordered_set>
+ #include <vector>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ // use this guard to handleSingleton breaking change in 3rd party code
+ #ifndef FOLLY_SINGLETON_TRY_GET
+diff --git a/folly/String.cpp b/folly/String.cpp
+index 804bfa066..a6f5c8ae4 100644
+--- a/folly/String.cpp
++++ b/folly/String.cpp
+@@ -24,7 +24,7 @@
+ #include <sstream>
+ #include <stdexcept>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/Portability.h>
+ #include <folly/ScopeGuard.h>
+diff --git a/folly/Synchronized.h b/folly/Synchronized.h
+index 26b0b14cf..7fa800760 100644
+--- a/folly/Synchronized.h
++++ b/folly/Synchronized.h
+@@ -35,7 +35,7 @@
+ #include <folly/functional/ApplyTuple.h>
+ #include <folly/synchronization/Lock.h>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <array>
+ #include <mutex>
+diff --git a/folly/concurrency/CacheLocality.cpp b/folly/concurrency/CacheLocality.cpp
+index c0508c44a..9826a258b 100644
+--- a/folly/concurrency/CacheLocality.cpp
++++ b/folly/concurrency/CacheLocality.cpp
+@@ -22,9 +22,6 @@
+ #endif
+ #include <fstream>
+ 
+-#include <fmt/core.h>
+-
+-#include <folly/Conv.h>
+ #include <folly/Exception.h>
+ #include <folly/FileUtil.h>
+ #include <folly/ScopeGuard.h>
+@@ -99,8 +96,7 @@ static size_t parseLeadingNumber(const std::string& line) {
+   char* end;
+   unsigned long val = strtoul(raw, &end, 10);
+   if (end == raw || (*end != ',' && *end != '-' && *end != '\n' && *end != 0)) {
+-    throw std::runtime_error(
+-        to<std::string>("error parsing list '", line, "'").c_str());
++    throw std::runtime_error(std::string("error parsing list ") + line);
+   }
+   return val;
+ }
+@@ -120,8 +116,7 @@ CacheLocality CacheLocality::readFromSysfsTree(
+     auto cpu = cpus.size();
+     std::vector<size_t> levels;
+     for (size_t index = 0;; ++index) {
+-      auto dir = fmt::format(
+-          "/sys/devices/system/cpu/cpu{}/cache/index{}/", cpu, index);
++      auto dir = std::string("/sys/devices/system/cpu/cpu") + std::to_string(cpu) + "/cache/index" + std::to_string(index);
+       auto cacheType = mapping(dir + "type");
+       auto equivStr = mapping(dir + "shared_cpu_list");
+       if (cacheType.empty() || equivStr.empty()) {
+diff --git a/folly/concurrency/DynamicBoundedQueue.h b/folly/concurrency/DynamicBoundedQueue.h
+index 2963629e0..ac71f149a 100644
+--- a/folly/concurrency/DynamicBoundedQueue.h
++++ b/folly/concurrency/DynamicBoundedQueue.h
+@@ -19,7 +19,7 @@
+ #include <folly/concurrency/CacheLocality.h>
+ #include <folly/concurrency/UnboundedQueue.h>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <atomic>
+ #include <chrono>
+diff --git a/folly/concurrency/UnboundedQueue.h b/folly/concurrency/UnboundedQueue.h
+index 30f22f7d3..5c3226e24 100644
+--- a/folly/concurrency/UnboundedQueue.h
++++ b/folly/concurrency/UnboundedQueue.h
+@@ -20,7 +20,7 @@
+ #include <chrono>
+ #include <memory>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/ConstexprMath.h>
+ #include <folly/Optional.h>
+diff --git a/folly/container/Access.h b/folly/container/Access.h
+index 50c948f85..35e5d8670 100644
+--- a/folly/container/Access.h
++++ b/folly/container/Access.h
+@@ -88,14 +88,14 @@ FOLLY_INLINE_VARIABLE constexpr data_fn data{};
+ //  begin
+ //
+ //  Invokes unqualified begin with std::begin in scope.
+-FOLLY_CREATE_FREE_INVOKER(begin_fn, begin, std);
+-FOLLY_INLINE_VARIABLE constexpr begin_fn begin{};
++// FOLLY_CREATE_FREE_INVOKER(begin_fn, begin, std);
++// FOLLY_INLINE_VARIABLE constexpr begin_fn begin{};
+ 
+ //  end
+ //
+ //  Invokes unqualified end with std::end in scope.
+-FOLLY_CREATE_FREE_INVOKER(end_fn, end, std);
+-FOLLY_INLINE_VARIABLE constexpr end_fn end{};
++// FOLLY_CREATE_FREE_INVOKER(end_fn, end, std);
++// FOLLY_INLINE_VARIABLE constexpr end_fn end{};
+ 
+ } // namespace access
+ 
+diff --git a/folly/container/Foreach-inl.h b/folly/container/Foreach-inl.h
+index d6b709502..ec38285fb 100644
+--- a/folly/container/Foreach-inl.h
++++ b/folly/container/Foreach-inl.h
+@@ -98,14 +98,14 @@ struct IsTuple<EnableIfTuple<T>, T> : std::true_type {};
+ /**
+  * Check if the sequence is a range
+  */
+-template <typename Type, typename T = typename std::decay<Type>::type>
+-using EnableIfRange = void_t<
+-    decltype(access::begin(std::declval<T&>())),
+-    decltype(access::end(std::declval<T&>()))>;
+-template <typename, typename T>
+-struct IsRange : std::false_type {};
+-template <typename T>
+-struct IsRange<EnableIfRange<T>, T> : std::true_type {};
++// template <typename Type, typename T = typename std::decay<Type>::type>
++// using EnableIfRange = void_t<
++//     decltype(access::begin(std::declval<T&>())),
++//     decltype(access::end(std::declval<T&>()))>;
++// template <typename, typename T>
++// struct IsRange : std::false_type {};
++// template <typename T>
++// struct IsRange<EnableIfRange<T>, T> : std::true_type {};
+ 
+ struct TupleTag {};
+ struct RangeTag {};
+@@ -114,8 +114,7 @@ struct RangeTag {};
+  * Should ideally check if it is a tuple and if not return void, but msvc fails
+  */
+ template <typename Sequence>
+-using SequenceTag =
+-    std::conditional_t<IsRange<void, Sequence>::value, RangeTag, TupleTag>;
++using SequenceTag = TupleTag;
+ 
+ struct BeginAddTag {};
+ struct IndexingTag {};
+@@ -153,41 +152,41 @@ LoopControl invoke_returning_loop_control(Func&& f, Args&&... a) {
+ /**
+  * Implementations for the runtime function
+  */
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<3>, Sequence&& range, Func& func) {
+-  auto first = access::begin(range);
+-  auto last = access::end(range);
+-  for (auto index = std::size_t{0}; first != last; ++index) {
+-    auto next = std::next(first);
+-    auto control = invoke_returning_loop_control(func, *first, index, first);
+-    if (loop_break == control) {
+-      break;
+-    }
+-    first = next;
+-  }
+-}
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<2>, Sequence&& range, Func& func) {
+-  // make a three arg adaptor for the function passed in so that the main
+-  // implementation function can be used
+-  auto three_arg_adaptor = [&func](
+-                               auto&& ele, auto index, auto) -> decltype(auto) {
+-    return func(std::forward<decltype(ele)>(ele), index);
+-  };
+-  for_each_range_impl(
+-      index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
+-}
+-
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<1>, Sequence&& range, Func& func) {
+-  // make a three argument adaptor for the function passed in that just ignores
+-  // the second and third argument
+-  auto three_arg_adaptor = [&func](auto&& ele, auto, auto) -> decltype(auto) {
+-    return func(std::forward<decltype(ele)>(ele));
+-  };
+-  for_each_range_impl(
+-      index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
+-}
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<3>, Sequence&& range, Func& func) {
++//   auto first = access::begin(range);
++//   auto last = access::end(range);
++//   for (auto index = std::size_t{0}; first != last; ++index) {
++//     auto next = std::next(first);
++//     auto control = invoke_returning_loop_control(func, *first, index, first);
++//     if (loop_break == control) {
++//       break;
++//     }
++//     first = next;
++//   }
++// }
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<2>, Sequence&& range, Func& func) {
++//   // make a three arg adaptor for the function passed in so that the main
++//   // implementation function can be used
++//   auto three_arg_adaptor = [&func](
++//                                auto&& ele, auto index, auto) -> decltype(auto) {
++//     return func(std::forward<decltype(ele)>(ele), index);
++//   };
++//   for_each_range_impl(
++//       index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
++// }
++//
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<1>, Sequence&& range, Func& func) {
++//   // make a three argument adaptor for the function passed in that just ignores
++//   // the second and third argument
++//   auto three_arg_adaptor = [&func](auto&& ele, auto, auto) -> decltype(auto) {
++//     return func(std::forward<decltype(ele)>(ele));
++//   };
++//   for_each_range_impl(
++//       index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
++// }
+ 
+ /**
+  * Handlers for iteration
+@@ -260,40 +259,40 @@ void for_each_impl(TupleTag, Sequence&& range, Func& func) {
+   static_assert(!std::is_same<tag, void>::value, "unknown invocability");
+   for_each_tuple_impl(tag{}, std::forward<Sequence>(range), func);
+ }
+-template <typename Sequence, typename Func>
+-void for_each_impl(RangeTag, Sequence&& range, Func& func) {
+-  using iter = decltype(access::begin(std::declval<Sequence>()));
+-  using type = decltype(*std::declval<iter>());
+-  using tag = ForEachImplTag<Func, type, iter>;
+-  static_assert(!std::is_same<tag, void>::value, "unknown invocability");
+-  for_each_range_impl(tag{}, std::forward<Sequence>(range), func);
+-}
+-
++// template <typename Sequence, typename Func>
++// void for_each_impl(RangeTag, Sequence&& range, Func& func) {
++//   using iter = decltype(access::begin(std::declval<Sequence>()));
++//   using type = decltype(*std::declval<iter>());
++//   using tag = ForEachImplTag<Func, type, iter>;
++//   static_assert(!std::is_same<tag, void>::value, "unknown invocability");
++//   for_each_range_impl(tag{}, std::forward<Sequence>(range), func);
++// }
++//
+ template <typename Sequence, typename Index>
+ decltype(auto) fetch_impl(IndexingTag, Sequence&& sequence, Index&& index) {
+   return std::forward<Sequence>(sequence)[std::forward<Index>(index)];
+ }
+-template <typename Sequence, typename Index>
+-decltype(auto) fetch_impl(BeginAddTag, Sequence&& sequence, Index index) {
+-  return *(access::begin(std::forward<Sequence>(sequence)) + index);
+-}
++// template <typename Sequence, typename Index>
++// decltype(auto) fetch_impl(BeginAddTag, Sequence&& sequence, Index index) {
++//   return *(access::begin(std::forward<Sequence>(sequence)) + index);
++// }
+ 
+ template <typename Sequence, typename Index>
+ decltype(auto) fetch_impl(TupleTag, Sequence&& sequence, Index index) {
+   return get_impl<index>(std::forward<Sequence>(sequence));
+ }
+-template <typename Sequence, typename Index>
+-decltype(auto) fetch_impl(RangeTag, Sequence&& sequence, Index&& index) {
+-  using iter = decltype(access::begin(std::declval<Sequence>()));
+-  using iter_traits = std::iterator_traits<remove_cvref_t<iter>>;
+-  using iter_cat = typename iter_traits::iterator_category;
+-  using tag = std::conditional_t<
+-      std::is_same<iter_cat, std::random_access_iterator_tag>::value,
+-      BeginAddTag,
+-      IndexingTag>;
+-  return fetch_impl(
+-      tag{}, std::forward<Sequence>(sequence), std::forward<Index>(index));
+-}
++// template <typename Sequence, typename Index>
++// decltype(auto) fetch_impl(RangeTag, Sequence&& sequence, Index&& index) {
++//   using iter = decltype(access::begin(std::declval<Sequence>()));
++//   using iter_traits = std::iterator_traits<remove_cvref_t<iter>>;
++//   using iter_cat = typename iter_traits::iterator_category;
++//   using tag = std::conditional_t<
++//       std::is_same<iter_cat, std::random_access_iterator_tag>::value,
++//       BeginAddTag,
++//       IndexingTag>;
++//   return fetch_impl(
++//       tag{}, std::forward<Sequence>(sequence), std::forward<Index>(index));
++// }
+ 
+ } // namespace for_each_detail
+ 
+diff --git a/folly/detail/AtFork.cpp b/folly/detail/AtFork.cpp
+index b3dc157c0..8dbc2d73a 100644
+--- a/folly/detail/AtFork.cpp
++++ b/folly/detail/AtFork.cpp
+@@ -18,6 +18,7 @@
+ 
+ #include <list>
+ #include <mutex>
++#include <system_error>
+ 
+ #include <folly/ScopeGuard.h>
+ #include <folly/lang/Exception.h>
+diff --git a/folly/detail/MemoryIdler.cpp b/folly/detail/MemoryIdler.cpp
+index 0134a4c29..2b7ee2da9 100644
+--- a/folly/detail/MemoryIdler.cpp
++++ b/folly/detail/MemoryIdler.cpp
+@@ -190,7 +190,6 @@ void MemoryIdler::unmapUnusedStack(size_t retain) {
+     // are bad.) Warn in debug mode, since MemoryIdler may not function as
+     // expected.
+     // We can also get an EAGAIN, theoretically.
+-    PLOG_IF(WARNING, kIsDebug && errno == EINVAL) << "madvise failed";
+     assert(errno == EAGAIN || errno == ENOMEM || errno == EINVAL);
+   }
+ }
+diff --git a/folly/detail/ThreadLocalDetail.h b/folly/detail/ThreadLocalDetail.h
+index a00741f84..49aecf9bf 100644
+--- a/folly/detail/ThreadLocalDetail.h
++++ b/folly/detail/ThreadLocalDetail.h
+@@ -25,7 +25,7 @@
+ #include <thread>
+ #include <vector>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/Exception.h>
+ #include <folly/Function.h>
+diff --git a/folly/detail/TurnSequencer.h b/folly/detail/TurnSequencer.h
+index 67a227f58..70321db66 100644
+--- a/folly/detail/TurnSequencer.h
++++ b/folly/detail/TurnSequencer.h
+@@ -19,7 +19,7 @@
+ #include <algorithm>
+ #include <limits>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/Portability.h>
+ #include <folly/chrono/Hardware.h>
+diff --git a/folly/detail/UniqueInstance.cpp b/folly/detail/UniqueInstance.cpp
+index 02b9c51ca..5b42dfddc 100644
+--- a/folly/detail/UniqueInstance.cpp
++++ b/folly/detail/UniqueInstance.cpp
+@@ -22,7 +22,7 @@
+ #include <stdexcept>
+ #include <string>
+ 
+-#include <folly/Demangle.h>
++#include <folly/FBString.h>
+ #include <folly/lang/Exception.h>
+ 
+ namespace folly {
+@@ -59,14 +59,14 @@ std::string join(PtrRange types) {
+     if (t != types.b) {
+       ret << ", ";
+     }
+-    ret << demangle((*t)->name());
++    ret << (*t)->name();
+   }
+   return ret.str();
+ }
+ 
+ template <typename Value>
+ fbstring render_tmpl(Value value) {
+-  auto const str = demangle(value.tmpl->name());
++  auto const str = fbstring(value.tmpl->name());
+   auto const off = str.find('<');
+   return str.substr(off + 1, str.size() - off - 2);
+ }
+diff --git a/folly/functional/Invoke.h b/folly/functional/Invoke.h
+index f94435605..87adbf4e2 100644
+--- a/folly/functional/Invoke.h
++++ b/folly/functional/Invoke.h
+@@ -19,11 +19,11 @@
+ #include <functional>
+ #include <type_traits>
+ 
+-#include <boost/preprocessor/control/expr_iif.hpp>
+-#include <boost/preprocessor/facilities/is_empty_variadic.hpp>
+-#include <boost/preprocessor/list/for_each.hpp>
+-#include <boost/preprocessor/logical/not.hpp>
+-#include <boost/preprocessor/tuple/to_list.hpp>
++// #include <boost/preprocessor/control/expr_iif.hpp>
++// #include <boost/preprocessor/facilities/is_empty_variadic.hpp>
++// #include <boost/preprocessor/list/for_each.hpp>
++// #include <boost/preprocessor/logical/not.hpp>
++// #include <boost/preprocessor/tuple/to_list.hpp>
+ 
+ #include <folly/CppAttributes.h>
+ #include <folly/Portability.h>
+diff --git a/folly/lang/SafeAssert.h b/folly/lang/SafeAssert.h
+index ba82cc840..f2b2b7a21 100644
+--- a/folly/lang/SafeAssert.h
++++ b/folly/lang/SafeAssert.h
+@@ -16,6 +16,7 @@
+ 
+ #pragma once
+ 
++#error "I dont want this"
+ #include <cstdint>
+ #include <utility>
+ 
+diff --git a/folly/memory/MallctlHelper.cpp b/folly/memory/MallctlHelper.cpp
+index 2af9ab403..4a032e715 100644
+--- a/folly/memory/MallctlHelper.cpp
++++ b/folly/memory/MallctlHelper.cpp
+@@ -16,22 +16,14 @@
+ 
+ #include <folly/memory/MallctlHelper.h>
+ 
+-#include <folly/Format.h>
+-#include <folly/String.h>
+ 
+ #include <stdexcept>
+ 
+ namespace folly {
+-
+-namespace detail {
+-
+-[[noreturn]] void handleMallctlError(const char* fn, const char* cmd, int err) {
+-  assert(err != 0);
+-  cmd = cmd ? cmd : "<none>";
+-  throw std::runtime_error(
+-      sformat("mallctl[{}] {}: {} ({})", fn, cmd, errnoStr(err), err));
+-}
+-
+-} // namespace detail
+-
++    namespace detail {
++        [[noreturn]] void handleMallctlError(const char *fn, const char *cmd, int err) {
++            assert(err != 0);
++            throw std::runtime_error("fancy exception here");
++        }
++    } // namespace detail
+ } // namespace folly
+diff --git a/folly/stub/logging.h b/folly/stub/logging.h
+new file mode 100644
+index 000000000..b57ca58c6
+--- /dev/null
++++ b/folly/stub/logging.h
+@@ -0,0 +1,23 @@
++#ifndef LOGGING_H
++#define LOGGING_H
++#include <cassert>
++#include <iostream>
++
++#define DCHECK_LE(a,b) assert((a) <= (b))
++#define DCHECK_LT(a,b) assert((a) < (b))
++#define DCHECK_GE(a,b) assert((a) >= (b))
++#define DCHECK_GT(a,b) assert((a) > (b))
++#define DCHECK_EQ(a,b) assert((a)==(b))
++#define DCHECK_NE(a,b) assert((a)!=(b))
++#define DCHECK(exp) assert(exp)
++
++#define CHECK_LE(a,b) assert((a) <= (b))
++#define CHECK_LT(a,b) assert((a) < (b))
++#define CHECK_GE(a,b) assert((a) >= (b))
++#define CHECK_GT(a,b) assert((a) > (b))
++#define CHECK_EQ(a,b) assert((a)==(b))
++#define CHECK_NE(a,b) assert((a)!=(b))
++
++#define LOG(...) std::cerr
++
++#endif //LOGGING_H
+diff --git a/folly/synchronization/HazptrDomain.h b/folly/synchronization/HazptrDomain.h
+index 8b1a81eca..9a5f5777e 100644
+--- a/folly/synchronization/HazptrDomain.h
++++ b/folly/synchronization/HazptrDomain.h
+@@ -19,6 +19,8 @@
+ #include <atomic>
+ #include <unordered_set>
+ 
++#include <folly/stub/logging.h>
++
+ #include <folly/Memory.h>
+ #include <folly/Portability.h>
+ #include <folly/executors/QueuedImmediateExecutor.h>
+diff --git a/folly/synchronization/HazptrObj.h b/folly/synchronization/HazptrObj.h
+index a872d8c70..853912461 100644
+--- a/folly/synchronization/HazptrObj.h
++++ b/folly/synchronization/HazptrObj.h
+@@ -19,7 +19,7 @@
+ #include <atomic>
+ #include <memory>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/CPortability.h>
+ #include <folly/Portability.h>
+@@ -386,8 +386,7 @@ class hazptr_obj_cohort {
+         if (kIsDebug) {
+           Obj* p = ll.head();
+           for (int i = 1; p; ++i, p = p->next()) {
+-            DCHECK_EQ(reinterpret_cast<uintptr_t>(p) & 7, uintptr_t{0})
+-                << p << " " << i;
++            DCHECK_EQ(reinterpret_cast<uintptr_t>(p) & 7, uintptr_t{0});
+           }
+         }
+         hazptr_obj_list<Atom> l(ll.head(), ll.tail(), c);
+diff --git a/folly/synchronization/HazptrObjLinked.h b/folly/synchronization/HazptrObjLinked.h
+index 772b442c6..d68369ad5 100644
+--- a/folly/synchronization/HazptrObjLinked.h
++++ b/folly/synchronization/HazptrObjLinked.h
+@@ -19,7 +19,7 @@
+ #include <atomic>
+ #include <stack>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/synchronization/Hazptr-fwd.h>
+ #include <folly/synchronization/HazptrObj.h>
+diff --git a/folly/synchronization/HazptrThrLocal.h b/folly/synchronization/HazptrThrLocal.h
+index 85c3f1899..1d541d951 100644
+--- a/folly/synchronization/HazptrThrLocal.h
++++ b/folly/synchronization/HazptrThrLocal.h
+@@ -22,7 +22,7 @@
+ 
+ #include <atomic>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/SingletonThreadLocal.h>
+ #include <folly/synchronization/HazptrObj.h>
+diff --git a/folly/synchronization/ParkingLot.h b/folly/synchronization/ParkingLot.h
+index 2bb7c9599..20a8686ed 100644
+--- a/folly/synchronization/ParkingLot.h
++++ b/folly/synchronization/ParkingLot.h
+@@ -24,7 +24,7 @@
+ #include <folly/Indestructible.h>
+ #include <folly/Portability.h>
+ #include <folly/Unit.h>
+-#include <folly/lang/SafeAssert.h>
++#include <folly/stub/logging.h>
+ 
+ namespace folly {
+ 
+@@ -84,7 +84,7 @@ struct Bucket {
+ 
+   void push_back(WaitNodeBase* node) {
+     if (tail_) {
+-      FOLLY_SAFE_DCHECK(head_, "");
++      DCHECK(head_);
+       node->prev_ = tail_;
+       tail_->next_ = node;
+       tail_ = node;
+@@ -95,25 +95,25 @@ struct Bucket {
+   }
+ 
+   void erase(WaitNodeBase* node) {
+-    FOLLY_SAFE_DCHECK(count_.load(std::memory_order_relaxed) >= 1, "");
++    DCHECK(count_.load(std::memory_order_relaxed) >= 1);
+     if (head_ == node && tail_ == node) {
+-      FOLLY_SAFE_DCHECK(node->prev_ == nullptr, "");
+-      FOLLY_SAFE_DCHECK(node->next_ == nullptr, "");
++      DCHECK(node->prev_ == nullptr);
++      DCHECK(node->next_ == nullptr);
+       head_ = nullptr;
+       tail_ = nullptr;
+     } else if (head_ == node) {
+-      FOLLY_SAFE_DCHECK(node->prev_ == nullptr, "");
+-      FOLLY_SAFE_DCHECK(node->next_, "");
++      DCHECK(node->prev_ == nullptr);
++      DCHECK(node->next_);
+       head_ = node->next_;
+       head_->prev_ = nullptr;
+     } else if (tail_ == node) {
+-      FOLLY_SAFE_DCHECK(node->next_ == nullptr, "");
+-      FOLLY_SAFE_DCHECK(node->prev_, "");
++      DCHECK(node->next_ == nullptr);
++      DCHECK(node->prev_);
+       tail_ = node->prev_;
+       tail_->next_ = nullptr;
+     } else {
+-      FOLLY_SAFE_DCHECK(node->next_, "");
+-      FOLLY_SAFE_DCHECK(node->prev_, "");
++      DCHECK(node->next_);
++      DCHECK(node->prev_);
+       node->next_->prev_ = node->prev_;
+       node->prev_->next_ = node->next_;
+     }
+diff --git a/folly/synchronization/SaturatingSemaphore.h b/folly/synchronization/SaturatingSemaphore.h
+index 23399b606..be7cb077a 100644
+--- a/folly/synchronization/SaturatingSemaphore.h
++++ b/folly/synchronization/SaturatingSemaphore.h
+@@ -18,7 +18,7 @@
+ 
+ #include <atomic>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/Likely.h>
+ #include <folly/detail/Futex.h>
+diff --git a/folly/synchronization/detail/HazptrUtils.h b/folly/synchronization/detail/HazptrUtils.h
+index 2a974ec3d..63d6affe6 100644
+--- a/folly/synchronization/detail/HazptrUtils.h
++++ b/folly/synchronization/detail/HazptrUtils.h
+@@ -19,7 +19,7 @@
+ #include <atomic>
+ #include <thread>
+ 
+-#include <glog/logging.h>
++#include <folly/stub/logging.h>
+ 
+ #include <folly/Portability.h>
+ #include <folly/synchronization/detail/Sleeper.h>
+-- 
+2.45.2
+

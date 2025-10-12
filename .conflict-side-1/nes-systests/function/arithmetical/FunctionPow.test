@@ -1,0 +1,29 @@
+# name: function/arithmetical/FunctionPow.test
+# description: Simple function power tests
+# groups: [Function, FunctionPow]
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+5,10,100,1000,8,20,500,2000,4.0,9.0
+
+CREATE SINK sinkStream(i8 FLOAT64, i16 FLOAT64, i32 FLOAT64, i64 FLOAT64, u8 FLOAT64, u16 FLOAT64, u32 FLOAT64, u64 FLOAT64, f32 FLOAT64, f64 FLOAT64) TYPE File;
+
+
+# Use pow across different data types
+SELECT
+    POW(i8, INT32(2)) AS i8,
+    POW(i16, INT32(3)) AS i16,
+    POW(i32, INT32(4)) AS i32,
+    POW(i64, INT32(1)) AS i64,
+
+    POW(u8, INT32(2)) AS u8,
+    POW(u16, INT32(3)) AS u16,
+    POW(u32, INT32(4)) AS u32,
+    POW(u64, INT32(1)) AS u64,
+
+    POW(f32, INT32(2)) AS f32,
+    POW(f64, INT32(3)) AS f64
+FROM stream INTO sinkStream;
+----
+25.0,1000.0,100000000.0,1000.0,64.0,8000.0,62500000000.0,2000.0,16.0,729.0

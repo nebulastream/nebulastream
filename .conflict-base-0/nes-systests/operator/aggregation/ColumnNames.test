@@ -1,0 +1,25 @@
+# name: operator/aggregation/ColumnName.test
+# description: Tests automatic name creation of aggregation function
+# groups: [Aggregation]
+
+
+CREATE LOGICAL SOURCE input(i UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH INLINE
+1,100
+2,125
+1,200
+2,225
+1,300
+2,325
+
+
+CREATE SINK out(input.start UINT64, input.end UINT64, input.i_count UINT64, input.i_min UINT64, input.i_max UINT64, input.i_sum UINT64, input.i_avg FLOAT64, input.i_median FLOAT64) TYPE File;
+
+SELECT start, end,COUNT(i), MIN(i), MAX(i), SUM(i), AVG(i), MEDIAN(i)
+FROM input WINDOW TUMBLING(timestamp, size 100 ms)
+INTO out;
+----
+100, 200, 2,1,2,3,1.5,1.5
+200, 300, 2,1,2,3,1.5,1.5
+300, 400, 2,1,2,3,1.5,1.5

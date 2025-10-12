@@ -1,0 +1,67 @@
+# name: milestone/Filter_Map_Queries.test
+# description: Simple tests that contain map and filter
+# groups: [Filter, Map]
+
+CREATE LOGICAL SOURCE stream(id INT64, value INT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,1000
+2,1,1001
+3,11,1002
+4,412,2000
+5,312,2012
+6,22,2021
+
+CREATE SINK sinkIdx3ValueTimeStamp(id_x_3 INT64, stream.value INT64, stream.timestamp UINT64)  TYPE File;
+CREATE SINK sinkIdNewValueNewTimeStamp(id_new INT64, value_new INT64, stream.timestamp UINT64)  TYPE File;
+
+# Filter and then map
+SELECT id * UINT32(3) AS id_x_3, value, timestamp FROM stream WHERE value != UINT32(1) INTO sinkIdx3ValueTimeStamp;
+----
+9,11,1002
+12,412,2000
+15,312,2012
+18,22,2021
+
+# Filter, Map and then Filter again
+SELECT id_x_3, value, timestamp FROM
+    (SELECT id * UINT32(3) AS id_x_3, value, timestamp FROM stream WHERE value != UINT32(1))
+WHERE id_x_3 != UINT32(9) AND value != UINT32(312) INTO sinkIdx3ValueTimeStamp;
+----
+12,412,2000
+18,22,2021
+
+# Map, filter and then map again
+# Todo #445: enable arithmetics on fields of sub-queries
+#   the query below does not work. 'id_x_3 * 3' causes an exception, because the type of 'id_x_3' is undefined.
+#SELECT id_x_3 * UINT32(3) AS id_x_9, value, timestamp FROM
+#    (SELECT id * UINT32(3) AS id_x_3, value, timestamp FROM stream WHERE value != UINT32(1))
+#INTO SINK
+SELECT id * UINT32(9) AS id_x_3, value, timestamp FROM stream WHERE value != UINT32(1) INTO sinkIdx3ValueTimeStamp;
+----
+27 11 1002
+36 412 2000
+45 312 2012
+54 22 2021
+
+
+#Query::from("stream")
+#    .map(Attribute("id") = (Attribute("id") * 3 / Attribute("value")) + (Attribute("value") * 2))
+#    .map(Attribute("value") = Attribute("value") * 25 - (Attribute("id") * 5) - 125)
+#    .SINK;
+
+# Nested Map functions and the second map depends on the first map
+# Todo #445: enable arithmetics on fields of sub-queries
+#   the query below does not work. 'value * 25 - id_new * 5' causes an exception, because the type of 'id_new' is undefined.
+#SELECT id_new, value * 25 - id_new * 5 - 125 AS value_new, timestamp FROM
+#    (SELECT id * 3 / value + value * 2 AS id_new FROM stream)
+#INTO SINK
+SELECT id * UINT32(3) / value + value * UINT32(2) AS id_new, value * UINT32(25) - (id * UINT32(3) / value + value * UINT32(2)) * UINT32(5) - UINT32(125) AS value_new, timestamp FROM stream INTO sinkIdNewValueNewTimeStamp;
+----
+5,-125,1000
+8,-140,1001
+22,40,1002
+824,6055,2000
+624,4555,2012
+44,205,2021
+

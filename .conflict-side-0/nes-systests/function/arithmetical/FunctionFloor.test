@@ -1,0 +1,47 @@
+# name: function/arithmetical/FunctionFloor.test
+# description: Simple function floor tests
+# groups: [Function, FunctionFloor]
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23.2,42.45
+
+CREATE LOGICAL SOURCE stream2(f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+23.2,42.45
+2.25,2.5
+9.98,1.23
+
+CREATE SINK sinkStream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64) TYPE File;
+CREATE SINK sinkStream2(f32 FLOAT32, f64 FLOAT64) TYPE File;
+
+
+# Use FLOOR across different data types
+SELECT
+    FLOOR(i8) AS i8,
+    FLOOR(i16) AS i16,
+    FLOOR(i32) AS i32,
+    FLOOR(i64) AS i64,
+
+    FLOOR(u8) AS u8,
+    FLOOR(u16) AS u16,
+    FLOOR(u32) AS u32,
+    FLOOR(u64) AS u64,
+
+    FLOOR(f32) AS f32,
+    FLOOR(f64) AS f64
+FROM stream INTO sinkStream;
+----
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,42
+
+# Use FLOOR for different floats
+SELECT
+    FLOOR(f32) AS f32,
+    FLOOR(f64) AS f64
+FROM stream2 INTO sinkStream2;
+----
+23,42
+2,2
+9,1

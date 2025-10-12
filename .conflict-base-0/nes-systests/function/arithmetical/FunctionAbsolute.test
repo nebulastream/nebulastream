@@ -1,0 +1,27 @@
+# name: function/arithmetical/FunctionAbsolute.test
+# description: Simple function absolute tests
+# groups: [Function, FunctionAbs]
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23.2,-42.45
+
+CREATE SINK sinkStream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64) TYPE File;
+
+SELECT
+    ABS(i8) AS i8,
+    ABS(i16) AS i16,
+    ABS(i32) AS i32,
+    ABS(i64) AS i64,
+
+    ABS(u8) AS u8,
+    ABS(u16) AS u16,
+    ABS(u32) AS u32,
+    ABS(u64) AS u64,
+
+    ABS(f32) AS f32,
+    ABS(f64) AS f64
+FROM stream INTO sinkStream;
+----
+42,129,32769,2147483649,42,256,65536,4294967296,23.2,42.45

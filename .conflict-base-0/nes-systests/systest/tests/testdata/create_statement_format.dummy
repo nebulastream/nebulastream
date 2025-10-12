@@ -1,0 +1,58 @@
+# name: create_statement_format.dummy
+# description: Validates the parsing of different forms of writing statement
+
+
+
+
+# Conclude queries with semicolon
+CREATE LOGICAL SOURCE input1(id UINT64);
+CREATE PHYSICAL SOURCE FOR input1 TYPE File;
+ATTACH INLINE
+1
+2
+3
+
+# Conclude queries with new lines
+CREATE LOGICAL SOURCE input2(id UINT64);
+
+CREATE PHYSICAL SOURCE FOR input2 TYPE File;
+
+ATTACH INLINE
+1
+2
+3
+
+CREATE LOGICAL SOURCE
+  input3(
+    id UINT64
+  );
+
+CREATE PHYSICAL SOURCE
+ FOR input3
+ TYPE File
+;
+ATTACH INLINE
+1
+2
+3
+
+CREATE SINK output(id UINT64) TYPE File;
+
+
+SELECT id AS id FROM input1 INTO output;
+----
+1
+2
+3
+
+SELECT id AS id FROM input2 INTO output;
+----
+1
+2
+3
+
+SELECT id AS id FROM input3 INTO output;
+----
+1
+2
+3

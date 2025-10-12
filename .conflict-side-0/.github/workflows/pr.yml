@@ -1,0 +1,96 @@
+name: NES PR CI
+description: |
+  The following pipeline is meant to run for every PR.
+  It will also apply the format check. If these steps are successful, it will try to build the PR and run the tests.
+  If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
+  Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
+on:
+  pull_request:
+    types: [ synchronize, opened, reopened ]
+
+# cancel previous runs of same PR / branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}-pr
+  cancel-in-progress: true
+
+jobs:
+  get-dev-images:
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      branch-name: ${{ github.head_ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+
+  smoke-tests:
+    needs: [ get-dev-images ]
+    uses: ./.github/workflows/smoke-tests.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits }}
+    secrets: inherit
+
+  build-and-test:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run build and test"
+    uses: ./.github/workflows/build_and_test.yml
+    secrets: inherit
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+
+  large-tests:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run large scale tests"
+    uses: ./.github/workflows/large_test.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+
+  run_code_coverage:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run Code Coverage"
+    uses: ./.github/workflows/code_coverage.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+    secrets: inherit
+
+  run_endless_mode:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "Run Endless Mode"
+    uses: ./.github/workflows/endless-mode.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+
+  test-nebuli-and-single-node-worker:
+    needs: [ get-dev-images, smoke-tests ]
+    name: "E2E Test using Nebuli and SingleNodeWorker"
+    strategy:
+      matrix:
+        arch: [ x64, arm64 ]
+    uses: ./.github/workflows/execute_query.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      runtime_seconds: '$((1*60))'
+      arch: ${{ matrix.arch }}
+
+  clang-tidy-diff:
+    if: github.event.pull_request.head.repo.fork == false
+    needs: [ get-dev-images, smoke-tests ]
+    uses: ./.github/workflows/clang_tidy_diff.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
+    secrets: inherit
+
+  nix-build:
+    needs: [ smoke-tests ]
+    name: "Run Nix Build"
+    uses: ./.github/workflows/nix-build.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
