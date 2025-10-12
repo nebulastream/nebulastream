@@ -40,6 +40,7 @@ EXCEPTION(CannotInferStamp, 2007, "cannot infer stamp")
 EXCEPTION(UnsupportedQuery, 2008, "specified query is (currently) not supported")
 EXCEPTION(InvalidIdentifier, 2009, "invalid identifier")
 EXCEPTION(InvalidLiteral, 2010, "invalid literal")
+EXCEPTION(QueryAlreadyRegistered, 2011, "query already registered")
 
 /// 21XX Errors during query optimization & compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
