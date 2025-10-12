@@ -14,10 +14,13 @@
 
 #include <SingleNodeWorker.hpp>
 
-#include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
+#include <random>
 #include <sstream>
 #include <utility>
 #include <unistd.h>
@@ -34,6 +37,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
+#include <folly/Synchronized.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -74,22 +78,32 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
 /// This is a workaround to get again unique queryId after our initial worker refactoring.
 /// We might want to move this to the engine.
-static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
+static folly::Synchronized idGenerator{std::mt19937(std::random_device()())};
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        plan.setQueryId(QueryId(queryIdCounter++));
+        /// Check if the plan already has a query ID
+        if (plan.getQueryId() == INVALID_QUERY_ID)
+        {
+            std::uniform_int_distribution<size_t> dist(QueryId::INITIAL, std::numeric_limits<int32_t>::max());
+            /// Generate a new query ID if the plan doesn't have one
+            plan.setQueryId(QueryId(dist(*idGenerator.wlock())));
+        }
+
+        const LogContext context("queryId", plan.getQueryId());
+
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
+        listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         const DumpMode dumpMode(
             configuration.workerConfiguration.dumpQueryCompilationIR.getValue(), configuration.workerConfiguration.dumpGraph.getValue());
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         request->dumpCompilationResult = dumpMode;
         auto result = compiler->compileQuery(std::move(request));
-        INVARIANT(result, "expected successfull query compilation or exception, but got nothing");
-        return nodeEngine->registerCompiledQueryPlan(std::move(result));
+        INVARIANT(result, "expected successful query compilation or exception, but got nothing");
+        nodeEngine->registerCompiledQueryPlan(plan.getQueryId(), std::move(result));
+        return plan.getQueryId();
     }
     CPPTRACE_CATCH(...)
     {

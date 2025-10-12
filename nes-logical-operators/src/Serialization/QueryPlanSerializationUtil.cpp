@@ -40,6 +40,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
+    serializableQueryPlan.set_queryid(queryPlan.getQueryId().getRawValue());
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;
     for (auto itr : BFSRange(rootOperator))
