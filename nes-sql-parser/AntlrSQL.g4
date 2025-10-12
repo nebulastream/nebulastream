@@ -58,7 +58,7 @@ singleStatement: statement ';'? EOF;
 
 terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
-statement: query | createStatement | dropStatement | showStatement;
+statement: queryWithOptions | createStatement | dropStatement | showStatement;
 
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
@@ -66,9 +66,10 @@ createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefini
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
                                 TYPE type=identifier
-                                (SET '(' options=namedConfigExpressionSeq ')')?;
+                                optionsClause?;
+optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
 
-createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier (SET '(' options=namedConfigExpressionSeq ')')?;
+createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
 
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
@@ -97,7 +98,8 @@ showSubject: QUERIES #showQueriesSubject
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
-query : queryTerm queryOrganization;
+queryWithOptions: query optionsClause?;
+query: queryTerm queryOrganization ;
 
 queryOrganization:
          (ORDER BY order+=sortItem (',' order+=sortItem)*)?

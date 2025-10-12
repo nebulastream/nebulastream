@@ -229,10 +229,12 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     CPPTRACE_TRY
     {
         auto boundPlan = PlanStage::BoundLogicalPlan{statement.plan};
-        const auto optimizedPlan
-            = QueryPlanner::with({.sourceCatalog = Util::copyPtr(sourceCatalog), .sinkCatalog = Util::copyPtr(sinkCatalog)})
-
-                  .plan(std::move(boundPlan));
+        auto optimizedPlan = QueryPlanner::with({.sourceCatalog = Util::copyPtr(sourceCatalog), .sinkCatalog = Util::copyPtr(sinkCatalog)})
+                                 .plan(std::move(boundPlan));
+        if (statement.id)
+        {
+            optimizedPlan.plan.setQueryId(QueryId(*statement.id));
+        }
         const auto queryResult = queryManager->registerQuery(optimizedPlan);
         return queryResult
             .and_then(
