@@ -121,7 +121,7 @@ if __name__ == "__main__":
                 if not content.startswith(license_text_cmake):
                     print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}:1')
                     result = False
-        elif suffix in {"sh", "py", "bats"}:
+        elif suffix in {"sh", "py", "bats", "exp"}:
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if license_text_cmake not in content:

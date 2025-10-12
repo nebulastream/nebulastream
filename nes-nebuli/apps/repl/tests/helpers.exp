@@ -1,0 +1,109 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# Helper procedures for expect-based testing of nebuli REPL
+
+# Helper to clean JSON by removing ANSI codes
+proc clean_json {text} {
+    # Remove all ANSI escape sequences
+    regsub -all {\033\[[0-9;]*[a-zA-Z]} $text {} cleaned
+    # Remove other control sequences like [J, [K, etc
+    # But don't remove JSON brackets!
+    regsub -all {(\[[0-9]+[GJKGHF])} $cleaned {} cleaned2
+    # Remove remaining control characters
+    regsub -all {\[[0-9]+G} $cleaned2 {} cleaned3
+    return $cleaned3
+}
+
+# Helper to extract JSON from buffer
+proc extract_json_from_buffer {buffer} {
+    # Extract just the line that contains the JSON (starts with [)
+    if {[regexp {(\[[^\n\r]*\][^\n\r]*)} $buffer json]} {
+        return [clean_json $json]
+    }
+    return ""
+}
+
+# Helper to wait for the prompt
+proc wait_for_prompt {} {
+    expect "NES 🌌 > "
+}
+
+# Helper to report test failure
+proc fail {message {expected ""} {actual ""}} {
+    puts "❌ FAILED: $message"
+    if {$expected ne ""} {
+        puts "Expected: $expected"
+    }
+    if {$actual ne ""} {
+        puts "Actual: $actual"
+    }
+    set log [exec cat nebuli.log]
+    puts "$log"
+    exit 1
+}
+
+# Helper to expect JSON response and assert equality
+proc expect_json_equal {expected testname {timeout_msg ""}} {
+    if {$timeout_msg eq ""} {
+        set timeout_msg "Timeout waiting for $testname response"
+    }
+    expect {
+        timeout { fail $timeout_msg }
+        -re {\[.*\]} {
+            set json [extract_json_from_buffer $expect_out(buffer)]
+            assert_json_equal $expected $json $testname
+        }
+    }
+    wait_for_prompt
+}
+
+# Helper to expect JSON response and return it
+proc expect_json {{timeout_msg "Timeout waiting for JSON response"}} {
+    expect {
+        timeout { fail $timeout_msg }
+        -re {\[.*\]} {
+            set json [extract_json_from_buffer $expect_out(buffer)]
+            wait_for_prompt
+            return $json
+        }
+    }
+}
+
+# Helper to extract field from JSON
+proc extract_json_field {json field} {
+    set cleaned [clean_json $json]
+    set result [exec echo $cleaned | jq -r ".\[$field\]"]
+    return $result
+}
+
+# Helper to check if JSON matches expected
+proc assert_json_equal {expected actual testname} {
+    set actual_cleaned [clean_json $actual]
+    set expected_sorted [exec echo $expected | jq --sort-keys .]
+    set actual_sorted [exec echo $actual_cleaned | jq --sort-keys .]
+
+    if {$expected_sorted ne $actual_sorted} {
+        fail $testname $expected_sorted $actual_sorted
+    }
+}
+
+# Helper to check if actual JSON contains expected subset
+proc assert_json_contains {expected actual testname} {
+    set actual_cleaned [clean_json $actual]
+    set result [exec echo $actual_cleaned | jq --argjson exp $expected "contains(\$exp)"]
+
+    if {$result ne "true"} {
+        fail "$testname (subset check)" $expected $actual_cleaned
+    }
+}
