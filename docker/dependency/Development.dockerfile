@@ -14,6 +14,7 @@ RUN apt-get update -y && apt-get install -y \
         python3-bs4 \
         jq \
         yq \
+        expect \
         bats \
         openjdk-21-jre-headless
 
