@@ -187,7 +187,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     const std::unique_lock lock(mutex);
     CPPTRACE_TRY
     {
-        const auto optimizedPlan = optimizer->optimize(statement);
+        const auto optimizedPlan = optimizer->optimize(statement.plan);
         const auto id = queryManager->registerQuery(optimizedPlan);
         return id.and_then([this](const auto& queryId) { return queryManager->start(queryId); })
             .transform(

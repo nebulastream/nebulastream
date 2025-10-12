@@ -326,9 +326,9 @@ public:
         const std::string type = physicalSourceDefAST->type->getText();
         auto configOptions = [&]()
         {
-            if (physicalSourceDefAST->options != nullptr)
+            if (physicalSourceDefAST->optionsClause() != nullptr)
             {
-                return bindConfigOptions(physicalSourceDefAST->options->namedConfigExpression());
+                return bindConfigOptions(physicalSourceDefAST->optionsClause()->options->namedConfigExpression());
             }
             return std::unordered_map<std::string, std::unordered_map<std::string, Literal>>{};
         }();
@@ -366,9 +366,9 @@ public:
         const auto sinkType = sinkDefAST->type->getText();
         const auto configOptions = [&]()
         {
-            if (sinkDefAST->options != nullptr)
+            if (sinkDefAST->optionsClause() != nullptr)
             {
-                return bindConfigOptions(sinkDefAST->options->namedConfigExpression());
+                return bindConfigOptions(sinkDefAST->optionsClause()->options->namedConfigExpression());
             }
             return std::unordered_map<std::string, std::unordered_map<std::string, Literal>>{};
         }();
@@ -568,10 +568,6 @@ public:
 
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
     {
-        if (statementAST->query() != nullptr)
-        {
-            return queryBinder(statementAST->query());
-        }
         try
         {
             if (auto* const createAST = statementAST->createStatement(); createAST != nullptr)
@@ -586,9 +582,25 @@ public:
             {
                 return bindDropStatement(dropAst);
             }
-            if (auto* const queryAst = statementAST->query(); queryAst != nullptr)
+            if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {
-                return queryBinder(queryAst);
+                std::optional<std::string> queryName;
+                if (queryAst->optionsClause() != nullptr)
+                {
+                    auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
+                    if (auto optionsIter = options.find("QUERY"); optionsIter != options.end())
+                    {
+                        if (auto nameIter = optionsIter->second.find("NAME"); nameIter != optionsIter->second.end())
+                        {
+                            if (!std::holds_alternative<std::string>(nameIter->second))
+                            {
+                                throw InvalidQuerySyntax("Query name must be a string");
+                            }
+                            queryName = std::get<std::string>(nameIter->second);
+                        }
+                    }
+                }
+                return QueryStatement{queryBinder(queryAst->query()), .name = queryName};
             }
 
             throw InvalidStatement(statementAST->toString());

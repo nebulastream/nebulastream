@@ -111,7 +111,11 @@ struct DropSinkStatement
     std::string name;
 };
 
-using QueryStatement = LogicalPlan;
+struct QueryStatement
+{
+    LogicalPlan plan;
+    std::optional<std::string> name;
+};
 
 struct ShowQueriesStatement
 {
