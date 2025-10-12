@@ -79,13 +79,15 @@ typeDefinition: DATA_TYPE;
 
 fromQuery: AS query;
 
-dropStatement: DROP dropSubject;
+dropStatement: DROP dropSubject WHERE dropFilter;
 dropSubject: dropQuery | dropSource | dropSink;
-dropQuery: QUERY id=unsignedIntegerLiteral;
+dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
-dropLogicalSourceSubject: LOGICAL SOURCE name=strictIdentifier;
-dropPhysicalSourceSubject: PHYSICAL SOURCE id=unsignedIntegerLiteral;
-dropSink: SINK name=strictIdentifier;
+dropLogicalSourceSubject: LOGICAL SOURCE;
+dropPhysicalSourceSubject: PHYSICAL SOURCE;
+dropSink: SINK;
+
+dropFilter: attr=strictIdentifier EQ value=constant;
 
 showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
 showFormat: TEXT | JSON;
