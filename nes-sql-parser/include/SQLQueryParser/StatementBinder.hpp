@@ -14,6 +14,7 @@
 
 
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <functional>
@@ -116,6 +117,7 @@ struct DropSinkStatement
 struct QueryStatement
 {
     LogicalPlan plan;
+    std::optional<size_t> id;
 };
 
 struct ExplainQueryStatement
