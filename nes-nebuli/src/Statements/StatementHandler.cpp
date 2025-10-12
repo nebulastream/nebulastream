@@ -249,7 +249,11 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
         auto boundPlan = PlanStage::BoundLogicalPlan{statement.plan};
         QueryPlanningContext context{.sourceCatalog = Util::copyPtr(sourceCatalog), .sinkCatalog = Util::copyPtr(sinkCatalog)};
 
-        const auto optimizedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
+        auto optimizedPlan = QueryPlanner::with(context).plan(std::move(boundPlan));
+        if (statement.id)
+        {
+            optimizedPlan.plan.setLocalQueryId(LocalQueryId(*statement.id));
+        }
         const auto queryResult = queryManager->registerQuery(optimizedPlan);
         return queryResult
             .and_then(

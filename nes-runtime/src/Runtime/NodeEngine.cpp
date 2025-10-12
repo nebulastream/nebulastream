@@ -52,7 +52,10 @@ class QueryTracker
 public:
     void registerQuery(std::unique_ptr<CompiledQueryPlan> qep, LocalQueryId queryId)
     {
-        queries.wlock()->emplace(std::move(queryId), std::make_unique<QueryState>(Idle{std::move(qep)}));
+        if (!queries.wlock()->try_emplace(std::move(queryId), std::make_unique<QueryState>(Idle{std::move(qep)})).second)
+        {
+            throw QueryAlreadyRegistered("{}", queryId);
+        }
     }
 
     std::unique_ptr<CompiledQueryPlan> moveToExecuting(LocalQueryId qid)

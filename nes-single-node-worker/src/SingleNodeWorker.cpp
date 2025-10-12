@@ -75,17 +75,23 @@ std::expected<LocalQueryId, Exception> SingleNodeWorker::registerQuery(LogicalPl
 {
     CPPTRACE_TRY
     {
-        auto queryId = LocalQueryId(generateUUID());
-        LogContext context("queryId", queryId);
+        /// Check if the plan already has a query ID
+        if (plan.getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
+        {
+            /// Generate a new query ID if the plan doesn't have one
+            plan.setLocalQueryId(LocalQueryId(generateUUID()));
+        }
+
+        LogContext context("queryId", plan.getLocalQueryId());
 
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryId, explain(plan, ExplainVerbosity::Debug)});
+        listener->onEvent(SubmitQuerySystemEvent{plan.getLocalQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         request->dumpCompilationResult = configuration.workerConfiguration.dumpQueryCompilationIntermediateRepresentations.getValue();
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successfull query compilation or exception, but got nothing");
-        nodeEngine->registerCompiledQueryPlan(queryId, std::move(result));
-        return queryId;
+        nodeEngine->registerCompiledQueryPlan(plan.getLocalQueryId(), std::move(result));
+        return plan.getLocalQueryId();
     }
     CPPTRACE_CATCH(...)
     {
