@@ -59,12 +59,18 @@ else ()
             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
 
     add_test(
-            NAME "repl-test"
+            NAME "nebuli-test"
             COMMAND
             env NEBULI=$<TARGET_FILE:nebuli-embedded>
             env NEBULI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
             env SYSTEST_TESTDATA=${CMAKE_CURRENT_BINARY_DIR}/../../nes-systests/testdata
             ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/nebuli_invocation_test.bats
+    )
+
+    add_test(
+            NAME "repl-test"
+            COMMAND
+            ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/test_query.exp $<TARGET_FILE:nebuli-embedded>
     )
 
     add_test(
