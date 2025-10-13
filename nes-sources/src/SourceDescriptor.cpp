@@ -49,8 +49,12 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
-        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        created.tupleDelimiter = tupleDelimiter->second;
+        auto unescapedDelimiter = unescapeSpecialCharacters(tupleDelimiter->second);
+        PRECONDITION(
+            unescapedDelimiter.size() == 1,
+            "We currently do not support tuple delimiters larger than one byte. `{}`",
+            escapeSpecialCharacters(unescapedDelimiter));
+        created.tupleDelimiter = unescapedDelimiter;
     }
     else
     {
@@ -59,7 +63,8 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     }
     if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
     {
-        created.fieldDelimiter = fieldDelimiter->second;
+        auto unescapedDelimiter = unescapeSpecialCharacters(fieldDelimiter->second);
+        created.fieldDelimiter = unescapedDelimiter;
     }
     else
     {
