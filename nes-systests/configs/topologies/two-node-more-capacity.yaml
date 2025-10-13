@@ -8,7 +8,7 @@ workers:
           number_of_worker_threads: 1
   - host: "source-node:8080"
     connection: "source-node:9090"
-    capacity: 2
+    capacity: 8
     downstream:
       - "sink-node:8080"
     config:

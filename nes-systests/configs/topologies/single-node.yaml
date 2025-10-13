@@ -2,6 +2,10 @@ workers:
   - host: "localhost:8080"
     connection: "localhost:9090"
     capacity: 10000
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 8
 
 allow_source_placement:
   - "localhost:8080"
