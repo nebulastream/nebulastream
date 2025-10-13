@@ -53,6 +53,7 @@
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Common.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
@@ -360,9 +361,9 @@ struct SystestBinder::Impl
         , clusterConfiguration(std::move(clusterConfiguration))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
-        for (const auto& [host, connection, capacity, downstream, config] : this->clusterConfiguration.workers)
+        for (const auto& [host, grpc, capacity, downstream, config] : this->clusterConfiguration.workers)
         {
-            workerCatalog->addWorker(host, connection, capacity, downstream);
+            workerCatalog->addWorker(host, grpc, capacity, downstream, config);
         }
     }
 
@@ -494,7 +495,17 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] static std::filesystem::path generateSourceFilePath() { return std::tmpnam(nullptr); }
+    [[nodiscard]] std::filesystem::path generateSourceFilePath() const
+    {
+        auto sourceDir = workingDir / "sources";
+        if (not is_directory(sourceDir))
+        {
+            create_directory(sourceDir);
+            std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
+        }
+
+        return createTemporaryFile(fmt::format("{}/input", sourceDir), ".csv").second;
+    }
 
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
 
