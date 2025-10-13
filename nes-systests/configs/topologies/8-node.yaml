@@ -1,0 +1,61 @@
+workers:
+  - host: "sink-node:9090"
+    grpc: "sink-node:8080"
+    capacity: 10000
+
+  - host: "intermediate-node-1:9090"
+    grpc: "intermediate-node-1:8080"
+    capacity: 4
+    downstream:
+      - "sink-node:9090"
+
+  - host: "intermediate-node-2:9090"
+    grpc: "intermediate-node-2:8080"
+    capacity: 4
+    downstream:
+      - "sink-node:9090"
+
+  - host: "source-node-1:9090"
+    grpc: "source-node-1:8080"
+    capacity: 100
+    downstream:
+      - "intermediate-node-1:9090"
+      - "intermediate-node-2:9090"
+
+  - host: "source-node-2:9090"
+    grpc: "source-node-2:8080"
+    capacity: 1
+    downstream:
+      - "intermediate-node-1:9090"
+      - "intermediate-node-2:9090"
+
+  - host: "source-node-3:9090"
+    grpc: "source-node-3:8080"
+    capacity: 1
+    downstream:
+      - "intermediate-node-1:9090"
+      - "intermediate-node-2:9090"
+
+  - host: "source-node-4:9090"
+    grpc: "source-node-4:8080"
+    capacity: 1
+    downstream:
+      - "intermediate-node-1:9090"
+      - "intermediate-node-2:9090"
+
+  - host: "source-node-5:9090"
+    grpc: "source-node-5:8080"
+    capacity: 1
+    downstream:
+      - "intermediate-node-1:9090"
+      - "intermediate-node-2:9090"
+
+allow_source_placement:
+  - "source-node-1:9090"
+  - "source-node-2:9090"
+  - "source-node-3:9090"
+  - "source-node-4:9090"
+  - "source-node-5:9090"
+
+allow_sink_placement:
+  - "sink-node:9090"
