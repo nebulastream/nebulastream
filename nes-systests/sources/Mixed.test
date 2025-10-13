@@ -1,6 +1,6 @@
 # name: sources/Mixed.test
 # description: Mixed sources data forwarding query
-# groups: [Sources]
+# groups: [Sources, TCP]
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
 CREATE PHYSICAL SOURCE FOR stream TYPE TCP SET("|" AS PARSER.FIELD_DELIMITER);
