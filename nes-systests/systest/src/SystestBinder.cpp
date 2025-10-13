@@ -389,7 +389,7 @@ struct SystestBinder::Impl
         this->workerCatalog = std::make_shared<WorkerCatalog>();
         for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
         {
-            workerCatalog->addWorker(host, data, capacity, downstream);
+            workerCatalog->addWorker(host, data, capacity, downstream, config);
         }
     }
 
