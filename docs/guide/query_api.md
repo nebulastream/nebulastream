@@ -108,7 +108,7 @@ physical:
     source_config:
       file_path: lrb.json
 workers:
-  - connection: localhost:9090
+  - data: localhost:9090
     host: localhost:8080
 ```
 This YAML can be sent to `nes-cli` to register or run the query.
