@@ -85,3 +85,40 @@ jobs:
         with:
           name: test-logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
           path: build/nes-systests/SystemTest_*.log
+
+  systest-remote-test:
+    name: "Run systest remote test on ${{matrix.arch}} with ${{matrix.stdlib}}"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      volumes:
+        - ccache:/ccache
+        - test-file-cache:/test-file-cache
+        - /var/run/docker.sock:/var/run/docker.sock
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        sanitizer: [ 'none' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Configure NebulaStream
+        run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache
+      - name: Build NebulaStream
+        run: cmake --build build --target systest nes-single-node-worker -j
+      - name: Run systest remote test
+        run: ctest --test-dir build --output-on-failure --timeout 2400 -R systest-remote-test
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        if: failure() && !github.event.act
+        with:
+          name: systest-remote-test-logs-${{ matrix.arch }}-${{ matrix.stdlib }}
+          path: build/test-tmp/

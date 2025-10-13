@@ -288,13 +288,21 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv) /// NO
         clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::WorkerId>>();
         for (const auto& worker : clusterConfigYAML["workers"])
         {
+            NES::SingleNodeWorkerConfiguration config;
+            /// Check if worker has config key
+            if (worker["config"].IsDefined() && !worker["config"].IsNull())
+            {
+                config.overwriteConfigWithYAMLNode(worker["config"]);
+            }
+
             clusterConfig.workers.push_back(NES::WorkerConfig{
                 .host = worker["host"].as<NES::WorkerId>(),
                 .connection = worker["connection"].as<std::string>(),
                 .capacity = worker["capacity"].as<size_t>(),
                 .downstream
                 = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::WorkerId>>() : std::vector<NES::WorkerId>{},
-                .config = {}});
+                .config = config,
+            });
         }
         config.clusterConfig = clusterConfig;
     }
