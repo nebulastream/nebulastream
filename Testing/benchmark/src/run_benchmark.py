@@ -6,7 +6,7 @@ import re
 import shutil
 from pathlib import Path
 import json
-
+import csv
 def get_config_from_file(config_file):
     config={}
     with open(config_file, 'r') as f:
@@ -15,6 +15,42 @@ def get_config_from_file(config_file):
             config[name.strip()] = value.strip()
 
     return config
+
+def json_to_csv(trace_file):
+    output_csv = trace_file.replace('.json', '.csv')
+
+    """Convert a JSON trace file to a compact CSV file."""
+    try:
+        # Load the JSON trace file
+        with open(trace_file, 'r') as f:
+            trace_data = json.load(f)
+
+        # Extract trace events
+        events = trace_data.get('traceEvents', [])
+
+        # Prepare compact CSV output
+        with open(output_csv, 'w', newline='') as csvfile:
+            fieldnames = ['p_id', 't_id', 'ph', 'ts', 'tpls']  # Shortened field names
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for event in events:
+                if event.get('ph') in ['B', 'E'] and event.get('cat') == 'task' and 'args' in event:
+                    args = event['args']
+                    writer.writerow({
+                        'p_id': args.get('pipeline_id', ''),
+                        't_id': args.get('task_id', ''),
+                        'ph': event.get('ph', ''),
+                        'ts': event.get('ts', ''),
+                        'tpls': args.get('tuples', 0) if event['ph'] == 'B' else ''
+                    })
+
+        print(f"Compact CSV file created: {output_csv}")
+        return output_csv
+
+    except Exception as e:
+        print(f"Error converting JSON to compact CSV: {e}")
+        return None
 
 def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=None, build_dir="cmake-build-release", project_dir=None):
     """Run benchmark for all queries with repetitions using the new directory structure."""
