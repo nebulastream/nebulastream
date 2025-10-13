@@ -65,27 +65,12 @@ on:
 
 jobs:
 
-  # Artificial mutex as we need to have the concurrency in a job and not in the workflow.
-  # GitHub applies a hidden "priority" rule to concurrency groups. If two workflow runs
-  # (one from pull_request, one from pull_request_target) have the same concurrency group,
-  # the lower-privilege (PR) run is cancelled. y moving concurrency control into this inner 'lock' job, both triggers
-  # share the same queue in the base repository but are no longer cancelled —
-  # instead, they wait their turn and run sequentially
-  lock:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: build-dev-image-lock-${{ inputs.branch-name }}
-      cancel-in-progress: false
-    steps:
-      - run: echo "Acquired lock for ${{ inputs.branch-name }}"
-
   detect-dependency-changes:
     # This job detects changes to files relevant for our dependency management by calculating a hash value
     # and looking for existing development images with the same hash.
     # If we find a development image matching the hash we skip building new docker images.
     # This job also determines the development image tag used for building and testing
     name: Detect changes to dependencies
-    needs: [ lock ]
     outputs:
       build-dependency: ${{steps.hash-and-lookup.outputs.build-dependency}}
       tag: ${{ steps.hash-and-lookup.outputs.tag }}
@@ -127,6 +112,22 @@ jobs:
             cat reponse.txt
           fi
 
+  # Artificial mutex as we need to have the concurrency in a job and not in the workflow.
+  # GitHub applies a hidden "priority" rule to concurrency groups. If two workflow runs
+  # (one from pull_request, one from pull_request_target) have the same concurrency group,
+  # the lower-privilege (PR) run is cancelled. y moving concurrency control into this inner 'lock' job, both triggers
+  # share the same queue in the base repository but are no longer cancelled —
+  # instead, they wait their turn and run sequentially
+  lock:
+    if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
+    needs: [ detect-dependency-changes ]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: build-dev-image-lock-${{ needs.detect-dependency-changes.outputs.tag }}
+      cancel-in-progress: false
+    steps:
+      - run: echo "Acquired lock for ${{ needs.detect-dependency-changes.outputs.tag }}"
+
   build-dev-images:
     # We run the docker image build on separate machines and combine them into a single
     # multi-arch docker image in the docker-development-images job.
@@ -137,7 +138,7 @@ jobs:
     # The Dependency Image contains a pre-built sdk based on the vcpkg manifest
     # The Development Image contains the dependencies and additional tooling like clang-format.
     name: "Build Dev Images"
-    needs: [ detect-dependency-changes ]
+    needs: [ detect-dependency-changes, lock ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
     strategy:
@@ -264,7 +265,7 @@ jobs:
           docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
-      
+          
           docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx
 
@@ -286,7 +287,7 @@ jobs:
           
           docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }}-libcxx \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-      
+          
           docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }}-libstdcxx \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx
 
