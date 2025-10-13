@@ -74,6 +74,7 @@ jobs:
       runtime_seconds: '$((1*60))'
 
   nix-build:
+    needs: [ smoke-tests ]
     name: "Run Nix Build"
     uses: ./.github/workflows/nix-build.yml
     with:
