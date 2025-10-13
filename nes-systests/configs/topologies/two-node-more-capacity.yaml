@@ -4,17 +4,20 @@ workers:
     max_operators: 10000
     config:
       worker:
+        number_of_buffers_in_global_buffer_manager: 2000000
         query_engine:
-          number_of_worker_threads: 1
+          number_of_worker_threads: 8
+
   - host: "source-node:8080"
     data: "source-node:9090"
-    max_operators: 2
+    max_operators: 8
     downstream:
       - "sink-node:8080"
     config:
       worker:
+        number_of_buffers_in_global_buffer_manager: 2000000
         query_engine:
-          number_of_worker_threads: 1
+          number_of_worker_threads: 4
 
 allow_source_placement:
   - "source-node:8080"
