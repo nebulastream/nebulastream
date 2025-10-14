@@ -10,7 +10,7 @@ on:
 
 # cancel previous runs of same PR / branch.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}-pr
   cancel-in-progress: true
 
 jobs:

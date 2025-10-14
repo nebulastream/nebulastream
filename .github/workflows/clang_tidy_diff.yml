@@ -35,6 +35,10 @@ permissions:
   pull-requests: write
   checks: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}-clang-tidy-diff
+  cancel-in-progress: true
+
 jobs:
   get-dev-images:
     uses: ./.github/workflows/get_dev_images.yml
