@@ -108,7 +108,7 @@ struct SystestQuery
     {
         LogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
-        Schema sinkOutputSchema;
+        UnboundSchema sinkOutputSchema;
     };
 
     std::expected<PlanInfo, Exception> planInfoOrException;

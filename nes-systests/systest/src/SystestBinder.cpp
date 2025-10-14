@@ -70,7 +70,7 @@ class SLTSinkFactory
 public:
     explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const Schema& schema)
+    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const UnboundSchema& schema)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
@@ -103,12 +103,11 @@ public:
         return sinkProviderIter->second(std::string{assignedSinkName}, filePath);
     }
 
-    static inline const Schema checksumSchema = []
+    static inline const UnboundSchema checksumSchema = []
     {
-        auto checksumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        return checksumSinkSchema;
+        return UnboundSchema{
+            UnboundField{Identifier::parse("COUNT"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            UnboundField{Identifier::parse("CHECKSUM"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
     }();
 
 private:
@@ -299,7 +298,7 @@ private:
     std::optional<Exception> exception;
     std::optional<LogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
-    std::optional<Schema> sinkOutputSchema;
+    std::optional<UnboundSchema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::optional<LogicalPlan> differentialQueryPlan;
@@ -451,12 +450,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-        for (const auto& field : statement.schema.getFields())
-        {
-            schema.addField(field.name, field.dataType);
-        }
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, statement.schema);
     }
 
     void createCallback(

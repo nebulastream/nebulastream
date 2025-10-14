@@ -51,7 +51,7 @@ SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSch
     auto copy = *this;
     copy.outputSchema = *sourceDescriptor.getLogicalSource().getSchema()
         | std::views::transform([&copy](const auto& unboundField)
-                                { return Field{copy, unboundField.getName(), unboundField.getDataType()}; })
+                                { return Field{copy, *std::ranges::rbegin(unboundField.getName()), unboundField.getDataType()}; })
         | std::ranges::to<Schema>();
     return copy;
 }

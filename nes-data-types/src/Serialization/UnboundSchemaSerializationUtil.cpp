@@ -25,7 +25,7 @@ SerializableUnboundSchema* UnboundSchemaSerializationUtil::serializeUnboundSchem
     for (const auto& field : unboundSchema)
     {
         auto* unboundField = serializedUnboundSchema->add_fields();
-        IdentifierSerializationUtil::serializeIdentifier(field.getName(), unboundField->mutable_name());
+        IdentifierSerializationUtil::serializeIdentifierList(field.getName(), unboundField->mutable_name());
         DataTypeSerializationUtil::serializeDataType(field.getDataType(), unboundField->mutable_type());
     }
     return serializedUnboundSchema;
@@ -36,7 +36,7 @@ UnboundSchema UnboundSchemaSerializationUtil::deserializeUnboundSchema(const Ser
     std::vector<UnboundField> fields;
     for (const auto& unboundField : serializedUnboundSchema.fields())
     {
-        Identifier identifier = IdentifierSerializationUtil::deserializeIdentifier(unboundField.name());
+        IdentifierList identifier = IdentifierSerializationUtil::deserializeIdentifierList(unboundField.name());
         DataType dataType = DataTypeSerializationUtil::deserializeDataType(unboundField.type());
         fields.emplace_back(identifier, dataType);
     }

@@ -43,11 +43,11 @@ struct JSONMetaData
 
     std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
 
-    const std::unordered_map<Identifier, FieldIndex>& getFieldNameToIndexOffset() const { return this->fieldNameToIndexOffset; }
+    const std::unordered_map<IdentifierList, FieldIndex>& getFieldNameToIndexOffset() const { return this->fieldNameToIndexOffset; }
 
 private:
     std::string tupleDelimiter;
-    std::unordered_map<Identifier, FieldIndex> fieldNameToIndexOffset;
+    std::unordered_map<IdentifierList, FieldIndex> fieldNameToIndexOffset;
 };
 
 class JSONInputFormatIndexer final : public InputFormatIndexer<JSONInputFormatIndexer>

@@ -57,7 +57,7 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
         memoryLayout->getPhysicalType(fieldIndex)};
 }
 
-DynamicField DynamicTuple::operator[](Identifier fieldName) const
+DynamicField DynamicTuple::operator[](IdentifierList fieldName) const
 {
     const auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
@@ -73,7 +73,7 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 }
 
 void DynamicTuple::writeVarSized(
-    std::variant<const uint64_t, const Identifier> field, std::string_view value, AbstractBufferProvider& bufferProvider)
+    std::variant<const uint64_t, const IdentifierList> field, std::string_view value, AbstractBufferProvider& bufferProvider)
 {
     auto combinedIdxOffset
         = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(buffer, bufferProvider, std::as_bytes(std::span{value}));
@@ -96,7 +96,7 @@ void DynamicTuple::writeVarSized(
         field);
 }
 
-std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const Identifier> field) const
+std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const IdentifierList> field) const
 {
     return std::visit(
         [this](const auto& key)

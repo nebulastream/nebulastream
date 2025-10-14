@@ -24,7 +24,7 @@ message SerializableField {
 }
 
 message SerializableUnboundField {
-  SerializableIdentifier name = 1;
+  SerializableIdentifierList name = 1;
   SerializableDataType type = 2;
 }
 

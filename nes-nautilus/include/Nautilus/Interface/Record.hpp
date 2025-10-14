@@ -27,7 +27,7 @@ namespace NES::Nautilus
 class Record
 {
 public:
-    using RecordFieldIdentifier = Identifier;
+    using RecordFieldIdentifier = IdentifierList;
     explicit Record() = default;
     explicit Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& recordFields);
     ~Record() = default;
