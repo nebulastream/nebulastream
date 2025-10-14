@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#pragma once
-
 #include <PhysicalOperatorWrapper.hpp>
 
 #include <memory>
