@@ -63,6 +63,8 @@
           magic-enum
           libuuid
           bats
+          jq
+          yq
           boost
           openssl.dev
           zstd.dev
