@@ -15,9 +15,11 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Model.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <PredictionCache.hpp>
+#include <PredictionCacheOperatorHandler.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -26,7 +28,7 @@ namespace NES
 class IREEAdapter;
 class Batch;
 
-class IREEBatchInferenceOperatorHandler final : public WindowBasedOperatorHandler
+class IREEBatchInferenceOperatorHandler final : public WindowBasedOperatorHandler, public PredictionCacheOperatorHandler
 {
 public:
     IREEBatchInferenceOperatorHandler(
@@ -53,6 +55,34 @@ public:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& ,
         PipelineExecutionContext*) override { /*noop*/ };
+
+    void allocatePredictionCacheEntries(const uint64_t sizeOfEntry, const uint64_t numberOfEntries, AbstractBufferProvider* bufferProvider) override;
+
+    struct StartPredictionCacheEntriesIREEInference final : StartPredictionCacheEntriesArgs
+    {
+        explicit StartPredictionCacheEntriesIREEInference(const WorkerThreadId workerThreadId)
+            : StartPredictionCacheEntriesArgs(workerThreadId)
+        {
+        }
+
+        StartPredictionCacheEntriesIREEInference(StartPredictionCacheEntriesIREEInference&& other) = default;
+        StartPredictionCacheEntriesIREEInference& operator=(StartPredictionCacheEntriesIREEInference&& other) = default;
+
+        StartPredictionCacheEntriesIREEInference(const StartPredictionCacheEntriesIREEInference& other)
+            : StartPredictionCacheEntriesArgs(other.workerThreadId)
+        {
+        }
+
+        StartPredictionCacheEntriesIREEInference& operator=(const StartPredictionCacheEntriesIREEInference& other)
+        {
+            workerThreadId = other.workerThreadId;
+            return *this;
+        };
+
+        ~StartPredictionCacheEntriesIREEInference() override = default;
+    };
+
+    const int8_t* getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const override;
 
     uint64_t batchSize;
     mutable uint64_t batchId = 0;

@@ -109,7 +109,6 @@ void BatchingPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffe
         executionCtx.pipelineContext,
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber);
-    NES_DEBUG("Lock should be released")
 }
 
 }
