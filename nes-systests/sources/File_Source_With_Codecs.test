@@ -16,6 +16,13 @@ CREATE PHYSICAL SOURCE FOR zstdMultiBuffer TYPE FILE SET(
 );
 ATTACH FILE small/200x8-rows-fields.zst
 
+CREATE SINK sinkSnappyMultiBuffer(snappyMultiBuffer.field_1 UINT64, snappyMultiBuffer.field_2 UINT64, snappyMultiBuffer.field_3 UINT64, snappyMultiBuffer.field_4 UINT64, snappyMultiBuffer.field_5 UINT64, snappyMultiBuffer.field_6 UINT64, snappyMultiBuffer.field_7 UINT64, snappyMultiBuffer.field_8 UINT64) TYPE Checksum;
+CREATE LOGICAL SOURCE snappyMultiBuffer(field_1 UINT64, field_2 UINT64, field_3 UINT64, field_4 UINT64, field_5 UINT64, field_6 UINT64, field_7 UINT64, field_8 UINT64);
+CREATE PHYSICAL SOURCE FOR snappyMultiBuffer TYPE FILE SET(
+       'Snappy' as `SOURCE`.CODEC
+);
+ATTACH FILE small/200x8-rows-fields.sz
+
 # Description:
 #   The data is LZ4Frame level 1 encoded and will be decoded in the source routine. It achieves a compression ratio of over
 #   2 for this data set.
@@ -27,5 +34,12 @@ SELECT * FROM lz4MultiBuffer INTO sinkLz4MultiBuffer;
 #   The data is Zstd level 3 encoded and will be decoded in the source routine. It achieves a compression ratio of over
 #   5 for this data set.
 SELECT * FROM zstdMultiBuffer INTO sinkZstdMultiBuffer;
+----
+199, 533714
+
+# Description:
+#   The data is Snappy frame encoded and will be decoded in the source routine. It achieves a compression ratio of over
+#   2,5 for this data set.
+SELECT * FROM snappyMultiBuffer INTO sinkSnappyMultiBuffer;
 ----
 199, 533714
