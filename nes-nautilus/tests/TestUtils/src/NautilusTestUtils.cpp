@@ -263,7 +263,7 @@ std::string NautilusTestUtils::compareRecords(
     {
         const auto& valueLeft = recordLeft.read(fieldIdentifier);
         const auto& valueRight = recordRight.read(fieldIdentifier);
-        ss << fieldIdentifier.getRawValue().c_str() << " (" << valueLeft;
+        ss << fmt::format("{}", fieldIdentifier).c_str() << " (" << valueLeft;
         if (valueLeft != valueRight)
         {
             printErrorMessage = true;

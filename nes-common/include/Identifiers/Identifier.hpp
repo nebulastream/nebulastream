@@ -48,20 +48,18 @@ class IdentifierBase
 
 public:
     constexpr explicit IdentifierBase() = default;
-
     // constexpr explicit IdentifierBase(std::string value) : value(std::move(value)) { }
     // constexpr explicit IdentifierBase(const std::string_view value) : value(value) { }
     constexpr explicit IdentifierBase(const std::string_view value, const bool caseSensitive) : value(value), caseSensitive(caseSensitive)
     {
     }
-
-    constexpr IdentifierBase(const std::string_view value) : value(value), caseSensitive(false) { }
-
+    constexpr IdentifierBase(const std::string_view value): value(value), caseSensitive(false) {}
     constexpr IdentifierBase(const IdentifierBase& other) = default;
     constexpr IdentifierBase(IdentifierBase&& other) noexcept = default;
     constexpr IdentifierBase& operator=(const IdentifierBase& other) = default;
     constexpr IdentifierBase& operator=(IdentifierBase&& other) noexcept = default;
     constexpr ~IdentifierBase() = default;
+
 
     // IdentifierBase(const IdentifierBase<false>& refIdentifier)
     // requires Owning
@@ -76,6 +74,7 @@ public:
         caseSensitive = refIdentifier.caseSensitive;
     }
 
+
     //Should we keep the conversion operator or the conversion constructor?
     operator IdentifierBase<true>() const
     requires(!Owning)
@@ -83,8 +82,8 @@ public:
         return IdentifierBase<true>{std::string{value}, caseSensitive};
     }
 
-    [[nodiscard]] constexpr std::string getRawValue() const { return std::string{value}; }
 
+    [[nodiscard]] constexpr std::string getRawValue() const { return std::string{value}; }
     [[nodiscard]] constexpr bool isCaseSensitive() const { return caseSensitive; }
 
     friend std::ostream& operator<<(std::ostream& os, const IdentifierBase& obj)
@@ -110,7 +109,6 @@ public:
         rhsss << rhs;
         return lhsss.str() == rhsss.str();
     }
-
     friend bool operator!=(const IdentifierBase& lhs, const IdentifierBase& rhs) { return !(lhs == rhs); }
 
     static constexpr IdentifierBase parse(std::string_view stringView)
@@ -193,47 +191,66 @@ struct std::hash<std::span<const NES::IdentifierBase<Owning>>>
 namespace NES
 {
 
-template <size_t maxSize, bool owning>
-class IdentifierListBase;
-
-///A list of identifiers that contains at least one element
-template <size_t maxSize, bool owning>
-requires(maxSize == std::dynamic_extent && owning)
-class IdentifierListBase<maxSize, owning>
+class IdentifierList
 {
     std::vector<Identifier> identifiers;
 
 public:
-    constexpr explicit IdentifierListBase(std::ranges::input_range auto&& identifiers)
+    constexpr explicit IdentifierList() = default;
+    constexpr explicit IdentifierList(std::ranges::input_range auto&& identifiers)
         : identifiers(std::ranges::to<std::vector<Identifier>>(identifiers))
     {
-        PRECONDITION(std::ranges::size(identifiers) > 0, "IdentifierList must not be empty");
     }
 
-    constexpr IdentifierListBase(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers)
+    constexpr IdentifierList(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers) { }
+
+    //The constructors from optionals can be removed in c++ 26 when optional implements the range concept
+    constexpr IdentifierList(const std::optional<Identifier>& identifier)
     {
-        PRECONDITION(std::ranges::size(identifiers) > 0, "IdentifierList must not be empty");
+        if (identifier)
+        {
+            identifiers.push_back(*identifier);
+        }
     }
 
-    explicit constexpr IdentifierListBase(const Identifier& identifier) : identifiers(std::vector{identifier}) { }
-
-    constexpr IdentifierListBase(const IdentifierListBase& other) = default;
-    constexpr IdentifierListBase(IdentifierListBase&& other) noexcept = default;
-    constexpr IdentifierListBase& operator=(const IdentifierListBase& other) = default;
-    constexpr IdentifierListBase& operator=(IdentifierListBase&& other) noexcept = default;
-    constexpr ~IdentifierListBase() = default;
+    constexpr IdentifierList(const std::optional<IdentifierList>& identifier)
+    {
+        if (identifier)
+        {
+            identifiers = identifier->identifiers;
+        }
+    }
+    constexpr IdentifierList(const Identifier& identifier) : identifiers(std::vector{identifier}) { }
+    constexpr IdentifierList(const IdentifierList& other) = default;
+    constexpr IdentifierList(IdentifierList&& other) noexcept = default;
+    constexpr IdentifierList& operator=(const IdentifierList& other) = default;
+    constexpr IdentifierList& operator=(IdentifierList&& other) noexcept = default;
+    constexpr ~IdentifierList() = default;
 
     [[nodiscard]] constexpr decltype(identifiers.begin()) begin() { return identifiers.begin(); }
-
     [[nodiscard]] constexpr decltype(identifiers.end()) end() { return identifiers.end(); }
 
     [[nodiscard]] constexpr decltype(identifiers.cbegin()) begin() const { return identifiers.cbegin(); }
-
     [[nodiscard]] constexpr decltype(identifiers.cend()) end() const { return identifiers.cend(); }
 
-    [[nodiscard]] size_t size() const { return identifiers.size(); }
+    [[nodiscard]] IdentifierList copyReplaceLast(const std::ranges::sized_range auto& replacements) const
+    {
+        if (std::ranges::size(replacements) >= identifiers.size())
+        {
+            return IdentifierList{replacements};
+        }
+        auto newIdentifiers = std::vector{identifiers};
 
-    [[nodiscard]] IdentifierListBase copyAppendLast(const std::ranges::input_range auto&& toAppend) const
+        auto iter = std::ranges::begin(replacements);
+        for (auto i = identifiers.size() - std::ranges::size(replacements); i < identifiers.size(); ++i)
+        {
+            newIdentifiers[i] = *iter;
+            ++iter;
+        }
+        return IdentifierList{std::move(newIdentifiers)};
+    }
+
+    [[nodiscard]] IdentifierList copyAppendLast(const std::ranges::input_range auto&& toAppend) const
     {
         auto newIdentifiers = std::vector{identifiers};
         newIdentifiers.reserve(identifiers.size() + std::ranges::size(toAppend));
@@ -241,25 +258,25 @@ public:
         {
             newIdentifiers.push_back(identifier);
         }
-        return IdentifierListBase{std::move(newIdentifiers)};
+        return IdentifierList{std::move(newIdentifiers)};
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const IdentifierListBase& obj)
+    friend std::ostream& operator<<(std::ostream& os, const IdentifierList& obj)
     {
         return os
             << (obj.identifiers | std::views::transform([](const Identifier& identifier) { return fmt::format("{}", identifier); })
                 | std::views::join_with('.') | std::ranges::to<std::string>());
     }
 
-    friend bool operator==(const IdentifierListBase& lhs, const IdentifierListBase& rhs) { return lhs.identifiers == rhs.identifiers; }
 
-    friend bool operator!=(const IdentifierListBase& lhs, const IdentifierListBase& rhs) { return !(lhs == rhs); }
+    friend bool operator==(const IdentifierList& lhs, const IdentifierList& rhs) { return lhs.identifiers == rhs.identifiers; }
+    friend bool operator!=(const IdentifierList& lhs, const IdentifierList& rhs) { return !(lhs == rhs); }
 
-    IdentifierListBase operator+(const IdentifierListBase& other) const { return copyAppendLast(std::move(other)); }
+    IdentifierList operator+(const IdentifierList& other) const { return copyAppendLast(std::move(other)); }
 
-    IdentifierListBase operator+(const Identifier& other) const { return copyAppendLast(std::initializer_list<Identifier>{other}); }
+    IdentifierList operator+(const Identifier& other) const { return copyAppendLast(std::initializer_list<Identifier>{other}); }
 
-    static std::optional<IdentifierListBase> parse(const std::string& name)
+    static IdentifierList parse(const std::string& name)
     {
         std::vector<Identifier> identifiers;
         std::stringstream stream(name);
@@ -268,113 +285,11 @@ public:
         {
             identifiers.push_back(Identifier::parse(item));
         }
-        if (identifiers.size() == 0)
-        {
-            return std::nullopt;
-        }
-        return IdentifierListBase{identifiers};
+        return IdentifierList{identifiers};
     }
-
     struct SpanEquals
     {
         constexpr SpanEquals() = default;
-
-        constexpr bool operator()(std::span<const Identifier> first, const std::span<const Identifier>& second) const
-        {
-            if (std::ranges::size(first) != std::ranges::size(second))
-            {
-                return false;
-            }
-            /// For some reason I didn't manage to get the type signatures right for ranges::all_of
-            for (auto zipped = std::views::zip(first, second); auto [first, second] : zipped)
-            {
-                if (first != second)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-    };
-};
-
-template <size_t maxSize, bool owning>
-requires(maxSize != std::dynamic_extent && maxSize > 0)
-class IdentifierListBase<maxSize, owning>
-{
-    std::array<IdentifierBase<owning>, maxSize> identifiers;
-
-public:
-    constexpr explicit IdentifierListBase(std::array<IdentifierBase<owning>, maxSize> identifiers) : identifiers(std::move(identifiers)) { }
-
-    constexpr IdentifierListBase(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers)
-    {
-        static_assert(
-            std::ranges::size(identifiers) == maxSize,
-            "Trying to initialize bounded IdentifierList with the incorrect amount of identifiers");
-    }
-
-    template <size_t n>
-    requires(n == maxSize && n == 1)
-    constexpr IdentifierListBase(const Identifier& identifier) : identifiers{identifier}
-    {
-    }
-
-    constexpr IdentifierListBase(const IdentifierListBase& other) = default;
-    constexpr IdentifierListBase(IdentifierListBase&& other) noexcept = default;
-    constexpr IdentifierListBase& operator=(const IdentifierListBase& other) = default;
-    constexpr IdentifierListBase& operator=(IdentifierListBase&& other) noexcept = default;
-    constexpr ~IdentifierListBase() = default;
-
-    [[nodiscard]] constexpr decltype(identifiers.begin()) begin() { return identifiers.begin(); }
-
-    [[nodiscard]] constexpr decltype(identifiers.end()) end() { return identifiers.end(); }
-
-    [[nodiscard]] constexpr decltype(identifiers.cbegin()) begin() const { return identifiers.cbegin(); }
-
-    [[nodiscard]] constexpr decltype(identifiers.cend()) end() const { return identifiers.cend(); }
-
-    [[nodiscard]] constexpr size_t size() { return maxSize; }
-
-    friend std::ostream& operator<<(std::ostream& os, const IdentifierListBase& obj)
-    {
-        return os
-            << (obj.identifiers | std::views::transform([](const Identifier& identifier) { return fmt::format("{}", identifier); })
-                | std::views::join_with('.') | std::ranges::to<std::string>());
-    }
-
-    friend bool operator==(const IdentifierListBase& lhs, const IdentifierListBase& rhs) { return lhs.identifiers == rhs.identifiers; }
-
-    friend bool operator!=(const IdentifierListBase& lhs, const IdentifierListBase& rhs) { return !(lhs == rhs); }
-
-    template <size_t size>
-    static std::optional<IdentifierListBase> parse(const std::string& name)
-    {
-        std::array<Identifier, size> identifiers;
-        std::stringstream stream(name);
-        std::string item;
-        size_t index = 0;
-        while (std::getline(stream, item, '.'))
-        {
-            if (index >= size)
-            {
-                return std::nullopt;
-            }
-            identifiers[index] = Identifier::parse(item);
-            index++;
-        }
-
-        if (index < size)
-        {
-            return std::nullopt;
-        }
-        return IdentifierListBase{identifiers};
-    }
-
-    struct SpanEquals
-    {
-        constexpr SpanEquals() = default;
-
         constexpr bool operator()(std::span<const Identifier> first, const std::span<const Identifier>& second) const
         {
             if (std::ranges::size(first) != std::ranges::size(second))
@@ -396,13 +311,14 @@ public:
 
 static_assert(std::ranges::input_range<std::initializer_list<Identifier>>);
 
-using IdentifierList = IdentifierListBase<std::dynamic_extent, true>;
+
 static_assert(std::ranges::random_access_range<IdentifierList>);
 static_assert(std::ranges::random_access_range<const IdentifierList>);
 static_assert(std::ranges::sized_range<IdentifierList>);
 
 IdentifierList zipIdentifierLists(const IdentifierList& firstIdList, const IdentifierList& secondIdList);
 }
+
 
 template <>
 struct std::hash<NES::IdentifierList>
@@ -425,6 +341,7 @@ struct std::hash<NES::IdentifierList>
     }
 };
 
+
 template <>
 struct fmt::formatter<NES::IdentifierList>
 {
@@ -444,3 +361,4 @@ struct fmt::formatter<NES::IdentifierList>
         return out;
     }
 };
+

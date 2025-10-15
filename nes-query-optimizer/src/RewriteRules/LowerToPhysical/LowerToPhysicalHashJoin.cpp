@@ -187,7 +187,7 @@ HashMapOptions createHashMapOptions(
     uint64_t keySize = 0;
     constexpr auto valueSize = sizeof(Nautilus::Interface::PagedVector);
     std::vector<PhysicalFunction> keyFunctions;
-    std::vector<Identifier> fieldKeyNames;
+    std::vector<IdentifierList> fieldKeyNames;
     for (auto& fieldExtension : joinFieldExtensions)
     {
         keySize += fieldExtension.newField.getDataType().getSizeInBytes();

@@ -59,7 +59,7 @@ static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& 
         | std::views::filter([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>().has_value(); })
         | std::views::transform([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>()->getField(); })
         | std::views::filter([&](const auto& field) { return inputSchema.contains(field.getLastName()); })
-        | std::views::transform([](const auto& field) { return field.getLastName(); }) | std::ranges::to<std::vector>();
+        | std::views::transform([](const auto& field) { return IdentifierList{field.getLastName()}; }) | std::ranges::to<std::vector>();
 };
 
 RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)

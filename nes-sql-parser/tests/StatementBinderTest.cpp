@@ -23,6 +23,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -96,10 +97,9 @@ TEST_F(StatementBinderTest, BindQuotedIdentifiers)
     const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement1));
     ASSERT_TRUE(createdSourceResult.has_value());
     const auto [actualSource] = createdSourceResult.value();
-    Schema expectedSchema{};
-    auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedSchema.addField("testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    auto expectedSchema = UnboundSchema{
+        UnboundField{Identifier::parse("testSource$attribute1"), DataType::Type::UINT32},
+        UnboundField{Identifier::parse("testSource$attribute2"), DataType::Type::VARSIZED}};
     ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
@@ -113,10 +113,9 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement1));
     ASSERT_TRUE(createdSourceResult.has_value());
     const auto [actualSource] = createdSourceResult.value();
-    Schema expectedSchema{};
-    auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    auto expectedSchema = UnboundSchema{
+        UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE1"), DataType::Type::UINT32},
+        UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE2"), DataType::Type::VARSIZED}};
     ASSERT_EQ(actualSource.getLogicalSourceName(), "TESTSOURCE");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
@@ -164,10 +163,9 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
 
 TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
 {
-    Schema schema{};
-    auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    schema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    schema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    auto schema = UnboundSchema{
+        UnboundField{Identifier::parse("ATTRIBUTE1"), DataType::Type::UINT32},
+        UnboundField{Identifier::parse("ATTRIBUTE2"), DataType::Type::VARSIZED}};
     const auto logicalSourceOpt = sourceCatalog->addLogicalSource("TESTSOURCE", schema);
     ASSERT_TRUE(logicalSourceOpt.has_value());
 
@@ -188,9 +186,9 @@ TEST_F(StatementBinderTest, BindCreateSink)
     const auto createdSinkResult = sinkStatementHandler->apply(std::get<CreateSinkStatement>(*statement));
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
-    Schema expectedSchema{};
-    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    auto expectedSchema = UnboundSchema{
+        UnboundField{Identifier::parse("ATTRIBUTE1"), DataType::Type::UINT32},
+        UnboundField{Identifier::parse("ATTRIBUTE2"), DataType::Type::VARSIZED}};
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
@@ -220,9 +218,9 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     const auto createdSinkResult = sinkStatementHandler->apply(std::get<CreateSinkStatement>(*statement));
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
-    Schema expectedSchema{};
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    auto expectedSchema = UnboundSchema{
+        UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE1"), DataType::Type::UINT32},
+        UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE2"), DataType::Type::VARSIZED}};
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");

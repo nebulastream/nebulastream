@@ -27,42 +27,40 @@
 
 namespace NES
 {
-
-template <size_t MaxIdentifierSize>
-struct UnboundFieldBase
+struct UnboundField
 {
-    UnboundFieldBase(IdentifierListBase<MaxIdentifierSize, true> name, DataType dataType)
-        : name(std::move(name)), dataType(std::move(dataType))
-    {
-    }
+    UnboundField(IdentifierList name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType)) { }
 
-    UnboundFieldBase(IdentifierListBase<MaxIdentifierSize, true> name, DataType::Type dataType)
+    UnboundField(IdentifierList name, DataType::Type dataType)
         : name(std::move(name)), dataType(DataTypeProvider::provideDataType(dataType))
     {
     }
 
-    [[nodiscard]] const IdentifierListBase<MaxIdentifierSize, true>& getName() const { return name; }
+    [[nodiscard]] const IdentifierList& getName() const { return name; }
 
     [[nodiscard]] const DataType& getDataType() const { return dataType; }
 
-    friend bool operator==(const UnboundFieldBase& lhs, const UnboundFieldBase& rhs);
-    friend std::ostream& operator<<(std::ostream& os, const UnboundFieldBase& obj);
+    friend bool operator==(const UnboundField& lhs, const UnboundField& rhs);
+    friend std::ostream& operator<<(std::ostream& os, const UnboundField& obj);
 
 private:
-    IdentifierListBase<MaxIdentifierSize, true> name;
+    IdentifierList name;
     DataType dataType;
 };
+}
 
-using UnboundField = UnboundFieldBase<std::dynamic_extent>;
+FMT_OSTREAM(NES::UnboundField);
 
-template <size_t MaxIdentifierSize>
-class UnboundSchemaBase
+namespace NES
+{
+
+class UnboundSchema
 {
 public:
     // explicit UnboundSchemaBase(std::initializer_list<UnboundFieldBase<MaxIdentifierSize>> fields);
-    explicit UnboundSchemaBase(std::vector<UnboundFieldBase<MaxIdentifierSize>> fields) : fields(std::move(fields))
+    explicit UnboundSchema(std::vector<UnboundField> fields) : fields(std::move(fields))
     {
-        using IdSpan = std::span<const Identifier, MaxIdentifierSize>;
+        using IdSpan = std::span<const Identifier>;
         std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals> fieldsByName{};
         std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals> collisions{};
         for (const auto& [idxSigned, field] : this->fields | std::views::enumerate)
@@ -98,16 +96,17 @@ public:
             NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
         }
         this->fieldsByName = fieldsByName
-            | std::views::transform([](const auto& pair)
-                                    { return std::pair{IdentifierListBase<MaxIdentifierSize, true>{pair.first}, pair.second}; })
+            | std::views::transform([](const auto& pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
             | std::ranges::to<std::unordered_map>();
     }
 
-    UnboundSchemaBase() = default;
+    explicit UnboundSchema(const std::initializer_list<UnboundField> fields) : UnboundSchema(std::vector(fields)) { }
 
-    friend bool operator==(const UnboundSchemaBase& lhs, const UnboundSchemaBase& rhs) { return lhs.fields == rhs.fields; }
+    UnboundSchema() = default;
 
-    friend std::ostream& operator<<(std::ostream& os, const UnboundSchemaBase& obj)
+    friend bool operator==(const UnboundSchema& lhs, const UnboundSchema& rhs) { return lhs.fields == rhs.fields; }
+
+    friend std::ostream& operator<<(std::ostream& os, const UnboundSchema& obj)
     {
         return os << fmt::format("UnboundSchema: (fields: ({})", fmt::join(obj.fields, ", "));
     }
@@ -122,25 +121,20 @@ public:
         return fields.at(iter->second);
     };
 
+    [[nodiscard]] UnboundField operator[](const size_t index) const { return fields.at(index); }
+
     size_t getSizeInBytes() const { return sizeInBytes; }
 
-    [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<UnboundField>>().cbegin())
-    {
-        return fields.cbegin();
-    }
+    [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<UnboundField>>().cbegin()) { return fields.cbegin(); }
 
-    [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<UnboundField>>().cend())
-    {
-        return fields.cend();
-    }
+    [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<UnboundField>>().cend()) { return fields.cend(); }
 
 private:
     std::vector<UnboundField> fields;
-    std::unordered_map<IdentifierListBase<std::dynamic_extent, true>, size_t> fieldsByName;
+    std::unordered_map<IdentifierList, size_t> fieldsByName;
     size_t sizeInBytes = 0;
 };
 
-using UnboundSchema = UnboundSchemaBase<std::dynamic_extent>;
 
 }
 
@@ -153,5 +147,4 @@ struct std::hash<NES::UnboundField>
     }
 };
 
-FMT_OSTREAM(NES::UnboundField);
 FMT_OSTREAM(NES::UnboundSchema);

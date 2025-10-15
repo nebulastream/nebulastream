@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>

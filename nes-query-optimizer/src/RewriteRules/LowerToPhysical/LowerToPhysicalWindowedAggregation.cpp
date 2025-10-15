@@ -157,9 +157,9 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
-    const auto fieldKeyNames = boundGroupingKeys | std::views::transform([](const auto& field) { return field.getField().getLastName(); });
+    const auto fieldKeyNames = boundGroupingKeys | std::views::transform([](const auto& field) { return IdentifierList{field.getField().getLastName()}; });
     const auto fieldValueNames
-        = aggregation->getWindowAggregation() | std::views::transform([](const auto& descriptor) { return descriptor.name; });
+        = aggregation->getWindowAggregation() | std::views::transform([](const auto& descriptor) { return IdentifierList{descriptor.name}; });
     const auto& [fieldKeys, fieldValues] = Interface::BufferRef::ChainedEntryMemoryProvider::createFieldOffsets(
         newInputSchema, fieldKeyNames | std::ranges::to<std::vector>(), fieldValueNames | std::ranges::to<std::vector>());
 

@@ -114,9 +114,9 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    auto schema = UnboundSchema{
+        UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
+        UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());

@@ -31,7 +31,7 @@
 #include <variant>
 #include <vector>
 
-#include <../../../nes-logical-operators/include/Schema/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -176,8 +176,8 @@ using ExpectedResultTuple = ResultTuple<ExpectedResultField, struct ExpectedResu
 using ActualResultTuple = ResultTuple<ActualResultField, struct ActualResultTuple_>;
 using ExpectedResultTuples = ResultTuples<ExpectedResultIndex, ExpectedResultTuple>;
 using ActualResultTuples = ResultTuples<ActualResultIndex, ActualResultTuple>;
-using ExpectedResultSchema = ResultCheckStrongType<NES::Schema, struct ExpectedResultSchema_>;
-using ActualResultSchema = ResultCheckStrongType<NES::Schema, struct ActualResultSchema_>;
+using ExpectedResultSchema = ResultCheckStrongType<NES::UnboundSchema, struct ExpectedResultSchema_>;
+using ActualResultSchema = ResultCheckStrongType<NES::UnboundSchema, struct ActualResultSchema_>;
 using SchemaErrorString = ResultCheckStrongType<std::string, struct SchemaErrorString_>;
 using ResultErrorString = ResultCheckStrongType<std::string, struct ResultErrorString_>;
 using SchemaErrorStream = ErrorStream<SchemaErrorString, struct SchemaErrorStream_>;
@@ -222,15 +222,15 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
     std::unreachable();
 }
 
-NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
+NES::UnboundSchema parseFieldNames(const std::string_view fieldNamesRawLine)
 {
     /// Assumes the field and type to be similar to
     /// window$val_i8_i8:INT32, window$val_i8_i8_plus_1:INT16
-    NES::Schema schema;
-    for (const auto& field : std::ranges::split_view(fieldNamesRawLine, ',')
+    auto fields = std::ranges::split_view(fieldNamesRawLine, ',')
              | std::views::transform([](auto splitNameAndType)
                                      { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
-             | std::views::filter([](const auto& stringViewSplit) { return !stringViewSplit.empty(); }))
+             | std::views::filter([](const auto& stringViewSplit) { return !stringViewSplit.empty(); })
+    | std::views::transform([](const auto& field)
     {
         /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
         /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
@@ -259,14 +259,14 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         {
             throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
         }
-        schema.addField(std::string(nameTrimmed), dataType);
-    }
-    return schema;
+        return NES::UnboundField{NES::Identifier{std::string(nameTrimmed)}, dataType};
+    });
+    return NES::UnboundSchema{fields | std::ranges::to<std::vector>()};
 }
 
 struct QueryResult
 {
-    NES::Schema schema;
+    NES::UnboundSchema schema;
     std::vector<std::string> result;
 };
 
@@ -374,7 +374,7 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
             matchingFieldIt != actualResultSchema.getRawValue().end())
         {
             auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.getDataType(), offset);
             matchedActualResultFields.emplace(offset);
             expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(expectedFieldIdx);
             expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(offset);
@@ -382,15 +382,15 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
         else
         {
             expectedToActualFieldMap.schemaErrorStream << fmt::format("\n- '{}' is missing from actual result schema.", expectedField);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, std::nullopt);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.getDataType(), std::nullopt);
         }
     }
-    for (size_t fieldIdx = 0; fieldIdx < actualResultSchema.getRawValue().getNumberOfFields(); ++fieldIdx)
+    for (size_t fieldIdx = 0; fieldIdx < std::ranges::size(actualResultSchema.getRawValue()); ++fieldIdx)
     {
         if (not matchedActualResultFields.contains(fieldIdx))
         {
             expectedToActualFieldMap.schemaErrorStream << fmt::format(
-                "\n+ '{}' is unexpected field in actual result schema.", actualResultSchema.getRawValue().getFieldAt(fieldIdx));
+                "\n+ '{}' is unexpected field in actual result schema.", actualResultSchema.getRawValue()[fieldIdx]);
             expectedToActualFieldMap.additionalActualFields.emplace_back(fieldIdx);
         }
     }
@@ -729,13 +729,13 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
                 runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
-        if (result1->schema.getNumberOfFields() == 0)
+        if (std::ranges::size(result1->schema) == 0)
         {
             return annotateDifferentialError(
                 fmt::format("First result file is empty or has no schema: {}", runningQuery.systestQuery.resultFile()));
         }
 
-        if (result2->schema.getNumberOfFields() == 0)
+        if (std::ranges::size(result2->schema) == 0)
         {
             return annotateDifferentialError(fmt::format(
                 "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));

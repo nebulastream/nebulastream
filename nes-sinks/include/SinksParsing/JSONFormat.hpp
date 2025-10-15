@@ -36,7 +36,7 @@ public:
     {
         size_t schemaSizeInBytes{};
         std::vector<size_t> offsets;
-        std::vector<Identifier> names;
+        std::vector<IdentifierList> names;
         std::vector<DataType> physicalTypes;
     };
 

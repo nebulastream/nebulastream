@@ -45,7 +45,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto accessedFields = projection->getAccessedFields();
     auto scan = ScanPhysicalOperator(
         scanBufferRef,
-        accessedFields | std::views::transform([](const auto& field) { return field.getLastName(); }) | std::ranges::to<std::vector>());
+        accessedFields | std::views::transform([](const auto& field) { return IdentifierList{field.getLastName()}; }) | std::ranges::to<std::vector>());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
