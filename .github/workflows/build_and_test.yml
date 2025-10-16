@@ -105,7 +105,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - uses: ./.github/steps/prepare-github
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
