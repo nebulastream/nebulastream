@@ -1,12 +1,12 @@
 # The Problem
 Currently, NebulaStream is able to receive and process data in `formats` such as CSV, JSON and Native, more formats like HL7 v2 are likely going to be added in the future. The component responsible for detecting tuples in the raw buffers filled with data in these formats is the `nes-input-formatter`. 
 
-Similar to `data formats` are `codecs`. Data of a certain format can be encoded according to the rules of a certain codec. Exemplary for this are general purpose `compression codecs` like Facebook's "Zstandart" (Zstd)[1]or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format.
+Similar to `data formats` are `codecs`. Data of a certain format can be encoded according to the rules of a certain codec. Exemplary for this are general purpose `compression codecs` like Facebook's "Zstandard" (Zstd)[1]or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format.
 
-(**P1**): If data is encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. Therefore, we need a new `decoder component` that decodes incoming tuple buffers before they are formatted.
+(**P1**) If data are encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. Therefore, we need a new `decoder component` that decodes incoming tuple buffers before they are formatted.
 
 (**P2**) This problem is also addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous and unordered fashion. 
-However, many compression codecs such as `LZ4`[4] need the data to arrive `in-order`, since the encoded data usually references reoccurring byte patterns via pointer to previous raw bytes. 
+However, many compression codecs such as `LZ4`[4] need the data to arrive `in-order`, since encoded data usually reference reoccurring byte patterns via pointer to previous raw bytes. 
 Therefore, decoding in the input-formatter could cause a bottleneck.
 
 (**P3**) Furthermore, data formats like `Apache Parquet`[5] use light weight and general purpose compression codecs to encode the data of column pages. If we want to include Parquet as a format, we need decoders for the possibly used encodings. 
@@ -34,8 +34,8 @@ This way, adding support for a new codec or format with codecs is straightforwar
 
 # Non-Goals
 **NG1** Encoders for codecs.
-The primary focus of this design document is the decoding of incoming data before it is formatted to tuples. 
-On demand encoding query results before emitting them to the sink affects different components than the decoders.
+The primary focus of this design document is the decoding of incoming data before the input formatting process. 
+On demand encoding of the query results before emitting them to the sink affects different components than the decoders.
 The benefits and challenges of this practice should be elaborated upon in a separate design document.
 
 **NG2** Decoding and encoding during query execution.
@@ -51,19 +51,113 @@ We used the `ysb1k_more_data_3GB` data set, which was compressed to the size of 
 
 For queries using only stateless operators like selections and projections, the server was able to keep up the 125mb/s sending rate, effectively tripling the throughput for these queries.
 
-While the implementation of the decoder on this branch was a mere prototype and does not match the proposed solution, the results of the experiment show that including decoders comes with benefits.
+While the implementation of the decoder on this branch was a mere prototype and does not match the proposed solution, the results of the experiment show that including decoders for compression codecs comes with benefits.
 
 
 # Our Proposed Solution
-- start with a high-level overview of the solution
-- explain the interface and interaction with other system components
-- explain a potential implementation
-- explain how the goals G1, G2, ... are addressed
-- use diagrams if reasonable
+For our solution, we propose decoding the encoded data in the `nes-sources` component. 
+Currently, each physical source instance is handled by its own `source thread`, which emits the filled tuple buffers in the source thread routine. 
+Before emitting a buffer, the thread must decode its contents, should the source utilize a codec. 
+This way, we can guarantee that the decoder receives the data in-order, achieving **G2**.
+
+## The abstract Decoder class
+To implement decoders for codecs, like **G1** demands, we propose an abstract `Decoder` class with a simple interface.
+Each implementation of the Decoder class for a codec must implement the function `decodeAndEmit()`.
+```c++
+ virtual void decodeAndEmit(
+        TupleBuffer& encodedBuffer,
+        TupleBuffer& emptyDecodedBuffer,
+        const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
+        = 0;
+```
+This function obtains a single tuple buffer filled with encoded data and an initial empty tuple buffer. It should decode the contents of the `encodedBuffer` argument and write the decoded data in the `emptyDecodedBuffer`.
+
+Afterward, the third argument, the `emitAndProvide()` function, should be called. Its purpose is to emit the decoded buffer to the input-formatter. 
+Alongside the decoded buffer, a `DecoderStatusType` instance is passed to `emitAndProvide()`. This is an enum class, defined in the `Decoder` class, and defines two status:
+```c++
+ enum class DecodeStatusType : uint8_t
+    {
+        FINISHED_DECODING_CURRENT_BUFFER,
+        DECODING_REQUIRES_ANOTHER_BUFFER
+    };
+```
+`FINISHED_DECODING_CURRENT_BUFFER` signalizes, that the encoded tuple buffer was fully decoded. 
+If this status is passed to `emitAndProvide()`, it simply emits the decoded buffer.
+
+`DECODING_REQUIRES_ANOTHER_BUFFER` signalizes, that the encoded buffer was not fully decoded yet and that another empty buffer is required to hold decoded data. 
+In this case, `emitAndProvide()` must return a new, empty tuple buffer and the decoding continues.
+
+We decided that decoders should not have full access to the `BufferProvider`. Instead, with `emitAndProvide()`, the decoder can obtain an additional empty buffer in exchange for a filled, decoded buffer.
+
+Since the decoding happens incrementally, the decoder implementations store `decoding context` information about headers, previous data etc. in class members. 
+How exactly this context is managed, differs between implementations.
+
+## DecoderRegistry
+
+To manage the decoder implementations, we propose the usage of a `Registry`. 
+This allows us to add new decoder implementations as optional plugins in the `nes-plugin` component, contributing to the extensibility that **G3** demands. 
+
+The `provideDecoder()` function, which is responsible for creating decoder instances, currently does not obtain any arguments besides the name of the decoder, since the solution was developed with `general purpose compression codecs` in mind, which do not require any configurations.
+```c++
+std::unique_ptr<Decoder> provideDecoder(std::string decoderType);
+```
+
+Should future decoder implementations require it, we could add a `decoder configuration` map to the `DecoderArguments`.
+
+## Integration in nes-sources
+
+To define the codec that a source utilizes, we propose the addition of a `codec` config parameter to the source descriptor configuration.
+
+```c++
+static inline const DescriptorConfig::ConfigParameter<std::string> CODEC{
+        "codec",
+        "None",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CODEC, config); }};
+```
+Since no codec is used per default, we do not need to change the source configurations for any preexisting source tests in our system. 
+Adding codec as config parameter does not require changes of the SQL parser, which makes for a tidy integration into the system.
+
+If a codec option other than `None` is set, the `SourceProvider` calls `provideDecoder()` to obtain a unique pointer to the decoder instance for the source.
+The decoder pointer is then moved into the `SourceHandle` constructor as `optional argument`, which will move it to the `SourceThread` constructor as `optional argument`.
+
+The `SourceThread` stores the decoder pointer as optional member. When `SourceThread::start()` is called, the decoder pointer is passed as optional argument to the `dataSourceThreadRoutine()` function.
+In the thread routine, after filling a tuple buffer, we check if a decoder argument was provided. 
+If not, the filled tuple buffer is emitted like in the current state of the system. Otherwise, we provide an initial empty tuple buffer for the decoded data, a lambda function as `emitAndProvide` argument and call the `decodeAndEmit()` method of the provided decoder.
+```c++
+if (decoder.has_value())
+            {
+                /// Lambda function to emit a decoded buffer and optionally provide an empty, new one.
+                auto emitAndProvide = [&emit, &bufferProvider](
+                                          const TupleBuffer& filledDecodedBuffer,
+                                          const Decoder::DecodeStatusType decodeStatus) -> std::optional<TupleBuffer>
+                {
+                    /// Emit the filled buffer.
+                    emit(filledDecodedBuffer, true);
+                    /// If required, provide a new, empty buffer.
+                    return decodeStatus == Decoder::DecodeStatusType::DECODING_REQUIRES_ANOTHER_BUFFER
+                        ? std::optional(bufferProvider.getBufferBlocking())
+                        : std::nullopt;
+                };
+
+                /// Get an initial empty buffer for the decoded data
+                auto decodedBuffer = bufferProvider.getBufferBlocking();
+                decoder.value()->decodeAndEmit(emptyBuffer, decodedBuffer, emitAndProvide);
+            }
+            else
+            {
+                emit(emptyBuffer, true);
+            }
+```
+
+While the addition of decoders in general affects the `SourceDescriptor`, `SourceProvider`, `SourceHandle` and `SourceThread` components of `nes-sources`, adding a decoder implementation for a new codec only requires the implementation of `emitAndDecode()` in a new decoder subclass as plugin, which makes extensions straightforward.
+Thus, **G3** is achieved.
 
 # Proof of Concept
-- demonstrate that the solution should work
-- can be done after the first draft
+On the branch [PoC-decoders-for-source](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-for-source), the proposed solution was implemented. 
+
+
+The `Decoder` abstract class and a `LZ4Decoder` implementation, as well as the `DecoderProvider` and the `DecoderRegistry` can be found in [nes-codecs](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-for-source/nes-codecs). 
+In [nes-plugins](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-for-source/nes-plugins), two additional decoders for the `Snappy-Framing`[6] and `Zstd` codecs are implemented.
 
 # Alternatives
 - (arguably the most important section of the DD, if there are no good alternatives, we can simply implement the sole solution and write documentation)
@@ -89,6 +183,8 @@ While the implementation of the decoder on this branch was a mere prototype and 
 [4] https://github.com/lz4/lz4
 
 [5] https://parquet.apache.org/docs/file-format/
+
+[6] https://github.com/google/snappy/blob/main/framing_format.txt
 
 # (Optional) Appendix
 - provide here nonessential information that could disturb the reading flow, e.g., implementation details
