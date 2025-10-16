@@ -41,6 +41,7 @@
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <nautilus/inline.hpp>
 #include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -236,7 +237,7 @@ struct DefaultPEC final : PipelineExecutionContext
         return threadId;
     }
 
-    TupleBuffer allocateTupleBuffer() override
+    NAUT_INLINE TupleBuffer allocateTupleBuffer() override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return bm->getBufferBlocking();
@@ -248,7 +249,7 @@ struct DefaultPEC final : PipelineExecutionContext
         return numberOfThreads;
     }
 
-    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override
+    NAUT_INLINE bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return handler(buffer, policy);
@@ -276,7 +277,7 @@ struct DefaultPEC final : PipelineExecutionContext
         return pipelineId;
     }
 
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
+    NAUT_INLINE std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
         PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
