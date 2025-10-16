@@ -13,14 +13,34 @@ Therefore, decoding in the input-formatter could cause a bottleneck.
 Supporting formats like Parquet or just compression codecs in general could help us achieve higher throughput for TCP source data, when dealing with a `fixed connection bandwidth`, which otherwise could cause a bottleneck at the source.
 
 # Goals
+To solve the described problems, a nes-codec component with the following properties should be added:
 
-- describe goals/requirements that the proposed solution must fulfill
-- enumerate goals as G1, G2, ...
-- describe how the goals G1, G2, ... address the problems P1, P2, ...
+**G1** Decoders for codecs. 
+For each codec, that we decide to support, a decoding function should be provided.
+It should be able to decode tuple buffers incrementally since we operate in a data stream context and do not receive one encoded block at a time.
+(**P1, P3**)
+
+**G2** In-order decoding. 
+The decoding functions assume that the tuple buffers arrive in-order.
+Thus, tuple buffers should be decoded in a component, where the system still obtains them in-order.
+Except for the decoding itself, the integration of the decoder should ideally not cause any additional work like ordering of the buffers or waiting for missing buffers.
+(**P2**)
+
+**G3** Easily extensible.
+There is a broad variety of codecs, and we cannot offer decoders for each one of them.
+Adding a decoder should only require the addition of the decoding function, without changing any other components of the system.
+This way, adding support for a new codec or format with codecs is straightforward. 
+(**P3**)
 
 # Non-Goals
-- list what is out of scope and why
-- enumerate non-goals as NG1, NG2, ...
+**NG1** Encoders for codecs.
+The primary focus of this design document is the decoding of incoming data before it is formatted to tuples. 
+On demand encoding query results before emitting them to the sink affects different components than the decoders.
+The benefits and challenges of this practice should be elaborated upon in a separate design document.
+
+**NG2** Decoding and encoding during query execution.
+Sending compressed data between pipelines and only decompressing the data if an operation in the pipeline demands it could increase the throughput. 
+However, such a feature would require changes of many components such as the query plan optimizer, operators and also the implementation of **NG1**.  
 
 # (Optional) Solution Background
 - describe relevant prior work, e.g., issues, PRs, other projects
