@@ -42,8 +42,17 @@ The benefits and challenges of this practice should be elaborated upon in a sepa
 Sending compressed data between pipelines and only decompressing the data if an operation in the pipeline demands it could increase the throughput. 
 However, such a feature would require changes of many components such as the query plan optimizer, operators and also the implementation of **NG1**.  
 
-# (Optional) Solution Background
-- describe relevant prior work, e.g., issues, PRs, other projects
+# Solution Background
+We conducted an experiment regarding the improvement of throughput for TCP data sources on the branch `benchmark-ingestion-decoding-experiment`.
+On this branch, we implemented a TCP source that expected LZ4 encoded data. The `fillBuffer` method of this source in `nes-sources/src/Blocking/Sources/BlockingTCPLZ4Source.cpp` decodes the received compressed bytes incrementally before writing them into the tuple buffer.
+
+For the experiment, we connected the rust server at `testing/rustE2EBenchmarking/src/tcp_server.rs` to the worker and let it send the LZ4-encoded data with a constant sending rate of 125mb/s.
+We used the `ysb1k_more_data_3GB` data set, which was compressed to the size of 937mb by the compression algorithm.
+
+For queries using only stateless operators like selections and projections, the server was able to keep up the 125mb/s sending rate, effectively tripling the throughput for these queries.
+
+While the implementation of the decoder on this branch was a mere prototype and does not match the proposed solution, the results of the experiment show that including decoders comes with benefits.
+
 
 # Our Proposed Solution
 - start with a high-level overview of the solution
