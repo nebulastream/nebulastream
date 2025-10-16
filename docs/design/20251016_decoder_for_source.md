@@ -1,14 +1,16 @@
 # The Problem
 Currently, NebulaStream is able to receive and process data in `formats` such as CSV, JSON and Native, more formats like HL7 v2 are likely going to be added in the future. The component responsible for detecting tuples in the raw buffers filled with data in these formats is the `nes-input-formatter`. 
 
-Similar to `data formats` are `codecs`. Data of a certain format can be encoded according to the rules of a certain codec. Exemplary for this are general purpose `compression codecs` like Facebook's "Zstandart" (Zstd)[1]
-or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format.
+Similar to `data formats` are `codecs`. Data of a certain format can be encoded according to the rules of a certain codec. Exemplary for this are general purpose `compression codecs` like Facebook's "Zstandart" (Zstd)[1]or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format.
 
-If data is encoded, the input-formatter cannot rely on the characteristic tuple and field `delimiters` of the format to extract tuples from the raw buffers. Therefore, we need a new `decoder component` that decodes incoming tuple buffers before they are formatted (**P1**).
+(**P1**): If data is encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. Therefore, we need a new `decoder component` that decodes incoming tuple buffers before they are formatted.
 
-This problem is also addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous fashion. However, many compression codecs such as `LZ4`[4] need the data to arrive `in-order`, since the encoded data usually references reoccurring byte patterns via pointer to previous raw bytes. Therefore, decoding in the input-formatter could cause a bottleneck (**P2**).
+(**P2**) This problem is also addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous and unordered fashion. 
+However, many compression codecs such as `LZ4`[4] need the data to arrive `in-order`, since the encoded data usually references reoccurring byte patterns via pointer to previous raw bytes. 
+Therefore, decoding in the input-formatter could cause a bottleneck.
 
-Furthermore, data formats like `Apache Parquet`[5] use light weight and general purpose compression codecs to encode the data of column pages. If we want to include Parquet as a format, we need decoders for the possibly used encodings (**P3**).
+(**P3**) Furthermore, data formats like `Apache Parquet`[5] use light weight and general purpose compression codecs to encode the data of column pages. If we want to include Parquet as a format, we need decoders for the possibly used encodings. 
+Supporting formats like Parquet or just compression codecs in general could help us achieve higher throughput for TCP source data, when dealing with a `fixed connection bandwidth`, which otherwise could cause a bottleneck at the source.
 
 # Goals
 
