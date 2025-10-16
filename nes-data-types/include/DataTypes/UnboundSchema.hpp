@@ -14,8 +14,10 @@
 
 #pragma once
 #include "DataTypeProvider.hpp"
+#include "ErrorHandling.hpp"
 
 
+#include <functional>
 #include <ostream>
 #include <unordered_map>
 #include <utility>
@@ -68,7 +70,7 @@ public:
             sizeInBytes += field.getDataType().getSizeInBytes();
 
             INVARIANT(idxSigned >= 0, "negative index");
-            const size_t idx = static_cast<size_t>(idxSigned);
+            const auto idx = static_cast<size_t>(idxSigned);
             const auto& fullName = field.getName();
             for (size_t i = 0; i < std::ranges::size(fullName); i++)
             {
@@ -77,7 +79,7 @@ public:
                 {
                     if (auto existingIdList = fieldsByName.find(idSubSpan); existingIdList != fieldsByName.end())
                     {
-                        collisions.insert(std::pair{idSubSpan, std::vector{idx}});
+                        collisions.insert(std::pair{idSubSpan, std::vector{existingIdList->second, idx}});
                         fieldsByName.erase(existingIdList);
                     }
                     else
@@ -100,7 +102,7 @@ public:
             | std::ranges::to<std::unordered_map>();
     }
 
-    explicit UnboundSchema(const std::initializer_list<UnboundField> fields) : UnboundSchema(std::vector(fields)) { }
+    explicit UnboundSchema(const std::initializer_list<UnboundField> fields) : UnboundSchema{std::vector(fields)} { }
 
     UnboundSchema() = default;
 
@@ -111,7 +113,7 @@ public:
         return os << fmt::format("UnboundSchema: (fields: ({})", fmt::join(obj.fields, ", "));
     }
 
-    std::optional<UnboundField> getFieldByName(const IdentifierList& name) const
+    std::optional<UnboundField> operator[](const IdentifierList& name) const
     {
         auto iter = fieldsByName.find(name);
         if (iter == fieldsByName.end())
@@ -121,7 +123,14 @@ public:
         return fields.at(iter->second);
     };
 
-    [[nodiscard]] UnboundField operator[](const size_t index) const { return fields.at(index); }
+    [[nodiscard]] std::optional<UnboundField> operator[](const size_t index) const
+    {
+        if (index < std::ranges::size(fields))
+        {
+            return fields.at(index);
+        }
+        return std::nullopt;
+    }
 
     size_t getSizeInBytes() const { return sizeInBytes; }
 

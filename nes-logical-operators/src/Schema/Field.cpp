@@ -20,8 +20,6 @@
 namespace NES
 {
 
-Field::Field() = default;
-
 Field::Field(const LogicalOperator& producedBy, Identifier name, DataType dataType)
     : producedBy(std::make_unique<LogicalOperator>(producedBy)), name(std::move(name)), dataType(std::move(dataType))
 {

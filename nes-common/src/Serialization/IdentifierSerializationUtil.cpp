@@ -22,7 +22,7 @@ NES::SerializableIdentifier*
 NES::IdentifierSerializationUtil::serializeIdentifier(const Identifier& identifier, SerializableIdentifier* serializedIdentifier)
 {
     serializedIdentifier->set_casesensitive(identifier.isCaseSensitive());
-    serializedIdentifier->set_value(identifier.getRawValue());
+    serializedIdentifier->set_value(identifier.getOriginalString());
     return serializedIdentifier;
 }
 

@@ -34,7 +34,6 @@ using LogicalOperator = TypedLogicalOperator<NES::detail::ErasedLogicalOperator>
 
 struct Field
 {
-    Field();
     ~Field();
     Field(const LogicalOperator& producedBy, Identifier name, DataType dataType);
     Field(const LogicalOperator& producedBy, Identifier name, DataType::Type dataType);

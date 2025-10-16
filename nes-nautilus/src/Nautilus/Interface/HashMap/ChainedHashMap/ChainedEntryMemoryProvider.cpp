@@ -46,7 +46,7 @@ std::pair<std::vector<BufferRef::FieldOffsets>, std::vector<BufferRef::FieldOffs
     uint64_t offset = sizeof(ChainedHashMapEntry);
     for (const auto& fieldName : fieldNameKeys)
     {
-        const auto field = schema.getFieldByName(fieldName);
+        const auto field = schema[fieldName];
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsKey.emplace_back(
@@ -56,7 +56,7 @@ std::pair<std::vector<BufferRef::FieldOffsets>, std::vector<BufferRef::FieldOffs
 
     for (const auto& fieldName : fieldNameValues)
     {
-        const auto field = schema.getFieldByName(fieldName);
+        const auto field = schema[fieldName];
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsValue.emplace_back(

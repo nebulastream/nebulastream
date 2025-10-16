@@ -110,7 +110,7 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig
                 for (const Identifier& identifier : arg)
                 {
                     auto* const serializedIdentifier = protoVar.mutable_identifiers()->add_identifiers();
-                    serializedIdentifier->set_value(identifier.getRawValue());
+                    serializedIdentifier->set_value(identifier.getOriginalString());
                     serializedIdentifier->set_casesensitive(identifier.isCaseSensitive());
                 }
             }

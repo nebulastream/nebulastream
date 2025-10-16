@@ -37,29 +37,69 @@
 
 namespace NES
 {
-//The template allows this class to be used with constexpr string, where we can only store a string_view.
-//For most parts, we should just use the "owning" version because it can't contain a dangling reference.
+/// Reopresenting a SQL compliant identifier.
+/// Automatically uppercases non-quoted identifiers but stores the original version so that we can emulate the behavior of non-SQL-compliant systems (e.g., Postgres) when interacting with them.
+/// The template allows this class to be used with constexpr string, where we can only store a string_view.
+/// For the most part, we should just use the "owning" version because it can't contain a dangling reference.
+/// Should you use the non-owning version for non-constexpr strings, make sure that they don't get mutated while Identifiers wrapping them are alive.
+/// The behaviour in that case is not well-defined and will sometimes produce correct results, sometimes exceptions and sometimes incorrect results.
 template <bool Owning = true>
 class IdentifierBase
 {
     using valueType = std::conditional_t<Owning, std::string, std::string_view>;
     valueType value;
-    bool caseSensitive{};
+    bool caseSensitive;
 
-public:
-    constexpr explicit IdentifierBase() = default;
-    // constexpr explicit IdentifierBase(std::string value) : value(std::move(value)) { }
-    // constexpr explicit IdentifierBase(const std::string_view value) : value(value) { }
-    constexpr explicit IdentifierBase(const std::string_view value, const bool caseSensitive) : value(value), caseSensitive(caseSensitive)
+    friend class IdentifierSerializationUtil;
+
+    constexpr explicit IdentifierBase(const valueType value, const bool caseSensitive)
+        : value(std::move(value)), caseSensitive(caseSensitive)
     {
     }
-    constexpr IdentifierBase(const std::string_view value): value(value), caseSensitive(false) {}
+
+    explicit constexpr IdentifierBase(const valueType value) : value(value), caseSensitive(false) { }
+
+    static constexpr bool isQuoted(std::string_view value)
+    {
+        PRECONDITION(value.find('.') == valueType::npos, "Invalid Identifier, cannot contain dot: {}", value);
+        if (*std::ranges::begin(value) == '"')
+        {
+            PRECONDITION(*std::ranges::rbegin(value) == '"', "Invalid Identifier, must end with quote: {}", value);
+            return true;
+        }
+        PRECONDITION(*std::ranges::begin(value) != '"', "Invalid Identifier, must not start but not end with quote: {}", value);
+        return false;
+    }
+
+    static constexpr std::expected<bool, Exception> tryIsQuoted(std::string_view value)
+    {
+        if (value.find('.') != valueType::npos)
+        {
+            return std::unexpected{InvalidIdentifier("Cannot contain dot")};
+        }
+        if (*std::ranges::begin(value) == '"')
+        {
+            if (*std::ranges::rbegin(value) == '"')
+            {
+                return true;
+            }
+            return std::unexpected{InvalidIdentifier("{}", value)};
+        }
+        if (*std::ranges::rbegin(value) == '"')
+        {
+            return std::unexpected{InvalidIdentifier("{}", value)};
+        }
+        return false;
+    }
+
+public:
+    // constexpr explicit IdentifierBase(std::string value) : value(std::move(value)) { }
+    // constexpr explicit IdentifierBase(const std::string_view value) : value(value) { }
     constexpr IdentifierBase(const IdentifierBase& other) = default;
     constexpr IdentifierBase(IdentifierBase&& other) noexcept = default;
     constexpr IdentifierBase& operator=(const IdentifierBase& other) = default;
     constexpr IdentifierBase& operator=(IdentifierBase&& other) noexcept = default;
     constexpr ~IdentifierBase() = default;
-
 
     // IdentifierBase(const IdentifierBase<false>& refIdentifier)
     // requires Owning
@@ -71,34 +111,43 @@ public:
     requires Owning
     {
         value = std::string{refIdentifier.value};
-        caseSensitive = refIdentifier.caseSensitive;
+        caseSensitive = refIdentifier.isCaseSensitive();
     }
-
 
     //Should we keep the conversion operator or the conversion constructor?
     operator IdentifierBase<true>() const
     requires(!Owning)
     {
-        return IdentifierBase<true>{std::string{value}, caseSensitive};
+        return IdentifierBase<true>{std::string{value}, isCaseSensitive()};
     }
 
+    /// Returns the original string this identifier was created with.
+    /// DO NOT USE THIS METHOD FOR COMPARISON.
+    /// Does not uppercase non-case sensitive identifiers as normally done.
+    /// This method mainly exists for serialization purposes.
+    [[nodiscard]] constexpr std::string_view getOriginalString() const { return value; }
 
-    [[nodiscard]] constexpr std::string getRawValue() const { return std::string{value}; }
-    [[nodiscard]] constexpr bool isCaseSensitive() const { return caseSensitive; }
+    [[nodiscard]] constexpr bool isCaseSensitive() const
+    {
+        if constexpr (Owning)
+        {
+            return caseSensitive;
+        }
+        return isQuoted(value);
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const IdentifierBase& obj)
     {
-        auto copy = std::string{obj.value};
-        if (!obj.caseSensitive)
+        if (!obj.isCaseSensitive())
         {
-            std::ranges::transform(
-                copy.begin(),
-                copy.end(),
-                copy.begin(),
-                [](const unsigned char character) -> unsigned char { return std::toupper(character); });
-            return os << copy;
+            for (auto character :
+                 std::views::transform(obj.value, [](const unsigned char character) -> unsigned char { return std::toupper(character); }))
+            {
+                os << character;
+            }
+            return os;
         }
-        return os << "\"" + copy + "\"";
+        return os << std::string_view{obj.value}.substr(1, std::ranges::size(obj.value) - 2);
     }
 
     friend bool operator==(const IdentifierBase& lhs, const IdentifierBase& rhs)
@@ -109,23 +158,38 @@ public:
         rhsss << rhs;
         return lhsss.str() == rhsss.str();
     }
-    friend bool operator!=(const IdentifierBase& lhs, const IdentifierBase& rhs) { return !(lhs == rhs); }
 
-    static constexpr IdentifierBase parse(std::string_view stringView)
+    static constexpr IdentifierBase parse(valueType stringLike)
     {
-        if (*std::ranges::begin(stringView) == '"')
+        if constexpr (Owning)
         {
-            if (*(std::ranges::end(stringView) - 1) == '"')
+            auto caseSensitive = isQuoted(stringLike);
+            return IdentifierBase{std::move(stringLike), caseSensitive};
+        }
+        else
+        {
+            /// Technically, it would not be needed to check here since we recalculate isQuoted evertime its needed,
+            /// But we ensure that calling this method with an invalid input never succeeds
+            auto caseSensitive = isQuoted(stringLike);
+            return IdentifierBase{stringLike, caseSensitive};
+        }
+    }
+
+    static constexpr std::expected<IdentifierBase, Exception> tryParse(valueType stringLike)
+    {
+        auto caseSensitive = tryIsQuoted(stringLike);
+        if (caseSensitive.has_value())
+        {
+            if constexpr (Owning)
             {
-                return IdentifierBase{stringView.substr(1, std::ranges::size(stringView) - 2), true};
+                return IdentifierBase{std::move(stringLike), caseSensitive.value()};
             }
-            throw InvalidIdentifier("{}", stringView);
+            else
+            {
+                return IdentifierBase{stringLike, caseSensitive.value()};
+            }
         }
-        if (*(std::ranges::end(stringView) - 1) == '"')
-        {
-            throw InvalidIdentifier("{}", stringView);
-        }
-        return IdentifierBase{stringView, false};
+        return caseSensitive.error();
     }
 };
 
@@ -196,31 +260,20 @@ class IdentifierList
     std::vector<Identifier> identifiers;
 
 public:
-    constexpr explicit IdentifierList() = default;
     constexpr explicit IdentifierList(std::ranges::input_range auto&& identifiers)
         : identifiers(std::ranges::to<std::vector<Identifier>>(identifiers))
     {
+        PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
 
-    constexpr IdentifierList(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers) { }
-
-    //The constructors from optionals can be removed in c++ 26 when optional implements the range concept
-    constexpr IdentifierList(const std::optional<Identifier>& identifier)
+    constexpr IdentifierList(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers)
     {
-        if (identifier)
-        {
-            identifiers.push_back(*identifier);
-        }
+        PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
 
-    constexpr IdentifierList(const std::optional<IdentifierList>& identifier)
-    {
-        if (identifier)
-        {
-            identifiers = identifier->identifiers;
-        }
-    }
-    constexpr IdentifierList(const Identifier& identifier) : identifiers(std::vector{identifier}) { }
+    explicit constexpr IdentifierList(const Identifier& identifier) : identifiers(std::vector{std::move(identifier)}) { }
+
+    constexpr IdentifierList() = delete;
     constexpr IdentifierList(const IdentifierList& other) = default;
     constexpr IdentifierList(IdentifierList&& other) noexcept = default;
     constexpr IdentifierList& operator=(const IdentifierList& other) = default;
@@ -228,27 +281,14 @@ public:
     constexpr ~IdentifierList() = default;
 
     [[nodiscard]] constexpr decltype(identifiers.begin()) begin() { return identifiers.begin(); }
+
     [[nodiscard]] constexpr decltype(identifiers.end()) end() { return identifiers.end(); }
 
     [[nodiscard]] constexpr decltype(identifiers.cbegin()) begin() const { return identifiers.cbegin(); }
+
     [[nodiscard]] constexpr decltype(identifiers.cend()) end() const { return identifiers.cend(); }
 
-    [[nodiscard]] IdentifierList copyReplaceLast(const std::ranges::sized_range auto& replacements) const
-    {
-        if (std::ranges::size(replacements) >= identifiers.size())
-        {
-            return IdentifierList{replacements};
-        }
-        auto newIdentifiers = std::vector{identifiers};
-
-        auto iter = std::ranges::begin(replacements);
-        for (auto i = identifiers.size() - std::ranges::size(replacements); i < identifiers.size(); ++i)
-        {
-            newIdentifiers[i] = *iter;
-            ++iter;
-        }
-        return IdentifierList{std::move(newIdentifiers)};
-    }
+    [[nodiscard]] size_t size() const { return identifiers.size(); }
 
     [[nodiscard]] IdentifierList copyAppendLast(const std::ranges::input_range auto&& toAppend) const
     {
@@ -268,15 +308,15 @@ public:
                 | std::views::join_with('.') | std::ranges::to<std::string>());
     }
 
-
     friend bool operator==(const IdentifierList& lhs, const IdentifierList& rhs) { return lhs.identifiers == rhs.identifiers; }
+
     friend bool operator!=(const IdentifierList& lhs, const IdentifierList& rhs) { return !(lhs == rhs); }
 
     IdentifierList operator+(const IdentifierList& other) const { return copyAppendLast(std::move(other)); }
 
     IdentifierList operator+(const Identifier& other) const { return copyAppendLast(std::initializer_list<Identifier>{other}); }
 
-    static IdentifierList parse(const std::string& name)
+    static std::optional<IdentifierList> parse(const std::string& name)
     {
         std::vector<Identifier> identifiers;
         std::stringstream stream(name);
@@ -285,11 +325,17 @@ public:
         {
             identifiers.push_back(Identifier::parse(item));
         }
+        if (identifiers.size() == 0)
+        {
+            return std::nullopt;
+        }
         return IdentifierList{identifiers};
     }
+
     struct SpanEquals
     {
         constexpr SpanEquals() = default;
+
         constexpr bool operator()(std::span<const Identifier> first, const std::span<const Identifier>& second) const
         {
             if (std::ranges::size(first) != std::ranges::size(second))
@@ -319,7 +365,6 @@ static_assert(std::ranges::sized_range<IdentifierList>);
 IdentifierList zipIdentifierLists(const IdentifierList& firstIdList, const IdentifierList& secondIdList);
 }
 
-
 template <>
 struct std::hash<NES::IdentifierList>
 {
@@ -341,7 +386,6 @@ struct std::hash<NES::IdentifierList>
     }
 };
 
-
 template <>
 struct fmt::formatter<NES::IdentifierList>
 {
@@ -361,4 +405,3 @@ struct fmt::formatter<NES::IdentifierList>
         return out;
     }
 };
-
