@@ -3,9 +3,18 @@ let
   lib = pkgs.lib;
   llvm = pkgs.llvmPackages_19;
   clangStdenv = llvm.stdenv;
+  libcxxStdenv = llvm.libcxxStdenv;
 
-  build = { extraBuildInputs ? [ ] }:
-    clangStdenv.mkDerivation (finalAttrs: {
+  build = { extraBuildInputs ? [ ], useLibcxx ? false }:
+    let
+      libcxxFlags = lib.optionals useLibcxx [
+        "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
+        "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libc++"
+      ];
+    in
+    (if useLibcxx then libcxxStdenv else clangStdenv).mkDerivation (finalAttrs: {
       pname = "nlohmann_json";
       version = "3.12.0";
 
@@ -21,12 +30,19 @@ let
       nativeBuildInputs = [ pkgs.cmake ];
       buildInputs = extraBuildInputs;
 
+      libcxxFlags = lib.optionals useLibcxx [
+        "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -isystem ${llvm.libcxx}/include/c++/v1"
+        "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libc++"
+      ];
+
       cmakeFlags = [
         "-DCMAKE_INSTALL_INCLUDEDIR=include"
         "-DJSON_BuildTests=OFF"
         "-DJSON_FastTests=OFF"
         "-DJSON_MultipleHeaders=ON"
-      ];
+      ] ++ libcxxFlags;
 
       strictDeps = true;
 
@@ -38,7 +54,27 @@ let
         platforms = platforms.all;
       };
     });
+
+  parseWithSanitizerArgs = arg:
+    if builtins.isList arg then {
+      extraBuildInputs = arg;
+      useLibcxx = false;
+    } else if builtins.isAttrs arg then {
+      extraBuildInputs =
+        if arg ? extraBuildInputs then arg.extraBuildInputs
+        else if arg ? extraPackages then arg.extraPackages
+        else [ ];
+      useLibcxx = arg.useLibcxx or false;
+    } else {
+      extraBuildInputs = [ ];
+      useLibcxx = false;
+    };
+
 in {
   default = build { };
-  withSanitizer = extraPackages: build { extraBuildInputs = extraPackages; };
+  withSanitizer = arg:
+    let cfg = parseWithSanitizerArgs arg;
+    in build {
+      inherit (cfg) extraBuildInputs useLibcxx;
+    };
 }

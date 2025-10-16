@@ -7,10 +7,20 @@
 }:
 
 let
-  clangStdenv = llvmPackages_19.stdenv;
+  llvmPackages = llvmPackages_19;
+  clangStdenv = llvmPackages.stdenv;
+  libcxxStdenv = llvmPackages.libcxxStdenv;
 
-  build = { extraBuildInputs ? [] }:
-    clangStdenv.mkDerivation rec {
+  build = { extraBuildInputs ? [], useLibcxx ? false }:
+    let
+      libcxxFlags = lib.optionals useLibcxx [
+        "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
+        "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libc++"
+      ];
+    in
+    (if useLibcxx then libcxxStdenv else clangStdenv).mkDerivation rec {
       pname = "argparse";
       version = "3.2";
 
@@ -35,7 +45,7 @@ let
         "-DARGPARSE_INSTALL_CMAKE_DIR=lib/cmake/argparse"
         "-DARGPARSE_INSTALL_PKGCONFIG_DIR=lib/pkgconfig"
         "-DCMAKE_INSTALL_INCLUDEDIR=include"
-      ];
+      ] ++ libcxxFlags;
 
       enableParallelBuilding = true;
       strictDeps = true;
@@ -48,7 +58,26 @@ let
       };
     };
 
+  parseWithSanitizerArgs = arg:
+    if builtins.isList arg then {
+      extraBuildInputs = arg;
+      useLibcxx = false;
+    } else if builtins.isAttrs arg then {
+      extraBuildInputs =
+        if arg ? extraBuildInputs then arg.extraBuildInputs
+        else if arg ? extraPackages then arg.extraPackages
+        else [ ];
+      useLibcxx = arg.useLibcxx or false;
+    } else {
+      extraBuildInputs = [ ];
+      useLibcxx = false;
+    };
+
 in {
   default = build { };
-  withSanitizer = extraPackages: build { extraBuildInputs = extraPackages; };
+  withSanitizer = arg:
+    let cfg = parseWithSanitizerArgs arg;
+    in build {
+      inherit (cfg) extraBuildInputs useLibcxx;
+    };
 }

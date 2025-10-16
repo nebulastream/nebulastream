@@ -19,6 +19,7 @@ if [ -z "$IN_NIX_RUN" ]; then
 
   # Logic to enable building with -DUSE_SANITIZER=...
   REQUESTED_SANITIZER=""
+  REQUESTED_STDLIB=""
   BUILD_DIR=""
   PREVIOUS_ARG=""
   for ARG in "$@"; do
@@ -26,6 +27,9 @@ if [ -z "$IN_NIX_RUN" ]; then
       case "$ARG" in
         USE_SANITIZER=*)
           REQUESTED_SANITIZER="${ARG#USE_SANITIZER=}"
+          ;;
+        USE_LIBCXX_IF_AVAILABLE=*)
+          REQUESTED_STDLIB="${ARG#USE_LIBCXX_IF_AVAILABLE=}"
           ;;
       esac
     elif [ "$PREVIOUS_ARG" = "--build" ]; then
@@ -35,6 +39,9 @@ if [ -z "$IN_NIX_RUN" ]; then
     case "$ARG" in
       -DUSE_SANITIZER=*)
         REQUESTED_SANITIZER="${ARG#-DUSE_SANITIZER=}"
+        ;;
+      -DUSE_LIBCXX_IF_AVAILABLE=*)
+        REQUESTED_STDLIB="${ARG#-DUSE_LIBCXX_IF_AVAILABLE=}"
         ;;
       --build)
         PREVIOUS_ARG="--build"
@@ -60,11 +67,21 @@ if [ -z "$IN_NIX_RUN" ]; then
       if [ -n "$CACHE_SANITIZER" ]; then
         REQUESTED_SANITIZER="$CACHE_SANITIZER"
       fi
+      if [ -z "$REQUESTED_STDLIB" ]; then
+        CACHE_STDLIB=$(sed -n 's/^USE_LIBCXX_IF_AVAILABLE:BOOL=\(.*\)$/\1/p' "$CACHE_FILE" | head -n 1)
+        if [ -n "$CACHE_STDLIB" ]; then
+          REQUESTED_STDLIB="$CACHE_STDLIB"
+        fi
+      fi
     fi
   fi
 
   if [ -z "$REQUESTED_SANITIZER" ] && [ -n "${NES_SANITIZER:-}" ]; then
     REQUESTED_SANITIZER="$NES_SANITIZER"
+  fi
+
+  if [ -z "$REQUESTED_STDLIB" ] && [ -n "${NES_STDLIB:-}" ]; then
+    REQUESTED_STDLIB="$NES_STDLIB"
   fi
 
   SANITIZER_SELECTOR=""
@@ -90,8 +107,28 @@ if [ -z "$IN_NIX_RUN" ]; then
     esac
   fi
 
-  if [ -n "$SANITIZER_SELECTOR" ]; then
-    NES_SANITIZER_REQUEST="$SANITIZER_SELECTOR" exec "$(dirname "$0")"/nix-run.sh "$SCRIPT_PATH" "$@"
+  STDLIB_SELECTOR=""
+  if [ -n "$REQUESTED_STDLIB" ]; then
+    LOWER_STDLIB=$(printf '%s' "$REQUESTED_STDLIB" | tr '[:upper:]' '[:lower:]')
+    LOWER_STDLIB=$(printf '%s' "$LOWER_STDLIB" | sed 's/++/xx/g')
+    case "$LOWER_STDLIB" in
+      on|true|1|yes|libcxx)
+        STDLIB_SELECTOR="libcxx"
+        ;;
+      off|false|0|no|libstdcxx|default|local)
+        STDLIB_SELECTOR="libstdcxx"
+        ;;
+      *)
+        printf 'nix-cmake.sh: warning: unrecognized stdlib "%s", defaulting to libstdcxx\n' "$REQUESTED_STDLIB" >&2
+        STDLIB_SELECTOR="libstdcxx"
+        ;;
+    esac
+  fi
+
+  if [ -n "$SANITIZER_SELECTOR$STDLIB_SELECTOR" ]; then
+    NES_SANITIZER_REQUEST="$SANITIZER_SELECTOR" \
+      NES_STDLIB_REQUEST="$STDLIB_SELECTOR" \
+      exec "$(dirname "$0")"/nix-run.sh "$SCRIPT_PATH" "$@"
   else
     exec "$(dirname "$0")"/nix-run.sh "$SCRIPT_PATH" "$@"
   fi
