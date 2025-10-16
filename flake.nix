@@ -7,7 +7,7 @@
   };
 
   outputs =
-    { self, nixpkgs, flake-utils, ... }:
+    { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (
       system:
       let
@@ -17,21 +17,53 @@
         clangStdenv = llvm.stdenv;
         mkShellClang = pkgs.mkShell.override { stdenv = clangStdenv; };
 
-        nautilusPackages = import ./.nix/nautilus/package.nix { inherit pkgs; };
-        mlirBinary = nautilusPackages.mlirBinary;
-        nautilusPkg = nautilusPackages.nautilus;
+        sanitizerOptions = {
+          none = {
+            name = "none";
+            cmakeValue = "none";
+            envValue = "none";
+            extraEnv = { };
+            extraPackages = [ ];
+          };
+          address = {
+            name = "asan";
+            cmakeValue = "address";
+            envValue = "address";
+            extraEnv = {
+              ASAN_OPTIONS = "detect_leaks=1";
+            };
+            extraPackages = [ llvm.compiler-rt ];
+          };
+          thread = {
+            name = "tsan";
+            cmakeValue = "thread";
+            envValue = "thread";
+            extraEnv = {
+              TSAN_OPTIONS = "halt_on_error=1";
+            };
+            extraPackages = [ llvm.compiler-rt ];
+          };
+          undefined = {
+            name = "ubsan";
+            cmakeValue = "undefined";
+            envValue = "undefined";
+            extraEnv = {
+              UBSAN_OPTIONS = "print_stacktrace=1";
+            };
+            extraPackages = [ llvm.compiler-rt ];
+          };
+        };
 
-        nlohmann_jsonPkg = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
-        cpptracePkg = pkgs.callPackage ./.nix/cpptrace/package.nix { };
-        argparsePkg = pkgs.callPackage ./.nix/argparse/package.nix { };
-        libcuckooPkg = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
+        sanitizerNames = builtins.attrNames sanitizerOptions;
+
+        antlr4Version = "4.13.2";
 
         fmtPkg = pkgs.fmt_11;
         spdlogPkg = pkgs.spdlog.override { fmt = fmtPkg; };
         follyPkg = import ./.nix/folly/package.nix { inherit pkgs; };
-        antlr4Pkg = import ./.nix/antlr4/package.nix { inherit pkgs; };
+        nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
 
-        baseThirdPartyDeps = (with pkgs; [
+        coreThirdPartyDeps = (with pkgs; [
           fmtPkg
           spdlogPkg
           grpc
@@ -40,7 +72,7 @@
           yaml-cpp
           replxx
           magic-enum
-          libuuid
+          gdb
           boost
           openssl.dev
           zstd.dev
@@ -48,17 +80,105 @@
           libdwarf.dev
           libffi
           libxml2
-          gdb
           gflags
           glog
           gtest
           tbb
           python3
           openjdk21
-        ]) ++ [ follyPkg antlr4Pkg ];
+        ]);
+
+        ccacheFlags = [
+          "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
+          "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+        ];
+
+        ccacheShellHook = ''
+          export CCACHE_DIR="$PWD/.ccache"
+          export CCACHE_BASEDIR="$PWD"
+          mkdir -p "$CCACHE_DIR"
+          export CMAKE_C_COMPILER_LAUNCHER=ccache
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+        '';
+
+        antlr4Packages = pkgs.callPackage ./.nix/antlr4/package.nix { };
+        cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix { };
+        argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix { };
+        libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
+
+        mlirPackages = import ./.nix/mlir/package.nix { inherit pkgs; };
+        mlirBinary = mlirPackages.mlirBinary;
+
+        nautilusPackages = import ./.nix/nautilus/package.nix {
+          inherit pkgs mlirBinary;
+        };
+
+        sanitizerPackageSet = {
+          antlr4 = antlr4Packages;
+          cpptrace = cpptracePackages;
+          argparse = argparsePackages;
+          libcuckoo = libcuckooPackages;
+          nautilus = nautilusPackages;
+          nlohmann_json = nlohmannJsonPackages;
+        };
+
+        sanitizerPackages = lib.attrValues sanitizerPackageSet;
+
+        mkThirdPartyDeps = sanitizer:
+          coreThirdPartyDeps
+          ++ [ follyPkg ]
+          ++ map (pkg: pkg.withSanitizer sanitizer.extraPackages) sanitizerPackages;
+
+        mkCmakeContext = sanitizer:
+          let
+            thirdPartyDeps = mkThirdPartyDeps sanitizer;
+            cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;
+            cmakePrefixPath = lib.makeSearchPath "" cmakeInputs;
+            pkgConfigPath = lib.concatStringsSep ":" (
+              map (dir: lib.makeSearchPath dir thirdPartyDeps) [
+                "lib/pkgconfig"
+                "share/pkgconfig"
+              ]
+            );
+            commonCmakeEnv = {
+              CMAKE_PREFIX_PATH = cmakePrefixPath;
+              PKG_CONFIG_PATH = pkgConfigPath;
+              MLIR_DIR = "${mlirBinary}/lib/cmake/mlir";
+              LLVM_DIR = "${mlirBinary}/lib/cmake/llvm";
+              CMAKE_MODULE_PATH = lib.makeSearchPath "share/cmake/Modules" [ libdwarfModule ];
+            };
+          in {
+            inherit thirdPartyDeps cmakeInputs cmakePrefixPath pkgConfigPath commonCmakeEnv;
+          };
+
+        cmakeCommonFlags = sanitizer: [
+          "-DUSE_LOCAL_MLIR=ON"
+          "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
+          "-DNES_USE_SYSTEM_DEPS=ON"
+          "-DLLVM_TOOLCHAIN_VERSION=19"
+          "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
+          "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"
+          "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
+          "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
+          "-DUSE_SANITIZER=${sanitizer.cmakeValue}"
+        ];
+
+        mkSanitizedAttrset = builder:
+          lib.foldl'
+            (acc: sanName:
+              let
+                sanitizer = sanitizerOptions.${sanName};
+                value = builder sanName;
+              in
+              acc
+              // { ${sanName} = value; }
+              // { ${sanitizer.name} = value; }
+            )
+            { }
+            sanitizerNames;
 
         antlr4Jar = pkgs.fetchurl {
-          url = "https://www.antlr.org/download/antlr-${antlr4Pkg.version}-complete.jar";
+          url = "https://www.antlr.org/download/antlr-${antlr4Version}-complete.jar";
           hash = "sha256-6uLfoRmmQydERnKv9j6ew1ogGA3FuAkLemq4USXfTXY=";
         };
 
@@ -112,33 +232,6 @@
               set(LIBDWARF_LIBRARIES libdwarf::libdwarf)
             endif()
           '';
-        };
-
-        thirdPartyDeps = baseThirdPartyDeps ++ [
-          cpptracePkg
-          argparsePkg
-          libcuckooPkg
-          nautilusPkg
-          nlohmann_jsonPkg
-        ];
-
-        cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;
-
-        cmakePrefixPath = lib.makeSearchPath "" cmakeInputs;
-
-        pkgConfigPath = lib.concatStringsSep ":" (
-          map (dir: lib.makeSearchPath dir thirdPartyDeps) [
-            "lib/pkgconfig"
-            "share/pkgconfig"
-          ]
-        );
-
-        commonCmakeEnv = {
-          CMAKE_PREFIX_PATH = cmakePrefixPath;
-          PKG_CONFIG_PATH = pkgConfigPath;
-          MLIR_DIR = "${mlirBinary}/lib/cmake/mlir";
-          LLVM_DIR = "${mlirBinary}/lib/cmake/llvm";
-          CMAKE_MODULE_PATH = lib.makeSearchPath "share/cmake/Modules" [ libdwarfModule ];
         };
 
         clionSetupScript = pkgs.writeShellApplication {
@@ -216,149 +309,116 @@
           python3
         ];
 
-        defaultPackage = clangStdenv.mkDerivation rec {
-          pname = "nebulastream";
-          version = "unstable";
-          src = ./.;
+        packageInstallPhase = ''
+          runHook preInstall
 
-          nativeBuildInputs = buildTools;
-          buildInputs = llvmTools ++ thirdPartyDeps ++ [ mlirBinary ];
-          patches = nebulastreamPatches;
+          mkdir -p $out/bin
+          for binary in \
+            nes-single-node-worker/nes-single-node-worker \
+            nes-nebuli/nes-nebuli \
+            nes-nebuli/nes-nebuli-embedded \
+            nes-systests/systest/systest
+          do
+            if [ -x "$binary" ]; then
+              install -Dm755 "$binary" "$out/bin/$(basename "$binary")"
+            fi
+          done
 
-          CMAKE_PREFIX_PATH = cmakePrefixPath;
-          PKG_CONFIG_PATH = pkgConfigPath;
+          mkdir -p $out/lib
+          find nes-* -maxdepth 1 -type f \( -name 'lib*.a' -o -name 'lib*.so' -o -name 'lib*.so.*' \) \
+            -exec sh -c 'for lib; do install -Dm644 "$lib" "$out/lib/$(basename "$lib")"; done' sh {} +
 
-          postPatch = ''
-            substituteInPlace CMakeLists.txt --replace "find_package(Protobuf REQUIRED)" "find_package(Protobuf CONFIG REQUIRED)"
-          '';
+          runHook postInstall
+        '';
 
-          cmakeFlags = [
-            "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
-            "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-            "-DCMAKE_BUILD_TYPE=Release"
-            "-DUSE_LOCAL_MLIR=ON"
-            "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
-            "-DNES_USE_SYSTEM_DEPS=ON"
-            "-DLLVM_TOOLCHAIN_VERSION=19"
-            "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
-            "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
-            "-DNES_ENABLES_TESTS=ON"
-            "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
-            "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
-          ];
+        mkPackage = sanitizerName:
+          let
+            sanitizer = sanitizerOptions.${sanitizerName};
+            cmakeCtx = mkCmakeContext sanitizer;
+            cmakeFlagsList = ccacheFlags
+              ++ [
+                "-DCMAKE_BUILD_TYPE=Release"
+                "-DNES_ENABLES_TESTS=ON"
+              ]
+              ++ cmakeCommonFlags sanitizer;
+            envVars = sanitizer.extraEnv // { NES_SANITIZER = sanitizer.envValue; };
+          in
+          clangStdenv.mkDerivation ((rec {
+            pname = "nebulastream";
+            version = "unstable";
+            src = ./.;
 
-          enableParallelBuilding = true;
-          strictDeps = true;
+            nativeBuildInputs = buildTools;
+            buildInputs = llvmTools ++ cmakeCtx.thirdPartyDeps ++ [ mlirBinary ] ++ sanitizer.extraPackages;
+            patches = nebulastreamPatches;
 
-          installPhase = ''
-            runHook preInstall
+            CMAKE_PREFIX_PATH = cmakeCtx.cmakePrefixPath;
+            PKG_CONFIG_PATH = cmakeCtx.pkgConfigPath;
 
-            mkdir -p $out/bin
-            for binary in \
-              nes-single-node-worker/nes-single-node-worker \
-              nes-nebuli/nes-nebuli \
-              nes-nebuli/nes-nebuli-embedded \
-              nes-systests/systest/systest
-            do
-              if [ -x "$binary" ]; then
-                install -Dm755 "$binary" "$out/bin/$(basename "$binary")"
-              fi
-            done
+            cmakeFlags = cmakeFlagsList;
 
-            mkdir -p $out/lib
-            find nes-* -maxdepth 1 -type f \( -name 'lib*.a' -o -name 'lib*.so' -o -name 'lib*.so.*' \) \
-              -exec sh -c 'for lib; do install -Dm644 "$lib" "$out/lib/$(basename "$lib")"; done' sh {} +
+            enableParallelBuilding = true;
+            strictDeps = true;
+            installPhase = packageInstallPhase;
+          }) // envVars);
 
-            runHook postInstall
-          '';
-        };
+        mkDevShell = sanitizerName:
+          let
+            sanitizer = sanitizerOptions.${sanitizerName};
+            cmakeCtx = mkCmakeContext sanitizer;
+            cmakeFlagsList = ccacheFlags
+              ++ [
+                "-DCMAKE_PROJECT_INCLUDE=${devCmakePrelude}"
+                "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
+              ]
+              ++ cmakeCommonFlags sanitizer;
+            envVars = sanitizer.extraEnv // {
+              NES_SANITIZER = sanitizer.envValue;
+              NES_USE_SYSTEM_DEPS = "ON";
+            };
+          in
+          mkShellClang (
+            cmakeCtx.commonCmakeEnv
+            // envVars
+            // {
+              name = "nebula-stream-${sanitizer.name}";
+              buildInputs = cmakeCtx.thirdPartyDeps ++ [ mlirBinary ] ++ sanitizer.extraPackages;
+              nativeBuildInputs = buildTools ++ llvmTools;
+              packages = devTools;
+              LLVM_TOOLCHAIN_VERSION = "19";
+              CMAKE_GENERATOR = "Ninja";
+              VCPKG_ENV_PASSTHROUGH = "MLIR_DIR;LLVM_DIR;CMAKE_PREFIX_PATH";
+              cmakeFlags = cmakeFlagsList;
+              shellHook = ''
+                unset NES_PREBUILT_VCPKG_ROOT
+              '' + ccacheShellHook;
+            }
+          );
 
+      in
+      let
+        packageVariants = mkSanitizedAttrset mkPackage;
+        devShellVariants = mkSanitizedAttrset mkDevShell;
       in
       {
         formatter = pkgs.nixfmt-tree;
 
-        packages.default = defaultPackage;
+        packages = packageVariants // { default = packageVariants.none; };
 
         checks = {
-          antlr4 = antlr4Pkg;
-          cpptrace = cpptracePkg;
-          nautilus = nautilusPkg;
+          antlr4 = sanitizerPackageSet.antlr4.withSanitizer sanitizerOptions.none.extraPackages;
+          cpptrace = sanitizerPackageSet.cpptrace.withSanitizer sanitizerOptions.none.extraPackages;
+          nautilus = sanitizerPackageSet.nautilus.withSanitizer sanitizerOptions.none.extraPackages;
         };
 
-        apps =
-          let
-            formatRunner = pkgs.writeShellApplication {
-              name = "nes-format";
-              runtimeInputs =
-                [
-                  pkgs.git
-                  pkgs.coreutils
-                  pkgs.findutils
-                  pkgs.gnugrep
-                  pkgs.gawk
-                  pkgs.python3
-                  pkgs.util-linux
-                ]
-                ++ llvmTools;
-              text = ''
-                set -euo pipefail
-                if [ ! -x ./scripts/format.sh ]; then
-                  echo "nes-format: run this command from the NebulaStream repository root" >&2
-                  exit 1
-                fi
-                if [ "$#" -gt 0 ]; then
-                  echo "nes-format: always runs with -i; ignoring extra arguments: $*" >&2
-                fi
-                ./scripts/format.sh -i
-              '';
-            };
-          in
-          {
-            clion-setup = {
-              type = "app";
-              program = "${clionSetupScript}/bin/clion-setup";
-            };
-            format = {
-              type = "app";
-              program = "${formatRunner}/bin/nes-format";
-            };
+        apps = {
+          clion-setup = {
+            type = "app";
+            program = "${clionSetupScript}/bin/clion-setup";
           };
+        };
 
-        devShells.default = mkShellClang (
-          commonCmakeEnv
-          // {
-            name = "nebula-stream";
-            buildInputs = thirdPartyDeps ++ [ mlirBinary ];
-            nativeBuildInputs = buildTools ++ llvmTools;
-            packages = devTools;
-            LLVM_TOOLCHAIN_VERSION = "19";
-            CMAKE_GENERATOR = "Ninja";
-            VCPKG_ENV_PASSTHROUGH = "MLIR_DIR;LLVM_DIR;CMAKE_PREFIX_PATH";
-            NES_USE_SYSTEM_DEPS = "ON";
-            cmakeFlags = [
-              "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
-              "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-              "-DCMAKE_PROJECT_INCLUDE=${devCmakePrelude}"
-              "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
-              "-DNES_USE_SYSTEM_DEPS=ON"
-              "-DUSE_LOCAL_MLIR=ON"
-              "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
-              "-DLLVM_TOOLCHAIN_VERSION=19"
-              "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
-              "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
-              "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
-              "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
-            ];
-            shellHook = ''
-              unset NES_PREBUILT_VCPKG_ROOT
-              export CCACHE_DIR="$PWD/.ccache"
-              export CCACHE_BASEDIR="$PWD"
-              mkdir -p "$CCACHE_DIR"
-              export CMAKE_C_COMPILER_LAUNCHER=ccache
-              export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-            '';
-          }
-        );
+        devShells = devShellVariants // { default = devShellVariants.none; };
       }
     );
 }
