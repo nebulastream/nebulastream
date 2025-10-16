@@ -42,6 +42,34 @@ fi
 SCRIPT="$(readlink -f "$0")"          # follow symlinks
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT")")"
 
+SANITIZER_REQUEST="${NES_SANITIZER_REQUEST:-}"
+if [ -z "$SANITIZER_REQUEST" ] && [ -n "${NES_SANITIZER:-}" ]; then
+  SANITIZER_REQUEST="$NES_SANITIZER"
+fi
+
+FLAKE_ATTR="default"
+if [ -n "$SANITIZER_REQUEST" ]; then
+  LOWER_REQUEST=$(printf '%s' "$SANITIZER_REQUEST" | tr '[:upper:]' '[:lower:]')
+  case "$LOWER_REQUEST" in
+    address|asan)
+      FLAKE_ATTR="address"
+      ;;
+    thread|tsan)
+      FLAKE_ATTR="thread"
+      ;;
+    undefined|ubsan)
+      FLAKE_ATTR="undefined"
+      ;;
+    none|default)
+      FLAKE_ATTR="default"
+      ;;
+    *)
+      printf 'nix-run.sh: warning: unrecognized sanitizer "%s", using default shell\n' "$SANITIZER_REQUEST" >&2
+      FLAKE_ATTR="default"
+      ;;
+  esac
+fi
+
 # keep only the environment variables we actually need
 KEEP_VARS="
 HOME
@@ -60,7 +88,7 @@ for var in $KEEP_VARS; do
 done
 
 IN_NIX_RUN=1 NIX_CONFIG="warn-dirty = false" \
-  nix develop "${PROJECT_DIR}#default" \
+  nix develop "${PROJECT_DIR}#${FLAKE_ATTR}" \
   --ignore-environment \
   $KEEP_ARGS \
   --command "$CMD" "$@"

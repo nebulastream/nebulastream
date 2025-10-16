@@ -1,0 +1,30 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index 5132e4e..63981f0 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -11,7 +11,15 @@
+ #include <mlir/Dialect/Func/Extensions/AllExtensions.h>
+ #include <mlir/Dialect/Func/IR/FuncOps.h>
+ #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
++#ifdef __has_include
++#if __has_include(<mlir/Dialect/LLVMIR/Transforms/InlinerInterfaceImpl.h>)
+ #include <mlir/Dialect/LLVMIR/Transforms/InlinerInterfaceImpl.h>
++#define NES_HAS_LLVM_INLINER_INTERFACE 1
++#endif
++#endif
++#ifndef NES_HAS_LLVM_INLINER_INTERFACE
++#define NES_HAS_LLVM_INLINER_INTERFACE 0
++#endif
+ #include <mlir/IR/MLIRContext.h>
+ #include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
+ #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+@@ -34,7 +42,9 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	::mlir::func::registerAllExtensions(registry);
+ 	registerBuiltinDialectTranslation(registry);
+ 	registerLLVMDialectTranslation(registry);
++#if NES_HAS_LLVM_INLINER_INTERFACE
+ 	::mlir::LLVM::registerInlinerInterface(registry);
++#endif
+ 
+ 	::mlir::MLIRContext context(registry);
+ 	if (not options.getOptionOrDefault("mlir.enableMultithreading", true)) {
