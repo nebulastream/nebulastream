@@ -47,27 +47,56 @@ if [ -z "$SANITIZER_REQUEST" ] && [ -n "${NES_SANITIZER:-}" ]; then
   SANITIZER_REQUEST="$NES_SANITIZER"
 fi
 
-FLAKE_ATTR="default"
+STDLIB_REQUEST="${NES_STDLIB_REQUEST:-}"
+if [ -z "$STDLIB_REQUEST" ] && [ -n "${NES_STDLIB:-}" ]; then
+  STDLIB_REQUEST="$NES_STDLIB"
+fi
+
+SANITIZER_SELECTOR="none"
 if [ -n "$SANITIZER_REQUEST" ]; then
   LOWER_REQUEST=$(printf '%s' "$SANITIZER_REQUEST" | tr '[:upper:]' '[:lower:]')
   case "$LOWER_REQUEST" in
     address|asan)
-      FLAKE_ATTR="address"
+      SANITIZER_SELECTOR="asan"
       ;;
     thread|tsan)
-      FLAKE_ATTR="thread"
+      SANITIZER_SELECTOR="tsan"
       ;;
     undefined|ubsan)
-      FLAKE_ATTR="undefined"
+      SANITIZER_SELECTOR="ubsan"
       ;;
     none|default)
-      FLAKE_ATTR="default"
+      SANITIZER_SELECTOR="none"
       ;;
     *)
-      printf 'nix-run.sh: warning: unrecognized sanitizer "%s", using default shell\n' "$SANITIZER_REQUEST" >&2
-      FLAKE_ATTR="default"
+      printf 'nix-run.sh: warning: unrecognized sanitizer "%s", falling back to none\n' "$SANITIZER_REQUEST" >&2
+      SANITIZER_SELECTOR="none"
       ;;
   esac
+fi
+
+STDLIB_SELECTOR="libstdcxx"
+if [ -n "$STDLIB_REQUEST" ]; then
+  LOWER_STDLIB=$(printf '%s' "$STDLIB_REQUEST" | tr '[:upper:]' '[:lower:]')
+  LOWER_STDLIB=$(printf '%s' "$LOWER_STDLIB" | sed 's/++/xx/g')
+  case "$LOWER_STDLIB" in
+    libcxx|on|true|1|yes)
+      STDLIB_SELECTOR="libcxx"
+      ;;
+    libstdcxx|off|false|0|no|default|local)
+      STDLIB_SELECTOR="libstdcxx"
+      ;;
+    *)
+      printf 'nix-run.sh: warning: unrecognized stdlib "%s", defaulting to libstdcxx\n' "$STDLIB_REQUEST" >&2
+      STDLIB_SELECTOR="libstdcxx"
+      ;;
+  esac
+fi
+
+if [ "$SANITIZER_SELECTOR" = "none" ] && [ "$STDLIB_SELECTOR" = "libstdcxx" ]; then
+  FLAKE_ATTR="default"
+else
+  FLAKE_ATTR="${SANITIZER_SELECTOR}-${STDLIB_SELECTOR}"
 fi
 
 # keep only the environment variables we actually need

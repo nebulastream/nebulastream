@@ -2,9 +2,21 @@
 let
   lib = pkgs.lib;
   antlr4Version = "4.13.2";
+  llvmPackages = pkgs.llvmPackages_19;
 
-  build = { extraBuildInputs ? [] }:
-    pkgs.llvmPackages_19.stdenv.mkDerivation rec {
+  stdenvFor = useLibcxx:
+    if useLibcxx then llvmPackages.libcxxStdenv else llvmPackages.stdenv;
+
+  build = { extraBuildInputs ? [], useLibcxx ? false }:
+    let
+      libcxxFlags = lib.optionals useLibcxx [
+        "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
+        "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libc++"
+      ];
+    in
+    (stdenvFor useLibcxx).mkDerivation rec {
       pname = "antlr4";
       version = antlr4Version;
 
@@ -41,7 +53,7 @@ let
         "-DANTLR_BUILD_SHARED=ON"
         "-DANTLR4_INSTALL=ON"
         "-DANTLR_BUILD_CPP_TESTS=OFF"
-      ];
+      ] ++ libcxxFlags;
 
       enableParallelBuilding = true;
       strictDeps = true;
@@ -54,7 +66,26 @@ let
       };
     };
 
+  parseWithSanitizerArgs = arg:
+    if builtins.isList arg then {
+      extraBuildInputs = arg;
+      useLibcxx = false;
+    } else if builtins.isAttrs arg then {
+      extraBuildInputs =
+        if arg ? extraBuildInputs then arg.extraBuildInputs
+        else if arg ? extraPackages then arg.extraPackages
+        else [ ];
+      useLibcxx = arg.useLibcxx or false;
+    } else {
+      extraBuildInputs = [ ];
+      useLibcxx = false;
+    };
+
 in {
   default = build { };
-  withSanitizer = extraPackages: build { extraBuildInputs = extraPackages; };
+  withSanitizer = arg:
+    let cfg = parseWithSanitizerArgs arg;
+    in build {
+      inherit (cfg) extraBuildInputs useLibcxx;
+    };
 }
