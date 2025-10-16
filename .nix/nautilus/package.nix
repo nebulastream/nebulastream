@@ -6,6 +6,7 @@ let
   lib = pkgs.lib;
   llvm = pkgs.llvmPackages_19;
   clangStdenv = llvm.stdenv;
+  libcxxStdenv = llvm.libcxxStdenv;
 
   fmtPkg = pkgs.fmt_11;
   spdlogPkg = pkgs.spdlog.override { fmt = fmtPkg; };
@@ -34,8 +35,11 @@ let
     pkgs.python3
   ];
 
-  build = extraBuildInputs:
-    clangStdenv.mkDerivation rec {
+  build = { extraBuildInputs ? [ ], useLibcxx ? false }:
+    let
+      selectedStdenv = if useLibcxx then libcxxStdenv else clangStdenv;
+    in
+    selectedStdenv.mkDerivation rec {
       pname = "nautilus";
       version = "0.1";
 
@@ -87,6 +91,13 @@ let
     };
 
 in {
-  default = build [ ];
-  withSanitizer = build;
+  default = build { };
+  withSanitizer = arg:
+    let
+      extraBuildInputs =
+        if builtins.isList arg then arg else (arg.extraBuildInputs or [ ]);
+      useLibcxx =
+        if builtins.isAttrs arg then (arg.useLibcxx or false) else false;
+    in
+    build { inherit extraBuildInputs useLibcxx; };
 }
