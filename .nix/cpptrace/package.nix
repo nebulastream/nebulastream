@@ -10,7 +10,9 @@
 }:
 
 let
-  clangStdenv = llvmPackages_19.stdenv;
+  llvmPackages = llvmPackages_19;
+  clangStdenv = llvmPackages.stdenv;
+  libcxxStdenv = llvmPackages.libcxxStdenv;
 
   libdwarfModule = writeTextFile {
     name = "libdwarf-cmake";
@@ -38,8 +40,16 @@ let
     '';
   };
 
-  build = { extraBuildInputs ? [] }:
-    clangStdenv.mkDerivation rec {
+  build = { extraBuildInputs ? [], useLibcxx ? false }:
+    let
+      libcxxFlags = lib.optionals useLibcxx [
+        "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
+        "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libc++"
+        "-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libc++"
+      ];
+    in
+    (if useLibcxx then libcxxStdenv else clangStdenv).mkDerivation rec {
       pname = "cpptrace";
       version = "0.8.3";
 
@@ -64,12 +74,14 @@ let
         "-G"
         "Ninja"
         "-DCMAKE_BUILD_TYPE=Release"
+        "-DBUILD_SHARED_LIBS=ON"
         "-DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON"
         "-DCPPTRACE_USE_EXTERNAL_ZSTD=ON"
         "-DCPPTRACE_BUILD_TESTS=OFF"
         "-DCPPTRACE_BUILD_EXAMPLES=OFF"
+        "-DCPPTRACE_BUILD_SHARED=ON"
         "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
-      ];
+      ] ++ libcxxFlags;
 
       enableParallelBuilding = true;
       strictDeps = true;
@@ -82,7 +94,26 @@ let
       };
     };
 
+  parseWithSanitizerArgs = arg:
+    if builtins.isList arg then {
+      extraBuildInputs = arg;
+      useLibcxx = false;
+    } else if builtins.isAttrs arg then {
+      extraBuildInputs =
+        if arg ? extraBuildInputs then arg.extraBuildInputs
+        else if arg ? extraPackages then arg.extraPackages
+        else [ ];
+      useLibcxx = arg.useLibcxx or false;
+    } else {
+      extraBuildInputs = [ ];
+      useLibcxx = false;
+    };
+
 in {
   default = build { };
-  withSanitizer = extraPackages: build { extraBuildInputs = extraPackages; };
+  withSanitizer = arg:
+    let cfg = parseWithSanitizerArgs arg;
+    in build {
+      inherit (cfg) extraBuildInputs useLibcxx;
+    };
 }
