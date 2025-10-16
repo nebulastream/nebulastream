@@ -16,10 +16,12 @@ target_include_directories(nes-query-engine
         PRIVATE .
 )
 
+nautilus_inline(nes-query-engine)
+
 # Set default ENGINE_LOG_LEVEL to ERROR if not specified. Set via: -DENGINE_LOG_LEVEL=TRACE
-if(NOT DEFINED ENGINE_LOG_LEVEL)
+if (NOT DEFINED ENGINE_LOG_LEVEL)
     set(ENGINE_LOG_LEVEL "ERROR" CACHE STRING "Log level for query engine (TRACE, DEBUG, INFO, WARNING, ERROR)")
-endif()
+endif ()
 
 # Add definition to the target
 target_compile_definitions(nes-query-engine PRIVATE ENGINE_LOG_LEVEL_${ENGINE_LOG_LEVEL})

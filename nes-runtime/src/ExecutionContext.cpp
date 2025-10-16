@@ -31,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
+#include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -123,22 +124,21 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
+NAUTILUS_INLINE TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pipelineCtx)
+{
+    PRECONDITION(pipelineCtx, "pipeline execution context should not be null");
+    /// We allocate a new tuple buffer for the runtime.
+    /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+    /// This increases the reference counter in the buffer.
+    /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
+    const auto buffer = pipelineCtx->allocateTupleBuffer();
+    auto* tb = new TupleBuffer(buffer);
+    return tb;
+}
+
 nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
-    auto bufferPtr = nautilus::invoke(
-        +[](PipelineExecutionContext* pec)
-        {
-            PRECONDITION(pec, "pipeline execution context should not be null");
-            /// We allocate a new tuple buffer for the runtime.
-            /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
-            /// This increases the reference counter in the buffer.
-            /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-            const auto buffer = pec->allocateTupleBuffer();
-            auto* tb = new TupleBuffer(buffer);
-            return tb;
-        },
-        pipelineContext);
-    return bufferPtr;
+    return nautilus::invoke(allocateBufferProxy, pipelineContext);
 }
 
 nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
@@ -146,7 +146,7 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
 }
 
-void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
+NAUTILUS_INLINE void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 
