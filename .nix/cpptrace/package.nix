@@ -38,45 +38,51 @@ let
     '';
   };
 
-in clangStdenv.mkDerivation rec {
-  pname = "cpptrace";
-  version = "0.8.3";
+  build = { extraBuildInputs ? [] }:
+    clangStdenv.mkDerivation rec {
+      pname = "cpptrace";
+      version = "0.8.3";
 
-  src = fetchFromGitHub {
-    owner = "jeremy-rifkin";
-    repo = "cpptrace";
-    rev = "v${version}";
-    hash = "sha512-T+fmn1DvgAhUBjanRJBcXc3USAJe4Qs2v5UpiLj+HErLtRKoOCr9V/Pa5Nfpfla9v5H/q/2REKpBJ3r4exSSoQ==";
-  };
+      src = fetchFromGitHub {
+        owner = "jeremy-rifkin";
+        repo = "cpptrace";
+        rev = "v${version}";
+        hash = "sha512-T+fmn1DvgAhUBjanRJBcXc3USAJe4Qs2v5UpiLj+HErLtRKoOCr9V/Pa5Nfpfla9v5H/q/2REKpBJ3r4exSSoQ==";
+      };
 
-  nativeBuildInputs = [
-    cmake
-    ninja
-    pkg-config
-  ];
-  buildInputs = [
-    libdwarf.dev
-    zstd.dev
-  ];
+      nativeBuildInputs = [
+        cmake
+        ninja
+        pkg-config
+      ];
+      buildInputs = [
+        libdwarf.dev
+        zstd.dev
+      ] ++ extraBuildInputs;
 
-  cmakeFlags = [
-    "-G"
-    "Ninja"
-    "-DCMAKE_BUILD_TYPE=Release"
-    "-DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON"
-    "-DCPPTRACE_USE_EXTERNAL_ZSTD=ON"
-    "-DCPPTRACE_BUILD_TESTS=OFF"
-    "-DCPPTRACE_BUILD_EXAMPLES=OFF"
-    "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
-  ];
+      cmakeFlags = [
+        "-G"
+        "Ninja"
+        "-DCMAKE_BUILD_TYPE=Release"
+        "-DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON"
+        "-DCPPTRACE_USE_EXTERNAL_ZSTD=ON"
+        "-DCPPTRACE_BUILD_TESTS=OFF"
+        "-DCPPTRACE_BUILD_EXAMPLES=OFF"
+        "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
+      ];
 
-  enableParallelBuilding = true;
-  strictDeps = true;
+      enableParallelBuilding = true;
+      strictDeps = true;
 
-  meta = with lib; {
-    description = "C++ stack trace library";
-    homepage = "https://github.com/jeremy-rifkin/cpptrace";
-    license = licenses.mit;
-    platforms = platforms.linux;
-  };
+      meta = with lib; {
+        description = "C++ stack trace library";
+        homepage = "https://github.com/jeremy-rifkin/cpptrace";
+        license = licenses.mit;
+        platforms = platforms.linux;
+      };
+    };
+
+in {
+  default = build { };
+  withSanitizer = extraPackages: build { extraBuildInputs = extraPackages; };
 }
