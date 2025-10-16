@@ -46,6 +46,7 @@ class SourceHandle
 public:
     explicit SourceHandle(
         BackpressureListener backpressureListener,
+        LocalQueryId queryId,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,

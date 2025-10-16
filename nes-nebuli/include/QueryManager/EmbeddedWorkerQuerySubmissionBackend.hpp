@@ -38,8 +38,15 @@ public:
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 
+    ~EmbeddedWorkerQuerySubmissionBackend() override;
+    EmbeddedWorkerQuerySubmissionBackend(const EmbeddedWorkerQuerySubmissionBackend& other) = delete;
+    EmbeddedWorkerQuerySubmissionBackend(EmbeddedWorkerQuerySubmissionBackend&& other) noexcept = delete;
+    EmbeddedWorkerQuerySubmissionBackend& operator=(const EmbeddedWorkerQuerySubmissionBackend& other) = delete;
+    EmbeddedWorkerQuerySubmissionBackend& operator=(EmbeddedWorkerQuerySubmissionBackend&& other) noexcept = delete;
+
 private:
-    SingleNodeWorker worker;
+    WorkerId id;
+    std::optional<SingleNodeWorker> worker;
 };
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);

@@ -31,44 +31,51 @@ namespace NES
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
     WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
-    : worker{[&]()
+    : id(config.host.getRawValue())
+    , worker{[&]()
              {
                  workerConfiguration.connection = URI(config.host.getRawValue());
                  workerConfiguration.grpcAddressUri = URI(config.grpc.getRawValue());
                  const LogContext logContext("create", config.grpc);
-                 return SingleNodeWorker(workerConfiguration, WorkerId("embedded"));
+                 return SingleNodeWorker(workerConfiguration, WorkerId(config.host.getRawValue()));
              }()}
 {
 }
 
 std::expected<LocalQueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
 {
-    return worker.registerQuery(plan);
+    return worker->registerQuery(plan);
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LocalQueryId queryId)
 {
-    return worker.startQuery(queryId);
+    return worker->startQuery(queryId);
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(LocalQueryId queryId)
 {
-    return worker.stopQuery(queryId, QueryTerminationType::Graceful);
+    return worker->stopQuery(queryId, QueryTerminationType::Graceful);
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::unregister(LocalQueryId queryId)
 {
-    return worker.unregisterQuery(queryId);
+    return worker->unregisterQuery(queryId);
 }
 
 std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::status(LocalQueryId queryId) const
 {
-    return worker.getQueryStatus(queryId);
+    return worker->getQueryStatus(queryId);
 }
 
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
-    return worker.getWorkerStatus(after);
+    return worker->getWorkerStatus(after);
+}
+
+EmbeddedWorkerQuerySubmissionBackend::~EmbeddedWorkerQuerySubmissionBackend()
+{
+    LogContext contextShutdown("shutdown", id);
+    worker.reset();
 }
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)

@@ -94,19 +94,20 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[operatorId], std::back_inserter(successors));
-        instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor), std::move(successors));
+        instantiatedSources.emplace_back(
+            sourceProvider.lower(compiledQueryPlan.localQueryId, originId, backpressureListener, descriptor), std::move(successors));
     }
 
 
     return std::make_unique<ExecutableQueryPlan>(
-        compiledQueryPlan.localQueryId, compiledQueryPlan.pipelines, std::move(instantiatedSources));
+        std::move(compiledQueryPlan.localQueryId), compiledQueryPlan.pipelines, std::move(instantiatedSources));
 }
 
 ExecutableQueryPlan::ExecutableQueryPlan(
     LocalQueryId localQueryId,
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
     std::vector<SourceWithSuccessor> instantiatedSources)
-    : localQueryId(localQueryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
+    : localQueryId(std::move(localQueryId)), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
 {
 }
 }

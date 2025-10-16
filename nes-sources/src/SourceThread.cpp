@@ -42,10 +42,12 @@ namespace NES
 
 SourceThread::SourceThread(
     BackpressureListener backpressureListener,
+    LocalQueryId queryId,
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
+    , queryId(std::move(queryId))
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
@@ -142,9 +144,11 @@ void dataSourceThread(
     Source* source,
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
+    const LocalQueryId queryId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
+    LogContext context("Query", queryId);
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -193,6 +197,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
+        queryId,
         localBufferManager);
     thread = std::move(sourceThread);
     return true;

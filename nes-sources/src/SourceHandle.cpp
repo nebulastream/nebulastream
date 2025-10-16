@@ -30,6 +30,7 @@ namespace NES
 {
 SourceHandle::SourceHandle(
     BackpressureListener backpressureListener,
+    LocalQueryId queryId,
     OriginId originId,
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
@@ -37,7 +38,7 @@ SourceHandle::SourceHandle(
     : configuration(std::move(configuration))
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
+        std::move(backpressureListener), std::move(queryId), std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
 }
 
 SourceHandle::~SourceHandle() = default;

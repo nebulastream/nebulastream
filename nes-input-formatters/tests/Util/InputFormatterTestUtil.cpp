@@ -179,7 +179,9 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
+    return {
+        std::move(backpressureController),
+        sourceProvider.lower(LocalQueryId(generateUUID()), NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
 }
 
 std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
