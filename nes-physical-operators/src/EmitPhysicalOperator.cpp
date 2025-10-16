@@ -27,6 +27,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/inline.hpp>
 #include <nautilus/val.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <ExecutionContext.hpp>
@@ -86,33 +87,19 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 
 namespace
 {
-void setChunkNumber(
-    const ExecutionContext& context,
-    OperatorHandlerId operatorHandlerId,
-    const nautilus::val<bool>& closesChunk,
-    const nautilus::val<ChunkNumber>& currentChunkNumber,
-    const nautilus::val<bool>& isCurrentBufferTheLastChunk,
-    const nautilus::val<TupleBuffer*>& newBuffer)
+NAUTILUS_INLINE void setChunkNumberProxy(
+    OperatorHandler* ptrOpHandler,
+    bool closesChunk,
+    ChunkNumber currentChunkNumber,
+    bool isCurrentBufferTheLastChunk,
+    TupleBuffer* newBuffer)
 {
-    nautilus::invoke(
-        +[](OperatorHandler* handler,
-            bool closesChunk,
-            ChunkNumber currentChunkNumber,
-            bool isCurrentBufferTheLastChunk,
-            TupleBuffer* newBuffer)
-        {
-            PRECONDITION(handler != nullptr, "Expects a valid handler");
-            PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");
-            PRECONDITION(currentChunkNumber != INVALID<ChunkNumber>, "Expects a valid chunkNumber");
+    PRECONDITION(ptrOpHandler != nullptr, "Expects a valid handler");
+    PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");
+    PRECONDITION(currentChunkNumber != INVALID<ChunkNumber>, "Expects a valid chunkNumber");
 
-            dynamic_cast<EmitOperatorHandler&>(*handler).setChunkNumber(
-                closesChunk, currentChunkNumber, isCurrentBufferTheLastChunk, *newBuffer);
-        },
-        context.getGlobalOperatorHandler(operatorHandlerId),
-        closesChunk,
-        currentChunkNumber,
-        isCurrentBufferTheLastChunk,
-        newBuffer);
+    dynamic_cast<EmitOperatorHandler*>(ptrOpHandler)
+        ->setChunkNumber(closesChunk, currentChunkNumber, isCurrentBufferTheLastChunk, *newBuffer);
 }
 }
 
@@ -128,7 +115,13 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
 
-    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
+    invoke(
+        setChunkNumberProxy,
+        ctx.getGlobalOperatorHandler(operatorHandlerId),
+        potentialLastChunk,
+        ctx.chunkNumber,
+        ctx.lastChunk,
+        recordBuffer.getReference());
 
     ctx.emitBuffer(recordBuffer);
 }
