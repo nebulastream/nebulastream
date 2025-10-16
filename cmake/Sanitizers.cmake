@@ -12,8 +12,8 @@
 
 set(USE_SANITIZER "none" CACHE STRING "Enables sanitizer. Thread, Address, Undefined, None (default)")
 
-if (DEFINED ENV{VCPKG_SANITIZER})
-    SET(SANITIZER_OPTION $ENV{VCPKG_SANITIZER})
+if (DEFINED ENV{NES_SANITIZER})
+    SET(SANITIZER_OPTION $ENV{NES_SANITIZER})
 else ()
     set_property(CACHE USE_SANITIZER PROPERTY STRINGS "none" "thread" "address" "undefined")
     string(TOLOWER "${USE_SANITIZER}" SANITIZER_OPTION)
