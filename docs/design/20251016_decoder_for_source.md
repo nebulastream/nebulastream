@@ -1,16 +1,21 @@
 # The Problem
 Currently, NebulaStream is able to receive and process data in `formats` such as CSV, JSON and Native, more formats like HL7 v2 are likely going to be added in the future. The component responsible for detecting tuples in the raw buffers filled with data in these formats is the `nes-input-formatter`. 
 
-Similar to `data formats` are `codecs`. Data of a certain format can be encoded according to the rules of a certain codec. Exemplary for this are general purpose `compression codecs` like Facebook's "Zstandard" (Zstd)[1]or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format.
+However, we currently do not consider codecs when treating incoming data. Data of any format can be encoded according to the rules of a certain codec. Exemplary of this are general purpose `compression codecs` like Facebook's "Zstandard" (Zstd)[1]or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format. 
+`Protobuf`, a commonly used encoding strategy, can also be considered a codec.
+Since codecs oftentimes reduce the size of data, supporting them could lead to a more efficient use of bandwidth when sending data to the worker.
 
-**P1** If data are encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. Therefore, we need a new `decoder component` that decodes incoming tuple buffers before they are formatted.
+There are a few hazards to be overcome when implementing codec support:
 
-**P2** This problem is also addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous and unordered fashion. 
+**P1** If data are encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. 
+Therefore, simply adding a new indexer will not be sufficient to process for example protobuf encoded data.
+
+**P2** The topic of codecs is already addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous and unordered fashion. 
 However, many compression codecs such as `LZ4`[4] need the data to arrive `in-order`, since encoded data usually reference reoccurring byte patterns via pointer to previous raw bytes. 
-Therefore, decoding in the input-formatter could cause a bottleneck.
 
-**P3** Furthermore, data formats like `Apache Parquet`[5] use light weight and general purpose compression codecs to encode the data of column pages. If we want to include Parquet as a format, we need decoders for the possibly used encodings. 
-Supporting formats like Parquet or just compression codecs in general could help us achieve higher throughput for TCP source data, when dealing with a `fixed connection bandwidth`, which otherwise could cause a bottleneck at the source.
+**P3** Furthermore, there is a broad variety of codecs, and we cannot offer decoders for each one of them. 
+For example, data formats like `Apache Parquet`[5] use multiple light weight and general purpose compression codecs to encode the data of column pages. 
+If we want to support Parquet as a format, we firstly would need decoders for all the possibly used encodings. 
 
 # Goals
 To solve the described problems, a nes-codec component with the following properties should be added:
@@ -27,7 +32,6 @@ Except for the decoding itself, the integration of the decoder should ideally no
 (**P2**)
 
 **G3** Easily extensible.
-There is a broad variety of codecs, and we cannot offer decoders for each one of them.
 Adding a decoder should only require the addition of the decoding function, without changing any other components of the system.
 This way, adding support for a new codec or format with codecs is straightforward. 
 (**P3**)
@@ -35,7 +39,7 @@ This way, adding support for a new codec or format with codecs is straightforwar
 # Non-Goals
 **NG1** Encoders for codecs.
 The primary focus of this design document is the decoding of incoming data before the input formatting process. 
-On demand encoding of the query results before emitting them to the sink affects different components than the decoders.
+Encoding the query results before emitting them affects different components than decoding.
 The benefits and challenges of this practice should be elaborated upon in a separate design document.
 
 **NG2** Decoding and encoding during query execution.
@@ -174,7 +178,7 @@ This could cause slow-downs and also contradicts the asynchronous out-of-order a
 # Summary
 In this design document, we proposed a solution for decoder support in NebulaStream. 
 
-To use limited bandwidth more efficiently and be able to directly process compressed source data without depending on an external system like Apache Kafka for the decoding[7], a decoder component should be added to the system.
+To use limited bandwidth more efficiently and be able to directly process compressed source data without depending on an external component like Apache Kafka [8] between the data producer and our system, a decoder component should be added to the system.
 
 Our proposed solution adds a `Decoder` abstract class with a simple decoding interface.
 Implementations for the decoder can be added as plugins with the help of the `DecoderRegistry`, making the component easily extensible without affecting other system components.
