@@ -3,13 +3,13 @@ Currently, NebulaStream is able to receive and process data in `formats` such as
 
 Similar to `data formats` are `codecs`. Data of a certain format can be encoded according to the rules of a certain codec. Exemplary for this are general purpose `compression codecs` like Facebook's "Zstandard" (Zstd)[1]or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format.
 
-(**P1**) If data are encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. Therefore, we need a new `decoder component` that decodes incoming tuple buffers before they are formatted.
+**P1** If data are encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. Therefore, we need a new `decoder component` that decodes incoming tuple buffers before they are formatted.
 
-(**P2**) This problem is also addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous and unordered fashion. 
+**P2** This problem is also addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous and unordered fashion. 
 However, many compression codecs such as `LZ4`[4] need the data to arrive `in-order`, since encoded data usually reference reoccurring byte patterns via pointer to previous raw bytes. 
 Therefore, decoding in the input-formatter could cause a bottleneck.
 
-(**P3**) Furthermore, data formats like `Apache Parquet`[5] use light weight and general purpose compression codecs to encode the data of column pages. If we want to include Parquet as a format, we need decoders for the possibly used encodings. 
+**P3** Furthermore, data formats like `Apache Parquet`[5] use light weight and general purpose compression codecs to encode the data of column pages. If we want to include Parquet as a format, we need decoders for the possibly used encodings. 
 Supporting formats like Parquet or just compression codecs in general could help us achieve higher throughput for TCP source data, when dealing with a `fixed connection bandwidth`, which otherwise could cause a bottleneck at the source.
 
 # Goals
@@ -160,20 +160,34 @@ The `Decoder` abstract class and a `LZ4Decoder` implementation, as well as the `
 In [nes-plugins](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-for-source/nes-plugins), two additional decoders for the `Snappy-Framing`[6] and `Zstd` codecs are implemented.
 
 # Alternatives
-- (arguably the most important section of the DD, if there are no good alternatives, we can simply implement the sole solution and write documentation)
-- discuss alternative approaches A1, A2, ..., including their advantages and disadvantages
+## A1 Integrating the decoders in nes-input-formatters
+In this alternative solution, the decoding of the tuple buffers is moved to the input formatter component and must be performed before the tuples and fields of the buffers are determined.
+
+This approach keeps the source itself as simple as possible by avoiding the two separate options of emitting tuple buffers that our proposed solution adds.
+
+However, the data does not arrive in-order at the input formatter. Since compression codecs like `LZ4` and `Zstd` require the data to be decoded in-order, we have two options:
+- We do not support codecs that require in-order decoding, ruling out codecs like `Lz4` and `Zstd` and disregarding **G2**.
+- We must wait for the tuple buffer with the lowest sequence number to continue decoding. 
+This could cause slow-downs and also contradicts the asynchronous out-of-order approach of the input-formatter.
 
 
 # Summary
-- this section closes the Problems/Goals bracket opened at the beginning of the design document
-- briefly recap how the proposed solution addresses all [problems](#the-problem) and achieves all [goals](#goals) and if it does not, why that is ok
-- briefly state why the proposed solution is the best [alternative](#alternatives)
+In this design document, we proposed a solution for decoder support in NebulaStream. 
 
-# (Optional) Open Questions
-- list relevant questions that cannot or need not be answered before merging
-- create issues if needed
+To use limited bandwidth more efficiently and be able to directly process compressed source data without depending on an external system like Apache Kafka for the decoding[7], a decoder component should be added to the system.
 
-# (Optional) Sources and Further Reading
+Our proposed solution adds a `Decoder` abstract class with a simple decoding interface.
+Implementations for the decoder can be added as plugins with the help of the `DecoderRegistry`, making the component easily extensible without affecting other system components.
+
+We propose to decode the encoded tuple buffers in the source thread routine. 
+This provides the advantage that the tuple buffers naturally occur in the correct order in this part of the system, thus avoiding waiting time for missing tuple buffers.
+Decoding in the source thread therefore seems like the best alternative, since the speed of the input formatter depends on being able to process the buffers out of order.
+
+# Open Questions
+- How will we integrate decoding, if we have a certain number of threads available to handle all sources instead of one source thread per source?
+Since this feature is not implemented yet either, proposing a solution for this might be too early. 
+
+# Sources and Further Reading
 [1] https://github.com/facebook/zstd
 
 [2] https://github.com/google/snappy
@@ -186,5 +200,4 @@ In [nes-plugins](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-
 
 [6] https://github.com/google/snappy/blob/main/framing_format.txt
 
-# (Optional) Appendix
-- provide here nonessential information that could disturb the reading flow, e.g., implementation details
+[7] https://kafka.apache.org/documentation/#brokerconfigs_compression.type
