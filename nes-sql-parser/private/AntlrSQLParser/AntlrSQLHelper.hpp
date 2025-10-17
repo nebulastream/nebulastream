@@ -28,6 +28,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 
+#include <CommonParserFunctions.hpp>
+
 namespace NES::Parsers
 {
 
@@ -37,6 +39,7 @@ class AntlrSQLHelper
     std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<LogicalFunction> havingClauses;
     std::string source;
+    std::pair<std::string, ConfigMap> inlineSourceConfig;
     std::vector<Projection> projectionBuilder;
 
 public:
@@ -99,6 +102,8 @@ public:
     void addHavingClause(LogicalFunction expressionNode);
     void setSource(std::string sourceName);
     [[nodiscard]] const std::string getSource() const;
+    void setInlineSource(const std::string& type, const ConfigMap& parameters);
+    [[nodiscard]] std::pair<std::string, ConfigMap> getInlineSourceConfig();
     void addProjection(std::optional<FieldIdentifier>, LogicalFunction);
 };
 }

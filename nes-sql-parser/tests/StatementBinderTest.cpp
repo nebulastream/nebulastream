@@ -88,6 +88,15 @@ TEST_F(StatementBinderTest, BindQuery)
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 }
 
+TEST_F(StatementBinderTest, InlineQuery)
+{
+    const std::string query = "SELECT a FROM File('input.csv' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, SCHEMA(id UINT64, text "
+                              "VARSIZED) AS `SOURCE`.`SCHEMA`) INTO output;";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+}
+
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 {
     const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE `testSource` (`attribute1` UINT32, `attribute2` VARSIZED)";

@@ -18,11 +18,13 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -33,6 +35,7 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -53,6 +56,15 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
     const DescriptorConfig::Config sourceDescriptorConfig{};
     return LogicalPlan(SourceNameLogicalOperator(logicalSourceName));
+}
+
+LogicalPlan LogicalPlanBuilder::createLogicalPlan(
+    std::string inlineSourceType,
+    const Schema& schema,
+    std::unordered_map<std::string, std::string> sourceConfig,
+    std::unordered_map<std::string, std::string> parserConfig)
+{
+    return LogicalPlan(InlineSourceLogicalOperator{std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(

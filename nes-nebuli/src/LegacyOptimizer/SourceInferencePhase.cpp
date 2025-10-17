@@ -19,6 +19,7 @@
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -29,8 +30,9 @@ namespace NES
 void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
 {
     auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
-
-    PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
+    auto sourceDescriptorOperators = getOperatorByType<SourceDescriptorLogicalOperator>(queryPlan);
+    PRECONDITION(
+        not(sourceOperators.empty() && sourceDescriptorOperators.empty()), "Query plan did not contain sources during type inference.");
 
     for (auto& source : sourceOperators)
     {

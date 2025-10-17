@@ -77,6 +77,7 @@ public:
     void exitLogicalNot(AntlrSQLParser::LogicalNotContext* context) override;
     void exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context) override;
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
+    void enterInlineSource(AntlrSQLParser::InlineSourceContext* context) override;
 };
 
 }

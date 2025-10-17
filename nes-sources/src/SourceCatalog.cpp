@@ -140,6 +140,30 @@ std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalS
     return std::nullopt;
 }
 
+std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
+    const std::string& sourceType,
+    const Schema& schema,
+    std::unordered_map<std::string, std::string> parserConfigMap,
+    std::unordered_map<std::string, std::string> sourceConfigMap)
+{
+    const std::unique_lock lock(catalogMutex);
+
+    auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
+    if (!descriptorConfig.has_value())
+    {
+        return std::nullopt;
+    }
+
+    auto parserConfig = ParserConfig::create(std::move(parserConfigMap));
+
+    auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
+    auto name = "InlineSource#" + physicalId.toString();
+
+    const auto logicalSource = LogicalSource{name, schema};
+    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, descriptorConfig.value(), parserConfig};
+    return sourceDescriptor;
+}
+
 std::optional<std::unordered_set<SourceDescriptor>> SourceCatalog::getPhysicalSources(const LogicalSource& logicalSource) const
 {
     const std::unique_lock lock(catalogMutex);
