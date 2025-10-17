@@ -4,7 +4,7 @@
   "homepage": "https://nebula.stream",
   "description": "Data Management for the Internet of Things.",
 
-  "builtin-baseline": "16e7a3eb109cde6115b1b5126449dfdf72341dfb",
+  "builtin-baseline": "4334d8b4c8916018600212ab4dd4bbdc343065d1",
   "$comment": [
     "BEWARE: changing the baseline might change the expected ANTLR_VERSION",
     "        supplied to cmake by the antlr4 dependency." ,
@@ -42,5 +42,12 @@
     "replxx",
     "spdlog",
     "yaml-cpp"
+  ],
+  "overrides": [
+    {
+      "name": "cpptrace",
+      "version": "0.8.3",
+      "port-version": 0
+    }
   ]
 }
