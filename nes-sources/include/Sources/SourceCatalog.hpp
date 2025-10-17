@@ -73,6 +73,12 @@ public:
 
     [[nodiscard]] std::optional<SourceDescriptor> getPhysicalSource(PhysicalSourceId physicalSourceId) const;
 
+    [[nodiscard]] std::optional<SourceDescriptor> getInlineSource(
+        const std::string& sourceType,
+        const Schema& schema,
+        std::unordered_map<std::string, std::string> parserConfigMap,
+        std::unordered_map<std::string, std::string> sourceConfigMap);
+
     /// @brief retrieves physical sources for a logical source
     /// @returns nullopt if the logical source is not registered anymore, else the set of source descriptors associated with it
     [[nodiscard]] std::optional<std::unordered_set<SourceDescriptor>> getPhysicalSources(const LogicalSource& logicalSource) const;

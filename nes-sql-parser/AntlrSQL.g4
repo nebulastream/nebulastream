@@ -142,12 +142,15 @@ relationPrimary
     | '(' query ')'  tableAlias               #aliasedQuery
     | '(' relation ')' tableAlias             #aliasedRelation
     | inlineTable                             #inlineTableDefault2
-    | functionTable                           #tableValuedFunction
+    | inlineSource                            #inlineDefinedSource
     ;
 
-functionTable
-    : funcName=errorCapturingIdentifier '(' (expression (',' expression)*)? ')' tableAlias
+inlineSource
+    : type=identifier '(' parameters=namedConfigExpressionSeq ')'
     ;
+
+schema: SCHEMA schemaDefinition
+ ;
 
 fromStatement: fromClause fromStatementBody+;
 
@@ -171,7 +174,7 @@ multipartIdentifier
     : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
     ;
 
-namedConfigExpression: constant AS name=identifierChain;
+namedConfigExpression: (constant | schema) AS name=identifierChain;
 
 namedExpression
     : expression AS name=identifier
@@ -220,6 +223,7 @@ expression
     : valueExpression
     | booleanExpression
     | identifier
+    | schema
     ;
 
 booleanExpression
@@ -437,6 +441,7 @@ RECOVER: 'RECOVER';
 RIGHT: 'RIGHT';
 RLIKE: 'RLIKE' | 'REGEXP';
 ROLLUP: 'ROLLUP';
+SCHEMA: 'SCHEMA';
 SELECT: 'SELECT' | 'select';
 SETS: 'SETS';
 SOME: 'SOME';

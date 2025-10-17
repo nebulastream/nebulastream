@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 #include <Functions/LogicalFunction.hpp>
+#include <CommonParserFunctions.hpp>
 
 namespace NES::Parsers
 {
@@ -42,6 +43,16 @@ std::vector<LogicalFunction>& AntlrSQLHelper::getHavingClauses()
 void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
+}
+
+void AntlrSQLHelper::setInlineSource(const std::string& type, const ConfigMap& parameters)
+{
+    this->inlineSourceConfig = std::make_pair(type, parameters);
+}
+
+std::pair<std::string, ConfigMap> AntlrSQLHelper::getInlineSourceConfig()
+{
+    return this->inlineSourceConfig;
 }
 
 void AntlrSQLHelper::addWhereClause(LogicalFunction expressionNode)

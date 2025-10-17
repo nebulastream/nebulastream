@@ -14,6 +14,7 @@
 
 #include <LegacyOptimizer.hpp>
 
+#include <LegacyOptimizer/InlineSourceInferencePhase.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
@@ -28,6 +29,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
+    const auto inlineSourceInference = InlineSourceInferencePhase{sourceCatalog};
     const auto sourceInference = SourceInferencePhase{sourceCatalog};
     const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
     constexpr auto typeInference = TypeInferencePhase{};
@@ -36,6 +38,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
 
     sinkBindingRule.apply(newPlan);
+    inlineSourceInference.apply(newPlan);
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
     NES_INFO("After Source Expansion:\n{}", newPlan);
