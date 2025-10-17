@@ -15,30 +15,22 @@
 #pragma once
 #include <memory>
 #include <utility>
-
 #include <Plans/LogicalPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
-class SinkCatalog;
-class SourceCatalog;
-}
 
-namespace NES
-{
-class LegacyOptimizer
+
+class InlineSourceInferencePhase
 {
 public:
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
-    LegacyOptimizer() = default;
+    explicit InlineSourceInferencePhase(std::shared_ptr<SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
-    explicit LegacyOptimizer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
-    {
-    }
+    void apply(LogicalPlan& queryPlan) const;
 
 private:
     std::shared_ptr<SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
+
 }

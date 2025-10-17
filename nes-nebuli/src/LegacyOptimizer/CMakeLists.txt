@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-legacy-optimizer
+        InlineSourceInferencePhase.cpp
         SourceInferencePhase.cpp
         LogicalSourceExpansionRule.cpp
         RedundantUnionRemovalRule.cpp
