@@ -212,27 +212,27 @@ std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLitera
 
 int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral)
 {
-    return std::stoi(integerLiteral->getText());
+    return from_chars_with_exception<int64_t>(integerLiteral->getText());
 }
 
 int64_t bindIntegerLiteral(AntlrSQLParser::SignedIntegerLiteralContext* signedIntegerLiteral)
 {
-    return std::stoi(signedIntegerLiteral->getText());
+    return from_chars_with_exception<int64_t>(signedIntegerLiteral->getText());
 }
 
 uint64_t bindUnsignedIntegerLiteral(AntlrSQLParser::UnsignedIntegerLiteralContext* unsignedIntegerLiteral)
 {
-    return std::stoul(unsignedIntegerLiteral->getText());
+    return from_chars_with_exception<uint64_t>(unsignedIntegerLiteral->getText());
 }
 
 double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral)
 {
-    return std::stod(doubleLiteral->getText());
+    return from_chars_with_exception<double>(doubleLiteral->getText());
 }
 
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral)
 {
-    return booleanLiteral->getText() == "true" || booleanLiteral->getText() == "TRUE";
+    return from_chars_with_exception<bool>(booleanLiteral->getText());
 }
 
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST)
