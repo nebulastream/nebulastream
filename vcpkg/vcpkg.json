@@ -43,7 +43,8 @@
     "yaml-cpp",
     "boost-url",
     "nameof",
-    "scope-guard"
+    "scope-guard",
+    "highs"
   ],
   "overrides": [
     {
