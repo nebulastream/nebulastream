@@ -111,7 +111,6 @@ std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName
 
     if (matchingFields.empty())
     {
-        NES_WARNING("Schema: field with name {} does not exist", fieldName);
         return std::nullopt;
     }
     if (matchingFields.size() > 1)
