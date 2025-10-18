@@ -125,7 +125,7 @@ def compute_stats(trace_path):
 
 
 def process_csv(trace_paths, window_size=10):
-    """ Pr ocess a single CSV file using pandas and return aggregated results."""
+    """ Process a single CSV file using pandas and return aggregated results."""
     try:
 
         # Read the CSV files into a pandas DataFrame
@@ -134,7 +134,10 @@ def process_csv(trace_paths, window_size=10):
         # concatenate over all number of runs
         df = pd.concat(dfs, keys=range(len(dfs)), names=['run_id'])
 
+        metadata = extract_metadata_from_filename(trace_paths[0]) #all files of same run have same metadata
+
         # Convert columns to appropriate types
+        df['run_id'] = df['run_id'].astype(int)
         df['t_id'] = df['t_id'].astype(int)
         df['ts'] = df['ts'].astype(int)
         df['tuples'] = pd.to_numeric(df['tuples'], errors='coerce').fillna(0).astype(int)
@@ -143,57 +146,122 @@ def process_csv(trace_paths, window_size=10):
         df['window'] = df['t_id'] // window_size
 
         # Separate begin and end events
-        begin_df = df[df['ph'] == 'B']
-        end_df = df[df['ph'] == 'E']
+        begin_df = df[df['ph'] == 'B'].copy()
+        end_df = df[df['ph'] == 'E'].copy()
 
         # Merge begin and end events on `p_id`, `t_id`, and `window`
         merged = pd.merge(
-            begin_df, end_df, on=['p_id', 't_id', 'window'], suffixes=('_begin', '_end')
+            begin_df, end_df, on=['run_id', 'p_id', 't_id', 'window'], suffixes=('_begin', '_end')
         )
 
         # Calculate latency and throughput
         merged['latency'] = merged['ts_end'] - merged['ts_begin'] #ms
+        if (merged['latency'] <= 0).any():
+            num_nul= (merged['latency'] <= 0).sum()
+            print(f"Warning: Some tasks have {num_nul} non-positive latency and will be excluded from metrics.")
+            merged = merged[merged['latency'] > 0].copy()
         merged['throughput'] = merged['tuples_begin'] / (merged['latency'] / 1e6)  # Convert to Tuples/second
 
-        # Group by `p_id` and window to calculate metrics
-        windowed = merged.groupby(['p_id', 'window']).agg(
+        num_reps = merged['run_id'].nunique()
+
+        # Group by run_id and produce pandas Series so we can use .mean() / np.mean() easily
+        grouped = merged.groupby('run_id')
+
+        # Total tasks time per run (in microseconds)
+        total_tasks_time_by_run = grouped['latency'].sum()
+
+        # Full query duration per run (in microseconds)
+        full_query_duration_by_run = (grouped['ts_end'].max() - grouped['ts_begin'].min())
+
+        # Aggregate means (already in seconds / counts)
+        mean_full_query_duration = full_query_duration_by_run.mean()
+        mean_total_tasks_time = total_tasks_time_by_run.mean()
+
+
+        # Total skipped tasks across all begins minus matched (aggregate across all runs)
+        total_skipped_tasks = len(begin_df) - len(merged)
+
+
+        #TODO: total skipped tasks by p_id
+
+        # Skipped tasks per run: begins per run minus matched tasks per run
+        #starts_by_run = df[df['ph'] == 'B'].groupby('run_id').size()
+        #matched_by_run = grouped.size()
+        #total_skipped_tasks_by_run = starts_by_run.reindex(matched_by_run.index, fill_value=0) - matched_by_run
+
+
+        #mean_total_skipped_tasks = total_skipped_tasks_by_run.mean()
+
+
+
+        # Count starts per run/p_id/window (to compute skipped = starts - matched)
+        starts = begin_df.groupby(['run_id', 'p_id', 'window']).size().rename('starts')
+
+        # Per-run, per-pipeline-window aggregates from matched tasks
+        grouped_run = merged.groupby(['run_id', 'p_id', 'window']).agg(
             count=('latency', 'size'),
-            count_tp=('mean_tp', 'size'),
-            total_tuples=('tuples', 'sum'),
+            total_tuples=('tuples_begin', 'sum'),
             sum_tp=('throughput', 'sum'),
             mean_latency=('latency', 'mean'),
             std_latency=('latency', 'std'),
             mean_tp=('throughput', 'mean'),
             std_tp=('throughput', 'std')
-        ).reset_index()
+        )
 
-        # Group by `p_id` to calculate overall metrics
-        pipeline = windowed.groupby('p_id').agg(
-            count=('latency', 'size'),
-            count_tp=('mean_tp', 'size'),
-            total_tuples=('tuples', 'sum'),
-            sum_tp=('sum_tp', 'sum'),
-            mean_latency=('mean_latency', 'mean'),
-            std_latency=('mean_latency', 'std'),
-            mean_tp=('mean_tp', 'mean'),
-            std_tp=('mean_tp', 'std')
-        ).reset_index()
+        # Join starts to compute skipped per run/p_id/window
+        grouped_run = grouped_run.join(starts, how='left')
+        grouped_run['starts'] = grouped_run['starts'].fillna(0).astype(int)
+        grouped_run['skipped'] = grouped_run['starts'] - grouped_run['count']
+        grouped_run['skipped'] = grouped_run['skipped'].clip(lower=0)
+
+        # Reset index for per-window averaging across runs
+        grouped_run = grouped_run.reset_index()
+
+        # Average windowed metrics across runs (mean and std across runs)
+        windowed_stats = grouped_run.groupby(['p_id', 'window']).agg(
+            runs=('run_id', 'nunique'),
+            count_mean=('count', 'mean'),
+            count_std=('count', 'std'),
+            total_tuples_mean=('total_tuples', 'mean'),
+            total_tuples_std=('total_tuples', 'std'),
+            sum_tp_mean=('sum_tp', 'mean'),
+            sum_tp_std=('sum_tp', 'std'),
+            mean_latency_mean=('mean_latency', 'mean'),
+            mean_latency_std=('mean_latency', 'std'),
+            mean_tp_mean=('mean_tp', 'mean'),
+            mean_tp_std=('mean_tp', 'std'),
+            skipped_mean=('skipped', 'mean'),
+            skipped_std=('skipped', 'std')
+        ).reset_index().fillna(0)
+
+        # Pipeline-level aggregation: average the windowed metrics across windows (as requested)
+        pipeline_stats = windowed_stats.groupby('p_id').agg(
+            windows=('window', 'nunique'),
+            total_tuples_mean=('total_tuples_mean', 'mean'),
+            total_tuples_std=('total_tuples_std', 'mean'),
+            sum_tp_mean=('sum_tp_mean', 'mean'),
+            sum_tp_std=('sum_tp_std', 'mean'),
+            mean_latency_mean=('mean_latency_mean', 'mean'),
+            mean_latency_std=('mean_latency_std', 'mean'),
+            mean_tp_mean=('mean_tp_mean', 'mean'),
+            mean_tp_std=('mean_tp_std', 'mean'),
+            skipped_mean=('skipped_mean', 'mean'),
+            skipped_std=('skipped_std', 'mean')
+        ).reset_index().fillna(0)
 
 
+        global_stats = {
+            'total_tasks_time': mean_total_tasks_time,
+            'full_query_duration': mean_full_query_duration ,
+            'total_skipped_tasks': total_skipped_tasks
+        }
 
-        full_query_duration = (merged['ts_end'].max() - merged['ts_begin'].min()) / 1e6  # in seconds
-        total_tasks_time = (merged['latency'].sum()) / 1e6  # in seconds
-        total_skipped_tasks = len(df[df['ph'] == 'B']) - len(merged)
-        time_pct = (pipeline['sum_tp'] * (merged['latency'].mean() / 1e6)) / full_query_duration * 100
+        run_stats = {
+            'total_tasks_time_by_run': total_tasks_time_by_run ,
+            'full_query_duration_by_run': full_query_duration_by_run
+        }
 
-        windowed_results = [windowed, total_tasks_time, full_query_duration, total_skipped_tasks, time_pct]
-        #pipeline['comp_tp'] = pipeline['sum_tp'] / full_query_duration
-        #pipeline['eff_tp'] = pipeline['sum_tp'] / (total_tasks_time if total_tasks_time > 0 else 1)
-
-
-        pipeline_results = [pipeline, total_tasks_time, full_query_duration, total_skipped_tasks, time_pct]
-
-        return windowed_results, pipeline_results
+        return windowed_stats, pipeline_stats, global_stats, run_stats, metadata
 
     except Exception as e:
         print(f"Error processing CSV with pandas: {e}")
