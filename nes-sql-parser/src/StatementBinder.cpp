@@ -140,23 +140,29 @@ public:
         return ss.str();
     }
 
-    int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral) const { return std::stoi(integerLiteral->getText()); }
+    int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral) const
+    {
+        return Util::from_chars_with_exception<int64_t>(integerLiteral->getText());
+    }
 
     int64_t bindIntegerLiteral(AntlrSQLParser::SignedIntegerLiteralContext* signedIntegerLiteral) const
     {
-        return std::stoi(signedIntegerLiteral->getText());
+        return Util::from_chars_with_exception<int64_t>(signedIntegerLiteral->getText());
     }
 
     uint64_t bindUnsignedIntegerLiteral(AntlrSQLParser::UnsignedIntegerLiteralContext* unsignedIntegerLiteral) const
     {
-        return std::stoul(unsignedIntegerLiteral->getText());
+        return Util::from_chars_with_exception<uint64_t>(unsignedIntegerLiteral->getText());
     }
 
-    double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral) const { return std::stod(doubleLiteral->getText()); }
+    double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral) const
+    {
+        return Util::from_chars_with_exception<double>(doubleLiteral->getText());
+    }
 
     bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral) const
     {
-        return booleanLiteral->getText() == "true" || booleanLiteral->getText() == "TRUE";
+        return Util::from_chars_with_exception<bool>(booleanLiteral->getText());
     }
 
     Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST) const
