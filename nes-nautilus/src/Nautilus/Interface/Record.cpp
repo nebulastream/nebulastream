@@ -78,14 +78,4 @@ nautilus::val<uint64_t> Record::getNumberOfFields() const
     return recordFields.size();
 }
 
-bool Record::operator==(const Record& rhs) const
-{
-    return recordFields == rhs.recordFields;
-}
-
-bool Record::operator!=(const Record& rhs) const
-{
-    return !(rhs == *this);
-}
-
 }
