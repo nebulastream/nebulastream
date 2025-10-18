@@ -137,3 +137,8 @@ Nautilus is not currently on vcpkg.
 ### Scope Guard
 
 [Scope Guard](https://github.com/Neargye/scope_guard) is not currently on vcpkg.
+
+### HiGHS
+
+[HiGHS](https://github.com/ERGO-Code/HiGHS) needs a patch that allows building with c++23.
+The patch also disables the HiGHS tool which is build with the vcpkg port.

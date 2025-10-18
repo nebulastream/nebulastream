@@ -47,7 +47,8 @@
     "scope-guard",
     "boost-url",
     "simdjson",
-    "date"
+    "date",
+    "highs"
   ],
   "overrides": [
     {
