@@ -218,6 +218,7 @@ struct Repl::Impl
         {
             exitCode = 1;
         }
+        NES_ERROR("Error encountered: {}", error.what());
         std::cout << fmt::format("Error encountered: {}", error.what());
     }
 
