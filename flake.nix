@@ -38,6 +38,7 @@
           spdlogPkg
           grpc
           protobuf
+          highs
           abseil-cpp
           yaml-cpp
           replxx

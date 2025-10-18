@@ -42,7 +42,8 @@
     "spdlog",
     "yaml-cpp",
     "nameof",
-    "scope-guard"
+    "scope-guard",
+    "highs"
   ],
   "overrides": [
     {
