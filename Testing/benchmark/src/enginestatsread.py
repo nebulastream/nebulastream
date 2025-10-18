@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 import sys
 import os
-import json
-import multiprocessing
-import concurrent.futures
-import time
-import re
-import argparse  # Add missing import
+import csv
+import argparse
+import numpy as np
+import pandas as pd
 from collections import defaultdict
 
 def compute_stats(trace_path):
@@ -125,14 +123,111 @@ def compute_stats(trace_path):
     except Exception as e:
         return trace_path, 0, 0, {}, f"Error: {str(e)}"
 
+
+def process_csv(trace_paths, window_size=10):
+    """ Pr ocess a single CSV file using pandas and return aggregated results."""
+    try:
+
+        # Read the CSV files into a pandas DataFrame
+        dfs = [pd.read_csv(f) for f in trace_paths]
+
+        # concatenate over all number of runs
+        df = pd.concat(dfs, keys=range(len(dfs)), names=['run_id'])
+
+        # Convert columns to appropriate types
+        df['t_id'] = df['t_id'].astype(int)
+        df['ts'] = df['ts'].astype(int)
+        df['tuples'] = pd.to_numeric(df['tuples'], errors='coerce').fillna(0).astype(int)
+
+        # Add a window column
+        df['window'] = df['t_id'] // window_size
+
+        # Separate begin and end events
+        begin_df = df[df['ph'] == 'B']
+        end_df = df[df['ph'] == 'E']
+
+        # Merge begin and end events on `p_id`, `t_id`, and `window`
+        merged = pd.merge(
+            begin_df, end_df, on=['p_id', 't_id', 'window'], suffixes=('_begin', '_end')
+        )
+
+        # Calculate latency and throughput
+        merged['latency'] = merged['ts_end'] - merged['ts_begin'] #ms
+        merged['throughput'] = merged['tuples_begin'] / (merged['latency'] / 1e6)  # Convert to Tuples/second
+
+        # Group by `p_id` and window to calculate metrics
+        windowed = merged.groupby(['p_id', 'window']).agg(
+            count=('latency', 'size'),
+            count_tp=('mean_tp', 'size'),
+            total_tuples=('tuples', 'sum'),
+            sum_tp=('throughput', 'sum'),
+            mean_latency=('latency', 'mean'),
+            std_latency=('latency', 'std'),
+            mean_tp=('throughput', 'mean'),
+            std_tp=('throughput', 'std')
+        ).reset_index()
+
+        # Group by `p_id` to calculate overall metrics
+        pipeline = windowed.groupby('p_id').agg(
+            count=('latency', 'size'),
+            count_tp=('mean_tp', 'size'),
+            total_tuples=('tuples', 'sum'),
+            sum_tp=('sum_tp', 'sum'),
+            mean_latency=('mean_latency', 'mean'),
+            std_latency=('mean_latency', 'std'),
+            mean_tp=('mean_tp', 'mean'),
+            std_tp=('mean_tp', 'std')
+        ).reset_index()
+
+
+
+        full_query_duration = (merged['ts_end'].max() - merged['ts_begin'].min()) / 1e6  # in seconds
+        total_tasks_time = (merged['latency'].sum()) / 1e6  # in seconds
+        total_skipped_tasks = len(df[df['ph'] == 'B']) - len(merged)
+        time_pct = (pipeline['sum_tp'] * (merged['latency'].mean() / 1e6)) / full_query_duration * 100
+
+        windowed_results = [windowed, total_tasks_time, full_query_duration, total_skipped_tasks, time_pct]
+        #pipeline['comp_tp'] = pipeline['sum_tp'] / full_query_duration
+        #pipeline['eff_tp'] = pipeline['sum_tp'] / (total_tasks_time if total_tasks_time > 0 else 1)
+
+
+        pipeline_results = [pipeline, total_tasks_time, full_query_duration, total_skipped_tasks, time_pct]
+
+        return windowed_results, pipeline_results
+
+    except Exception as e:
+        print(f"Error processing CSV with pandas: {e}")
+        return None, None
+
+
+
+
+
+
+
+
+
+
+def write_results_with_pandas(base_directory, windowed_results, pipeline_results):
+    """Write results to CSV files."""
+    # Write windowed results
+    windowed_path = os.path.join(base_directory, 'results_windowed.csv')
+    windowed_results.to_csv(windowed_path, index=False)
+    print(f"Windowed results written to {windowed_path}")
+
+    # Write pipeline results
+    pipeline_path = os.path.join(base_directory, 'results_pipeline.csv')
+    pipeline_results.to_csv(pipeline_path, index=False)
+    print(f"Pipeline results written to {pipeline_path}")
+
 def extract_metadata_from_filename(file_path):
     """Extract metadata (layout, buffer size, threads, query) from filename."""
     # Get just the filename from path
     filename = os.path.basename(file_path)
 
     # Fix duplicate filenames like "file.jsonfile.json"
-    if filename.endswith(".json"):
-        duplicate_pos = filename.find(".json", 0, -5)
+    if filename.endswith(".csv"):
+        duplicate_pos = filename.find(".csv", 0, -5)
         if duplicate_pos > 0:
             filename = filename[:duplicate_pos + 5]
 
@@ -178,7 +273,7 @@ def main():
         logs_directory = os.path.join(base_directory, "logs")
         if os.path.exists(logs_directory):
             for file in os.listdir(logs_directory):
-                if file.endswith('.json') and 'GoogleEventTrace' in file:
+                if file.endswith('.csv') and 'GoogleEventTrace' in file:
                     trace_files.append(os.path.join(logs_directory, file))
 
     if not trace_files:
@@ -187,10 +282,28 @@ def main():
 
     print(f"Processing {len(trace_files)} trace files in parallel...")
 
+    # -trace to csv#
+    # -get all csvs for same configuration (run 1, 2 etc.)
+    # calculate metrics (windowed and average) + needed for plots, total_time etc.
+    # -average over repetitions
+    # delete old data files
+    # combine average results to main result file
+
+
+    #find first underscore in filename and group by suffix
+
+    config_groups = defaultdict(list)
+    for trace_file in trace_files:
+        filename = os.path.basename(trace_file)
+        first_underscore = filename.find('_')
+        config_key = filename[first_underscore:]
+        config_groups[config_key].append(trace_file)
+
     # Process all trace files in parallel
     results = []
     with concurrent.futures.ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        results = list(executor.map(compute_stats, trace_files))
+        results = executor.map(process_csv, config_groups)
+
 
     # Process data for CSV output
     csv_data = []
