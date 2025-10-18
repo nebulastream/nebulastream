@@ -334,3 +334,12 @@ flowchart TD
 - The exception name and description should very concisely describe i) which condition led to the error ("UnknownSourceType") or ii) which operation failed ("CannotConnectToCoordinator"). The former is preferred to the latter.
 - When writing error messages (which are `description` and optional context), we follow the [Postgres Error Message Style Guide](https://www.postgresql.org/docs/current/error-style-guide.html).
 
+# Printing Type Names
+
+When printing a type, i.e., in a generic parsing function, do not use the built-in `typeid(T).name()`, as this will
+usually give a mangled type name. Instead, use [nameof](https://github.com/Neargye/nameof).
+
+```c++
+NAMEOF_TYPE(T) /// gives a string_view which contains the types name
+NAMEOF_TYPE_EXPR(expr) /// gives a string_view of exprs type. (i.e. decltype(expr))
+```
