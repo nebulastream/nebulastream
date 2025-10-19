@@ -305,7 +305,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                 "buffer_size": buffer_size,
                                 "num_columns": num_col,
                                 "accessed_columns": access_col,
-                                "operator_chain": "filter",
+                                "operator_chain": ["filter"],
                                 "swap_strategy": "USE_SINGLE_LAYOUT",
                                 "selectivity": selectivity,
                                 "individual_selectivity": individual_selectivity,
@@ -349,7 +349,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                 "buffer_size": buffer_size,
                                 "num_columns": num_col,
                                 "accessed_columns": access_col,
-                                "operator_chain": "map",
+                                "operator_chain": ["map"],
                                 "swap_strategy": "USE_SINGLE_LAYOUT",
                                 "function_type": func_type
                             }
@@ -409,7 +409,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                             "buffer_size": buffer_size,
                                             "num_columns": num_col,
                                             "accessed_columns": access_col,
-                                            "operator_chain": "agg",
+                                            "operator_chain": ["aggregation"],
                                             "swap_strategy": "USE_SINGLE_LAYOUT",
                                             "aggregation_function": agg_func,
                                             "window_size": window_size,
@@ -499,9 +499,8 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                     query_id += 1
 
     # Write query mapping to a file for later reference
-    with open(result_dir / "query_mapping.txt", 'w') as f:
-        for qid, config in query_configs.items():
-            f.write(f"Query {qid}: {config}\n")
+    df = pd.DataFrame(query_configs)
+    df.to_csv(result_dir / "query_configs.csv", index=False)
 
     print(f"Generated test files with {query_id-1} queries")
     print(f"Created organized directory structure in {result_dir}")

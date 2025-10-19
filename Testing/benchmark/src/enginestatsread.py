@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from collections import defaultdict
+from run_benchmark import get_config_from_file
 
 def compute_stats(trace_path):
     """Process a single trace file and return the results."""
@@ -301,6 +302,10 @@ def extract_metadata_from_filename(file_path):
 
     metadata = {}
 
+    query_id= re.search(r'_query(\d+).json', filename)
+    if query_id:
+        metadata['query_id'] = query_id.group(1)
+
     # Extract layout with more specific pattern
     if '_ROW_LAYOUT_' in filename:
         metadata['layout'] = 'ROW_LAYOUT'
@@ -366,6 +371,8 @@ def main():
         first_underscore = filename.find('_')
         config_key = filename[first_underscore:]
         config_groups[config_key].append(trace_file)
+
+    query_config = get_config_from_file(base_directory + '/query_configs.csv')
 
     # Process all trace files in parallel
     results = []
