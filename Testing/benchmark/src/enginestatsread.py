@@ -134,65 +134,8 @@ def compute_stats(trace_path):
 def process_csv(trace_paths, window_size=10):
     """ Process a single CSV file using pandas and return aggregated results."""
     try:
-
-        # Read the CSV files into a pandas DataFrame
-        #dfs = [pd.read_csv(f) for f in trace_paths]
-
-        # Load the JSON trace file
-        """dfs = []
-        for trace_data in trace_paths:
-            # Support both {"traceEvents": [...]} and a top-level list of events
-            if isinstance(trace_data, dict):
-                events = trace_data.get('traceEvents', [])
-            elif isinstance(trace_data, list):
-                events = trace_data
-            else:
-                events = []
-
-            if not events:
-                continue
-
-            df = pd.DataFrame(events)
-            if df.empty:
-                continue
-
-            # Ensure required columns exist
-            for col in ['cat', 'ph', 'args', 'ts']:
-                if col not in df.columns:
-                    df[col] = None
-
-            # Keep only task events with phase B or E and non-null args
-            df = df[(df['cat'] == 'task') & (df['ph'].isin(['B', 'E'])) & (df['args'].notnull())].copy()
-            if df.empty:
-                continue
-
-
-            #set tuples = 0 if missing or ph = B
-            new_df = pd.DataFrame()
-            new_df['p_id'] = df['args'].apply(lambda x: x.get('pipeline_id', -1)).astype(int)
-            new_df['t_id'] = df['args'].apply(lambda x: x.get('task_id', -1)).astype(int)
-            new_df['ph'] = df['ph'].astype(str)
-            # Normalize timestamps to int and make them reasonable (keep lower digits)
-            new_df['ts'] = pd.to_numeric(df['ts'], errors='coerce').fillna(0).astype(int) % (10**9)  # Ignore the first 9 digits of the timestamp
-           # tuples only meaningful on begin events ('B'), default to 0 otherwise
-            def extract_tuples(row):
-                args = row['args']
-                if isinstance(args, dict) and row['ph'] == 'B':
-                    return int(args.get('tuples', 0) or 0)
-                return 0
-            new_df['tuples'] = df.apply(extract_tuples, axis=1)
-
-            dfs.append(new_df)
-
-        # If no valid data, return early
-        if not dfs:
-            print("No valid task events found in provided trace files.")
-            return None, None, None, None, {}"""
-
-
         dfs = []
         for trace_file in trace_paths:
-            df = []
             with open(trace_file, 'r') as f:
                 trace_data = json.load(f)
 
@@ -202,41 +145,44 @@ def process_csv(trace_paths, window_size=10):
             rows = []
             for event in events:
                 if event.get('ph') in ['B', 'E'] and event.get('cat') == 'task' and 'args' in event:
-
                     args = event['args']
                     # Ignore the first 9 digits of the timestamp
                     p_id = int(args.get('pipeline_id', -1))
                     t_id = int(args.get('task_id', -1))
                     ph = event.get('ph', '')
                     #reduced_ts = (event['ts'] % 1_000_000_000)
-                    ts = int(event['ts'])
+                    ts = int(event['ts']) % 1_000_000_000
 
                     tuples = int(args.get('tuples', 0) if event['ph'] == 'B' else 0)
                     rows.append({
                         'p_id': p_id,
-                         't_id': t_id,
-                         'ph': ph,
-                         'ts': ts,
-                         'tuples': tuples
+                        't_id': t_id,
+                        'ph': ph,
+                        'ts': ts,
+                        'tuples': tuples
                     })
             if not rows:
                 continue
-            df =    pd.DataFrame(rows)
+            df = pd.DataFrame(rows)
 
-            min_timestamp = df['ts'].min()
-            df['ts'] = (df['ts']  -  min_timestamp) % 1_000_000_000
+            # Normalize timestamps per-file to start at zero (microseconds).
+            # Avoid modulo wrap that can reorder events and cause negative latencies.
+            min_timestamp = df['ts'].min() % 1_000_000_000
+            df['ts'] = (df['ts']  -  min_timestamp)
 
-            #print(df.info())
-            #print(df.head())
             dfs.append(df)
         print(f"Loaded {len(dfs)} trace files for processing.")
         # concatenate over all number of runs
-        df = pd.concat(dfs, keys=range(len(dfs)), names=['run_id']).reset_index(level=0).reset_index(drop=True)
-        print(df.info())
-        print(df.head())
-        metadata = extract_metadata_from_filename(trace_paths[0]) #all files of same run have same metadata
 
-        # Convert columns to appropriate types
+        if not dfs:
+            print("No valid task events found in provided trace files.")
+            return None, None, None, None, {}
+
+        # concatenate across runs; key -> run_id
+        df = pd.concat(dfs, keys=range(len(dfs)), names=['run_id']).reset_index(level=0).reset_index(drop=True)
+        metadata = extract_metadata_from_filename(trace_paths[0])
+
+        # ensure types
         df['run_id'] = df['run_id'].astype(int)
         df['t_id'] = df['t_id'].astype(int)
         df['ts'] = df['ts'].astype(int)
@@ -249,7 +195,7 @@ def process_csv(trace_paths, window_size=10):
         begin_df = df[df['ph'] == 'B'].copy()
         end_df = df[df['ph'] == 'E'].copy()
 
-        # Merge begin and end events on `p_id`, `t_id`, and `window`
+        # Merge begin and end on run_id, p_id, t_id, window
         merged = pd.merge(
             begin_df, end_df, on=['run_id', 'p_id', 't_id', 'window'], suffixes=('_begin', '_end')
         )
@@ -260,44 +206,32 @@ def process_csv(trace_paths, window_size=10):
             num_nul= (merged['latency'] <= 0).sum()
             print(f"Warning: Some tasks have {num_nul} non-positive latency and will be excluded from metrics.")
             merged = merged[merged['latency'] > 0].copy()
-        merged['throughput'] = merged['tuples_begin'] / (merged['latency'] / 1e6)  # Convert to Tuples/second
 
+        # throughput per task (tuples/sec)
+        merged['throughput'] = merged['tuples_begin'] / (merged['latency'] / 1e6)
+
+        # per-run counts
         num_reps = merged['run_id'].nunique()
 
-        # Group by run_id and produce pandas Series so we can use .mean() / np.mean() easily
         grouped = merged.groupby('run_id')
 
-        # Total tasks time per run (in microseconds)
+        # Total tasks time per run (microseconds)
         total_tasks_time_by_run = grouped['latency'].sum()
 
-        # Full query duration per run (in microseconds)
+        # Full query duration per run (microseconds)
         full_query_duration_by_run = (grouped['ts_end'].max() - grouped['ts_begin'].min())
 
         # Aggregate means (already in seconds / counts)
         mean_full_query_duration = full_query_duration_by_run.mean()
         mean_total_tasks_time = total_tasks_time_by_run.mean()
 
-
-        # Total skipped tasks across all begins minus matched (aggregate across all runs)
+        # Total skipped tasks (starts - matched) across all runs/files
         total_skipped_tasks = len(begin_df) - len(merged)
-
-
-        #TODO: total skipped tasks by p_id
-
-        # Skipped tasks per run: begins per run minus matched tasks per run
-        #starts_by_run = df[df['ph'] == 'B'].groupby('run_id').size()
-        #matched_by_run = grouped.size()
-        #total_skipped_tasks_by_run = starts_by_run.reindex(matched_by_run.index, fill_value=0) - matched_by_run
-
-
-        #mean_total_skipped_tasks = total_skipped_tasks_by_run.mean()
-
-
 
         # Count starts per run/p_id/window (to compute skipped = starts - matched)
         starts = begin_df.groupby(['run_id', 'p_id', 'window']).size().rename('starts')
 
-        # Per-run, per-pipeline-window aggregates from matched tasks
+        # Per-run, per-pipeline-window aggregates (from matched tasks)
         grouped_run = merged.groupby(['run_id', 'p_id', 'window']).agg(
             count=('latency', 'size'),
             total_tuples=('tuples_begin', 'sum'),
@@ -306,20 +240,20 @@ def process_csv(trace_paths, window_size=10):
             std_latency=('latency', 'std'),
             mean_tp=('throughput', 'mean'),
             std_tp=('throughput', 'std'),
-            sum_tp=('throughput', 'sum')         # for completeness
+            sum_tp=('throughput', 'sum')
         )
 
         # Join starts to compute skipped per run/p_id/window
         grouped_run = grouped_run.join(starts, how='left')
         grouped_run['starts'] = grouped_run['starts'].fillna(0).astype(int)
-        grouped_run['skipped'] = grouped_run['starts'] - grouped_run['count']
-        grouped_run['skipped'] = grouped_run['skipped'].clip(lower=0)
+        grouped_run['skipped'] = (grouped_run['starts'] - grouped_run['count']).clip(lower=0)
 
-        # Reset index for per-window averaging across runs
+        # Reset index for per-window averaging across runs and keep a copy
         grouped_run = grouped_run.reset_index()
+        per_run_window = grouped_run.copy()
 
         # Average windowed metrics across runs (mean and std across runs)
-        windowed_stats = grouped_run.groupby(['p_id', 'window']).agg(
+        windowed_stats = per_run_window.groupby(['p_id', 'window']).agg(
             runs=('run_id', 'nunique'),
             count_mean=('count', 'mean'),
             count_std=('count', 'std'),
@@ -331,8 +265,7 @@ def process_csv(trace_paths, window_size=10):
             mean_latency_std=('mean_latency', 'std'),
             mean_tp_mean=('mean_tp', 'mean'),
             mean_tp_std=('mean_tp', 'std'),
-            skipped_mean=('skipped', 'mean'),
-            skipped_std=('skipped', 'std')
+            skipped_sum=('skipped', 'sum')
         ).reset_index().fillna(0)
 
         # Build per-run, per-pipeline totals (to be averaged across runs for pipeline-level stats)
@@ -341,7 +274,7 @@ def process_csv(trace_paths, window_size=10):
             sum_tuples=('tuples_begin', 'sum'),
             sum_latency=('latency', 'sum'),                 # microseconds (compute time)
             mean_latency=('latency', 'mean'),
-            sum_tp=('tp_task', 'sum')
+            sum_tp=('throughput', 'sum')
         )
 
         # compute pipeline wall-time per run (wall time = max end - min begin per run/p_id)
@@ -361,7 +294,7 @@ def process_csv(trace_paths, window_size=10):
         # compute per-run derived tps to allow mean-of-runs later
         per_run_pipeline['comp_tp_run'] = per_run_pipeline.apply(
             lambda r: (r['sum_tuples'] / (r['sum_latency'] / 1e6)) if r['sum_latency'] > 0 else 0, axis=1
-        )  # tuples/sec using compute time
+        )
         per_run_pipeline['eff_tp_run'] = per_run_pipeline.apply(
             lambda r: (r['sum_tuples'] / (r['wall_time'] / 1e6)) if r['wall_time'] > 0 else 0, axis=1
         )
@@ -378,16 +311,14 @@ def process_csv(trace_paths, window_size=10):
             wall_time_mean=('wall_time', 'mean'),          # microseconds
             wall_time_std=('wall_time', 'std'),
             mean_tp_mean=('sum_tp', 'mean'),               # average of per-run sum_tp (optional)
-            skipped_mean=('skipped', 'mean'),
-            skipped_std=('skipped', 'std'),
+            skipped_sum=('skipped', 'sum'),
             comp_tp_mean_of_runs=('comp_tp_run', 'mean'),
             comp_tp_std_of_runs=('comp_tp_run', 'std'),
             eff_tp_mean_of_runs=('eff_tp_run', 'mean'),
             eff_tp_std_of_runs=('eff_tp_run', 'std')
         ).reset_index().fillna(0)
 
-        # Provide derived comp/eff tp based on aggregated means (useful for some comparisons).
-        # These are computed as mean_sum_tuples / mean_sum_latency  (and / mean_wall_time).
+        # Provide derived comp/eff tp based on aggregated means
         def safe_div(a, b):
             return (a / b) if b and b > 0 else 0  # b in microseconds #-> convert to seconds
 
@@ -398,15 +329,14 @@ def process_csv(trace_paths, window_size=10):
             lambda r: safe_div(r['sum_tuples_mean'], r['wall_time_mean']), axis=1
         )
 
-
         global_stats = {
             'total_tasks_time': mean_total_tasks_time,
-            'full_query_duration': mean_full_query_duration ,
+            'full_query_duration': mean_full_query_duration,
             'total_skipped_tasks': total_skipped_tasks
         }
 
         run_stats = {
-            'total_tasks_time_by_run': total_tasks_time_by_run ,
+            'total_tasks_time_by_run': total_tasks_time_by_run,
             'full_query_duration_by_run': full_query_duration_by_run
         }
 
@@ -414,7 +344,7 @@ def process_csv(trace_paths, window_size=10):
 
     except Exception as e:
         print(f"Error processing CSV with pandas: {e}")
-        return None, None
+        return None, None, None, None, {}
 
 
 
@@ -452,7 +382,7 @@ def extract_metadata_from_filename(file_path):
 
     query_id= re.search(r'_query(\d+).json', filename)
     if query_id:
-        metadata['query_id'] = query_id.group(1)
+        metadata['query_id'] = int(query_id.group(1))
 
     # Extract layout with more specific pattern
     if '_ROW_LAYOUT_' in filename:
@@ -463,17 +393,17 @@ def extract_metadata_from_filename(file_path):
     # Extract buffer size with more specific pattern
     buffer_match = re.search(r'_buffer(\d+)_', filename)
     if buffer_match:
-        metadata['buffer_size'] = buffer_match.group(1)
+        metadata['buffer_size'] = int(buffer_match.group(1))
 
     # Extract thread count with more specific pattern
     threads_match = re.search(r'_threads(\d+)_', filename)
     if threads_match:
-        metadata['threads'] = threads_match.group(1)
+        metadata['threads'] = int(threads_match.group(1))
 
     # Extract query number with more specific pattern
     query_match = re.search(r'_query(\d+)', filename)
     if query_match:
-        metadata['query'] = query_match.group(1)
+        metadata['query'] = int(query_match.group(1))
 
     return metadata
 
@@ -539,9 +469,14 @@ def main():
             continue
         windowed_stats, pipeline_stats, global_stats, run_stats, metadata = result
 
-        # metadata safety
-        query_id = metadata.get('query_id') if metadata else None
-        config = query_config.get(query_id, {}) if query_id else {}
+        if metadata == {}:
+            print("Warning: Missing metadata, skipping result")
+            continue
+
+        #print(f"Processing results for config: {metadata}")
+
+        query_id = metadata['query_id']
+        config = query_config[query_id]
 
         # Skip multi-operator chains if desired (keeps original behavior)
         operator_chain = config.get('operator_chain', ['unknown'])
@@ -553,6 +488,7 @@ def main():
         try:
             buffer_dir = Path(base_directory) / operator_chain[0] / f"bufferSize{metadata.get('buffer_size','')}"
             buffer_dir.mkdir(parents=True, exist_ok=True)
+            #TODO: add query information to filename
             if windowed_stats is not None:
                 windowed_stats.to_csv(buffer_dir / "results_windowed.csv", index=False)
             if pipeline_stats is not None:

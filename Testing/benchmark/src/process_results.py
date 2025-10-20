@@ -148,10 +148,15 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
         try:
             subprocess.run(
                 ["python3", "src/enginestatsread.py",
-                 str(temp_dir),
+                 str(benchmark_dir),
                  "--trace-files"] + trace_files,
                 check=True
             )
+            if result.returncode != 0:
+                print(f"Error running enginestatsread.py: {result.stderr.decode()}")
+                return None
+            else:
+                print(result.stdout.decode())
 
             """
             # Read CSV result from enginestatsread.py

@@ -11,6 +11,7 @@ import pandas as pd
 import concurrent
 import multiprocessing
 import concurrent.futures
+from collections import defaultdict
 
 def get_config_from_file(config_file):
     # Read the query mapping file to get query configurations
@@ -27,6 +28,20 @@ def get_config_from_file(config_file):
     query_configs = []
     if config_file.exists():
         query_configs = pd.read_csv(config_file).to_dict(orient='records')
+        if config_file.suffix == '.csvo': # old version
+            config=defaultdict(dict)
+            columns= []
+            for col in range(len(query_configs)):
+                columns.append(query_configs[col]['query_id'])
+            for query_id in range(len(query_configs[1])):
+                for col in range(len(columns)):
+                    config[query_id][col] = query_configs[col]['query_id']
+            return config
+
+    else:
+        #raise error if file does not exist
+        raise FileNotFoundError(f"Config file {config_file} does not exist.")
+
 
     return query_configs
 

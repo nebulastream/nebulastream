@@ -499,8 +499,12 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                     query_id += 1
 
     # Write query mapping to a file for later reference
-    df = pd.DataFrame(query_configs)
-    df.to_csv(result_dir / "query_configs.csv", index=True)
+    with open(result_dir / "query_configs.csv", 'w') as f:
+        cols = query_configs.columns
+        f.write(','.join(cols) + '\n')
+        for qid, config in query_configs.items():
+            row = [str(config.get(col, '')) for col in cols]
+            f.write(','.join(row) + '\n')
 
     print(f"Generated test files with {query_id-1} queries")
     print(f"Created organized directory structure in {result_dir}")
