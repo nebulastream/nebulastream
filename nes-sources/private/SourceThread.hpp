@@ -19,8 +19,10 @@
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
+#include <string>
 #include <thread>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -34,6 +36,8 @@
 
 namespace NES
 {
+class ReplayableSourceStorage;
+
 struct SourceImplementationTermination
 {
     enum : uint8_t
@@ -61,8 +65,11 @@ public:
     explicit SourceThread(
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
+        PhysicalSourceId physicalSourceId,
+        std::filesystem::path replayBaseDir,
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation);
+    ~SourceThread();
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -90,10 +97,15 @@ public:
 
 protected:
     OriginId originId;
+    PhysicalSourceId physicalSourceId;
+    std::filesystem::path replayBaseDir;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
+    std::unique_ptr<ReplayableSourceStorage> replayStorage;
+    std::atomic<SequenceNumber::Underlying> lastEmittedSequence;
+    std::optional<std::string> checkpointCallbackId;
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

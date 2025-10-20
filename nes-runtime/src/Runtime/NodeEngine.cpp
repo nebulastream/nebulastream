@@ -22,6 +22,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/AtomicState.hpp>
@@ -31,6 +32,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -99,7 +101,23 @@ NodeEngine::NodeEngine(
 
 void NodeEngine::registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
+    auto statefulHandlers = compiledQueryPlan->statefulHandlers;
     queryTracker->registerQuery(std::move(compiledQueryPlan), queryId);
+    if (!statefulHandlers.empty())
+    {
+        const auto callbackId = fmt::format("query_state_{}", queryId.getRawValue());
+        CheckpointManager::registerCallback(callbackId, [handlers = std::move(statefulHandlers)]
+        {
+            const auto checkpointDir = CheckpointManager::getCheckpointDirectory();
+            for (const auto& handler : handlers)
+            {
+                if (handler)
+                {
+                    handler->serializeState(checkpointDir);
+                }
+            }
+        });
+    }
     queryLog->logQueryStatusChange(queryId, QueryState::Registered, std::chrono::system_clock::now());
 }
 

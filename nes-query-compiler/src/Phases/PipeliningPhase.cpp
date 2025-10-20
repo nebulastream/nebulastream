@@ -137,6 +137,14 @@ void buildPipelineRecursively(
     PipelinePolicy policy,
     uint64_t configuredBufferSize)
 {
+    auto registerStateful = [&](const std::shared_ptr<Pipeline>& pipeline)
+    {
+        if (opWrapper->isStateful() && opWrapper->getHandler() && opWrapper->getHandlerId())
+        {
+            pipeline->registerStatefulHandler(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
+        }
+    };
+
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
     if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
@@ -187,6 +195,7 @@ void buildPipelineRecursively(
                 const OperatorHandlerId operatorHandlerIndex = opWrapper->getHandlerId().value();
                 newPipeline->getOperatorHandlers().emplace(operatorHandlerIndex, opWrapper->getHandler().value());
             }
+            registerStateful(newPipeline);
 
             for (auto& child : opWrapper->getChildren())
             {
@@ -200,6 +209,7 @@ void buildPipelineRecursively(
             {
                 currentPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
             }
+            registerStateful(currentPipeline);
             for (auto& child : opWrapper->getChildren())
             {
                 buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
@@ -281,6 +291,7 @@ void buildPipelineRecursively(
         PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
         newPipelinePtr->prependOperator(
             createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
+        registerStateful(newPipelinePtr);
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
@@ -293,11 +304,13 @@ void buildPipelineRecursively(
     {
         /// If the current operator is a fusible operator and the prev operator was an emit operator, we need to add a scan before the
         /// current operator to create a new pipeline.
-        createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+        auto newPipeline = createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+        registerStateful(newPipeline);
     }
     else
     {
         currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
+        registerStateful(currentPipeline);
     }
 
     if (opWrapper->getHandler() && opWrapper->getHandlerId())

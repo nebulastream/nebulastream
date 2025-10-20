@@ -312,4 +312,14 @@ void PhysicalOperatorWrapper::setReplayStatisticsFingerprint(std::string replayS
     replayStatisticsFingerprint = std::move(replayStatisticsFingerprintValue);
 }
 
+void PhysicalOperatorWrapper::setStateful(bool flag)
+{
+    stateful = flag;
+}
+
+bool PhysicalOperatorWrapper::isStateful() const
+{
+    return stateful;
+}
+
 }

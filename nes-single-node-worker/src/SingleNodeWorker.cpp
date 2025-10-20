@@ -17,10 +17,14 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <optional>
 #include <random>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -32,13 +36,16 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Replay/ReplayStorage.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
+#include <fmt/format.h>
 #include <cpptrace/from_current.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
@@ -54,7 +61,15 @@ extern void initNetworkServices(const std::string& connectionAddr, const NES::Ho
 namespace NES
 {
 
-SingleNodeWorker::~SingleNodeWorker() = default;
+namespace
+{
+std::regex PlanFilePattern(R"(query_[0-9]+\.plan)");
+}
+
+SingleNodeWorker::~SingleNodeWorker()
+{
+    CheckpointManager::shutdown();
+}
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
@@ -69,6 +84,12 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         SingleNodeWorkerConfiguration(configuration).accept(printer);
         NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", host.getRawValue(), configStr.str());
     }
+    const auto& checkpointConfig = configuration.workerConfiguration.checkpointConfiguration;
+    const auto checkpointDir = std::filesystem::path(checkpointConfig.checkpointDirectory.getValue());
+    const auto checkpointInterval = std::chrono::milliseconds(checkpointConfig.checkpointIntervalMs.getValue());
+    const auto recoverFromCheckpoint = checkpointConfig.recoverFromCheckpoint.getValue();
+
+    CheckpointManager::initialize(checkpointDir, checkpointInterval, recoverFromCheckpoint);
     if (configuration.enableGoogleEventTrace.getValue())
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
@@ -97,6 +118,11 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                 .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
             });
     }
+
+    if (recoverFromCheckpoint)
+    {
+        recoverLatestCheckpoint(checkpointDir);
+    }
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
@@ -119,7 +145,9 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         }
 
         const LogContext context("queryId", plan.getQueryId());
-
+        auto serializedPlanProto = QueryPlanSerializationUtil::serializeQueryPlan(plan);
+        std::string serializedPlan;
+        serializedPlanProto.SerializeToString(&serializedPlan);
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         const DumpMode dumpMode(
@@ -132,7 +160,20 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
         replayStatisticsCollector->registerCompiledQueryPlan(plan.getQueryId(), *result);
         nodeEngine->registerCompiledQueryPlan(plan.getQueryId(), std::move(result));
-        return plan.getQueryId();
+        const auto queryId = plan.getQueryId();
+        const auto callbackId = fmt::format("query_plan_{}", queryId.getRawValue());
+        const auto checkpointIntervalMs = configuration.workerConfiguration.checkpointConfiguration.checkpointIntervalMs.getValue();
+        if (checkpointIntervalMs > 0)
+        {
+            auto persistPlan = [planBytes = serializedPlan, queryId]() mutable
+            {
+                const auto fileName = fmt::format("query_{}.plan", queryId.getRawValue());
+                CheckpointManager::persistFile(fileName, planBytes);
+            };
+            persistPlan();
+            CheckpointManager::registerCallback(callbackId, std::move(persistPlan));
+        }
+        return queryId;
     }
     CPPTRACE_CATCH(...)
     {
@@ -178,6 +219,8 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         replayStatisticsCollector->unregisterQuery(queryId);
         nodeEngine->unregisterQuery(queryId);
+        CheckpointManager::unregisterCallback(fmt::format("query_plan_{}", queryId.getRawValue()));
+        CheckpointManager::unregisterCallback(fmt::format("query_state_{}", queryId.getRawValue()));
         return {};
     }
     CPPTRACE_CATCH(...)
@@ -269,6 +312,94 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
 std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
+}
+
+void SingleNodeWorker::recoverLatestCheckpoint(const std::filesystem::path& checkpointDir)
+{
+    try
+    {
+        if (!std::filesystem::exists(checkpointDir))
+        {
+            NES_INFO("Checkpoint directory {} does not exist, skipping recovery", checkpointDir.string());
+            return;
+        }
+        if (!std::filesystem::is_directory(checkpointDir))
+        {
+            NES_WARNING("Checkpoint path {} is not a directory, skipping recovery", checkpointDir.string());
+            return;
+        }
+
+        std::optional<std::filesystem::directory_entry> newestEntry;
+        std::error_code ec;
+        for (std::filesystem::directory_iterator it(checkpointDir, ec); !ec && it != std::filesystem::directory_iterator(); ++it)
+        {
+            const auto& entry = *it;
+            if (!entry.is_regular_file())
+            {
+                continue;
+            }
+            const auto& filename = entry.path().filename().string();
+            if (!std::regex_match(filename, PlanFilePattern))
+            {
+                continue;
+            }
+            if (!newestEntry || entry.last_write_time() > newestEntry->last_write_time())
+            {
+                newestEntry = entry;
+            }
+        }
+        if (ec)
+        {
+            NES_WARNING("Failed to iterate checkpoint directory {}: {}", checkpointDir.string(), ec.message());
+            return;
+        }
+
+        if (!newestEntry)
+        {
+            NES_INFO("No checkpoint plan files found in {}", checkpointDir.string());
+            return;
+        }
+
+        auto serializedPlanOpt = loadSerializedPlanFromFile(newestEntry->path());
+        if (!serializedPlanOpt)
+        {
+            NES_WARNING("Latest checkpoint {} does not contain a valid serialized plan", newestEntry->path().string());
+            return;
+        }
+
+        SerializableQueryPlan proto;
+        if (!proto.ParseFromString(*serializedPlanOpt))
+        {
+            NES_WARNING("Failed to parse serialized plan from {}", newestEntry->path().string());
+            return;
+        }
+
+        auto plan = QueryPlanSerializationUtil::deserializeQueryPlan(proto);
+        auto registerResult = registerQuery(plan);
+        if (!registerResult)
+        {
+            NES_WARNING("Failed to register recovered query from {}: {}", newestEntry->path().string(), registerResult.error().what());
+            return;
+        }
+        NES_INFO("Recovered query {} from checkpoint {}", registerResult.value(), newestEntry->path().string());
+        if (auto startResult = startQuery(registerResult.value()); !startResult)
+        {
+            NES_WARNING("Failed to start recovered query {}: {}", registerResult.value(), startResult.error().what());
+        }
+    }
+    catch (const Exception& ex)
+    {
+        NES_WARNING("Exception during checkpoint recovery: {}", ex.what());
+    }
+    catch (const std::exception& stdex)
+    {
+        NES_WARNING("Std exception during checkpoint recovery: {}", stdex.what());
+    }
+}
+
+std::optional<std::string> SingleNodeWorker::loadSerializedPlanFromFile(const std::filesystem::path& planFilePath)
+{
+    return CheckpointManager::loadFile(planFilePath);
 }
 
 }

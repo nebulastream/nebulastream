@@ -33,8 +33,8 @@ class ChainedHashMapRef;
 
 /// Each entry contains a ptr to the next element, the hash of the current value and the keys and values.
 /// The physical layout of the storage space is the following
-/// | --- Entry* --- | --- hash --- | --- keys ---     | --- values ---    |
-/// | --- 64bit ---  | --- 64bit ---  | --- keySize ---  | --- valueSize ---  |
+/// | --- Entry* --- | ---  hash  --- | ---   keys   --- | ---   values   --- |
+/// | --- 64bit ---  | --- 64bit ---  | --- keySize ---  | ---  valueSize --- |
 class ChainedHashMapEntry final : public AbstractHashMapEntry
 {
 public:
@@ -96,8 +96,26 @@ public:
     /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
     static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
 
+    void serialize(std::ostream& out, const HashMapSerializationOptions& hashMapOptions) const override;
+
+    /// Overwrites the buffers of this current instance with the serialized data
+    void deserialize(
+        std::istream& in,
+        const HashMapSerializationOptions& hashMapOptions,
+        AbstractBufferProvider* bufferProvider) override;
+
 private:
     friend class ChainedHashMapRef;
+
+#pragma pack(push, 1)
+    struct ChainedHashMapHeader
+    {
+        uint64_t numberOfEntries{0};
+        uint64_t keySize{0};
+        uint64_t valueSize{0};
+    };
+#pragma pack(pop)
+
 
     /// Specifies the number of pre-allocated var sized
     static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;

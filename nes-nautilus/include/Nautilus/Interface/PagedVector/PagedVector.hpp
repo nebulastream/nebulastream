@@ -18,7 +18,6 @@
 #include <memory>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
 
 namespace NES
 {
@@ -62,7 +61,25 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
+    [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
+
+    /// serializes the PagedVector into the ostream
+    void serialize(std::ostream& os) const;
+
+    void deserialize(std::istream& is, AbstractBufferProvider* abstractBufferProvider);
+
+    /// Clears all stored pages.
+    void clear();
+
+    void appendPage(const TupleBuffer& buffer);
+
 private:
+    struct PagedVectorHeader
+    {
+        uint64_t bufferSize{0};
+        uint64_t numberOfTuples{0};
+    };
+
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
     struct PagesWrapper
     {

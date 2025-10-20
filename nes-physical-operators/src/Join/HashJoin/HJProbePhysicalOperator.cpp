@@ -56,6 +56,7 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
     , leftHashMapOptions(std::move(leftHashMapBasedOptions))
     , rightHashMapOptions(std::move(rightHashMapBasedOptions))
 {
+
 }
 
 void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -81,14 +82,20 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
     }
 
     /// Getting necessary values from the record buffer
-    const auto windowInfoRef = getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
-    const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
-    const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
-    auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
-
+    const auto windowInfoRef = Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
+    const auto windowStartRaw
+        = Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowStart));
+    const auto windowEndRaw
+        = Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowEnd));
+    const nautilus::val<Timestamp> windowStart{windowStartRaw};
+    const nautilus::val<Timestamp> windowEnd{windowEndRaw};
+    auto leftHashMapRefs = Nautilus::Util::readValueFromMemRef<Interface::HashMap**>(
+        Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
+    auto rightHashMapRefs = Nautilus::Util::readValueFromMemRef<Interface::HashMap**>(
+        Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
 
     /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps
+    uint64_t emittedJoins = 0;
     for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
     {
         const nautilus::val<HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
@@ -136,11 +143,13 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                             auto joinedRecord
                                 = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
                             executeChild(executionCtx, joinedRecord);
+                            ++emittedJoins;
                         }
                     }
                 }
             }
         }
     }
+    static_cast<void>(emittedJoins);
 }
 }

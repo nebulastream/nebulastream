@@ -277,6 +277,9 @@ public:
     [[nodiscard]] const std::optional<std::string>& getReplayStatisticsFingerprint() const;
     void setReplayStatisticsFingerprint(std::string replayStatisticsFingerprint);
 
+    void setStateful(bool flag);
+    [[nodiscard]] bool isStateful() const;
+
 private:
     PhysicalOperator physicalOperator;
     std::optional<MemoryLayoutType> inputMemoryLayoutType;
@@ -289,6 +292,7 @@ private:
     std::optional<OperatorHandlerId> handlerId;
     PipelineLocation pipelineLocation;
     std::optional<std::string> replayStatisticsFingerprint;
+    bool stateful{false};
 };
 }
 

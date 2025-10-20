@@ -212,7 +212,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         keySize,
         valueSize,
         pageSize,
-        numberOfBuckets);
+        numberOfBuckets,
+        false);
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
@@ -230,6 +231,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
+    buildWrapper->setStateful(true);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         probe,

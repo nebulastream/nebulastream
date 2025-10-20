@@ -14,20 +14,25 @@
 
 #include <SourceThread.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <atomic>
 #include <exception>
 #include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/ReplayableSourceStorage.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -43,14 +48,28 @@ namespace NES
 SourceThread::SourceThread(
     BackpressureListener backpressureListener,
     OriginId originId,
+    PhysicalSourceId physicalSourceId,
+    std::filesystem::path replayBaseDir,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
+    , physicalSourceId(physicalSourceId)
+    , replayBaseDir(std::move(replayBaseDir))
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
+    , started(false)
     , backpressureListener(std::move(backpressureListener))
+    , lastEmittedSequence(INVALID_SEQ_NUMBER.getRawValue())
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
+}
+
+SourceThread::~SourceThread()
+{
+    if (checkpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+    }
 }
 
 namespace
@@ -143,20 +162,55 @@ void dataSourceThread(
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
-    std::shared_ptr<AbstractBufferProvider> bufferProvider)
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    ReplayableSourceStorage* replayStorage,
+    std::atomic<SequenceNumber::Underlying>* lastEmittedSequence)
 {
-    size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
+    SequenceNumber::Underlying sequenceNumberGenerator = SequenceNumber::INITIAL;
+    std::optional<SequenceNumber::Underlying> lastCheckpointedSequence;
+    if (replayStorage && CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        lastCheckpointedSequence = replayStorage->loadLastCheckpointedSequence();
+        if (lastCheckpointedSequence)
+        {
+            sequenceNumberGenerator = std::max(
+                sequenceNumberGenerator, static_cast<SequenceNumber::Underlying>(*lastCheckpointedSequence + 1));
+        }
+    }
+
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {
-            addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
+            const auto sequenceNumber = SequenceNumber(sequenceNumberGenerator++);
+            addBufferMetaData(originId, sequenceNumber, buffer);
+            if (lastEmittedSequence)
+            {
+                lastEmittedSequence->store(sequenceNumber.getRawValue(), std::memory_order_release);
+            }
+        }
+        else if (lastEmittedSequence)
+        {
+            lastEmittedSequence->store(buffer.getSequenceNumber().getRawValue(), std::memory_order_release);
+        }
+        if (replayStorage && shouldAddMetadata)
+        {
+            replayStorage->persistBuffer(buffer);
         }
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
 
     try
     {
+        if (CheckpointManager::shouldRecoverFromCheckpoint() && replayStorage)
+        {
+            if (const auto replayed = replayStorage->replayPending(*bufferProvider, dataEmit, stopToken))
+            {
+                sequenceNumberGenerator
+                    = std::max(sequenceNumberGenerator, static_cast<SequenceNumber::Underlying>(replayed->getRawValue() + 1));
+            }
+        }
+
         result.set_value_at_thread_exit(
             dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
         if (!stopToken.stop_requested())
@@ -185,6 +239,33 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
+    const bool enableReplay = CheckpointManager::isCheckpointingEnabled() || CheckpointManager::shouldRecoverFromCheckpoint();
+    lastEmittedSequence.store(INVALID_SEQ_NUMBER.getRawValue(), std::memory_order_release);
+    if (enableReplay)
+    {
+        const auto storageDir
+            = replayBaseDir / "source_replay"
+            / fmt::format("origin_{}_ps_{}", originId.getRawValue(), physicalSourceId.getRawValue());
+        replayStorage = std::make_unique<ReplayableSourceStorage>(originId, storageDir, physicalSourceId);
+
+        if (CheckpointManager::isCheckpointingEnabled() && !checkpointCallbackId)
+        {
+            checkpointCallbackId
+                = fmt::format("source_replay_{}_{}", originId.getRawValue(), physicalSourceId.getRawValue());
+            CheckpointManager::registerCallback(
+                *checkpointCallbackId,
+                [this]()
+                {
+                    const auto lastSeq = lastEmittedSequence.load(std::memory_order_acquire);
+                    if (lastSeq == INVALID_SEQ_NUMBER.getRawValue() || !replayStorage)
+                    {
+                        return;
+                    }
+                    replayStorage->markCheckpoint(SequenceNumber(lastSeq));
+                });
+        }
+    }
+
     Thread sourceThread(
         fmt::format("DataSrc-{}", originId),
         dataSourceThread,
@@ -193,7 +274,9 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager);
+        localBufferManager,
+        replayStorage.get(),
+        enableReplay ? &lastEmittedSequence : nullptr);
     thread = std::move(sourceThread);
     return true;
 }
@@ -217,6 +300,7 @@ void SourceThread::stop()
     {
         NES_ERROR("Source encountered an error: {}", exception.what());
     }
+
 }
 
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)

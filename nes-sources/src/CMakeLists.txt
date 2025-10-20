@@ -12,6 +12,7 @@
 
 add_source_files(nes-sources
         SourceThread.cpp
+        ReplayableSourceStorage.cpp
         SourceDescriptor.cpp
         Source.cpp
         SourceHandle.cpp

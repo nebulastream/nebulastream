@@ -1,0 +1,48 @@
+# name: operator/aggregation/AggregationCheckpointing.test
+# description: Test stateful aggregation checkpoint creation and recovery
+# groups: [Aggregation, Checkpointing]
+
+CREATE LOGICAL SOURCE stream1(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream1 TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 20' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE INT64 0 100 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE stream2(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+0,1
+0,2
+0,3
+0,4
+0,5
+0,6
+0,7
+0,8
+
+CREATE SINK sinkStream1(stream1.start UINT64, stream1.end UINT64, stream1.i64_out UINT64)  TYPE File;
+CREATE SINK sinkStream2(stream2.start UINT64, stream2.end UINT64, stream2.i64_out UINT64)  TYPE File;
+
+# 1. Start query with stream1 data. Hashtable snapshot stored in at checkpointing dir
+CONFIGURATION worker.checkpoint.checkpoint_directory: CHECKPOINT_DIR
+CONFIGURATION worker.checkpoint.checkpoint_interval_ms: 1
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream1 WINDOW TUMBLING(ts, size 100ms) INTO sinkStream1;
+----
+0,100,100
+
+# 2. Start query with checkpointed state. Process data from stream2.
+CONFIGURATION worker.checkpoint.checkpoint_directory: CHECKPOINT_DIR
+CONFIGURATION worker.checkpoint.recover_from_checkpoint: true
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream2 WINDOW TUMBLING(ts, size 100ms) INTO sinkStream2;
+----
+0,100,108
+
+# 3. Negative test: start query without checkpointed state. Process data from stream2.
+SELECT start, end, COUNT(i64) as i64_out FROM stream2 WINDOW TUMBLING(ts, size 100ms) INTO sinkStream2;
+----
+0,100,8

@@ -35,10 +35,21 @@ HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
-    uint64_t keySize,
-    uint64_t valueSize,
-    uint64_t pageSize,
-    uint64_t numberOfBuckets);
+    const AggregationBuildPhysicalOperator* buildOperator);
+
+void serializeHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    AbstractBufferProvider* bufferProvider,
+    const AggregationBuildPhysicalOperator* buildOperator);
+
+HashMap* deserializeHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    AbstractBufferProvider* bufferProvider,
+    const AggregationBuildPhysicalOperator* buildOperator);
 
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
@@ -47,10 +58,21 @@ public:
         const AggregationOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
-        uint64_t keySize,
-        uint64_t valueSize,
-        uint64_t pageSize,
-        uint64_t numberOfBuckets);
+        const AggregationBuildPhysicalOperator* buildOperator);
+
+    friend void serializeHashMapProxy(
+        const AggregationOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        AbstractBufferProvider* bufferProvider,
+        const AggregationBuildPhysicalOperator* buildOperator);
+
+    friend HashMap* deserializeHashMapProxy(
+        const AggregationOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        AbstractBufferProvider* bufferProvider,
+        const AggregationBuildPhysicalOperator* buildOperator);
 
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
@@ -64,6 +86,13 @@ private:
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
+
+public:
+    [[nodiscard]] const HashMapOptions& getHashMapOptions() const { return hashMapOptions; }
+    [[nodiscard]] const std::vector<std::shared_ptr<AggregationPhysicalFunction>>& getAggregationFunctions() const
+    {
+        return aggregationPhysicalFunctions;
+    }
 };
 
 }

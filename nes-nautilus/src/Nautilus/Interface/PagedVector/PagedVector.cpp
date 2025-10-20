@@ -185,4 +185,63 @@ uint64_t PagedVector::PagesWrapper::getNumberOfPages() const
 {
     return pages.size();
 }
+
+const TupleBuffer& PagedVector::getPage(const uint64_t pageIndex) const
+{
+    PRECONDITION(pageIndex < pages.getNumberOfPages(), "Page index {} exceeds number of pages {}", pageIndex, pages.getNumberOfPages());
+    return pages[pageIndex].buffer;
+}
+
+void PagedVector::serialize(std::ostream& os) const
+{
+    const auto numPages = this->getNumberOfPages();
+    os.write(reinterpret_cast<const char*>(&numPages), sizeof(numPages));
+    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
+    {
+        const auto& page = this->getPage(pageIdx);
+        PagedVectorHeader pageHeader{
+            .bufferSize = page.getBufferSize(),
+            .numberOfTuples = page.getNumberOfTuples(),
+        };
+        os.write(reinterpret_cast<const char*>(&pageHeader), sizeof(pageHeader));
+        const auto dataSpan = page.getAvailableMemoryArea<char>();
+        os.write(dataSpan.data(), dataSpan.size());
+    }
+}
+
+void PagedVector::deserialize(std::istream& in, AbstractBufferProvider* bufferProvider)
+{
+    uint64_t numPages = 0;
+    in.read(reinterpret_cast<char*>(&numPages), sizeof(numPages));
+    this->clear();
+    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
+    {
+        PagedVectorHeader pageHeader{};
+        in.read(reinterpret_cast<char*>(&pageHeader), sizeof(pageHeader));
+        auto pageBuffer = bufferProvider->getUnpooledBuffer(pageHeader.bufferSize);
+        if (!pageBuffer)
+        {
+            throw CannotAllocateBuffer(
+                "Could not allocate buffer of size {} during checkpoint restore",
+                pageHeader.bufferSize
+            );
+        }
+        auto bufferValue = pageBuffer.value();
+        auto dataSpan = bufferValue.getAvailableMemoryArea<char>();
+        in.read(dataSpan.data(), static_cast<std::streamsize>(dataSpan.size()));
+        bufferValue.setNumberOfTuples(pageHeader.numberOfTuples);
+        this->appendPage(bufferValue);
+    }
+}
+
+
+void PagedVector::clear()
+{
+    pages.clearPages();
+}
+
+void PagedVector::appendPage(const TupleBuffer& buffer)
+{
+    pages.addPage(buffer);
+}
 }

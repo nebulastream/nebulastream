@@ -18,13 +18,21 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <span>
 #include <string>
+
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <absl/strings/internal/str_format/extension.h>
+#include <absl/strings/str_format.h>
+#include <google/protobuf/stubs/port.h>
+#include "Nautilus/Interface/PagedVector/PagedVector.hpp"
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -256,6 +264,79 @@ void ChainedHashMap::clear() noexcept
 
     /// Releasing all memory
     storageSpace.clear();
+}
+
+void ChainedHashMap::serialize(std::ostream& out, const HashMapSerializationOptions& hashMapOptions) const
+{
+    const ChainedHashMapHeader header{
+        .numberOfEntries = this->getNumberOfTuples(),
+        .keySize = hashMapOptions.keySize,
+        .valueSize = hashMapOptions.valueSize
+    };
+    out.write(reinterpret_cast<const char*>(&header), sizeof(header));
+    uint64_t writtenEntries = 0;
+    for (uint64_t chainIdx = 0; chainIdx < this->getNumberOfChains(); ++chainIdx)
+    {
+        const auto* entry = this->getStartOfChain(chainIdx);
+        while (entry != nullptr)
+        {
+            out.write(reinterpret_cast<const char*>(&entry->hash), sizeof(entry->hash));
+            const auto* keyPtr = reinterpret_cast<const char*>(entry) + sizeof(Interface::ChainedHashMapEntry);
+            out.write(keyPtr, static_cast<std::streamsize>(header.keySize));
+            const auto* valuePtr = keyPtr + header.keySize;
+            if (hashMapOptions.valuesContainPagedVectors)
+            {
+                auto* pagedVector = reinterpret_cast<const Interface::PagedVector*>(valuePtr);
+                pagedVector->serialize(out);
+            }
+            else
+            {
+                out.write(valuePtr, static_cast<std::streamsize>(header.valueSize));
+            }
+            entry = entry->next;
+            ++writtenEntries;
+        }
+    }
+    INVARIANT(
+        writtenEntries == header.numberOfEntries,
+        "Expected to serialize {} entries but serialized {}",
+        header.numberOfEntries,
+        writtenEntries
+    );
+}
+
+void ChainedHashMap::deserialize(
+    std::istream& in,
+    const HashMapSerializationOptions& hashMapOptions,
+    AbstractBufferProvider* bufferProvider)
+{
+
+    ChainedHashMapHeader header;
+    in.read(reinterpret_cast<char*>(&header), sizeof(ChainedHashMapHeader));
+    if (header.keySize != hashMapOptions.keySize || header.valueSize != hashMapOptions.valueSize)
+    {
+        throw CheckpointError("Header from deserialized hash map do not match the current ones!");
+    }
+    this->clear();
+    for (uint64_t entryIdx = 0; entryIdx < header.numberOfEntries; ++entryIdx)
+    {
+        Interface::HashFunction::HashValue::raw_type hash{0};
+        in.read(reinterpret_cast<char*>(&hash), sizeof(hash));
+        auto* const newEntry = static_cast<Interface::ChainedHashMapEntry*>(this->insertEntry(hash, bufferProvider));
+        auto* const keyPtr  = reinterpret_cast<char*>(newEntry) + sizeof(Interface::ChainedHashMapEntry);
+        in.read(keyPtr, static_cast<std::streamsize>(header.keySize));
+        auto* valuePtr = keyPtr + header.keySize;
+        if (hashMapOptions.valuesContainPagedVectors)
+        {
+            auto* pagedVector = new (valuePtr) Interface::PagedVector();
+            pagedVector->deserialize(in, bufferProvider);
+        }
+        else
+        {
+            in.read(valuePtr, static_cast<std::streamsize>(header.valueSize));
+        }
+    }
+
 }
 
 }

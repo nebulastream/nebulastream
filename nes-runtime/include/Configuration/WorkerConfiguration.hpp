@@ -22,6 +22,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <Configuration/CheckpointConfiguration.hpp>
 #include <Util/DumpMode.hpp>
 #include <NetworkConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
@@ -71,6 +72,8 @@ public:
            "/tmp/nes-compilation-cache",
            "Directory used by the Nautilus compilation cache to store cached compilation artifacts."};
 
+    CheckpointConfiguration checkpointConfiguration = {"checkpoint", "Checkpoint configuration"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -84,7 +87,8 @@ private:
             &dumpQueryCompilationIR,
             &dumpGraph,
             &enableCompilationCache,
-            &compilationCacheDir};
+            &compilationCacheDir,
+            &checkpointConfiguration};
     }
 };
 }
