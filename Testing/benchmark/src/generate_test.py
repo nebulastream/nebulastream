@@ -282,7 +282,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                         # Filter queries with different selectivities
                         for selectivity in selectivities:
-                            if 'filter' not in params['operator_chains'][0]:
+                            if ['filter'] not in params['operator_chains']:
                                 break
                             filter_col = cols_to_access[0]
                             filter_queries+=1
@@ -335,7 +335,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                         # Map queries with different function types
                         for func_type in function_types:
-                            if 'map' not in params['operator_chains'][0]:
+                            if ['map'] not in params['operator_chains']:
                                 break
                             map_queries+=1
                             # Create query directory
@@ -385,7 +385,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                         # Aggregation queries
                         for agg_func in agg_functions:
-                            if 'agg' not in params['operator_chains'][0]:
+                            if ['aggregation'] not in params['operator_chains']:
                                 break
                             for window_size in params['window_sizes']:
                                 for num_groups in params['num_groups']:
@@ -500,7 +500,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
     # Write query mapping to a file for later reference
     df = pd.DataFrame(query_configs)
-    df.to_csv(result_dir / "query_configs.csv", index=False)
+    df.to_csv(result_dir / "query_configs.csv", index=True)
 
     print(f"Generated test files with {query_id-1} queries")
     print(f"Created organized directory structure in {result_dir}")

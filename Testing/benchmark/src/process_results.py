@@ -153,6 +153,7 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
                 check=True
             )
 
+            """
             # Read CSV result from enginestatsread.py
             csv_file = temp_dir / f"{temp_dir.name}.csv"
             if csv_file.exists():
@@ -254,7 +255,7 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
                     avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
                     #avg_df.to_csv(avg_csv, index=False)
 
-                    return str(output_csv)
+                    return str(output_csv)"""
 
         except Exception as e:
             print(f"Error processing trace files: {e}")

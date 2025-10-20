@@ -7,17 +7,31 @@ import shutil
 from pathlib import Path
 import json
 import csv
-def get_config_from_file(config_file):
-    config={}
-    with open(config_file, 'r') as f:
-        for line in f:
-            name, value = line.split(':')
-            config[name.strip()] = value.strip()
+import pandas as pd
+import concurrent
+import multiprocessing
+import concurrent.futures
 
-    return config
+def get_config_from_file(config_file):
+    # Read the query mapping file to get query configurations
+    if config_file.suffix == '.txt':
+        config={}
+        with open(config_file, 'r') as f:
+            for line in f:
+                name, value = line.split(':')
+                config[name.strip()] = value.strip()
+
+        return config
+
+    #else assume csv
+    query_configs = []
+    if config_file.exists():
+        query_configs = pd.read_csv(config_file).to_dict(orient='records')
+
+    return query_configs
 
 def json_to_csv(trace_file):
-    output_csv = trace_file.replace('.json', '.csv')
+    output_csv = trace_file.with_suffix('.csv')
 
     """Convert a JSON trace file to a compact CSV file."""
     try:
@@ -28,28 +42,39 @@ def json_to_csv(trace_file):
         # Extract trace events
         events = trace_data.get('traceEvents', [])
 
+        min_timestamp = min(event['ts'] for event in events if ('ts' in event and event.get('ph') == 'B' and event.get('cat') == 'task')) % 1_000_000_000
+        print(f"Minimum timestamp (mod 1_000_000_000): {min_timestamp}")
+        print(f"first timestamp: {events[0]['ts'] if 'ts' in events[0] else 'N/A'}")
+        print(f"second timestamp: {events[1]['ts'] if 'ts' in events[1] else 'N/A'}")
+        print(f"reduced first timestamp: {(events[0]['ts'] % 1_000_000_000) - min_timestamp if 'ts' in events[0] else 'N/A'}")
+        print(f"reduced second timestamp: {(events[1]['ts'] % 1_000_000_000) - min_timestamp if 'ts' in events[1] else 'N/A'}")
         # Prepare compact CSV output
         with open(output_csv, 'w', newline='') as csvfile:
-            fieldnames = ['p_id', 't_id', 'ph', 'ts', 'tpls']  # Shortened field names
+            fieldnames = ['p_id', 't_id', 'ph', 'ts', 'tuples']  # Shortened field names
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
 
             for event in events:
                 if event.get('ph') in ['B', 'E'] and event.get('cat') == 'task' and 'args' in event:
+
                     args = event['args']
+                    # Ignore the first 9 digits of the timestamp
+                    reduced_ts = (event['ts'] % 1_000_000_000) - min_timestamp
                     writer.writerow({
                         'p_id': args.get('pipeline_id', ''),
                         't_id': args.get('task_id', ''),
                         'ph': event.get('ph', ''),
-                        'ts': event.get('ts', ''),
-                        'tpls': args.get('tuples', 0) if event['ph'] == 'B' else ''
+                        'ts': reduced_ts,
+                        'tuples': args.get('tuples', 0) if event['ph'] == 'B' else ''
                     })
-
+        #if os.path.exists(output_csv):
+        #    os.remove(trace_file)  # Remove original JSON file if CSV was created successfully
         print(f"Compact CSV file created: {output_csv}")
         return output_csv
 
     except Exception as e:
         print(f"Error converting JSON to compact CSV: {e}")
+        print(f"Failed file: {trace_file.name}")
         return None
 
 def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=None, build_dir="cmake-build-release", project_dir=None):
@@ -70,19 +95,8 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
     # Find test file path
     test_file = Path(test_file)
 
-    # Read the query mapping file to get query configurations
-    query_mapping_file = output_dir / "query_mapping.txt"
-    query_configs = {}
-    if query_mapping_file.exists():
-        with open(query_mapping_file, 'r') as f:
-            for line in f:
-                if line.startswith("Query "):
-                    parts = line.split(":", 1)
-                    query_id = int(parts[0].replace("Query ", "").strip())
-                    config_str = parts[1].strip()
-                    # Convert string representation to dict
-                    config_dict = eval(config_str)
-                    query_configs[query_id] = config_dict
+    trace_files_to_process = []
+
 
     # Determine which directories to process based on run_options
     filter_dir = output_dir / "filter"
@@ -136,7 +150,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
             numberOfBuffers = 1000 #TODO check for what needed when multiple operators
             if 'agg' in buffer_test_file.name:
                 numberOfBuffers = 20000
-                if int(buffer_size) >= 20000000: #TODO have variable based on given bufferSize and ops
+                if int(buffer_size) >= 20000000: #TODO have variable based on given bufferSize and ops + available memory
                     numberOfBuffers = 10000
             # Extract strategy from parent directory name for double operators
             parent_dir = buffer_dir.parent
@@ -235,12 +249,18 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
                             # Copy GoogleEventTrace file if it exists
                             search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests/systest")
                             trace_files = list(search_path.glob("**/GoogleEventTrace*"))
+
                             if trace_files:
                                 trace_files.sort()
                                 trace_file = trace_files[-1]
-                                trace_dest = run_dir / f"GoogleEventTrace_{layout}_buffer{buffer_size}_query{query_id}.json"
-                                shutil.copy(trace_file, trace_dest)
-                                #print(f"  Saved most recent trace file: {trace_file.name} to {trace_dest}")
+                                if trace_file.stat().st_size == 0:
+                                    print(f"  Trace file is empty for Query {query_id}, Run {run}")
+                                    trace_file.unlink()
+                                else:
+                                    trace_dest = run_dir / f"GoogleEventTrace_{layout}_buffer{buffer_size}_query{query_id}.json"
+                                    shutil.move(trace_file, trace_dest)
+                                    trace_files_to_process.append(trace_dest)
+
                             else:
                                 print(f"  No trace file found for Query {query_id}, Run {run}")
                             search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests")
@@ -256,6 +276,10 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
 
                         except Exception as e:
                             print(f"Error running benchmark: {e}", file=os.sys.stderr)
+
+    #with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+    #    executor.map(json_to_csv, trace_files_to_process)
+
 
     print(f"Benchmark complete. Results in {output_dir}")
     return str(output_dir)

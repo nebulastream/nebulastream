@@ -7,6 +7,12 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from run_benchmark import get_config_from_file
+from pathlib import Path
+import concurrent
+import multiprocessing
+import concurrent.futures
+import json
+import re
 
 def compute_stats(trace_path):
     """Process a single trace file and return the results."""
@@ -130,11 +136,104 @@ def process_csv(trace_paths, window_size=10):
     try:
 
         # Read the CSV files into a pandas DataFrame
-        dfs = [pd.read_csv(f) for f in trace_paths]
+        #dfs = [pd.read_csv(f) for f in trace_paths]
 
+        # Load the JSON trace file
+        """dfs = []
+        for trace_data in trace_paths:
+            # Support both {"traceEvents": [...]} and a top-level list of events
+            if isinstance(trace_data, dict):
+                events = trace_data.get('traceEvents', [])
+            elif isinstance(trace_data, list):
+                events = trace_data
+            else:
+                events = []
+
+            if not events:
+                continue
+
+            df = pd.DataFrame(events)
+            if df.empty:
+                continue
+
+            # Ensure required columns exist
+            for col in ['cat', 'ph', 'args', 'ts']:
+                if col not in df.columns:
+                    df[col] = None
+
+            # Keep only task events with phase B or E and non-null args
+            df = df[(df['cat'] == 'task') & (df['ph'].isin(['B', 'E'])) & (df['args'].notnull())].copy()
+            if df.empty:
+                continue
+
+
+            #set tuples = 0 if missing or ph = B
+            new_df = pd.DataFrame()
+            new_df['p_id'] = df['args'].apply(lambda x: x.get('pipeline_id', -1)).astype(int)
+            new_df['t_id'] = df['args'].apply(lambda x: x.get('task_id', -1)).astype(int)
+            new_df['ph'] = df['ph'].astype(str)
+            # Normalize timestamps to int and make them reasonable (keep lower digits)
+            new_df['ts'] = pd.to_numeric(df['ts'], errors='coerce').fillna(0).astype(int) % (10**9)  # Ignore the first 9 digits of the timestamp
+           # tuples only meaningful on begin events ('B'), default to 0 otherwise
+            def extract_tuples(row):
+                args = row['args']
+                if isinstance(args, dict) and row['ph'] == 'B':
+                    return int(args.get('tuples', 0) or 0)
+                return 0
+            new_df['tuples'] = df.apply(extract_tuples, axis=1)
+
+            dfs.append(new_df)
+
+        # If no valid data, return early
+        if not dfs:
+            print("No valid task events found in provided trace files.")
+            return None, None, None, None, {}"""
+
+
+        dfs = []
+        for trace_file in trace_paths:
+            df = []
+            with open(trace_file, 'r') as f:
+                trace_data = json.load(f)
+
+            # Extract trace events
+            events  = trace_data.get('traceEvents', [])
+
+            rows = []
+            for event in events:
+                if event.get('ph') in ['B', 'E'] and event.get('cat') == 'task' and 'args' in event:
+
+                    args = event['args']
+                    # Ignore the first 9 digits of the timestamp
+                    p_id = int(args.get('pipeline_id', -1))
+                    t_id = int(args.get('task_id', -1))
+                    ph = event.get('ph', '')
+                    #reduced_ts = (event['ts'] % 1_000_000_000)
+                    ts = int(event['ts'])
+
+                    tuples = int(args.get('tuples', 0) if event['ph'] == 'B' else 0)
+                    rows.append({
+                        'p_id': p_id,
+                         't_id': t_id,
+                         'ph': ph,
+                         'ts': ts,
+                         'tuples': tuples
+                    })
+            if not rows:
+                continue
+            df =    pd.DataFrame(rows)
+
+            min_timestamp = df['ts'].min()
+            df['ts'] = (df['ts']  -  min_timestamp) % 1_000_000_000
+
+            #print(df.info())
+            #print(df.head())
+            dfs.append(df)
+        print(f"Loaded {len(dfs)} trace files for processing.")
         # concatenate over all number of runs
-        df = pd.concat(dfs, keys=range(len(dfs)), names=['run_id'])
-
+        df = pd.concat(dfs, keys=range(len(dfs)), names=['run_id']).reset_index(level=0).reset_index(drop=True)
+        print(df.info())
+        print(df.head())
         metadata = extract_metadata_from_filename(trace_paths[0]) #all files of same run have same metadata
 
         # Convert columns to appropriate types
@@ -415,7 +514,7 @@ def main():
         config_key = filename[first_underscore:]
         config_groups[config_key].append(trace_file)
 
-    query_config = get_config_from_file(base_directory + '/query_configs.csv')
+    query_config = get_config_from_file(Path(base_directory) / 'query_configs.csv')
 
     # Process all trace files in parallel
     results_iter = []
@@ -430,6 +529,7 @@ def main():
 
     # Process data for CSV output
     csv_data = []
+    csv_rows = []
     all_fields = set(['windowed_stats', 'pipeline_stats', 'global_stats', 'run_stats', 'metadata'])
 
 
@@ -536,6 +636,8 @@ def main():
 
     # Ensure we have at least some fields in consistent order and write consolidated CSV
     out_csv_path = os.path.join(base_directory, os.path.basename(base_directory) + ".csv")
+    if csv_rows:
+        all_fields = sorted(set().union(*(r.keys() for r in csv_rows)))
     with open(out_csv_path, 'w', newline='') as f:
         if csv_rows:
             fieldnames = sorted(all_fields)
