@@ -49,29 +49,44 @@ void addDefaultEmit(BuilderContext& ctx, const PhysicalOperatorWrapper& wrappedO
 
 void createPipeline(BuilderContext& ctx) noexcept
 {
-    auto newPipe = std::make_shared<Pipeline>(ctx.currentOp->getPhysicalOperator());
+    const auto opId = ctx.currentOp->getPhysicalOperator().getId();
 
-    /// Copy handler, if any, from the operator wrapper
-    if (ctx.currentOp->getHandler() and ctx.currentOp->getHandlerId())
+    /// If a pipeline for this operator id already exists
+    std::shared_ptr<Pipeline> pipeline;
+    if (auto it = ctx.op2Pipeline.find(opId); it != ctx.op2Pipeline.end())
     {
-        newPipe->getOperatorHandlers().emplace(ctx.currentOp->getHandlerId().value(), ctx.currentOp->getHandler().value());
+        pipeline = it->second;
     }
+    else
+    {
+        pipeline = std::make_shared<Pipeline>(ctx.currentOp->getPhysicalOperator());
 
-    /// Register the pipeline under the operator id
-    ctx.op2Pipeline.emplace(ctx.currentOp->getPhysicalOperator().getId(), newPipe);
+        /// Copy handler, if any, from the operator wrapper
+        if (ctx.currentOp->getHandler() && ctx.currentOp->getHandlerId())
+        {
+            pipeline->getOperatorHandlers().emplace(ctx.currentOp->getHandlerId().value(), ctx.currentOp->getHandler().value());
+        }
+
+        /// Register the pipeline under the operator id
+        ctx.op2Pipeline.emplace(opId, pipeline);
+    }
 
     /// If we were already in a pipeline, link it as successor,
     /// otherwise this is a root pipeline and must be added to the plan.
     if (ctx.currentPipeline)
     {
-        ctx.currentPipeline->addSuccessor(newPipe, ctx.currentPipeline);
+        const bool alreadyLinked = std::ranges::any_of(ctx.currentPipeline->getSuccessors(), [&](const auto& s) { return s == pipeline; });
+        if (!alreadyLinked)
+            ctx.currentPipeline->addSuccessor(pipeline, ctx.currentPipeline);
     }
     else
     {
-        ctx.outPlan->addPipeline(newPipe);
+        const bool alreadyRoot = std::ranges::any_of(ctx.outPlan->getPipelines(), [&](const auto& p) { return p == pipeline; });
+        if (!alreadyRoot)
+            ctx.outPlan->addPipeline(pipeline);
     }
 
-    ctx.currentPipeline = std::move(newPipe);
+    ctx.currentPipeline = pipeline;
 }
 
 void appendSource(BuilderContext& ctx) noexcept
