@@ -20,7 +20,9 @@
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <fstream>
 #include <span>
+#include <filesystem>
 #include <string>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -256,6 +258,85 @@ void ChainedHashMap::clear() noexcept
 
     /// Releasing all memory
     storageSpace.clear();
+}
+
+void ChainedHashMap::serialize(std::filesystem::path path) const
+{
+    NES_INFO("Serializing chained hash map {}", path);
+    /// Serialize Header
+
+    std::ofstream out(path, std::ios::binary);
+    if (!out.is_open())
+    {
+        NES_ERROR("Cannot open output file {}", path);
+        throw CheckpointError("Cannot open output file {}", path);
+    }
+
+    if (entries != nullptr)
+    {
+        for (uint64_t entryIdx = 0; entryIdx < numberOfChains; ++entryIdx)
+        {
+            auto* entry = entries[entryIdx];
+            while (entry != nullptr)
+            {
+                NES_INFO("Found entry!")
+                entry = entry->next;
+            }
+        }
+    }
+
+    ChainedHashMapHeader header{numberOfTuples, pageSize, entrySize, entriesPerPage, numberOfChains};
+    out.write(reinterpret_cast<const char*>(&header), sizeof(ChainedHashMapHeader));
+    /// Serialize entrySpace
+    const uint64_t entrySpaceSize = entrySpace.getBufferSize();
+    out.write(reinterpret_cast<const char*>(&entrySpaceSize), sizeof(uint64_t));
+    out.write(entrySpace.getAvailableMemoryArea<char>().data(), entrySpace.getBufferSize());
+
+    /// Serialize storageSpace
+    for (const auto& storageBuffer : storageSpace)
+    {
+        const uint64_t storageBufferSize = storageBuffer.getBufferSize();
+        out.write(reinterpret_cast<const char*>(&storageBufferSize), sizeof(uint64_t));
+        out.write(storageBuffer.getAvailableMemoryArea<char>().data(), storageBuffer.getBufferSize());
+    }
+    out.close();
+}
+
+void ChainedHashMap::deserialize(std::filesystem::path path)
+{
+    std::ifstream in(path, std::ios::binary);
+    if (!in.is_open())
+    {
+        NES_ERROR("Cannot open input file {}", path);
+        throw CheckpointError("Cannot open input file {}", path);
+    }
+
+    ChainedHashMapHeader header;
+    in.read(reinterpret_cast<char*>(&header), sizeof(ChainedHashMapHeader));
+
+    uint64_t entrySpaceSize;
+    in.read(reinterpret_cast<char*>(&entrySpaceSize), sizeof(uint64_t));
+    if (entrySpaceSize != entrySpace.getBufferSize())
+    {
+        NES_ERROR("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
+        throw CheckpointError("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
+    }
+    in.read(entrySpace.getAvailableMemoryArea<char>().data(), entrySpaceSize);
+
+    uint64_t posStorageBuffers = 0;
+    while (in.peek() != EOF)
+    {
+        INVARIANT(posStorageBuffers < storageSpace.size(), "position in storageSpace vector cannot be greater than the vector's size!");
+        uint64_t storageBufferSize;
+        in.read(reinterpret_cast<char*>(&storageBufferSize), sizeof(uint64_t));
+        if (uint64_t instanceBufferSize = storageSpace.at(posStorageBuffers).getBufferSize(); instanceBufferSize != storageBufferSize)
+        {
+            NES_ERROR("storageSpace[{}] size mismatch! Serialized size is {} but instance size is {}", posStorageBuffers, storageBufferSize, instanceBufferSize);
+            throw CheckpointError("storageSpace[{}] size mismatch! Serialized size is {} but instance size is {}", posStorageBuffers, storageBufferSize, instanceBufferSize);
+        }
+        in.read(entrySpace.getAvailableMemoryArea<char>().data(), storageBufferSize);
+        ++posStorageBuffers;
+    }
 }
 
 }
