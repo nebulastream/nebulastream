@@ -96,8 +96,25 @@ public:
     /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
     static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
 
+    void serialize(std::filesystem::path path) const override;
+
+    /// Overwrites the buffers of this current instance with the serialized data
+    void deserialize(std::filesystem::path path) override;
+
 private:
     friend class ChainedHashMapRef;
+
+    #pragma pack(push, 1)
+    struct ChainedHashMapHeader
+    {
+        uint64_t numberOfTuples;
+        uint64_t pageSize;
+        uint64_t entrySize;
+        uint64_t entriesPerPage;
+        uint64_t numberOfChains;
+    };
+    #pragma pack(pop)
+
 
     /// Specifies the number of pre-allocated var sized
     static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
