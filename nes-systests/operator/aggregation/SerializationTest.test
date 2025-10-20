@@ -1,0 +1,27 @@
+# name: operator/aggregation/SerializationTest.test
+# description: Test Hashmap Serialization
+# groups: [Aggregation, Serialization]
+
+
+CREATE LOGICAL SOURCE stream(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1
+2,2
+3,3
+4,4
+5,5
+6,6
+7,7
+8,8
+9,9
+
+CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i64_out UINT64)  TYPE File;
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream WINDOW TUMBLING(ts, size 100ms) INTO sinkStream;
+----
+0,100,9
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream WINDOW TUMBLING(ts, size 100ms) INTO sinkStream;
+----
+0,100,9
