@@ -35,10 +35,8 @@ namespace NES
 
 struct SinkLogicalOperator final
 {
-    /// During deserialization, we don't need to know/use the name of the sink anymore.
-    SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
-    explicit SinkLogicalOperator(std::string sinkName);
+    explicit SinkLogicalOperator(Identifier sinkName);
     explicit SinkLogicalOperator(SinkDescriptor sinkDescriptor);
 
     [[nodiscard]] bool operator==(const SinkLogicalOperator& rhs) const;
@@ -57,14 +55,14 @@ struct SinkLogicalOperator final
 
     [[nodiscard]] SinkLogicalOperator withInferredSchema() const;
 
-    [[nodiscard]] std::string getSinkName() const noexcept;
+    [[nodiscard]] Identifier getSinkName() const noexcept;
     [[nodiscard]] std::optional<SinkDescriptor> getSinkDescriptor() const;
 
     [[nodiscard]] SinkLogicalOperator withSinkDescriptor(SinkDescriptor sinkDescriptor) const;
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> SINK_NAME{
+        static inline const DescriptorConfig::ConfigParameter<IdentifierList> SINK_NAME{
             "SinkName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SINK_NAME, config); }};
@@ -81,7 +79,7 @@ private:
     std::vector<OriginId> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 
-    std::string sinkName;
+    Identifier sinkName;
     std::optional<SinkDescriptor> sinkDescriptor;
 
     friend class OperatorSerializationUtil;

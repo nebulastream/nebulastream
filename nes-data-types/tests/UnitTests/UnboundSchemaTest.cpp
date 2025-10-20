@@ -76,15 +76,15 @@ TEST_F(UnboundSchemaTest, InitListCtorConflictNoName)
 
 TEST_F(UnboundSchemaTest, InitListCtorConflictQualifiedResolution)
 {
-    const UnboundField field1{IdentifierList::parse("source1.field1"), DataType::Type::BOOLEAN};
-    const UnboundField field2{IdentifierList::parse("source2.field1"), DataType::Type::INT32};
+    const UnboundField field1{IdentifierList::tryParse("source1.field1").value(), DataType::Type::BOOLEAN};
+    const UnboundField field2{IdentifierList::tryParse("source2.field1").value(), DataType::Type::INT32};
     const UnboundSchema unboundSchema{field1, field2};
 
     const auto foundUnqualified = unboundSchema[Identifier::parse("field1")];
     EXPECT_FALSE(foundUnqualified.has_value());
-    const auto foundQualified1 = unboundSchema[IdentifierList::parse("source1.field1")];
+    const auto foundQualified1 = unboundSchema[IdentifierList::tryParse("source1.field1").value()];
     EXPECT_EQ(foundQualified1.value(), field1);
-    const auto foundQualified2 = unboundSchema[IdentifierList::parse("source2.field1")];
+    const auto foundQualified2 = unboundSchema[IdentifierList::tryParse("source2.field1").value()];
     EXPECT_EQ(foundQualified2.value(), field2);
 
     EXPECT_EQ(std::ranges::size(unboundSchema), 2);
@@ -92,17 +92,17 @@ TEST_F(UnboundSchemaTest, InitListCtorConflictQualifiedResolution)
 
 TEST_F(UnboundSchemaTest, InitListCtorMultiLevelConflict)
 {
-    const UnboundField field1{IdentifierList::parse("source1.struct1.field1"), DataType::Type::BOOLEAN};
-    const UnboundField field2{IdentifierList::parse("source2.struct1.field1"), DataType::Type::INT32};
+    const UnboundField field1{IdentifierList::tryParse("source1.struct1.field1").value(), DataType::Type::BOOLEAN};
+    const UnboundField field2{IdentifierList::tryParse("source2.struct1.field1").value(), DataType::Type::INT32};
     const UnboundSchema unboundSchema{field1, field2};
 
     const auto foundUnqualifiedField = unboundSchema[Identifier::parse("field1")];
     EXPECT_FALSE(foundUnqualifiedField.has_value());
-    const auto foundUnqualifiedStruct = unboundSchema[IdentifierList::parse("struct1.field1")];
+    const auto foundUnqualifiedStruct = unboundSchema[IdentifierList::tryParse("struct1.field1").value()];
     EXPECT_FALSE(foundUnqualifiedStruct.has_value());
-    const auto foundQualified1 = unboundSchema[IdentifierList::parse("source1.struct1.field1")];
+    const auto foundQualified1 = unboundSchema[IdentifierList::tryParse("source1.struct1.field1").value()];
     EXPECT_EQ(foundQualified1.value(), field1);
-    const auto foundQualified2 = unboundSchema[IdentifierList::parse("source2.struct1.field1")];
+    const auto foundQualified2 = unboundSchema[IdentifierList::tryParse("source2.struct1.field1").value()];
     EXPECT_EQ(foundQualified2.value(), field2);
 
     EXPECT_EQ(std::ranges::size(unboundSchema), 2);
@@ -110,15 +110,15 @@ TEST_F(UnboundSchemaTest, InitListCtorMultiLevelConflict)
 
 TEST_F(UnboundSchemaTest, InitListCtorSubsetConflict)
 {
-    const UnboundField field1{IdentifierList::parse("source1.struct1.field1"), DataType::Type::BOOLEAN};
-    const UnboundField field2{IdentifierList::parse("struct1.field1"), DataType::Type::INT32};
+    const UnboundField field1{IdentifierList::tryParse("source1.struct1.field1").value(), DataType::Type::BOOLEAN};
+    const UnboundField field2{IdentifierList::tryParse("struct1.field1").value(), DataType::Type::INT32};
     const UnboundSchema unboundSchema{field1, field2};
 
     const auto foundUnqualifiedField = unboundSchema[Identifier::parse("field1")];
     EXPECT_FALSE(foundUnqualifiedField.has_value());
-    const auto foundUnqualifiedStruct = unboundSchema[IdentifierList::parse("struct1.field1")];
+    const auto foundUnqualifiedStruct = unboundSchema[IdentifierList::tryParse("struct1.field1").value()];
     EXPECT_FALSE(foundUnqualifiedStruct.has_value());
-    const auto foundQualified1 = unboundSchema[IdentifierList::parse("source1.struct1.field1")];
+    const auto foundQualified1 = unboundSchema[IdentifierList::tryParse("source1.struct1.field1").value()];
     EXPECT_EQ(foundQualified1.value(), field1);
 
     EXPECT_EQ(std::ranges::size(unboundSchema), 2);
@@ -179,7 +179,7 @@ TEST_F(UnboundSchemaTest, Inequality)
         []
     {
         const UnboundField field1{Identifier::parse("field1"), DataType::Type::BOOLEAN};
-        const UnboundField field2{IdentifierList::parse("source1.field2"), DataType::Type::INT32};
+        const UnboundField field2{IdentifierList::tryParse("source1.field2").value(), DataType::Type::INT32};
         return UnboundSchema{field1, field2, field1};
     }();
 

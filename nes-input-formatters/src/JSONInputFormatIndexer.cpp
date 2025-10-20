@@ -56,7 +56,7 @@ void setupFieldAccessFunctionForTuple(
         const auto keyStartPos = tuple.find(JSONFormatter::KEY_QUOTE, endOfFieldInTuple) + 1;
         const auto keyEndPos = tuple.find(JSONFormatter::KEY_QUOTE, keyStartPos);
         const auto key = tuple.substr(keyStartPos, keyEndPos - keyStartPos);
-        if (const auto fieldIdx = metaData.getFieldNameToIndexOffset().find(NES::Identifier{key});
+        if (const auto fieldIdx = metaData.getFieldNameToIndexOffset().find(NES::Identifier::parse(std::string{key}));
             fieldIdx != metaData.getFieldNameToIndexOffset().end())
         {
             ++numFields;

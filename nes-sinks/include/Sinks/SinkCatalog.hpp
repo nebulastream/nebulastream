@@ -28,19 +28,19 @@ class SinkCatalog
 {
 public:
     std::optional<SinkDescriptor> addSinkDescriptor(
-        std::string sinkName, const UnboundSchema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
+        Identifier sinkName, const UnboundSchema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
 
-    std::optional<SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
+    std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
 
-    bool removeSinkDescriptor(const std::string& sinkName);
+    bool removeSinkDescriptor(const Identifier& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);
 
-    bool containsSinkDescriptor(const std::string& sinkName) const;
+    bool containsSinkDescriptor(const Identifier& sinkName) const;
     bool containsSinkDescriptor(const SinkDescriptor& sinkDescriptor) const;
 
     std::vector<SinkDescriptor> getAllSinkDescriptors() const;
 
 private:
-    folly::Synchronized<std::unordered_map<std::string, SinkDescriptor>> sinks;
+    folly::Synchronized<std::unordered_map<Identifier , SinkDescriptor>> sinks;
 };
 }

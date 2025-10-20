@@ -165,9 +165,19 @@ JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children
 
         this->joinFunction = FunctionSerializationUtil::deserializeFunction(functions[0], inputSchemaOrCollisions.value());
 
+        auto parseOrThrow = [](std::string str)
+        {
+            auto expected = Identifier::tryParse(std::move(str));
+            if (!expected.has_value())
+            {
+                throw expected.error();
+            }
+            return expected.value();
+        };
+        auto windowStartFieldIdentiifer = Identifier::tryParse(windowStartFieldName);
         this->windowMetaData = WindowMetaData{
-            Field{*this, Identifier{windowStartFieldName}, DataType::Type::UINT64},
-            Field{*this, Identifier{windowEndFieldName}, DataType::Type::UINT64}};
+            Field{*this, parseOrThrow(std::move(windowStartFieldName)), DataType::Type::UINT64},
+            Field{*this, parseOrThrow(windowEndFieldName), DataType::Type::UINT64}};
 
         if (std::holds_alternative<SerializableWindowType>(windowTypeVariant))
         {
@@ -279,8 +289,10 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema() const
         },
         timestampFields);
 
+    static constexpr auto startIdentifier = Identifier::parse("start");
+    static constexpr auto endIdentifier = Identifier::parse("end");
     copy.windowMetaData
-        = WindowMetaData{Field{copy, Identifier{"start"}, DataType::Type::UINT64}, Field{copy, Identifier{"end"}, DataType::Type::UINT64}};
+        = WindowMetaData{Field{copy, startIdentifier, DataType::Type::UINT64}, Field{copy, endIdentifier, DataType::Type::UINT64}};
 
     copy.outputSchema = inferOutputSchema(copy.children, copy, copy.windowMetaData.value());
 

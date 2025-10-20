@@ -33,6 +33,7 @@
 #include <Util/Ranges.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -43,37 +44,48 @@ namespace NES
 /// For the most part, we should just use the "owning" version because it can't contain a dangling reference.
 /// Should you use the non-owning version for non-constexpr strings, make sure that they don't get mutated while Identifiers wrapping them are alive.
 /// The behaviour in that case is not well-defined and will sometimes produce correct results, sometimes exceptions and sometimes incorrect results.
-template <bool Owning = true>
+template <size_t Extent>
 class IdentifierBase
 {
-    using valueType = std::conditional_t<Owning, std::string, std::string_view>;
+    using valueType = std::conditional_t<Extent == std::dynamic_extent, std::string, std::array<char, Extent>>;
     valueType value;
     bool caseSensitive;
 
     friend class IdentifierSerializationUtil;
 
+    template <size_t OtherExtent>
+    friend class IdentifierBase;
+
     constexpr explicit IdentifierBase(const valueType value, const bool caseSensitive)
+    requires(Extent == std::dynamic_extent)
         : value(std::move(value)), caseSensitive(caseSensitive)
     {
     }
 
-    explicit constexpr IdentifierBase(const valueType value) : value(value), caseSensitive(false) { }
+    constexpr explicit IdentifierBase(const valueType value, const bool caseSensitive)
+    requires(Extent != std::dynamic_extent)
+        : value(value), caseSensitive(caseSensitive)
+    {
+    }
+
+    constexpr IdentifierBase() = default;
 
     static constexpr bool isQuoted(std::string_view value)
     {
-        PRECONDITION(value.find('.') == valueType::npos, "Invalid Identifier, cannot contain dot: {}", value);
+        PRECONDITION(value.find('.') == std::string_view::npos, "Invalid Identifier, cannot contain dot: {}", value);
         if (*std::ranges::begin(value) == '"')
         {
             PRECONDITION(*std::ranges::rbegin(value) == '"', "Invalid Identifier, must end with quote: {}", value);
             return true;
         }
-        PRECONDITION(*std::ranges::begin(value) != '"', "Invalid Identifier, must not start but not end with quote: {}", value);
+        PRECONDITION(
+            *std::ranges::rbegin(value) != '"', "Invalid Identifier, cannot end with quote if it doesn't start with one: {}", value);
         return false;
     }
 
     static constexpr std::expected<bool, Exception> tryIsQuoted(std::string_view value)
     {
-        if (value.find('.') != valueType::npos)
+        if (value.find('.') != std::string_view::npos)
         {
             return std::unexpected{InvalidIdentifier("Cannot contain dot")};
         }
@@ -83,58 +95,44 @@ class IdentifierBase
             {
                 return true;
             }
-            return std::unexpected{InvalidIdentifier("{}", value)};
+            return std::unexpected{InvalidIdentifier("Must also end with quote: {}", value)};
         }
         if (*std::ranges::rbegin(value) == '"')
         {
-            return std::unexpected{InvalidIdentifier("{}", value)};
+            return std::unexpected{InvalidIdentifier("Cannot end with quote if it doesn't start with one: {}", value)};
         }
         return false;
     }
 
 public:
-    // constexpr explicit IdentifierBase(std::string value) : value(std::move(value)) { }
-    // constexpr explicit IdentifierBase(const std::string_view value) : value(value) { }
     constexpr IdentifierBase(const IdentifierBase& other) = default;
     constexpr IdentifierBase(IdentifierBase&& other) noexcept = default;
     constexpr IdentifierBase& operator=(const IdentifierBase& other) = default;
     constexpr IdentifierBase& operator=(IdentifierBase&& other) noexcept = default;
     constexpr ~IdentifierBase() = default;
 
-    // IdentifierBase(const IdentifierBase<false>& refIdentifier)
-    // requires Owning
-    //     : value(std::string{refIdentifier.value}), caseSensitive(refIdentifier.caseSensitive)
-    // {
-    // }
-
-    IdentifierBase& operator=(const IdentifierBase<false>& refIdentifier)
-    requires Owning
+    template <size_t OtherExtent>
+    IdentifierBase& operator=(const IdentifierBase<OtherExtent>& refIdentifier)
+    requires(OtherExtent == std::dynamic_extent)
     {
-        value = std::string{refIdentifier.value};
+        value = std::string{refIdentifier.value.begin(), refIdentifier.value.end()};
         caseSensitive = refIdentifier.isCaseSensitive();
     }
 
     //Should we keep the conversion operator or the conversion constructor?
-    operator IdentifierBase<true>() const
-    requires(!Owning)
+    operator IdentifierBase<std::dynamic_extent>() const
+    requires(Extent != std::dynamic_extent)
     {
-        return IdentifierBase<true>{std::string{value}, isCaseSensitive()};
+        return IdentifierBase<std::dynamic_extent>{std::string{value.begin(), value.end()}, isCaseSensitive()};
     }
 
     /// Returns the original string this identifier was created with.
     /// DO NOT USE THIS METHOD FOR COMPARISON.
     /// Does not uppercase non-case sensitive identifiers as normally done.
     /// This method mainly exists for serialization purposes.
-    [[nodiscard]] constexpr std::string_view getOriginalString() const { return value; }
+    [[nodiscard]] constexpr std::string_view getOriginalString() const { return std::string_view{value.begin(), value.end()}; }
 
-    [[nodiscard]] constexpr bool isCaseSensitive() const
-    {
-        if constexpr (Owning)
-        {
-            return caseSensitive;
-        }
-        return isQuoted(value);
-    }
+    [[nodiscard]] constexpr bool isCaseSensitive() const { return caseSensitive; }
 
     friend std::ostream& operator<<(std::ostream& os, const IdentifierBase& obj)
     {
@@ -150,7 +148,14 @@ public:
         return os << std::string_view{obj.value}.substr(1, std::ranges::size(obj.value) - 2);
     }
 
-    friend bool operator==(const IdentifierBase& lhs, const IdentifierBase& rhs)
+    [[nodiscard]] std::string asCanonicalString() const
+    {
+        return fmt::format("{}", *this);
+    }
+
+    template <size_t Rhs_Extent>
+    friend bool operator==(const IdentifierBase& lhs, const IdentifierBase<Rhs_Extent>& rhs)
+    // requires (Extent == std::dynamic_extent)
     {
         std::stringstream lhsss;
         std::stringstream rhsss;
@@ -159,63 +164,85 @@ public:
         return lhsss.str() == rhsss.str();
     }
 
-    static constexpr IdentifierBase parse(valueType stringLike)
+    /// We attach these static parse methods to the template specialization with dynamic extent so that it is available under Identifier::parse
+    /// But don't start generating unnecessary specializations by accident.
+
+    static constexpr IdentifierBase<std::dynamic_extent> parse(std::string value)
+    requires(Extent == std::dynamic_extent)
     {
-        if constexpr (Owning)
-        {
-            auto caseSensitive = isQuoted(stringLike);
-            return IdentifierBase{std::move(stringLike), caseSensitive};
-        }
-        else
-        {
-            /// Technically, it would not be needed to check here since we recalculate isQuoted evertime its needed,
-            /// But we ensure that calling this method with an invalid input never succeeds
-            auto caseSensitive = isQuoted(stringLike);
-            return IdentifierBase{stringLike, caseSensitive};
-        }
+        PRECONDITION(std::ranges::size(value) != 0, "Invalid identifier, cannot be empty");
+        auto caseSensitive = isQuoted(value);
+        return IdentifierBase{std::move(value), caseSensitive};
     }
 
-    static constexpr std::expected<IdentifierBase, Exception> tryParse(valueType stringLike)
+    template <size_t ReturnedExtent>
+    static constexpr IdentifierBase<ReturnedExtent - 1> parse(const char (&value)[ReturnedExtent])
+    requires(Extent == std::dynamic_extent && ReturnedExtent > 1)
     {
-        auto caseSensitive = tryIsQuoted(stringLike);
+        PRECONDITION(value[ReturnedExtent - 1] == '\0', "Invalid Identifier, must end with null terminator: {}", value);
+        IdentifierBase<ReturnedExtent - 1> identifier{};
+        /// While string view can deal with a null byte, isQuoted expects the last character to be a quote if the first one is one
+        identifier.caseSensitive = isQuoted(std::string_view{value, ReturnedExtent - 1});
+        std::copy_n(value, ReturnedExtent - 1, identifier.value.data());
+        return identifier;
+    }
+
+
+    static constexpr std::expected<IdentifierBase, Exception> tryParse(std::string value)
+    requires(Extent == std::dynamic_extent)
+    {
+        if (std::ranges::size(value) == 0)
+        {
+            return std::unexpected{InvalidIdentifier("Cannot be empty")};
+        }
+        auto caseSensitive = tryIsQuoted(value);
         if (caseSensitive.has_value())
         {
-            if constexpr (Owning)
-            {
-                return IdentifierBase{std::move(stringLike), caseSensitive.value()};
-            }
-            else
-            {
-                return IdentifierBase{stringLike, caseSensitive.value()};
-            }
+            return IdentifierBase{std::move(value), caseSensitive.value()};
         }
-        return caseSensitive.error();
+        return std::unexpected{caseSensitive.error()};
+    }
+
+    template <size_t ReturnedExtent>
+    static constexpr std::expected<IdentifierBase<ReturnedExtent - 1>, Exception> tryParse(const char (&value)[ReturnedExtent])
+    requires(Extent == std::dynamic_extent && ReturnedExtent > 1)
+    {
+        auto caseSensitive = tryIsQuoted(value);
+        if (caseSensitive.has_value())
+        {
+            IdentifierBase<ReturnedExtent - 1> identifier{};
+            identifier.caseSensitive = caseSensitive.value();
+            std::copy_n(value, ReturnedExtent - 1, identifier.value.data());
+            return identifier;
+        }
+        return std::unexpected{caseSensitive.error()};
     }
 };
 
-using Identifier = IdentifierBase<true>;
+using Identifier = IdentifierBase<std::dynamic_extent>;
+
 }
 
-template <bool Owning>
-struct fmt::formatter<NES::IdentifierBase<Owning>> : ostream_formatter
+template <size_t Extent>
+struct fmt::formatter<NES::IdentifierBase<Extent>> : ostream_formatter
 {
 };
 
-template <bool owning>
-struct std::hash<NES::IdentifierBase<owning>>
+template <size_t Extent>
+struct std::hash<NES::IdentifierBase<Extent>>
 {
-    std::size_t operator()(const NES::IdentifierBase<owning>& arg) const noexcept
+    std::size_t operator()(const NES::IdentifierBase<Extent>& arg) const noexcept
     {
         return std::hash<std::string>{}(fmt::format("{}", arg));
     }
 };
 
-template <bool Owning>
-struct std::hash<std::span<NES::IdentifierBase<Owning>>>
+template <size_t Extent>
+struct std::hash<std::span<NES::IdentifierBase<Extent>>>
 {
     //taken from https://stackoverflow.com/a/72073933 from SO user see,
     //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
-    std::size_t operator()(const std::span<NES::IdentifierBase<Owning>>& arg) const noexcept
+    std::size_t operator()(const std::span<NES::IdentifierBase<Extent>>& arg) const noexcept
     {
         std::size_t seed = std::ranges::size(arg);
         constexpr auto hasher = std::hash<NES::Identifier>{};
@@ -231,12 +258,12 @@ struct std::hash<std::span<NES::IdentifierBase<Owning>>>
     }
 };
 
-template <bool Owning>
-struct std::hash<std::span<const NES::IdentifierBase<Owning>>>
+template <size_t Extent>
+struct std::hash<std::span<const NES::IdentifierBase<Extent>>>
 {
     //taken from https://stackoverflow.com/a/72073933 from SO user see,
     //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
-    std::size_t operator()(const std::span<const NES::IdentifierBase<Owning>>& arg) const noexcept
+    std::size_t operator()(const std::span<const NES::IdentifierBase<Extent>>& arg) const noexcept
     {
         std::size_t seed = std::ranges::size(arg);
         constexpr auto hasher = std::hash<NES::Identifier>{};
@@ -260,8 +287,14 @@ class IdentifierList
     std::vector<Identifier> identifiers;
 
 public:
-    constexpr explicit IdentifierList(std::ranges::input_range auto&& identifiers)
-        : identifiers(std::ranges::to<std::vector<Identifier>>(identifiers))
+    constexpr explicit IdentifierList(std::vector<Identifier> identifiers) : identifiers(std::move(identifiers))
+    {
+        PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
+    }
+
+    template <std::ranges::input_range T>
+    requires(std::same_as<std::remove_cv_t<std::ranges::range_value_t<T>>, Identifier> && !std::same_as<T, std::vector<Identifier>>)
+    explicit constexpr IdentifierList(const T& identifiers) : identifiers(identifiers | std::ranges::to<std::vector>())
     {
         PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
@@ -271,7 +304,12 @@ public:
         PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
 
-    explicit constexpr IdentifierList(const Identifier& identifier) : identifiers(std::vector{std::move(identifier)}) { }
+
+    constexpr IdentifierList(Identifier identifier) : identifiers(std::vector{std::move(identifier)}) { }
+
+    template <size_t Extent>
+    requires (Extent != std::dynamic_extent)
+    constexpr IdentifierList(IdentifierBase<Extent> identifier) : identifiers(std::vector{Identifier{identifier}}) { }
 
     constexpr IdentifierList() = delete;
     constexpr IdentifierList(const IdentifierList& other) = default;
@@ -288,7 +326,7 @@ public:
 
     [[nodiscard]] constexpr decltype(identifiers.cend()) end() const { return identifiers.cend(); }
 
-    [[nodiscard]] size_t size() const { return identifiers.size(); }
+    [[nodiscard]] constexpr size_t size() const { return identifiers.size(); }
 
     [[nodiscard]] IdentifierList copyAppendLast(const std::ranges::input_range auto&& toAppend) const
     {
@@ -303,33 +341,49 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const IdentifierList& obj)
     {
-        return os
-            << (obj.identifiers | std::views::transform([](const Identifier& identifier) { return fmt::format("{}", identifier); })
-                | std::views::join_with('.') | std::ranges::to<std::string>());
+        return os << fmt::format(
+                   "{}",
+                   fmt::join(
+                       obj.identifiers | std::views::transform([](const Identifier& identifier) { return fmt::format("{}", identifier); }),
+                       "."));
     }
 
     friend bool operator==(const IdentifierList& lhs, const IdentifierList& rhs) { return lhs.identifiers == rhs.identifiers; }
 
-    friend bool operator!=(const IdentifierList& lhs, const IdentifierList& rhs) { return !(lhs == rhs); }
+    IdentifierList operator+(const std::ranges::input_range auto& other) const { return copyAppendLast(std::move(other)); }
 
-    IdentifierList operator+(const IdentifierList& other) const { return copyAppendLast(std::move(other)); }
+    IdentifierList operator+(const Identifier& other) const
+    {
+        auto newIdentifiers = std::vector{identifiers};
+        newIdentifiers.push_back(other);
+        return IdentifierList{std::move(newIdentifiers)};
+    }
 
-    IdentifierList operator+(const Identifier& other) const { return copyAppendLast(std::initializer_list<Identifier>{other}); }
+    static std::expected<IdentifierList, Exception> tryCreate(std::vector<Identifier> identifiers)
+    {
+        if (std::ranges::empty(identifiers))
+        {
+            return std::unexpected{InvalidIdentifier("Cannot be empty")};
+        }
+        return IdentifierList{std::move(identifiers)};
+    }
 
-    static std::optional<IdentifierList> parse(const std::string& name)
+    static std::expected<IdentifierList, Exception> tryParse(std::string_view name)
     {
         std::vector<Identifier> identifiers;
-        std::stringstream stream(name);
-        std::string item;
-        while (std::getline(stream, item, '.'))
+        for (const auto& item : name | std::views::split('.'))
         {
-            identifiers.push_back(Identifier::parse(item));
+            auto identifierExpected = Identifier::tryParse(std::string{item.begin(), item.end()});
+            if (identifierExpected.has_value())
+            {
+                identifiers.push_back(std::move(identifierExpected.value()));
+            }
+            else
+            {
+                return std::unexpected{std::move(identifierExpected.error())};
+            }
         }
-        if (identifiers.size() == 0)
-        {
-            return std::nullopt;
-        }
-        return IdentifierList{identifiers};
+        return tryCreate(std::move(identifiers));
     }
 
     struct SpanEquals
@@ -357,12 +411,10 @@ public:
 
 static_assert(std::ranges::input_range<std::initializer_list<Identifier>>);
 
-
+static_assert(std::ranges::input_range<IdentifierList>);
 static_assert(std::ranges::random_access_range<IdentifierList>);
 static_assert(std::ranges::random_access_range<const IdentifierList>);
 static_assert(std::ranges::sized_range<IdentifierList>);
-
-IdentifierList zipIdentifierLists(const IdentifierList& firstIdList, const IdentifierList& secondIdList);
 }
 
 template <>
@@ -386,22 +438,5 @@ struct std::hash<NES::IdentifierList>
     }
 };
 
-template <>
-struct fmt::formatter<NES::IdentifierList>
-{
-    constexpr auto parse(fmt::format_parse_context& ctx) { return ctx.begin(); }
 
-    auto format(const NES::IdentifierList& identifiers, format_context& ctx) const
-    {
-        auto out = ctx.out();
-        if (std::ranges::size(identifiers) >= 1)
-        {
-            out = fmt::format_to(out, "{}", *std::ranges::begin(identifiers));
-        }
-        for (const auto& identifier : std::span{std::ranges::begin(identifiers) + 1, std::ranges::end(identifiers)})
-        {
-            out = fmt::format_to(out, ".{}", identifier);
-        }
-        return out;
-    }
-};
+FMT_OSTREAM(NES::IdentifierList);

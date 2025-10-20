@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 import "SerializableDataType.proto";
-import "SerializableVariantDescriptor.proto";
+import "SerializableIdentifier.proto";
 package NES;
 
 message SerializableField {

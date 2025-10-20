@@ -36,7 +36,7 @@ SerializableSchema* SchemaSerializationUtil::serializeSchema(const Schema& schem
     {
         auto* serializedField = serializedSchema->add_fields();
         SerializableIdentifier identifier;
-        identifier.set_value(fmt::format("{}", field.getLastName().getRawValue()));
+        identifier.set_value(fmt::format("{}", field.getLastName().getOriginalString()));
         identifier.set_casesensitive(field.getLastName().isCaseSensitive());
         serializedField->set_allocated_name(&identifier);
         DataTypeSerializationUtil::serializeDataType(field.getDataType(), serializedField->mutable_type());

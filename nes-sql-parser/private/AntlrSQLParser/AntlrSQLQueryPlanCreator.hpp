@@ -27,7 +27,7 @@ namespace NES::Parsers
 class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 {
     std::stack<AntlrSQLHelper> helpers;
-    std::vector<std::string> sinkNames;
+    std::vector<Identifier> sinkNames;
     std::stack<LogicalPlan> queryPlans;
 
 public:

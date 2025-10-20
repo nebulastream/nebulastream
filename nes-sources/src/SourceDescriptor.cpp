@@ -31,6 +31,7 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
+#include "Serialization/IdentifierSerializationUtil.hpp"
 #include "Serialization/UnboundSchemaSerializationUtl.hpp"
 
 namespace NES
@@ -146,7 +147,7 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
 {
     SerializableSourceDescriptor serializableSourceDescriptor;
     UnboundSchemaSerializationUtil::serializeUnboundSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
-    serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
+    IdentifierSerializationUtil::serializeIdentifier(logicalSource.getLogicalSourceName(), serializableSourceDescriptor.mutable_logicalsourcename());
     serializableSourceDescriptor.set_sourcetype(sourceType);
 
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());

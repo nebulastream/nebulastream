@@ -52,7 +52,7 @@ enum class StatementOutputFormat : uint8_t
 /// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
 struct CreateLogicalSourceStatement
 {
-    std::string name;
+    Identifier name;
     UnboundSchema schema;
 };
 
@@ -67,7 +67,7 @@ struct CreatePhysicalSourceStatement
 
 struct CreateSinkStatement
 {
-    std::string name;
+    Identifier name;
     std::string sinkType;
     UnboundSchema schema;
     std::unordered_map<std::string, std::string> sinkConfig;
@@ -77,7 +77,7 @@ struct CreateSinkStatement
 /// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
 struct ShowLogicalSourcesStatement
 {
-    std::optional<std::string> name;
+    std::optional<Identifier> name;
     std::optional<StatementOutputFormat> format;
 };
 
@@ -92,7 +92,7 @@ struct ShowPhysicalSourcesStatement
 
 struct ShowSinksStatement
 {
-    std::optional<std::string> name;
+    std::optional<Identifier> name;
     std::optional<StatementOutputFormat> format;
 };
 
@@ -108,7 +108,7 @@ struct DropPhysicalSourceStatement
 
 struct DropSinkStatement
 {
-    std::string name;
+    Identifier name;
 };
 
 using QueryStatement = LogicalPlan;

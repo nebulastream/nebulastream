@@ -30,12 +30,13 @@
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
 #include <SinkValidationRegistry.hpp>
+#include "Serialization/IdentifierSerializationUtil.hpp"
 #include "Serialization/UnboundSchemaSerializationUtl.hpp"
 
 namespace NES
 {
 
-SinkDescriptor::SinkDescriptor(std::string sinkName, const UnboundSchema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
+SinkDescriptor::SinkDescriptor(Identifier sinkName, const UnboundSchema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
     : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<UnboundSchema>(schema)), sinkType(sinkType)
 {
 }
@@ -50,7 +51,7 @@ std::string SinkDescriptor::getSinkType() const
     return sinkType;
 }
 
-std::string SinkDescriptor::getSinkName() const
+Identifier SinkDescriptor::getSinkName() const
 {
     return sinkName;
 }
@@ -80,7 +81,7 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 SerializableSinkDescriptor SinkDescriptor::serialize() const
 {
     SerializableSinkDescriptor serializedSinkDescriptor;
-    serializedSinkDescriptor.set_sinkname(sinkName);
+    IdentifierSerializationUtil::serializeIdentifier(sinkName, serializedSinkDescriptor.mutable_sinkname());
     UnboundSchemaSerializationUtil::serializeUnboundSchema(*schema, serializedSinkDescriptor.mutable_sinkschema());
     serializedSinkDescriptor.set_sinktype(sinkType);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.

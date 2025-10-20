@@ -166,7 +166,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(LogicalOp
         if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
         {
             windowMetaData = WindowMetaData{
-                Field{*this, Identifier{"start"}, DataType::Type::UINT64}, Field{*this, Identifier{"end"}, DataType::Type::UINT64}};
+                Field{*this, Identifier::parse("start"), DataType::Type::UINT64}, Field{*this, Identifier::parse("end"), DataType::Type::UINT64}};
         }
         else
         {
@@ -263,8 +263,10 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
     {
+        static constexpr auto startId = Identifier::parse("start");
+        static constexpr auto endId = Identifier::parse("end");
         copy.windowMetaData = WindowMetaData{
-            Field{copy, Identifier{"start"}, DataType::Type::UINT64}, Field{copy, Identifier{"end"}, DataType::Type::UINT64}};
+            Field{copy, startId, DataType::Type::UINT64}, Field{copy, endId, DataType::Type::UINT64}};
     }
     else
     {

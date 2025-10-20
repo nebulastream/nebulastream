@@ -70,19 +70,19 @@ class SLTSinkFactory
 public:
     explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const UnboundSchema& schema)
+    bool registerSink(const std::string& sinkType, Identifier sinkNameInFile, const UnboundSchema& schema)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
             [this, schema, sinkType](
-                const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
+                Identifier assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
                 if (sinkType == "File")
                 {
                     config["input_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+                const auto sink = sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -93,14 +93,14 @@ public:
     }
 
     std::expected<SinkDescriptor, Exception>
-    createActualSink(const std::string& sinkNameInFile, const std::string_view assignedSinkName, const std::filesystem::path& filePath)
+    createActualSink(const Identifier& sinkNameInFile, Identifier assignedSinkName, const std::filesystem::path& filePath)
     {
         const auto sinkProviderIter = sinkProviders.find(sinkNameInFile);
         if (sinkProviderIter == sinkProviders.end())
         {
             throw UnknownSinkName("{}", sinkNameInFile);
         }
-        return sinkProviderIter->second(std::string{assignedSinkName}, filePath);
+        return sinkProviderIter->second(std::move(assignedSinkName), filePath);
     }
 
     static inline const UnboundSchema checksumSchema = []
@@ -112,7 +112,7 @@ public:
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
-    std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
+    std::unordered_map<Identifier, std::function<std::expected<SinkDescriptor, Exception>(Identifier, std::filesystem::path)>>
         sinkProviders;
 };
 
@@ -425,7 +425,7 @@ struct SystestBinder::Impl
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
         PhysicalSourceConfig physicalSourceConfig{
-            .logical = statement.attachedTo.getLogicalSourceName(),
+            .logical = statement.attachedTo.getLogicalSourceName().asCanonicalString(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
             .sourceConfig = statement.sourceConfig};
@@ -504,13 +504,12 @@ struct SystestBinder::Impl
         /// We assume:
         /// - the INTO keyword is the last keyword in the query
         /// - the sink name is the last word in the INTO clause
-        const auto sinkName = [&query]() -> std::string
+        const auto sinkName = [&query]() -> Identifier
         {
             const auto intoClause = query.find("INTO");
             if (intoClause == std::string::npos)
             {
-                NES_ERROR("INTO clause not found in query: {}", query);
-                return "";
+                throw InvalidQuerySyntax("INTO clause not found in query: {}", query);
             }
             const auto intoLength = std::string("INTO").length();
             auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
@@ -520,19 +519,29 @@ struct SystestBinder::Impl
             {
                 trimmedSinkName.pop_back();
             }
-            return trimmedSinkName;
+
+            auto expectedSinkName = Identifier::tryParse(trimmedSinkName);
+            if (not expectedSinkName.has_value())
+            {
+                throw expectedSinkName.error();
+            }
+            if (expectedSinkName.value().isCaseSensitive())
+            {
+                throw InvalidQuerySyntax("Sink name in systest must be case insensitive: {}", query);
+            }
+            return expectedSinkName.value();
         }();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
-        query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
+        const auto sinkForQuery = Identifier::parse(Util::toUpperCase(sinkName.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue())));
+        query = std::regex_replace(query, std::regex(std::string{sinkName.getOriginalString()}), sinkForQuery.asCanonicalString());
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
-        if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
+        if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile);
             not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
@@ -580,7 +589,7 @@ struct SystestBinder::Impl
         std::string rightQuery,
         const SystestQueryId currentQueryNumberInTest) const
     {
-        const auto extractSinkName = [](const std::string& query) -> std::string
+        const auto extractSinkName = [](const std::string& query) -> Identifier
         {
             std::istringstream stream(query);
             std::string token;
@@ -591,28 +600,35 @@ struct SystestBinder::Impl
                     std::string sink;
                     if (!(stream >> sink))
                     {
-                        NES_ERROR("INTO clause not followed by sink name in query: {}", query);
-                        return "";
+                        throw InvalidQuerySyntax("INTO clause not followed by sink name in query: {}", query);
                     }
                     if (!sink.empty() && sink.back() == ';')
                     {
                         sink.pop_back();
                     }
-                    return sink;
+                    auto expectedSinkName = Identifier::tryParse(sink);
+                    if (not expectedSinkName.has_value())
+                    {
+                        throw expectedSinkName.error();
+                    }
+                    if (expectedSinkName.value().isCaseSensitive())
+                    {
+                        throw InvalidQuerySyntax("Sink name in systest must be case insensitive: {}", query);
+                    }
+                    return expectedSinkName.value();
                 }
             }
-            NES_ERROR("INTO clause not found in query: {}", query);
-            return "";
+            throw InvalidQuerySyntax("INTO clause not found in query: {}", query);
         };
 
         const auto leftSinkName = extractSinkName(leftQuery);
         const auto rightSinkName = extractSinkName(rightQuery);
 
-        const auto leftSinkForQuery = leftSinkName + std::to_string(lastParsedQueryId.getRawValue());
-        const auto rightSinkForQuery = rightSinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
+        const auto leftSinkForQuery = Identifier::parse(leftSinkName.asCanonicalString() + std::to_string(lastParsedQueryId.getRawValue()));
+        const auto rightSinkForQuery = Identifier::parse(rightSinkName.asCanonicalString() + std::to_string(lastParsedQueryId.getRawValue()) + "differential");
 
-        leftQuery = std::regex_replace(leftQuery, std::regex(leftSinkName), leftSinkForQuery);
-        rightQuery = std::regex_replace(rightQuery, std::regex(rightSinkName), rightSinkForQuery);
+        leftQuery = std::regex_replace(leftQuery, std::regex(std::string{leftSinkName.getOriginalString()}), leftSinkForQuery.asCanonicalString());
+        rightQuery = std::regex_replace(rightQuery, std::regex(std::string{rightSinkName.getOriginalString()}), rightSinkForQuery.asCanonicalString());
 
         const auto differentialTestResultFileName = std::string(testFileName) + "differential";
         const auto leftResultFile = SystestQuery::resultFile(workingDir, testFileName, lastParsedQueryId);
@@ -621,14 +637,14 @@ struct SystestBinder::Impl
         auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
 
         if (auto leftSinkExpected
-            = sltSinkProvider.createActualSink(Util::toUpperCase(leftSinkName), Util::toUpperCase(leftSinkForQuery), leftResultFile);
+            = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
             not leftSinkExpected.has_value())
         {
             currentTest.setException(leftSinkExpected.error());
             return;
         }
         if (auto rightSinkExpected
-            = sltSinkProvider.createActualSink(Util::toUpperCase(rightSinkName), Util::toUpperCase(rightSinkForQuery), rightResultFile);
+            = sltSinkProvider.createActualSink(rightSinkName, rightSinkForQuery, rightResultFile);
             not rightSinkExpected.has_value())
         {
             currentTest.setException(rightSinkExpected.error());

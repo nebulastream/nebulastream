@@ -46,7 +46,7 @@ public:
     /// @param schema the schema of fields without the logical source name as a prefix
     /// @return the created logical source if successful with a schema containing the logical source name as a prefix,
     /// nullopt if a logical source with that name already existed
-    [[nodiscard]] std::optional<NES::LogicalSource> addLogicalSource(const std::string& logicalSourceName, const UnboundSchema& schema);
+    [[nodiscard]] std::optional<NES::LogicalSource> addLogicalSource(const Identifier& logicalSourceName, const UnboundSchema& schema);
 
 
     /// @brief method to delete a logical source and any associated physical source.
@@ -65,10 +65,10 @@ public:
     /// @return true if there is a source descriptor with that id registered and it was removed
     [[nodiscard]] bool removePhysicalSource(const SourceDescriptor& physicalSource);
 
-    [[nodiscard]] std::optional<LogicalSource> getLogicalSource(const std::string& logicalSourceName) const;
+    [[nodiscard]] std::optional<LogicalSource> getLogicalSource(const Identifier& logicalSourceName) const;
 
     [[nodiscard]] bool containsLogicalSource(const LogicalSource& logicalSource) const;
-    [[nodiscard]] bool containsLogicalSource(const std::string& logicalSourceName) const;
+    [[nodiscard]] bool containsLogicalSource(const Identifier& logicalSourceName) const;
 
     [[nodiscard]] std::optional<SourceDescriptor> getPhysicalSource(PhysicalSourceId physicalSourceId) const;
 
@@ -83,7 +83,7 @@ public:
 private:
     mutable std::recursive_mutex catalogMutex;
     std::atomic<PhysicalSourceId::Underlying> nextPhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()};
-    std::unordered_map<std::string, LogicalSource> namesToLogicalSourceMapping;
+    std::unordered_map<Identifier, LogicalSource> namesToLogicalSourceMapping;
     std::unordered_map<PhysicalSourceId, SourceDescriptor> idsToPhysicalSources;
     std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> logicalToPhysicalSourceMapping;
 };

@@ -36,7 +36,7 @@
 namespace NES
 {
 
-std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const UnboundSchema& schema)
+std::optional<LogicalSource> SourceCatalog::addLogicalSource(const Identifier& logicalSourceName, const UnboundSchema& schema)
 {
     const std::unique_lock lock(catalogMutex);
     if (!containsLogicalSource(logicalSourceName))
@@ -85,7 +85,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     return descriptor;
 }
 
-std::optional<LogicalSource> SourceCatalog::getLogicalSource(const std::string& logicalSourceName) const
+std::optional<LogicalSource> SourceCatalog::getLogicalSource(const Identifier& logicalSourceName) const
 {
     const std::unique_lock lock(catalogMutex);
     if (const auto found = namesToLogicalSourceMapping.find(logicalSourceName); found != namesToLogicalSourceMapping.end())
@@ -110,7 +110,7 @@ bool SourceCatalog::containsLogicalSource(const LogicalSource& logicalSource) co
     return false;
 }
 
-bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName) const
+bool SourceCatalog::containsLogicalSource(const Identifier& logicalSourceName) const
 {
     const std::unique_lock lock{catalogMutex};
     return namesToLogicalSourceMapping.contains(logicalSourceName);

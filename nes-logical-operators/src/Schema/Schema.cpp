@@ -35,7 +35,6 @@
 #include <ErrorHandling.hpp>
 #include "Operators/LogicalOperator.hpp"
 
-
 namespace NES
 {
 
@@ -68,25 +67,23 @@ namespace NES
 // }
 
 
-Schema::Schema(std::initializer_list<Field> fields) noexcept
-    : Schema(
-          Private{},
-          fields
-              | std::views::transform([](const Field& field)
-                                      { return std::make_tuple<IdentifierList, Field>(field.getLastName(), Field{field}); }))
+Schema::Schema(std::vector<Field> fields) noexcept : fields(std::move(fields))
 {
-    // auto enumerated = std::vector<std::pair<Field, size_t>>{};
-    // enumerated.reserve(std::ranges::size(fields));
-    // for (size_t i = 0; i < std::ranges::size(fields); ++i)
-    // {
-    //     enumerated.push_back({this->fields[i], i});
-    // }
-    // auto [fieldsByName, collisions] = initializeFields(enumerated);
-    // nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
-    //     | ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    // currentPrefix = findCommonPrefix(fields);
+    auto [fieldsByName, collisions] = initializeFields(this->fields);
+    nameToField = fieldsByName
+        | std::views::transform([](auto pair)
+                                { return std::make_pair<IdentifierList, size_t>(IdentifierList{pair.first}, std::move(pair.second)); })
+        | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
 }
 
+Schema::Schema(std::initializer_list<Field> fields) noexcept : fields(std::move(fields))
+{
+    auto [fieldsByName, collisions] = initializeFields(this->fields);
+    nameToField = fieldsByName
+        | std::views::transform([](auto pair)
+                                { return std::make_pair<IdentifierList, size_t>(IdentifierList{pair.first}, std::move(pair.second)); })
+        | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
+}
 
 // Schema Schema::addField(const IdentifierList& name, const DataType::Type type)
 // {

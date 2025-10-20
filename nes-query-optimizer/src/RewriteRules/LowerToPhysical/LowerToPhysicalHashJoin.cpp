@@ -128,8 +128,10 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
                     {
                         joinedDataType = DataType{DataType::Type::VARSIZED_POINTER_REP};
                     }
-                    const auto leftFieldNewName = Identifier{leftField.getLastName().getRawValue() + "_" + std::to_string(counter++)};
-                    const auto rightFieldNewName = Identifier{rightField.getLastName().getRawValue() + "_" + std::to_string(counter++)};
+                    const auto leftFieldNewName
+                        = IdentifierList{leftField.getLastName(), Identifier::parse("j" + std::to_string(counter++))};
+                    const auto rightFieldNewName
+                        = IdentifierList{rightField.getLastName(), Identifier::parse("j" + std::to_string(counter++))};
                     leftJoinNames.emplace_back(
                         FieldNamesExtension{.oldField = leftField, .newField = UnboundField{leftFieldNewName, *joinedDataType}});
                     rightJoinNames.emplace_back(
@@ -237,9 +239,11 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join->getWindowType());
     const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
-    auto characteristicsAreBound = std::holds_alternative<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
+    auto characteristicsAreBound
+        = std::holds_alternative<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
     PRECONDITION(characteristicsAreBound, "Expected the join time characteristics to be bound");
-    auto& [timeStampFieldLeft, timeStampFieldRight] = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
+    auto& [timeStampFieldLeft, timeStampFieldRight]
+        = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
     const auto inputOriginIds
         = join.getChildren()

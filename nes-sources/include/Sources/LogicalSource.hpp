@@ -32,10 +32,10 @@ class LogicalSource
 {
     friend SourceCatalog;
     friend OperatorSerializationUtil;
-    explicit LogicalSource(std::string logicalSourceName, const UnboundSchema& schema);
+    explicit LogicalSource(Identifier logicalSourceName, const UnboundSchema& schema);
 
 public:
-    [[nodiscard]] std::string getLogicalSourceName() const;
+    [[nodiscard]] Identifier getLogicalSourceName() const;
 
     [[nodiscard]] std::shared_ptr<const UnboundSchema> getSchema() const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalSource& logicalSource);
@@ -44,7 +44,7 @@ public:
     friend bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs);
 
 private:
-    std::string logicalSourceName;
+    Identifier logicalSourceName;
     /// Keep schemas in logical sources dynamically allocated to avoid unnecessary copies
     std::shared_ptr<const UnboundSchema> schema;
 };

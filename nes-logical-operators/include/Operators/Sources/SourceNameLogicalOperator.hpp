@@ -36,11 +36,11 @@ namespace NES
 class SourceNameLogicalOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName);
+    explicit SourceNameLogicalOperator(Identifier logicalSourceName);
 
     static void inferInputOrigins();
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
+    [[nodiscard]] Identifier getLogicalSourceName() const;
 
 
     [[nodiscard]] bool operator==(const SourceNameLogicalOperator& rhs) const;
@@ -63,7 +63,7 @@ private:
     static constexpr std::string_view NAME = "Source";
 
     std::vector<LogicalOperator> children;
-    std::string logicalSourceName;
+    Identifier logicalSourceName;
 
     TraitSet traitSet;
 };

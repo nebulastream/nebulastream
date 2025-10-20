@@ -35,7 +35,7 @@ class AntlrSQLHelper
     using Projection = std::pair<std::optional<Identifier>, LogicalFunction>;
     std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<LogicalFunction> havingClauses;
-    std::string source;
+    std::optional<Identifier> source;
     std::vector<Projection> projectionBuilder;
 
 public:
@@ -66,20 +66,19 @@ public:
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<std::pair<std::shared_ptr<WindowAggregationLogicalFunction>, std::optional<Identifier>>> windowAggs;
+    std::vector<std::pair<std::shared_ptr<WindowAggregationLogicalFunction>, std::optional<IdentifierList>>> windowAggs;
     std::vector<SinkDescriptor> sinkDescriptor;
     std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;
     std::vector<UnboundFieldAccessLogicalFunction> groupByFields;
-    std::vector<std::string> joinSources;
+    std::vector<Identifier> joinSources;
     std::vector<LogicalFunction> joinKeyRelationHelper;
-    std::vector<std::string> joinSourceRenames;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
 
     /// Utility variables to keep state between enter/exit parser function calls.
     size_t opBoolean{}; ///anonymous token enum in AntlrSQLLexer.h
     std::string opValue;
-    std::string newSourceName;
+    std::optional<Identifier> newSourceName;
     std::optional<std::variant<Windowing::UnboundTimeCharacteristic, std::array<Windowing::UnboundTimeCharacteristic, 2>>> windowTimestamp;
 
     /// Utility variables used to keep track of the parsing state.
@@ -96,8 +95,8 @@ public:
 
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);
-    void setSource(std::string sourceName);
-    [[nodiscard]] const std::string getSource() const;
+    void setSource(Identifier sourceName);
+    [[nodiscard]] std::optional<Identifier> getSource() const;
     void addProjection(std::optional<Identifier>, LogicalFunction);
 };
 }

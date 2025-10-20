@@ -32,11 +32,11 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Schema/Field.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
-#include <DataTypes/UnboundSchema.hpp>
 #include <Util/Ranges.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -45,45 +45,42 @@ class Schema
 {
 public:
 private:
-    using IdSpan = std::span<const Identifier>;
     //take const reference to make sure that the spans don't dangle
     template <std::ranges::input_range Range>
-    std::pair<
-        std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals>,
-        std::unordered_map<
-            IdSpan,
-            std::vector<size_t>,
-            std::hash<IdSpan>,
-            IdentifierList::SpanEquals>> static initializeFields(const Range& fields) noexcept
+    std::pair<std::unordered_map<Identifier, size_t>, std::unordered_map<Identifier, std::vector<size_t>>> static initializeFields(
+        const Range& fields) noexcept
+    requires(std::same_as<Field, std::ranges::range_value_t<Range>>)
     {
-        std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals> fieldsByName{};
-        std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals> collisions{};
-
-        for (const std::tuple<IdentifierList, Field, size_t>& field : fields)
+        std::unordered_map<Identifier, size_t> fieldsByName{};
+        std::unordered_map<Identifier, std::vector<size_t>> collisions{};
+        for (const auto& [idxSigned, field] : fields | std::views::enumerate)
         {
-            const IdentifierList& fullName = std::get<IdentifierList>(field);
-            for (size_t i = 0; i < std::ranges::size(fullName); i++)
+            INVARIANT(idxSigned >= 0, "negative index");
+            const auto idx = static_cast<size_t>(idxSigned);
+            const auto& name = field.getLastName();
+            auto collisionIter = collisions.find(name);
+            if (collisionIter == collisions.end())
             {
-                IdSpan idSubSpan = std::span{std::ranges::begin(fullName) + i, std::ranges::size(fullName) - i};
-                if (auto existingCollisions = collisions.find(idSubSpan); existingCollisions == collisions.end())
+                if (auto existingIdList = fieldsByName.find(name); existingIdList != fieldsByName.end())
                 {
-                    if (auto existingIdList = fieldsByName.find(idSubSpan); existingIdList != fieldsByName.end())
-                    {
-                        collisions.insert(std::pair<IdSpan, std::vector<size_t>>{idSubSpan, std::vector{std::get<size_t>(field)}});
-                        fieldsByName.erase(existingIdList);
-                    }
-                    else
-                    {
-                        fieldsByName.insert(std::pair{idSubSpan, std::get<size_t>(field)});
-                    }
+                    collisions.insert(std::pair{name, std::vector{existingIdList->second, idx}});
+                    fieldsByName.erase(existingIdList);
                 }
                 else
                 {
-                    existingCollisions->second.push_back(std::get<size_t>(field));
+                    fieldsByName.insert(std::pair{name, idx});
                 }
             }
+            else
+            {
+                collisionIter->second.push_back(idx);
+            }
         }
-        return {fieldsByName, collisions};
+        if (!collisions.empty())
+        {
+            NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
+        }
+        return std::pair{std::move(fieldsByName), std::move(collisions)};
     }
 
     struct Private
@@ -95,25 +92,6 @@ private:
     {
     }
 
-    template <std::ranges::input_range Range>
-    requires(std::same_as<std::tuple<IdentifierList, Field>, std::ranges::range_value_t<Range>>)
-    explicit Schema(Private, const Range& input) noexcept
-    {
-        auto enumerated
-            = views::enumerate(input)
-            | std::views::transform(
-                  [](auto pair)
-                  {
-                      return std::tuple{std::get<IdentifierList>(std::get<1>(pair)), std::get<Field>(std::get<1>(pair)), std::get<0>(pair)};
-                  });
-        fields
-            = enumerated | std::views::transform([](auto tuple) { return std::get<Field>(tuple); }) | std::ranges::to<std::vector<Field>>();
-        auto [fieldsByName, collisions] = initializeFields(enumerated);
-        nameToField = fieldsByName
-            | std::views::transform([](auto pair)
-                                    { return std::make_pair<IdentifierList, size_t>(IdentifierList{pair.first}, std::move(pair.second)); })
-            | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    }
 
 public:
     /// Enum to identify the memory layout in which we want to represent the schema physically.
@@ -125,54 +103,53 @@ public:
             PRECONDITION(not this->streamName.empty(), "Cannot create a QualifiedFieldName with an empty field name");
             PRECONDITION(not this->fieldName.empty(), "Cannot create a QualifiedFieldName with an empty field name");
         }
+
         std::string streamName;
         std::string fieldName;
     };
 
     Schema() = default;
-    Schema(std::initializer_list<Field> fields) noexcept;
+    Schema(const Schema& other) = default;
+    Schema(Schema&& other) noexcept = default;
+    Schema& operator=(const Schema& other) = default;
+    Schema& operator=(Schema&& other) noexcept = default;
 
+    Schema(std::initializer_list<Field> fields) noexcept;
+    explicit Schema(std::vector<Field> fields) noexcept;
 
     //template overloading on input ranges for fields and schemas which require separate handling
     //Since std::initializer_list also implements std::input_range we need to make sure we don't overload it and exclude it
     //While we are implementing them in the header,
     //we should explicitly instantiate as many of the used specializations as possible at the end of the cpp to reduce compile times
     template <std::ranges::input_range Range>
-    requires(std::same_as<Field, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Field>>)
-    explicit Schema(const Range& input) noexcept
-        : Schema(
-              Private{},
-              input
-                  | std::views::transform([](const Field& field)
-                                          { return std::make_tuple(IdentifierList{field.getLastName()}, Field{field}); }))
+    requires(
+        std::same_as<Field, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Field>>
+        && !std::same_as<Range, std::vector<Field>> && !std::same_as<Range, Schema>)
+    explicit Schema(Range&& input) noexcept : fields{input | std::ranges::to<std::vector>()}
     {
+        auto [fieldsByName, collisions] = initializeFields(this->fields);
+        nameToField = fieldsByName
+            | std::views::transform([](auto pair)
+                                    { return std::make_pair<IdentifierList, size_t>(IdentifierList{pair.first}, std::move(pair.second)); })
+            | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
     }
 
     template <std::ranges::input_range Range>
     requires(std::same_as<Field, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Field>>)
     static std::expected<Schema, std::unordered_map<IdentifierList, std::vector<Field>>> tryCreateCollisionFree(Range input) noexcept
     {
-        auto enumerated
-            = views::enumerate(std::move(input))
-            | std::views::transform(
-                  [](const std::tuple<long, Field>& pair)
-                  {
-                      return std::make_tuple(IdentifierList{std::get<Field>(pair).getLastName()}, std::get<Field>(pair), std::get<0>(pair));
-                  })
-            | std::ranges::to<std::vector>();
-        auto fields
-            = enumerated | std::views::transform([](auto tuple) { return std::get<Field>(tuple); }) | std::ranges::to<std::vector<Field>>();
-        auto [fieldsByName, collisions] = initializeFields(enumerated);
+        auto fields = input | std::ranges::to<std::vector>();
+        auto [fieldsByName, collisions] = initializeFields(fields);
         if (collisions.size() > 0)
         {
             return std::unexpected{
                 std::views::all(collisions)
                 | std::views::transform(
-                    [&enumerated](auto& pair)
+                    [&fields](auto& pair)
                     {
                         return std::make_pair(
                             IdentifierList{pair.first},
-                            pair.second | std::views::transform([&enumerated](auto index) { return std::get<Field>(enumerated.at(index)); })
+                            pair.second | std::views::transform([&fields](auto index) { return fields.at(index); })
                                 | std::ranges::to<std::vector<Field>>());
                     })
                 | std::ranges::to<std::unordered_map<IdentifierList, std::vector<Field>>>()};
@@ -220,7 +197,6 @@ public:
     std::vector<IdentifierList> getUniqueFieldNames() const&;
     [[nodiscard]] const std::vector<Field>& getFields() const;
 
-
     auto begin() const -> decltype(std::declval<const std::vector<Field>>().cbegin()) { return fields.cbegin(); }
 
     auto end() const -> decltype(std::declval<const std::vector<Field>>().cend()) { return fields.cend(); }
@@ -237,6 +213,7 @@ private:
 };
 
 static_assert(std::ranges::range<Schema>);
+static_assert(std::same_as<std::ranges::range_value_t<Schema>, Field>);
 
 }
 

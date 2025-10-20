@@ -26,7 +26,7 @@ namespace NES
 {
 
 
-LogicalSource::LogicalSource(std::string logicalSourceName, const UnboundSchema& schema)
+LogicalSource::LogicalSource(Identifier logicalSourceName, const UnboundSchema& schema)
     : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<UnboundSchema>(schema))
 {
 }
@@ -36,7 +36,7 @@ std::shared_ptr<const UnboundSchema> LogicalSource::getSchema() const
     return schema;
 }
 
-std::string LogicalSource::getLogicalSourceName() const
+Identifier LogicalSource::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
@@ -54,7 +54,7 @@ bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs)
 
 uint64_t std::hash<NES::LogicalSource>::operator()(const NES::LogicalSource& logicalSource) const noexcept
 {
-    return std::hash<std::string>()(logicalSource.getLogicalSourceName());
+    return std::hash<NES::Identifier>()(logicalSource.getLogicalSourceName());
 }
 
 std::ostream& NES::operator<<(std::ostream& os, const LogicalSource& logicalSource)

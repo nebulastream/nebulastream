@@ -36,7 +36,7 @@
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName) : logicalSourceName(std::move(logicalSourceName))
+SourceNameLogicalOperator::SourceNameLogicalOperator(Identifier logicalSourceName) : logicalSourceName(std::move(logicalSourceName))
 {
 }
 
@@ -102,7 +102,7 @@ std::vector<LogicalOperator> SourceNameLogicalOperator::getChildren() const
     return children;
 }
 
-std::string SourceNameLogicalOperator::getLogicalSourceName() const
+Identifier SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;
 }

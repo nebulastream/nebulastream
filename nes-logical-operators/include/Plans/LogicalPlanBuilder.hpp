@@ -38,7 +38,7 @@ class LogicalPlanBuilder
 public:
     /// Creates a query plan from a particular source. The source is identified by its name.
     /// During query processing the underlying source descriptor is retrieved from the source catalog.
-    static LogicalPlan createLogicalPlan(std::string logicalSourceName);
+    static LogicalPlan createLogicalPlan(Identifier logicalSourceName);
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes
@@ -82,7 +82,7 @@ public:
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic);
 
-    static LogicalPlan addSink(std::string sinkName, const LogicalPlan& queryPlan);
+    static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.

@@ -38,7 +38,7 @@
 namespace NES
 {
 
-SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) { };
+SinkLogicalOperator::SinkLogicalOperator(Identifier sinkName) : sinkName(std::move(sinkName)) { };
 
 SinkLogicalOperator::SinkLogicalOperator(SinkDescriptor sinkDescriptor)
     : sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
@@ -158,7 +158,7 @@ std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
     return {child};
 }
 
-std::string SinkLogicalOperator::getSinkName() const noexcept
+Identifier SinkLogicalOperator::getSinkName() const noexcept
 {
     return sinkName;
 }

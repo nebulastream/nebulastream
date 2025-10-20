@@ -14,6 +14,8 @@
 
 syntax = "proto3";
 import "SerializableDataType.proto";
+import "SerializableIdentifier.proto";
+
 package NES;
 
 
@@ -76,14 +78,6 @@ message SerializableEnumWrapper {
     string value = 1;
 }
 
-message SerializableIdentifier {
-  string value = 1;
-  bool caseSensitive = 2;
-}
-
-message SerializableIdentifierList {
-  repeated SerializableIdentifier identifiers = 1;
-}
 
 
 message UInt64List {

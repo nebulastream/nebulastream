@@ -49,11 +49,11 @@
 
 namespace NES
 {
-LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
+LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
     const DescriptorConfig::Config sourceDescriptorConfig{};
-    return LogicalPlan(SourceNameLogicalOperator(logicalSourceName));
+    return LogicalPlan(SourceNameLogicalOperator(std::move(logicalSourceName)));
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
@@ -170,7 +170,7 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     return leftLogicalPlan;
 }
 
-LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, const LogicalPlan& queryPlan)
+LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& queryPlan)
 {
     return promoteOperatorToRoot(queryPlan, SinkLogicalOperator(std::move(sinkName)));
 }

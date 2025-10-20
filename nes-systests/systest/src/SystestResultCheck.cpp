@@ -259,7 +259,7 @@ NES::UnboundSchema parseFieldNames(const std::string_view fieldNamesRawLine)
         {
             throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
         }
-        return NES::UnboundField{NES::Identifier{std::string(nameTrimmed)}, dataType};
+        return NES::UnboundField{NES::Identifier::parse(std::string(nameTrimmed)), dataType};
     });
     return NES::UnboundSchema{fields | std::ranges::to<std::vector>()};
 }

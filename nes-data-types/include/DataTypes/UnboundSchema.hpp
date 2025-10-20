@@ -68,7 +68,6 @@ public:
         for (const auto& [idxSigned, field] : this->fields | std::views::enumerate)
         {
             sizeInBytes += field.getDataType().getSizeInBytes();
-
             INVARIANT(idxSigned >= 0, "negative index");
             const auto idx = static_cast<size_t>(idxSigned);
             const auto& fullName = field.getName();

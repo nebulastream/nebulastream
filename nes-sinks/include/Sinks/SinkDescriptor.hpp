@@ -61,13 +61,13 @@ public:
 
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const UnboundSchema> getSchema() const;
-    [[nodiscard]] std::string getSinkName() const;
+    [[nodiscard]] Identifier getSinkName() const;
 
 private:
-    explicit SinkDescriptor(std::string sinkName, const UnboundSchema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+    explicit SinkDescriptor(Identifier sinkName, const UnboundSchema& schema, std::string_view sinkType, DescriptorConfig::Config config);
 
 
-    std::string sinkName;
+    Identifier sinkName;
     std::shared_ptr<const UnboundSchema> schema;
     std::string sinkType;
 
@@ -100,7 +100,7 @@ struct std::hash<NES::SinkDescriptor>
 {
     size_t operator()(const NES::SinkDescriptor& sinkDescriptor) const noexcept
     {
-        return std::hash<std::string>{}(sinkDescriptor.getSinkName());
+        return std::hash<NES::Identifier>{}(sinkDescriptor.getSinkName());
     }
 };
 

@@ -67,7 +67,7 @@ class StatementBinder::Impl
     std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
 
 public:
-    using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
+    using Literal = std::variant<Identifier, std::string, int64_t, uint64_t, double, bool>;
 
     Impl(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
@@ -78,18 +78,27 @@ public:
 
     ~Impl() = default;
 
-    std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier) const
+    Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier) const
     {
         if (auto* const unquotedIdentifier = dynamic_cast<AntlrSQLParser::UnquotedIdentifierContext*>(strictIdentifier))
         {
-            std::string text = unquotedIdentifier->getText();
-            return text | std::ranges::views::transform([](const char character) { return std::toupper(character); })
-                | std::ranges::to<std::string>();
+            auto expectedIdentifier = Identifier::tryParse(unquotedIdentifier->IDENTIFIER()->getText());
+            if (expectedIdentifier.has_value())
+            {
+                return expectedIdentifier.value();
+            }
+            throw expectedIdentifier.error();
         }
         if (auto* const quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierAlternativeContext*>(strictIdentifier))
         {
             const auto withQuotationMarks = quotedIdentifier->quotedIdentifier()->BACKQUOTED_IDENTIFIER()->getText();
-            return withQuotationMarks.substr(1, withQuotationMarks.size() - 2);
+            const auto replacedQuotationMarks = fmt::format("\"{}\"", withQuotationMarks.substr(1, withQuotationMarks.size() - 2));
+            auto expectedIdentifier = Identifier::tryParse(replacedQuotationMarks);
+            if (expectedIdentifier.has_value())
+            {
+                return expectedIdentifier.value();
+            }
+            throw expectedIdentifier.error();
         }
         INVARIANT(
             false,
@@ -194,6 +203,7 @@ public:
         return std::visit(
             Overloaded{
                 [](std::string string) { return string; },
+                [](Identifier identifier) { return identifier.asCanonicalString(); },
                 [](int64_t integer) { return std::to_string(integer); },
                 [](uint64_t unsignedInteger) { return std::to_string(unsignedInteger); },
                 [](const double doubleLiteral) { return std::to_string(doubleLiteral); },
@@ -202,7 +212,7 @@ public:
     }
 
     /// TODO #897 replace with normal comparison binding
-    std::pair<std::string, Literal> bindShowFilter(const AntlrSQLParser::ShowFilterContext* showFilterAST) const
+    std::pair<Identifier, Literal> bindShowFilter(const AntlrSQLParser::ShowFilterContext* showFilterAST) const
     {
         return {bindIdentifier(showFilterAST->attr), bindLiteral(showFilterAST->value)};
     }
@@ -263,19 +273,20 @@ public:
 
     UnboundSchema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST) const
     {
-
-        auto fields = schemaDefAST->columnDefinition() | std::views::transform([this](auto* column)
-        {
-            auto dataType = bindDataType(column->typeDefinition());
-            /// TODO #764 Remove qualification of column names in schema declarations, it's only needed as a hack now to make it work with the per-operator-lexical-scopes.
-            std::stringstream qualifiedAttributeName;
-            for (const auto& unboundIdentifier : column->identifierChain()->strictIdentifier())
-            {
-                qualifiedAttributeName << bindIdentifier(unboundIdentifier) << "$";
-            }
-            const auto fullName = qualifiedAttributeName.str().substr(0, qualifiedAttributeName.str().size() - 1);
-            return UnboundField{Identifier::parse(fullName), dataType};
-        });
+        auto fields = schemaDefAST->columnDefinition()
+            | std::views::transform(
+                          [this](auto* column)
+                          {
+                              auto dataType = bindDataType(column->typeDefinition());
+                              /// TODO #764 Remove qualification of column names in schema declarations, it's only needed as a hack now to make it work with the per-operator-lexical-scopes.
+                              std::stringstream qualifiedAttributeName;
+                              for (const auto& unboundIdentifier : column->identifierChain()->strictIdentifier())
+                              {
+                                  qualifiedAttributeName << bindIdentifier(unboundIdentifier) << "$";
+                              }
+                              const auto fullName = qualifiedAttributeName.str().substr(0, qualifiedAttributeName.str().size() - 1);
+                              return UnboundField{Identifier::parse(fullName), dataType};
+                          });
         return UnboundSchema{fields | std::ranges::to<std::vector>()};
     }
 
@@ -288,10 +299,10 @@ public:
     }
 
     /// TODO #764 use identifier lists instead of map of maps
-    [[nodiscard]] std::unordered_map<std::string, std::unordered_map<std::string, Literal>>
+    [[nodiscard]] std::unordered_map<Identifier, std::unordered_map<Identifier, Literal>>
     bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions) const
     {
-        std::unordered_map<std::string, std::unordered_map<std::string, Literal>> boundConfigOptions{};
+        std::unordered_map<Identifier, std::unordered_map<Identifier, Literal>> boundConfigOptions{};
         for (auto* const configOption : configOptions)
         {
             if (configOption->name->strictIdentifier().size() != 2)
@@ -300,7 +311,7 @@ public:
             }
             const auto rootIdentifier = bindIdentifier(configOption->name->strictIdentifier().at(0));
             auto optionName = bindIdentifier(configOption->name->strictIdentifier().at(1));
-            boundConfigOptions.try_emplace(rootIdentifier, std::unordered_map<std::string, Literal>{});
+            boundConfigOptions.try_emplace(rootIdentifier, std::unordered_map<Identifier, Literal>{});
             if (not boundConfigOptions.at(rootIdentifier).try_emplace(optionName, bindLiteral(configOption->constant())).second)
             {
                 throw InvalidConfigParameter("Duplicate option for source: {}", configOption->name->getText());
@@ -329,29 +340,31 @@ public:
             {
                 return bindConfigOptions(physicalSourceDefAST->options->namedConfigExpression());
             }
-            return std::unordered_map<std::string, std::unordered_map<std::string, Literal>>{};
+            return std::unordered_map<Identifier, std::unordered_map<Identifier, Literal>>{};
         }();
 
 
         auto parserConfigLiteralMap = [&]()
         {
-            if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
+            static constexpr auto parserIdentifier = Identifier::parse("PARSER");
+            if (const auto parserConfigIter = configOptions.find(parserIdentifier); parserConfigIter != configOptions.end())
             {
                 return parserConfigIter->second;
             }
-            return std::unordered_map<std::string, Literal>{};
+            return std::unordered_map<Identifier, Literal>{};
         }();
 
         const auto parserConfig = parserConfigLiteralMap
             | std::views::transform([this](const auto& pair)
-                                    { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
+                                    { return std::make_pair(Util::toLowerCase(pair.first.asCanonicalString()), literalToString(pair.second)); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();
 
-        if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
+        static constexpr auto sourceIdentifier = Identifier::parse("SOURCE");
+        if (const auto sourceConfigIter = configOptions.find(sourceIdentifier); sourceConfigIter != configOptions.end())
         {
             sourceOptions = sourceConfigIter->second
                 | std::views::transform([this](auto& pair)
-                                        { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
+                                        { return std::make_pair(Util::toLowerCase(pair.first.asCanonicalString()), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
 
@@ -369,14 +382,15 @@ public:
             {
                 return bindConfigOptions(sinkDefAST->options->namedConfigExpression());
             }
-            return std::unordered_map<std::string, std::unordered_map<std::string, Literal>>{};
+            return std::unordered_map<Identifier, std::unordered_map<Identifier, Literal>>{};
         }();
         std::unordered_map<std::string, std::string> sinkOptions{};
-        if (const auto sinkConfigIter = configOptions.find("SINK"); sinkConfigIter != configOptions.end())
+        static constexpr auto sinkIdentifier = Identifier::parse("SINK");
+        if (const auto sinkConfigIter = configOptions.find(sinkIdentifier); sinkConfigIter != configOptions.end())
         {
             sinkOptions = sinkConfigIter->second
                 | std::views::transform([this](auto& pair)
-                                        { return std::make_pair(Util::toLowerCase(pair.first), literalToString(pair.second)); })
+                                        { return std::make_pair(Util::toLowerCase(pair.first.asCanonicalString()), literalToString(pair.second)); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
@@ -410,7 +424,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "NAME")
+            static constexpr auto nameIdentifier = Identifier::parse("NAME");
+            if (attr != nameIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW LOGICAL SOURCES must be on name attribute");
             }
@@ -418,7 +433,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW LOGICAL SOURCES must be a string");
             }
-            return ShowLogicalSourcesStatement{.name = std::get<std::string>(value), .format = format};
+            return ShowLogicalSourcesStatement{.name = std::get<Identifier>(value), .format = format};
         }
         return ShowLogicalSourcesStatement{.name = std::nullopt, .format = format};
     }
@@ -443,7 +458,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "ID")
+            static constexpr auto idIdentifier = Identifier::parse("ID");
+            if (attr != idIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW PHYSICAL SOURCES must be on id attribute");
             }
@@ -464,7 +480,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "NAME")
+            static constexpr auto nameIdentifier = Identifier::parse("NAME");
+            if (attr != nameIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW SINKS must be on name attribute");
             }
@@ -472,7 +489,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW SINKS must be a string");
             }
-            return ShowSinksStatement{.name = std::get<std::string>(value), .format = format};
+            return ShowSinksStatement{.name = std::get<Identifier>(value), .format = format};
         }
         return ShowSinksStatement{.name = std::nullopt, .format = format};
     }
@@ -485,7 +502,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "ID")
+            static constexpr auto idIdentifier = Identifier::parse("ID");
+            if (attr != idIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
             }
