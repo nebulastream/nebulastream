@@ -38,6 +38,8 @@
 #include <static.hpp>
 #include <val_ptr.hpp>
 
+static bool deserialize{false};
+
 namespace NES
 {
 Interface::HashMap* getAggHashMapProxy(
@@ -74,7 +76,24 @@ Interface::HashMap* getAggHashMapProxy(
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+
+    const std::size_t numTuples = aggregationSlice->getHashMapPtrOrCreate(workerThreadId)->getNumberOfTuples();
+    auto rv = aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+
+    if (timestamp.getRawValue() == 9)
+    {
+        if (!deserialize)
+        {
+            rv->serialize(std::format("/tmp/nebulastream/bin.out"));
+            deserialize = true;
+        }
+        else
+        {
+            rv->deserialize(std::format("/tmp/nebulastream/bin.out"));
+        }
+
+    }
+    return rv;
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
