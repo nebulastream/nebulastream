@@ -288,9 +288,9 @@ void ChainedHashMap::serialize(std::filesystem::path path) const
     ChainedHashMapHeader header{numberOfTuples, pageSize, entrySize, entriesPerPage, numberOfChains};
     out.write(reinterpret_cast<const char*>(&header), sizeof(ChainedHashMapHeader));
     /// Serialize entrySpace
-    const uint64_t entrySpaceSize = entrySpace.getBufferSize();
-    out.write(reinterpret_cast<const char*>(&entrySpaceSize), sizeof(uint64_t));
-    out.write(entrySpace.getAvailableMemoryArea<char>().data(), entrySpace.getBufferSize());
+    //const uint64_t entrySpaceSize = entrySpace.getBufferSize();
+    //out.write(reinterpret_cast<const char*>(&entrySpaceSize), sizeof(uint64_t));
+    //out.write(entrySpace.getAvailableMemoryArea<char>().data(), entrySpace.getBufferSize());
 
     /// Serialize storageSpace
     for (const auto& storageBuffer : storageSpace)
@@ -314,14 +314,15 @@ void ChainedHashMap::deserialize(std::filesystem::path path)
     ChainedHashMapHeader header;
     in.read(reinterpret_cast<char*>(&header), sizeof(ChainedHashMapHeader));
 
-    uint64_t entrySpaceSize;
-    in.read(reinterpret_cast<char*>(&entrySpaceSize), sizeof(uint64_t));
-    if (entrySpaceSize != entrySpace.getBufferSize())
-    {
-        NES_ERROR("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
-        throw CheckpointError("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
-    }
-    in.read(entrySpace.getAvailableMemoryArea<char>().data(), entrySpaceSize);
+    //uint64_t entrySpaceSize;
+    //in.read(reinterpret_cast<char*>(&entrySpaceSize), sizeof(uint64_t));
+    //if (entrySpaceSize != entrySpace.getBufferSize())
+    //{
+    //    NES_ERROR("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
+    //    throw CheckpointError("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
+    //}
+    //in.read(entrySpace.getAvailableMemoryArea<char>().data(), entrySpaceSize);
+    //in.seekg(entrySpaceSize, std::ios::cur);
 
     uint64_t posStorageBuffers = 0;
     while (in.peek() != EOF)
