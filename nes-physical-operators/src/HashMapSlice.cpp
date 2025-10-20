@@ -26,6 +26,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -58,7 +59,18 @@ HashMapSlice::~HashMapSlice()
         if (hashMaps[i] and hashMaps[i]->getNumberOfTuples() > 0)
         {
             /// Calling the compiled nautilus function
-            createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->operator()(hashMaps[i].get());
+            const auto& cleanupFn = createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream];
+            if (cleanupFn)
+            {
+                cleanupFn->operator()(hashMaps[i].get());
+            }
+            else
+            {
+                NES_WARNING(
+                    "Missing cleanup function for hashmap {} (stream {}), skipping state cleanup",
+                    i,
+                    i / numberOfHashMapsPerInputStream);
+            }
         }
     }
 
@@ -76,6 +88,13 @@ uint64_t HashMapSlice::getNumberOfTuples() const
         hashMaps.begin(),
         hashMaps.end(),
         0,
-        [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+        [](uint64_t runningSum, const auto& hashMap)
+        {
+            if (!hashMap)
+            {
+                return runningSum;
+            }
+            return runningSum + hashMap->getNumberOfTuples();
+        });
 }
 }

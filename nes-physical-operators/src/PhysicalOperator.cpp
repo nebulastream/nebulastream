@@ -302,4 +302,14 @@ PhysicalOperatorWrapper::PipelineLocation PhysicalOperatorWrapper::getPipelineLo
     return pipelineLocation;
 }
 
+void PhysicalOperatorWrapper::setStateful(bool flag)
+{
+    stateful = flag;
+}
+
+bool PhysicalOperatorWrapper::isStateful() const
+{
+    return stateful;
+}
+
 }

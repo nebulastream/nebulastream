@@ -25,6 +25,8 @@
 namespace NES
 {
 
+class OperatorHandler;
+
 struct ExecutablePipeline
 {
     static std::shared_ptr<ExecutablePipeline> create(
@@ -61,11 +63,16 @@ struct CompiledQueryPlan
     };
 
     static std::unique_ptr<CompiledQueryPlan> create(
-        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
+        QueryId queryId,
+        std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+        std::vector<Sink> sinks,
+        std::vector<Source> sources,
+        std::vector<std::shared_ptr<OperatorHandler>> statefulHandlers);
 
     QueryId queryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<Sink> sinks;
     std::vector<Source> sources;
+    std::vector<std::shared_ptr<OperatorHandler>> statefulHandlers;
 };
 }

@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <ostream>
+#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -45,11 +46,14 @@ struct PipelinedQueryPlan final
     [[nodiscard]] const std::vector<std::shared_ptr<Pipeline>>& getPipelines() const;
     void addPipeline(const std::shared_ptr<Pipeline>& pipeline);
     void removePipeline(Pipeline& pipeline);
+    [[nodiscard]] const std::vector<std::shared_ptr<OperatorHandler>>& getStatefulHandlers() const;
 
 private:
     QueryId queryId;
     ExecutionMode executionMode;
     std::vector<std::shared_ptr<Pipeline>> pipelines;
+    std::vector<std::shared_ptr<OperatorHandler>> statefulHandlers;
+    std::unordered_set<OperatorHandlerId> registeredStatefulHandlerIds;
 };
 }
 

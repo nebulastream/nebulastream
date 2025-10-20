@@ -69,6 +69,8 @@ struct Pipeline
 
     [[nodiscard]] const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() const;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers();
+    [[nodiscard]] const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getStatefulHandlers() const;
+    void registerStatefulHandler(OperatorHandlerId handlerId, const std::shared_ptr<OperatorHandler>& handler);
 
     void addSuccessor(const std::shared_ptr<Pipeline>& successor, const std::weak_ptr<Pipeline>& self);
 
@@ -84,6 +86,7 @@ private:
     PhysicalOperator rootOperator;
     const PipelineId pipelineId;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> statefulHandlers;
     std::vector<std::shared_ptr<Pipeline>> successorPipelines;
     std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
 };

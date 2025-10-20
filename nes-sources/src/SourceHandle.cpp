@@ -20,6 +20,7 @@
 #include <ostream>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -31,13 +32,20 @@ namespace NES
 SourceHandle::SourceHandle(
     BackpressureListener backpressureListener,
     OriginId originId,
+    PhysicalSourceId physicalSourceId,
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
     std::unique_ptr<Source> sourceImplementation)
-    : configuration(std::move(configuration))
+    : physicalSourceId(physicalSourceId)
+    , configuration(std::move(configuration))
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
+        std::move(backpressureListener),
+        std::move(originId),
+        physicalSourceId,
+        CheckpointManager::getCheckpointDirectory(),
+        std::move(bufferPool),
+        std::move(sourceImplementation));
 }
 
 SourceHandle::~SourceHandle() = default;

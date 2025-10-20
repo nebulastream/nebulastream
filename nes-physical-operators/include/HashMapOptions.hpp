@@ -24,6 +24,7 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/HashMap/HashMapSerializationOptions.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -42,7 +43,8 @@ struct HashMapOptions
         const uint64_t keySize,
         const uint64_t valueSize,
         const uint64_t pageSize,
-        const uint64_t numberOfBuckets)
+        const uint64_t numberOfBuckets,
+        bool valuesContainPagedVectors = true)
         : hashFunction(std::move(hashFunction))
         , keyFunctions(std::move(keyFunctions))
         , fieldKeys(std::move(fieldKeys))
@@ -53,6 +55,7 @@ struct HashMapOptions
         , valueSize(valueSize)
         , pageSize(pageSize)
         , numberOfBuckets(numberOfBuckets)
+        , valuesContainPagedVectors(valuesContainPagedVectors)
     {
         INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
         INVARIANT(entrySize > 0, "The entry size must be greater than 0");
@@ -78,6 +81,7 @@ struct HashMapOptions
         , valueSize(std::move(other.valueSize))
         , pageSize(std::move(other.pageSize))
         , numberOfBuckets(std::move(other.numberOfBuckets))
+        , valuesContainPagedVectors(other.valuesContainPagedVectors)
     {
     }
 
@@ -92,6 +96,7 @@ struct HashMapOptions
         , valueSize(other.valueSize)
         , pageSize(other.pageSize)
         , numberOfBuckets(other.numberOfBuckets)
+        , valuesContainPagedVectors(other.valuesContainPagedVectors)
     {
     }
 
@@ -107,6 +112,7 @@ struct HashMapOptions
         valueSize = std::move(other.valueSize);
         pageSize = std::move(other.pageSize);
         numberOfBuckets = std::move(other.numberOfBuckets);
+        valuesContainPagedVectors = other.valuesContainPagedVectors;
         return *this;
     };
 
@@ -122,6 +128,7 @@ struct HashMapOptions
         valueSize = other.valueSize;
         pageSize = other.pageSize;
         numberOfBuckets = other.numberOfBuckets;
+        valuesContainPagedVectors = other.valuesContainPagedVectors;
         return *this;
     }
 
@@ -154,6 +161,12 @@ struct HashMapOptions
     uint64_t valueSize;
     uint64_t pageSize;
     uint64_t numberOfBuckets;
+    bool valuesContainPagedVectors{true};
+
+    [[nodiscard]] Nautilus::Interface::HashMapSerializationOptions getSerializationOptions() const
+    {
+        return {.keySize = keySize, .valueSize = valueSize, .valuesContainPagedVectors = valuesContainPagedVectors};
+    }
 };
 
 }

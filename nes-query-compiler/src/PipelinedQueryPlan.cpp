@@ -79,7 +79,19 @@ const std::vector<std::shared_ptr<Pipeline>>& PipelinedQueryPlan::getPipelines()
 void PipelinedQueryPlan::addPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
     pipeline->setExecutionMode(executionMode);
+    for (const auto& [handlerId, handler] : pipeline->getStatefulHandlers())
+    {
+        if (handler && registeredStatefulHandlerIds.insert(handlerId).second)
+        {
+            statefulHandlers.push_back(handler);
+        }
+    }
     pipelines.push_back(pipeline);
+}
+
+const std::vector<std::shared_ptr<OperatorHandler>>& PipelinedQueryPlan::getStatefulHandlers() const
+{
+    return statefulHandlers;
 }
 
 }

@@ -68,6 +68,7 @@ public:
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const { return numberOfWorkerThreads; }
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
 
