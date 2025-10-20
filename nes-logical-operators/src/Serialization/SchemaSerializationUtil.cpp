@@ -24,6 +24,7 @@
 
 #include <SerializableSchema.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+#include <SerializableIdentifier.pb.h>
 
 namespace NES
 {

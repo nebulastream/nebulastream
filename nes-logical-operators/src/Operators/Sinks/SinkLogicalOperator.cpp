@@ -158,6 +158,11 @@ std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
     return {child};
 }
 
+LogicalOperator SinkLogicalOperator::getChild() const
+{
+    return child;
+}
+
 Identifier SinkLogicalOperator::getSinkName() const noexcept
 {
     return sinkName;

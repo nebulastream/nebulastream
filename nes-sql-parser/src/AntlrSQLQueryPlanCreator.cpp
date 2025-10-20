@@ -655,8 +655,9 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     if (context->name == nullptr and helper.functionBuilder.size() == 1
         and helper.functionBuilder.back().tryGet<UnboundFieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
     {
+        auto fieldName = helpers.top().functionBuilder.back().get<UnboundFieldAccessLogicalFunction>().getFieldName();
         /// Project onto the specified field and remove the field access from the active functions.
-        helpers.top().addProjection(parseIdentifier(context->identifier()), std::move(helpers.top().functionBuilder.back()));
+        helpers.top().addProjection(std::make_optional(*std::ranges::rbegin(fieldName)), std::move(helpers.top().functionBuilder.back()));
         helpers.top().functionBuilder.pop_back();
     }
     else if (helper.isSelect && context->getText() == "*" && helper.functionBuilder.empty())

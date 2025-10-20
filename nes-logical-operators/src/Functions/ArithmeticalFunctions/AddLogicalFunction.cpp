@@ -48,7 +48,7 @@ LogicalFunction AddLogicalFunction::withInferredDataType(const Schema& schema) c
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
 
-    copy.dataType = left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    copy.dataType = copy.left.getDataType().join(copy.right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
     if (copy.dataType.isType(DataType::Type::UNDEFINED))
     {
         throw CannotInferStamp("Can only apply addition to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);

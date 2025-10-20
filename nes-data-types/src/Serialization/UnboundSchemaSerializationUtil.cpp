@@ -13,6 +13,8 @@
 */
 
 #include <DataTypes/UnboundSchema.hpp>
+#include <SerializableSchema.pb.h>
+#include <SerializableIdentifier.pb.h>
 #include <Serialization/UnboundSchemaSerializationUtl.hpp>
 #include "Serialization/DataTypeSerializationUtil.hpp"
 #include "Serialization/IdentifierSerializationUtil.hpp"

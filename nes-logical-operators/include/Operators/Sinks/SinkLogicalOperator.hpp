@@ -47,6 +47,7 @@ struct SinkLogicalOperator final
 
     [[nodiscard]] SinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
     [[nodiscard]] Schema getOutputSchema() const;
 

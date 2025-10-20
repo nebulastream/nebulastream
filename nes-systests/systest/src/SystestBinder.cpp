@@ -59,6 +59,7 @@
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+#include "Operators/Sources/SourceNameLogicalOperator.hpp"
 
 namespace NES::Systest
 {
@@ -201,7 +202,16 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->getRootOperators().at(0).getOutputSchema();
+            sinkOutputSchema = [&]
+            {
+                /// Sinks do not have an output schema, but they are guaranteed to have only one child, from which we can take the output schema
+                const auto sink = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
+                if (!sink.has_value())
+                {
+                    throw InvalidQuerySyntax("The optimized plan should have a sink as its root");
+                }
+                return sink.value()->getChild().getOutputSchema();
+            }();
         }
     }
 
@@ -533,7 +543,8 @@ struct SystestBinder::Impl
         }();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = Identifier::parse(Util::toUpperCase(sinkName.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue())));
+        const auto sinkForQuery
+            = Identifier::parse(Util::toUpperCase(sinkName.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue())));
         query = std::regex_replace(query, std::regex(std::string{sinkName.getOriginalString()}), sinkForQuery.asCanonicalString());
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
@@ -541,8 +552,7 @@ struct SystestBinder::Impl
 
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
-        if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile);
-            not sinkExpected.has_value())
+        if (auto sinkExpected = sltSinkProvider.createActualSink(sinkName, sinkForQuery, resultFile); not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
         }
@@ -625,10 +635,13 @@ struct SystestBinder::Impl
         const auto rightSinkName = extractSinkName(rightQuery);
 
         const auto leftSinkForQuery = Identifier::parse(leftSinkName.asCanonicalString() + std::to_string(lastParsedQueryId.getRawValue()));
-        const auto rightSinkForQuery = Identifier::parse(rightSinkName.asCanonicalString() + std::to_string(lastParsedQueryId.getRawValue()) + "differential");
+        const auto rightSinkForQuery
+            = Identifier::parse(rightSinkName.asCanonicalString() + std::to_string(lastParsedQueryId.getRawValue()) + "differential");
 
-        leftQuery = std::regex_replace(leftQuery, std::regex(std::string{leftSinkName.getOriginalString()}), leftSinkForQuery.asCanonicalString());
-        rightQuery = std::regex_replace(rightQuery, std::regex(std::string{rightSinkName.getOriginalString()}), rightSinkForQuery.asCanonicalString());
+        leftQuery = std::regex_replace(
+            leftQuery, std::regex(std::string{leftSinkName.getOriginalString()}), leftSinkForQuery.asCanonicalString());
+        rightQuery = std::regex_replace(
+            rightQuery, std::regex(std::string{rightSinkName.getOriginalString()}), rightSinkForQuery.asCanonicalString());
 
         const auto differentialTestResultFileName = std::string(testFileName) + "differential";
         const auto leftResultFile = SystestQuery::resultFile(workingDir, testFileName, lastParsedQueryId);
@@ -636,15 +649,13 @@ struct SystestBinder::Impl
 
         auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
 
-        if (auto leftSinkExpected
-            = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
+        if (auto leftSinkExpected = sltSinkProvider.createActualSink(leftSinkName, leftSinkForQuery, leftResultFile);
             not leftSinkExpected.has_value())
         {
             currentTest.setException(leftSinkExpected.error());
             return;
         }
-        if (auto rightSinkExpected
-            = sltSinkProvider.createActualSink(rightSinkName, rightSinkForQuery, rightResultFile);
+        if (auto rightSinkExpected = sltSinkProvider.createActualSink(rightSinkName, rightSinkForQuery, rightResultFile);
             not rightSinkExpected.has_value())
         {
             currentTest.setException(rightSinkExpected.error());

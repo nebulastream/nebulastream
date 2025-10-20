@@ -17,6 +17,7 @@
 #include <Serialization/IdentifierSerializationUtil.hpp>
 
 #include <SerializableVariantDescriptor.pb.h>
+#include <SerializableIdentifier.pb.h>
 
 NES::SerializableIdentifier*
 NES::IdentifierSerializationUtil::serializeIdentifier(const Identifier& identifier, SerializableIdentifier* serializedIdentifier)
