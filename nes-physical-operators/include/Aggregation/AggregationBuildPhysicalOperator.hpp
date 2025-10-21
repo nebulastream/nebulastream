@@ -35,6 +35,7 @@ HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
+    AbstractBufferProvider* bufferProvider,
     const AggregationBuildPhysicalOperator* buildOperator);
 
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
@@ -44,6 +45,7 @@ public:
         const AggregationOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
+        AbstractBufferProvider* bufferProvider,
         const AggregationBuildPhysicalOperator* buildOperator);
 
     AggregationBuildPhysicalOperator(

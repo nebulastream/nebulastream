@@ -19,15 +19,7 @@ ATTACH INLINE
 CREATE LOGICAL SOURCE stream2(i64 INT64, ts UINT64);
 CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
 ATTACH INLINE
-0,1
-0,2
-0,3
-0,4
-0,5
-0,6
-0,7
-0,8
-0,9
+0,10
 
 CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i64_out UINT64)  TYPE File;
 CREATE SINK sinkStream2(stream2.start UINT64, stream2.end UINT64, stream2.i64_out UINT64)  TYPE File;

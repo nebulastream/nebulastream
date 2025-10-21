@@ -46,7 +46,9 @@ HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
-    const AggregationBuildPhysicalOperator* buildOperator)
+    AbstractBufferProvider* bufferProvider,
+    const AggregationBuildPhysicalOperator* buildOperator
+    )
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
@@ -87,11 +89,10 @@ HashMap* getAggHashMapProxy(
             rv->serialize(std::format("/tmp/nebulastream/bin.out"));
             deserialize = true;
         }
-        else
-        {
-            rv->deserialize(std::format("/tmp/nebulastream/bin.out"));
-        }
-
+    }
+    if (timestamp.getRawValue() == 10)
+    {
+        rv->deserialize(std::format("/tmp/nebulastream/bin.out"), bufferProvider);
     }
     return rv;
 }
@@ -146,7 +147,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, ctx.pipelineMemoryProvider.bufferProvider, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
