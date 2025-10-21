@@ -32,6 +32,9 @@ public:
 
     std::optional<SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
 
+    [[nodiscard]] static std::optional<SinkDescriptor>
+    getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
+
     bool removeSinkDescriptor(const std::string& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);
 

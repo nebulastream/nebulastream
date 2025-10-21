@@ -61,14 +61,18 @@ public:
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
+    [[nodiscard]] bool isInline() const;
+    [[nodiscard]] SinkDescriptor withNewSchema(const Schema& schema) const;
 
 private:
     explicit SinkDescriptor(std::string sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
-
+    explicit SinkDescriptor(
+        std::string sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config, bool isInline);
 
     std::string sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
+    bool isInlineSink = false;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)

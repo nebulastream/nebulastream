@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <LegacyOptimizer/InlineSourceInferencePhase.hpp>
+#include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 
 #include <utility>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
@@ -19,7 +19,9 @@
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
-void NES::InlineSourceInferencePhase::apply(LogicalPlan& queryPlan) const
+namespace NES
+{
+void InlineSourceBindingPhase::apply(LogicalPlan& queryPlan) const
 {
     for (const auto& inlineSource : getOperatorByType<InlineSourceLogicalOperator>(queryPlan))
     {
@@ -46,4 +48,6 @@ void NES::InlineSourceInferencePhase::apply(LogicalPlan& queryPlan) const
 
         queryPlan = std::move(*result);
     }
+}
+
 }

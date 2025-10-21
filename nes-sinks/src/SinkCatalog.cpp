@@ -62,6 +62,22 @@ std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const std::string& 
     return sinkDescriptorOpt->second;
 }
 
+std::optional<SinkDescriptor>
+SinkCatalog::getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config)
+{
+    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
+
+    const std::string sinkName = "InlineSink";
+    if (not descriptorConfigOpt.has_value())
+    {
+        return std::nullopt;
+    }
+
+    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(descriptorConfigOpt.value()), true};
+
+    return sinkDescriptor;
+}
+
 bool SinkCatalog::removeSinkDescriptor(const std::string& sinkName)
 {
     const auto lockedSinks = sinks.wlock();

@@ -18,6 +18,7 @@
 #include <cctype>
 #include <cstdint>
 #include <cstring>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -125,9 +126,26 @@ std::unordered_map<std::string, std::string> getSourceConfig(ConfigMap configOpt
     return sourceOptions;
 }
 
-Schema getSourceSchema(ConfigMap configOptions)
+std::unordered_map<std::string, std::string> getSinkConfig(ConfigMap configOptions)
 {
-    if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
+    std::unordered_map<std::string, std::string> sinkOptions{};
+    if (const auto sourceConfigIter = configOptions.find("SINK"); sourceConfigIter != configOptions.end())
+    {
+        sinkOptions
+            = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            | std::views::transform(
+                  [](auto& pair) { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+            | std::ranges::to<std::unordered_map<std::string, std::string>>();
+    }
+
+    return sinkOptions;
+}
+
+namespace
+{
+std::optional<Schema> getSchema(ConfigMap configOptions, const std::string& configName)
+{
+    if (const auto sourceConfigIter = configOptions.find(configName); sourceConfigIter != configOptions.end())
     {
         if (const auto schemaIter = sourceConfigIter->second.find("SCHEMA"); schemaIter != sourceConfigIter->second.end())
         {
@@ -137,8 +155,18 @@ Schema getSourceSchema(ConfigMap configOptions)
             }
         }
     }
+    return std::nullopt;
+}
+}
 
-    throw InvalidConfigParameter("Given configuration map does not contain a source schema");
+std::optional<Schema> getSourceSchema(ConfigMap configOptions)
+{
+    return getSchema(std::move(configOptions), "SOURCE");
+}
+
+std::optional<Schema> getSinkSchema(ConfigMap configOptions)
+{
+    return getSchema(std::move(configOptions), "SINK");
 }
 
 std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral)

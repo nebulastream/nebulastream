@@ -39,6 +39,16 @@ SinkDescriptor::SinkDescriptor(std::string sinkName, const Schema& schema, const
 {
 }
 
+SinkDescriptor::SinkDescriptor(
+    std::string sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config, const bool isInline)
+    : Descriptor(std::move(config))
+    , sinkName(std::move(sinkName))
+    , schema(std::make_shared<Schema>(schema))
+    , sinkType(sinkType)
+    , isInlineSink(isInline)
+{
+}
+
 std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
 {
     return schema;
@@ -52,6 +62,17 @@ std::string SinkDescriptor::getSinkType() const
 std::string SinkDescriptor::getSinkName() const
 {
     return sinkName;
+}
+
+bool SinkDescriptor::isInline() const
+{
+    return this->isInlineSink;
+}
+
+SinkDescriptor SinkDescriptor::withNewSchema(const Schema& schema) const
+{
+    const SinkDescriptor copy{this->getSinkName(), schema, this->getSinkType(), this->getConfig(), this->isInlineSink};
+    return copy;
 }
 
 std::optional<DescriptorConfig::Config>
