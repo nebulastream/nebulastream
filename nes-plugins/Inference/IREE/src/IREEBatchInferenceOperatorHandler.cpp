@@ -127,7 +127,6 @@ void IREEBatchInferenceOperatorHandler::garbageCollectBatches() const
 
     if (batchesWriteLock->contains(batchId) && batchesWriteLock->at(batchId)->state == BatchState::MARKED_AS_PROCESSED)
     {
-        NES_DEBUG("Top batch ID {} state {}", batchId, static_cast<uint8_t>(batchesWriteLock->at(batchId)->state))
         auto processedBatches = *batchesWriteLock
             | std::views::filter([](const auto& pair)
                 {
@@ -139,7 +138,6 @@ void IREEBatchInferenceOperatorHandler::garbageCollectBatches() const
                     return pair.first;
                 });
         auto batchesCount = static_cast<size_t>(std::ranges::distance(processedBatches));
-        NES_DEBUG("Batches to clear {}, total {}", batchesCount, batchesWriteLock->size());
 
         std::vector batchesToErase(processedBatches.begin(), processedBatches.end());
         for (const uint64_t batchId : batchesToErase)

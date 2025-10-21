@@ -13,6 +13,7 @@
 add_plugin_as_library(InferenceModel RewriteRule nes-query-optimizer iree_inference_plugin_library
         LowerToPhysicalIreeInference.cpp
         IREEBatchInferenceOperator.cpp
+        IREEBatchCacheInferenceOperator.cpp
         IREEBatchInferenceOperatorHandler.cpp
         IREEInferenceOperator.cpp
         IREECacheInferenceOperator.cpp
