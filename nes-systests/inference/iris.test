@@ -420,6 +420,7 @@ MODEL iris TESTDATA/model/iris.onnx
 VARSIZED
 FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
 BATCH_SIZE 1
+CACHE NONE SIZE 1
 
 SELECT data, iris_label(setosa, versicolor, virginica) as flower
 FROM (SELECT INFER_MODEL(iris, (data)) FROM streamVarsized)
@@ -435,6 +436,7 @@ MODEL iris_varsized TESTDATA/model/iris.onnx
 VARSIZED
 VARSIZED species_vector
 BATCH_SIZE 1
+CACHE NONE SIZE 1
 
 SELECT ArgMax(species_vector) as index
 FROM (SELECT INFER_MODEL(iris_varsized, (data)) FROM streamVarsized)
