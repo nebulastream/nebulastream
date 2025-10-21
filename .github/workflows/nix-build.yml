@@ -20,17 +20,11 @@ jobs:
           ref: ${{ inputs.head_sha }}
           fetch-depth: 0
           submodules: recursive
-
       - name: Install Nix
-        run: |
-          # Install Nix in the container
-          curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
-          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-          
-          # Enable flakes
-          mkdir -p ~/.config/nix
-          echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
-
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
       - name: Build with Nix
         run: |
           # Source Nix environment
@@ -46,9 +40,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: nix-build-logs-${{ matrix.os }}
+          name: nix-build-logs
           path: |
             cmake-build-nix/CMakeFiles/CMakeOutput.log
             cmake-build-nix/CMakeFiles/CMakeError.log
-            vcpkg-repository/buildtrees/**/*.log
           retention-days: 7
