@@ -299,7 +299,11 @@ functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 
 sinkClause: INTO sink (',' sink)*;
 
-sink: identifier;
+sink: identifier | inlineSink;
+
+inlineSink
+    : type=identifier '(' parameters=namedConfigExpressionSeq ')'
+    ;
 
 nullNotnull
     : NOT? NULLTOKEN

@@ -157,7 +157,7 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     auto parserConfig = ParserConfig::create(std::move(parserConfigMap));
 
     auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto name = "InlineSource#" + physicalId.toString();
+    auto name = physicalId.toString();
 
     const auto logicalSource = LogicalSource{name, schema};
     SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, descriptorConfig.value(), parserConfig};

@@ -22,6 +22,7 @@
 #include <ranges>
 #include <string>
 #include <utility>
+#include <variant>
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
@@ -29,6 +30,7 @@
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
@@ -64,16 +66,15 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
 #include <ParserUtil.hpp>
-
-#include <CommonParserFunctions.hpp>
 
 namespace NES::Parsers
 {
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
-    if (sinkNames.empty())
+    if (sinks.empty())
     {
         throw InvalidQuerySyntax("Query does not contain sink");
     }
@@ -82,8 +83,24 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
         throw InvalidQuerySyntax("Query could not be parsed");
     }
     /// Todo #421: support multiple sinks
-    INVARIANT(!sinkNames.empty(), "Need at least one sink!");
-    return LogicalPlanBuilder::addSink(sinkNames.front(), queryPlans.top());
+    INVARIANT(!sinks.empty(), "Need at least one sink!");
+
+    if (std::holds_alternative<std::string>(sinks.front()))
+    {
+        return LogicalPlanBuilder::addSink(std::get<std::string>(sinks.front()), queryPlans.top());
+    }
+    if (std::holds_alternative<std::pair<std::string, ConfigMap>>(sinks.front()))
+    {
+        auto [type, configOptions] = std::get<std::pair<std::string, ConfigMap>>(sinks.front());
+
+        const auto sinkConfig = getSinkConfig(configOptions);
+        const auto schemaOpt = getSinkSchema(configOptions);
+        const Schema schema = (schemaOpt.has_value() ? schemaOpt.value() : Schema{});
+
+        return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, queryPlans.top());
+    }
+
+    std::unreachable();
 }
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
@@ -168,8 +185,19 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
     /// Store all specified sinks.
     for (const auto& sink : context->sink())
     {
-        const auto sinkIdentifier = sink->identifier();
-        sinkNames.emplace_back(bindIdentifier(sinkIdentifier));
+        if (sink->identifier() != nullptr)
+        {
+            sinks.emplace_back(bindIdentifier(sink->identifier()));
+        }
+        else if (sink->inlineSink() != nullptr)
+        {
+            const auto& sinkInlineSink = sink->inlineSink();
+
+            const auto type = bindIdentifier(sinkInlineSink->type);
+            const auto configOptions = bindConfigOptions(sinkInlineSink->parameters->namedConfigExpression());
+
+            sinks.emplace_back(std::make_pair(type, configOptions));
+        }
     }
 }
 
@@ -439,8 +467,12 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             const auto parserConfig = getParserConfig(configOptions);
             const auto sourceConfig = getSourceConfig(configOptions);
             const auto schema = getSourceSchema(configOptions);
+            if (!schema.has_value())
+            {
+                throw InvalidConfigParameter("Inline Source is missing schema definition");
+            }
 
-            queryPlan = LogicalPlanBuilder::createLogicalPlan(type, schema, sourceConfig, parserConfig);
+            queryPlan = LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
         }
         else
         {
@@ -886,9 +918,9 @@ void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::Thr
 
 void AntlrSQLQueryPlanCreator::enterInlineSource(AntlrSQLParser::InlineSourceContext* context)
 {
-    auto type = bindIdentifier(context->type);
+    const auto type = bindIdentifier(context->type);
 
-    auto parameters = bindConfigOptions(context->parameters->namedConfigExpression());
+    const auto parameters = bindConfigOptions(context->parameters->namedConfigExpression());
 
     helpers.top().setInlineSource(type, parameters);
 }

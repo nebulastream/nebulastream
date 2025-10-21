@@ -90,8 +90,15 @@ TEST_F(StatementBinderTest, BindQuery)
 
 TEST_F(StatementBinderTest, InlineQuery)
 {
-    const std::string query = "SELECT a FROM File('input.csv' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, SCHEMA(id UINT64, text "
-                              "VARSIZED) AS `SOURCE`.`SCHEMA`) INTO output;";
+    const std::string query = "SELECT id, text \n"
+                              "FROM File(\n"
+                              "'input.csv' AS `SOURCE`.FILE_PATH,\n"
+                              "'CSV' AS PARSER.`TYPE`,\n"
+                              "SCHEMA(id UINT64, text VARSIZED) AS `SOURCE`.`SCHEMA`)\n"
+                              "INTO FILE(\n"
+                              "'out.csv' AS `SINK`.FILE_PATH,\n"
+                              "'CSV' as `SINK`.INPUT_FORMAT,\n"
+                              "SCHEMA(id UINT64, text VARSIZED) AS `SINK`.`SCHEMA`)\n";
     const auto statement = binder->parseAndBindSingle(query);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));

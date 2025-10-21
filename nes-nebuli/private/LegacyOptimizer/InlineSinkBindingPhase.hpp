@@ -16,21 +16,20 @@
 #include <memory>
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
 
-
-class InlineSourceInferencePhase
+class InlineSinkBindingPhase
 {
 public:
-    explicit InlineSourceInferencePhase(std::shared_ptr<SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit InlineSinkBindingPhase(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
     void apply(LogicalPlan& queryPlan) const;
 
 private:
-    std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::shared_ptr<SinkCatalog> sinkCatalog;
 };
 
 }
