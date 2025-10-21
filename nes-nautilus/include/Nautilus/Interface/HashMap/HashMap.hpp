@@ -34,6 +34,6 @@ public:
     [[nodiscard]] virtual uint64_t getNumberOfTuples() const = 0;
 
     virtual void serialize(std::filesystem::path) const = 0;
-    virtual void deserialize(std::filesystem::path) = 0;
+    virtual void deserialize(std::filesystem::path, AbstractBufferProvider* bufferProvider) = 0;
 };
 }

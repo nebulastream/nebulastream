@@ -33,8 +33,8 @@ class ChainedHashMapRef;
 
 /// Each entry contains a ptr to the next element, the hash of the current value and the keys and values.
 /// The physical layout of the storage space is the following
-/// | --- Entry* --- | --- hash --- | --- keys ---     | --- values ---    |
-/// | --- 64bit ---  | --- 64bit ---  | --- keySize ---  | --- valueSize ---  |
+/// | --- Entry* --- | ---  hash  --- | ---   keys   --- | ---   values   --- |
+/// | --- 64bit ---  | --- 64bit ---  | --- keySize ---  | ---  valueSize --- |
 class ChainedHashMapEntry final : public AbstractHashMapEntry
 {
 public:
@@ -99,7 +99,7 @@ public:
     void serialize(std::filesystem::path path) const override;
 
     /// Overwrites the buffers of this current instance with the serialized data
-    void deserialize(std::filesystem::path path) override;
+    void deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider) override;
 
 private:
     friend class ChainedHashMapRef;
