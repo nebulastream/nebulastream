@@ -50,6 +50,9 @@ NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const Ser
                         })
         | std::ranges::to<std::vector>();
 
+    model.predictionCacheType = grpcModel.predictioncachetype();
+    model.predictionCacheSize = grpcModel.predictioncachesize();
+
     return model;
 }
 
@@ -83,4 +86,7 @@ void NES::Nebuli::Inference::serializeModel(const Model& model, SerializableMode
         output->set_name(name);
         DataTypeSerializationUtil::serializeDataType(type, output->mutable_type());
     }
+
+    target.set_predictioncachetype(model.predictionCacheType);
+    target.set_predictioncachesize(model.predictionCacheSize);
 }

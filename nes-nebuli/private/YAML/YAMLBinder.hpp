@@ -75,6 +75,8 @@ struct Model
     std::vector<NES::DataType> inputs;
     std::vector<SchemaField> outputs;
     size_t batchSize;
+    std::string predictionCacheType;
+    size_t predictionCacheSize;
 };
 
 struct QueryConfig
