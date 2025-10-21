@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/algorithm/string.hpp>
 #include <cstddef>
 #include <cstring>
 #include <filesystem>

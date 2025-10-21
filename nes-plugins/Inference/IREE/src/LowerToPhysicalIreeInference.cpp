@@ -44,6 +44,9 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             | std::ranges::to<std::vector>();
         auto outputNames = model.getOutputs() | std::views::keys | std::ranges::to<std::vector>();
 
+        auto predictionCacheType = magic_enum::enum_cast<NES::Configurations::PredictionCacheType>(model.getPredictionCacheType());
+        auto predictionCacheSize = model.getPredictionCacheSize();
+
         /// if the batch size is 1, then we simply use the inference operator with PipelineLocation::INTERMEDIATE
         /// else, add the batching operator (custom emit) and batch inference operator (custom scan)
         if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
@@ -51,7 +54,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             std::shared_ptr<NES::PhysicalOperatorWrapper> wrapper = nullptr;
             auto handler = std::make_shared<NES::IREEInferenceOperatorHandler>(model);
 
-            switch (conf.predictionCacheConfiguration.predictionCacheType.getValue())
+            switch (predictionCacheType.value_or(NES::Configurations::PredictionCacheType::NONE))
             {
                 case NES::Configurations::PredictionCacheType::NONE: {
                     NES_INFO("Lower InferModel operator to IREEInferenceOperator");
@@ -86,8 +89,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
                     NES_INFO("Lower InferModel operator to IREECacheInferenceOperator");
                     NES::Configurations::PredictionCacheOptions predictionCacheOptions{
-                        conf.predictionCacheConfiguration.predictionCacheType.getValue(),
-                        conf.predictionCacheConfiguration.numberOfEntriesPredictionCache.getValue()};
+                        predictionCacheType.value(),
+                        predictionCacheSize};
                     auto ireeOperator = NES::IREECacheInferenceOperator(handlerId, inputFunctions, outputNames, predictionCacheOptions);
 
                     if (inferModelOperator.getInputFields().size() == 1
@@ -130,7 +133,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 batchingOperator, inputSchema, inputSchema, handlerId, handler, NES::PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
             std::shared_ptr<NES::PhysicalOperatorWrapper> ireeWrapper = nullptr;
-            switch (conf.predictionCacheConfiguration.predictionCacheType.getValue())
+            switch (predictionCacheType.value_or(NES::Configurations::PredictionCacheType::NONE))
             {
                 case NES::Configurations::PredictionCacheType::NONE: {
                     NES_INFO("Lower InferModel operator to IREEBatchInferenceOperator");
@@ -166,8 +169,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
                     NES_INFO("Lower InferModel operator to IREEBatchCacheInferenceOperator");
                     NES::Configurations::PredictionCacheOptions predictionCacheOptions{
-                        conf.predictionCacheConfiguration.predictionCacheType.getValue(),
-                        conf.predictionCacheConfiguration.numberOfEntriesPredictionCache.getValue()};
+                        predictionCacheType.value(),
+                        predictionCacheSize};
                     auto ireeOperator = NES::IREEBatchCacheInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions);
 
                     if (inferModelOperator.getInputFields().size() == 1

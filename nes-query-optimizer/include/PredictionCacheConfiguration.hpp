@@ -46,11 +46,11 @@ public:
     PredictionCacheConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
     EnumOption<PredictionCacheType> predictionCacheType
-        = {"PredictionCacheType",
-           PredictionCacheType::FIFO,
+        = {"prediction_cache_type",
+           PredictionCacheType::NONE,
            fmt::format("Type of prediction cache {}", fmt::join(magic_enum::enum_names<PredictionCacheType>(), ", "))};
     UIntOption numberOfEntriesPredictionCache
-        = {"numberOfEntriesPredictionCache", "16", "Size of the prediction cache", {std::make_shared<NonZeroValidation>()}};
+        = {"number_of_entries_prediction_cache", "1", "Size of the prediction cache", {std::make_shared<NonZeroValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override { return {&predictionCacheType, &numberOfEntriesPredictionCache}; }
