@@ -79,7 +79,7 @@ OperatorSerializationUtil::deserializeOperator(const SerializableOperator& seria
                     serializedOperator.DebugString());
             }
 
-            auto sinkOperator = SinkLogicalOperator(*std::ranges::rbegin(sinkNameList));
+            auto sinkOperator = SinkLogicalOperator(*std::ranges::rbegin(sinkNameList)).withChildren(std::move(children));
             serializedSinkDescriptor.transform(
                 [&sinkOperator](const auto& serialized)
                 { return sinkOperator = sinkOperator.withSinkDescriptor(deserializeSinkDescriptor(serialized)); });
@@ -105,7 +105,8 @@ OperatorSerializationUtil::deserializeOperator(const SerializableOperator& seria
 
     if (result.has_value())
     {
-        return result.value();
+        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set());
+        return result->withTraitSet(std::move(traitSet)).withOperatorId(OperatorId{serializedOperator.operator_id()});
     }
 
     throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());

@@ -139,7 +139,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         {
             throw CannotDeserialize("Unknown operator id: {}", id);
         }
-        const LogicalOperator op = baseIt->second(children);
+        const LogicalOperator op = baseIt->second(children).withOperatorId(OperatorId{id});
 
         builtOps.emplace(id, op);
         return op;
@@ -168,12 +168,12 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     }
     auto sink = std::move(sinkOpt).value();
 
-    if (sinkOpt->getChildren().empty())
+    if (sink->getChildren().empty())
     {
         throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
     }
 
-    if (not sinkOpt.value()->getSinkDescriptor())
+    if (not sink->getSinkDescriptor())
     {
         throw CannotDeserialize("Sink has no descriptor!");
     }

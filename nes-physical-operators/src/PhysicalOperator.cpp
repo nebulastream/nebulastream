@@ -159,7 +159,8 @@ std::string PhysicalOperator::toString() const
     return self->id;
 }
 
-PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, std::optional<UnboundSchema> outputSchema)
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(
+    PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, std::optional<UnboundSchema> outputSchema)
     : physicalOperator(std::move(physicalOperator))
     , inputSchema(std::move(inputSchema))
     , outputSchema(std::move(outputSchema))
@@ -168,7 +169,16 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperat
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
-    PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, std::optional<UnboundSchema> outputSchema, PipelineLocation pipelineLocation)
+    PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, PipelineLocation pipelineLocation)
+    : physicalOperator(std::move(physicalOperator)), inputSchema(std::move(inputSchema)), pipelineLocation(pipelineLocation)
+{
+}
+
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(
+    PhysicalOperator physicalOperator,
+    std::optional<UnboundSchema> inputSchema,
+    std::optional<UnboundSchema> outputSchema,
+    PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator))
     , inputSchema(std::move(inputSchema))
     , outputSchema(std::move(outputSchema))

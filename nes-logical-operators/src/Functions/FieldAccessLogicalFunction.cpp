@@ -150,11 +150,13 @@ LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFun
     {
         throw CannotDeserialize("FieldAccessLogicalFunction requires a FieldName that is part of the schema");
     }
-    const uint64_t foundOperatorId = std::get<uint64_t>(operatorIdIter->second);
-    if (field.value().getProducedBy().getId().getRawValue() != foundOperatorId)
-    {
-        throw CannotDeserialize("Operator id in config does not match the operator id of the field of FieldAccessLogicalFunction");
-    }
+
+    /// TODO enable this check when we removed operator ids from the model and made it serialization only
+    /// const uint64_t foundOperatorId = std::get<uint64_t>(operatorIdIter->second);
+    /// if (field.value().getProducedBy().getId().getRawValue() != foundOperatorId)
+    /// {
+    ///     throw CannotDeserialize("Operator id in config does not match the operator id of the field of FieldAccessLogicalFunction");
+    /// }
     return FieldAccessLogicalFunction(field.value());
 }
 

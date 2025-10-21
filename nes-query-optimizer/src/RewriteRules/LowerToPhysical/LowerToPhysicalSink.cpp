@@ -34,7 +34,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
     auto physicalOperator = SinkPhysicalOperator(sink->getSinkDescriptor().value()); /// NOLINT(bugprone-unchecked-optional-access)
     PRECONDITION(logicalOperator.getChildren().size() == 1, "Expected exactly one child for sink operator");
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getChildren().at(0).getOutputSchema(), sink.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator, logicalOperator.getChildren().at(0).getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     ;
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

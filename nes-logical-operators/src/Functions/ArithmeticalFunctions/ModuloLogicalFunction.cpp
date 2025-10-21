@@ -54,7 +54,7 @@ LogicalFunction ModuloLogicalFunction::withInferredDataType(const Schema& schema
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-    copy.dataType = left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    copy.dataType = copy.left.getDataType().join(copy.right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
 
     if (copy.dataType.isType(DataType::Type::UNDEFINED))
     {

@@ -225,6 +225,7 @@ public:
         INTERMEDIATE, /// neither of them, intermediate operator
     };
 
+    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, std::optional<UnboundSchema> outputSchema);
     PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundSchema> inputSchema, std::optional<UnboundSchema> outputSchema, PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(

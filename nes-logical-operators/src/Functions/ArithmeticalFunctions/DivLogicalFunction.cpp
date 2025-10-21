@@ -56,9 +56,9 @@ LogicalFunction DivLogicalFunction::withInferredDataType(const Schema& schema) c
     copy.right = right.withInferredDataType(schema);
     if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
     {
-        throw CannotInferStamp("Cannot apply division to non-numeric input function left: {}, right: {}", left, right);
+        throw CannotInferStamp("Cannot apply division to non-numeric input function left: {}, right: {}", copy.left, copy.right);
     }
-    copy.dataType = left.getDataType();
+    copy.dataType = copy.left.getDataType();
 
     return copy;
 };

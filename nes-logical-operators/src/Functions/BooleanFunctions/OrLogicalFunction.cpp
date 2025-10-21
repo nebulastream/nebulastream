@@ -82,7 +82,7 @@ LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) co
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-    if (!(left.getDataType().isType(DataType::Type::BOOLEAN) or !right.getDataType().isType(DataType::Type::BOOLEAN)))
+    if (!(copy.left.getDataType().isType(DataType::Type::BOOLEAN) or !copy.right.getDataType().isType(DataType::Type::BOOLEAN)))
     {
         throw CannotInferStamp("Can only apply or to two boolean input function, but got left: {}, right: {}", copy.left, copy.right);
     }

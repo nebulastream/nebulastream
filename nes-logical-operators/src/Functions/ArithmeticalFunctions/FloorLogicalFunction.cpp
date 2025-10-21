@@ -44,7 +44,7 @@ LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema& schema)
 {
     auto copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (!child.getDataType().isNumeric())
+    if (!copy.child.getDataType().isNumeric())
     {
         throw CannotInferStamp("Cannot apply floor function on non-numeric input function {}", copy.child);
     }

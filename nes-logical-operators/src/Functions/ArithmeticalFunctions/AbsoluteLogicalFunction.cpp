@@ -46,19 +46,19 @@ LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema& sche
 {
     AbsoluteLogicalFunction copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (!child.getDataType().isNumeric())
+    if (!copy.child.getDataType().isNumeric())
     {
         throw CannotInferStamp("Cannot apply absolute function on non-numeric input function {}", copy.child);
     }
 
     copy.dataType = [&]
     {
-        if (child.getDataType().isSignedInteger())
+        if (copy.child.getDataType().isSignedInteger())
         {
             /// TODO select appropriately narrow data type
             return DataTypeProvider::provideDataType(DataType::Type::UINT64);
         }
-        return child.getDataType();
+        return copy.child.getDataType();
     }();
 
     return copy;
