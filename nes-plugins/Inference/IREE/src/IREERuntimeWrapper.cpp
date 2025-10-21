@@ -28,12 +28,10 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_instance_t* instance = nullptr;
     iree_status_t status = iree_runtime_instance_create(&instanceOptions, iree_allocator_system(), &instance);
     std::unique_ptr<iree_runtime_instance_t, decltype(&iree_runtime_instance_release)> runtimeInstance(instance, &iree_runtime_instance_release);
-    NES_DEBUG("Created IREE runtime instance")
 
     iree_hal_device_t* device = nullptr;
     status = iree_runtime_instance_try_create_default_device(instance, iree_make_cstring_view("local-sync"), &device);
     std::unique_ptr<iree_hal_device_t, decltype(&iree_hal_device_release)> ireeDevice(device, &iree_hal_device_release);
-    NES_DEBUG("Created IREE device")
 
     iree_runtime_session_options_t sessionOptions;
     iree_runtime_session_options_initialize(&sessionOptions);
@@ -41,7 +39,6 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     status = iree_runtime_session_create_with_device(
         instance, &sessionOptions, device, iree_runtime_instance_host_allocator(instance), &session);
     std::unique_ptr<iree_runtime_session_t, decltype(&iree_runtime_session_release)> ireeSession(session, &iree_runtime_session_release);
-    NES_DEBUG("Created IREE session")
 
     if (!iree_status_is_ok(status))
     {
@@ -54,7 +51,7 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
         throw InferenceRuntime("Model Setup failed. Could not Load model: {}", iree_status_code_string(iree_status_code(status)));
     }
 
-    NES_DEBUG("Read the model from the bytecode buffer");
+    NES_DEBUG("Read the model from the bytecode buffer and set an IREE session up");
     this->instance = std::move(runtimeInstance);
     this->session = std::move(ireeSession);
     this->device = std::move(ireeDevice);
