@@ -20,21 +20,19 @@ jobs:
           ref: ${{ inputs.head_sha }}
           fetch-depth: 0
           submodules: recursive
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - name: Build with Nix
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: Configure via devShell
         run: |
-          # Source Nix environment
-          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-          
-          # Configure the project
           ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B cmake-build-nix
-                      
-          # Build the project
-          ./.nix/nix-cmake.sh --build cmake-build-nix --target nes-single-node-worker -j$(nproc)
+
+      - name: Build via devShell
+        run: |
+          ./.nix/nix-cmake.sh --build cmake-build-nix --target nes-single-node-worker -j"$(nproc)"
 
       - name: Upload build artifacts on failure
         if: failure()
