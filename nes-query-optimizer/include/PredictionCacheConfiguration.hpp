@@ -50,7 +50,7 @@ public:
            PredictionCacheType::FIFO,
            fmt::format("Type of prediction cache {}", fmt::join(magic_enum::enum_names<PredictionCacheType>(), ", "))};
     UIntOption numberOfEntriesPredictionCache
-        = {"numberOfEntriesPredictionCache", "1", "Size of the prediction cache", {std::make_shared<NonZeroValidation>()}};
+        = {"numberOfEntriesPredictionCache", "16", "Size of the prediction cache", {std::make_shared<NonZeroValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override { return {&predictionCacheType, &numberOfEntriesPredictionCache}; }

@@ -1,0 +1,321 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <ExecutionContext.hpp>
+#include <IREEAdapter.hpp>
+#include <IREEBatchCacheInferenceOperator.hpp>
+#include <IREEBatchInferenceOperatorHandler.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <PredictionCache/PredictionCache2Q.hpp>
+#include <PredictionCache/PredictionCacheFIFO.hpp>
+#include <PredictionCache/PredictionCacheLFU.hpp>
+#include <PredictionCache/PredictionCacheLRU.hpp>
+#include <PredictionCache/PredictionCacheSecondChance.hpp>
+#include <PredictionCache/PredictionCacheUtil.hpp>
+#include <QueryExecutionConfiguration.hpp>
+#include <nautilus/function.hpp>
+#include <ranges>
+
+namespace NES::QueryCompilation::PhysicalOperators
+{
+class PhysicalInferModelOperator;
+}
+
+namespace NES::IREEBatchCacheInference
+{
+template <class T>
+void addValueToModelProxy(int index, float value, void* inferModelHandler, WorkerThreadId thread)
+{
+    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+    auto adapter = handler->getIREEAdapter(thread);
+    adapter->addModelInput(index, value);
+}
+
+void copyVarSizedFromModelProxy(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
+{
+    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+    auto adapter = handler->getIREEAdapter(thread);
+    adapter->copyResultTo(std::span{content, size});
+}
+
+void copyVarSizedToModelProxy(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
+{
+    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+    auto adapter = handler->getIREEAdapter(thread);
+    adapter->addModelInput(std::span{content, size});
+}
+
+void applyModelProxy(void* inferModelHandler, WorkerThreadId thread)
+{
+    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+    auto adapter = handler->getIREEAdapter(thread);
+    adapter->infer();
+}
+
+float getValueFromModelProxy(int index, void* inferModelHandler, WorkerThreadId thread)
+{
+    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+    auto adapter = handler->getIREEAdapter(thread);
+    return adapter->getResultAt(index);
+}
+
+template <typename T>
+nautilus::val<T> min(const nautilus::val<T>& lhs, const nautilus::val<T>& rhs)
+{
+    return lhs < rhs ? lhs : rhs;
+}
+
+void garbageCollectBatchesProxy(void* inferModelHandler)
+{
+    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+    handler->garbageCollectBatches();
+}
+}
+
+namespace NES
+{
+
+IREEBatchCacheInferenceOperator::IREEBatchCacheInferenceOperator(
+    const OperatorHandlerId operatorHandlerId,
+    std::vector<PhysicalFunction> inputs,
+    std::vector<std::string> outputFieldNames,
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+    Configurations::PredictionCacheOptions predictionCacheOptions)
+    : WindowProbePhysicalOperator(operatorHandlerId)
+    , inputs(std::move(inputs))
+    , outputFieldNames(std::move(outputFieldNames))
+    , memoryProvider(std::move(memoryProvider))
+    , predictionCacheOptions(predictionCacheOptions)
+{
+}
+
+void IREEBatchCacheInferenceOperator::performInference(
+    const Interface::PagedVectorRef& pagedVectorRef,
+    Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
+    ExecutionContext& executionCtx) const
+{
+    const auto fields = memoryProvider.getMemoryLayout()->getSchema().getFieldNames();
+    auto* predictionCache = dynamic_cast<PredictionCache*>(executionCtx.getLocalState(id));
+    const auto operatorHandler = predictionCache->getOperatorHandler();
+
+    nautilus::val<int> rowIdx(0);
+    for (auto it = pagedVectorRef.begin(fields); it != pagedVectorRef.end(fields); ++it)
+    {
+        auto record = createRecord(*it, fields);
+
+        if (!this->isVarSizedInput)
+        {
+            for (nautilus::static_val<size_t> i = 0; i < inputs.size(); ++i)
+            {
+                nautilus::invoke(
+                    IREEBatchCacheInference::addValueToModelProxy<float>,
+                    rowIdx,
+                    inputs.at(i).execute(record, executionCtx.pipelineMemoryProvider.arena).cast<nautilus::val<float>>(),
+                    operatorHandler,
+                    executionCtx.workerThreadId);
+                ++rowIdx;
+            }
+        }
+        else
+        {
+            VarVal value = inputs.at(0).execute(record, executionCtx.pipelineMemoryProvider.arena);
+            auto varSizedValue = value.cast<VariableSizedData>();
+            nautilus::invoke(
+                IREEBatchCacheInference::copyVarSizedToModelProxy,
+                varSizedValue.getContent(),
+                IREEBatchCacheInference::min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
+                operatorHandler,
+                executionCtx.workerThreadId);
+            ++rowIdx;
+        }
+    }
+
+    nautilus::val<std::byte*> inputDataVal = nautilus::invoke(
+        +[](void* inferModelHandler, WorkerThreadId thread)
+        {
+            auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+            auto adapter = handler->getIREEAdapter(thread);
+            return adapter->inputData.get();
+        }, operatorHandler, executionCtx.workerThreadId);
+
+    const auto pred = predictionCache->getDataStructureRef(
+        inputDataVal,
+        [&](
+            const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>&)
+        {
+            return nautilus::invoke(
+                +[](PredictionCacheEntry* predictionCacheEntry, void* opHandlerPtr, WorkerThreadId thread)
+                {
+                    auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(opHandlerPtr);
+                    auto adapter = handler->getIREEAdapter(thread);
+                    adapter->infer();
+
+                    std::memcpy(adapter->inputDataCache.get(), adapter->inputData.get(), adapter->inputSize);
+                    predictionCacheEntry->record = adapter->inputDataCache.get();
+
+                    predictionCacheEntry->dataStructure = reinterpret_cast<int8_t*>(adapter->outputData.get());
+                    return predictionCacheEntry->dataStructure;
+                }, predictionCacheEntryToReplace, operatorHandler, executionCtx.workerThreadId);
+        });
+
+    rowIdx = nautilus::val<int>(0);
+    for (auto it = pagedVectorRef.begin(fields); it != pagedVectorRef.end(fields); ++it)
+    {
+        auto record = createRecord(*it, fields);
+
+        if (!this->isVarSizedOutput)
+        {
+            for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
+            {
+                VarVal result = VarVal(nautilus::invoke(IREEBatchCacheInference::getValueFromModelProxy, rowIdx, operatorHandler, executionCtx.workerThreadId));
+                record.write(outputFieldNames.at(i), result);
+                ++rowIdx;
+            }
+        }
+        else
+        {
+            auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
+            nautilus::invoke(IREEBatchCacheInference::copyVarSizedFromModelProxy, output.getContent(), output.getContentSize(), operatorHandler, executionCtx.workerThreadId);
+            record.write(outputFieldNames.at(0), output);
+            ++rowIdx;
+        }
+        executeChild(executionCtx, record);
+    }
+}
+
+void IREEBatchCacheInferenceOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    /// As this operator functions as a scan, we have to set the execution context for this pipeline
+    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
+    executionCtx.lastChunk = recordBuffer.isLastChunk();
+    executionCtx.originId = recordBuffer.getOriginId();
+    openChild(executionCtx, recordBuffer);
+
+    const auto emittedBatch = static_cast<nautilus::val<EmittedBatch*>>(recordBuffer.getBuffer());
+    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+
+    const auto batchMemRef = nautilus::invoke(
+        +[](OperatorHandler* ptrOpHandler, const EmittedBatch* currentBatch)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
+            std::shared_ptr<Batch> batch = opHandler->getBatch(currentBatch->batchId);
+            return batch.get();
+        }, operatorHandlerMemRef, emittedBatch);
+
+    const auto batchPagedVectorMemRef = nautilus::invoke(
+        +[](const Batch* batch)
+        {
+            PRECONDITION(batch != nullptr, "batch context should not be null!");
+            return batch->getPagedVectorRef();
+        }, batchMemRef);
+    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, memoryProvider);
+
+    const auto startOfEntries = nautilus::invoke(
+        +[](const IREEBatchInferenceOperatorHandler* opHandler, const WorkerThreadId workerThreadId)
+        {
+            return opHandler->getStartOfPredictionCacheEntries(
+                IREEBatchInferenceOperatorHandler::StartPredictionCacheEntriesIREEInference{workerThreadId});
+        }, operatorHandlerMemRef, executionCtx.workerThreadId);
+
+    const auto inputSize = nautilus::invoke(
+        +[](void* inferModelHandler, WorkerThreadId thread)
+        {
+            auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
+            auto adapter = handler->getIREEAdapter(thread);
+            return adapter->inputSize;
+        }, operatorHandlerMemRef, executionCtx.workerThreadId);
+
+    auto predictionCache = NES::Util::createPredictionCache(
+        predictionCacheOptions, operatorHandlerMemRef, startOfEntries, inputSize);
+    executionCtx.setLocalOperatorState(id, std::move(predictionCache));
+    
+    performInference(batchPagedVectorRef, *memoryProvider, executionCtx);
+
+    nautilus::invoke(
+        +[](OperatorHandler* ptrOpHandler, const EmittedBatch* currentBatch)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
+            std::shared_ptr<Batch> batch = opHandler->getBatch(currentBatch->batchId);
+            batch->setState(BatchState::MARKED_AS_PROCESSED);
+        }, operatorHandlerMemRef, emittedBatch);
+}
+
+void IREEBatchCacheInferenceOperator::setup(ExecutionContext& executionCtx) const
+{
+    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    nautilus::invoke(
+        +[](OperatorHandler* opHandler, PipelineExecutionContext* pec) { opHandler->start(*pec, 0); },
+        globalOperatorHandler,
+        executionCtx.pipelineContext);
+
+    nautilus::val<uint64_t> sizeOfEntry = 0;
+    nautilus::val<uint64_t> numberOfEntries = predictionCacheOptions.numberOfEntries;
+    switch (predictionCacheOptions.predictionCacheType)
+    {
+        case Configurations::PredictionCacheType::NONE:
+            return;
+        case Configurations::PredictionCacheType::FIFO:
+            sizeOfEntry = sizeof(PredictionCacheEntryFIFO);
+            break;
+        case Configurations::PredictionCacheType::LFU:
+            sizeOfEntry = sizeof(PredictionCacheEntryLFU);
+            break;
+        case Configurations::PredictionCacheType::LRU:
+            sizeOfEntry = sizeof(PredictionCacheEntryLRU);
+            break;
+        case Configurations::PredictionCacheType::SECOND_CHANCE:
+            sizeOfEntry = sizeof(PredictionCacheEntrySecondChance);
+            break;
+        case Configurations::PredictionCacheType::TWO_QUEUES:
+            sizeOfEntry = sizeof(PredictionCacheEntry2Q);
+            break;
+    }
+
+    nautilus::invoke(
+        +[](IREEBatchInferenceOperatorHandler* opHandler,
+            AbstractBufferProvider* bufferProvider,
+            const uint64_t sizeOfEntryVal,
+            const uint64_t numberOfEntriesVal)
+        { opHandler->allocatePredictionCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider); },
+        globalOperatorHandler,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        sizeOfEntry,
+        numberOfEntries);
+}
+
+void IREEBatchCacheInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    nautilus::invoke(IREEBatchCacheInference::garbageCollectBatchesProxy, operatorHandlerMemRef);
+    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
+}
+
+Record
+IREEBatchCacheInferenceOperator::createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const
+{
+    Record record;
+    for (const auto& fieldName : nautilus::static_iterable(projections))
+    {
+        record.write(fieldName, featureRecord.read(fieldName));
+    }
+    return record;
+}
+
+}

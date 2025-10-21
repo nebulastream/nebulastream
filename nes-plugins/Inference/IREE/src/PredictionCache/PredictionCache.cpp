@@ -40,7 +40,7 @@ void PredictionCache::incrementNumberOfHits()
 {
     auto currentNumberOfHits = static_cast<nautilus::val<uint64_t>>(*numberOfHits);
     currentNumberOfHits = currentNumberOfHits + 1;
-    nautilus::invoke(+[](uint64_t n){ std::cout << "Hits: " << n << '\n'; }, currentNumberOfHits);
+    nautilus::invoke(+[](uint64_t n){ NES_DEBUG("Hits: {}", n) }, currentNumberOfHits);
     *numberOfHits = currentNumberOfHits;
 }
 
@@ -48,7 +48,7 @@ void PredictionCache::incrementNumberOfMisses()
 {
     auto currentNumberOfMisses = static_cast<nautilus::val<uint64_t>>(*numberOfMisses);
     currentNumberOfMisses = currentNumberOfMisses + 1;
-    nautilus::invoke(+[](uint64_t n){ std::cout << "Misses: " << n << '\n'; }, currentNumberOfMisses);
+    nautilus::invoke(+[](uint64_t n){ NES_DEBUG("Misses: {}", n) }, currentNumberOfMisses);
     *numberOfMisses = currentNumberOfMisses;
 }
 
