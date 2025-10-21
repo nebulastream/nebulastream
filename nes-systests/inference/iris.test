@@ -30,6 +30,7 @@ MODEL irisCache TESTDATA/model/model.onnx
 FLOAT32 FLOAT32 FLOAT32 FLOAT32
 FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
 BATCH_SIZE 1
+CACHE FIFO SIZE 1
 
 SELECT setosa, versicolor, virginica
 FROM (SELECT INFER_MODEL(irisCache, (p1,p2,p3,p4)) FROM streamDiff)
@@ -49,17 +50,23 @@ INTO classificationThreeSeparate
 0.184111,0.288652,0.527237
 0.184111,0.288652,0.527237
 
-MODEL iris4 TESTDATA/model/model.onnx
+MODEL iris16 TESTDATA/model/model.onnx
 FLOAT32 FLOAT32 FLOAT32 FLOAT32
 FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
 BATCH_SIZE 32
+CACHE FIFO SIZE 16
 
 SELECT setosa, versicolor, virginica
-FROM (SELECT INFER_MODEL(iris4, (p1,p2,p3,p4)) FROM streamFloatCache)
+FROM (SELECT INFER_MODEL(iris16, (p1,p2,p3,p4)) FROM streamFloatCache)
 INTO irisChecksum
 ----
 1023,1352145
 
+MODEL iris4 TESTDATA/model/model.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+BATCH_SIZE 32
+CACHE NONE SIZE 1
 SELECT setosa, versicolor, virginica
 FROM (SELECT INFER_MODEL(iris4, (p1,p2,p3,p4)) FROM streamFloat)
 INTO classificationThreeSeparate

@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/algorithm/string.hpp>
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
@@ -529,6 +530,8 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
         auto& outputLine = lines[currentLine];
         _ = moveToNextToken();
         auto& batchSizeLine = lines[currentLine];
+        _= moveToNextToken();
+        auto& predictionCacheLine = lines[currentLine];
 
         std::istringstream stream(modelNameLine);
         std::string discard;
@@ -560,6 +563,10 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
         auto batchSize = NES::Util::splitWithStringDelimiter<std::string>(batchSizeLine, " ");
         model.batchSize = static_cast<size_t>(std::stoull(batchSize[1]));
 
+        auto predictionCache = NES::Util::splitWithStringDelimiter<std::string>(predictionCacheLine, " ");
+        model.predictionCacheType = boost::to_upper_copy(predictionCache[1]);
+        model.predictionCacheSize = static_cast<size_t>(std::stoull(predictionCache[3]));
+
         return model;
     }
     catch (Exception& e)
@@ -567,7 +574,8 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
         auto modelParserSchema = "MODEL <model_name> <model_path>"
                                  "<type-0> ... <type-N>"
                                  "<type-0> <output-name-0> ... <type-N> <output-name-N>"
-                                 "BATCH_SIZE <batch_size>"sv;
+                                 "BATCH_SIZE <batch_size>"
+                                 "CACHE <cache_type> SIZE <cache_size>"sv;
         e.what() += fmt::format("\nWhen Parsing a Model Statement:\n{}", modelParserSchema);
         throw;
     }

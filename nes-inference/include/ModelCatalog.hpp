@@ -29,6 +29,8 @@ struct ModelDescriptor
     std::vector<DataType> inputs;
     Schema outputs;
     size_t batchSize;
+    std::string predictionCacheType;
+    size_t predictionCacheSize;
 };
 
 class ModelCatalog
@@ -87,6 +89,9 @@ inline Model ModelCatalog::load(const std::string modelName) const
                 result->outputDims = result->outputShape.size();
                 result->outputSizeInBytes = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
             }
+
+            result->predictionCacheType = it->second.predictionCacheType;
+            result->predictionCacheSize = it->second.predictionCacheSize;
 
             catalogImpl.emplace(modelName, *result);
             return *result;
