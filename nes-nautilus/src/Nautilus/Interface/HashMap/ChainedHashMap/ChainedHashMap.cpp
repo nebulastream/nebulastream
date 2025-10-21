@@ -302,8 +302,11 @@ void ChainedHashMap::serialize(std::filesystem::path path) const
     out.close();
 }
 
-void ChainedHashMap::deserialize(std::filesystem::path path)
+void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider)
 {
+    /// Clear instance
+    this->clear();
+
     std::ifstream in(path, std::ios::binary);
     if (!in.is_open())
     {
@@ -313,30 +316,38 @@ void ChainedHashMap::deserialize(std::filesystem::path path)
 
     ChainedHashMapHeader header;
     in.read(reinterpret_cast<char*>(&header), sizeof(ChainedHashMapHeader));
+    this->numberOfChains = header.numberOfChains;
+    this->entriesPerPage = header.entriesPerPage;
+    this->entrySize = header.entrySize;
+    this->numberOfTuples = header.numberOfTuples;
+    this->pageSize = header.pageSize;
 
-    //uint64_t entrySpaceSize;
-    //in.read(reinterpret_cast<char*>(&entrySpaceSize), sizeof(uint64_t));
-    //if (entrySpaceSize != entrySpace.getBufferSize())
-    //{
-    //    NES_ERROR("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
-    //    throw CheckpointError("entrySpace size mismatch! Serialized size: {} != instance size: {}", entrySpaceSize, entrySpace.getBufferSize());
-    //}
-    //in.read(entrySpace.getAvailableMemoryArea<char>().data(), entrySpaceSize);
-    //in.seekg(entrySpaceSize, std::ios::cur);
+    const auto numberOfPages = this->numberOfTuples;
 
-    uint64_t posStorageBuffers = 0;
+    /// Fill Entry Space
+    const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
+    const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
+    if (not entryBuffer)
+    {
+        throw CannotAccessBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
+    }
+    entrySpace = entryBuffer.value();
+    entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
+    std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
+    entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
+
     while (in.peek() != EOF)
     {
-        INVARIANT(posStorageBuffers < storageSpace.size(), "position in storageSpace vector cannot be greater than the vector's size!");
         uint64_t storageBufferSize;
         in.read(reinterpret_cast<char*>(&storageBufferSize), sizeof(uint64_t));
-        if (uint64_t instanceBufferSize = storageSpace.at(posStorageBuffers).getBufferSize(); instanceBufferSize != storageBufferSize)
+        auto newPage = bufferProvider->getUnpooledBuffer(pageSize);
+        if (not newPage)
         {
-            NES_ERROR("storageSpace[{}] size mismatch! Serialized size is {} but instance size is {}", posStorageBuffers, storageBufferSize, instanceBufferSize);
-            throw CheckpointError("storageSpace[{}] size mismatch! Serialized size is {} but instance size is {}", posStorageBuffers, storageBufferSize, instanceBufferSize);
+            throw CannotAccessBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(storageBufferSize));
         }
-        in.read(entrySpace.getAvailableMemoryArea<char>().data(), storageBufferSize);
-        ++posStorageBuffers;
+        std::ranges::fill(newPage.value().getAvailableMemoryArea(), std::byte{0});
+        in.read(newPage.value().getAvailableMemoryArea<char>().data(), storageBufferSize);
+        storageSpace.emplace_back(newPage.value());
     }
 }
 
