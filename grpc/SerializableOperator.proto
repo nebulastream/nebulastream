@@ -60,7 +60,6 @@ message SerializableSinkLogicalOperator
 message SerializableLogicalOperator {
   string operator_type = 1;
   SerializableSchema output_schema = 2;
-  repeated SerializableSchema input_schemas = 3;
 }
 
 message SerializableOperator

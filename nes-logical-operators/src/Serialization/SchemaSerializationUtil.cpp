@@ -13,14 +13,16 @@
 */
 #include <cstdint>
 #include <unordered_map>
+
+#include <Identifiers/Identifier.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Identifiers/Identifier.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include "Serialization/IdentifierSerializationUtil.hpp"
 
 #include <SerializableSchema.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
@@ -36,10 +38,7 @@ SerializableSchema* SchemaSerializationUtil::serializeSchema(const Schema& schem
     for (const auto& field : schema.getFields())
     {
         auto* serializedField = serializedSchema->add_fields();
-        SerializableIdentifier identifier;
-        identifier.set_value(fmt::format("{}", field.getLastName().getOriginalString()));
-        identifier.set_casesensitive(field.getLastName().isCaseSensitive());
-        serializedField->set_allocated_name(&identifier);
+        IdentifierSerializationUtil::serializeIdentifier(field.getLastName(), serializedField->mutable_name());
         DataTypeSerializationUtil::serializeDataType(field.getDataType(), serializedField->mutable_type());
         serializedField->set_operator_id(field.getProducedBy().getId().getRawValue());
     }
@@ -64,7 +63,7 @@ Schema SchemaSerializationUtil::deserializeSchema(const SerializableSchema& seri
         {
             throw CannotDeserialize("Did not find operator with id {} in operators list", serializedField.operator_id());
         }
-        const auto fieldName = Identifier::parse(serializedField.name().value());
+        const auto fieldName = IdentifierSerializationUtil::deserializeIdentifier(serializedField.name());
         /// de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
         fields.emplace_back(foundOperator->second, fieldName, type);

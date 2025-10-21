@@ -161,21 +161,24 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         throw CannotDeserialize("Plan contains multiple root operators!");
     }
 
-    auto sink = rootOperators.at(0).tryGetAs<SinkLogicalOperator>();
-    if (!sink)
+    auto sinkOpt = rootOperators.at(0).tryGetAs<SinkLogicalOperator>();
+    if (!sinkOpt)
     {
         throw CannotDeserialize("Plan root has to be a sink, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
     }
+    auto sink = std::move(sinkOpt).value();
 
-    if (sink->getChildren().empty())
+    if (sinkOpt->getChildren().empty())
     {
         throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
     }
 
-    if (not sink.value()->getSinkDescriptor())
+    if (not sinkOpt.value()->getSinkDescriptor())
     {
         throw CannotDeserialize("Sink has no descriptor!");
     }
+
+    rootOperators = std::vector<LogicalOperator>{sink->withInferredSchema()};
 
     /// 4) Finalize plan
     auto queryId = INVALID_QUERY_ID;

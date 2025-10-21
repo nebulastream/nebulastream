@@ -48,7 +48,7 @@ LogicalFunction deserializeFunction(const SerializableFunction& serializedFuncti
         functionDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
-    auto argument = LogicalFunctionRegistryArguments(functionDescriptorConfig, deserializedChildren, dataType);
+    auto argument = LogicalFunctionRegistryArguments(functionDescriptorConfig, deserializedChildren, dataType, schema);
 
     if (auto function = LogicalFunctionRegistry::instance().create(functionType, argument))
     {

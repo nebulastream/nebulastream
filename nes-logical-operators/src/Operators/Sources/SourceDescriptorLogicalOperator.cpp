@@ -25,6 +25,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
@@ -32,13 +33,24 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
-#include <Schema/Field.hpp>
 
 namespace NES
 {
+namespace
+{
+Schema inferOutputSchema(const UnboundSchema& unboundSchema, const SourceDescriptorLogicalOperator& sourceOperator)
+{
+    return unboundSchema
+        | std::views::transform([&sourceOperator](const auto& unboundField)
+                                { return Field{sourceOperator, *std::ranges::rbegin(unboundField.getName()), unboundField.getDataType()}; })
+        | std::ranges::to<Schema>();
+}
+}
+
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor)
     : sourceDescriptor(std::move(sourceDescriptor))
 {
+    outputSchema = inferOutputSchema(*this->sourceDescriptor.getLogicalSource().getSchema(), *this);
 }
 
 std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
@@ -49,10 +61,7 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
 SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema() const
 {
     auto copy = *this;
-    copy.outputSchema = *sourceDescriptor.getLogicalSource().getSchema()
-        | std::views::transform([&copy](const auto& unboundField)
-                                { return Field{copy, *std::ranges::rbegin(unboundField.getName()), unboundField.getDataType()}; })
-        | std::ranges::to<Schema>();
+    copy.outputSchema = inferOutputSchema(*sourceDescriptor.getLogicalSource().getSchema(), copy);
     return copy;
 }
 

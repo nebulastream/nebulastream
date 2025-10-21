@@ -99,18 +99,18 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(LogicalOperator child, Desc
     const auto functionVariant = config[ConfigParameters::PROJECTION_FUNCTION_NAME];
     const auto asteriskValue = std::get<bool>(config[ConfigParameters::ASTERISK]);
 
-    if (const auto* projection = std::get_if<NES::ProjectionList>(&functionVariant))
+    if (const auto* serializedProjections = std::get_if<NES::ProjectionList>(&functionVariant))
     {
         this->asterisk = asteriskValue;
         this->child = std::move(child);
 
         const auto& childOutputSchema = this->child.getOutputSchema();
 
-        this->projections = projection->projections()
+        this->projections = serializedProjections->projections()
             | std::views::transform(
                                 [&childOutputSchema](const auto& serialized)
                                 {
-                                    return ProjectionLogicalOperator::Projection{
+                                    return Projection{
                                         IdentifierSerializationUtil::deserializeIdentifier(serialized.identifier()),
                                         FunctionSerializationUtil::deserializeFunction(serialized.function(), childOutputSchema)};
                                 })
@@ -174,7 +174,7 @@ const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOpera
 
 bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
-    return projections == rhs.projections && outputSchema == rhs.outputSchema &&  traitSet == rhs.traitSet;
+    return projections == rhs.projections && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 };
 
 std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -215,7 +215,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema() const
     auto inputSchema = copy.child.getOutputSchema();
 
     /// Propagate the type inference to all projection functions and resolve projection names.
-    auto inferredProjections = projections
+    auto inferredProjections = copy.projections
         | std::views::transform(
                                    [&inputSchema](const Projection& projection)
                                    {
@@ -274,8 +274,7 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
 
     proto.set_operator_type(NAME);
 
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), proto.mutable_output_schema());
 
     for (const auto& child : getChildren())
     {
@@ -285,9 +284,9 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     ProjectionList projList;
     for (const auto& [name, fn] : getProjections())
     {
-        auto& proj = *projList.add_projections();
-        IdentifierSerializationUtil::serializeIdentifier(name, proj.mutable_identifier());
-        proj.mutable_function()->CopyFrom(fn.serialize());
+        auto* proj = projList.add_projections();
+        IdentifierSerializationUtil::serializeIdentifier(name, proj->mutable_identifier());
+        proj->mutable_function()->CopyFrom(fn.serialize());
     }
     (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(projList);
     (*serializableOperator.mutable_config())[ConfigParameters::ASTERISK] = descriptorConfigTypeToProto(asterisk);
