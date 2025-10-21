@@ -27,10 +27,12 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_instance_options_use_all_available_drivers(&instanceOptions);
     iree_runtime_instance_t* instance = nullptr;
     iree_status_t status = iree_runtime_instance_create(&instanceOptions, iree_allocator_system(), &instance);
+    std::unique_ptr<iree_runtime_instance_t, decltype(&iree_runtime_instance_release)> runtimeInstance(instance, &iree_runtime_instance_release);
     NES_DEBUG("Created IREE runtime instance")
 
     iree_hal_device_t* device = nullptr;
-    iree_runtime_instance_try_create_default_device(instance, iree_make_cstring_view("local-sync"), &device);
+    status = iree_runtime_instance_try_create_default_device(instance, iree_make_cstring_view("local-sync"), &device);
+    std::unique_ptr<iree_hal_device_t, decltype(&iree_hal_device_release)> ireeDevice(device, &iree_hal_device_release);
     NES_DEBUG("Created IREE device")
 
     iree_runtime_session_options_t sessionOptions;
@@ -38,7 +40,7 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_session_t* session = nullptr;
     status = iree_runtime_session_create_with_device(
         instance, &sessionOptions, device, iree_runtime_instance_host_allocator(instance), &session);
-    iree_hal_device_release(device);
+    std::unique_ptr<iree_runtime_session_t, decltype(&iree_runtime_session_release)> ireeSession(session, &iree_runtime_session_release);
     NES_DEBUG("Created IREE session")
 
     if (!iree_status_is_ok(status))
@@ -53,9 +55,9 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     }
 
     NES_DEBUG("Read the model from the bytecode buffer");
-    this->instance = instance;
-    this->session = session;
-    this->device = device;
+    this->instance = std::move(runtimeInstance);
+    this->session = std::move(ireeSession);
+    this->device = std::move(ireeDevice);
 }
 
 void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size_t inputSize, void* outputData)
@@ -64,7 +66,7 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
     // Cache the function after the first call such that initializing subsequent calls is cheaper
     if (this->function.module == nullptr)
     {
-        auto status = iree_runtime_call_initialize_by_name(session, iree_make_cstring_view(functionName.c_str()), &call);
+        auto status = iree_runtime_call_initialize_by_name(session.get(), iree_make_cstring_view(functionName.c_str()), &call);
         if (!iree_status_is_ok(status))
         {
             throw InferenceRuntime("Model Setup failed. Could not Load model");
@@ -73,16 +75,15 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
     }
     else
     {
-        iree_runtime_call_initialize(session, function, &call);
+        iree_runtime_call_initialize(session.get(), function, &call);
     }
 
-    device = iree_runtime_session_device(session);
-    iree_hal_allocator_t* deviceAllocator = iree_runtime_session_device_allocator(session);
+    iree_hal_allocator_t* deviceAllocator = iree_runtime_session_device_allocator(session.get());
     iree_status_t status = iree_ok_status();
 
     iree_hal_buffer_view_t* view = nullptr;
     status = iree_hal_buffer_view_allocate_buffer_copy(
-        device,
+        device.get(),
         deviceAllocator,
         // Shape rank and dimensions:
         this->nDim,
@@ -133,7 +134,7 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
 
     int outputSize = iree_hal_buffer_view_byte_length(outputBuffer.get());
     status = iree_hal_device_transfer_d2h(
-        iree_runtime_session_device(session),
+        iree_runtime_session_device(session.get()),
         iree_hal_buffer_view_buffer(outputBuffer.get()),
         0,
         outputData,
@@ -146,7 +147,7 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
         throw InferenceRuntime("Model Execution failed. Could not copy output tensor");
     }
 
-    // iree_runtime_call_deinitialize(&call);
+    iree_runtime_call_deinitialize(&call);
 }
 
 void IREERuntimeWrapper::setInputShape(std::vector<size_t> inputShape)

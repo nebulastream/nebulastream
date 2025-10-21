@@ -23,7 +23,12 @@ namespace NES
 class IREERuntimeWrapper
 {
 public:
-    IREERuntimeWrapper() = default;
+    IREERuntimeWrapper()
+    : nDim(0)
+    , instance(nullptr, &iree_runtime_instance_release)
+    , device(nullptr, &iree_hal_device_release)
+    , session(nullptr, &iree_runtime_session_release)
+    , function{} {};
     void setup(iree_const_byte_span_t compiledModel);
     void execute(std::string functionName, void* inputData, size_t inputSize, void* outputData);
     void setInputShape(std::vector<size_t> inputShape);
@@ -32,9 +37,9 @@ public:
 private:
     std::vector<size_t> inputShape;
     size_t nDim;
-    iree_runtime_instance_t* instance;
-    iree_runtime_session_t* session;
-    iree_hal_device_t* device;
+    std::unique_ptr<iree_runtime_instance_t, decltype(&iree_runtime_instance_release)> instance;
+    std::unique_ptr<iree_hal_device_t, decltype(&iree_hal_device_release)> device;
+    std::unique_ptr<iree_runtime_session_t, decltype(&iree_runtime_session_release)> session;
     iree_vm_function_t function;
 };
 
