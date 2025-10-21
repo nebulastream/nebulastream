@@ -16,12 +16,12 @@ CREATE LOGICAL SOURCE person(id INT32, name VARSIZED, email_address VARSIZED, cr
 CREATE PHYSICAL SOURCE FOR person TYPE File;
 ATTACH FILE large/nexmark/person_840MB.csv
 
-CREATE SINK bidCheckSum(bid.timestamp UINT64, bid.auctionId INT32, bid.bidder INT32, bid.price FLOAT64)  TYPE Checksum;
-CREATE SINK q1CheckSum(bid.timestamp UINT64, bid.auctionId INT32, bid.bidder INT32, price FLOAT64)  TYPE Checksum;
-CREATE SINK q2CheckSum(bid.auctionId INT32, bid.price FLOAT64)  TYPE Checksum;
-CREATE SINK q5Checksum(bidbid.start UINT64, bidbid.end UINT64, bid.auctionId INT32, bid.num UINT64, bid.max_tmp UINT64)  TYPE Checksum;
-CREATE SINK q8CheckSum(personauction.start UINT64, personauction.end UINT64, person.id INT32, person.name VARSIZED)  TYPE Checksum;
-CREATE SINK q8VariantCheckSum(bidauction.start UINT64, bidauction.end UINT64, bid.timestamp UINT64, bid.auctionId INT32, bid.bidder INT32, bid.price FLOAT64, bid.timestamp UINT64, auction.id INT32, auction.initialbid INT32, auction.reserve INT32, auction.expires UINT64, auction.seller INT32, auction.category INT32)  TYPE Checksum;
+CREATE SINK bidCheckSum(timestamp UINT64, auctionId INT32, bidder INT32, price FLOAT64)  TYPE Checksum;
+CREATE SINK q1CheckSum(timestamp UINT64, auctionId INT32, bidder INT32, price FLOAT64)  TYPE Checksum;
+CREATE SINK q2CheckSum(auctionId INT32, price FLOAT64)  TYPE Checksum;
+CREATE SINK q5Checksum(start UINT64, end UINT64, auctionId INT32, num UINT64, max_tmp UINT64)  TYPE Checksum;
+CREATE SINK q8CheckSum(start UINT64, end UINT64, id INT32, name VARSIZED)  TYPE Checksum;
+CREATE SINK q8VariantCheckSum(start UINT64, end UINT64, timestamp UINT64, auctionId INT32, bidder INT32, price FLOAT64, timestamp UINT64, id INT32, initialbid INT32, reserve INT32, expires UINT64, seller INT32, category INT32)  TYPE Checksum;
 
 
 # Query 0

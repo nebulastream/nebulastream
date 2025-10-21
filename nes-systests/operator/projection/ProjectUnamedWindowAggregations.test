@@ -11,7 +11,7 @@ ATTACH INLINE
 12,12,1001
 
 
-CREATE SINK sinkStream(stream.value_Sum UINT64)  TYPE File;
+CREATE SINK sinkStream(value_Sum UINT64)  TYPE File;
 
 # Aggregations without a name also get projected
 SELECT SUM(value) FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkStream;

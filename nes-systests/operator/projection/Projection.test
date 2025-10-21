@@ -13,27 +13,27 @@ ATTACH INLINE
 6,20,20000
 7,21,21000
 
-CREATE SINK sinkId(stream.id UINT64)  TYPE File;
+CREATE SINK sinkId(id UINT64)  TYPE File;
 CREATE SINK sinkRenamedId(new_id UINT64)  TYPE File;
-CREATE SINK sinkRenamedIdValue(new_id UINT64, stream.value UINT64)  TYPE File;
-CREATE SINK sinkValue(stream.value UINT64)  TYPE File;
-CREATE SINK sinkTimestamp(stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkIdValue(stream.id UINT64, stream.value UINT64)  TYPE File;
-CREATE SINK sinkIdTimestamp(stream.id UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkValueTimestamp(stream.value UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkIdValueTimestamp(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkIdTimestampValue(stream.id UINT64, stream.timestamp UINT64, stream.value UINT64)  TYPE File;
-CREATE SINK sinkValueIdTimestamp(stream.value UINT64, stream.id UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkValueTimestampId(stream.value UINT64, stream.timestamp UINT64, stream.id UINT64)  TYPE File;
-CREATE SINK sinkTimestampIdValue(stream.timestamp UINT64, stream.id UINT64, stream.value UINT64)  TYPE File;
-CREATE SINK sinkTimestampValueId(stream.timestamp UINT64, stream.value UINT64, stream.id UINT64)  TYPE File;
-CREATE SINK sinkIdIdNew(stream.id UINT64, new_field UINT64)  TYPE File;
-CREATE SINK sinkIdValueIdNew(stream.id UINT64, stream.value UINT64, new_field UINT64)  TYPE File;
-CREATE SINK sinkIdValueTimestampIdNew(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, new_field UINT64)  TYPE File;
-CREATE SINK sinkNewIdValueTimestamp(new_field UINT64, stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkNewIdNewValueNewTimestamp(new_field_1 UINT64, stream.id UINT64, new_field_2 UINT64, stream.value UINT64, new_field_3 UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkIdNewIdValueTimeStamp(stream.id UINT64, new_id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkNewIdIdValueTimestamp(new_id UINT64, stream.id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkRenamedIdValue(new_id UINT64, value UINT64)  TYPE File;
+CREATE SINK sinkValue(value UINT64)  TYPE File;
+CREATE SINK sinkTimestamp(timestamp UINT64)  TYPE File;
+CREATE SINK sinkIdValue(id UINT64, value UINT64)  TYPE File;
+CREATE SINK sinkIdTimestamp(id UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkValueTimestamp(value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkIdValueTimestamp(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkIdTimestampValue(id UINT64, timestamp UINT64, value UINT64)  TYPE File;
+CREATE SINK sinkValueIdTimestamp(value UINT64, id UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkValueTimestampId(value UINT64, timestamp UINT64, id UINT64)  TYPE File;
+CREATE SINK sinkTimestampIdValue(timestamp UINT64, id UINT64, value UINT64)  TYPE File;
+CREATE SINK sinkTimestampValueId(timestamp UINT64, value UINT64, id UINT64)  TYPE File;
+CREATE SINK sinkIdIdNew(id UINT64, new_field UINT64)  TYPE File;
+CREATE SINK sinkIdValueIdNew(id UINT64, value UINT64, new_field UINT64)  TYPE File;
+CREATE SINK sinkIdValueTimestampIdNew(id UINT64, value UINT64, timestamp UINT64, new_field UINT64)  TYPE File;
+CREATE SINK sinkNewIdValueTimestamp(new_field UINT64, id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkNewIdNewValueNewTimestamp(new_field_1 UINT64, id UINT64, new_field_2 UINT64, value UINT64, new_field_3 UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkIdNewIdValueTimeStamp(id UINT64, new_id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkNewIdIdValueTimestamp(new_id UINT64, id UINT64, value UINT64, timestamp UINT64)  TYPE File;
 
 
 # 1: [id]

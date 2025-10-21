@@ -16,9 +16,9 @@ CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE File;
 ATTACH FILE large/cluster_monitoring/google-cluster-data-original_1G.csv
 
 
-CREATE SINK q1Checksum(monitoringClusterData.start UINT64, monitoringClusterData.end UINT64, monitoringClusterData.totalCpu FLOAT64, monitoringClusterData.jobId UINT64) TYPE Checksum;
-CREATE SINK q2Checksum(monitoringLightsaber.start UINT64, monitoringLightsaber.end UINT64, monitoringLightsaber.totalCpu FLOAT32, monitoringLightsaber.jobId UINT64)  TYPE Checksum;
-CREATE SINK q2Sink(monitoringLightsaber.start UINT64, monitoringLightsaber.end UINT64, monitoringLightsaber.totalCpu FLOAT32, monitoringLightsaber.jobId UINT64)  TYPE File;
+CREATE SINK q1Checksum(start UINT64, end UINT64, totalCpu FLOAT64, jobId UINT64) TYPE Checksum;
+CREATE SINK q2Checksum(start UINT64, end UINT64, totalCpu FLOAT32, jobId UINT64)  TYPE Checksum;
+CREATE SINK q2Sink(start UINT64, end UINT64, totalCpu FLOAT32, jobId UINT64)  TYPE File;
 
 # These test is currently disabled, as we cannot ensure deterministic results for the queries
 # The problem is that the queries perform a floating point aggregation. Due to our out-of-order processing, the results may differ slightly.

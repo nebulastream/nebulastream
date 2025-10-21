@@ -11,7 +11,7 @@ ATTACH INLINE
 3,21,21000
 4,22,22000
 
-CREATE SINK tcp_sink(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
+CREATE SINK tcp_sink(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
 
 # Source/Sink for double TCP stream
 CREATE LOGICAL SOURCE stream_with_two_sources(id UINT64, value UINT64, timestamp UINT64);
@@ -29,14 +29,14 @@ ATTACH INLINE
 7,25,25000
 8,26,26000
 
-CREATE SINK tcp_sink_double(stream_with_two_sources.id UINT64, stream_with_two_sources.value UINT64, stream_with_two_sources.timestamp UINT64)  TYPE File;
+CREATE SINK tcp_sink_double(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
 
 
 CREATE LOGICAL SOURCE multiBuffer(field_1 UINT64, field_2 UINT64, field_3 UINT64, field_4 UINT64, field_5 UINT64, field_6 UINT64, field_7 UINT64, field_8 UINT64);
 CREATE PHYSICAL SOURCE FOR multiBuffer TYPE TCP;
 ATTACH FILE small/200x8-rows-fields.csv
 
-CREATE SINK sinkMultiBuffer(multiBuffer.field_1 UINT64, multiBuffer.field_2 UINT64, multiBuffer.field_3 UINT64, multiBuffer.field_4 UINT64, multiBuffer.field_5 UINT64, multiBuffer.field_6 UINT64, multiBuffer.field_7 UINT64, multiBuffer.field_8 UINT64)  TYPE File;
+CREATE SINK sinkMultiBuffer(field_1 UINT64, field_2 UINT64, field_3 UINT64, field_4 UINT64, field_5 UINT64, field_6 UINT64, field_7 UINT64, field_8 UINT64)  TYPE File;
 
 SELECT * FROM stream INTO tcp_sink;
 ----

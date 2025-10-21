@@ -7,7 +7,7 @@ CREATE LOGICAL SOURCE manufacturing(creationTS UINT64, messageIndex UINT64, mf01
 CREATE PHYSICAL SOURCE FOR manufacturing TYPE File;
 ATTACH FILE large/manufacturing/manufacturing_1G.csv
 
-CREATE SINK manufacturingChecksum(manufacturing.start UINT64, manufacturing.end UINT64, manufacturing.avg_mf01 FLOAT64, manufacturing.sum_mf02 INT16, manufacturing.min_mf03 INT16, manufacturing.count_mf01 UINT64, manufacturing.sum_mf01 INT16)  TYPE Checksum ;
+CREATE SINK manufacturingChecksum(start UINT64, end UINT64, avg_mf01 FLOAT64, sum_mf02 INT16, min_mf03 INT16, count_mf01 UINT64, sum_mf01 INT16)  TYPE Checksum ;
 
 
 # Query 1 Windowed Aggregation with three different aggregation functions

@@ -14,7 +14,7 @@ ATTACH INLINE
 7,21,21000
 
 # Notice the missing schema qualification on `new_id` as it does not originate from the source schema
-CREATE SINK allWithId(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, new_id UINT64)  TYPE File;
+CREATE SINK allWithId(id UINT64, value UINT64, timestamp UINT64, new_id UINT64)  TYPE File;
 
 # Systest currently does not allow duplicate field names in the result schema. TODO #1002
 # This is why every test has to rename the identifier

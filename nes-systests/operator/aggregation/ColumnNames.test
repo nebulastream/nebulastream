@@ -14,7 +14,7 @@ ATTACH INLINE
 2,325
 
 
-CREATE SINK out(input.start UINT64, input.end UINT64, input.i_count UINT64, input.i_min UINT64, input.i_max UINT64, input.i_sum UINT64, input.i_avg FLOAT64, input.i_median FLOAT64) TYPE File;
+CREATE SINK out(start UINT64, end UINT64, i_count UINT64, i_min UINT64, i_max UINT64, i_sum UINT64, i_avg FLOAT64, i_median FLOAT64) TYPE File;
 
 SELECT start, end,COUNT(i), MIN(i), MAX(i), SUM(i), AVG(i), MEDIAN(i)
 FROM input WINDOW TUMBLING(timestamp, size 100 ms)

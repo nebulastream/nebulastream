@@ -8,7 +8,7 @@ CREATE PHYSICAL SOURCE FOR wrongKeyStream TYPE File SET("JSON" AS PARSER.`TYPE`)
 ATTACH INLINE
 {"ID":1, "VALUE":1, "NAME":"john"}
 
-CREATE SINK keySink(wrongKeyStream.key UINT64)  TYPE File;
+CREATE SINK keySink(key UINT64)  TYPE File;
 
 # key 'id' is not part of expected schema
 SELECT key FROM wrongKeyStream INTO keySink
@@ -22,7 +22,7 @@ ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "NAME":"max"}
 
-CREATE SINK allFieldsSink(missingValueKey.key UINT64, missingValueKey.value UINT64, missingValueKey.name VARSIZED)  TYPE File;
+CREATE SINK allFieldsSink(key UINT64, value UINT64, name VARSIZED)  TYPE File;
 
 # key 'value' is missing in second tuple
 SELECT * FROM missingValueKey INTO allFieldsSink
@@ -30,7 +30,7 @@ SELECT * FROM missingValueKey INTO allFieldsSink
 ERROR 4005
 
 
-CREATE SINK keyNameSink(missingValueKey.key UINT64, missingValueKey.name VARSIZED)  TYPE File;
+CREATE SINK keyNameSink(key UINT64, name VARSIZED)  TYPE File;
 
 # query does not require 'value', but schema does
 SELECT key, name FROM missingValueKey INTO keyNameSink
@@ -43,7 +43,7 @@ CREATE PHYSICAL SOURCE FOR paddedValuesStream TYPE File  SET("JSON" AS PARSER.`T
 ATTACH INLINE
 {"KEY": 1,"VALUE":1 ,"NAME":  "john"  }
 
-CREATE SINK paddedValuesSink(paddedValuesStream.key UINT64)  TYPE File;
+CREATE SINK paddedValuesSink(key UINT64)  TYPE File;
 
 # Tries to parse ' 1', which fails and throws a 'CannotFormatMalformedStringValue' exception (since we don't support null values)
 SELECT KEY FROM paddedValuesStream INTO paddedValuesSink

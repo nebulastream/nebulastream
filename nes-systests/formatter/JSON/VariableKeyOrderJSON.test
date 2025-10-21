@@ -8,10 +8,10 @@ ATTACH INLINE
 {"NAME":"john", "KEY":1, "VALUE":1}
 {"VALUE":2, "KEY":1, "NAME":"max"}
 
-CREATE SINK keySink(variableKeyOrderStream.key UINT64) TYPE File;
-CREATE SINK valueSink(variableKeyOrderStream.value UINT64) TYPE File;
-CREATE SINK nameSink(variableKeyOrderStream.name VARSIZED)  TYPE File;
-CREATE SINK allFieldsSink(variableKeyOrderStream.key UINT64, variableKeyOrderStream.value UINT64, variableKeyOrderStream.name VARSIZED)  TYPE File;
+CREATE SINK keySink(key UINT64) TYPE File;
+CREATE SINK valueSink(value UINT64) TYPE File;
+CREATE SINK nameSink(name VARSIZED)  TYPE File;
+CREATE SINK allFieldsSink(key UINT64, value UINT64, name VARSIZED)  TYPE File;
 
 SELECT key FROM variableKeyOrderStream INTO keySink;
 ----

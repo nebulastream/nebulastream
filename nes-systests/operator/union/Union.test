@@ -60,7 +60,7 @@ SELECT * FROM stream UNION SELECT id2 as id, value, timestamp FROM stream3 INTO 
 2,2,3002
 2,2,3003
 
-CREATE SINK sink2(stream.timestamp UINT64, origin UINT8)  TYPE File;
+CREATE SINK sink2(timestamp UINT64, origin UINT8)  TYPE File;
 # Union with selection to fixup the schema and projection of constant into the schema
 SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2) as origin FROM stream WHERE timestamp < UINT64(1002) INTO sink2;
 ----
@@ -87,7 +87,7 @@ SELECT * FROM stream UNION SELECT * FROM stream2 UNION SELECT id2 as id, value, 
 2,2,3002
 2,2,3003
 
-CREATE SINK sink3(stream.timestamp UINT64)  TYPE File;
+CREATE SINK sink3(timestamp UINT64)  TYPE File;
 
 # nested union with projection to fixup the schema
 SELECT timestamp
@@ -134,7 +134,7 @@ INTO sink4;
 65
 2
 
-CREATE SINK sink5(idstream3_1.start UINT64, idstream3_1.end UINT64, id UINT64, value UINT64, timestamp UINT64, stream3_1.id2 UINT64, stream3_1.value2 UINT64, stream3_1.timestamp UINT64) TYPE File;
+CREATE SINK sink5(start UINT64, end UINT64, id UINT64, value UINT64, timestamp UINT64, id2 UINT64, value2 UINT64, timestamp UINT64) TYPE File;
 
 SELECT *
 FROM (SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2))
@@ -218,7 +218,7 @@ INTO sink6;
 65
 2
 
-CREATE SINK subquery_sink(stream.timestamp UINT64)  TYPE File;
+CREATE SINK subquery_sink(timestamp UINT64)  TYPE File;
 # triple union query as a subquery as a nested query.
 SELECT timestamp
 FROM (
