@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+
 #include <LegacyOptimizer.hpp>
 
-#include <LegacyOptimizer/InlineSourceInferencePhase.hpp>
+#include <LegacyOptimizer/InlineSinkBindingPhase.hpp>
+#include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
@@ -28,8 +30,9 @@ namespace NES
 LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
+    const auto inlineSinkBindingPhase = InlineSinkBindingPhase{sinkCatalog};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
-    const auto inlineSourceInference = InlineSourceInferencePhase{sourceCatalog};
+    const auto inlineSourceBindingPhase = InlineSourceBindingPhase{sourceCatalog};
     const auto sourceInference = SourceInferencePhase{sourceCatalog};
     const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
     constexpr auto typeInference = TypeInferencePhase{};
@@ -37,8 +40,9 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
 
+    inlineSinkBindingPhase.apply(newPlan);
     sinkBindingRule.apply(newPlan);
-    inlineSourceInference.apply(newPlan);
+    inlineSourceBindingPhase.apply(newPlan);
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
     NES_INFO("After Source Expansion:\n{}", newPlan);

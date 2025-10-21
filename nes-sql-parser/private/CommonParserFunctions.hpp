@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -34,7 +35,9 @@ std::string bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 std::unordered_map<std::string, std::string> getParserConfig(ConfigMap configOptions);
 std::unordered_map<std::string, std::string> getSourceConfig(ConfigMap configOptions);
-Schema getSourceSchema(ConfigMap configOptions);
+std::unordered_map<std::string, std::string> getSinkConfig(ConfigMap configOptions);
+std::optional<Schema> getSourceSchema(ConfigMap configOptions);
+std::optional<Schema> getSinkSchema(ConfigMap configOptions);
 
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST);
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral);

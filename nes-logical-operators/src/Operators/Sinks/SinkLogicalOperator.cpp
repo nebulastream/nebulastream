@@ -92,7 +92,12 @@ SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> 
         }
     }
 
-    if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
+    if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && sinkDescriptor.value().getSchema()->getFields().empty())
+    {
+        const SinkDescriptor descriptorWithInferredSchema = sinkDescriptor.value().withNewSchema(firstSchema);
+        copy = this->withSinkDescriptor(descriptorWithInferredSchema);
+    }
+    else if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
     {
         std::vector expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
         std::vector actualFields(firstSchema.begin(), firstSchema.end());
