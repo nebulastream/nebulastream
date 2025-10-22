@@ -52,7 +52,7 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
 {
     std::stringstream builder;
     builder << projection.second.explain(verbosity);
-    if (projection.first)
+    if (projection.first && projection.first->getFieldName() != projection.second.explain(verbosity))
     {
         builder << " as " << projection.first->getFieldName();
     }
@@ -110,10 +110,10 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     if (verbosity == ExplainVerbosity::Debug)
     {
         builder << "opId: " << id << ", ";
-    }
-    if (!outputSchema.getFieldNames().empty())
-    {
-        builder << "schema: " << outputSchema << ", ";
+        if (!outputSchema.getFieldNames().empty())
+        {
+            builder << "schema: " << outputSchema << ", ";
+        }
     }
 
     builder << "fields: [";
@@ -126,8 +126,13 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
         }
     }
     builder << fmt::format("{}", fmt::join(explainedProjections, ", "));
-    builder << fmt::format(", traitSet: {}", traitSet.explain(verbosity));
-    builder << "])";
+    builder << "]";
+
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        builder << fmt::format(", traitSet: {}", traitSet.explain(verbosity));
+    }
+    builder << ")";
     return builder.str();
 }
 
