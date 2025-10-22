@@ -19,6 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -54,16 +55,7 @@ class EmitOperatorHandler final : public OperatorHandler
 public:
     EmitOperatorHandler() = default;
 
-    /// Returns the next chunk number belonging to a sequence number for emitting a buffer
-    uint64_t getNextChunkNumber(SequenceNumberForOriginId seqNumberOriginId);
-
-    /// Sets provided chunkNumber as lastChunkNumber if 'isLastChunk' flag is true. Otherwise, lastChunkNumber is set to an invalid chunkNumber.
-    /// Checks if the number of seen chunks matches the lastChunkNumber.
-    /// @return true, if the number of seenChunks matches the lastChunkNumber.
-    bool processChunkNumber(SequenceNumberForOriginId seqNumberOriginId, ChunkNumber chunkNumber, bool isLastChunk);
-
-    /// Removes the sequence state in seqNumberOriginIdToChunkStateInput and seqNumberOriginIdToOutputChunkNumber for the seqNumberOriginId
-    void removeSequenceState(SequenceNumberForOriginId seqNumberOriginId);
+    void setChunkNumber(bool chunkCompleted, ChunkNumber currentChunkNumber, bool isCurrentBufferTheLastChunk, TupleBuffer& buffer);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
