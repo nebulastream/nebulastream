@@ -38,56 +38,6 @@
 namespace NES
 {
 
-uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
-{
-    PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
-    auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
-    auto chunkNumber = pipelineCtx->getNextChunkNumber({.sequenceNumber = SequenceNumber(sequenceNumber), .originId = OriginId(originId)});
-    NES_TRACE("(Sequence Number: {}, Chunk Number: {})", sequenceNumber, chunkNumber);
-    return chunkNumber;
-}
-
-bool isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool isLastChunk)
-{
-    PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
-    auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
-    return pipelineCtx->processChunkNumber(
-        {.sequenceNumber = SequenceNumber(sequenceNumber), .originId = OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
-}
-
-void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
-{
-    PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
-    auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
-    pipelineCtx->removeSequenceState({.sequenceNumber = SequenceNumber(sequenceNumber), .originId = OriginId(originId)});
-}
-
-namespace
-{
-nautilus::val<bool> isLastChunk(ExecutionContext& context, OperatorHandlerId operatorHandlerId)
-{
-    return nautilus::invoke(
-        isLastChunkProxy,
-        context.getGlobalOperatorHandler(operatorHandlerId),
-        context.originId,
-        context.sequenceNumber,
-        context.chunkNumber,
-        context.lastChunk);
-}
-
-nautilus::val<ChunkNumber> getNextChunkNr(ExecutionContext& context, OperatorHandlerId operatorHandlerId)
-{
-    return nautilus::invoke(
-        getNextChunkNumberProxy, context.getGlobalOperatorHandler(operatorHandlerId), context.originId, context.sequenceNumber);
-}
-
-void removeSequenceState(ExecutionContext& context, OperatorHandlerId operatorHandlerId)
-{
-    nautilus::invoke(
-        removeSequenceStateProxy, context.getGlobalOperatorHandler(operatorHandlerId), context.originId, context.sequenceNumber);
-}
-}
-
 class EmitState : public OperatorState
 {
 public:
@@ -134,6 +84,38 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
 }
 
+namespace
+{
+void setChunkNumber(
+    const ExecutionContext& context,
+    OperatorHandlerId operatorHandlerId,
+    const nautilus::val<bool>& closesChunk,
+    const nautilus::val<ChunkNumber>& currentChunkNumber,
+    const nautilus::val<bool>& isCurrentBufferTheLastChunk,
+    const nautilus::val<TupleBuffer*>& newBuffer)
+{
+    nautilus::invoke(
+        +[](OperatorHandler* handler,
+            bool closesChunk,
+            ChunkNumber currentChunkNumber,
+            bool isCurrentBufferTheLastChunk,
+            TupleBuffer* newBuffer)
+        {
+            PRECONDITION(handler != nullptr, "Expects a valid handler");
+            PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");
+            PRECONDITION(currentChunkNumber != INVALID<ChunkNumber>, "Expects a valid chunkNumber");
+
+            dynamic_cast<EmitOperatorHandler&>(*handler).setChunkNumber(
+                closesChunk, currentChunkNumber, isCurrentBufferTheLastChunk, *newBuffer);
+        },
+        context.getGlobalOperatorHandler(operatorHandlerId),
+        closesChunk,
+        currentChunkNumber,
+        isCurrentBufferTheLastChunk,
+        newBuffer);
+}
+}
+
 void EmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
@@ -146,20 +128,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
 
-    /// Chunk Logic. Order matters.
-    /// A worker thread will clean up the sequence state for the current sequence number if its told it is the last
-    /// chunk number. Thus it is important to query the state first to get the next chunk number, before asking for the lastChunk
-    /// as this will mark the current chunknumber as processed and my allow a different worker thread to concurrently clean up.
-    recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerId));
-    if (potentialLastChunk && isLastChunk(ctx, operatorHandlerId))
-    {
-        removeSequenceState(ctx, operatorHandlerId);
-        recordBuffer.setLastChunk(true);
-    }
-    else
-    {
-        recordBuffer.setLastChunk(false);
-    }
+    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
 
     ctx.emitBuffer(recordBuffer);
 }

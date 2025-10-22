@@ -179,13 +179,18 @@ public:
     void checkLastChunks(std::source_location location = std::source_location::current())
     {
         const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "checkForLastChunks");
-        std::unordered_map<SequenceNumber, std::tuple<size_t, ChunkNumber::Underlying, bool>> sequenceNumberTerminations;
+        std::unordered_map<SequenceNumber, std::tuple<size_t, ChunkNumber::Underlying, bool, ChunkNumber::Underlying>>
+            sequenceNumberTerminations;
 
         for (const auto& buffer : *buffers.rlock())
         {
-            auto& [seen, maxChunkNumber, termination] = sequenceNumberTerminations[buffer.getSequenceNumber()];
+            auto& [seen, maxChunkNumber, termination, terminationAt] = sequenceNumberTerminations[buffer.getSequenceNumber()];
             seen++;
             maxChunkNumber = std::max(maxChunkNumber, buffer.getChunkNumber().getRawValue());
+            if (buffer.isLastChunk())
+            {
+                terminationAt = buffer.getChunkNumber().getRawValue();
+            }
             EXPECT_FALSE(termination && buffer.isLastChunk())
                 << fmt::format("Sequence {} has multiple last chunks", buffer.getSequenceNumber());
             termination |= buffer.isLastChunk();
@@ -193,8 +198,9 @@ public:
 
         for (const auto& [seq, t] : sequenceNumberTerminations)
         {
-            const auto& [seen, max, terminated] = t;
+            const auto& [seen, max, terminated, terminationAt] = t;
             EXPECT_TRUE(terminated) << fmt::format("Sequence {} is not terminated", seq);
+            EXPECT_EQ(terminationAt, max) << fmt::format("Sequence {} Non Max Chunk Number has Last Flag", seq);
             EXPECT_EQ(seen, max) << fmt::format("Sequence {}: The maximum chunk number is {}, but we only saw {} chunks", seq, max, seen);
         }
     }
