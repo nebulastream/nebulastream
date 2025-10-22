@@ -23,19 +23,30 @@
 namespace NES
 {
 
-uint64_t EmitOperatorHandler::getNextChunkNumber(const SequenceNumberForOriginId seqNumberOriginId)
+void EmitOperatorHandler::setChunkNumber(
+    bool chunkCompleted, ChunkNumber currentChunkNumber, bool isCurrentBufferTheLastChunk, TupleBuffer& buffer)
 {
-    auto lockedMap = seqNumberOriginIdToOutputChunkNumber.wlock();
-    const auto newChunkNumber = (*lockedMap)[seqNumberOriginId] + ChunkNumber::INITIAL;
-    /// Increment the chunk number for the next chunk
-    (*lockedMap)[seqNumberOriginId] += 1;
-    return newChunkNumber;
-}
-
-void EmitOperatorHandler::removeSequenceState(const SequenceNumberForOriginId seqNumberOriginId)
-{
-    seqNumberOriginIdToOutputChunkNumber.wlock()->erase(seqNumberOriginId);
-    seqNumberOriginIdToChunkStateInput.wlock()->erase(seqNumberOriginId);
+    SequenceNumberForOriginId seqNumberOriginId(buffer.getSequenceNumber(), buffer.getOriginId());
+    auto chunkNumberCounter = seqNumberOriginIdToOutputChunkNumber.wlock();
+    const auto newChunkNumber = ChunkNumber((*chunkNumberCounter)[seqNumberOriginId]++ + ChunkNumber::INITIAL);
+    buffer.setChunkNumber(newChunkNumber);
+    buffer.setLastChunk(false);
+    if (chunkCompleted)
+    {
+        auto chunkStateInput = seqNumberOriginIdToChunkStateInput.wlock();
+        auto& [lastChunkNumber, seenChunks] = (*chunkStateInput)[seqNumberOriginId];
+        if (isCurrentBufferTheLastChunk)
+        {
+            lastChunkNumber = currentChunkNumber.getRawValue();
+        }
+        seenChunks++;
+        if (seenChunks == lastChunkNumber)
+        {
+            chunkNumberCounter->erase(seqNumberOriginId);
+            chunkStateInput->erase(seqNumberOriginId);
+            buffer.setLastChunk(true);
+        }
+    }
 }
 
 void EmitOperatorHandler::start(PipelineExecutionContext&, uint32_t)
@@ -44,26 +55,6 @@ void EmitOperatorHandler::start(PipelineExecutionContext&, uint32_t)
 
 void EmitOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
-}
-
-bool EmitOperatorHandler::processChunkNumber(
-    const SequenceNumberForOriginId seqNumberOriginId, const ChunkNumber chunkNumber, const bool isLastChunk)
-{
-    const auto lockedMap = seqNumberOriginIdToChunkStateInput.wlock();
-    auto& [lastChunkNumber, seenChunks] = (*lockedMap)[seqNumberOriginId];
-    if (isLastChunk)
-    {
-        lastChunkNumber = chunkNumber.getRawValue();
-    }
-    seenChunks++;
-    NES_TRACE(
-        "seqNumberOriginId = {} chunkNumber = {} isLastChunk = {} seenChunks = {} lastChunkNumber = {}",
-        seqNumberOriginId,
-        chunkNumber,
-        isLastChunk,
-        seenChunks,
-        lastChunkNumber)
-    return seenChunks == lastChunkNumber;
 }
 
 }
