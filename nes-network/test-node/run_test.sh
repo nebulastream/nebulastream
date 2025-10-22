@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[workspace]
-resolver = "2"
-members = ["network", "nes-rust-bindings", "test-node"]
+FILE_NAME=$1
+NUMBER_OF_NODES=$(yq '. | length' $FILE_NAME)
+NUMBER_OF_NODES=$(($NUMBER_OF_NODES - 1))
+cat $FILE_NAME
+echo "Starting $NUMBER_OF_NODES nodes"
+
+cargo build
+for i in $(seq 0 $NUMBER_OF_NODES); do
+  cargo run -- $FILE_NAME $i &
+done
+
+wait

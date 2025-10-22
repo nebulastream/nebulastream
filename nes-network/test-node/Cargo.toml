@@ -1,0 +1,37 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[package]
+name = "test-node"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "test-node"
+
+[dependencies]
+clap = { version = "4.5.20", features = ["derive"] }
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread", "sync", "net", "io-util", "time"] }
+tokio-util = "0.7.13"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+log = "0.4.25"
+bytes = "1.10.0"
+
+async-channel = "2.3.1"
+crossbeam-queue = "0.3.12"
+threadpool = "1.8.1"
+
+serde = { version = "1.0.217", features = ["derive"] }
+serde_yaml = "0.9.34"
+
+nes_network = { path = "../network" }

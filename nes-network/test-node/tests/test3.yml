@@ -1,0 +1,89 @@
+- connection: 8000
+  commands:
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 8001
+    - type: Wait
+      millis: 500
+    - type: StopQuery
+      id: 0
+    - type: Wait
+      millis: 500
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 8001
+    - type: Wait
+      millis: 500
+    - type: StopQuery
+      id: 1
+    - type: Wait
+      millis: 500
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 8001
+    - type: Wait
+      millis: 500
+    - type: StopQuery
+      id: 2
+    - type: Wait
+      millis: 500
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 8001
+    - type: Wait
+      millis: 500
+    - type: StopQuery
+      id: 3
+    - type: Wait
+      millis: 500
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 8001
+    - type: Wait
+      millis: 500
+    - type: StopQuery
+      id: 4
+    - type: Wait
+      millis: 500
+    - type: Wait
+      millis: 30000
+- connection: 8001
+  commands:
+    - type: StartQuery
+      q:
+        type: bridge
+        input_channel: channel_1
+        downstream_channel: channel_1
+        downstream_connection: 8003
+    - type: Wait
+      millis: 4000
+    - type: StopQuery
+      id: 0
+    - type: Wait
+      millis: 4000
+    - type: StartQuery
+      q:
+        type: bridge
+        input_channel: channel_1
+        downstream_channel: channel_1
+        downstream_connection: 8003
+    - type: Wait
+      millis: 30000
+- connection: 8003
+  commands:
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_1
+    - type: Wait
+      millis: 30000

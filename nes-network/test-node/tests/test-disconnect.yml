@@ -1,0 +1,68 @@
+# Test case uses 4 Workers
+# worker:8080──►worker:8081───►worker:8082
+
+# This testcase as two queries: each one use one of the intermediate bridge nodes
+
+- connection: nes://localhost:8000
+  commands:
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: nes://localhost:8001
+        ingestion_rate_in_milliseconds: 100
+    - type: Wait
+      millis: 7000
+    - type: StopQuery
+      id: 0
+- connection: nes://localhost:8001
+  commands:
+    - type: StartQuery
+      q:
+        type: Bridge
+        input_channel: channel_1
+        downstream_channel: channel_1
+        downstream_connection: nes://localhost:8002
+        close_sink: false
+        close_source: false
+    - type: Wait
+      millis: 1000
+    - type: Reset
+    - type: Wait
+      millis: 1000
+    - type: StartQuery
+      q:
+        type: Bridge
+        input_channel: channel_1
+        downstream_channel: channel_1
+        downstream_connection: nes://localhost:8002
+        close_sink: false
+        close_source: false
+    - type: Wait
+      millis: 1000
+    - type: Reset
+    - type: Wait
+      millis: 1000
+    - type: StartQuery
+      q:
+        type: Bridge
+        input_channel: channel_1
+        downstream_channel: channel_1
+        downstream_connection: nes://localhost:8002
+    - type: Wait
+      millis: 1000
+    - type: StopQuery
+      id: 2
+- connection: nes://localhost:8002
+  commands:
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_1
+        source_expectations:
+          expected_messages: 1000
+          expected_messages_uncertainty: 50
+    - type: Wait
+      millis: 7000
+    - type: StopQuery
+      id: 0

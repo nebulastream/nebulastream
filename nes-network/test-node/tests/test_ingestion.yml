@@ -1,0 +1,30 @@
+- connection: 127.0.0.1:8000
+  commands:
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 127.0.0.1:8001
+        ingestion_rate_in_milliseconds: 10
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_2
+        ingestion_rate_in_milliseconds: 20
+    - type: Wait
+      millis: 200000
+- connection: 127.0.0.1:8001
+  commands:
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_2
+        downstream_connection: 127.0.0.1:8000
+        ingestion_rate_in_milliseconds: 100
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_1
+        ingestion_rate_in_milliseconds: 200
+    - type: Wait
+      millis: 200000

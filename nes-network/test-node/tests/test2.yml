@@ -1,0 +1,64 @@
+- connection: localhost:8000
+  commands:
+    - type: Wait
+      millis: 1000
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: localhost:8001
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_2
+        downstream_connection: localhost:8002
+    - type: Wait
+      millis: 10000
+    - type: StopQuery
+      id: 0
+    - type: StopQuery
+      id: 1
+- connection: localhost:8001
+  commands:
+    - type: Wait
+      millis: 2000
+    - type: StartQuery
+      q:
+        type: Bridge
+        input_channel: channel_1
+        downstream_channel: channel_1
+        downstream_connection: localhost:8003
+    - type: Wait
+      millis: 10000
+    - type: StopQuery
+      id: 0
+- connection: localhost:8002
+  commands:
+    - type: StartQuery
+      q:
+        type: Bridge
+        input_channel: channel_2
+        downstream_channel: channel_2
+        downstream_connection: localhost:8003
+    - type: Wait
+      millis: 10000
+    - type: StopQuery
+      id: 0
+- connection: localhost:8003
+  commands:
+    - type: Wait
+      millis: 4000
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_1
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_2
+    - type: Wait
+      millis: 10000
+    - type: StopQuery
+      id: 0
+    - type: StopQuery
+      id: 1

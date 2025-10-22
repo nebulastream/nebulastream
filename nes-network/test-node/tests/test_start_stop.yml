@@ -1,0 +1,68 @@
+- connection: 127.0.0.1:8000
+  commands:
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 127.0.0.1:8001
+        ingestion_rate_in_milliseconds: 1
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_2
+        downstream_connection: 127.0.0.1:8001
+        ingestion_rate_in_milliseconds: 5
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_3
+        downstream_connection: 127.0.0.1:8001
+        ingestion_rate_in_milliseconds: 20
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_4
+        downstream_connection: 127.0.0.1:8001
+        ingestion_rate_in_milliseconds: 100
+    - type: Wait
+      millis: 1000
+    - type: StopQuery
+      id: 0
+    - type: StopQuery
+      id: 1
+    - type: StopQuery
+      id: 2
+    - type: StopQuery
+      id: 3
+- connection: 127.0.0.1:8001
+  commands:
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_1
+        ingestion_rate_in_milliseconds: 1
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_2
+        ingestion_rate_in_milliseconds: 5
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_3
+        ingestion_rate_in_milliseconds: 20
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_4
+        ingestion_rate_in_milliseconds: 100
+    - type: Wait
+      millis: 2000
+    - type: StopQuery
+      id: 0
+    - type: StopQuery
+      id: 1
+    - type: StopQuery
+      id: 2
+    - type: StopQuery
+      id: 3

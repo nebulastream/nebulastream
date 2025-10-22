@@ -1,0 +1,19 @@
+- connection: 8083
+  commands:
+    - type: StartQuery
+      q:
+        type: Source
+        downstream_channel: channel_1
+        downstream_connection: 9090
+        ingestion_rate_in_milliseconds: 10
+    - type: Wait
+      millis: 20000
+- connection: 8084
+  commands:
+    - type: StartQuery
+      q:
+        type: Sink
+        input_channel: channel_1
+        ingestion_rate_in_milliseconds: 20
+    - type: Wait
+      millis: 60000
