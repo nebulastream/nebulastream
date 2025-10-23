@@ -42,6 +42,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
@@ -57,7 +58,6 @@
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-#include <from_current.hpp>
 
 /// Rust FFI function that enables in-memory communication channels for embedded multi-worker mode.
 /// Configures the network layer to use shared memory instead of real network sockets

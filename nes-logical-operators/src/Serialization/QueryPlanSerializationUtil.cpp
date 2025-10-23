@@ -26,12 +26,12 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cpptrace/from_current.hpp>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableQueryId.pb.h>
 #include <SerializableQueryPlan.pb.h>
-#include <from_current.hpp>
 
 namespace NES
 {

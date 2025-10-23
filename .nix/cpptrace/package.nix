@@ -56,14 +56,18 @@ let
     in
     (if useLibcxx then libcxxStdenv else clangStdenv).mkDerivation rec {
       pname = "cpptrace";
-      version = "0.8.3";
+      version = "1.0.4";
 
-      src = fetchFromGitHub {
-        owner = "jeremy-rifkin";
-        repo = "cpptrace";
-        rev = "v${version}";
-        hash = "sha512-T+fmn1DvgAhUBjanRJBcXc3USAJe4Qs2v5UpiLj+HErLtRKoOCr9V/Pa5Nfpfla9v5H/q/2REKpBJ3r4exSSoQ==";
-      };
+  src = fetchFromGitHub {
+    owner = "jeremy-rifkin";
+    repo = "cpptrace";
+    rev = "v${version}";
+    hash = "sha512-jK2VnWtk7ovSFhgDkwqAlQ5REgVzyqU2nddySnuZZSIVLP5nW5EnOpfLGTpg65x+9ILaCm1UacouvIyJfzyYHQ==";
+  };
+
+   patches = [
+      ./patches/0001-bump-cxx-std.patch
+   ];
 
       nativeBuildInputs = [
         cmake
