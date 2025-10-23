@@ -19,8 +19,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <span>
-#include <string_view>
-#include <utility>
 #include <vector>
 
 #include <Nautilus/Interface/Record.hpp>
@@ -155,7 +153,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
+            parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, currentField.name);
         }
         return record;
     }
