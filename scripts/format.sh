@@ -165,7 +165,7 @@ done
 # c.f. https://github.com/jeremy-rifkin/cpptrace?tab=readme-ov-file#traces-from-all-exceptions-cpptrace_try-and-cpptrace_catch
 if git grep "catch (\.\.\.)" -- ".hpp" "*.cpp" | grep -v "NOLINT(no-raw-catch-all)" > /dev/null
 then
-    log_error "Found catch (...). Please use CPPTRACE_TRY and CPPTRACE_CATCH to preserve stacktraces.\n$(git grep -n "catch (\.\.\.)" -- ".hpp" "*.cpp" | grep -v "NOLINT(no-raw-catch-all)")"
+    log_error "Found catch (...). Please use CPPTRACE_TRY and CPPTRACE_CATCH (or cpptrace::try_catch for multiple exception handlers) to preserve stacktraces, .\n$(git grep -n "catch (\.\.\.)" -- ".hpp" "*.cpp" | grep -v "NOLINT(no-raw-catch-all)")"
 fi
 
 python3 scripts/check_preamble.py || FAIL=1
