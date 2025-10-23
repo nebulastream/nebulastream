@@ -41,7 +41,10 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -196,7 +199,8 @@ public:
         const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
-        if (sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType() == "Checksum") /// NOLINT(bugprone-unchecked-optional-access)
+        if (Util::toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType())
+            == "CHECKSUM") /// NOLINT(bugprone-unchecked-optional-access)
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
         }
@@ -498,63 +502,158 @@ struct SystestBinder::Impl
         }
     }
 
-    void queryCallback(
-        const std::string_view& testFileName,
-        std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
-        SLTSinkFactory& sltSinkProvider,
-        std::string query,
-        const SystestQueryId& currentQueryNumberInTest)
+    void setInlineSources(LogicalPlan& plan) const
     {
-        /// We have to get all sink names from the query and then create custom paths for each sink.
-        /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
-        /// We assume:
-        /// - the INTO keyword is the last keyword in the query
-        /// - the sink name is the last word in the INTO clause
-        const auto sinkName = [&query]() -> std::string
+        for (const auto& inlineSourceLogicalOperator : NES::getOperatorByType<InlineSourceLogicalOperator>(plan))
         {
-            const auto intoClause = query.find("INTO");
-            if (intoClause == std::string::npos)
-            {
-                NES_ERROR("INTO clause not found in query: {}", query);
-                return "";
-            }
-            const auto intoLength = std::string("INTO").length();
-            auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+            auto sourceConfig = inlineSourceLogicalOperator->getSourceConfig();
+            auto parserConfig = inlineSourceLogicalOperator->getParserConfig();
 
-            /// As the sink name might have a semicolon at the end, we remove it
-            if (trimmedSinkName.back() == ';')
+            if (!parserConfig.contains("type"))
             {
-                trimmedSinkName.pop_back();
+                parserConfig.emplace("type", "CSV");
             }
-            return trimmedSinkName;
-        }();
+
+            if (sourceConfig.contains("file_path") && !sourceConfig.at("file_path").starts_with("/"))
+            {
+                auto filePath = inlineSourceLogicalOperator->getSourceConfig().at("file_path");
+                filePath = testDataDir / filePath;
+                sourceConfig.erase("file_path");
+                sourceConfig.emplace("file_path", filePath);
+            }
+
+            if (sourceConfig != inlineSourceLogicalOperator->getSourceConfig()
+                || parserConfig != inlineSourceLogicalOperator->getParserConfig())
+            {
+                const InlineSourceLogicalOperator newOperator{
+                    inlineSourceLogicalOperator->getSourceType(), inlineSourceLogicalOperator->getSchema(), sourceConfig, parserConfig};
+
+                auto newPlan = replaceOperator(plan, inlineSourceLogicalOperator.getId(), newOperator);
+
+                if (!newPlan.has_value())
+                {
+                    throw UnsupportedQuery();
+                }
+                plan = std::move(newPlan.value());
+            }
+        }
+    }
+
+    void setInlineSink(
+        LogicalPlan& plan,
+        const std::string_view& testFileName,
+        const SystestQueryId& currentQueryNumberInTest,
+        const TypedLogicalOperator<InlineSinkLogicalOperator>& sinkOperator) const
+    {
+        const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
+
+        auto sinkConfig = sinkOperator->getSinkConfig();
+        auto schema = sinkOperator->getSchema();
+        sinkConfig.erase("file_path");
+        sinkConfig.emplace("file_path", resultFile);
+
+        if (sinkOperator->getSinkType() == "FILE")
+        {
+            sinkConfig.erase("input_format");
+            sinkConfig.emplace("input_format", "CSV");
+        }
+
+        auto sinkDescriptor = SinkCatalog::getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig);
+        if (not sinkDescriptor.has_value())
+        {
+            throw UnsupportedQuery();
+        }
+        auto newOperator = SinkLogicalOperator{sinkDescriptor.value()};
+        auto newPlan = replaceOperator(plan, sinkOperator.getId(), newOperator);
+
+        if (!newPlan.has_value())
+        {
+            throw UnsupportedQuery();
+        }
+
+        plan = std::move(newPlan.value());
+    }
+
+    void setNamedSink(
+        LogicalPlan& plan,
+        SystestQueryBuilder& currentBuilder,
+        const std::string_view& testFileName,
+        SLTSinkFactory& sltSinkProvider,
+        const SystestQueryId& currentQueryNumberInTest,
+        const TypedLogicalOperator<SinkLogicalOperator>& sinkOperator) const
+    {
+        const std::string sinkName = sinkOperator->getSinkName();
 
         /// Replacing the sinkName with the created unique sink name
         const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
-        query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
+
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
-        SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
-        currentBuilder.setQueryDefinition(query);
-        if (auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
-            not sinkExpected.has_value())
+        auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
+        if (not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
         }
-        else
+
+        auto newOperator = SinkLogicalOperator{sinkExpected.value()};
+
+        auto newPlan = replaceOperator(plan, sinkOperator.getId(), newOperator);
+
+        if (!newPlan.has_value())
         {
-            try
+            throw UnsupportedQuery();
+        }
+
+        plan = std::move(newPlan.value());
+    }
+
+    void setSinks(
+        LogicalPlan& plan,
+        SystestQueryBuilder& currentBuilder,
+        const std::string_view& testFileName,
+        SLTSinkFactory& sltSinkProvider,
+        const SystestQueryId& currentQueryNumberInTest) const
+    {
+        for (const auto& rootOperator : plan.getRootOperators())
+        {
+            if (auto inlineSink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); inlineSink.has_value())
             {
-                auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                currentBuilder.setBoundPlan(std::move(plan));
+                setInlineSink(plan, testFileName, currentQueryNumberInTest, inlineSink.value());
             }
-            catch (Exception& e)
+            else if (auto namedSink = rootOperator.tryGetAs<SinkLogicalOperator>(); namedSink.has_value())
             {
-                currentBuilder.setException(e);
+                setNamedSink(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, namedSink.value());
+            }
+            else
+            {
+                throw UnsupportedQuery();
             }
         }
+    }
+
+    void queryCallback(
+        const std::string_view& testFileName,
+        std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
+        SLTSinkFactory& sltSinkProvider,
+        const std::string& query,
+        const SystestQueryId& currentQueryNumberInTest) const
+    {
+        SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
+        currentBuilder.setQueryDefinition(query);
+        try
+        {
+            auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+            setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setInlineSources(plan);
+            currentBuilder.setBoundPlan(std::move(plan));
+        }
+        catch (Exception& e)
+        {
+            currentBuilder.setException(e);
+        }
+
         plans.emplace(currentQueryNumberInTest, currentBuilder);
     }
 
@@ -586,65 +685,20 @@ struct SystestBinder::Impl
         std::string rightQuery,
         const SystestQueryId currentQueryNumberInTest) const
     {
-        const auto extractSinkName = [](const std::string& query) -> std::string
-        {
-            std::istringstream stream(query);
-            std::string token;
-            while (stream >> token)
-            {
-                if (Util::toLowerCase(token) == "into")
-                {
-                    std::string sink;
-                    if (!(stream >> sink))
-                    {
-                        NES_ERROR("INTO clause not followed by sink name in query: {}", query);
-                        return "";
-                    }
-                    if (!sink.empty() && sink.back() == ';')
-                    {
-                        sink.pop_back();
-                    }
-                    return sink;
-                }
-            }
-            NES_ERROR("INTO clause not found in query: {}", query);
-            return "";
-        };
-
-        const auto leftSinkName = extractSinkName(leftQuery);
-        const auto rightSinkName = extractSinkName(rightQuery);
-
-        const auto leftSinkForQuery = leftSinkName + std::to_string(lastParsedQueryId.getRawValue());
-        const auto rightSinkForQuery = rightSinkName + std::to_string(lastParsedQueryId.getRawValue()) + "differential";
-
-        leftQuery = std::regex_replace(leftQuery, std::regex(leftSinkName), leftSinkForQuery);
-        rightQuery = std::regex_replace(rightQuery, std::regex(rightSinkName), rightSinkForQuery);
-
         const auto differentialTestResultFileName = std::string(testFileName) + "differential";
-        const auto leftResultFile = SystestQuery::resultFile(workingDir, testFileName, lastParsedQueryId);
-        const auto rightResultFile = SystestQuery::resultFile(workingDir, differentialTestResultFileName, lastParsedQueryId);
 
         auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
-
-        if (auto leftSinkExpected
-            = sltSinkProvider.createActualSink(Util::toUpperCase(leftSinkName), Util::toUpperCase(leftSinkForQuery), leftResultFile);
-            not leftSinkExpected.has_value())
-        {
-            currentTest.setException(leftSinkExpected.error());
-            return;
-        }
-        if (auto rightSinkExpected
-            = sltSinkProvider.createActualSink(Util::toUpperCase(rightSinkName), Util::toUpperCase(rightSinkForQuery), rightResultFile);
-            not rightSinkExpected.has_value())
-        {
-            currentTest.setException(rightSinkExpected.error());
-            return;
-        }
 
         try
         {
             auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
             auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
+
+            setSinks(leftPlan, currentTest, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setSinks(rightPlan, currentTest, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest);
+
+            setInlineSources(leftPlan);
+            setInlineSources(rightPlan);
 
             currentTest.setQueryDefinition(std::move(leftQuery));
             currentTest.setBoundPlan(std::move(leftPlan));

@@ -30,7 +30,6 @@ namespace NES
 LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
-    const auto inlineSinkBindingPhase = InlineSinkBindingPhase{sinkCatalog};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
     const auto inlineSourceBindingPhase = InlineSourceBindingPhase{sourceCatalog};
     const auto sourceInference = SourceInferencePhase{sourceCatalog};
@@ -40,7 +39,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
 
-    inlineSinkBindingPhase.apply(newPlan);
+    InlineSinkBindingPhase::apply(newPlan);
     sinkBindingRule.apply(newPlan);
     inlineSourceBindingPhase.apply(newPlan);
     sourceInference.apply(newPlan);
