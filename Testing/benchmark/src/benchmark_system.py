@@ -135,12 +135,12 @@ def main():
             result = subprocess.run([
                 "python3", str(src_dir / "generate_test.py"),
                 "--data", str(data_file),
-                "--output", str(test_file),
                 "--result-dir", str(benchmark_dir),
                 "--columns", ','.join(map(str, args.columns)),
                 "--rows", str(args.rows),
                 "--window-sizes", ','.join(map(str, args.window_sizes)),
                 "--groups", ','.join(map(str, args.groups)),
+                "--id-data-types", ','.join(args.id_data_types),
                 "--run-options", args.run_options
             ], check=False, capture_output=True, text=True)
 

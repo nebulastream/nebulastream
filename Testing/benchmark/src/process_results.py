@@ -146,11 +146,11 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
 
         # Run enginestatsread.py with all trace files at once
         try:
-            subprocess.run(
+            result = subprocess.run(
                 ["python3", "src/enginestatsread.py",
                  str(benchmark_dir),
                  "--trace-files"] + trace_files,
-                check=True
+                check=False, capture_output=True
             )
             if result.returncode != 0:
                 print(f"Error running enginestatsread.py: {result.stderr.decode()}")

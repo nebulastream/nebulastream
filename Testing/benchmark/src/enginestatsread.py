@@ -132,7 +132,11 @@ def compute_stats(trace_path):
 
 
 def process_csv(trace_paths, window_size=10):
-    """ Process a single CSV file using pandas and return aggregated results."""
+    """ Process a single CSV/JSON trace(s) and return aggregated results.
+
+    window_size is in seconds; internal timestamps are in microseconds so we
+    compute windows as ts // (window_size * 1_000_000).
+    """
     try:
         dfs = []
         for trace_file in trace_paths:
@@ -171,8 +175,6 @@ def process_csv(trace_paths, window_size=10):
             df['ts'] = (df['ts']  -  min_timestamp)
 
             dfs.append(df)
-        print(f"Loaded {len(dfs)} trace files for processing.")
-        # concatenate over all number of runs
 
         if not dfs:
             print("No valid task events found in provided trace files.")
@@ -379,7 +381,7 @@ def extract_metadata_from_filename(file_path):
             filename = filename[:duplicate_pos + 5]
 
     metadata = {}
-
+    metadata['filename'] = file_path
     query_id= re.search(r'_query(\d+).json', filename)
     if query_id:
         metadata['query_id'] = int(query_id.group(1))
@@ -486,13 +488,16 @@ def main():
 
         # Prepare buffer dir and write per-config files if DataFrames present
         try:
-            buffer_dir = Path(base_directory) / operator_chain[0] / f"bufferSize{metadata.get('buffer_size','')}"
-            buffer_dir.mkdir(parents=True, exist_ok=True)
-            #TODO: add query information to filename
+            #buffer_dir = Path(base_directory) / operator_chain[0] / f"bufferSize{metadata.get('buffer_size','')}"
+            #buffer_dir.mkdir(parents=True, exist_ok=True)
+            #result dir = query dir = parent /  parent / filename
+            result_dir = Path(metadata['filename']).parent.parent
+            #name= Path(metadata['filename']).stem.with_suffix('.csv')
+            layout = metadata['layout']
             if windowed_stats is not None:
-                windowed_stats.to_csv(buffer_dir / "results_windowed.csv", index=False)
+                windowed_stats.to_csv(result_dir / f"results_windowed_{layout}.csv", index=False)
             if pipeline_stats is not None:
-                pipeline_stats.to_csv(buffer_dir / "results_pipeline.csv", index=False)
+                pipeline_stats.to_csv(result_dir / f"results_pipelined_{layout}.csv", index=False)
         except Exception as e:
             print(f"Warning: error writing per-config files: {e}")
 
