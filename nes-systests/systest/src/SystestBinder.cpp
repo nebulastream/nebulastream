@@ -199,8 +199,9 @@ public:
         const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
-        if (Util::toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType())
-            == "CHECKSUM") /// NOLINT(bugprone-unchecked-optional-access)
+        if (Util::toUpperCase(
+                sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
+            == "CHECKSUM")
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
         }
