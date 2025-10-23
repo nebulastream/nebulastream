@@ -109,7 +109,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
             }
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             const auto& currentField = metaData.getSchema().getFieldAt(i);
-            RawValueParser::parseRawValueIntoRecord(currentField.dataType.type, record, fieldAddress, fieldSize, currentField.name);
+            RawValueParser::parseLazyValueIntoRecord(currentField.dataType.type, record, fieldAddress, fieldSize, currentField.name);
         }
         return record;
     }

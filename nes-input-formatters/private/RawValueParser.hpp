@@ -72,6 +72,15 @@ void parseRawValueIntoRecord(
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName);
 
+// Registers a lazy materializer for the given field. On first read, the parser executes
+// the same logic as parseRawValueIntoRecord and stores the result in the Record.
+void parseLazyValueIntoRecord(
+    DataType::Type physicalType,
+    Nautilus::Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName);
+
 /// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
 ParseFunctionSignature getParseFunction(const DataType::Type physicalType);
 }

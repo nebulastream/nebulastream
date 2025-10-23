@@ -209,6 +209,52 @@ void parseRawValueIntoRecord(
     std::unreachable();
 }
 
+void parseLazyValueIntoRecord(
+    const DataType::Type physicalType,
+    Nautilus::Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName)
+{
+    // Register a lazy materializer that performs the same logic as parseRawValueIntoRecord on first access
+    record.writeLazy(fieldName, [physicalType, fieldAddress, fieldSize]() -> Nautilus::VarVal {
+        switch (physicalType)
+        {
+            case DataType::Type::INT8:
+                return RawValueParser::parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize);
+            case DataType::Type::INT16:
+                return RawValueParser::parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize);
+            case DataType::Type::INT32:
+                return RawValueParser::parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize);
+            case DataType::Type::INT64:
+                return RawValueParser::parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize);
+            case DataType::Type::UINT8:
+                return RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize);
+            case DataType::Type::UINT16:
+                return RawValueParser::parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize);
+            case DataType::Type::UINT32:
+                return RawValueParser::parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize);
+            case DataType::Type::UINT64:
+                return RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize);
+            case DataType::Type::FLOAT32:
+                return RawValueParser::parseIntoNautilusRecord<float>(fieldAddress, fieldSize);
+            case DataType::Type::FLOAT64:
+                return RawValueParser::parseIntoNautilusRecord<double>(fieldAddress, fieldSize);
+            case DataType::Type::CHAR:
+                return RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize);
+            case DataType::Type::BOOLEAN:
+                return RawValueParser::parseIntoNautilusRecord<bool>(fieldAddress, fieldSize);
+            case DataType::Type::VARSIZED:
+                return parseVarSizedIntoNautilusRecord(fieldAddress, fieldSize);
+            case DataType::Type::VARSIZED_POINTER_REP:
+                throw NotImplemented("Cannot parse varsized pointer rep type.");
+            case DataType::Type::UNDEFINED:
+                throw NotImplemented("Cannot parse undefined type.");
+        }
+        std::unreachable();
+    });
+}
+
 ParseFunctionSignature getParseFunction(const DataType::Type physicalType)
 {
     if (physicalType == DataType::Type::VARSIZED)
