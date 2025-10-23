@@ -27,7 +27,8 @@ def get_config_from_file(config_file):
     #else assume csv
     query_configs = []
     if config_file.exists():
-        query_configs = pd.read_csv(config_file).to_dict(orient='records')
+        query_configs = pd.read_csv(config_file, index_col='query_id').to_dict(orient='index')
+        #{'test_id': 1, 'buffer_size': 4000, 'num_columns': 1, 'accessed_columns': 1, 'operator_chain': "['filter']", 'swap_strategy': 'USE_SINGLE_LAYOUT', 'selectivity': 5.0, 'individual_selectivity': 5.0, 'threshold': 4080218930.0, 'function_type': nan, 'aggregation_function': nan, 'window_size': nan, 'num_groups': nan, 'id_data_type': nan}
         if config_file.suffix == '.csvo': # old version
             config=defaultdict(dict)
             columns= []

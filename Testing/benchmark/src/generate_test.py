@@ -500,7 +500,10 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
     # Write query mapping to a file for later reference
     with open(result_dir / "query_configs.csv", 'w') as f:
-        cols = query_configs.columns
+        cols = ['query_id', 'test_id', 'buffer_size', 'num_columns', 'accessed_columns',
+                'operator_chain', 'swap_strategy', 'selectivity', 'individual_selectivity',
+                'threshold', 'function_type', 'aggregation_function', 'window_size',
+                'num_groups', 'id_data_type']
         f.write(','.join(cols) + '\n')
         for qid, config in query_configs.items():
             row = [str(config.get(col, '')) for col in cols]
