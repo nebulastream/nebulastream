@@ -24,7 +24,7 @@
 namespace NES
 {
 
-void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan) const
+void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan)
 {
     for (auto rootOperators = queryPlan.getRootOperators(); const auto& rootOperator : rootOperators)
     {

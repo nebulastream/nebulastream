@@ -214,7 +214,7 @@ errorCapturingIdentifierExtra
     |                        #realIdent
     ;
 
-namedConfigExpressionSeq: namedConfigExpression (',' namedConfigExpression)*;
+namedConfigExpressionSeq: (namedConfigExpression (',' namedConfigExpression)*)?;
 namedExpressionSeq
     : namedExpression (',' namedExpression)*
     ;
