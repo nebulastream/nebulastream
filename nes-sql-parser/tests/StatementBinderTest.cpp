@@ -25,6 +25,9 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
+#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/FileSink.hpp>
@@ -88,13 +91,10 @@ TEST_F(StatementBinderTest, BindQuery)
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 }
 
-TEST_F(StatementBinderTest, InlineQuery)
+TEST_F(StatementBinderTest, InlineSinkQuery)
 {
     const std::string query = "SELECT id, text \n"
-                              "FROM File(\n"
-                              "'input.csv' AS `SOURCE`.FILE_PATH,\n"
-                              "'CSV' AS PARSER.`TYPE`,\n"
-                              "SCHEMA(id UINT64, text VARSIZED) AS `SOURCE`.`SCHEMA`)\n"
+                              "FROM input\n"
                               "INTO FILE(\n"
                               "'out.csv' AS `SINK`.FILE_PATH,\n"
                               "'CSV' as `SINK`.INPUT_FORMAT,\n"
@@ -102,6 +102,56 @@ TEST_F(StatementBinderTest, InlineQuery)
     const auto statement = binder->parseAndBindSingle(query);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement);
+
+    const auto inlineSinkOperatorList = getOperatorByType<InlineSinkLogicalOperator>(plan);
+    ASSERT_EQ(1, inlineSinkOperatorList.size());
+
+    const auto& inlineSinkOperator = inlineSinkOperatorList.at(0);
+
+    ASSERT_EQ("FILE", inlineSinkOperator->getSinkType());
+
+    const std::unordered_map<std::string, std::string> expectedSinkConfig = {{"file_path", "out.csv"}, {"input_format", "CSV"}};
+    ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
+
+    Schema schema;
+    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    ASSERT_EQ(schema, inlineSinkOperator->getSchema());
+}
+
+TEST_F(StatementBinderTest, InlineSourceQuery)
+{
+    const std::string query = "SELECT id, text \n"
+                              "FROM File(\n"
+                              "'input.csv' AS `SOURCE`.FILE_PATH,\n"
+                              "'CSV' AS PARSER.`TYPE`,\n"
+                              "SCHEMA(id UINT64, text VARSIZED) AS `SOURCE`.`SCHEMA`)\n"
+                              "INTO output\n";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement);
+
+    const auto inlineSourceOperatorList = getOperatorByType<InlineSourceLogicalOperator>(plan);
+    ASSERT_EQ(1, inlineSourceOperatorList.size());
+
+    const auto& inlineSourceOperator = inlineSourceOperatorList.at(0);
+
+    ASSERT_EQ("FILE", inlineSourceOperator->getSourceType());
+
+    const std::unordered_map<std::string, std::string> expectedSourceConfig = {{"file_path", "input.csv"}};
+    ASSERT_EQ(expectedSourceConfig, inlineSourceOperator->getSourceConfig());
+
+    const std::unordered_map<std::string, std::string> expectedParserConfig = {{"type", "CSV"}};
+    ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
+
+    Schema schema;
+    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    ASSERT_EQ(schema, inlineSourceOperator->getSchema());
 }
 
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
