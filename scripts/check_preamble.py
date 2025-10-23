@@ -88,6 +88,7 @@ VENDORED_FILES = {
     "nes-systests/utils/SystestPlugin/NES-Systest-Runner/gradlew",
     "nes-systests/utils/SystestPlugin/NES-Systest-Runner/gradlew.bat",
     "vcpkg/vcpkg-registry/ports/llvm/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/cpptrace/portfile.cmake",
 }
 
 if __name__ == "__main__":

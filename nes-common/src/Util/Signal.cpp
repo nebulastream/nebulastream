@@ -19,9 +19,9 @@
 #include <unistd.h>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/cpptrace.hpp>
+#include <cpptrace/utils.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
-#include <utils.hpp>
 
 namespace
 {

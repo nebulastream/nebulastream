@@ -49,6 +49,7 @@
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <cpptrace/utils.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -60,7 +61,6 @@
 #include <Repl.hpp>
 #include <Thread.hpp>
 #include <WorkerCatalog.hpp>
-#include <utils.hpp>
 
 #ifdef EMBED_ENGINE
     #include <Configurations/Util.hpp>

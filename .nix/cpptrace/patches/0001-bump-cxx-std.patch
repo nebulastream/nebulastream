@@ -1,0 +1,29 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d7bc6bc..55dfd45 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -15,6 +15,8 @@ project(
+   LANGUAGES C CXX
+ )
+ 
++set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
++
+ # Don't change include order, OptionVariables checks if project is top level
+ include(cmake/ProjectIsTopLevel.cmake)
+ include(cmake/OptionVariables.cmake)
+@@ -251,12 +253,14 @@ target_include_directories(
+     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+ )
+ 
++
+ # Require C++11 support
+ target_compile_features(
+     ${target_name}
+-    PRIVATE cxx_std_11
++    PRIVATE cxx_std_20
+ )
+ 
++
+ target_compile_definitions(${target_name} PRIVATE NOMINMAX)
+ 
+ if(HAS_ATTRIBUTE_PACKED)
