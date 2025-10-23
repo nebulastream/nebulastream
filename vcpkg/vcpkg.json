@@ -42,12 +42,5 @@
     "replxx",
     "spdlog",
     "yaml-cpp"
-  ],
-  "overrides": [
-    {
-      "name": "cpptrace",
-      "version": "0.8.3",
-      "port-version": 0
-    }
   ]
 }
