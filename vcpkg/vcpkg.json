@@ -47,12 +47,5 @@
     "scope-guard",
     "boost-url",
     "simdjson"
-  ],
-  "overrides": [
-    {
-      "name": "cpptrace",
-      "version": "0.8.3",
-      "port-version": 0
-    }
   ]
 }

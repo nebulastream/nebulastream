@@ -30,7 +30,6 @@
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <from_current.hpp>
 
 namespace NES
 {
