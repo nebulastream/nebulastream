@@ -26,7 +26,7 @@ class InlineSinkBindingPhase
 public:
     explicit InlineSinkBindingPhase(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    void apply(LogicalPlan& queryPlan) const;
+    static void apply(LogicalPlan& queryPlan);
 
 private:
     std::shared_ptr<SinkCatalog> sinkCatalog;
