@@ -59,7 +59,6 @@
 #include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <StatementHandler.hpp>
-#include <utils.hpp>
 
 #ifdef EMBED_ENGINE
     #include <Configurations/Util.hpp>
