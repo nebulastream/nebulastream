@@ -107,7 +107,11 @@ std::string formatLogMessage(const Exception& e)
     if (!e.where())
     {
         return fmt::format(
-            "failed to process with error code ({}) : {}\n\n{}{}\n", e.code(), e.what(), ansiColorReset, e.trace().to_string(true));
+            "failed to process with error code ({}) : {}\n\n{}{}\n",
+            e.code(),
+            e.what(),
+            ansiColorReset,
+            traceFormatter.format(e.trace(), true));
     }
 
     auto exceptionLocation = e.where().value();
@@ -120,7 +124,7 @@ std::string formatLogMessage(const Exception& e)
         exceptionLocation.column,
         exceptionLocation.symbol,
         ansiColorReset,
-        e.trace().to_string(true));
+        traceFormatter.format(e.trace(), true));
 }
 
 std::string formatLogMessage(const std::exception& e)
@@ -130,7 +134,7 @@ std::string formatLogMessage(const std::exception& e)
         return fmt::format("failed to process with error : {}", e.what());
     }
     constexpr auto ansiColorReset = "\u001B[0m";
-    const auto& trace = cpptrace::from_current_exception().to_string(true);
+    const auto& trace = traceFormatter.format(cpptrace::from_current_exception(), true);
     return fmt::format("failed to process with error : {}\n{}{}", e.what(), ansiColorReset, trace);
 }
 

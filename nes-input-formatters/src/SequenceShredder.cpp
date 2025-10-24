@@ -29,12 +29,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <RawTupleBuffer.hpp>
 #include <STBuffer.hpp>
-#include <from_current.hpp>
 
 namespace NES
 {
