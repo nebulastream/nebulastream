@@ -59,7 +59,7 @@ jobs:
     name: "Check format"
     uses: ./.github/workflows/format.yml
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       # since there is no merge base to compare against, just check last 10 commits
       number_of_commits: 10
@@ -68,7 +68,7 @@ jobs:
     uses: ./.github/workflows/execute_query.yml
     needs: [ get-dev-images ]
     with:
-      ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ github.event.pull_request.head.ref }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   build-and-test:
@@ -76,7 +76,7 @@ jobs:
     needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/build_and_test.yml
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   run_large_scale_tests_random_config:
@@ -85,7 +85,7 @@ jobs:
     uses: ./.github/workflows/large_tests_random_worker_config.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
   test-other-configs:
@@ -161,7 +161,7 @@ jobs:
     uses: ./.github/workflows/build-and-benchmark.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       run_reason: "Nightly Benchmark"
 
@@ -170,7 +170,7 @@ jobs:
     uses: ./.github/workflows/benchmark-compile-time.yml
     secrets: inherit
     with:
-      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       run_reason: "Nightly Benchmark"
 
@@ -180,7 +180,7 @@ jobs:
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
-      ref: "main"
+      head_sha: "main"
       dockerhub-tag: "nightly"
 
   send-zulip-msg-on-failure:
