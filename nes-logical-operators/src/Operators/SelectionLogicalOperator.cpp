@@ -137,11 +137,10 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
 
     proto.set_operator_type(NAME);
 
-    auto inputs = getInputSchemas();
-    for (size_t i = 0; i < inputs.size(); ++i)
+    for (const auto& input : getInputSchemas())
     {
         auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputs[i], schProto);
+        SchemaSerializationUtil::serializeSchema(input, schProto);
     }
 
     auto* outSch = proto.mutable_output_schema();
