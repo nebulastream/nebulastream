@@ -29,7 +29,7 @@
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <mutex>
     #include <thread>
-    #include <cpptrace.hpp>
+    #include <cpptrace/cpptrace.hpp>
 #endif
 
 namespace NES
