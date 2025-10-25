@@ -44,6 +44,7 @@ Checks: [
 
   "-boost-use-ranges", # we don't use boost
   "-bugprone-easily-swappable-parameters", # annoying-ish
+  "-fuchsia-trailing-return", # we do not have a problem with that
   "-fuchsia-default-arguments-calls", # we do not forbid default args
   "-fuchsia-overloaded-operator", # we can not overload the operator() anywhere
   "-fuchsia-statically-constructed-objects", # we allow statically constructed objects; constexpr is not always possible
