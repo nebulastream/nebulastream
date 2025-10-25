@@ -273,14 +273,14 @@ def process_csv(trace_paths, window_size=10):
 
         #combine begin and end events taking tuples from begin and latency from end
         merged['latency'] = merged['latency_end'] #microseconds
-        merged['tuples'] = merged['tuples_end']
+        merged['tuples'] = merged['tuples_begin']
 
 
         max_size = np.max([begin_df['tuples'].size, end_df['tuples'].size])
 
         diff = int(np.abs(max_size - merged['tuples_begin'].size))
 
-        if diff > 0:
+        if diff > 0 and diff > max_size / 10000:
             print("Warning: Total skipped tasks:")
             print(f"{diff} out of")
             print(f"{int(max_size)} tasks across all runs.")
@@ -294,43 +294,57 @@ def process_csv(trace_paths, window_size=10):
         #remove emtpy latency -1 if tuples are 0
         mask_invalid = (merged['latency'] == -1) & (merged['tuples'] == 0)
         if mask_invalid.any():
+            #print(f"Warning: {mask_invalid.sum()} tasks with no duration.")
             merged.loc[mask_invalid, 'latency'] = 0
 
 
         #discard ts and store max_ts by run
         merged['max_ts'] = merged.groupby('run_id')['ts_end'].transform('max')
         merged['duration'] = merged['ts_end'] - merged['ts_begin']
+
+        # Compute window number based on midpoint
+        merged['window'] = ((merged['ts_begin'] + merged['ts_end']) // 2 // window_size).astype(int)
+
         abs_diff = (merged['latency'] - merged['duration']).abs()
-        mask_inconsistent = abs_diff > 3
+        mask_inconsistent = abs_diff > 1
         diff = int(mask_inconsistent.sum())
         if diff > 0:
             print(f"Warning: {diff} tasks have inconsistent latency values between duration and timestamps.")
         else:
-            merged = merged.drop(columns=['ts_begin', 'ts_end', 'duration'])
+            merged['latency'] = merged['duration']
+            #merged = merged.drop(columns=['ts_begin', 'ts_end', 'duration'])
 
 
 
         if (merged['latency'] <= 0).any():
             #remove 0 latencies 0 tuples tasks
-            merged = merged[~((merged['latency'] == 0) & (merged['tuples'] == 0))].copy()
+            merged = merged[~((merged['latency'] == 0) | (merged['tuples'] == 0))].copy()#TODO: investigate if tuple = 0 and latency > 0 is important for latency statistics
 
             num_nul= (merged['latency'] < 0).sum()
             tuples = (merged[merged['latency'] < 0]['tuples']).sum()
-            if num_nul > 0 or tuples > 0:
+            if num_nul > 0 and tuples > 0:
                 print(f"Warning: Some tasks have {num_nul} non-positive latency and will be excluding {tuples} tuples from metrics.")
                 #print(f"{(merged['latency'] ==  -1).sum()} tasks have empty latency.")
                 #print(f"{(merged['latency_begin'] ==  0).sum()} begin tasks have empty latency.")
                 merged = merged[merged['latency'] > 0].copy()
 
-        #TODO: check why new csv latencies are that varied
-        #
-
-        # Compute window number based on midpoint
-        merged['window'] = (merged['latency'] // 2) // window_size
 
         # throughput per task (tuples/sec)
         merged['throughput'] = merged['tuples'] / (merged['latency'] / 1e6)
 
+        empty_tuples = (merged['tuples'] <= 0).sum()
+        empty_tp = (merged['throughput'] <= 0).sum()
+        if empty_tuples > 0 or empty_tp > 0:
+            print(f"empty tuples {empty_tuples} / {merged['tuples'].size}, zero tp {empty_tp} / {merged['throughput'].size}")
+            print(trace_file)
+            latency_avg = merged['latency'].mean() / 1e6
+            latency_min = merged['latency'].min() / 1e6
+            latency_max = merged['latency'].max() / 1e6
+            avg = merged['throughput'].mean()
+            min = merged['throughput'].min()
+            max = merged['throughput'].max()
+            print(f"Throughput stats (tuples/sec): avg={avg}, min={min}, max={max}")
+            print(f"Latency stats (sec): avg={latency_avg}, min={latency_min}, max={latency_max}")
         # Calculate skipped tasks per (run_id, p_id, window):
         # skipped = max(begin_count, end_count) - matched_count
         # derive window for begin/end using ts // window_size (same coarse bins)
@@ -376,7 +390,7 @@ def process_csv(trace_paths, window_size=10):
         # Per-run, per-pipeline-window aggregates (from matched tasks)
         grouped_run = merged.groupby(['run_id', 'p_id', 'window']).agg(
             count=('t_id', 'size'),
-            total_tuples=('tuples_begin', 'sum'),
+            total_tuples=('tuples', 'sum'),
             total_skipped=('skipped', 'sum'),
             sum_latency=('latency', 'sum'),          # microseconds
             mean_latency=('latency', 'mean'),
@@ -451,7 +465,7 @@ def process_csv(trace_paths, window_size=10):
         per_run_pipeline = pd.merge(per_run_pipeline.reset_index(), p_time, on=['run_id', 'p_id'], how='left')
         per_run_pipeline = pd.merge(per_run_pipeline, total_tasks_time_by_pipe, on=['run_id', 'p_id'], how='left')
 
-
+        #TODO: fix comp and eff_tp calculation (prob wall times into tp)
         # compute per-run derived tps to allow mean-of-runs later
         per_run_pipeline['comp_tp_run'] = per_run_pipeline.apply(
             lambda r: (r['sum_tuples'] / (r['sum_latency'] / 1e6)) if r['sum_latency'] > 0 else 0, axis=1
