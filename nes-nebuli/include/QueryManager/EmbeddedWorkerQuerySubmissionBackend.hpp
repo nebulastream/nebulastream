@@ -13,27 +13,33 @@
 */
 
 #pragma once
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <ErrorHandling.hpp>
-#include <SingleNodeWorker.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
 
 #include <QueryManager/QueryManager.hpp>
 
+#include <chrono>
+#include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <ErrorHandling.hpp>
+#include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerStatus.hpp>
+
 namespace NES
 {
-class EmbeddedWorkerQueryManager final : public QueryManager
+class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    explicit EmbeddedWorkerQueryManager(const SingleNodeWorkerConfiguration& configuration);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept override;
-    std::expected<void, Exception> start(QueryId queryId) noexcept override;
-    std::expected<void, Exception> stop(QueryId queryId) noexcept override;
-    std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept override;
+    EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
+    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
+    std::expected<void, Exception> start(QueryId) override;
+    std::expected<void, Exception> stop(QueryId) override;
+    std::expected<void, Exception> unregister(QueryId) override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId) const override;
+    [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 
 private:
     SingleNodeWorker worker;
 };
+
 }
