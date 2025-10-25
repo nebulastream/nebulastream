@@ -161,13 +161,11 @@ public:
 
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
-    mutable std::mutex mutex;
     SharedPtr<QueryManager> queryManager;
-    std::vector<QueryId> runningQueries;
-    std::shared_ptr<const LegacyOptimizer> optimizer;
+    SharedPtr<const LegacyOptimizer> optimizer;
 
 public:
-    explicit QueryStatementHandler(const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<LegacyOptimizer>& optimizer);
+    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
