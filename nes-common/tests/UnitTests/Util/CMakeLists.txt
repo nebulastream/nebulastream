@@ -15,6 +15,7 @@ add_nes_common_test(nes-common-tests
         "NonBlockingMonotonicSeqQueueTest.cpp"
         "UtilFunctionTest.cpp"
         "StringUtilTest.cpp"
+        "FileUtilTest.cpp"
         "RangesTest.cpp"
         "LogLevelTest.cpp"
         "BFSIteratorTest.cpp"
