@@ -1,0 +1,86 @@
+name: Build and Run Large Tests
+description: This workflow builds and tests a head_sha, on a combination of different architectures and standard libraries.
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      head_sha:
+        type: string
+        required: true
+        description: "head_sha of the branch"
+      number_of_worker_threads:
+        type: string
+        description: "Number of worker threads the large scale tests should be run with"
+        default: 4
+      buffer_size:
+        type: string
+        description: "Buffer size the large scale tests should be run with"
+        default: 4096
+      page_size:
+        type: string
+        description: "Page size the large scale tests should be run with"
+        default: 4096
+      number_of_partitions:
+        type: string
+        description: "Number of partitions large scale tests should be run with"
+        default: 128
+
+jobs:
+  build-and-test-linux:
+    name: "Run large scale tests on ${{matrix.arch}} with ${{matrix.stdlib}} in ${{ matrix.build_type }}"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      volumes:
+        - ccache:/ccache
+        - test-file-cache:/test-file-cache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        sanitizer: [ 'none' ]
+        build_type: [ 'RelWithDebInfo', 'Release' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Configure NebulaStream
+        run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+      - name: Build NebulaStream
+        run: cmake --build build --target systest -j
+      - name: Run large System Level Tests
+        run: |
+          echo "Running all large tests with: "
+          echo " - NUMBER_OF_WORKER_THREADS: ${{ inputs.number_of_worker_threads }}"
+          echo " - BUFFER_SIZE: ${{ inputs.buffer_size }}"
+          echo " - PAGE_SIZE: ${{ inputs.page_size }}"
+          echo " - NUMBER_OF_PARTITIONS: ${{ inputs.number_of_partitions }}"    
+
+          build/nes-systests/systest/systest \
+              --workingDir=build/nes-systests/large_scale \
+              --data build/nes-systests/testdata \
+              --groups large \
+              -- \
+              --worker.default_query_execution.execution_mode=COMPILER \
+              --worker.query_engine.number_of_worker_threads=${{ inputs.number_of_worker_threads }} \
+              --worker.default_query_execution.operator_buffer_size=${{ inputs.buffer_size }} \
+              --worker.default_query_execution.page_size=${{ inputs.page_size }} \
+              --worker.default_query_execution.number_of_partitions=${{ inputs.number_of_partitions }} \
+              --worker.number_of_buffers_in_global_buffer_manager=200000
+
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        if: failure() && !github.event.act
+        with:
+          name: test-logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          path: build/nes-systests/SystemTest_*.log

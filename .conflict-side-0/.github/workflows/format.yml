@@ -1,0 +1,40 @@
+name: Check formatting rules
+description: This workflow calls our formatting script to verify the commit conforms to our formatting rules.
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image of the head commit"
+      head_sha:
+        type: string
+        required: true
+        description: "commit sha of head"
+      number_of_commits:
+        type: number
+        required: false
+        default: -1
+
+jobs:
+  check-format:
+    runs-on: [ self-hosted, linux, Build ]
+    container:
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+      options: --user root
+      env:
+        GH_TOKEN: ${{ github.token }}
+        DISTANCE_MERGE_BASE: ${{ inputs.number_of_commits }}
+    permissions:
+      issues: read
+      contents: read
+    steps:
+      - name: Include base commit
+        id: increment
+        run: echo "result=$((${{ inputs.number_of_commits }} + 1))" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ steps.increment.outputs.result }}
+          ref: ${{ inputs.head_sha }}
+      - name: Check Format
+        run: ./scripts/format.sh

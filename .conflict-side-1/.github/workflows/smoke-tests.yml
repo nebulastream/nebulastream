@@ -1,0 +1,97 @@
+name: Run Smoke Tests
+description: Performs quick running tests to check for basic errors
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+      head_sha:
+        required: true
+        type: string
+      number_of_commits:
+        required: true
+        type: number
+
+concurrency:
+  group: smoke-${{ inputs.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  check-format:
+    uses: ./.github/workflows/format.yml
+    with:
+      head_sha:          ${{ inputs.head_sha }}
+      dev_image_tag:     ${{ inputs.dev_image_tag }}
+      number_of_commits: ${{ inputs.number_of_commits }}
+
+  build-and-test-linux:
+    name: "Build and test"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      env:
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'RelWithDebInfo' ]
+        sanitizer: [ 'none' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.18
+        with:
+          key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+      - name: Choose a number of concurrent jobs
+        id: number-of-jobs
+        shell: bash
+        run: |
+          # Our arm machines have more cores than memory (in gb). This chooses a number of concurrent jobs equal to min(mem_in_gb, cpus)
+          VALUE=$(($(free -g | grep Mem: | awk '{print $2}') < $(nproc) ? $(free -g | grep Mem: | awk '{print $2}') : $(nproc)))
+          echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
+      - name: Configure NebulaStream
+        run: |
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+      - name: Build NebulaStream
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}}  -- -k 0
+      - name: Run Tests
+        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        # Upload all log and stats files if any of the tests has failed.
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && !github.event.act }}
+        uses: codecov/codecov-action@v5
+        with:
+          report_type: test_results
+          slug: nebulastream/nebulastream
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
+          files: /junit.xml
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
+          path: /junit.xml

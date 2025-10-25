@@ -1,0 +1,68 @@
+# name: function/arithmetical/FunctionSqrt.test
+# description: Simple function sqrt tests
+# groups: [Function, FunctionSqrt]
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+49,144,32761,2147395600,42,169,89401,15241383936,6.25,15239.9025
+
+CREATE LOGICAL SOURCE streamWithNegatives(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR streamWithNegatives TYPE File;
+ATTACH INLINE
+-49,-144,-32761,-2147395600,42,169,89401,15241383936,6.25,15239.9025
+
+CREATE SINK sinkStream(i8 FLOAT64, i16 FLOAT64, i32 FLOAT64, i64 FLOAT64, u8 FLOAT64, u16 FLOAT64, u32 FLOAT64, u64 FLOAT64, f32 FLOAT64, f64 FLOAT64) TYPE File;
+
+
+# Use SQRT across different data types
+# Due to the C++ standard making no assumptions on whether a sqrt of a negative number is -nan or nan,
+# we can not test for negative number by hardcoding the result.
+SELECT
+    SQRT(i8) AS i8,
+    SQRT(i16) AS i16,
+    SQRT(i32) AS i32,
+    SQRT(i64) AS i64,
+
+    SQRT(u8) AS u8,
+    SQRT(u16) AS u16,
+    SQRT(u32) AS u32,
+    SQRT(u64) AS u64,
+
+    SQRT(f32) AS f32,
+    SQRT(f64) AS f64
+FROM stream INTO sinkStream;
+----
+7,12,181,46340,6.480741,13.0,299.0,123456.0,2.5,123.45
+
+
+# As we can not hardcode the result for sqrt of negative numbers, we use a differential test
+SELECT
+    SQRT(i8) AS i8,
+    SQRT(i16) AS i16,
+    SQRT(i32) AS i32,
+    SQRT(i64) AS i64,
+
+    SQRT(u8) AS u8,
+    SQRT(u16) AS u16,
+    SQRT(u32) AS u32,
+    SQRT(u64) AS u64,
+
+    SQRT(f32) AS f32,
+    SQRT(f64) AS f64
+FROM streamWithNegatives INTO sinkStream;
+====
+SELECT
+    SQRT(INT32(0) - INT32(1)) AS i8,
+    SQRT(INT32(0) - INT32(1)) AS i16,
+    SQRT(INT32(0) - INT32(1)) AS i32,
+    SQRT(INT32(0) - INT32(1)) AS i64,
+
+    SQRT(u8) AS u8,
+    SQRT(u16) AS u16,
+    SQRT(u32) AS u32,
+    SQRT(u64) AS u64,
+
+    SQRT(f32) AS f32,
+    SQRT(f64) AS f64
+FROM streamWithNegatives INTO sinkStream;

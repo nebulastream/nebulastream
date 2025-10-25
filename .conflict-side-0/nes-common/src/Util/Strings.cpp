@@ -1,0 +1,349 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include <Util/Strings.hpp>
+
+#include <algorithm>
+#include <cctype>
+#include <concepts>
+#include <cstddef>
+#include <optional>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <Util/Ranges.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
+
+namespace NES
+{
+
+template <>
+std::optional<float> from_chars<float>(const std::string_view input)
+{
+    const std::string str(trimWhiteSpaces(input));
+    try
+    {
+        return std::stof(str);
+    }
+    catch (...) /// NOLINT(no-raw-catch-all)
+    {
+        return {};
+    }
+}
+
+template <>
+std::optional<bool> from_chars<bool>(const std::string_view input)
+{
+    auto trimmed = trimWhiteSpaces(input);
+    if (toLowerCase(trimmed) == "true" || trimmed == "1")
+    {
+        return true;
+    }
+    if (toLowerCase(trimmed) == "false" || trimmed == "0")
+    {
+        return false;
+    }
+    return {};
+}
+
+template <>
+std::optional<char> from_chars<char>(const std::string_view input)
+{
+    return (input.size() == 1) ? std::optional(input.front()) : std::nullopt;
+}
+
+template <>
+bool from_chars_with_exception<bool>(std::string_view input)
+{
+    if (const auto boolValue = from_chars<bool>(input); boolValue.has_value())
+    {
+        return boolValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported boolean value.", input);
+}
+
+template <>
+float from_chars_with_exception<float>(std::string_view input)
+{
+    if (const auto floatValue = from_chars<float>(input); floatValue.has_value())
+    {
+        return floatValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported float value.", input);
+}
+
+template <>
+double from_chars_with_exception<double>(std::string_view input)
+{
+    if (const auto doubleValue = from_chars<double>(input); doubleValue.has_value())
+    {
+        return doubleValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported double value.", input);
+}
+
+template <>
+char from_chars_with_exception<char>(std::string_view input)
+{
+    if (const auto charValue = from_chars<char>(input); charValue.has_value())
+    {
+        return charValue.value();
+    }
+    throw CannotFormatMalformedStringValue("'{}' is not a supported char value.", input);
+}
+
+std::string formatFloat(std::floating_point auto value)
+{
+    std::string formatted = fmt::format("{:.6f}", value);
+    const size_t decimalPos = formatted.find('.');
+    if (decimalPos == std::string_view::npos)
+    {
+        return formatted;
+    }
+
+    const size_t lastNonZero = formatted.find_last_not_of('0');
+    if (lastNonZero == decimalPos)
+    {
+        return formatted.substr(0, decimalPos + 2);
+    }
+
+    return formatted.substr(0, lastNonZero + 1);
+}
+
+template <>
+std::optional<double> from_chars<double>(const std::string_view input)
+{
+    const std::string str(trimWhiteSpaces(input));
+    try
+    {
+        return std::stod(str);
+    }
+    catch (...) /// NOLINT(no-raw-catch-all)
+    {
+        return {};
+    }
+}
+
+/// explicit instantiations
+template std::string formatFloat(float);
+template std::string formatFloat(double);
+
+template <>
+std::optional<std::string> from_chars<std::string>(const std::string_view input)
+{
+    return std::string(input);
+}
+
+template <>
+std::optional<std::string_view> from_chars<std::string_view>(std::string_view input)
+{
+    return input;
+}
+
+std::string replaceAll(std::string_view origin, const std::string_view search, const std::string_view replace)
+{
+    if (search.empty())
+    {
+        return std::string(origin);
+    }
+
+    std::stringstream stringBuilder;
+    for (auto index = origin.find(search); index != std::string_view::npos;
+         origin = origin.substr(index + search.length()), index = origin.find(search))
+    {
+        stringBuilder << origin.substr(0, index) << replace;
+    }
+
+    stringBuilder << origin;
+    return stringBuilder.str();
+}
+
+std::string replaceFirst(std::string_view origin, const std::string_view search, const std::string_view replace)
+{
+    if (search.empty())
+    {
+        return std::string(origin);
+    }
+
+    if (auto index = origin.find(search); index != std::string::npos)
+    {
+        std::stringstream stringBuilder;
+        stringBuilder << origin.substr(0, index) << replace << origin.substr(index + search.size());
+        return stringBuilder.str();
+    }
+    return std::string(origin);
+}
+
+std::string escapeSpecialCharacters(const std::string_view input)
+{
+    std::string result;
+    result.reserve(input.length());
+    for (const char character : input)
+    {
+        switch (character)
+        {
+            case '\a':
+                result += "\\a";
+                break;
+            case '\b':
+                result += "\\b";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            case '\v':
+                result += "\\v";
+                break;
+            case '\\':
+                result += "\\\\";
+                break;
+            default:
+                result += character;
+                break;
+        }
+    }
+    return result;
+}
+
+std::string unescapeSpecialCharacters(std::string_view input)
+{
+    std::string result;
+    result.reserve(input.size()); /// Result will be at most as long as input
+
+    for (size_t i = 0; i < input.size(); ++i)
+    {
+        if (input[i] == '\\' && i + 1 < input.size())
+        {
+            switch (input[i + 1])
+            {
+                case 'a':
+                    result.push_back('\a');
+                    ++i;
+                    break;
+                case 'b':
+                    result.push_back('\b');
+                    ++i;
+                    break;
+                case 'f':
+                    result.push_back('\f');
+                    ++i;
+                    break;
+                case 'n':
+                    result.push_back('\n');
+                    ++i;
+                    break;
+                case 'r':
+                    result.push_back('\r');
+                    ++i;
+                    break;
+                case 't':
+                    result.push_back('\t');
+                    ++i;
+                    break;
+                case 'v':
+                    result.push_back('\v');
+                    ++i;
+                    break;
+                case '\\':
+                    result.push_back('\\');
+                    ++i;
+                    break;
+                default:
+                    result.push_back(input[i]);
+                    break;
+            }
+        }
+        else
+        {
+            result.push_back(input[i]);
+        }
+    }
+
+    return result;
+}
+
+std::string toUpperCase(std::string_view input)
+{
+    return input | std::views::transform(::toupper) | std::ranges::to<std::string>();
+}
+
+std::string toLowerCase(std::string_view input)
+{
+    return input | std::views::transform(::tolower) | std::ranges::to<std::string>();
+}
+
+std::string_view trimWhiteSpaces(const std::string_view input)
+{
+    const auto start = input.find_first_not_of(" \t\n\r");
+    const auto end = input.find_last_not_of(" \t\n\r");
+    return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
+}
+
+std::string_view trimCharacters(const std::string_view input, const char c)
+{
+    const auto start = input.find_first_not_of(c);
+    const auto end = input.find_last_not_of(c);
+    return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
+}
+
+std::string_view trimCharsRight(std::string_view input, char character)
+{
+    const std::size_t lastNotC = input.find_last_not_of(character);
+    if (lastNotC == std::string_view::npos)
+    {
+        return std::string_view{};
+    }
+    input.remove_suffix(input.size() - lastNotC - 1);
+    return input;
+}
+
+void removeDoubleSpaces(std::string& input)
+{
+    const auto newEnd = std::ranges::unique(input, [](const char lhs, const char rhs) { return (lhs == rhs) && (lhs == ' '); }).begin();
+    input.erase(newEnd, input.end());
+}
+
+std::vector<std::string_view> splitOnMultipleDelimiters(std::string_view input, const std::vector<char>& delimiters)
+{
+    std::vector<std::string_view> result;
+    result.emplace_back(input);
+
+    for (const char delimiter : delimiters)
+    {
+        result = result
+            | std::views::transform(
+                     [delimiter](std::string_view inputSV)
+                     {
+                         return inputSV | std::views::split(delimiter)
+                             | std::views::transform([](auto&& split) { return std::string_view(split); })
+                             | std::views::filter([](const std::string_view splitSV) { return not splitSV.empty(); });
+                     })
+            | std::views::join | std::ranges::to<std::vector<std::string_view>>();
+    }
+
+    return result;
+}
+
+}

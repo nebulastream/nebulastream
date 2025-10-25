@@ -1,0 +1,14 @@
+# name: buffersize/OneToMultipleBuffers.test
+# description: Simple source/buffer tests
+# groups: [Sources]
+
+CREATE LOGICAL SOURCE noTuple(field_1 UINT64);
+CREATE PHYSICAL SOURCE FOR noTuple TYPE File;
+ATTACH INLINE
+
+CREATE SINK noTupelSink(noTuple.field_1 UINT64) TYPE File;
+
+# Description: check if we run into an error if we process a single tuple.
+SELECT field_1 FROM noTuple INTO noTupelSink;
+----
+

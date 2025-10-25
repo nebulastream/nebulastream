@@ -1,0 +1,98 @@
+# name: map/Map_Add.test
+# description: Simple map tests with an add function
+# groups: [Map]
+
+CREATE LOGICAL SOURCE stream(ID UINT64, VALUE UINT64, TIMESTAMP UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
+
+#SINK streamSink UINT64 ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP
+CREATE SINK streamSink(id UINT64, stream.value UINT64, stream.timestamp UINT64) TYPE File;
+
+#SINK streamSinkWithNew UINT64 STREAM$ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP UINT64 NEW
+CREATE SINK streamSinkWithNew(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, new UINT64) TYPE File;
+
+#SINK streamSinkWithNew2 UINT64 ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP UINT64 NEW UINT64 NEW2
+CREATE SINK streamSinkWithNew2(id UINT64, stream.value UINT64, stream.timestamp UINT64, new UINT64, new2 UINT64) TYPE File;
+
+#SINK sinkOnlyIdAndNew2 UINT64 NEW2 UINT64 ID
+CREATE SINK sinkOnlyIdAndNew2(new2 UINT64, id UINT64) TYPE File;
+
+# Map with add function touches one field
+SELECT id + UINT64(1) AS id, value, timestamp FROM stream INTO streamSink;
+----
+2,1,1000
+3,1,1001
+4,1,1002
+5,2,2000
+6,19,19000
+7,20,20000
+8,21,21000
+
+# Map with add function touches two fields
+SELECT ID + VALUE AS ID, VALUE, TIMESTAMP FROM STREAM INTO STREAMSINK;
+----
+2,1,1000
+3,1,1001
+4,1,1002
+6,2,2000
+24,19,19000
+26,20,20000
+28,21,21000
+
+# Map with add function touches two fields and adds a new field
+SELECT ID, VALUE, TIMESTAMP, ID + VALUE AS NEW FROM STREAM INTO STREAMSINKWITHNEW;
+----
+1,1,1000,2
+2,1,1001,3
+3,1,1002,4
+4,2,2000,6
+5,19,19000,24
+6,20,20000,26
+7,21,21000,28
+
+# Two maps after each other that both touch the same fields
+# Todo: SELECT id + 1 AS new_id, new_id + value AS id <--- does not work 'field new_id does not exist'
+SELECT ID + UINT64(1) + VALUE AS ID, VALUE, TIMESTAMP FROM STREAM INTO STREAMSINK;
+----
+3,1,1000
+4,1,1001
+5,1,1002
+7,2,2000
+25,19,19000
+27,20,20000
+29,21,21000
+
+# Three maps after each other that use a newly created field to create another field
+SELECT *, NEW + VALUE AS NEW2 FROM (
+    SELECT *, ID + VALUE AS NEW FROM (
+        SELECT ID + UINT64(1) AS ID, VALUE, TIMESTAMP FROM STREAM
+    )
+) INTO STREAMSINKWITHNEW2;
+----
+2,1,1000,3,4
+3,1,1001,4,5
+4,1,1002,5,6
+5,2,2000,7,9
+6,19,19000,25,44
+7,20,20000,27,47
+8,21,21000,29,50
+
+# Four maps that use a newly created field to create another field,
+# but we keep id, and new2 only. We also add id and new2 together in the end.
+SELECT NEW2, (ID + UINT64(1)) + NEW2 AS ID FROM (SELECT *, VALUE + (ID + UINT64(1)) + VALUE AS NEW2 FROM STREAM) INTO SINKONLYIDANDNEW2;
+----
+4,6
+5,8
+6,10
+9,14
+44,50
+47,54
+50,58

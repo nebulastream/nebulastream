@@ -1,0 +1,45 @@
+{
+  "name": "NebulaStream Development (Thin)",
+  "build": {
+    "dockerfile": "../docker/dependency/Thin.dockerfile",
+    "context": "../"
+  },
+  "mounts": [
+    "source=nes-vcpkg-binary-cache,target=/vcpkg-binary-cache,type=volume",
+    "source=nes-vcpkg-downloads,target=/vcpkg_input/vcpkg_repository/downloads,type=volume",
+    "source=nes-ccache,target=/ccache,type=volume",
+    "source=nes-claude-config,target=/home/vscode/.claude,type=volume",
+    "source=nes-test-file-cache,target=/test-file-cache,type=volume"
+  ],
+  "runArgs": ["--env-file", ".devcontainer/.secrets.env"],
+  "containerEnv": {
+    "NES_DEVCONTAINER": "1",
+    "VCPKG_DEFAULT_BINARY_CACHE": "/vcpkg-binary-cache",
+    "CCACHE_DIR": "/ccache",
+    "VCPKG_BINARY_SOURCES": "clear;http,https://pub-162f068cdd4a45d192dedb5f886cd825.r2.dev/{sha}.zip,read"
+  },
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "vscode"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools"
+      ]
+    }
+  },
+  "initializeCommand": "touch .devcontainer/.secrets.env",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && gh auth setup-git && git config --global user.name \"$(gh api user --jq .name)\" && git config --global user.email \"$(gh api user --jq '.email // .login + \"@users.noreply.github.com\"')\"",
+  "postStartCommand": "sudo chown -R vscode:vscode /vcpkg_input /ccache /vcpkg-binary-cache /home/vscode/.claude /test-file-cache && sudo -E /usr/local/bin/nes-thin-entrypoint.sh"
+}
