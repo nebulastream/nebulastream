@@ -258,9 +258,6 @@ def process_csv(trace_paths, window_size=10):
             window_size = 1
         num_windows = max_ts // window_size #<= 10000
 
-        # Add a window column
-        df['window'] = df['ts'] // window_size
-
 
         # Separate begin and end events
         begin_df = df[df['ph'] == 'B'].copy()
@@ -270,31 +267,21 @@ def process_csv(trace_paths, window_size=10):
         merged = pd.merge(
             begin_df, end_df, on=['run_id', 'p_id', 't_id'], suffixes=('_begin', '_end')
         )
-        merged = merged.rename(columns={'window_begin': 'window'})
-
-        # Compute skipped counts per (run_id, p_id, window) as the absolute difference
-        # between begin and end event counts in that scope.
-        begin_counts = begin_df.groupby(['run_id', 'p_id', 'window']).size().rename('begin_count').reset_index()
-        end_counts = end_df.groupby(['run_id', 'p_id', 'window']).size().rename('end_count').reset_index()
-        counts = pd.merge(begin_counts, end_counts, on=['run_id', 'p_id', 'window'], how='outer').fillna(0)
-        counts['skipped'] = (counts['begin_count'] - counts['end_count']).abs().astype(int)
-
-        # Attach skipped counts to merged matched tasks (missing entries will be 0)
-        merged = pd.merge(merged, counts[['run_id', 'p_id', 'window', 'skipped']], on=['run_id', 'p_id', 'window'], how='left')
-        merged['skipped'] = merged['skipped'].fillna(0).astype(int)
 
         # per-run counts
         num_reps = merged['run_id'].nunique()
 
-        # Total skipped tasks (starts - matched) across all runs/files
-        total_skipped_tasks = int(counts['skipped'].sum())
-        if total_skipped_tasks > 0:
-            max_size = np.max([begin_df['tuples'].size, end_df['tuples'].size])
+        #combine begin and end events taking tuples from begin and latency from end
+        merged['latency'] = merged['latency_end'] #microseconds
+        merged['tuples'] = merged['tuples_end']
+
+
+        max_size = np.max([begin_df['tuples'].size, end_df['tuples'].size])
+
+        diff = int(np.abs(max_size - merged['tuples_begin'].size))
+
+        if diff > 0:
             print("Warning: Total skipped tasks:")
-            print(f"{int(total_skipped_tasks)} skipped out of:")
-            print(f"{int(merged['t_id'].nunique() * num_reps)} total tasks and bufferSize {metadata.get('buffer_size','')}")
-            print("or")
-            diff = int(np.abs(max_size - merged['tuples_begin'].size))
             print(f"{diff} out of")
             print(f"{int(max_size)} tasks across all runs.")
             if max_size < 550:
@@ -303,18 +290,24 @@ def process_csv(trace_paths, window_size=10):
             #print(f"Total tasks time across all runs (s): {total_tasks_time_by_run.sum() / 1e6}")
 
 
-            #discard ts and store max_ts by run
-        merged['max_ts'] = merged.groupby('run_id')['ts_end'].transform('max')
-        merged = merged.drop(columns=['ts_begin', 'ts_end'])
-
-        #combine begin and end events taking tuples from begin and latency from end
-        merged['latency'] = merged['latency_end'] #microseconds
-        merged['tuples'] = merged['tuples_end']
 
         #remove emtpy latency -1 if tuples are 0
         mask_invalid = (merged['latency'] == -1) & (merged['tuples'] == 0)
         if mask_invalid.any():
             merged.loc[mask_invalid, 'latency'] = 0
+
+
+        #discard ts and store max_ts by run
+        merged['max_ts'] = merged.groupby('run_id')['ts_end'].transform('max')
+        merged['duration'] = merged['ts_end'] - merged['ts_begin']
+        abs_diff = (merged['latency'] - merged['duration']).abs()
+        mask_inconsistent = abs_diff > 3
+        diff = int(mask_inconsistent.sum())
+        if diff > 0:
+            print(f"Warning: {diff} tasks have inconsistent latency values between duration and timestamps.")
+        else:
+            merged = merged.drop(columns=['ts_begin', 'ts_end', 'duration'])
+
 
 
         if (merged['latency'] <= 0).any():
@@ -330,11 +323,35 @@ def process_csv(trace_paths, window_size=10):
                 merged = merged[merged['latency'] > 0].copy()
 
         #TODO: check why new csv latencies are that varied
+        #
+
+        # Compute window number based on midpoint
+        merged['window'] = (merged['latency'] // 2) // window_size
 
         # throughput per task (tuples/sec)
         merged['throughput'] = merged['tuples'] / (merged['latency'] / 1e6)
 
+        # Calculate skipped tasks per (run_id, p_id, window):
+        # skipped = max(begin_count, end_count) - matched_count
+        # derive window for begin/end using ts // window_size (same coarse bins)
+        b = begin_df.copy()
+        b['window'] = (b['ts'] // window_size).astype(int)
+        begin_grp = b.groupby(['run_id', 'p_id', 'window']).size().rename('begin_count')
 
+        e = end_df.copy()
+        e['window'] = (e['ts'] // window_size).astype(int)
+        end_grp = e.groupby(['run_id', 'p_id', 'window']).size().rename('end_count')
+
+        matched_grp = merged.groupby(['run_id', 'p_id', 'window']).size().rename('matched_count')
+
+        counts = pd.concat([begin_grp, end_grp, matched_grp], axis=1).fillna(0).reset_index()
+        counts['skipped'] = (counts[['begin_count', 'end_count']].max(axis=1) - counts['matched_count']).clip(lower=0).astype(int)
+
+        # Join skipped back onto merged rows
+        merged = merged.merge(counts[['run_id', 'p_id', 'window', 'skipped']], on=['run_id', 'p_id', 'window'], how='left')
+        merged['skipped'] = merged['skipped'].fillna(0).astype(int)
+
+        #print(f"Total skipped tasks {counts['skipped'].sum()} vs diff {diff}")
 
 
 
