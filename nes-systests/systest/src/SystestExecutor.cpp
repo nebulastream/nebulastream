@@ -34,10 +34,9 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-
 #include <Configurations/Util.hpp>
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -91,8 +90,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const URI& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
-    auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI.toString(), grpc::InsecureChannelCredentials()));
-    Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+    Systest::QuerySubmitter querySubmitter(
+        std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(grpcURI.toString())})));
 
     while (true)
     {
@@ -138,7 +137,9 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
 
-            auto queryManager = std::make_unique<EmbeddedWorkerQueryManager>(configCopy);
+            auto queryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+                WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, baseConfiguration));
+
             Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
             auto shuffledQueries = queriesForConfig;

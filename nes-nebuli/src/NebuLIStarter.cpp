@@ -32,7 +32,7 @@
 #include <unistd.h>
 
 #include <Plans/LogicalPlan.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
@@ -64,7 +64,7 @@
 
 #ifdef EMBED_ENGINE
     #include <Configurations/Util.hpp>
-    #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
+    #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
     #include <SingleNodeWorkerConfiguration.hpp>
 #endif
 
@@ -168,8 +168,8 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::GRPCQueryManager>(
-                CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+            queryManager = std::make_shared<NES::QueryManager>(
+                std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{NES::GrpcAddr("localhost:8080")}));
         }
         else
         {
@@ -191,7 +191,8 @@ int main(int argc, char** argv)
             auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
                                               .value_or(NES::SingleNodeWorkerConfiguration{});
 
-            queryManager = std::make_shared<NES::EmbeddedWorkerQueryManager>(singleNodeWorkerConfig);
+            queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(
+                NES::WorkerConfig{NES::GrpcAddr("localhost:8080")}, singleNodeWorkerConfig));
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
                       "single node worker.")
@@ -218,7 +219,7 @@ int main(int argc, char** argv)
 
             if (program.is_used("-w"))
             {
-                for (const auto& query : queryStatementHandler->getRunningQueries())
+                for (const auto& query : queryManager->getRunningQueries())
                 {
                     auto status = queryManager->status(query);
                     while (status.has_value() && status.value().state != NES::QueryState::Stopped
