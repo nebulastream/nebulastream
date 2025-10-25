@@ -33,10 +33,9 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-
 #include <Configurations/Util.hpp>
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -393,9 +392,10 @@ void runEndlessMode(std::vector<Systest::SystestQuery> queries, SystestConfigura
     {
         if (runRemote)
         {
-            return std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
+            return std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(grpcURI)}));
         }
-        return std::make_unique<EmbeddedWorkerQueryManager>(singleNodeWorkerConfiguration);
+        return std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+            WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, singleNodeWorkerConfiguration));
     }();
     Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
