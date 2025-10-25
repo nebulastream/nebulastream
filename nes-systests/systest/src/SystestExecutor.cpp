@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -34,14 +35,13 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-
-#include <Configurations/Util.hpp>
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/URI.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
@@ -53,6 +53,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <SystestConfiguration.hpp>
+#include <SystestProgressTracker.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <from_current.hpp>
@@ -91,8 +92,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const std::string& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
-    auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
-    Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+    Systest::QuerySubmitter querySubmitter(
+        std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(grpcURI)})));
 
     while (true)
     {
@@ -138,7 +139,9 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
 
-            auto queryManager = std::make_unique<EmbeddedWorkerQueryManager>(configCopy);
+            auto queryManager = std::make_unique<QueryManager>(
+                std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configCopy));
+
             Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
             auto shuffledQueries = queriesForConfig;

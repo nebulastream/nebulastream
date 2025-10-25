@@ -37,30 +37,21 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
+#include <QueryManager/QueryManager.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/URI.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>
-#include <folly/MPMCQueue.h>
-#include <nlohmann/json.hpp>
-
-
-#include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
-#include <nlohmann/json_fwd.hpp>
+#include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
-#include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 
@@ -332,7 +323,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     nlohmann::json& resultJson,
     SystestProgressTracker& progressTracker)
 {
-    auto worker = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
+    auto worker = std::make_unique<QueryManager>(
+        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
@@ -473,7 +465,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker)
 {
-    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
+    auto embeddedQueryManager = std::make_unique<QueryManager>(
+        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
     QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
@@ -484,7 +477,8 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::string& serverURI,
     SystestProgressTracker& progressTracker)
 {
-    auto remoteQueryManager = std::make_unique<GRPCQueryManager>(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
+    auto remoteQueryManager
+        = std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI)}));
     QuerySubmitter submitter(std::move(remoteQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
