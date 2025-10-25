@@ -268,10 +268,42 @@ def process_csv(trace_paths, window_size=10):
 
         # Merge begin and end on run_id, p_id, t_id, window
         merged = pd.merge(
-            begin_df, end_df, on=['run_id', 'p_id', 't_id', 'window'], suffixes=('_begin', '_end')
+            begin_df, end_df, on=['run_id', 'p_id', 't_id'], suffixes=('_begin', '_end')
         )
+        merged = merged.rename(columns={'window_begin': 'window'})
 
-        #discard ts and store max_ts by run
+        # Compute skipped counts per (run_id, p_id, window) as the absolute difference
+        # between begin and end event counts in that scope.
+        begin_counts = begin_df.groupby(['run_id', 'p_id', 'window']).size().rename('begin_count').reset_index()
+        end_counts = end_df.groupby(['run_id', 'p_id', 'window']).size().rename('end_count').reset_index()
+        counts = pd.merge(begin_counts, end_counts, on=['run_id', 'p_id', 'window'], how='outer').fillna(0)
+        counts['skipped'] = (counts['begin_count'] - counts['end_count']).abs().astype(int)
+
+        # Attach skipped counts to merged matched tasks (missing entries will be 0)
+        merged = pd.merge(merged, counts[['run_id', 'p_id', 'window', 'skipped']], on=['run_id', 'p_id', 'window'], how='left')
+        merged['skipped'] = merged['skipped'].fillna(0).astype(int)
+
+        # per-run counts
+        num_reps = merged['run_id'].nunique()
+
+        # Total skipped tasks (starts - matched) across all runs/files
+        total_skipped_tasks = int(counts['skipped'].sum())
+        if total_skipped_tasks > 0:
+            max_size = np.max([begin_df['tuples'].size, end_df['tuples'].size])
+            print("Warning: Total skipped tasks:")
+            print(f"{int(total_skipped_tasks)} skipped out of:")
+            print(f"{int(merged['t_id'].nunique() * num_reps)} total tasks and bufferSize {metadata.get('buffer_size','')}")
+            print("or")
+            diff = int(np.abs(max_size - merged['tuples_begin'].size))
+            print(f"{diff} out of")
+            print(f"{int(max_size)} tasks across all runs.")
+            if max_size < 550:
+                print(trace_file)
+            #print(f"{int(np.abs(merged['tuples_begin'].size - merged['tuples_end'].size))}")
+            #print(f"Total tasks time across all runs (s): {total_tasks_time_by_run.sum() / 1e6}")
+
+
+            #discard ts and store max_ts by run
         merged['max_ts'] = merged.groupby('run_id')['ts_end'].transform('max')
         merged = merged.drop(columns=['ts_begin', 'ts_end'])
 
@@ -302,8 +334,7 @@ def process_csv(trace_paths, window_size=10):
         # throughput per task (tuples/sec)
         merged['throughput'] = merged['tuples'] / (merged['latency'] / 1e6)
 
-        # per-run counts
-        num_reps = merged['run_id'].nunique()
+
 
 
 
@@ -314,7 +345,7 @@ def process_csv(trace_paths, window_size=10):
             for p_id in merged['p_id'].unique():
                 mask = (merged['run_id'] == run_id) & (merged['p_id'] == p_id)
                 times[p_id] = merged.loc[mask, 'latency'].sum()
-                merged['skipped'] = np.abs(merged.loc[mask, 'tuples_begin'].size - merged.loc[mask, 'tuples_end'].size)
+                #merged['skipped'] = np.abs(merged.loc[mask, 'tuples_begin'].size - merged.loc[mask, 'tuples_end'].size)
             total_tasks_time_by_pipeline[run_id] = times
         #TODO: add to pipeline stats
 
@@ -323,11 +354,6 @@ def process_csv(trace_paths, window_size=10):
         # Total tasks time per run (microseconds)
         total_tasks_time_by_run = grouped['latency'].sum()#TODO: insert into pipeline stats
 
-
-        # Total skipped tasks (starts - matched) across all runs/files
-        total_skipped_tasks = merged['skipped'].sum()
-        if total_skipped_tasks > 0:
-            print(f"Warning: Total skipped tasks: {total_skipped_tasks}")
 
 
         # Per-run, per-pipeline-window aggregates (from matched tasks)
