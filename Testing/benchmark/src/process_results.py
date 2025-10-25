@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 import shutil
 
-def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover latency (especially for swaps)
+def process_benchmark(benchmark_dir, run_options='all', legacy = False): #TODO: also cover latency (especially for swaps)
     """Process benchmark results with support for double operator configurations."""
     try:
         benchmark_dir = Path(benchmark_dir)
@@ -138,8 +138,8 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
         print(f"Found {len(trace_file_info)} trace files to process and {empty_files} empty trace files.")
 
         # Create a temporary directory for enginestatsread.py output
-        temp_dir = benchmark_dir / "temp_results"
-        temp_dir.mkdir(exist_ok=True)
+        #temp_dir = benchmark_dir / "temp_results"
+        #temp_dir.mkdir(exist_ok=True)
 
         # Get a list of all trace files
         trace_files = [str(info['file_path']) for info in trace_file_info]
@@ -158,10 +158,9 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
             else:
                 print(result.stdout.decode())
 
-            """
             # Read CSV result from enginestatsread.py
-            csv_file = temp_dir / f"{temp_dir.name}.csv"
-            if csv_file.exists():
+            csv_file = benchmark_dir / f"{benchmark_dir.name}_old.csv"
+            if csv_file.exists() and legacy:
                 results_df = pd.read_csv(csv_file)
 
                 # Process the combined results
@@ -213,7 +212,7 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
                         # Copy individual results to query directory
                         result_csv = info['query_dir'] / f"run{info['run']}_{info['layout']}_results.csv"
                         query_results.to_csv(result_csv, index=False)
-
+                """
                 if all_results:
                     combined_df = pd.concat(all_results, ignore_index=True)
 
@@ -268,7 +267,7 @@ def process_benchmark(benchmark_dir, run_options='all'): #TODO: also cover laten
             traceback.print_exc()
 
         # Clean up temporary directory
-        shutil.rmtree(temp_dir)
+        #shutil.rmtree(temp_dir)
 
     except Exception as e:
         print(f"Error processing benchmark: {e}")
@@ -281,8 +280,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process benchmark results')
     parser.add_argument('--benchmark-dir', required=True, help='Path to benchmark directory')
     parser.add_argument('--run-options', required=True, default='all', help='options: all, single or double')
+    parser.add_argument('--legacy', action='store_true', help='Use legacy processing method')
     args = parser.parse_args()
+    legacy= False
+    if args.legacy:
+        legacy= True
+    process_benchmark(args.benchmark_dir, args.run_options, legacy)
 
-    process_benchmark(args.benchmark_dir, args.run_options)
-
-#python3 src/process_results.py --benchmark-dir /home/user/CLionProjects/nebulastream/Testing/benchmark/benchmark_results/benchmark14 --run-options=singl
+#python3 src/process_results.py --benchmark-dir /home/user/CLionProjects/nebulastream/Testing/benchmark/benchmark_results/benchmark14 --run-options=single

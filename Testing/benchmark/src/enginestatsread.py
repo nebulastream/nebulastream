@@ -139,6 +139,9 @@ def process_csv(trace_paths, window_size=10):
     """
     try:
         dfs = []
+        run = 0
+        full_query_durations = {}
+        pipeline_times_by_run = {}
         for trace_file in trace_paths:
             with open(trace_file, 'r') as f:
                 trace_data = json.load(f)
@@ -147,7 +150,11 @@ def process_csv(trace_paths, window_size=10):
             events  = trace_data.get('traceEvents', [])
 
             rows = []
+            total_time = {}
+            pipeline_times = {}
             for event in events:
+                #TODO: get total query time
+                # get total pipeline time
                 if event.get('ph') in ['B', 'E'] and event.get('cat') == 'task' and 'args' in event:
                     args = event['args']
                     # Ignore the first 9 digits of the timestamp
@@ -155,23 +162,75 @@ def process_csv(trace_paths, window_size=10):
                     t_id = int(args.get('task_id', -1))
                     ph = event.get('ph', '')
                     #reduced_ts = (event['ts'] % 1_000_000_000)
-                    ts = int(event['ts']) % 1_000_000_000
+                    ts = event['ts'] #% 1_000_000_000
+                    latency = 0
+                    tuples = 0
+                    if ph == 'E':
+                        tuples = 0
+                        latency = event.get('dur', -1)
+                    else:
+                        latency = 0
+                        tuples = args.get('tuples', 0)
 
-                    tuples = int(args.get('tuples', 0) if event['ph'] == 'B' else 0)
                     rows.append({
                         'p_id': p_id,
                         't_id': t_id,
                         'ph': ph,
                         'ts': ts,
-                        'tuples': tuples
+                        'tuples': tuples,
+                        'latency': latency
                     })
+                elif event.get('cat') == 'query':
+                    if event.get('ph') == 'B':
+                        total_time['begin'] = event.get('ts', 0)
+                    elif event.get('ph') == 'E':
+                        total_time['end'] = event.get('ts', 0)
+                elif event.get('cat') == 'pipeline' and 'args' in event:
+                    args = event['args']
+                    p_id = int(args.get('pipeline_id', -1))
+                    pipe_time = pipeline_times.get(p_id, {})
+                    if event.get('ph') == 'B':
+                        pipe_time['begin'] = event.get('ts', 0)
+                    elif event.get('ph') == 'E':
+                        pipe_time['end'] = event.get('ts', 0)
+                    pipeline_times[p_id] = pipe_time
+
             if not rows:
                 continue
             df = pd.DataFrame(rows)
 
+            if 'begin' in total_time and 'end' in total_time:
+                full_query_durations[run] = (total_time.get('end', 0) - total_time.get('begin', 0))
+            elif 'begin' in total_time:
+                #print("Warning: Missing query end event in trace. Using max_ts")
+                max_ts = df['ts'].max()
+                full_query_durations[run] = (max_ts - total_time.get('begin', 0))
+            else:
+                print("Warning: Missing query begin event in trace: ", full_query_durations)
+                print("From file: " + trace_file)
+
+            times = {}
+            for pipe in pipeline_times:
+                ptime = pipeline_times[pipe]
+                if 'begin' in ptime and 'end' in ptime:
+                    duration = ptime.get('end', 0) - ptime.get('begin', 0)
+
+                    times[pipe] = duration
+                elif 'begin' in ptime:
+                    #print(f"Warning: Missing pipeline {pipe} end event in trace. Using max_ts")
+                    df_pipe = df[df['p_id'] == pipe]
+                    max_ts = df_pipe['ts'].max()
+                    duration = max_ts - ptime.get('begin', 0)
+                    times[pipe] = duration
+                else:
+
+                    print(f"Warning: Missing pipeline {pipe} begin or end event in trace.")
+            pipeline_times_by_run[run] = times
+            run += 1
+
             # Normalize timestamps per-file to start at zero (microseconds).
             # Avoid modulo wrap that can reorder events and cause negative latencies.
-            min_timestamp = df['ts'].min() % 1_000_000_000
+            min_timestamp = df['ts'].min()# % 1_000_000_000
             df['ts'] = (df['ts']  -  min_timestamp)
 
             dfs.append(df)
@@ -189,9 +248,19 @@ def process_csv(trace_paths, window_size=10):
         df['t_id'] = df['t_id'].astype(int)
         df['ts'] = df['ts'].astype(int)
         df['tuples'] = pd.to_numeric(df['tuples'], errors='coerce').fillna(0).astype(int)
+        df['latency'] = pd.to_numeric(df['latency'], errors='coerce').fillna(0).astype(int)
+
+
+        max_ts = df['ts'].max()
+
+        window_size = max_ts // 10000 # at max 10k col per file
+        if window_size < 1:
+            window_size = 1
+        num_windows = max_ts // window_size #<= 10000
 
         # Add a window column
-        df['window'] = df['t_id'] // window_size
+        df['window'] = df['ts'] // window_size
+
 
         # Separate begin and end events
         begin_df = df[df['ph'] == 'B'].copy()
@@ -202,53 +271,78 @@ def process_csv(trace_paths, window_size=10):
             begin_df, end_df, on=['run_id', 'p_id', 't_id', 'window'], suffixes=('_begin', '_end')
         )
 
-        # Calculate latency and throughput
-        merged['latency'] = merged['ts_end'] - merged['ts_begin'] #microseconds
+        #discard ts and store max_ts by run
+        merged['max_ts'] = merged.groupby('run_id')['ts_end'].transform('max')
+        merged = merged.drop(columns=['ts_begin', 'ts_end'])
+
+        #combine begin and end events taking tuples from begin and latency from end
+        merged['latency'] = merged['latency_end'] #microseconds
+        merged['tuples'] = merged['tuples_end']
+
+        #remove emtpy latency -1 if tuples are 0
+        mask_invalid = (merged['latency'] == -1) & (merged['tuples'] == 0)
+        if mask_invalid.any():
+            merged.loc[mask_invalid, 'latency'] = 0
+
+
         if (merged['latency'] <= 0).any():
-            num_nul= (merged['latency'] <= 0).sum()
-            print(f"Warning: Some tasks have {num_nul} non-positive latency and will be excluded from metrics.")
-            merged = merged[merged['latency'] > 0].copy()
+            #remove 0 latencies 0 tuples tasks
+            merged = merged[~((merged['latency'] == 0) & (merged['tuples'] == 0))].copy()
+
+            num_nul= (merged['latency'] < 0).sum()
+            tuples = (merged[merged['latency'] < 0]['tuples']).sum()
+            if num_nul > 0 or tuples > 0:
+                print(f"Warning: Some tasks have {num_nul} non-positive latency and will be excluding {tuples} tuples from metrics.")
+                #print(f"{(merged['latency'] ==  -1).sum()} tasks have empty latency.")
+                #print(f"{(merged['latency_begin'] ==  0).sum()} begin tasks have empty latency.")
+                merged = merged[merged['latency'] > 0].copy()
+
+        #TODO: check why new csv latencies are that varied
 
         # throughput per task (tuples/sec)
-        merged['throughput'] = merged['tuples_begin'] / (merged['latency'] / 1e6)
+        merged['throughput'] = merged['tuples'] / (merged['latency'] / 1e6)
 
         # per-run counts
         num_reps = merged['run_id'].nunique()
 
+
+
+        total_tasks_time_by_pipeline = {}
+
+        for run_id in range(run):
+            times = {}
+            for p_id in merged['p_id'].unique():
+                mask = (merged['run_id'] == run_id) & (merged['p_id'] == p_id)
+                times[p_id] = merged.loc[mask, 'latency'].sum()
+                merged['skipped'] = np.abs(merged.loc[mask, 'tuples_begin'].size - merged.loc[mask, 'tuples_end'].size)
+            total_tasks_time_by_pipeline[run_id] = times
+        #TODO: add to pipeline stats
+
         grouped = merged.groupby('run_id')
 
         # Total tasks time per run (microseconds)
-        total_tasks_time_by_run = grouped['latency'].sum()
+        total_tasks_time_by_run = grouped['latency'].sum()#TODO: insert into pipeline stats
 
-        # Full query duration per run (microseconds)
-        full_query_duration_by_run = (grouped['ts_end'].max() - grouped['ts_begin'].min())
-
-        # Aggregate means (already in seconds / counts)
-        mean_full_query_duration = full_query_duration_by_run.mean()
-        mean_total_tasks_time = total_tasks_time_by_run.mean()
 
         # Total skipped tasks (starts - matched) across all runs/files
-        total_skipped_tasks = len(begin_df) - len(merged)
+        total_skipped_tasks = merged['skipped'].sum()
+        if total_skipped_tasks > 0:
+            print(f"Warning: Total skipped tasks: {total_skipped_tasks}")
 
-        # Count starts per run/p_id/window (to compute skipped = starts - matched)
-        starts = begin_df.groupby(['run_id', 'p_id', 'window']).size().rename('starts')
 
         # Per-run, per-pipeline-window aggregates (from matched tasks)
         grouped_run = merged.groupby(['run_id', 'p_id', 'window']).agg(
-            count=('latency', 'size'),
+            count=('t_id', 'size'),
             total_tuples=('tuples_begin', 'sum'),
+            total_skipped=('skipped', 'sum'),
             sum_latency=('latency', 'sum'),          # microseconds
             mean_latency=('latency', 'mean'),
             std_latency=('latency', 'std'),
             mean_tp=('throughput', 'mean'),
             std_tp=('throughput', 'std'),
-            sum_tp=('throughput', 'sum')
+            sum_tp=('throughput', 'sum'),
+            max_ts=('max_ts', 'max')
         )
-
-        # Join starts to compute skipped per run/p_id/window
-        grouped_run = grouped_run.join(starts, how='left')
-        grouped_run['starts'] = grouped_run['starts'].fillna(0).astype(int)
-        grouped_run['skipped'] = (grouped_run['starts'] - grouped_run['count']).clip(lower=0)
 
         # Reset index for per-window averaging across runs and keep a copy
         grouped_run = grouped_run.reset_index()
@@ -259,6 +353,8 @@ def process_csv(trace_paths, window_size=10):
             runs=('run_id', 'nunique'),
             count_mean=('count', 'mean'),
             count_std=('count', 'std'),
+            total_skipped_mean=('total_skipped', 'mean'),
+            total_skipped_std=('total_skipped', 'std'),
             total_tuples_mean=('total_tuples', 'mean'),
             total_tuples_std=('total_tuples', 'std'),
             sum_latency_mean=('sum_latency', 'mean'),      # microseconds
@@ -267,31 +363,51 @@ def process_csv(trace_paths, window_size=10):
             mean_latency_std=('mean_latency', 'std'),
             mean_tp_mean=('mean_tp', 'mean'),
             mean_tp_std=('mean_tp', 'std'),
-            skipped_sum=('skipped', 'sum')
+            sum_tp_mean=('sum_tp', 'mean'),
         ).reset_index().fillna(0)
 
         # Build per-run, per-pipeline totals (to be averaged across runs for pipeline-level stats)
         per_run_pipeline = merged.groupby(['run_id', 'p_id']).agg(
-            count=('latency', 'size'),
-            sum_tuples=('tuples_begin', 'sum'),
+            count=('t_id', 'size'),
+            sum_tuples=('tuples', 'sum'),
             sum_latency=('latency', 'sum'),                 # microseconds (compute time)
             mean_latency=('latency', 'mean'),
-            sum_tp=('throughput', 'sum')
+            std_latency=('latency', 'std'),
+            sum_tp=('throughput', 'sum'),
+            total_skipped=('skipped', 'sum'),
+            max_ts=('max_ts', 'max')
         )
+        # Full query duration per run (microseconds)
+        #full_query_duration_by_run = full_query_durations
+        #(grouped['ts_end'].max() - grouped['ts_begin'].min())
+        full_query_duration_rows = []
+        for run_id, time in full_query_durations.items():
+            full_query_duration_rows.append({'run_id': run_id, 'full_query_duration': time})
+        full_query_duration_by_run = pd.DataFrame(full_query_duration_rows, columns=['run_id', 'full_query_duration'])
 
-        # compute pipeline wall-time per run (wall time = max end - min begin per run/p_id)
-        run_wall = merged.groupby(['run_id', 'p_id']).agg(
-            wall_start=('ts_begin', 'min'),
-            wall_end=('ts_end', 'max')
-        )
-        run_wall['wall_time'] = run_wall['wall_end'] - run_wall['wall_start']  # microseconds
-        per_run_pipeline = per_run_pipeline.join(run_wall['wall_time'], how='left')
-        per_run_pipeline = per_run_pipeline.reset_index()
+        p_time_rows = []
+        for run_id, pipes in pipeline_times_by_run.items():
+            for p_id, time in pipes.items():
+                p_time_rows.append({'run_id': run_id, 'p_id': p_id, 'wall_time': time})
+        p_time = pd.DataFrame(p_time_rows, columns=['run_id', 'p_id', 'wall_time'])
 
-        # skipped per run/pipeline (sum of skipped windows)
-        skipped_per_run_pipeline = per_run_window.groupby(['run_id', 'p_id'])['skipped'].sum().rename('skipped')
-        per_run_pipeline = per_run_pipeline.join(skipped_per_run_pipeline, on=['run_id', 'p_id'], how='left')
-        per_run_pipeline['skipped'] = per_run_pipeline['skipped'].fillna(0).astype(int)
+        total_tasks_rows = []
+        for run_id, pipes in total_tasks_time_by_pipeline.items():
+            for p_id, time in pipes.items():
+                total_tasks_rows.append({'run_id': run_id, 'p_id': p_id, 'total_tasks_time': time})
+        total_tasks_time_by_pipe = pd.DataFrame(total_tasks_rows, columns=['run_id', 'p_id', 'total_tasks_time'])
+
+        # Aggregate means (already in seconds / counts)
+        mean_full_query_duration = full_query_duration_by_run.mean() #full_query_duration_by_run['full_query_duration'].mean()
+        std_full_query_duration = full_query_duration_by_run.std()#full_query_duration_by_run['full_query_duration'].std()
+        per_run_total_tasks = total_tasks_time_by_pipe.groupby('run_id')['total_tasks_time'].sum()
+        total_tasks_time_mean = per_run_total_tasks.mean()
+        total_tasks_time_std = per_run_total_tasks.std()
+
+        #per_run_pipeline = pd.merge(per_run_pipeline, full_query_duration_by_run, on=['run_id', 'p_id'])
+        per_run_pipeline = pd.merge(per_run_pipeline.reset_index(), p_time, on=['run_id', 'p_id'], how='left')
+        per_run_pipeline = pd.merge(per_run_pipeline, total_tasks_time_by_pipe, on=['run_id', 'p_id'], how='left')
+
 
         # compute per-run derived tps to allow mean-of-runs later
         per_run_pipeline['comp_tp_run'] = per_run_pipeline.apply(
@@ -304,6 +420,7 @@ def process_csv(trace_paths, window_size=10):
         # Now aggregate across runs for each pipeline (compact: means/stds of core sums & times)
         pipeline_stats = per_run_pipeline.groupby('p_id').agg(
             runs=('run_id', 'nunique'),
+
             count_mean=('count', 'mean'),
             count_std=('count', 'std'),
             sum_tuples_mean=('sum_tuples', 'mean'),
@@ -313,11 +430,14 @@ def process_csv(trace_paths, window_size=10):
             wall_time_mean=('wall_time', 'mean'),          # microseconds
             wall_time_std=('wall_time', 'std'),
             mean_tp_mean=('sum_tp', 'mean'),               # average of per-run sum_tp (optional)
-            skipped_sum=('skipped', 'sum'),
+            skipped_mean=('total_skipped', 'mean'),
             comp_tp_mean_of_runs=('comp_tp_run', 'mean'),
             comp_tp_std_of_runs=('comp_tp_run', 'std'),
             eff_tp_mean_of_runs=('eff_tp_run', 'mean'),
-            eff_tp_std_of_runs=('eff_tp_run', 'std')
+            eff_tp_std_of_runs=('eff_tp_run', 'std'),
+            max_ts=('max_ts', 'max'),
+            max_ts_std=('max_ts', 'max'),
+            max_ts_mean=('max_ts', 'mean'),
         ).reset_index().fillna(0)
 
         # Provide derived comp/eff tp based on aggregated means
@@ -332,21 +452,19 @@ def process_csv(trace_paths, window_size=10):
         )
 
         global_stats = {
-            'total_tasks_time': mean_total_tasks_time,
-            'full_query_duration': mean_full_query_duration,
-            'total_skipped_tasks': total_skipped_tasks
+            'total_tasks_time_mean': total_tasks_time_mean,
+            'total_tasks_time_std': total_tasks_time_std,
+            'full_query_duration_mean': mean_full_query_duration,
+            'full_query_duration_std': std_full_query_duration,
+            #'total_skipped_tasks': total_skipped_tasks
         }
 
-        run_stats = {
-            'total_tasks_time_by_run': total_tasks_time_by_run,
-            'full_query_duration_by_run': full_query_duration_by_run
-        }
 
-        return windowed_stats, pipeline_stats, global_stats, run_stats, metadata
+        return windowed_stats, pipeline_stats, global_stats, metadata
 
     except Exception as e:
         print(f"Error processing CSV with pandas: {e}")
-        return None, None, None, None, {}
+        return None, None, None, {}
 
 
 
@@ -407,6 +525,8 @@ def extract_metadata_from_filename(file_path):
     if query_match:
         metadata['query'] = int(query_match.group(1))
 
+    if metadata == {}:
+        print(f"Warning: No metadata extracted from filename: {filename}")
     return metadata
 
 def main():
@@ -416,7 +536,12 @@ def main():
     parser.add_argument('benchmark_directory', help='Directory to save results')
     parser.add_argument('--trace-files', nargs='+', help='List of trace files to process')
     parser.add_argument('--num-reps', type=int, default=2, help='Number of repetitions for averaging')
+    parser.add_argument('--legacy', action='store_true', help='Use legacy processing method')
     args = parser.parse_args()
+
+    legacy= False
+    if args.legacy:
+        legacy= True
 
     base_directory = args.benchmark_directory
 
@@ -436,166 +561,245 @@ def main():
     # delete old data files
     # combine average results to main result file
 
+    if legacy:
+            # Process all trace files in parallel
+            results = []
+            with concurrent.futures.ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+                results = list(executor.map(compute_stats, trace_files))
 
-    #find first underscore in filename and group by suffix
+            # Process data for CSV output
+            csv_data = []
+            all_fields = set(['filename', 'layout', 'buffer_size', 'threads', 'query',
+                              'total_tasks_time', 'full_query_duration', 'total_skipped_tasks'])
 
-    config_groups = defaultdict(list)
-    for trace_file in trace_files:
-        filename = os.path.basename(trace_file)
-        first_underscore = filename.find('_')
-        config_key = filename[first_underscore:]
-        config_groups[config_key].append(trace_file)
+            for file_path, total_time, full_time, pipelines, total_skipped in sorted(results):
+                if isinstance(total_skipped, str) and total_skipped.startswith("Error"):
+                    continue
 
-    query_config = get_config_from_file(Path(base_directory) / 'query_configs.csv')
+                #filename = os.path.basename(file_path)
+                metadata = extract_metadata_from_filename(file_path)
 
-    # Process all trace files in parallel
-    results_iter = []
-    with concurrent.futures.ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        futures = [executor.submit(process_csv, paths) for paths in config_groups.values()]
-        for fut in concurrent.futures.as_completed(futures):
-            try:
-                results_iter.append(fut.result())
-            except Exception as e:
-                print(f"Error in worker: {e}")
+                row = {
+                    'filename': filename,
+                    'layout': metadata.get('layout', ''),
+                    'buffer_size': metadata.get('buffer_size', ''),
+                    'threads': metadata.get('threads', ''),
+                    'query': metadata.get('query', ''),
+                    'total_tasks_time': total_time,
+                    'full_query_duration': full_time,
+                    'total_skipped_tasks': total_skipped
+                }
 
+                # Add pipeline-specific data
+                for pid in sorted(pipelines):
+                    p = pipelines[pid]
+                    # Add columns for this pipeline
+                    for metric in ['comp_tp', 'eff_tp', 'total_tuples', 'time_pct', 'mean_latency', 'skipped_tasks']:
+                        field_name = f'pipeline_{pid}_{metric}'
+                        row[field_name] = p.get(metric, 0)
+                        all_fields.add(field_name)
 
-    # Process data for CSV output
-    csv_data = []
-    csv_rows = []
-    all_fields = set(['windowed_stats', 'pipeline_stats', 'global_stats', 'run_stats', 'metadata'])
+                csv_data.append(row)
 
+            # Write the results to a text file
+            with open(os.path.join(base_directory, 'results.txt'), 'w') as f:
+                for file_path, total_time, full_time, pipelines, total_skipped in sorted(results):
+                    if isinstance(total_skipped, str) and total_skipped.startswith("Error"):
+                        f.write(f"File: {os.path.basename(file_path)}\n{total_skipped}\n\n")
+                        continue
 
+                    f.write(f"File: {os.path.basename(file_path)}\n")
+                    f.write(f"Total tasks time: {total_time:.2f}s\n")
+                    f.write(f"Full query duration: {full_time:.2f}s\n")
+                    f.write(f"Total skipped tasks: {total_skipped}\n\n")
 
-    for result in results_iter:
-        if not result or len(result) < 5:
-            continue
-        windowed_stats, pipeline_stats, global_stats, run_stats, metadata = result
+                    for pid in sorted(pipelines):
+                        p = pipelines[pid]
+                        f.write(f"Pipeline {pid}: comp_tp={p['comp_tp']:.2f} tuples/s, "
+                                f"eff_tp={p['eff_tp']:.2f} tuples/s, "
+                                f"total_tuples={p['sum_tuples']}, "
+                                f"time_pct={p['time_pct']:.2f}%, "
+                                f"skipped_tasks={p['skipped']}\n")
+                    f.write("\n--------------------------------------------------\n\n")
 
-        if metadata == {}:
-            print("Warning: Missing metadata, skipping result")
-            continue
+            # Write CSV with all possible fields to the base directory
+            csv_path = os.path.join(base_directory, os.path.basename(base_directory)+ "_old" + ".csv")
+            with open(csv_path, 'w', newline='') as csvfile:
+                if csv_data:
+                    # Use the full collected field set for all rows
+                    fieldnames = sorted(list(all_fields))
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for row in csv_data:
+                        # Ensure all fields exist (with empty values if necessary)
+                        for field in fieldnames:
+                            if field not in row:
+                                row[field] = 0  # Use 0 instead of empty for numeric fields
+                        writer.writerow(row)
 
-        #print(f"Processing results for config: {metadata}")
+            print(f"Results written to {os.path.join(base_directory, 'results.txt')}")
+            print(f"CSV written to {csv_path}")
 
-        query_id = metadata['query_id']
-        config = query_config[query_id]
+    else:
+        #find first underscore in filename and group by suffix
 
-        # Skip multi-operator chains if desired (keeps original behavior)
-        operator_chain = config.get('operator_chain', ['unknown'])
-        if len(operator_chain) > 1:
-            # still write per-config files but skip adding to consolidated CSV to mirror prior behavior
-            pass
+        config_groups = defaultdict(list)
+        for trace_file in trace_files:
+            filename = os.path.basename(trace_file)
+            first_underscore = filename.find('_')
+            config_key = filename[first_underscore:]
+            config_groups[config_key].append(trace_file)
 
-        # Prepare buffer dir and write per-config files if DataFrames present
-        try:
-            #buffer_dir = Path(base_directory) / operator_chain[0] / f"bufferSize{metadata.get('buffer_size','')}"
-            #buffer_dir.mkdir(parents=True, exist_ok=True)
-            #result dir = query dir = parent /  parent / filename
-            result_dir = Path(metadata['filename']).parent.parent
-            #name= Path(metadata['filename']).stem.with_suffix('.csv')
-            layout = metadata['layout']
-            if windowed_stats is not None:
-                windowed_stats.to_csv(result_dir / f"results_windowed_{layout}.csv", index=False)
-            if pipeline_stats is not None:
-                pipeline_stats.to_csv(result_dir / f"results_pipelined_{layout}.csv", index=False)
-        except Exception as e:
-            print(f"Warning: error writing per-config files: {e}")
+        query_config = get_config_from_file(Path(base_directory) / 'query_configs.csv')
 
-        # Base row with global metrics
-        row = {
-            'layout': metadata.get('layout', ''),
-            'buffer_size': metadata.get('buffer_size', ''),
-            'threads': metadata.get('threads', ''),
-            'query': metadata.get('query', ''),
-            'total_tasks_time': global_stats.get('total_tasks_time', 0) if global_stats else 0,
-            'full_query_duration': global_stats.get('full_query_duration', 0) if global_stats else 0,
-            'total_skipped_tasks': global_stats.get('total_skipped_tasks', 0) if global_stats else 0
-        }
-
-        # Pull pipeline-level metrics from pipeline_stats DataFrame if present
-        if pipeline_stats is not None and not pipeline_stats.empty:
-            # ensure p_id column exists
-            if 'p_id' in pipeline_stats.columns:
-                for _, prow in pipeline_stats.iterrows():
-                    pid = prow['p_id']
-                    # core aggregated sums/means (matching compute_stats scope)
-                    sum_tuples_mean = prow.get('sum_tuples_mean', prow.get('sum_tuples', 0))
-                    sum_latency_mean = prow.get('sum_latency_mean', prow.get('sum_latency', 0))  # microseconds
-                    count_mean = prow.get('count_mean', prow.get('count', 0))
-                    wall_time_mean = prow.get('wall_time_mean', prow.get('wall_time', 0))
-
-                    # mean latency per task analogous to compute_stats: sum_time / count
-                    mean_latency = (sum_latency_mean / count_mean) if count_mean and count_mean > 0 else prow.get('mean_latency_mean', 0)
-
-                    # comp/eff throughput derived from means (convert microseconds to seconds)
-                    comp_tp_from_means = (sum_tuples_mean / (sum_latency_mean / 1e6)) if sum_latency_mean and sum_latency_mean > 0 else 0
-                    eff_tp_from_means = (sum_tuples_mean / (wall_time_mean / 1e6)) if wall_time_mean and wall_time_mean > 0 else 0
-
-                    # per-run mean-of-runs if present prefer those
-                    comp_tp_mean_of_runs = prow.get('comp_tp_mean_of_runs', None)
-                    eff_tp_mean_of_runs = prow.get('eff_tp_mean_of_runs', None)
-
-                    # skipped statistics
-                    skipped_mean = prow.get('skipped_mean', 0)
-                    skipped_std = prow.get('skipped_std', 0)
-                    runs = prow.get('runs', 0)
-
-                    # Add pipeline-specific fields (no truncated fields like time_pct)
-                    base_keys = {
-                        f'pipeline_{pid}_runs': runs,
-                        f'pipeline_{pid}_sum_tuples_mean': sum_tuples_mean,
-                        f'pipeline_{pid}_sum_latency_mean': sum_latency_mean,
-                        f'pipeline_{pid}_wall_time_mean': wall_time_mean,
-                        f'pipeline_{pid}_count_mean': count_mean,
-                        f'pipeline_{pid}_mean_latency': mean_latency,
-                        f'pipeline_{pid}_comp_tp_from_means': comp_tp_from_means,
-                        f'pipeline_{pid}_eff_tp_from_means': eff_tp_from_means,
-                        f'pipeline_{pid}_comp_tp_mean_of_runs': comp_tp_mean_of_runs if comp_tp_mean_of_runs is not None else comp_tp_from_means,
-                        f'pipeline_{pid}_eff_tp_mean_of_runs': eff_tp_mean_of_runs if eff_tp_mean_of_runs is not None else eff_tp_from_means,
-                        f'pipeline_{pid}_skipped_mean': skipped_mean,
-                        f'pipeline_{pid}_skipped_std': skipped_std
-                    }
-
-                    for k, v in base_keys.items():
-                        row[k] = v if v is not None else 0
-                        all_fields.add(k)
-            else:
-                # fallback: if pipeline_stats is a dict-like or empty, attempt best-effort extraction
+        # Process all trace files in parallel
+        results_iter = []
+        with concurrent.futures.ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+            futures = [executor.submit(process_csv, paths) for paths in config_groups.values()]
+            for fut in concurrent.futures.as_completed(futures):
                 try:
-                    pdata = pipeline_stats if isinstance(pipeline_stats, dict) else {}
-                    for pid, p in pdata.items():
-                        key_prefix = f'pipeline_{pid}_'
-                        row[key_prefix + 'sum_tuples_mean'] = p.get('sum_tuples', 0)
-                        row[key_prefix + 'sum_latency_mean'] = p.get('sum_time', 0)
-                        row[key_prefix + 'comp_tp'] = p.get('comp_tp', 0)
-                        row[key_prefix + 'eff_tp'] = p.get('eff_tp', 0)
-                        all_fields.update([key_prefix + k for k in ['sum_tuples_mean', 'sum_latency_mean', 'comp_tp', 'eff_tp']])
-                except Exception:
-                    pass
+                    results_iter.append(fut.result())
+                except Exception as e:
+                    print(f"Error in worker: {e}")
 
-        csv_rows.append(row)
 
-    # Ensure we have at least some fields in consistent order and write consolidated CSV
-    out_csv_path = os.path.join(base_directory, os.path.basename(base_directory) + ".csv")
-    if csv_rows:
-        all_fields = sorted(set().union(*(r.keys() for r in csv_rows)))
-    with open(out_csv_path, 'w', newline='') as f:
+        # Process data for CSV output
+        csv_data = []
+        csv_rows = []
+        all_fields = set(['windowed_stats', 'pipeline_stats', 'global_stats', 'run_stats', 'metadata'])
+
+
+
+        for result in results_iter:
+            if not result or len(result) < 5:
+                continue
+            windowed_stats, pipeline_stats, global_stats, metadata = result
+
+            if metadata == {}:
+                print("Warning: Missing metadata, skipping result")
+                continue
+
+            #print(f"Processing results for config: {metadata}")
+
+            query_id = metadata['query_id']
+            config = query_config[query_id]
+
+            # Skip multi-operator chains if desired (keeps original behavior)
+            operator_chain = config.get('operator_chain', ['unknown'])
+            if len(operator_chain) > 1:
+                # still write per-config files but skip adding to consolidated CSV to mirror prior behavior
+                pass
+
+            # Prepare buffer dir and write per-config files if DataFrames present
+            try:
+                #buffer_dir = Path(base_directory) / operator_chain[0] / f"bufferSize{metadata.get('buffer_size','')}"
+                #buffer_dir.mkdir(parents=True, exist_ok=True)
+                #result dir = query dir = parent /  parent / filename
+                result_dir = Path(metadata['filename']).parent.parent
+                #name= Path(metadata['filename']).stem.with_suffix('.csv')
+                layout = metadata['layout']
+                if windowed_stats is not None:
+                    windowed_stats.to_csv(result_dir / f"results_windowed_{layout}.csv", index=False)
+                if pipeline_stats is not None:
+                    pipeline_stats.to_csv(result_dir / f"results_pipelined_{layout}.csv", index=False)
+            except Exception as e:
+                print(f"Warning: error writing per-config files: {e}")
+
+            # Base row with global metrics
+            row = {
+                'layout': metadata.get('layout', ''),
+                'buffer_size': metadata.get('buffer_size', ''),
+                'threads': metadata.get('threads', ''),
+                'query': metadata.get('query', ''),
+                'total_tasks_time': global_stats.get('total_tasks_time', 0) if global_stats else 0,
+                'full_query_duration': global_stats.get('full_query_duration', 0) if global_stats else 0,
+                'total_skipped_tasks': global_stats.get('total_skipped_tasks', 0) if global_stats else 0
+            }
+
+            # Pull pipeline-level metrics from pipeline_stats DataFrame if present
+            if pipeline_stats is not None and not pipeline_stats.empty:
+                # ensure p_id column exists
+                if 'p_id' in pipeline_stats.columns:
+                    for _, prow in pipeline_stats.iterrows():
+                        pid = prow['p_id']
+                        # core aggregated sums/means (matching compute_stats scope)
+                        sum_tuples_mean = prow.get('sum_tuples_mean', prow.get('sum_tuples', 0))
+                        sum_latency_mean = prow.get('sum_latency_mean', prow.get('sum_latency', 0))  # microseconds
+                        count_mean = prow.get('count_mean', prow.get('count', 0))
+                        wall_time_mean = prow.get('wall_time_mean', prow.get('wall_time', 0))
+
+                        # mean latency per task analogous to compute_stats: sum_time / count
+                        mean_latency = (sum_latency_mean / count_mean) if count_mean and count_mean > 0 else prow.get('mean_latency_mean', 0)
+
+                        # comp/eff throughput derived from means (convert microseconds to seconds)
+                        comp_tp_from_means = (sum_tuples_mean / (sum_latency_mean / 1e6)) if sum_latency_mean and sum_latency_mean > 0 else 0
+                        eff_tp_from_means = (sum_tuples_mean / (wall_time_mean / 1e6)) if wall_time_mean and wall_time_mean > 0 else 0
+
+                        # per-run mean-of-runs if present prefer those
+                        comp_tp_mean_of_runs = prow.get('comp_tp_mean_of_runs', None)
+                        eff_tp_mean_of_runs = prow.get('eff_tp_mean_of_runs', None)
+
+                        # skipped statistics
+                        skipped_mean = prow.get('skipped_mean', 0)
+                        skipped_std = prow.get('skipped_std', 0)
+                        runs = prow.get('runs', 0)
+
+                        # Add pipeline-specific fields (no truncated fields like time_pct)
+                        base_keys = {
+                            f'pipeline_{pid}_runs': runs,
+                            f'pipeline_{pid}_sum_tuples_mean': sum_tuples_mean,
+                            f'pipeline_{pid}_sum_latency_mean': sum_latency_mean,
+                            f'pipeline_{pid}_wall_time_mean': wall_time_mean,
+                            f'pipeline_{pid}_count_mean': count_mean,
+                            f'pipeline_{pid}_mean_latency': mean_latency,
+                            f'pipeline_{pid}_comp_tp_from_means': comp_tp_from_means,
+                            f'pipeline_{pid}_eff_tp_from_means': eff_tp_from_means,
+                            f'pipeline_{pid}_comp_tp_mean_of_runs': comp_tp_mean_of_runs if comp_tp_mean_of_runs is not None else comp_tp_from_means,
+                            f'pipeline_{pid}_eff_tp_mean_of_runs': eff_tp_mean_of_runs if eff_tp_mean_of_runs is not None else eff_tp_from_means,
+                            f'pipeline_{pid}_skipped_mean': skipped_mean,
+                            f'pipeline_{pid}_skipped_std': skipped_std
+                        }
+
+                        for k, v in base_keys.items():
+                            row[k] = v if v is not None else 0
+                            all_fields.add(k)
+                else:
+                    # fallback: if pipeline_stats is a dict-like or empty, attempt best-effort extraction
+                    try:
+                        pdata = pipeline_stats if isinstance(pipeline_stats, dict) else {}
+                        for pid, p in pdata.items():
+                            key_prefix = f'pipeline_{pid}_'
+                            row[key_prefix + 'sum_tuples_mean'] = p.get('sum_tuples', 0)
+                            row[key_prefix + 'sum_latency_mean'] = p.get('sum_time', 0)
+                            row[key_prefix + 'comp_tp'] = p.get('comp_tp', 0)
+                            row[key_prefix + 'eff_tp'] = p.get('eff_tp', 0)
+                            all_fields.update([key_prefix + k for k in ['sum_tuples_mean', 'sum_latency_mean', 'comp_tp', 'eff_tp']])
+                    except Exception:
+                        pass
+
+            csv_rows.append(row)
+
+        # Ensure we have at least some fields in consistent order and write consolidated CSV
+        out_csv_path = os.path.join(base_directory, os.path.basename(base_directory) + ".csv")
         if csv_rows:
-            fieldnames = sorted(all_fields)
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            for r in csv_rows:
-                # fill missing fields with 0
-                for fn in fieldnames:
-                    if fn not in r:
-                        r[fn] = 0
-                writer.writerow(r)
-        else:
-            # write basic header only
-            writer = csv.writer(f)
-            writer.writerow(sorted(list(all_fields)))
+            all_fields = sorted(set().union(*(r.keys() for r in csv_rows)))
+        with open(out_csv_path, 'w', newline='') as f:
+            if csv_rows:
+                fieldnames = sorted(all_fields)
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                for r in csv_rows:
+                    # fill missing fields with 0
+                    for fn in fieldnames:
+                        if fn not in r:
+                            r[fn] = 0
+                    writer.writerow(r)
+            else:
+                # write basic header only
+                writer = csv.writer(f)
+                writer.writerow(sorted(list(all_fields)))
 
-    print(f"Consolidated CSV written to {out_csv_path}")
+        print(f"Consolidated CSV written to {out_csv_path}")
 
 if __name__ == "__main__":
     main()
