@@ -13,7 +13,9 @@
 */
 
 #pragma once
+#include <string>
 #include <Identifiers/NESStrongType.hpp>
+#include <yaml-cpp/exceptions.h>
 #include <yaml-cpp/yaml.h>
 
 /**
@@ -34,7 +36,7 @@ struct as_if<NES::NESStrongType<T, Tag, invalid, initial>, void>
 
     NES::NESStrongType<T, Tag, invalid, initial> operator()() const
     {
-        if (!node.m_pNode)
+        if (node.m_pNode == nullptr)
         {
             throw TypedBadConversion<T>(node.Mark());
         }
@@ -43,34 +45,34 @@ struct as_if<NES::NESStrongType<T, Tag, invalid, initial>, void>
     }
 };
 
-template <typename Tag, NES::StringLiteral invalid>
-struct as_if<NES::NESStrongStringType<Tag, invalid>, void>
+template <typename Tag, NES::StringLiteral Invalid>
+struct as_if<NES::NESStrongStringType<Tag, Invalid>, void>
 {
-    explicit as_if(const Node& node_) : node(node_) { }
+    explicit as_if(const Node& node) : node(node) { }
 
     const Node& node;
 
-    NES::NESStrongStringType<Tag, invalid> operator()() const
+    NES::NESStrongStringType<Tag, Invalid> operator()() const
     {
-        if (!node.m_pNode)
+        if (node.m_pNode == nullptr)
         {
             throw TypedBadConversion<std::string>(node.Mark());
         }
 
-        return NES::NESStrongStringType<Tag, invalid>{node.as<std::string>()};
+        return NES::NESStrongStringType<Tag, Invalid>{node.as<std::string>()};
     }
 };
 
 template <typename Tag>
 struct as_if<NES::NESStrongUUIDType<Tag>, void>
 {
-    explicit as_if(const Node& node_) : node(node_) { }
+    explicit as_if(const Node& node) : node(node) { }
 
     const Node& node;
 
     NES::NESStrongUUIDType<Tag> operator()() const
     {
-        if (!node.m_pNode)
+        if (node.m_pNode == nullptr)
         {
             throw TypedBadConversion<std::string>(node.Mark());
         }
