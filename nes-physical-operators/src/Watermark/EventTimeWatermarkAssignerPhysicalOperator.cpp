@@ -30,29 +30,22 @@
 namespace NES
 {
 
-struct WatermarkState final : OperatorState
-{
-    explicit WatermarkState() = default;
-    nautilus::val<Timestamp> currentWatermark{Timestamp(Timestamp::INITIAL_VALUE)};
-};
-
 EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction)
     : timeFunction(std::move(timeFunction)) { };
 
 void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
-    executionCtx.setLocalOperatorState(id, std::make_unique<WatermarkState>());
+    executionCtx.watermarkTs = nautilus::val<Timestamp>(Timestamp(Timestamp::INITIAL_VALUE));
     timeFunction.open(executionCtx, recordBuffer);
 }
 
 void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    auto* const state = dynamic_cast<WatermarkState*>(ctx.getLocalState(id));
     const auto tsField = timeFunction.getTs(ctx, record);
-    if (tsField > state->currentWatermark)
+    if (tsField > ctx.watermarkTs)
     {
-        state->currentWatermark = tsField;
+        ctx.watermarkTs = tsField;
     }
     /// call next operator
     executeChild(ctx, record);
@@ -60,11 +53,6 @@ void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, 
 
 void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    PRECONDITION(
-        NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)), /// TODO #1035
-        "Expects the local state to be of type WatermarkState");
-    auto* const state = dynamic_cast<WatermarkState*>(executionCtx.getLocalState(id));
-    executionCtx.watermarkTs = state->currentWatermark;
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
