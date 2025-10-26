@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <string>
 #include <Identifiers/NESStrongType.hpp>
 #include <nlohmann/json.hpp>
 
@@ -26,30 +27,42 @@ namespace nlohmann
 template <typename T, typename Tag, T invalid, T initial>
 struct adl_serializer<NES::NESStrongType<T, Tag, invalid, initial>>
 {
-    static NES::NESStrongType<T, Tag, invalid, initial> from_json(const json& j)
+    ///NOLINTNEXTLINE(readability-identifier-naming)
+    static NES::NESStrongType<T, Tag, invalid, initial> from_json(const json& jsonObject)
     {
-        return NES::NESStrongType<T, Tag, invalid, initial>{j.get<T>()};
+        return NES::NESStrongType<T, Tag, invalid, initial>{jsonObject.get<T>()};
     }
 
-    static void to_json(json& j, NES::NESStrongType<T, Tag, invalid, initial> t) { j = t.getRawValue(); }
+    ///NOLINTNEXTLINE(readability-identifier-naming)
+    static void to_json(json& jsonObject, NES::NESStrongType<T, Tag, invalid, initial> strongType)
+    {
+        jsonObject = strongType.getRawValue();
+    }
 };
 
-template <typename Tag, NES::StringLiteral invalid>
-struct adl_serializer<NES::NESStrongStringType<Tag, invalid>>
+template <typename Tag, NES::StringLiteral Invalid>
+struct adl_serializer<NES::NESStrongStringType<Tag, Invalid>>
 {
-    static NES::NESStrongStringType<Tag, invalid> from_json(const json& j)
+    ///NOLINTNEXTLINE(readability-identifier-naming)
+    static NES::NESStrongStringType<Tag, Invalid> from_json(const json& jsonObject)
     {
-        return NES::NESStrongStringType<Tag, invalid>{j.get<std::string>()};
+        return NES::NESStrongStringType<Tag, Invalid>{jsonObject.get<std::string>()};
     }
 
-    static void to_json(json& j, NES::NESStrongStringType<Tag, invalid> t) { j = t.getRawValue(); }
+    ///NOLINTNEXTLINE(readability-identifier-naming)
+    static void to_json(json& jsonObject, NES::NESStrongStringType<Tag, Invalid> strongType) { jsonObject = strongType.getRawValue(); }
 };
 
 template <typename Tag>
 struct adl_serializer<NES::NESStrongUUIDType<Tag>>
 {
-    static NES::NESStrongUUIDType<Tag> from_json(const json& j) { return NES::NESStrongUUIDType<Tag>{j.get<std::string>()}; }
+    ///NOLINTNEXTLINE(readability-identifier-naming)
+    static NES::NESStrongUUIDType<Tag> from_json(const json& jsonObject)
+    {
+        return NES::NESStrongUUIDType<Tag>{jsonObject.get<std::string>()};
+    }
 
-    static void to_json(json& j, NES::NESStrongUUIDType<Tag> t) { j = t.getRawValue(); }
+    ///NOLINTNEXTLINE(readability-identifier-naming)
+    static void to_json(json& jsonObject, NES::NESStrongUUIDType<Tag> strongType) { jsonObject = strongType.getRawValue(); }
 };
 }
