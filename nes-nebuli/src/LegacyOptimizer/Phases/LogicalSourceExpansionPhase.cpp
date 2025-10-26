@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/Phases/LogicalSourceExpansionPhase.hpp>
 
 #include <ranges>
 #include <utility>
@@ -22,15 +22,19 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+LogicalPlan LogicalSourceExpansionPhase::apply(const LogicalPlan& inputPlan, SharedPtr<const SourceCatalog> sourceCatalog)
 {
-    for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
+    LogicalPlan plan = inputPlan;
+
+    for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(inputPlan))
     {
         const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
@@ -54,22 +58,23 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
             | std::views::transform([](const auto& entry) { return LogicalOperator{SourceDescriptorLogicalOperator{entry}}; })
             | std::ranges::to<std::vector>();
 
-        INVARIANT(getParents(queryPlan, sourceOp).size() == 1, "Source name operator must have exactly one parent");
-        auto parent = getParents(queryPlan, sourceOp).front();
+        INVARIANT(getParents(plan, sourceOp).size() == 1, "Source name operator must have exactly one parent");
+        auto parent = getParents(plan, sourceOp).front();
         INVARIANT(
             parent.getChildren().size() == 1 && parent.getChildren().front() == sourceOp,
             "Parent of source name operator must have exactly one child, the source itself");
 
         auto newParent = parent.withChildren({UnionLogicalOperator{}.withChildren(std::move(expandedSourceOperators))});
-        auto replaceResult = replaceSubtree(queryPlan, parent.getId(), newParent);
+        auto replaceResult = replaceSubtree(plan, parent.getId(), newParent);
 
         INVARIANT(
             replaceResult.has_value(),
             "Failed to replace operator {} with {}",
             parent.explain(ExplainVerbosity::Debug),
             newParent.explain(ExplainVerbosity::Debug));
-        queryPlan = std::move(replaceResult.value());
+        plan = std::move(replaceResult.value());
     }
+    return plan;
 }
 
 }

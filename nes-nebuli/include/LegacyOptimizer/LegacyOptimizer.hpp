@@ -14,17 +14,21 @@
 
 #pragma once
 
-#include <Plans/LogicalPlan.hpp>
+#include <LegacyOptimizer/QueryPlanning.hpp>
 
 namespace NES
 {
 
-/**
- * @brief This rule removes redundant unions with only a single child.
- */
-class RedundantUnionRemovalRule
+class LegacyOptimizer
 {
+    QueryPlanningContext& ctx; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is managed by QueryPlanner
+
+    explicit LegacyOptimizer(QueryPlanningContext& ctx) : ctx{ctx} { }
+
 public:
-    void apply(LogicalPlan& queryPlan) const; ///NOLINT(readability-convert-member-functions-to-static)
+    static LegacyOptimizer with(QueryPlanningContext& ctx) { return LegacyOptimizer{ctx}; }
+
+    PlanStage::OptimizedLogicalPlan optimize(PlanStage::BoundLogicalPlan&& inputPlan) &&;
 };
+
 }

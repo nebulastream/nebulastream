@@ -10,8 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Phases)
 add_source_files(nes-legacy-optimizer
-        LegacyOptimizer.cpp
-        QueryPlanning.cpp
+        SourceInferencePhase.cpp
+        LogicalSourceExpansionPhase.cpp
+        RedundantUnionRemovalPhase.cpp
+        RedundantProjectionRemovalPhase.cpp
+        OriginIdInferencePhase.cpp
+        TypeInferencePhase.cpp
+        SinkBindingPhase.cpp
 )

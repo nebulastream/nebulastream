@@ -14,24 +14,22 @@
 
 #pragma once
 
-#include <memory>
-#include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
 
-class SourceInferencePhase
+///  @brief This rule removes redundant projections, which project everything
+class RedundantProjectionRemovalPhase
 {
 public:
-    explicit SourceInferencePhase(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    RedundantProjectionRemovalPhase() = delete;
+    ~RedundantProjectionRemovalPhase() = delete;
+    RedundantProjectionRemovalPhase(const RedundantProjectionRemovalPhase&) = delete;
+    RedundantProjectionRemovalPhase(RedundantProjectionRemovalPhase&&) = delete;
+    RedundantProjectionRemovalPhase& operator=(const RedundantProjectionRemovalPhase&) = delete;
+    RedundantProjectionRemovalPhase& operator=(RedundantProjectionRemovalPhase&&) = delete;
 
-    /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
-    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
-    void apply(LogicalPlan& queryPlan) const;
-
-private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    static LogicalPlan apply(const LogicalPlan& inputPlan);
 };
 }

@@ -12,19 +12,19 @@
     limitations under the License.
 */
 
-#pragma once
+#include <LegacyOptimizer/QueryPlanning.hpp>
 
-#include <Plans/LogicalPlan.hpp>
+#include <utility>
+#include <LegacyOptimizer/LegacyOptimizer.hpp>
 
 namespace NES
 {
 
-/**
- * @brief This rule removes redundant projection, which project everything
- */
-class RedundantProjectionRemovalRule
+PlanStage::OptimizedLogicalPlan QueryPlanner::plan(PlanStage::BoundLogicalPlan&& boundPlan) &&
 {
-public:
-    void apply(LogicalPlan& queryPlan) const;
-};
+    PlanStage::OptimizedLogicalPlan optimized = LegacyOptimizer::with(context).optimize(std::move(boundPlan));
+
+    return optimized;
+}
+
 }

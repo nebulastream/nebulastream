@@ -12,15 +12,11 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 
-#include <algorithm>
-#include <iterator>
 #include <ranges>
 #include <unordered_set>
-#include <utility>
 #include <vector>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
@@ -70,17 +66,18 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
 }
 }
 
-void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+LogicalPlan OriginIdInferencePhase::apply(const LogicalPlan& inputPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
     /// propagate origin ids through the complete query plan
     std::vector<LogicalOperator> newSinks;
-    newSinks.reserve(queryPlan.getRootOperators().size());
-    for (auto& sinkOperator : queryPlan.getRootOperators())
+    newSinks.reserve(inputPlan.getRootOperators().size());
+    for (auto& sinkOperator : inputPlan.getRootOperators())
     {
         newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
     }
-    queryPlan = queryPlan.withRootOperators(newSinks);
+    return inputPlan.withRootOperators(newSinks);
 }
+
 }

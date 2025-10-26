@@ -37,6 +37,8 @@
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <Identifiers/Identifiers.hpp>
+#include <LegacyOptimizer/LegacyOptimizer.hpp>
+#include <LegacyOptimizer/QueryPlanning.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -54,11 +56,8 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <magic_enum/magic_enum.hpp>
-#include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <StatementHandler.hpp>
 #include <utils.hpp>
 
@@ -161,7 +160,6 @@ int main(int argc, char** argv)
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
         auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
-        auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
             sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
@@ -205,7 +203,7 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
-            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
+            auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, sourceCatalog, sinkCatalog);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
@@ -271,7 +269,9 @@ int main(int argc, char** argv)
             boundPlan = yamlBinder.parseAndBind(file);
         }
 
-        const NES::LogicalPlan optimizedQueryPlan = optimizer->optimize(boundPlan);
+        NES::QueryPlanningContext context{.sourceCatalog = sourceCatalog, .sinkCatalog = sinkCatalog};
+        const NES::LogicalPlan optimizedQueryPlan
+            = NES::LegacyOptimizer::with(context).optimize(NES::PlanStage::BoundLogicalPlan(boundPlan)).plan;
 
         std::string output;
         auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(optimizedQueryPlan);

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
+#include <LegacyOptimizer/Phases/RedundantUnionRemovalPhase.hpp>
 
 #include <ranges>
 #include <utility>
@@ -25,16 +25,20 @@
 namespace NES
 {
 
-void RedundantUnionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(readability-convert-member-functions-to-static)
+LogicalPlan RedundantUnionRemovalPhase::apply(const LogicalPlan& inputPlan)
 {
-    for (const auto& unionOperator : getOperatorByType<UnionLogicalOperator>(queryPlan)
+    LogicalPlan plan = inputPlan;
+
+    for (const auto& unionOperator : getOperatorByType<UnionLogicalOperator>(inputPlan)
              | std::views::filter([](const auto& op) { return op.getChildren().size() == 1; }))
     {
         auto child = unionOperator.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, unionOperator.getId(), child);
+        auto replaceResult = replaceSubtree(plan, unionOperator.getId(), child);
         INVARIANT(replaceResult.has_value(), "Failed to replace union with its child");
-        queryPlan = std::move(replaceResult.value());
+        plan = std::move(replaceResult.value());
     }
+
+    return plan;
 }
 
 }

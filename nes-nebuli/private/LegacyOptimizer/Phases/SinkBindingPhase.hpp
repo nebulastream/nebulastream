@@ -13,32 +13,20 @@
 */
 
 #pragma once
+
 #include <memory>
-#include <utility>
-
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Util/Pointers.hpp>
 
 namespace NES
 {
-class SinkCatalog;
-class SourceCatalog;
-}
-
-namespace NES
-{
-class LegacyOptimizer
+class SinkBindingPhase
 {
 public:
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
-    LegacyOptimizer() = default;
-
-    explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
-    {
-    }
+    static LogicalPlan apply(const LogicalPlan& inputPlan, SharedPtr<const SinkCatalog> sinkCatalog);
 
 private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 }

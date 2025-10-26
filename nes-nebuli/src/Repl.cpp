@@ -39,7 +39,6 @@
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
 #include <JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
-#include <LegacyOptimizer.hpp>
 #include <StatementHandler.hpp>
 #include <StatementOutputAssembler.hpp>
 #include <TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
