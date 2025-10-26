@@ -17,7 +17,6 @@
 #include <compare>
 #include <concepts>
 #include <cstddef>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -39,7 +38,7 @@ template <typename T, typename Tag, T invalid, T initial>
 class NESStrongType
 {
 public:
-    explicit constexpr NESStrongType(T v) : v(v) { }
+    explicit constexpr NESStrongType(T value) : value(value) { }
 
     using Underlying = T;
     using TypeTag = Tag;
@@ -50,13 +49,13 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const NESStrongType& t) { return os << t.getRawValue(); }
 
-    [[nodiscard]] std::string toString() const { return std::to_string(v); }
+    [[nodiscard]] std::string toString() const { return std::to_string(value); }
 
     /// return the underlying value as a value of the underlying type
-    [[nodiscard]] constexpr T getRawValue() const { return v; }
+    [[nodiscard]] constexpr T getRawValue() const { return value; }
 
 private:
-    T v;
+    T value;
 };
 
 template <size_t N>
@@ -70,31 +69,31 @@ struct StringLiteral
     std::array<char, N> value;
 };
 
-template <typename Tag, StringLiteral invalid>
+template <typename Tag, StringLiteral Invalid>
 class NESStrongStringType
 {
-    std::string v;
+    std::string value;
 
 public:
     using Underlying = std::string;
     using TypeTag = Tag;
-    static constexpr std::string_view INVALID{invalid.value.begin(), invalid.value.end()};
+    static constexpr std::string_view INVALID{Invalid.value.begin(), Invalid.value.end()};
 
-    explicit constexpr NESStrongStringType(std::string_view view) : v(std::string(view)) { }
+    explicit constexpr NESStrongStringType(std::string_view view) : value(std::string(view)) { }
 
     template <std::convertible_to<std::string> StringType>
-    explicit constexpr NESStrongStringType(StringType&& stringType) : v(static_cast<std::string>(std::forward<StringType>(stringType)))
+    explicit constexpr NESStrongStringType(StringType&& stringType) : value(static_cast<std::string>(std::forward<StringType>(stringType)))
     {
     }
 
     [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongStringType& lhs, const NESStrongStringType& rhs) noexcept
         = default;
 
-    friend std::ostream& operator<<(std::ostream& os, const NESStrongStringType& t) { return os << t.v; }
+    friend std::ostream& operator<<(std::ostream& os, const NESStrongStringType& t) { return os << t.value; }
 
-    std::string getRawValue() const { return v; }
+    [[nodiscard]] std::string getRawValue() const { return value; }
 
-    std::string_view view() const { return v; }
+    [[nodiscard]] std::string_view view() const { return value; }
 };
 
 template <typename Tag>
@@ -156,10 +155,10 @@ struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
     }
 };
 
-template <typename Tag, NES::StringLiteral invalid>
-struct hash<NES::NESStrongStringType<Tag, invalid>>
+template <typename Tag, NES::StringLiteral Invalid>
+struct hash<NES::NESStrongStringType<Tag, Invalid>>
 {
-    size_t operator()(const NES::NESStrongStringType<Tag, invalid>& strongType) const
+    size_t operator()(const NES::NESStrongStringType<Tag, Invalid>& strongType) const
     {
         return std::hash<std::string>()(strongType.getRawValue());
     }
