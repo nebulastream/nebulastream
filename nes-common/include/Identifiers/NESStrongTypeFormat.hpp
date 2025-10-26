@@ -31,10 +31,10 @@ struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::
     }
 };
 
-template <typename Tag, NES::StringLiteral invalid>
-struct formatter<NES::NESStrongStringType<Tag, invalid>> : formatter<std::string>
+template <typename Tag, NES::StringLiteral Invalid>
+struct formatter<NES::NESStrongStringType<Tag, Invalid>> : formatter<std::string>
 {
-    auto format(const NES::NESStrongStringType<Tag, invalid>& t, format_context& ctx) const -> decltype(ctx.out())
+    auto format(const NES::NESStrongStringType<Tag, Invalid>& t, format_context& ctx) const -> decltype(ctx.out())
     {
         return fmt::format_to(ctx.out(), "{}", t.getRawValue());
     }
