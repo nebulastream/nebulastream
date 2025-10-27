@@ -31,6 +31,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Files.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
@@ -50,7 +51,7 @@ void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
     this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
     if (not this->inputFile)
     {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), std::strerror(errno));
+        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
     }
 }
 
