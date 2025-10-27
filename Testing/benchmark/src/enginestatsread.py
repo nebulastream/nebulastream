@@ -820,7 +820,7 @@ def main():
                 # ensure p_id column exists
                 if 'p_id' in pipeline_stats.columns:
                     for _, prow in pipeline_stats.iterrows():
-                        pid = prow['p_id']
+                        pid = int(prow['p_id'])
                         # core aggregated sums/means (matching compute_stats scope)
                         sum_tuples_mean = prow.get('sum_tuples_mean', prow.get('sum_tuples', 0))
                         sum_latency_mean = prow.get('sum_latency_mean', prow.get('sum_latency', 0))  # microseconds

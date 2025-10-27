@@ -239,7 +239,7 @@ if __name__ == "__main__":
     parser.add_argument('--run-options', required=True, default='all', help='options: all, single or double')
     parser.add_argument('--legacy', action='store_true', help='Use legacy processing method')
     args = parser.parse_args()
-    legacy= True
+    legacy= False
     if args.legacy:
         legacy= True
     process_benchmark(args.benchmark_dir, args.run_options, legacy)

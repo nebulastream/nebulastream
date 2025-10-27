@@ -277,7 +277,23 @@ def main():
                         print(f"  Success: Global enhanced plots created in {charts_dir}")
                     except Exception as e:
                         print(f"  Error generating global enhanced plots: {e}")
+                main_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_old.csv"
+                charts_dir = Path(benchmark_result_dir) / "charts_old"
+                if main_results.exists():
+                    print(f"Found main results CSV: {main_results}")
 
+                    # Generate global charts with enhanced_plots
+                    try:
+                        subprocess.run(
+                            ["python3", str(enhanced_plots_path),
+                             "--results-csv", str(main_results),
+                             "--output-dir", str(charts_dir)],
+                            check=True
+                        )
+                        print(f"  Success: Global enhanced plots created in {charts_dir}")
+                    except Exception as e:
+                        print(f"  Error generating global enhanced plots: {e}")
+                """
                 # Process individual query results (single operator)
                 query_count = 0
                 single_op_dir = Path(benchmark_result_dir) / "single_operator"
@@ -289,7 +305,7 @@ def main():
 
                         for buffer_dir in op_dir.glob("bufferSize*"):
                             for query_dir in buffer_dir.glob("query_*"):
-                                avg_csv = query_dir / "avg_results.csv"
+                                avg_csv = query_dir / "results.csv"
                                 if avg_csv.exists():
                                     plots_dir = query_dir / "plots"
                                     plots_dir.mkdir(exist_ok=True, parents=True)
@@ -362,7 +378,7 @@ def main():
 
                     except Exception as e:
                         print(f"  Error generating double operator plots: {e}")
-
+                """
 
 
             except Exception as e:

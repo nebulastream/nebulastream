@@ -594,6 +594,66 @@ def create_map_function_type_plots(df, output_dir):
             plt.savefig(map_dir / f"map_{metric.replace('pipeline_3_', '')}_function_type_num_cols_{num_cols}.png")
             plt.close()
 
+def plot_single_operators_query_time(df, output_dir):
+    """Plot overall query time for single operators separated by layout."""
+
+    df = df[(df['num_columns'] == 10) & (df['accessed_columns'] == 1)]
+
+    if df.empty:
+        print("No data available for single operators plot.")
+        return
+
+    y= 'full_query_duration'
+    if y not in df.columns:
+        y += '_mean'
+
+    plt.figure(figsize=(12, 8))
+    sns.barplot(data=df, x='operator_type', y=y, hue='layout', palette='viridis')
+    plt.title("Overall Query Time for Single Operators (Total Columns = 10, Accessed Columns = 1)")
+    plt.xlabel("Operator Type")
+    plt.ylabel("Query Time (ms)")
+    plt.yscale('log')
+    plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(output_dir / "single_operators_query_time.png")
+    plt.close()
+
+def plot_aggregation_comparison(df, output_dir):
+    """Compare effective throughput and mean latency for aggregation with/without group by."""
+    agg_dir = Path(output_dir) / "aggregation_comparison"
+    agg_dir.mkdir(exist_ok=True, parents=True)
+
+    # Filter data for total_columns = 10 and accessed_columns = 1
+    df = df[(df['num_columns'] == 10) & (df['accessed_columns'] == 1)]
+
+    if df.empty:
+        print("No data available for aggregation comparison plots.")
+        return
+
+    metric = 'pipeline_3_eff_tp'
+    if metric not in df.columns:
+        metric += '_from_means'
+    metrics = [
+        (metric, 'Effective Throughput (tuples/s)'),
+        ('row_latency', 'Mean Latency (ms)')
+    ]
+
+    # Add latency columns for ROW and COLUMNAR layouts
+    df.loc[df['layout'] == 'ROW', 'row_latency'] = df.loc[df['layout'] == 'ROW', ['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+    df.loc[df['layout'] == 'COLUMNAR', 'row_latency'] = df.loc[df['layout'] == 'COLUMNAR', ['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+
+    for metric, metric_label in metrics:
+        plt.figure(figsize=(12, 8))
+        sns.barplot(data=df, x=df['id_data_type'].apply(lambda x: "No Group By" if x == "NaN" else "Group By"), y=metric, hue='layout', palette='viridis')
+        plt.title(f"Aggregation {metric_label} Comparison (Total Columns = 10, Accessed Columns = 1)")
+        plt.xlabel("Group By")
+        plt.ylabel(metric_label)
+        plt.yscale('log' if 'Throughput' in metric_label else 'linear')
+        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(agg_dir / f"aggregation_{metric_label[:12].replace(" ", "")}_comparison.png")
+        plt.close()
+
 def create_layout_comparison_plots(df, output_dir):
     """Create layout comparison plots for filter and map operators."""
     filter_df = df[df['operator_type'] == 'filter']
@@ -622,7 +682,7 @@ def create_test_plots(df, output_dir):
 
     # Generate plots for each operator
     for operator, pipelines in operators.items():
-        operator_df = df[df['operator_type'] == operator]
+        operator_df = df[df['operator_chain'] == f"['{operator}']"] #df[df['operator_chain'].apply(lambda x: operator in x)]
         if operator_df.empty:
             print(f"No data for operator: {operator}")
             continue
@@ -636,12 +696,18 @@ def create_test_plots(df, output_dir):
         # Plot latency vs. total_columns
         plot_latency(operator_df, operator_dir, pipelines)
 
+        plot_single_operators_query_time(df, test_plots_dir)
+
+        y= 'pipeline_3_eff_tp'
+        if y not in operator_df.columns:
+            y += '_from_means'
+
         # Additional plot for filter: eff_tp averaged for acc_col = 1 and num_columns = 10
         if operator == 'filter':
             filter_df = operator_df[(operator_df['num_columns'] == 10) & (operator_df['accessed_columns'] == 1)]
             if not filter_df.empty:
                 plt.figure(figsize=(12, 8))
-                sns.barplot(data=filter_df, x='selectivity', y='pipeline_3_eff_tp', hue='layout', palette='viridis')
+                sns.barplot(data=filter_df, x='selectivity', y=y, hue='layout', palette='viridis')
                 plt.title("Filter Effective Throughput Averaged for acc_col = 1, Total Columns = 10")
                 plt.xlabel("Layout")
                 plt.ylabel("Effective Throughput (tuples/s)")
@@ -656,7 +722,7 @@ def create_test_plots(df, output_dir):
             map_df = operator_df[(operator_df['num_columns'] == 10) & (operator_df['accessed_columns'] == 1)]
             if not map_df.empty:
                 plt.figure(figsize=(12, 8))
-                sns.barplot(data=map_df, x='function_type', y='pipeline_3_eff_tp', hue='layout', palette='viridis')
+                sns.barplot(data=map_df, x='function_type', y=y, hue='layout', palette='viridis')
                 plt.title("Map Effective Throughput by Function Type (Total Columns = 10, acc_col = 1)")
                 plt.xlabel("Function Type")
                 plt.ylabel("Effective Throughput (tuples/s)") #TODO: tuples or bytes / second?
@@ -665,6 +731,8 @@ def create_test_plots(df, output_dir):
                 plt.tight_layout()
                 plt.savefig(operator_dir / "map_eff_tp_func_type_num_cols_10_acc_col_1.png")
                 plt.close()
+        if operator == 'aggregation':
+            plot_aggregation_comparison(df[df['operator_chain'] == "['aggregation']"], test_plots_dir / "aggregation")
 
     # Generate aggregation-specific plots
     create_aggregation_plots(df[df['operator_type'] == 'aggregation'], test_plots_dir / "aggregation")
@@ -672,6 +740,8 @@ def create_test_plots(df, output_dir):
 def plot_eff_comp_tp(df, output_dir, operator):
     """Plot eff/comp_tp vs. total_columns for acc_col = 1."""
     metrics = ['pipeline_3_eff_tp']#, 'pipeline_3_comp_tp']
+    if metrics[0] not in df.columns:
+        metrics[0] = 'pipeline_3_eff_tp_from_means'
     df = df[df['accessed_columns'] == 1]
 
     for metric in metrics:
@@ -783,11 +853,16 @@ def create_aggregation_plots(df, output_dir):
 
     # Filter data for total_col = 10 and acc_col = 1
     df = df[(df['num_columns'] == 10) & (df['accessed_columns'] == 1)]
+    print("data types: ")
+    print(+df['id_data_type'].unique())
+    df['id_data_type'] = df['id_data_type'].replace(np.nan, 0)
+    df['group_by'] = df['id_data_type'].apply(lambda x: True if x != 0 else False)
+
     row_df = df[df['layout'] == 'ROW']
     col_df = df[df['layout'] == 'COLUMNAR']
 
     # Parameters for x-axis
-    x_params = ['window_size', 'num_groups', 'id_data_type'] #TODO: add group by on vs off plot
+    x_params = ['window_size', 'num_groups', 'id_data_type', 'group_by'] #TODO: add group by on vs off plot
     metrics = ['pipeline_3_eff_tp']#, 'pipeline_3_comp_tp']
 
     for x_param in x_params:
@@ -796,6 +871,8 @@ def create_aggregation_plots(df, output_dir):
 
         for metric in metrics:
             plt.figure(figsize=(12, 8))
+
+
             sns.barplot(data=df, x=x_param, y=metric, hue='layout', palette='viridis')
             plt.title(f"Aggregation {metric.split('_')[2]} Throughput vs. {x_param}, accessed cols: 1/10 (3/12)")
             plt.xlabel(x_param.capitalize())
@@ -841,10 +918,11 @@ def main():
 
     # Check if this is a double operator benchmark
     is_double_op = False
-    if 'is_double_op' in df.columns:
-        is_double_op = df['is_double_op'].any()
-    elif 'swap_strategy' in df.columns and 'operator_chain' in df.columns:
-        is_double_op = True
+    if 'operator_chain' in df.columns:
+        #print(df['operator_chain'].unique())
+        df['operator_type'] = df['operator_chain'][2:-2]
+       # print(df['operator_chain'])
+        is_double_op = False #any(chain is not None and len(chain) > 1 for chain in df['operator_chain'])
 
     # Create appropriate plots based on benchmark type
     if is_double_op:
