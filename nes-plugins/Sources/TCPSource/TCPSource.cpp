@@ -37,6 +37,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
@@ -59,13 +60,6 @@ namespace
     dest.tv_sec = millisecs.count() / 1000;
     dest.tv_usec = (millisecs.count() % 1000) * 1000;
     return dest;
-}
-
-std::string toErrorString(int error)
-{
-    std::array<char, 1024> buffer{};
-    const char* result = ::strerror_r(error, buffer.data(), buffer.size());
-    return result;
 }
 }
 
@@ -91,12 +85,12 @@ std::expected<void, std::string> Socket::setTimeouts(std::chrono::microseconds t
     auto timeout = toTimeval(timeoutDuration);
     if (setsockopt(static_cast<int>(descriptor), SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
     {
-        return std::unexpected(fmt::format("could not set socket recv timeout: {}", toErrorString(errno)));
+        return std::unexpected(fmt::format("could not set socket recv timeout: {}", getErrorMessageFromERRNO()));
     }
 
     if (setsockopt(static_cast<int>(descriptor), SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) != 0)
     {
-        return std::unexpected(fmt::format("could not set socket send timeout: {}", toErrorString(errno)));
+        return std::unexpected(fmt::format("could not set socket send timeout: {}", getErrorMessageFromERRNO()));
     }
     this->timeout = std::chrono::duration_cast<std::chrono::microseconds>(timeoutDuration);
     return {};
@@ -123,7 +117,7 @@ std::expected<Connection, std::string> Connection::from(Socket sock, AddressInfo
 
     if (errno != EINPROGRESS)
     {
-        return std::unexpected(fmt::format("Failed to connect to with error: {}", toErrorString(errno)));
+        return std::unexpected(fmt::format("Failed to connect to with error: {}", getErrorMessageFromERRNO()));
     }
 
     /// Set the timeout for the connect attempt
@@ -134,7 +128,7 @@ std::expected<Connection, std::string> Connection::from(Socket sock, AddressInfo
     auto selectResult = select(static_cast<int>(sock.descriptor) + 1, nullptr, &fdset, nullptr, &timeout);
     if (selectResult == -1)
     {
-        return std::unexpected(fmt::format("Failed to select with error: {}", toErrorString(errno)));
+        return std::unexpected(fmt::format("Failed to select with error: {}", getErrorMessageFromERRNO()));
     }
     if (selectResult == 0)
     {
@@ -220,7 +214,7 @@ std::expected<Socket, std::string> Socket::create(const AddressInfo& address)
     const auto sockfd = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
     if (sockfd == -1)
     {
-        return std::unexpected(fmt::format("Failed to create socket with error: {}", toErrorString(errno)));
+        return std::unexpected(fmt::format("Failed to create socket with error: {}", getErrorMessageFromERRNO()));
     }
     const int flags = fcntl(sockfd, F_GETFL, 0);
     return Socket{
@@ -237,7 +231,7 @@ std::expected<void, std::string> Socket::addFlag(unsigned flag)
         }
         else
         {
-            return std::unexpected(fmt::format("could not set socket flag `{}`: {}", flag, toErrorString(errno)));
+            return std::unexpected(fmt::format("could not set socket flag `{}`: {}", flag, getErrorMessageFromERRNO()));
         }
     }
     return {};
@@ -253,7 +247,7 @@ std::expected<void, std::string> Socket::removeFlag(unsigned flag)
         }
         else
         {
-            return std::unexpected(fmt::format("could not remove socket flag `{}`: {}", flag, toErrorString(errno)));
+            return std::unexpected(fmt::format("could not remove socket flag `{}`: {}", flag, getErrorMessageFromERRNO()));
         }
     }
     return {};
@@ -265,12 +259,12 @@ std::expected<void, std::string> Socket::checkError() const
     socklen_t len = sizeof(error);
     if (getsockopt(static_cast<int>(descriptor), SOL_SOCKET, SO_ERROR, &error, &len) == -1)
     {
-        return std::unexpected(fmt::format("Failed to get socket error with error: {}", toErrorString(errno)));
+        return std::unexpected(fmt::format("Failed to get socket error with error: {}", getErrorMessageFromERRNO()));
     }
 
     if (error != 0)
     {
-        return std::unexpected(fmt::format("Socket has error: {}", toErrorString(error)));
+        return std::unexpected(fmt::format("Socket has error: {}", getErrorMessage(error)));
     }
 
     return {};
@@ -307,8 +301,7 @@ Connection::receive(std::span<uint8_t> result, std::chrono::microseconds timeout
             {
                 continue;
             }
-            const auto recvError = errno;
-            NES_WARNING("TCPSource: recv failed with error: {}. Attempting to reconnect...", toErrorString(recvError));
+            NES_WARNING("TCPSource: recv failed with error: {}. Attempting to reconnect...", getErrorMessageFromERRNO());
             auto reconnectResult = reconnect();
             if (reconnectResult)
             {
@@ -316,7 +309,7 @@ Connection::receive(std::span<uint8_t> result, std::chrono::microseconds timeout
                 continue;
             }
             return std::unexpected(fmt::format(
-                "Failed to receive from socket with error: {}. Reconnect failed: {}", toErrorString(recvError), reconnectResult.error()));
+                "Failed to receive from socket with error: {}. Reconnect failed: {}", getErrorMessageFromERRNO(), reconnectResult.error()));
         }
         if (resultSize == 0)
         {
