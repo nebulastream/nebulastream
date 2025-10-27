@@ -104,7 +104,8 @@ public:
 private:
     friend class ChainedHashMapRef;
 
-    #pragma pack(push, 1)
+#pragma pack(push, 1)
+
     struct ChainedHashMapHeader
     {
         uint64_t numberOfTuples;
@@ -113,7 +114,8 @@ private:
         uint64_t entriesPerPage;
         uint64_t numberOfChains;
     };
-    #pragma pack(pop)
+
+#pragma pack(pop)
 
 
     /// Specifies the number of pre-allocated var sized

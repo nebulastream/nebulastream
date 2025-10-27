@@ -18,11 +18,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <memory>
-#include <fstream>
 #include <span>
-#include <filesystem>
 #include <string>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -271,6 +271,7 @@ void ChainedHashMap::serialize(std::filesystem::path path) const
         NES_ERROR("Cannot open output file {}", path);
         throw CheckpointError("Cannot open output file {}", path);
     }
+    const auto span = entrySpace.getAvailableMemoryArea<>();
 
     if (entries != nullptr)
     {
@@ -343,7 +344,8 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
         auto newPage = bufferProvider->getUnpooledBuffer(pageSize);
         if (not newPage)
         {
-            throw CannotAccessBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(storageBufferSize));
+            throw CannotAccessBuffer(
+                "Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(storageBufferSize));
         }
         std::ranges::fill(newPage.value().getAvailableMemoryArea(), std::byte{0});
         in.read(newPage.value().getAvailableMemoryArea<char>().data(), storageBufferSize);

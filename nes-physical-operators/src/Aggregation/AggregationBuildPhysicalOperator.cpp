@@ -38,17 +38,13 @@
 #include <static.hpp>
 #include <val_ptr.hpp>
 
-static bool deserialize{false};
-
 namespace NES
 {
 Interface::HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
-    AbstractBufferProvider* bufferProvider,
-    const AggregationBuildPhysicalOperator* buildOperator
-    )
+    const AggregationBuildPhysicalOperator* buildOperator)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
@@ -80,21 +76,26 @@ Interface::HashMap* getAggHashMapProxy(
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
 
     const std::size_t numTuples = aggregationSlice->getHashMapPtrOrCreate(workerThreadId)->getNumberOfTuples();
-    auto rv = aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+}
 
-    if (timestamp.getRawValue() == 9)
-    {
-        if (!deserialize)
-        {
-            rv->serialize(std::format("/tmp/nebulastream/bin.out"));
-            deserialize = true;
-        }
-    }
-    if (timestamp.getRawValue() == 10)
-    {
-        rv->deserialize(std::format("/tmp/nebulastream/bin.out"), bufferProvider);
-    }
-    return rv;
+void serializeHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    AbstractBufferProvider* bufferProvider,
+    const AggregationBuildPhysicalOperator* buildOperator)
+{
+    const auto hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, bufferProvider, buildOperator);
+}
+
+Interface::HashMap* deserializeHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    AbstractBufferProvider* bufferProvider,
+    const AggregationBuildPhysicalOperator* buildOperator)
+{
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -147,7 +148,11 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, ctx.pipelineMemoryProvider.bufferProvider, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     Interface::ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
@@ -180,6 +185,16 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
 
     /// Updating the aggregation states
+    if (timestamp == nautilus::val<Timestamp>(9))
+    {
+        nautilus::invoke(
+            serializeHashMapProxy,
+            operatorHandler,
+            timestamp,
+            ctx.workerThreadId,
+            ctx.pipelineMemoryProvider.bufferProvider,
+            nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+    }
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(
         hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
@@ -188,6 +203,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
+
+    /// Serialize and Deserialize
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
