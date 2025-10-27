@@ -26,9 +26,9 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Common.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
-
 
 namespace NES
 {
@@ -49,8 +49,11 @@ public:
         friend ProjectionLogicalOperator;
     };
 
-    using Projection = std::pair<Identifier, LogicalFunction>;
-    ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk);
+    using Projection = std::pair<Field, LogicalFunction>;
+    using UnboundProjection = std::pair<Identifier, LogicalFunction>;
+    using ProjectionVariant = NES::Util::VariantContainer<std::vector, Projection, UnboundProjection>;
+
+    ProjectionLogicalOperator(std::vector<UnboundProjection> projections, Asterisk asterisk);
     ProjectionLogicalOperator(LogicalOperator children, DescriptorConfig::Config config);
 
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
@@ -97,14 +100,21 @@ private:
 
     LogicalOperator child;
     bool asterisk = false;
-    std::vector<Projection> projections;
+    ProjectionVariant projections;
 
     /// Set during schema inference
     std::optional<Schema> outputSchema;
 
     TraitSet traitSet;
+
+    friend struct std::hash<ProjectionLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
 
 }
+template <>
+struct std::hash<NES::ProjectionLogicalOperator>
+{
+    size_t operator()(const NES::ProjectionLogicalOperator& projectionOperator) const noexcept;
+};

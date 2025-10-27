@@ -68,7 +68,7 @@ SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSch
 bool SourceDescriptorLogicalOperator::operator==(const SourceDescriptorLogicalOperator& rhs) const
 {
     const bool descriptorsEqual = sourceDescriptor == rhs.sourceDescriptor;
-    return descriptorsEqual && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
+    return descriptorsEqual && getTraitSet() == rhs.getTraitSet();
 }
 
 std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -123,4 +123,10 @@ void SourceDescriptorLogicalOperator::serialize(SerializableOperator& serializab
     serializableOperator.mutable_source()->CopyFrom(proto);
 }
 
+}
+
+std::size_t std::hash<NES::SourceDescriptorLogicalOperator>::operator()(
+    const NES::SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const
+{
+    return std::hash<NES::SourceDescriptor>{}(sourceDescriptorLogicalOperator.getSourceDescriptor());
 }

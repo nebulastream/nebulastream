@@ -38,6 +38,11 @@
 
 namespace NES
 {
+
+template <size_t Extent>
+requires(Extent >= 1)
+class IdentifierListBase;
+
 /// Reopresenting a SQL compliant identifier.
 /// Automatically uppercases non-quoted identifiers but stores the original version so that we can emulate the behavior of non-SQL-compliant systems (e.g., Postgres) when interacting with them.
 /// The template allows this class to be used with constexpr string, where we can only store a string_view.
@@ -47,8 +52,8 @@ namespace NES
 template <size_t Extent>
 class IdentifierBase
 {
-    using valueType = std::conditional_t<Extent == std::dynamic_extent, std::string, std::array<char, Extent>>;
-    valueType value;
+    using ValueType = std::conditional_t<Extent == std::dynamic_extent, std::string, std::array<char, Extent>>;
+    ValueType value;
     bool caseSensitive;
 
     friend class IdentifierSerializationUtil;
@@ -56,13 +61,13 @@ class IdentifierBase
     template <size_t OtherExtent>
     friend class IdentifierBase;
 
-    constexpr explicit IdentifierBase(const valueType value, const bool caseSensitive)
+    constexpr explicit IdentifierBase(const ValueType value, const bool caseSensitive)
     requires(Extent == std::dynamic_extent)
         : value(std::move(value)), caseSensitive(caseSensitive)
     {
     }
 
-    constexpr explicit IdentifierBase(const valueType value, const bool caseSensitive)
+    constexpr explicit IdentifierBase(const ValueType value, const bool caseSensitive)
     requires(Extent != std::dynamic_extent)
         : value(value), caseSensitive(caseSensitive)
     {
@@ -126,6 +131,10 @@ public:
         return IdentifierBase<std::dynamic_extent>{std::string{value.begin(), value.end()}, isCaseSensitive()};
     }
 
+    operator IdentifierListBase<1>() const;
+
+    operator IdentifierListBase<std::dynamic_extent>() const;
+
     /// Returns the original string this identifier was created with.
     /// DO NOT USE THIS METHOD FOR COMPARISON.
     /// Does not uppercase non-case sensitive identifiers as normally done.
@@ -148,10 +157,7 @@ public:
         return os << std::string_view{obj.value}.substr(1, std::ranges::size(obj.value) - 2);
     }
 
-    [[nodiscard]] std::string asCanonicalString() const
-    {
-        return fmt::format("{}", *this);
-    }
+    [[nodiscard]] std::string asCanonicalString() const { return fmt::format("{}", *this); }
 
     template <size_t Rhs_Extent>
     friend bool operator==(const IdentifierBase& lhs, const IdentifierBase<Rhs_Extent>& rhs)
@@ -186,7 +192,6 @@ public:
         std::copy_n(value, ReturnedExtent - 1, identifier.value.data());
         return identifier;
     }
-
 
     static constexpr std::expected<IdentifierBase, Exception> tryParse(std::string value)
     requires(Extent == std::dynamic_extent)
@@ -282,41 +287,58 @@ struct std::hash<std::span<const NES::IdentifierBase<Extent>>>
 namespace NES
 {
 
-class IdentifierList
+template <size_t Extent>
+requires(Extent >= 1)
+class IdentifierListBase
 {
-    std::vector<Identifier> identifiers;
+    using ContainerType = std::conditional_t<Extent == std::dynamic_extent, std::vector<Identifier>, std::array<Identifier, Extent>>;
+    ContainerType identifiers;
+
+    template <size_t OtherExtent>
+    requires(OtherExtent >= 1)
+    friend class IdentifierListBase;
 
 public:
-    constexpr explicit IdentifierList(std::vector<Identifier> identifiers) : identifiers(std::move(identifiers))
+    constexpr explicit IdentifierListBase(ContainerType identifiers) : identifiers(std::move(identifiers))
     {
         PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
 
     template <std::ranges::input_range T>
-    requires(std::same_as<std::remove_cv_t<std::ranges::range_value_t<T>>, Identifier> && !std::same_as<T, std::vector<Identifier>>)
-    explicit constexpr IdentifierList(const T& identifiers) : identifiers(identifiers | std::ranges::to<std::vector>())
+    requires(
+        std::same_as<std::remove_cv_t<std::ranges::range_value_t<T>>, Identifier> && !std::same_as<T, ContainerType>
+        && Extent == std::dynamic_extent)
+    explicit constexpr IdentifierListBase(const T& identifiers) : identifiers(identifiers | std::ranges::to<std::vector>())
     {
         PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
 
-    constexpr IdentifierList(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers)
+    // constexpr IdentifierListBase(const std::initializer_list<Identifier>& identifiers) : identifiers(identifiers)
+    // {
+    //     PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
+    // }
+
+    // constexpr IdentifierListBase(Identifier identifier) : identifiers(ContainerType{std::move(identifier)}) { }
+
+
+    constexpr IdentifierListBase() = delete;
+    constexpr IdentifierListBase(const IdentifierListBase& other) = default;
+    constexpr IdentifierListBase(IdentifierListBase&& other) noexcept = default;
+    constexpr IdentifierListBase& operator=(const IdentifierListBase& other) = default;
+    constexpr IdentifierListBase& operator=(IdentifierListBase&& other) noexcept = default;
+    constexpr ~IdentifierListBase() = default;
+
+    constexpr operator const Identifier&() const
+    requires(Extent == 1)
     {
-        PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
+        return identifiers[0];
     }
 
-
-    constexpr IdentifierList(Identifier identifier) : identifiers(std::vector{std::move(identifier)}) { }
-
-    template <size_t Extent>
-    requires (Extent != std::dynamic_extent)
-    constexpr IdentifierList(IdentifierBase<Extent> identifier) : identifiers(std::vector{Identifier{identifier}}) { }
-
-    constexpr IdentifierList() = delete;
-    constexpr IdentifierList(const IdentifierList& other) = default;
-    constexpr IdentifierList(IdentifierList&& other) noexcept = default;
-    constexpr IdentifierList& operator=(const IdentifierList& other) = default;
-    constexpr IdentifierList& operator=(IdentifierList&& other) noexcept = default;
-    constexpr ~IdentifierList() = default;
+    operator IdentifierListBase<std::dynamic_extent>() const
+    requires(Extent != std::dynamic_extent)
+    {
+        return IdentifierListBase<std::dynamic_extent>(identifiers | std::ranges::to<std::vector>());
+    }
 
     [[nodiscard]] constexpr decltype(identifiers.begin()) begin() { return identifiers.begin(); }
 
@@ -328,18 +350,18 @@ public:
 
     [[nodiscard]] constexpr size_t size() const { return identifiers.size(); }
 
-    [[nodiscard]] IdentifierList copyAppendLast(const std::ranges::input_range auto&& toAppend) const
+    [[nodiscard]] IdentifierListBase<std::dynamic_extent> copyAppendLast(const std::ranges::input_range auto&& toAppend) const
     {
-        auto newIdentifiers = std::vector{identifiers};
-        newIdentifiers.reserve(identifiers.size() + std::ranges::size(toAppend));
+        auto newIdentifiers = identifiers | std::ranges::to<std::vector<Identifier>>();
+        newIdentifiers.reserve(std::ranges::size(identifiers) + std::ranges::size(toAppend));
         for (const auto& identifier : toAppend)
         {
             newIdentifiers.push_back(identifier);
         }
-        return IdentifierList{std::move(newIdentifiers)};
+        return IdentifierListBase<std::dynamic_extent>{std::move(newIdentifiers)};
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const IdentifierList& obj)
+    friend std::ostream& operator<<(std::ostream& os, const IdentifierListBase& obj)
     {
         return os << fmt::format(
                    "{}",
@@ -348,27 +370,62 @@ public:
                        "."));
     }
 
-    friend bool operator==(const IdentifierList& lhs, const IdentifierList& rhs) { return lhs.identifiers == rhs.identifiers; }
-
-    IdentifierList operator+(const std::ranges::input_range auto& other) const { return copyAppendLast(std::move(other)); }
-
-    IdentifierList operator+(const Identifier& other) const
+    template <size_t Rhs_Extent>
+    friend bool operator==(const IdentifierListBase& lhs, const IdentifierListBase<Rhs_Extent>& rhs)
     {
-        auto newIdentifiers = std::vector{identifiers};
-        newIdentifiers.push_back(other);
-        return IdentifierList{std::move(newIdentifiers)};
+        if (std::ranges::size(lhs.identifiers) != std::ranges::size(rhs.identifiers))
+        {
+            return false;
+        }
+        for (auto zipped = std::views::zip(lhs.identifiers, rhs.identifiers); auto [lhs, rhs] : zipped)
+        {
+            if (lhs != rhs)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
-    static std::expected<IdentifierList, Exception> tryCreate(std::vector<Identifier> identifiers)
+    IdentifierListBase<std::dynamic_extent> operator+(const std::ranges::input_range auto& other) const
+    {
+        return copyAppendLast(std::move(other));
+    }
+
+    IdentifierListBase<std::dynamic_extent> operator+(const Identifier& other) const
+    {
+        auto newIdentifiers = identifiers | std::ranges::to<std::vector<Identifier>>();
+        newIdentifiers.push_back(other);
+        return IdentifierListBase<std::dynamic_extent>{std::move(newIdentifiers)};
+    }
+
+    static std::expected<IdentifierListBase, Exception> tryCreate(std::vector<Identifier> identifiers)
+    requires(Extent == std::dynamic_extent)
     {
         if (std::ranges::empty(identifiers))
         {
             return std::unexpected{InvalidIdentifier("Cannot be empty")};
         }
-        return IdentifierList{std::move(identifiers)};
+        return IdentifierListBase<std::dynamic_extent>{std::move(identifiers)};
     }
 
-    static std::expected<IdentifierList, Exception> tryParse(std::string_view name)
+    template <size_t CreatedExtent>
+    static IdentifierListBase<CreatedExtent> create(std::array<Identifier, CreatedExtent> identifiers)
+    requires(CreatedExtent >= 1)
+    {
+        return IdentifierListBase<CreatedExtent>{std::move(identifiers)};
+    }
+
+    template <typename... T>
+    static IdentifierListBase<sizeof...(T)> create(const T&... identifiers)
+    requires(sizeof...(T) >= 1 && Extent == std::dynamic_extent)
+    {
+        return IdentifierListBase<sizeof...(T)>{std::array{Identifier(identifiers)...}};
+    }
+
+
+    static std::expected<IdentifierListBase, Exception> tryParse(std::string_view name)
+    requires(Extent == std::dynamic_extent)
     {
         std::vector<Identifier> identifiers;
         for (const auto& item : name | std::views::split('.'))
@@ -409,20 +466,34 @@ public:
     };
 };
 
+using IdentifierList = IdentifierListBase<std::dynamic_extent>;
 static_assert(std::ranges::input_range<std::initializer_list<Identifier>>);
 
 static_assert(std::ranges::input_range<IdentifierList>);
 static_assert(std::ranges::random_access_range<IdentifierList>);
 static_assert(std::ranges::random_access_range<const IdentifierList>);
 static_assert(std::ranges::sized_range<IdentifierList>);
+
+template <size_t Extent>
+IdentifierBase<Extent>::operator IdentifierListBase<1>() const
+{
+    return IdentifierListBase<1>{std::array{Identifier{*this}}};
 }
 
-template <>
-struct std::hash<NES::IdentifierList>
+template <size_t Extent>
+IdentifierBase<Extent>::operator IdentifierListBase<std::dynamic_extent>() const
 {
-    //taken from https://stackoverflow.com/a/72073933 from SO user see,
-    //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
-    std::size_t operator()(const NES::IdentifierList& arg) const noexcept
+    return IdentifierList{std::vector{Identifier{*this}}};
+}
+}
+
+template <size_t Extent>
+struct std::hash<NES::IdentifierListBase<Extent>>
+{
+    ///taken from https://stackoverflow.com/a/72073933 from SO user see,
+    ///based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
+    ///not using folly hash to avoid drawing it in as a dependency for every file that uses identifiers
+    std::size_t operator()(const NES::IdentifierListBase<Extent>& arg) const noexcept
     {
         std::size_t seed = std::ranges::size(arg);
         constexpr auto hasher = std::hash<NES::Identifier>{};
@@ -437,6 +508,5 @@ struct std::hash<NES::IdentifierList>
         return seed;
     }
 };
-
 
 FMT_OSTREAM(NES::IdentifierList);

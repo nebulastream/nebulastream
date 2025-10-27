@@ -99,7 +99,7 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor(Identifier::parse("dummySink"), Schema{}, "Print", {{"input_format", "CSV"}}).value();
 };
 
 class MockQueryManager final : public QueryManager
@@ -141,7 +141,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
     QuerySubmitter submitter{std::move(mockManager)};
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema{});
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     auto sourceOperator
@@ -173,7 +173,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     QuerySubmitter submitter{std::move(mockManager)};
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema{});
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     auto sourceOperator

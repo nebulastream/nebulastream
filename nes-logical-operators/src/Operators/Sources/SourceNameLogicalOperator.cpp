@@ -90,7 +90,6 @@ SourceNameLogicalOperator SourceNameLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-
 Schema SourceNameLogicalOperator::getOutputSchema() const
 {
     INVARIANT(false, "SourceNameLogicalOperator does not define a output schema");
@@ -112,4 +111,9 @@ void SourceNameLogicalOperator::serialize(SerializableOperator&) const
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
 }
 
+}
+
+std::size_t std::hash<NES::SourceNameLogicalOperator>::operator()(const NES::SourceNameLogicalOperator& sourceNameLogicalOperator) const
+{
+    return std::hash<NES::Identifier>{}(sourceNameLogicalOperator.getLogicalSourceName());
 }

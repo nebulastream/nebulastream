@@ -79,7 +79,9 @@ public:
         SerializableTimeCharacteristic,
         ProjectionList,
         IdentifierList,
-        UInt64List>;
+        Identifier,
+        UInt64List,
+        SerializableFieldMapping>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Tag struct that tags a config key with a type.

@@ -36,8 +36,8 @@
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Operators/Windows/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -72,9 +72,8 @@ public:
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
-    [[nodiscard]] Field getWindowStartFieldName() const;
-    [[nodiscard]] Field getWindowEndFieldName() const;
-    [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
+    [[nodiscard]] const UnboundFieldBase<1>& getStartField() const;
+    [[nodiscard]] const UnboundFieldBase<1>& getEndField() const;
     [[nodiscard]] JoinTimeCharacteristic getJoinTimeCharacteristics() const;
 
 
@@ -105,7 +104,7 @@ public:
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
 
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
+        static inline const DescriptorConfig::ConfigParameter<IdentifierList> WINDOW_START_FIELD_NAME{
             "windowStartFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
@@ -154,12 +153,25 @@ private:
     LogicalFunction joinFunction;
 
     /// Set during schema inference
-    std::optional<WindowMetaData> windowMetaData;
+    std::optional<std::array<UnboundFieldBase<1>, 2>> startEndFields;
     std::optional<Schema> outputSchema;
     JoinTimeCharacteristic timestampFields;
 
     TraitSet traitSet;
+    friend struct std::hash<JoinLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
 }
+
+template <>
+struct std::hash<NES::JoinLogicalOperator>
+{
+    std::size_t operator()(const NES::JoinLogicalOperator& joinLogicalOperator) const noexcept;
+};
+
+template <>
+struct std::hash<NES::JoinTimeCharacteristic>
+{
+    std::size_t operator()(const NES::JoinTimeCharacteristic& joinTimeCharacteristic) const noexcept;
+};

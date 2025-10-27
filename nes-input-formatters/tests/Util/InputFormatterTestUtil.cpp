@@ -148,7 +148,7 @@ std::unique_ptr<SourceHandle> createFileSource(
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{
         {"file_path", filePath}, {"max_inflight_buffers", std::to_string(numberOfRequiredSourceBuffers)}};
-    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
+    const auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("TestSource"), schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor
         = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), {{"type", "CSV"}});

@@ -32,6 +32,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -84,8 +85,7 @@ SinkLogicalOperator SinkLogicalOperator::withInferredSchema() const
 
     auto inputSchema = copy.child.getOutputSchema();
     UnboundSchema unboundInputSchema{
-        inputSchema
-        | std::views::transform([](const Field& field) { return UnboundField{field.getLastName(), field.getDataType()}; })
+        inputSchema | std::views::transform([](const Field& field) { return UnboundField{field.getLastName(), field.getDataType()}; })
         | std::ranges::to<std::vector>()};
 
     if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != unboundInputSchema)
@@ -198,4 +198,9 @@ void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) 
 
     serializableOperator.mutable_sink()->CopyFrom(proto);
 }
+}
+
+std::size_t std::hash<NES::SinkLogicalOperator>::operator()(const NES::SinkLogicalOperator& sinkLogicalOperator) const noexcept
+{
+    return folly::hash::hash_combine(sinkLogicalOperator.sinkName, sinkLogicalOperator.sinkDescriptor);
 }

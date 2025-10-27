@@ -15,13 +15,13 @@
 #pragma once
 
 #include <memory>
+#include <../../../../nes-logical-operators/include/Operators/Windows/WindowMetaData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
 

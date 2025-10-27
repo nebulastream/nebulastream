@@ -85,7 +85,7 @@ size_t ImplementationTypeTrait::hash() const
 
 std::string ImplementationTypeTrait::explain(ExplainVerbosity) const
 {
-    return fmt::format("ImplementationTypeTrait: {}", magic_enum::enum_name(implementationType));
+    return fmt::format("ImplementationTypeTrait({})", magic_enum::enum_name(implementationType));
 }
 
 std::string_view ImplementationTypeTrait::getName() const

@@ -69,7 +69,13 @@ private:
     std::optional<Schema> outputSchema;
 
     TraitSet traitSet;
+    friend struct std::hash<SourceDescriptorLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
 }
+
+template <>
+struct std::hash<NES::SourceDescriptorLogicalOperator>{
+    std::size_t operator()(const NES::SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const;
+};

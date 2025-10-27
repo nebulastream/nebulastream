@@ -50,3 +50,8 @@ namespace NES::Windowing
 // }
 
 }
+
+std::size_t std::hash<NES::Windowing::TimeBasedWindowType>::operator()(const NES::Windowing::TimeBasedWindowType& window) const noexcept
+{
+    return window.hash();
+}

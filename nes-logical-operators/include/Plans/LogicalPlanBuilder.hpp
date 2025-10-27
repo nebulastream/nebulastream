@@ -46,7 +46,7 @@ public:
     /// @param queryPlan the queryPlan to add the projection node
     /// @return the updated queryPlan
     static LogicalPlan
-    addProjection(std::vector<ProjectionLogicalOperator::Projection> projections, bool asterisk, const LogicalPlan& queryPlan);
+    addProjection(std::vector<ProjectionLogicalOperator::UnboundProjection> projections, bool asterisk, const LogicalPlan& queryPlan);
 
     /// @brief: this call adds the selection operator to the queryPlan; the operator selects records according to the predicate.
     /// @param selectionFunction a function node containing the predicate

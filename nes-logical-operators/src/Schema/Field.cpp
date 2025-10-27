@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include <Schema/Field.hpp>
+
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Schema/Field.hpp>
+#include <folly/hash/Hash.h>
 
 namespace NES
 {
@@ -24,17 +26,22 @@ Field::Field(const LogicalOperator& producedBy, Identifier name, DataType dataTy
     : producedBy(std::make_unique<LogicalOperator>(producedBy)), name(std::move(name)), dataType(std::move(dataType))
 {
 }
-Field::Field(const LogicalOperator& producedBy, Identifier name, const DataType::Type dataType) : producedBy(std::make_unique<LogicalOperator>(producedBy)), name(std::move(name)), dataType(dataType)
+
+Field::Field(const LogicalOperator& producedBy, Identifier name, const DataType::Type dataType)
+    : producedBy(std::make_unique<LogicalOperator>(producedBy)), name(std::move(name)), dataType(dataType)
 {
 }
+
 Field::Field(const Field& other)
     : producedBy(std::make_unique<LogicalOperator>(*other.producedBy)), name(other.name), dataType(other.dataType)
 {
 }
+
 Field::Field(Field&& other) noexcept
     : producedBy(std::move(other.producedBy)), name(std::move(other.name)), dataType(std::move(other.dataType))
 {
 }
+
 Field& Field::operator=(const Field& other)
 {
     if (this == &other)
@@ -44,6 +51,7 @@ Field& Field::operator=(const Field& other)
     dataType = other.dataType;
     return *this;
 }
+
 Field& Field::operator=(Field&& other) noexcept
 {
     if (this == &other)
@@ -65,4 +73,14 @@ std::ostream& operator<<(std::ostream& os, const Field& field)
 {
     return os << fmt::format("Field(name: {}, DataType: {})", field.name, field.dataType);
 }
+
+bool Field::operator==(const Field& other) const
+{
+    return other.name == name && other.dataType == dataType && *other.producedBy == *producedBy;
+}
+}
+
+std::size_t std::hash<NES::Field>::operator()(const NES::Field& field) const noexcept
+{
+    return folly::hash::hash_combine(field.getLastName(), field.getProducedBy());
 }

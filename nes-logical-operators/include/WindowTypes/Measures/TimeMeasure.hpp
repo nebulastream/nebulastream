@@ -15,8 +15,12 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <ostream>
 #include <string>
+
+#include "Util/Logger/Formatter.hpp"
 
 namespace NES::Windowing
 {
@@ -24,18 +28,25 @@ namespace NES::Windowing
 class TimeMeasure
 {
 public:
-    explicit TimeMeasure(uint64_t milliseconds);
+    constexpr explicit TimeMeasure(const uint64_t milliseconds) : milliSeconds(milliseconds) { }
 
-    [[nodiscard]] uint64_t getTime() const;
+    [[nodiscard]] constexpr uint64_t getTime() const { return milliSeconds; };
 
-    [[nodiscard]] std::string toString() const;
+    friend std::ostream& operator<<(std::ostream& ostream, const TimeMeasure& measure);
 
-    bool operator<(const TimeMeasure& other) const;
-    bool operator<=(const TimeMeasure& other) const;
-    bool operator==(const TimeMeasure& other) const;
+    constexpr auto operator<=>(const TimeMeasure& other) const = default;
 
 private:
     const uint64_t milliSeconds;
+    friend class std::hash<TimeMeasure>;
 };
 
 }
+
+FMT_OSTREAM(NES::Windowing::TimeMeasure);
+
+template <>
+struct std::hash<NES::Windowing::TimeMeasure>
+{
+    constexpr std::size_t operator()(const NES::Windowing::TimeMeasure& timeMeasure) const noexcept { return timeMeasure.milliSeconds; }
+};

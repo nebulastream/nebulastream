@@ -19,6 +19,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <folly/Hash.h>
 
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -113,7 +114,6 @@ TimeCharacteristicWrapper::Type TimeCharacteristicWrapper::getType() const
         underlying);
 }
 
-
 BoundTimeCharacteristic TimeCharacteristicWrapper::withInferredSchema(const Schema& schema) const
 {
     return std::visit(
@@ -168,4 +168,22 @@ std::ostream& operator<<(std::ostream& os, const TimeCharacteristicWrapper& time
         timeCharacteristic.underlying);
     return os;
 }
+}
+
+std::size_t std::hash<NES::Windowing::IngestionTimeCharacteristic>::operator()(
+    const NES::Windowing::IngestionTimeCharacteristic&) const noexcept
+{
+    return 983131;
+}
+
+std::size_t std::hash<NES::Windowing::UnboundEventTimeCharacteristic>::operator()(
+    const NES::Windowing::UnboundEventTimeCharacteristic& timeCharacteristic) const noexcept
+{
+    return folly::hash::hash_combine(timeCharacteristic.field, timeCharacteristic.unit);
+}
+
+std::size_t std::hash<NES::Windowing::BoundEventTimeCharacteristic>::operator()(
+    const NES::Windowing::BoundEventTimeCharacteristic& timeCharacteristic) const noexcept
+{
+    return folly::hash::hash_combine(timeCharacteristic.field, timeCharacteristic.unit);
 }

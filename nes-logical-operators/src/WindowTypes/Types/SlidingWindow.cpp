@@ -17,10 +17,14 @@
 #include <memory>
 #include <string>
 #include <utility>
+
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <fmt/format.h>
+#include <folly/Hash.h>
+#include "Util/Locks.hpp"
+
 
 namespace NES::Windowing
 {
@@ -49,6 +53,11 @@ std::string SlidingWindow::toString() const
     return fmt::format("SlidingWindow: size={} slide={}", size.getTime(), slide.getTime());
 }
 
+size_t SlidingWindow::hash() const
+{
+    return std::hash<SlidingWindow>{}(*this);
+}
+
 bool SlidingWindow::operator==(const WindowType& otherWindowType) const
 {
     if (const auto* otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
@@ -58,4 +67,9 @@ bool SlidingWindow::operator==(const WindowType& otherWindowType) const
     return false;
 }
 
+}
+
+std::size_t std::hash<NES::Windowing::SlidingWindow>::operator()(const NES::Windowing::SlidingWindow& window) const noexcept
+{
+    return folly::hash::hash_combine(window.size, window.slide);
 }

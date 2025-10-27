@@ -37,10 +37,18 @@ public:
     TimeMeasure getSize() override;
     TimeMeasure getSlide() override;
     [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] size_t hash() const override;
     bool operator==(const WindowType& otherWindowType) const override;
 
 private:
     const TimeMeasure size;
+    friend struct std::hash<TumblingWindow>;
 };
 
 }
+
+template <>
+struct std::hash<NES::Windowing::TumblingWindow>
+{
+    std::size_t operator()(const NES::Windowing::TumblingWindow& window) const noexcept;
+};

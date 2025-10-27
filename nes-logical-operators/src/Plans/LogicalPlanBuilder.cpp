@@ -57,7 +57,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
-    std::vector<ProjectionLogicalOperator::Projection> projections, bool asterisk, const LogicalPlan& queryPlan)
+    std::vector<ProjectionLogicalOperator::UnboundProjection> projections, bool asterisk, const LogicalPlan& queryPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add projection operator to query plan");
     return promoteOperatorToRoot(

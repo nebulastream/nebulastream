@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(Aggregations)
+add_source_files(nes-logical-operators WindowMetaData.cpp)
 
 add_plugin(WindowedAggregation LogicalOperator nes-logical-operators WindowedAggregationLogicalOperator.cpp)
 add_plugin(Join LogicalOperator nes-logical-operators JoinLogicalOperator.cpp)

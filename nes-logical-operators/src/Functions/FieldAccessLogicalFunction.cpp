@@ -134,11 +134,7 @@ LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFun
     {
         throw CannotDeserialize("FieldAccessLogicalFunction requires a FieldName in its config");
     }
-    auto fieldName = get<IdentifierList>(fieldNameIter->second);
-    if (std::ranges::empty(fieldName))
-    {
-        throw CannotDeserialize("FieldName cannot be empty");
-    }
+    const auto fieldName = std::get<Identifier>(fieldNameIter->second);
 
     const auto& operatorIdIter = arguments.config.find(std::string{FieldAccessLogicalFunction::ConfigParameters::FROM_OPERATOR});
     if (operatorIdIter == arguments.config.end() || !std::holds_alternative<uint64_t>(operatorIdIter->second))
@@ -160,4 +156,9 @@ LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFun
     return FieldAccessLogicalFunction(field.value());
 }
 
+}
+
+std::size_t std::hash<NES::FieldAccessLogicalFunction>::operator()(const NES::FieldAccessLogicalFunction& fieldAccessFunction) const noexcept
+{
+    return std::hash<NES::Field>()(fieldAccessFunction.getField());
 }

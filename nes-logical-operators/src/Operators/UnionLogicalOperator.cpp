@@ -48,7 +48,6 @@ namespace
 {
 Schema inferOutputSchema(const std::vector<LogicalOperator>& children, const UnionLogicalOperator& unionOperator)
 {
-
     auto inputSchemas = children | std::views::transform([](const auto& child) { return child.getOutputSchema(); });
     auto inputSchemaSizes = inputSchemas | std::views::transform([](const auto& schema) { return std::ranges::size(schema); });
 
@@ -106,8 +105,10 @@ Schema inferOutputSchema(const std::vector<LogicalOperator>& children, const Uni
     }
 
     /// For some reason, c++ doesn't convert *std::ranges::begin(inputSchemas) into a range of fields correctly
-    return Schema{(inputSchemas | std::ranges::to<std::vector<Schema>>()).at(0)
-        | std::views::transform([&unionOperator](const Field& field) { return Field{unionOperator, field.getLastName(), field.getDataType()}; })};
+    return Schema{
+        (inputSchemas | std::ranges::to<std::vector<Schema>>()).at(0)
+        | std::views::transform([&unionOperator](const Field& field)
+                                { return Field{unionOperator, field.getLastName(), field.getDataType()}; })};
 }
 }
 
@@ -211,4 +212,9 @@ LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(
     return UnionLogicalOperator{std::move(arguments.children)};
 }
 
+}
+
+uint64_t std::hash<NES::UnionLogicalOperator>::operator()(const NES::UnionLogicalOperator&) const noexcept
+{
+    return 1214827;
 }

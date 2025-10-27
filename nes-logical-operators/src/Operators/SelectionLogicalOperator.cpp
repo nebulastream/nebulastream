@@ -198,3 +198,8 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
     return SelectionLogicalOperator{std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
 }
+
+uint64_t std::hash<NES::SelectionLogicalOperator>::operator()(const NES::SelectionLogicalOperator& op) const noexcept
+{
+    return std::hash<NES::LogicalFunction>{}(op.predicate);
+}

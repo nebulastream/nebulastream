@@ -49,6 +49,7 @@ void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 
 void to_json(nlohmann::json& jsonOutput, const UnboundField& str);
 
+
 void to_json(nlohmann::json& jsonOutput, const UnboundSchema& schema);
 
 void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos);
@@ -59,6 +60,15 @@ void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& co
 
 namespace nlohmann
 {
+
+template <size_t Extent>
+struct adl_serializer<NES::IdentifierBase<Extent>>
+{
+    static void to_json(json& jsonOutput, const NES::IdentifierBase<Extent>& identifier)
+    {
+        jsonOutput = identifier.asCanonicalString();
+    }
+};
 
 template <size_t N, typename... Ts>
 struct adl_serializer<std::pair<std::array<std::string_view, N>, std::vector<std::tuple<Ts...>>>>

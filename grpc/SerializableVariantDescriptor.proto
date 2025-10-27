@@ -74,6 +74,14 @@ message AggregationFunctionList {
   repeated ProjectedAggregation functions = 1;
 }
 
+message SerializableFieldMapping {
+  message SerializableSingleFieldMapping {
+    SerializableIdentifier logicalField = 1;
+    SerializableIdentifierList physicalField = 2;
+  }
+  repeated SerializableSingleFieldMapping fieldMappings = 1;
+}
+
 message SerializableEnumWrapper {
     string value = 1;
 }
@@ -102,6 +110,8 @@ message SerializableVariantDescriptor {
     SerializableTimeCharacteristic time_characteristic = 14;
     ProjectionList projections = 15;
     SerializableIdentifierList identifiers = 16;
-    UInt64List ulongs = 17;
+    SerializableIdentifier identifier = 17;
+    UInt64List ulongs = 18;
+    SerializableFieldMapping fieldMapping = 19;
   }
 }

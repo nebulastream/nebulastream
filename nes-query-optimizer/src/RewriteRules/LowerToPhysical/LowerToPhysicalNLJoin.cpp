@@ -53,7 +53,7 @@
 namespace NES
 {
 
-static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
+static std::vector<IdentifierList> getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>().has_value(); })
@@ -114,7 +114,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator
-        = NLJProbePhysicalOperator(handlerId, joinFunction, join->getWindowMetaData(), joinSchema, leftBufferRef, rightBufferRef);
+        = NLJProbePhysicalOperator(handlerId, joinFunction, WindowMetaData{join->getStartField(), join->getEndField()}, joinSchema, leftBufferRef, rightBufferRef);
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());

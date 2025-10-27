@@ -21,14 +21,4 @@
 namespace NES
 {
 
-bool operator==(const UnboundField& lhs, const UnboundField& rhs)
-{
-    return lhs.getName() == rhs.getName() && lhs.getDataType() == rhs.getDataType();
-}
-
-std::ostream& operator<<(std::ostream& os, const UnboundField& obj)
-{
-    return os << fmt::format("UnboundField: (name: {}, type: {})", obj.getName(), obj.getDataType());
-}
-
 }

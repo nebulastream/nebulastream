@@ -38,3 +38,9 @@ public:
 };
 
 }
+
+template <>
+struct std::hash<NES::Windowing::TimeBasedWindowType>
+{
+    std::size_t operator()(const NES::Windowing::TimeBasedWindowType& window) const noexcept;
+};

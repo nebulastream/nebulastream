@@ -34,12 +34,19 @@ public:
     TimeMeasure getSlide() override;
 
     std::string toString() const override;
+    size_t hash() const override;
 
     bool operator==(const WindowType& otherWindowType) const override;
 
 private:
     const TimeMeasure size;
     const TimeMeasure slide;
+    friend struct std::hash<SlidingWindow>;
 };
 
 }
+template <>
+struct std::hash<NES::Windowing::SlidingWindow>
+{
+    std::size_t operator()(const NES::Windowing::SlidingWindow& window) const noexcept;
+};

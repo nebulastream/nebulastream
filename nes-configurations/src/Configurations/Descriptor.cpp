@@ -114,9 +114,18 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig
                     serializedIdentifier->set_casesensitive(identifier.isCaseSensitive());
                 }
             }
+            else if constexpr (std::is_same_v<U, Identifier>)
+            {
+                auto* const serializedIdentifier = protoVar.mutable_identifier();
+                serializedIdentifier->set_value(arg.getOriginalString());
+                serializedIdentifier->set_casesensitive(arg.isCaseSensitive());
+            }
             else if constexpr (std::is_same_v<U, UInt64List>)
             {
                 protoVar.mutable_ulongs()->CopyFrom(arg);
+            } else if constexpr (std::is_same_v<U, SerializableFieldMapping>)
+            {
+                protoVar.mutable_fieldmapping()->CopyFrom(arg);
             }
             else
             {
@@ -165,6 +174,10 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
             return protoVar.ulongs();
         case SerializableVariantDescriptor::kIdentifiers:
             return IdentifierSerializationUtil::deserializeIdentifierList(protoVar.identifiers());
+        case SerializableVariantDescriptor::kIdentifier:
+            return IdentifierSerializationUtil::deserializeIdentifier(protoVar.identifier());
+        case SerializableVariantDescriptor::kFieldMapping:
+            return protoVar.fieldmapping();
         case NES::SerializableVariantDescriptor::VALUE_NOT_SET:
             throw CannotSerialize("Protobuf oneOf has no value");
     }

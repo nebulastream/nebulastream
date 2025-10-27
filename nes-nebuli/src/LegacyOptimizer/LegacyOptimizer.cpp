@@ -35,6 +35,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     sinkBindingRule.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
+    typeInference.apply(newPlan);
     NES_INFO("After Source Expansion:\n{}", newPlan);
     redundantUnionRemovalRule.apply(newPlan);
     NES_INFO("After Redundant Union Removal:\n{}", newPlan);

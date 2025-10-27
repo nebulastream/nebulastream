@@ -150,8 +150,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 
         /// Adding the window start and end to the output record and then passing the record to the child
         outputRecord.reassignFields(recordKey);
-        outputRecord.write(windowMetaData.startField.getLastName(), windowStart.convertToValue());
-        outputRecord.write(windowMetaData.endField.getLastName(), windowEnd.convertToValue());
+        outputRecord.write(windowMetaData.startField.getName(), windowStart.convertToValue());
+        outputRecord.write(windowMetaData.endField.getName(), windowEnd.convertToValue());
         executeChild(executionCtx, outputRecord);
 
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());

@@ -36,9 +36,9 @@
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Operators/Windows/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -52,10 +52,7 @@ public:
         std::shared_ptr<WindowAggregationLogicalFunction> function;
         Identifier name;
 
-        friend bool operator==(const ProjectedAggregation& lhs, const ProjectedAggregation& rhs)
-        {
-            return *lhs.function == rhs.function && lhs.name == rhs.name;
-        }
+        friend bool operator==(const ProjectedAggregation& lhs, const ProjectedAggregation& rhs);
     };
 
     using GroupingKeyType = NES::Util::VariantContainer<
@@ -81,9 +78,8 @@ public:
     [[nodiscard]] const GroupingKeyType& getGroupingKeysWithName() const;
 
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
-    [[nodiscard]] Field getWindowStartField() const;
-    [[nodiscard]] Field getWindowEndField() const;
-    [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
+    [[nodiscard]] const UnboundFieldBase<1>& getWindowStartField() const;
+    [[nodiscard]] const UnboundFieldBase<1>& getWindowEndField() const;
     [[nodiscard]] std::variant<Windowing::UnboundTimeCharacteristic, Windowing::BoundTimeCharacteristic> getCharacteristic() const;
 
 
@@ -122,13 +118,13 @@ public:
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_KEYS, config); }};
 
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
+        static inline const DescriptorConfig::ConfigParameter<Identifier> WINDOW_START_FIELD_NAME{
             "windowStartFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
             { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
 
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
+        static inline const DescriptorConfig::ConfigParameter<Identifier> WINDOW_END_FIELD_NAME{
             "windowEndFieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
@@ -165,13 +161,27 @@ private:
     std::vector<ProjectedAggregation> aggregationFunctions;
 
     /// Set during schema inference
-    std::optional<WindowMetaData> windowMetaData;
+    std::optional<std::array<UnboundFieldBase<1>, 2>> startEndField;
     std::optional<Schema> outputSchema;
     Windowing::TimeCharacteristic timestampField;
 
     TraitSet traitSet;
+
+    friend struct std::hash<WindowedAggregationLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::WindowedAggregationLogicalOperator>
+{
+    std::size_t operator()(const NES::WindowedAggregationLogicalOperator& windowedAggregationLogicalOperator) const noexcept;
+};
+
+template <>
+struct std::hash<NES::WindowedAggregationLogicalOperator::ProjectedAggregation>
+{
+    std::size_t operator()(const NES::WindowedAggregationLogicalOperator::ProjectedAggregation& aggregation) const noexcept;
+};

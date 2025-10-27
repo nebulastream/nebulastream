@@ -23,6 +23,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <folly/Hash.h>
 
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -40,12 +41,14 @@
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Hash.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -69,7 +72,7 @@ std::optional<JoinTimeCharacteristic> JoinLogicalOperator::createJoinTimeCharact
                     Overloaded{
                         [&unbound](Windowing::UnboundTimeCharacteristic&& unbound2) -> std::optional<JoinTimeCharacteristic>
                         { return std::make_optional<JoinTimeCharacteristic>(std::array{std::move(unbound), std::move(unbound2)}); },
-                        [](Windowing::BoundTimeCharacteristic) -> std::optional<JoinTimeCharacteristic>
+                        [](Windowing::BoundTimeCharacteristic&&) -> std::optional<JoinTimeCharacteristic>
                         { return std::optional<JoinTimeCharacteristic>{}; }},
                     std::move(timestampFields[1]));
             },
@@ -79,7 +82,7 @@ std::optional<JoinTimeCharacteristic> JoinLogicalOperator::createJoinTimeCharact
                     Overloaded{
                         [&bound](Windowing::BoundTimeCharacteristic&& bound2) -> std::optional<JoinTimeCharacteristic>
                         { return std::make_optional<JoinTimeCharacteristic>(std::array{std::move(bound), std::move(bound2)}); },
-                        [](Windowing::UnboundTimeCharacteristic) -> std::optional<JoinTimeCharacteristic>
+                        [](Windowing::UnboundTimeCharacteristic&&) -> std::optional<JoinTimeCharacteristic>
                         { return std::optional<JoinTimeCharacteristic>{}; }},
                     std::move(timestampFields[1]));
             }},
@@ -89,7 +92,9 @@ std::optional<JoinTimeCharacteristic> JoinLogicalOperator::createJoinTimeCharact
 namespace
 {
 Schema inferOutputSchema(
-    const std::array<LogicalOperator, 2>& children, const JoinLogicalOperator& joinOperator, const WindowMetaData& windowMetaData)
+    const std::array<LogicalOperator, 2>& children,
+    const TypedLogicalOperator<JoinLogicalOperator>& joinOperator,
+    const std::array<UnboundFieldBase<1>, 2>& startEndFields)
 {
     const std::vector<Field> inputFields = children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
         | std::views::join | std::ranges::to<std::vector>();
@@ -99,8 +104,8 @@ Schema inferOutputSchema(
                                 { return Field{joinOperator, field.getLastName(), field.getDataType()}; })
         | std::ranges::to<std::vector>();
 
-    outputFields.emplace_back(windowMetaData.startField);
-    outputFields.emplace_back(windowMetaData.endField);
+    outputFields.emplace_back(Field{joinOperator, startEndFields[0].getName(), startEndFields[1].getDataType()});
+    outputFields.emplace_back(Field{joinOperator, startEndFields[1].getName(), startEndFields[1].getDataType()});
 
     auto outputSchemaOrCollisions = Schema::tryCreateCollisionFree(outputFields);
 
@@ -175,9 +180,9 @@ JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children
             return expected.value();
         };
         auto windowStartFieldIdentiifer = Identifier::tryParse(windowStartFieldName);
-        this->windowMetaData = WindowMetaData{
-            Field{*this, parseOrThrow(std::move(windowStartFieldName)), DataType::Type::UINT64},
-            Field{*this, parseOrThrow(windowEndFieldName), DataType::Type::UINT64}};
+        this->startEndFields = std::array{
+            UnboundFieldBase{IdentifierList::create(parseOrThrow(std::move(windowStartFieldName))), DataType::Type::UINT64},
+            UnboundFieldBase{IdentifierList::create(parseOrThrow(std::move(windowEndFieldName))), DataType::Type::UINT64}};
 
         if (std::holds_alternative<SerializableWindowType>(windowTypeVariant))
         {
@@ -230,7 +235,7 @@ JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children
         // Infer function and window types
         this->joinFunction = joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
 
-        this->outputSchema = inferOutputSchema(this->children, *this, this->windowMetaData.value());
+        this->outputSchema = inferOutputSchema(this->children, *this, this->startEndFields.value());
         return;
     }
     throw UnknownLogicalOperator();
@@ -252,11 +257,12 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join(opId: {}, windowType: {}, joinFunction: {}, windowMetadata: ({}), traitSet: {})",
+            "Join(opId: {}, windowType: {}, joinFunction: {}, windowMetadata: (startField: {}, endField: {}), traitSet: {})",
             id,
             getWindowType()->toString(),
             getJoinFunction().explain(verbosity),
-            windowMetaData,
+            startEndFields.value()[0],
+            startEndFields.value()[1],
             traitSet.explain(verbosity));
     }
     return fmt::format("Join({})", getJoinFunction().explain(verbosity));
@@ -291,10 +297,11 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema() const
 
     static constexpr auto startIdentifier = Identifier::parse("start");
     static constexpr auto endIdentifier = Identifier::parse("end");
-    copy.windowMetaData
-        = WindowMetaData{Field{copy, startIdentifier, DataType::Type::UINT64}, Field{copy, endIdentifier, DataType::Type::UINT64}};
+    copy.startEndFields = std::array{
+        UnboundFieldBase{IdentifierListBase<1>{startIdentifier}, DataType::Type::UINT64},
+        UnboundFieldBase{IdentifierListBase<1>{endIdentifier}, DataType::Type::UINT64}};
 
-    copy.outputSchema = inferOutputSchema(copy.children, copy, copy.windowMetaData.value());
+    copy.outputSchema = inferOutputSchema(copy.children, copy, copy.startEndFields.value());
 
     return copy;
 }
@@ -302,7 +309,7 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema() const
 JoinLogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
@@ -335,22 +342,16 @@ std::shared_ptr<Windowing::WindowType> JoinLogicalOperator::getWindowType() cons
     return windowType;
 }
 
-Field JoinLogicalOperator::getWindowStartFieldName() const
+const UnboundFieldBase<1>& JoinLogicalOperator::getStartField() const
 {
-    INVARIANT(windowMetaData.has_value(), "Retrieving window start field before calling schema inference");
-    return windowMetaData->startField;
+    INVARIANT(startEndFields.has_value(), "Retrieving window end field before calling schema inference");
+    return startEndFields.value()[0];
 }
 
-Field JoinLogicalOperator::getWindowEndFieldName() const
+const UnboundFieldBase<1>& JoinLogicalOperator::getEndField() const
 {
-    INVARIANT(windowMetaData.has_value(), "Retrieving window end field before calling schema inference");
-    return windowMetaData->endField;
-}
-
-const WindowMetaData& JoinLogicalOperator::getWindowMetaData() const
-{
-    INVARIANT(windowMetaData.has_value(), "Retrieving window end field before calling schema inference");
-    return windowMetaData.value();
+    INVARIANT(startEndFields.has_value(), "Retrieving window end field before calling schema inference");
+    return startEndFields.value()[1];
 }
 
 LogicalFunction JoinLogicalOperator::getJoinFunction() const
@@ -402,9 +403,9 @@ void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     (*serializableOperator.mutable_config())[ConfigParameters::JOIN_TYPE] = descriptorConfigTypeToProto(EnumWrapper(joinType));
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_TYPE] = descriptorConfigTypeToProto(serializableWindowType);
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData->startField.getLastName());
+        = descriptorConfigTypeToProto(*startEndFields.value()[0].getName().begin());
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData->endField.getLastName());
+        = descriptorConfigTypeToProto(*startEndFields.value()[1].getName().begin());
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
@@ -418,4 +419,20 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
     return JoinLogicalOperator{std::array{std::move(arguments.children.at(0)), std::move(arguments.children.at(1))}, arguments.config};
 }
 
+}
+
+std::size_t std::hash<NES::JoinLogicalOperator>::operator()(const NES::JoinLogicalOperator& joinLogicalOperator) const noexcept
+{
+    return folly::hash::hash_combine(
+        joinLogicalOperator.joinType,
+        joinLogicalOperator.joinFunction,
+        *joinLogicalOperator.windowType,
+        joinLogicalOperator.timestampFields,
+        joinLogicalOperator.startEndFields);
+}
+
+std::size_t std::hash<NES::JoinTimeCharacteristic>::operator()(const NES::JoinTimeCharacteristic& joinTimeCharacteristic) const noexcept
+{
+    return std::visit(
+        [](const auto& characteristic) { return folly::hash::hash_combine(characteristic[0], characteristic[1]); }, joinTimeCharacteristic);
 }

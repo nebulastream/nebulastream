@@ -113,6 +113,11 @@ std::optional<Field> Schema::getFieldByName(const IdentifierList& fieldName) con
     return std::nullopt;
 }
 
+// std::optional<Field> Schema::getFieldByName(const Identifier& fieldName) const
+// {
+//     return getFieldByName(IdentifierList{fieldName});
+// }
+
 // Field Schema::getFieldAt(const size_t index) const
 // {
 //     if (index < fields.size())

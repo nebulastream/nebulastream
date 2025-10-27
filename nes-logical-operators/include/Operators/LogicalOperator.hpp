@@ -138,6 +138,7 @@ struct ErasedLogicalOperator
     [[nodiscard]] virtual Schema getOutputSchema() const = 0;
     [[nodiscard]] virtual LogicalOperator withInferredSchema() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedLogicalOperator& other) const = 0;
+    [[nodiscard]] virtual uint64_t hash() const = 0;
     [[nodiscard]] virtual OperatorId getOperatorId() const = 0;
     [[nodiscard]] virtual LogicalOperator withOperatorId(OperatorId id) const = 0;
 
@@ -304,7 +305,14 @@ struct TypedLogicalOperator
 
     [[nodiscard]] OperatorId getId() const { return self->getOperatorId(); }
 
-    [[nodiscard]] bool operator==(const LogicalOperator& other) const { return self->equals(*other.self); }
+    [[nodiscard]] bool operator==(const LogicalOperator& other) const
+    {
+        if (self == other.self)
+        {
+            return true;
+        }
+        return self->equals(*other.self);
+    }
 
     [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
@@ -325,6 +333,8 @@ private:
 
     template <typename FriendChecked>
     friend struct TypedLogicalOperator;
+
+    friend struct std::hash<TypedLogicalOperator>;
 
     [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
 
@@ -380,6 +390,8 @@ struct OperatorModel : ErasedLogicalOperator
         return false;
     }
 
+    [[nodiscard]] uint64_t hash() const noexcept override { return std::hash<OperatorType>{}(impl); }
+
     [[nodiscard]] OperatorId getOperatorId() const override { return id; }
 
     [[nodiscard]] LogicalOperator withOperatorId(OperatorId id) const override { return LogicalOperator{OperatorModel{impl, id}}; }
@@ -429,10 +441,17 @@ LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitType&.
 /// Hash is based solely on unique identifier (needed for e.g. unordered_set)
 namespace std
 {
+template <typename T>
+requires (NES::LogicalOperatorConcept<T> && !std::is_same_v<T, NES::detail::ErasedLogicalOperator>)
+struct hash<NES::TypedLogicalOperator<T>>
+{
+    std::size_t operator()(const NES::TypedLogicalOperator<T>& op) const noexcept { return std::hash<T>{}(op.get()); }
+};
+
 template <>
 struct hash<NES::LogicalOperator>
 {
-    std::size_t operator()(const NES::LogicalOperator& op) const noexcept { return std::hash<NES::OperatorId>{}(op.getId()); }
+    std::size_t operator()(const NES::LogicalOperator& op) const noexcept { return op.self->hash(); }
 };
 }
 

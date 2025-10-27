@@ -129,9 +129,9 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
                         joinedDataType = DataType{DataType::Type::VARSIZED_POINTER_REP};
                     }
                     const auto leftFieldNewName
-                        = IdentifierList{leftField.getLastName(), Identifier::parse("j" + std::to_string(counter++))};
+                        = IdentifierList::create(leftField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
                     const auto rightFieldNewName
-                        = IdentifierList{rightField.getLastName(), Identifier::parse("j" + std::to_string(counter++))};
+                        = IdentifierList::create(rightField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
                     leftJoinNames.emplace_back(
                         FieldNamesExtension{.oldField = leftField, .newField = UnboundField{leftFieldNewName, *joinedDataType}});
                     rightJoinNames.emplace_back(
@@ -291,7 +291,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto probeOperator = HJProbePhysicalOperator(
         handlerId,
         physicalJoinFunction,
-        join->getWindowMetaData(),
+        WindowMetaData{join->getStartField(), join->getEndField()},
         joinSchema,
         leftBufferRef,
         rightBufferRef,

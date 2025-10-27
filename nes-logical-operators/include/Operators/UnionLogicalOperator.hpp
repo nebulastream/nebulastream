@@ -63,8 +63,14 @@ private:
     std::optional<Schema> outputSchema;
 
     TraitSet traitSet;
+    friend struct std::hash<UnionLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<UnionLogicalOperator>);
 
 }
+template <>
+struct std::hash<NES::UnionLogicalOperator>
+{
+    uint64_t operator()(const NES::UnionLogicalOperator& op) const noexcept;
+};

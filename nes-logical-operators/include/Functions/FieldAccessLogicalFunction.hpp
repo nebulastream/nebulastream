@@ -62,7 +62,7 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<IdentifierList> FIELD_NAME{
+        static inline const DescriptorConfig::ConfigParameter<Identifier> FIELD_NAME{
             "fieldName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_NAME, config); }};
@@ -78,8 +78,15 @@ public:
 
 private:
     Field field;
+    friend struct std::hash<FieldAccessLogicalFunction>;
 };
 
 }
 
 FMT_OSTREAM(NES::FieldAccessLogicalFunction);
+
+template <>
+struct std::hash<NES::FieldAccessLogicalFunction>
+{
+    size_t operator()(const NES::FieldAccessLogicalFunction& fieldAccessFunction) const noexcept;
+};

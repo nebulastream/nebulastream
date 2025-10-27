@@ -189,7 +189,7 @@ public:
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(
             currentTestFile.schemaFieldTypes,
-            currentTestFile.schemaFieldNames | std::views::transform([](const auto& name) { return Identifier(name); })
+            currentTestFile.schemaFieldNames | std::views::transform([](const auto& name) { return Identifier::parse(name); })
                 | std::ranges::to<std::vector>());
         const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType;
         const auto testFilePath

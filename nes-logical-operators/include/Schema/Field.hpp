@@ -43,7 +43,7 @@ struct Field
     Field& operator=(Field&& other) noexcept;
 
     friend std::ostream& operator<<(std::ostream& os, const Field& field);
-    bool operator==(const Field&) const = default;
+    bool operator==(const Field& other) const;
 
     [[nodiscard]] const LogicalOperator& getProducedBy() const;
     [[nodiscard]] Identifier getLastName() const { return name; }
@@ -57,5 +57,11 @@ private:
     DataType dataType{};
 };
 }
+
+template <>
+struct std::hash<NES::Field>
+{
+    std::size_t operator()(const NES::Field& field) const noexcept;
+};
 
 FMT_OSTREAM(NES::Field);

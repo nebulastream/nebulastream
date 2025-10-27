@@ -12,16 +12,24 @@
     limitations under the License.
 */
 
-#include <WindowTypes/Types/WindowType.hpp>
+#pragma once
 
-namespace NES::Windowing
+#include <folly/hash/Hash.h>
+
+template <typename T>
+struct std::hash<std::vector<T>>
 {
+    size_t operator()(const std::vector<T>& vector) const noexcept
+    {
+        return folly::hash::hash_range(vector.begin(), vector.end());
+    }
+};
 
-WindowType::WindowType() = default;
-
-}
-
-std::size_t std::hash<NES::Windowing::WindowType>::operator()(const NES::Windowing::WindowType& window) const noexcept
+template <typename T, size_t N>
+struct std::hash<std::array<T, N>>
 {
-    return window.hash();
-}
+    size_t operator()(const std::array<T, N>& array) const noexcept
+    {
+        return folly::hash::hash_range(array.begin(), array.end());
+    }
+};

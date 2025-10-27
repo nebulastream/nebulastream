@@ -63,8 +63,15 @@ protected:
     std::optional<Schema> outputSchema;
 
     TraitSet traitSet;
+
+    friend struct std::hash<IngestionTimeWatermarkAssignerLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);
 
 }
+template <>
+struct std::hash<NES::IngestionTimeWatermarkAssignerLogicalOperator>
+{
+    uint64_t operator()(const NES::IngestionTimeWatermarkAssignerLogicalOperator& op) const noexcept;
+};

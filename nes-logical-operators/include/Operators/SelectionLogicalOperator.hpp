@@ -81,7 +81,14 @@ private:
     std::optional<Schema> outputSchema;
 
     TraitSet traitSet;
+    friend struct std::hash<SelectionLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
 }
+
+template <>
+struct std::hash<NES::SelectionLogicalOperator>
+{
+    uint64_t operator()(const NES::SelectionLogicalOperator& op) const noexcept;
+};

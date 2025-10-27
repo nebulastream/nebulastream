@@ -520,7 +520,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
                                {
                                    throw InvalidQuerySyntax("Projection must have a name.");
                                }
-                               return ProjectionLogicalOperator::Projection{pair.first.value(), pair.second};
+                               return ProjectionLogicalOperator::UnboundProjection{pair.first.value(), pair.second};
                            });
     queryPlan = LogicalPlanBuilder::addProjection(projections | std::ranges::to<std::vector>(), helpers.top().asterisk, queryPlan);
 

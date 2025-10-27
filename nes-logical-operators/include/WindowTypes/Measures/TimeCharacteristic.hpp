@@ -91,3 +91,22 @@ private:
 }
 
 FMT_OSTREAM(NES::Windowing::TimeCharacteristic);
+
+template <>
+struct std::hash<NES::Windowing::IngestionTimeCharacteristic>
+{
+    std::size_t operator()(const NES::Windowing::IngestionTimeCharacteristic& timeCharacteristic) const noexcept;
+};
+
+template <>
+struct std::hash<NES::Windowing::UnboundEventTimeCharacteristic>
+{
+    std::size_t operator()(const NES::Windowing::UnboundEventTimeCharacteristic& timeCharacteristic) const noexcept;
+};
+
+template <>
+struct std::hash<NES::Windowing::BoundEventTimeCharacteristic>
+{
+    std::size_t operator()(const NES::Windowing::BoundEventTimeCharacteristic& timeCharacteristic) const noexcept;
+};
+

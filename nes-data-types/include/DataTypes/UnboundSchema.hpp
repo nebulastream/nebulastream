@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <ostream>
+#include <span>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -29,29 +30,55 @@
 
 namespace NES
 {
-struct UnboundField
+template <size_t IdListExtent>
+struct UnboundFieldBase
 {
-    UnboundField(IdentifierList name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType)) { }
+    UnboundFieldBase(IdentifierListBase<IdListExtent> name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType)) { }
 
-    UnboundField(IdentifierList name, DataType::Type dataType)
+    UnboundFieldBase(IdentifierListBase<IdListExtent> name, DataType::Type dataType)
         : name(std::move(name)), dataType(DataTypeProvider::provideDataType(dataType))
     {
     }
 
-    [[nodiscard]] const IdentifierList& getName() const { return name; }
+    // UnboundFieldBase(Identifier name, DataType::Type dataType)
+    // requires(IdListExtent == std::dynamic_extent || IdListExtent == 1)
+    //     : name(IdentifierList::create(std::move(name))), dataType(DataTypeProvider::provideDataType(dataType))
+    // {
+    // }
+
+    template <size_t OtherIdListExtent>
+    UnboundFieldBase(const UnboundFieldBase<OtherIdListExtent>& other)
+    requires(IdListExtent == std::dynamic_extent || IdListExtent != OtherIdListExtent)
+        : name(other.getName()), dataType(other.getDataType())
+    {
+    }
+
+    [[nodiscard]] const IdentifierListBase<IdListExtent>& getName() const { return name; }
 
     [[nodiscard]] const DataType& getDataType() const { return dataType; }
 
-    friend bool operator==(const UnboundField& lhs, const UnboundField& rhs);
-    friend std::ostream& operator<<(std::ostream& os, const UnboundField& obj);
+    friend bool operator==(const UnboundFieldBase& lhs, const UnboundFieldBase& rhs)
+    {
+        return lhs.getName() == rhs.getName() && lhs.getDataType() == rhs.getDataType();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const UnboundFieldBase& obj)
+    {
+        return os << fmt::format("UnboundField: (name: {}, type: {})", obj.getName(), obj.getDataType());
+    }
 
 private:
-    IdentifierList name;
+    IdentifierListBase<IdListExtent> name;
     DataType dataType;
 };
+
+using UnboundField = UnboundFieldBase<std::dynamic_extent>;
 }
 
-FMT_OSTREAM(NES::UnboundField);
+template <size_t IdListExtent>
+struct fmt::formatter<NES::UnboundFieldBase<IdListExtent>> : fmt::ostream_formatter
+{
+};
 
 namespace NES
 {
@@ -146,12 +173,12 @@ private:
 
 }
 
-template <>
-struct std::hash<NES::UnboundField>
+template <size_t IdListExtent>
+struct std::hash<NES::UnboundFieldBase<IdListExtent>>
 {
-    size_t operator()(const NES::UnboundField& field) const noexcept
+    size_t operator()(const NES::UnboundFieldBase<IdListExtent>& field) const noexcept
     {
-        return std::hash<NES::IdentifierList>{}(field.getName()) ^ std::hash<NES::DataType>{}(field.getDataType());
+        return std::hash<NES::IdentifierListBase<IdListExtent>>{}(field.getName()) ^ std::hash<NES::DataType>{}(field.getDataType());
     }
 };
 

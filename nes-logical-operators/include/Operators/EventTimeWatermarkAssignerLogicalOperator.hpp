@@ -86,8 +86,15 @@ private:
     std::optional<Schema> outputSchema;
 
     TraitSet traitSet;
+
+    friend struct std::hash<EventTimeWatermarkAssignerLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
 
 }
+template <>
+struct std::hash<NES::EventTimeWatermarkAssignerLogicalOperator>
+{
+    uint64_t operator()(const NES::EventTimeWatermarkAssignerLogicalOperator& eventTimeWatermarkAssignerOperator) const noexcept;
+};

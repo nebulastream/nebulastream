@@ -64,22 +64,15 @@ OperatorSerializationUtil::deserializeOperator(const SerializableOperator& seria
             {
                 config[key] = protoToDescriptorConfigType(value);
             }
-            auto sinkName = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
-            if (not std::holds_alternative<IdentifierList>(sinkName))
+            auto sinkNameVariant = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
+            if (not std::holds_alternative<Identifier>(sinkNameVariant))
             {
                 throw CannotDeserialize(
-                    "Expected identifier list for sinkName but got {} while deserializing\n{}", sinkName, serializedOperator.DebugString());
+                    "Expected identifier list for sinkName but got {} while deserializing\n{}", sinkNameVariant, serializedOperator.DebugString());
             }
-            auto sinkNameList = std::get<IdentifierList>(sinkName);
-            if (sinkNameList.size() != 1)
-            {
-                throw CannotDeserialize(
-                    "Expected sinkName to be a single identifier but got {} while deserializing\n{}",
-                    sinkName,
-                    serializedOperator.DebugString());
-            }
+            auto sinkName = std::get<Identifier>(sinkNameVariant);
 
-            auto sinkOperator = SinkLogicalOperator(*std::ranges::rbegin(sinkNameList)).withChildren(std::move(children));
+            auto sinkOperator = SinkLogicalOperator(sinkName).withChildren(std::move(children));
             serializedSinkDescriptor.transform(
                 [&sinkOperator](const auto& serialized)
                 { return sinkOperator = sinkOperator.withSinkDescriptor(deserializeSinkDescriptor(serialized)); });
@@ -105,7 +98,7 @@ OperatorSerializationUtil::deserializeOperator(const SerializableOperator& seria
 
     if (result.has_value())
     {
-        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set());
+        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set(), result.value());
         return result->withTraitSet(std::move(traitSet)).withOperatorId(OperatorId{serializedOperator.operator_id()});
     }
 

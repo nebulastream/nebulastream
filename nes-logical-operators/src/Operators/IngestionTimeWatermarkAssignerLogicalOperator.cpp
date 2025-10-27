@@ -22,6 +22,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <folly/Hash.h>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -49,7 +50,8 @@ namespace NES
 
 IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator() = default;
 
-IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(LogicalOperator child, DescriptorConfig::Config)
+IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(
+    LogicalOperator child, DescriptorConfig::Config)
 {
     this->child = std::move(child);
     this->outputSchema = Schema{
@@ -148,4 +150,10 @@ LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogical
     return IngestionTimeWatermarkAssignerLogicalOperator(std::move(arguments.children.at(0)), DescriptorConfig::Config{});
 }
 
+}
+
+uint64_t std::hash<NES::IngestionTimeWatermarkAssignerLogicalOperator>::operator()(
+    const NES::IngestionTimeWatermarkAssignerLogicalOperator&) const noexcept
+{
+    return 35890319;
 }

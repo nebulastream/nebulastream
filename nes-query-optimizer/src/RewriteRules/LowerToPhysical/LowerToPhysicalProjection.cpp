@@ -47,16 +47,16 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         scanBufferRef,
         accessedFields | std::views::transform([](const auto& field) { return IdentifierList{field.getLastName()}; }) | std::ranges::to<std::vector>());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+        scan, inputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
     auto child = scanWrapper;
     for (const auto& [fieldName, function] : projection->getProjections())
     {
         auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-        auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
+        auto physicalOperator = MapPhysicalOperator(fieldName.getLastName(), physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,
-            outputSchema,
+            inputSchema,
             outputSchema,
             std::nullopt,
             std::nullopt,

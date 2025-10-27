@@ -66,8 +66,15 @@ private:
     Identifier logicalSourceName;
 
     TraitSet traitSet;
+    friend struct std::hash<SourceNameLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<SourceNameLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::SourceNameLogicalOperator>
+{
+    std::size_t operator()(const NES::SourceNameLogicalOperator& sourceNameLogicalOperator) const;
+};

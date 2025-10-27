@@ -51,3 +51,13 @@ protected:
     LogicalFunction inputFunction;
 };
 }
+
+
+template <>
+struct std::hash<NES::WindowAggregationLogicalFunction>
+{
+    size_t operator()(const NES::WindowAggregationLogicalFunction& windowAggregationLogicalFunction) const
+    {
+        return std::hash<std::string_view>{}(windowAggregationLogicalFunction.getName());
+    }
+};

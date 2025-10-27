@@ -24,8 +24,7 @@
 namespace NES::Windowing
 {
 
-TumblingWindow::TumblingWindow(TimeMeasure size)
-    : size(std::move(size))
+TumblingWindow::TumblingWindow(TimeMeasure size) : size(std::move(size))
 {
 }
 
@@ -37,6 +36,11 @@ TimeMeasure TumblingWindow::getSize()
 TimeMeasure TumblingWindow::getSlide()
 {
     return getSize();
+}
+
+size_t TumblingWindow::hash() const
+{
+    return std::hash<TimeMeasure>{}(size);
 }
 
 std::string TumblingWindow::toString() const
@@ -52,4 +56,9 @@ bool TumblingWindow::operator==(const WindowType& otherWindowType) const
     }
     return false;
 }
+}
+
+std::size_t std::hash<NES::Windowing::TumblingWindow>::operator()(const NES::Windowing::TumblingWindow& window) const noexcept
+{
+    return std::hash<NES::Windowing::TimeMeasure>{}(window.size);
 }

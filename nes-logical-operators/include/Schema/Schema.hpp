@@ -191,6 +191,7 @@ public:
     /// If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
     /// Note that this function does not return a field with an ambiguous field name.
     [[nodiscard]] std::optional<Field> getFieldByName(const IdentifierList& fieldName) const;
+    // [[nodiscard]] std::optional<Field> getFieldByName(const Identifier& fieldName) const;
 
     bool contains(const IdentifierList& qualifiedFieldName) const;
 

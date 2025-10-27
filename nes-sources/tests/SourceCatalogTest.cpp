@@ -60,7 +60,7 @@ TEST_F(SourceCatalogTest, AddInspectLogicalSource)
         UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
+    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     ASSERT_TRUE(sourceCatalog.containsLogicalSource(*sourceOpt));
 }
@@ -72,7 +72,7 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
         UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
+    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto physical1Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     const auto physical2Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
@@ -118,7 +118,7 @@ TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
         UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
+    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto physical1Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "THIS_DOES_NOT_EXIST", {}, {});
     ASSERT_FALSE(physical1Opt.has_value());
@@ -131,7 +131,7 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
         UnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
+    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto& logicalSource = sourceOpt.value();
     const auto physical1Opt = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
@@ -187,7 +187,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
         std::ranges::generate(nums, [&]() { return range(gen); });
         for (int num : nums)
         {
-            auto logicalSourceName = fmt::format("testSource{}", num);
+            auto logicalSourceName = Identifier::parse(fmt::format("testSource{}", num));
 
             auto logicalSourceOpt = sourceCatalog.getLogicalSource(logicalSourceName);
             if (not logicalSourceOpt.has_value())
@@ -229,7 +229,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
         while (not stopToken.stop_requested())
         {
             int num = range(gen);
-            auto logicalSourceName = fmt::format("testSource{}", num);
+            auto logicalSourceName = Identifier::parse(fmt::format("testSource{}", num));
             if (auto logicalSourceOpt = sourceCatalog.getLogicalSource(logicalSourceName))
             {
                 bool unused = sourceCatalog.removeLogicalSource(*logicalSourceOpt);

@@ -43,7 +43,7 @@ TEST_F(UnboundSchemaTest, InitListCtorNoConflicts)
     const UnboundField field2{Identifier::parse("field2"), DataType::Type::INT32};
     const UnboundSchema unboundSchema{field1, field2};
 
-    const auto found1 = unboundSchema[Identifier::parse("field1")];
+    const auto found1 = unboundSchema[static_cast<IdentifierList>(Identifier::parse("field1"))];
     const auto found2 = unboundSchema[Identifier::parse("field2")];
     EXPECT_EQ(found1.value(), field1);
     EXPECT_EQ(found2.value(), field2);

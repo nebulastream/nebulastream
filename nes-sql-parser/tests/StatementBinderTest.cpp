@@ -100,7 +100,7 @@ TEST_F(StatementBinderTest, BindQuotedIdentifiers)
     auto expectedSchema = UnboundSchema{
         UnboundField{Identifier::parse("testSource$attribute1"), DataType::Type::UINT32},
         UnboundField{Identifier::parse("testSource$attribute2"), DataType::Type::VARSIZED}};
-    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    ASSERT_EQ(actualSource.getLogicalSourceName(), Identifier::parse("TestSource"));
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
 
@@ -116,7 +116,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     auto expectedSchema = UnboundSchema{
         UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE1"), DataType::Type::UINT32},
         UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE2"), DataType::Type::VARSIZED}};
-    ASSERT_EQ(actualSource.getLogicalSourceName(), "TESTSOURCE");
+    ASSERT_EQ(actualSource.getLogicalSourceName(), Identifier::parse("TESTSOURCE"));
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
     const std::string createPhysicalSourceStatement
@@ -156,7 +156,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto dropped2Result = sourceStatementHandler->apply(std::get<DropLogicalSourceStatement>(*statement4));
     ASSERT_TRUE(dropped2Result.has_value());
     const auto [dropped2] = dropped2Result.value();
-    ASSERT_EQ(dropped2.getLogicalSourceName(), "TESTSOURCE");
+    ASSERT_EQ(dropped2.getLogicalSourceName(), Identifier::parse("TESTSOURCE"));
     auto remainingLogicalSources = sourceCatalog->getLogicalToPhysicalSourceMapping();
     ASSERT_EQ(remainingLogicalSources.size(), 0);
 }
@@ -166,7 +166,7 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
     auto schema = UnboundSchema{
         UnboundField{Identifier::parse("ATTRIBUTE1"), DataType::Type::UINT32},
         UnboundField{Identifier::parse("ATTRIBUTE2"), DataType::Type::VARSIZED}};
-    const auto logicalSourceOpt = sourceCatalog->addLogicalSource("TESTSOURCE", schema);
+    const auto logicalSourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("TESTSOURCE"), schema);
     ASSERT_TRUE(logicalSourceOpt.has_value());
 
     /// Invalid logical source
@@ -189,7 +189,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
     auto expectedSchema = UnboundSchema{
         UnboundField{Identifier::parse("ATTRIBUTE1"), DataType::Type::UINT32},
         UnboundField{Identifier::parse("ATTRIBUTE2"), DataType::Type::VARSIZED}};
-    ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
+    ASSERT_EQ(actualSink.getSinkName(), Identifier::parse("TESTSINK"));
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
@@ -202,7 +202,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
     const auto droppedResult = sinkStatementHandler->apply(std::get<DropSinkStatement>(*statement2));
     ASSERT_TRUE(droppedResult.has_value());
     const auto [dropped] = droppedResult.value();
-    ASSERT_EQ(dropped.getSinkName(), "TESTSINK");
+    ASSERT_EQ(dropped.getSinkName(), Identifier::parse("TESTSINK"));
     auto remainingSinks = sinkCatalog->getAllSinkDescriptors();
     ASSERT_EQ(remainingSinks.size(), 0);
 }
@@ -221,7 +221,7 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     auto expectedSchema = UnboundSchema{
         UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE1"), DataType::Type::UINT32},
         UnboundField{Identifier::parse("TESTSOURCE$ATTRIBUTE2"), DataType::Type::VARSIZED}};
-    ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
+    ASSERT_EQ(actualSink.getSinkName(), Identifier::parse("TESTSINK"));
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
@@ -275,13 +275,13 @@ TEST_F(StatementBinderTest, ShowLogicalSources)
     ASSERT_TRUE(std::holds_alternative<ShowLogicalSourcesStatement>(*filteredQuotedStatementExp));
     const auto [name2, format2] = std::get<ShowLogicalSourcesStatement>(*filteredQuotedStatementExp);
     ASSERT_TRUE(name2.has_value());
-    ASSERT_EQ(*name2, "TESTSOURCE1");
+    ASSERT_EQ(*name2, Identifier::parse("TESTSOURCE1"));
     ASSERT_TRUE(format2 == std::nullopt);
     const auto filteredQuotedSourcesStatementResult
         = sourceStatementHandler->apply(std::get<ShowLogicalSourcesStatement>(*filteredQuotedStatementExp));
     ASSERT_TRUE(filteredQuotedSourcesStatementResult.has_value());
     ASSERT_EQ(filteredQuotedSourcesStatementResult.value().sources.size(), 1);
-    ASSERT_EQ(filteredQuotedSourcesStatementResult.value().sources.at(0).getLogicalSourceName(), "TESTSOURCE1");
+    ASSERT_EQ(filteredQuotedSourcesStatementResult.value().sources.at(0).getLogicalSourceName(), Identifier::parse("TESTSOURCE1"));
 
     const auto invalidFormatStatementExp = binder->parseAndBindSingle(invalidFormatQueryString);
     ASSERT_FALSE(invalidFormatStatementExp.has_value());
@@ -363,7 +363,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     auto showPhysicalSourceForLogicalSource = std::get<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementExp);
     const auto [logicalSource3, id3, format3] = showPhysicalSourceForLogicalSource;
     ASSERT_TRUE(logicalSource3.has_value());
-    ASSERT_EQ(logicalSource3->getLogicalSourceName(), "TESTSOURCE1");
+    ASSERT_EQ(logicalSource3->getLogicalSourceName(), Identifier::parse("TESTSOURCE1"));
     ASSERT_FALSE(id3.has_value());
     ASSERT_TRUE(format3 == StatementOutputFormat::TEXT);
     const auto physicalSourceForLogicalSourceStatementResult = sourceStatementHandler->apply(showPhysicalSourceForLogicalSource);
@@ -380,7 +380,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
         = std::get<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementFilteredExp);
     const auto [logicalSource4, id4, format4] = showPhysicalSourceForLogicalSourceFiltered;
     ASSERT_TRUE(logicalSource4.has_value());
-    ASSERT_EQ(logicalSource4->getLogicalSourceName(), "TESTSOURCE2");
+    ASSERT_EQ(logicalSource4->getLogicalSourceName(), Identifier::parse("TESTSOURCE2"));
     ASSERT_TRUE(id4.has_value());
     ASSERT_TRUE(*id4 == 3);
     ASSERT_TRUE(format4 == std::nullopt);
@@ -426,7 +426,7 @@ TEST_F(StatementBinderTest, ShowSinks)
     auto filteredQuotedSinksStatement = std::get<ShowSinksStatement>(*filteredQuotedSinksStatementExp);
     const auto [name2, format2] = filteredQuotedSinksStatement;
     ASSERT_TRUE(name2.has_value());
-    ASSERT_EQ(*name2, "TESTSINK1");
+    ASSERT_EQ(*name2, Identifier::parse("TESTSINK1"));
     ASSERT_TRUE(format2 == std::nullopt);
 
     const auto allSinksResult = sinkStatementHandler->apply(allSinksStatement);
@@ -435,7 +435,7 @@ TEST_F(StatementBinderTest, ShowSinks)
     ASSERT_TRUE(filteredQuotedSinksResult.has_value());
     ASSERT_EQ(allSinksResult.value().sinks.size(), 2);
     ASSERT_EQ(filteredQuotedSinksResult.value().sinks.size(), 1);
-    ASSERT_EQ(filteredQuotedSinksResult.value().sinks.at(0).getSinkName(), "TESTSINK1");
+    ASSERT_EQ(filteredQuotedSinksResult.value().sinks.at(0).getSinkName(), Identifier::parse("TESTSINK1"));
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

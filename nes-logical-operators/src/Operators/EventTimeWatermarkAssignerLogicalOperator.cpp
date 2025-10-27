@@ -25,6 +25,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <folly/Hash.h>
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/TimeUnit.hpp>
@@ -197,4 +198,10 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
     }
     return EventTimeWatermarkAssignerLogicalOperator{std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
+}
+
+uint64_t std::hash<NES::EventTimeWatermarkAssignerLogicalOperator>::operator()(
+    const NES::EventTimeWatermarkAssignerLogicalOperator& eventTimeWatermarkAssignerOperator) const noexcept
+{
+    return folly::hash::hash_combine(eventTimeWatermarkAssignerOperator.unit, eventTimeWatermarkAssignerOperator.onField);
 }

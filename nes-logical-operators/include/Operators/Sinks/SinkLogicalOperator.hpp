@@ -63,7 +63,7 @@ struct SinkLogicalOperator final
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<IdentifierList> SINK_NAME{
+        static inline const DescriptorConfig::ConfigParameter<Identifier> SINK_NAME{
             "SinkName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SINK_NAME, config); }};
@@ -84,7 +84,14 @@ private:
     std::optional<SinkDescriptor> sinkDescriptor;
 
     friend class OperatorSerializationUtil;
+    friend struct std::hash<SinkLogicalOperator>;
 };
 
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);
 }
+
+template <>
+struct std::hash<NES::SinkLogicalOperator>
+{
+    size_t operator()(const NES::SinkLogicalOperator& sinkLogicalOperator) const noexcept;
+};

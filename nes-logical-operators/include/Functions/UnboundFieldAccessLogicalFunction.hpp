@@ -69,6 +69,7 @@ public:
 private:
     IdentifierList fieldName;
     DataType dataType;
+    friend std::hash<UnboundFieldAccessLogicalFunction>;
 };
 
 struct FieldAccessLogicalFunctionVariantWrapper
@@ -80,3 +81,15 @@ struct FieldAccessLogicalFunctionVariantWrapper
     FieldAccessLogicalFunction withInferredDataType(const Schema& schema) const;
 };
 }
+
+template <>
+struct std::hash<NES::UnboundFieldAccessLogicalFunction>
+{
+    std::size_t operator()(const NES::UnboundFieldAccessLogicalFunction& function) const noexcept;
+};
+
+template <>
+struct std::hash<NES::FieldAccessLogicalFunctionVariantWrapper>
+{
+    std::size_t operator()(const NES::FieldAccessLogicalFunctionVariantWrapper& function) const noexcept;
+};

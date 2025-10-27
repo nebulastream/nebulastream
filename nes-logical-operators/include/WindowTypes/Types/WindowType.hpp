@@ -28,8 +28,15 @@ public:
     virtual ~WindowType() = default;
 
     virtual std::string toString() const = 0;
+    virtual size_t hash() const = 0;
 
     virtual bool operator==(const WindowType& otherWindowType) const = 0;
 };
 
 }
+
+template <>
+struct std::hash<NES::Windowing::WindowType>
+{
+    std::size_t operator()(const NES::Windowing::WindowType& window) const noexcept;
+};

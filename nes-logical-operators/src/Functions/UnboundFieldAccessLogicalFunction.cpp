@@ -16,6 +16,8 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 
+#include <folly/Hash.h>
+
 #include <Schema/Schema.hpp>
 #include <Util/Overloaded.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -143,4 +145,16 @@ FieldAccessLogicalFunction FieldAccessLogicalFunctionVariantWrapper::withInferre
         },
         underlying);
 }
+}
+
+std::size_t
+std::hash<NES::UnboundFieldAccessLogicalFunction>::operator()(const NES::UnboundFieldAccessLogicalFunction& function) const noexcept
+{
+    return folly::hash::hash_combine(function.fieldName, function.dataType);
+}
+
+std::size_t std::hash<NES::FieldAccessLogicalFunctionVariantWrapper>::operator()(
+    const NES::FieldAccessLogicalFunctionVariantWrapper& function) const noexcept
+{
+    return std::hash<std::variant<NES::UnboundFieldAccessLogicalFunction, NES::FieldAccessLogicalFunction>>{}(function.underlying);
 }

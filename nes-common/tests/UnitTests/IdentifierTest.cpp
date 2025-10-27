@@ -137,7 +137,7 @@ TEST_F(IdentifierTest, NotParseDotWrongList)
 
 TEST_F(IdentifierTest, ConcatListWithOne)
 {
-    const auto idList2 = IdentifierList{Identifier::parse("Source"), Identifier::parse("Test")};
+    const auto idList2 = IdentifierList::create(Identifier::parse("Source"), Identifier::parse("Test"));
     const auto idList3 = idList2 + Identifier::parse("attr");
     EXPECT_EQ(std::ranges::size(idList3), 3);
     EXPECT_EQ(fmt::format("{}", *std::ranges::begin(idList3)), "SOURCE");
@@ -148,8 +148,8 @@ TEST_F(IdentifierTest, ConcatListWithOne)
 
 TEST_F(IdentifierTest, ConcatListWithList)
 {
-    const auto idList21 = IdentifierList{Identifier::parse("Source"), Identifier::parse("Test")};
-    const auto idList22 = IdentifierList{Identifier::parse("Attr"), Identifier::parse("sub")};
+    const auto idList21 = IdentifierList::create(Identifier::parse("Source"), Identifier::parse("Test"));
+    const auto idList22 = IdentifierList::create(Identifier::parse("Attr"), Identifier::parse("sub"));
     const auto idList3 = idList21 + idList22;
     EXPECT_EQ(std::ranges::size(idList3), 4);
     EXPECT_EQ(fmt::format("{}", *std::ranges::begin(idList3)), "SOURCE");
@@ -161,8 +161,8 @@ TEST_F(IdentifierTest, ConcatListWithList)
 
 TEST_F(IdentifierTest, IdSpanLookup)
 {
-    const auto idList31 = IdentifierList{Identifier::parse("Source"), Identifier::parse("Test"), Identifier::parse("Attr")};
-    const auto idList32 = IdentifierList{Identifier::parse("Source"), Identifier::parse("Test"), Identifier::parse("Attr2")};
+    const auto idList31 = IdentifierList::create(Identifier::parse("Source"), Identifier::parse("Test"), Identifier::parse("Attr"));
+    const auto idList32 = IdentifierList::create(Identifier::parse("Source"), Identifier::parse("Test"), Identifier::parse("Attr2"));
     const std::unordered_set<std::span<const Identifier>, std::hash<std::span<const Identifier>>, IdentifierList::SpanEquals> idMap{
         std::span{idList31.begin() + 1, idList31.end()},
         std::span{idList32.begin() + 1, idList32.end()},

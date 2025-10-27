@@ -16,26 +16,29 @@
 
 #include <ostream>
 #include <utility>
-#include <Schema/Field.hpp>
+
+#include "DataTypes/UnboundSchema.hpp"
+#include "Identifiers/Identifier.hpp"
 
 namespace NES
 {
 struct WindowMetaData
 {
-    Field startField;
-    Field endField;
+    /// I'd prefer to use Fields or at least UnboundFields, but common cannot have a dependency on them
+    /// and nes-phyiscal-operators depend on a lot of transitive dependencies at the moment.
+    UnboundField startField;
+    UnboundField endField;
 
-    WindowMetaData(Field startField, Field endField)
-        : startField(std::move(startField)), endField(std::move(endField))
-    {
-    }
-    bool operator==(const WindowMetaData& other) const = default;
-    friend std::ostream& operator<<(std::ostream& os, const WindowMetaData& obj)
-    {
-        return os << fmt::format("startField: {}, endField {}", obj.startField, obj.endField);
-    }
+    WindowMetaData(UnboundField startField, UnboundField endField);
+    bool operator==(const WindowMetaData& other) const;
+    friend std::ostream& operator<<(std::ostream& os, const WindowMetaData& obj);
 };
 }
 
 FMT_OSTREAM(NES::WindowMetaData);
 
+template <>
+struct std::hash<NES::WindowMetaData>
+{
+    size_t operator()(const NES::WindowMetaData& windowMetaData) const noexcept;
+};
