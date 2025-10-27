@@ -586,8 +586,8 @@ if __name__ == "__main__":
 
         'operator_chains': [
             #['map'],                  # Single map
-            #['filter'],               # Single filter
-            ['agg'],                 # Single aggregation
+            ['filter'],               # Single filter
+            ['aggregation'],                 # Single aggregation
             ['map', 'filter'],        # Map followed by filter
             ['filter', 'map'],        # Filter followed by map
             #['filter', 'agg'],

@@ -146,17 +146,22 @@ def process_benchmark(benchmark_dir, run_options='all', legacy = False): #TODO: 
 
         # Run enginestatsread.py with all trace files at once
         try:
-            result = subprocess.run(
-                ["python3", "src/enginestatsread.py",
-                 str(benchmark_dir),
-                 "--trace-files"] + trace_files,
-                check=False, capture_output=True
+            cmd= ["python3", "src/enginestatsread.py",
+                   str(benchmark_dir),
+                   "--trace-files"] + trace_files
+            if legacy:
+                cmd.append("--legacy")
+            result = subprocess.run(cmd,
+                check=False, capture_output=True, text=True
             )
+
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print("enginestatsread stderr:", result.stderr)
             if result.returncode != 0:
-                print(f"Error running enginestatsread.py: {result.stderr.decode()}")
+                print(f"enginestatsread returned code {result.returncode}")
                 return None
-            else:
-                print(result.stdout.decode())
 
             # Read CSV result from enginestatsread.py
             csv_file = benchmark_dir / f"{benchmark_dir.name}_old.csv"
@@ -212,54 +217,6 @@ def process_benchmark(benchmark_dir, run_options='all', legacy = False): #TODO: 
                         # Copy individual results to query directory
                         result_csv = info['query_dir'] / f"run{info['run']}_{info['layout']}_results.csv"
                         query_results.to_csv(result_csv, index=False)
-                """
-                if all_results:
-                    combined_df = pd.concat(all_results, ignore_index=True)
-
-                    # Process per-query statistics
-                    query_ids = combined_df['query_id'].unique()
-                    for query_id in query_ids:
-                        query_results = combined_df[combined_df['query_id'] == query_id]
-
-                        # Get the query directory from first matching info
-                        query_info = next((info for info in trace_file_info if info['query_id'] == query_id), None)
-                        if query_info:
-                            query_dir = query_info['query_dir']
-
-                            # Calculate average results for this query across runs
-                            avg_df = query_results.groupby(['layout']).mean(numeric_only=True).reset_index()
-                            avg_df['operator_type'] = query_info['operator_type']
-                            avg_df['is_double_op'] = query_info['is_double_op']
-                            avg_df['operator_chain'] = query_info['operator_chain']
-                            avg_df['swap_strategy'] = query_info['swap_strategy']
-
-                            avg_csv = query_dir / "avg_results.csv"
-                            avg_df.to_csv(avg_csv, index=False)
-
-                    # Combine all results
-                    output_csv = benchmark_dir / f"{benchmark_dir.name}_results.csv"
-                    combined_df.to_csv(output_csv, index=False)
-
-                    # Create separate results files for single and double operators
-                    single_ops_df = combined_df[~combined_df['is_double_op']]
-                    if not single_ops_df.empty:
-                        single_csv = benchmark_dir / f"{benchmark_dir.name}_single_operator_results.csv"
-                        single_ops_df.to_csv(single_csv, index=False)
-
-                    double_ops_df = combined_df[combined_df['is_double_op']]
-                    if not double_ops_df.empty:
-                        double_csv = benchmark_dir / f"{benchmark_dir.name}_double_operator_results.csv"
-                        double_ops_df.to_csv(double_csv, index=False)
-
-                    # Average results across runs for all queries
-                    #avg_columns = ['query_id', 'layout', 'buffer_size', 'operator_type',
-                                   #'is_double_op', 'operator_chain', 'swap_strategy']
-                    #avg_df = combined_df.groupby(avg_columns).mean(numeric_only=True).reset_index()
-
-                    avg_csv = benchmark_dir / f"{benchmark_dir.name}_avg_results.csv"
-                    #avg_df.to_csv(avg_csv, index=False)
-
-                    return str(output_csv)"""
 
         except Exception as e:
             print(f"Error processing trace files: {e}")
@@ -282,7 +239,7 @@ if __name__ == "__main__":
     parser.add_argument('--run-options', required=True, default='all', help='options: all, single or double')
     parser.add_argument('--legacy', action='store_true', help='Use legacy processing method')
     args = parser.parse_args()
-    legacy= False
+    legacy= True
     if args.legacy:
         legacy= True
     process_benchmark(args.benchmark_dir, args.run_options, legacy)
