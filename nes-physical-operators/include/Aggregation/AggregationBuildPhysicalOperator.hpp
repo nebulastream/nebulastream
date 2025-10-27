@@ -35,6 +35,19 @@ Interface::HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
+    const AggregationBuildPhysicalOperator* buildOperator);
+
+void serializeHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    AbstractBufferProvider* bufferProvider,
+    const AggregationBuildPhysicalOperator* buildOperator);
+
+Interface::HashMap* deserializeHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
     AbstractBufferProvider* bufferProvider,
     const AggregationBuildPhysicalOperator* buildOperator);
 
@@ -42,6 +55,19 @@ class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperato
 {
 public:
     friend Interface::HashMap* getAggHashMapProxy(
+        const AggregationOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        const AggregationBuildPhysicalOperator* buildOperator);
+
+    friend void serializeHashMapProxy(
+        const AggregationOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        AbstractBufferProvider* bufferProvider,
+        const AggregationBuildPhysicalOperator* buildOperator);
+
+    friend Interface::HashMap* deserializeHashMapProxy(
         const AggregationOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
