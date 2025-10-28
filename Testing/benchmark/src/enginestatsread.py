@@ -316,7 +316,7 @@ def process_csv(trace_paths, window_size=10):
 
         if (merged['latency'] <= 0).any():
             #remove 0 latencies 0 tuples tasks
-            merged = merged[~((merged['latency'] == 0) | (merged['tuples'] == 0))].copy()#TODO: investigate if tuple = 0 and latency > 0 is important for latency statistics
+            merged = merged[~(merged['latency'] == 0)].copy()
 
             num_nul= (merged['latency'] < 0).sum()
             tuples = (merged[merged['latency'] < 0]['tuples']).sum()
@@ -324,7 +324,7 @@ def process_csv(trace_paths, window_size=10):
                 print(f"Warning: Some tasks have {num_nul} non-positive latency and will be excluding {tuples} tuples from metrics.")
                 #print(f"{(merged['latency'] ==  -1).sum()} tasks have empty latency.")
                 #print(f"{(merged['latency_begin'] ==  0).sum()} begin tasks have empty latency.")
-                merged = merged[merged['latency'] > 0].copy()
+                merged = merged[merged['latency'] > 0 and merged['latency'] >= 0].copy()
 
 
         # throughput per task (tuples/sec)
