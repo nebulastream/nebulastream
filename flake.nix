@@ -70,9 +70,15 @@
 
         fmtBase = pkgs.fmt_11;
         boostBase = pkgs.boost;
-        abseilBase = pkgs.abseil-cpp;
-        protobufBase = pkgs.protobuf;
-        grpcBase = pkgs.grpc;
+        abseilBase = pkgs.abseil-cpp_202401;
+        protobufBase = pkgs.callPackage ./.nix/protobuf/package.nix {
+          abseilCpp = pkgs.abseil-cpp_202401;
+          protobufBase = pkgs.protobuf3_21;
+        };
+        grpcBase = pkgs.callPackage ./.nix/grpc/package.nix {
+          abseilCpp = pkgs.abseil-cpp_202401;
+          protobufPkg = protobufBase;
+        };
         yamlCppBase = pkgs.yaml-cpp;
         replxxBase = pkgs.replxx;
         magicEnumBase = pkgs.magic-enum;
@@ -133,7 +139,11 @@
             boostPkg = sanitizeDrv { drv = boostBase; };
             abseilPkg = sanitizeDrv { drv = abseilBase; };
             protobufPkg = sanitizeDrv { drv = protobufBase; disableChecks = true; };
-            grpcPkg = sanitizeDrv { drv = grpcBase; };
+            grpcPkg =
+              if sanitizer.name == sanitizerOptions.none.name then
+                grpcBase.default
+              else
+                grpcBase.withSanitizer sanitizer;
             yamlCppPkg = sanitizeDrv { drv = yamlCppBase; };
             replxxPkg = sanitizeDrv { drv = replxxBase; };
             magicEnumPkg = sanitizeDrv { drv = magicEnumBase; };

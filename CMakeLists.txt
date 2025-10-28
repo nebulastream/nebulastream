@@ -60,8 +60,8 @@ endif ()
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/Sanitizers.cmake)
-include(cmake/ImportDependencies.cmake)
 project(NES LANGUAGES C CXX)
+include(cmake/ImportDependencies.cmake)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 

@@ -1,0 +1,27 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3c4f4f8..3c4f4f8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,20 +1,23 @@
+ # CMake build for gRPC
+ cmake_minimum_required(VERSION 3.13)
+ project(grpc C CXX)
+ 
+@@
+ # The grpc_plugin_support library contains common code for gRPC language
+ # plugins. It is used by the C++ and Python plugins currently.
+ add_library(grpc_plugin_support
+   src/compiler/cpp_generator.cc
+   src/compiler/cpp_generator_helpers.cc
+   src/compiler/cpp_plugin.cc
+   src/compiler/csharp_generator.cc
+   src/compiler/node_generator.cc
+   src/compiler/objective_c_generator.cc
+   src/compiler/php_generator.cc
+   src/compiler/python_generator.cc
+-  src/compiler/ruby_generator.cc)
++  src/compiler/ruby_generator.cc)
++# Abseil LTS 20250512 introduces a constexpr test that can fail
++# for this target. Disable the test to keep gRPC building.
++target_compile_definitions(grpc_plugin_support PRIVATE
++  ABSL_INTERNAL_ENABLE_TYPE_ERASURE_CONSTEXPR_TESTING=0)

@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: NES Dev <dev@nebulastream.org>
+Date: Mon, 27 Oct 2025 12:00:00 +0000
+Subject: [grpc] Disable codegen by default to avoid Abseil LTS incompatibility
+
+gRPC's codegen (grpc_plugin_support and protoc plugins) currently fails
+to compile with the nixpkgs Abseil LTS (20250512) due to constexpr
+incompatibilities in absl::flat_hash_map instantiations pulled in via
+protobuf's Printer. NES does not require gRPC code generation binaries at
+build time, so turn codegen OFF by default to unblock sanitizer builds.
+
+Upstream CMake already respects gRPC_BUILD_CODEGEN and gates plugin
+targets behind it.
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@
+-option(gRPC_BUILD_CODEGEN "Build gRPC codegen" ON)
++option(gRPC_BUILD_CODEGEN "Build gRPC codegen" OFF)
+

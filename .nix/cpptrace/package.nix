@@ -45,54 +45,56 @@ let
     sanitizeCompileFlags ? [],
     sanitizeLinkFlags ? []
   }:
-    clangStdenv.mkDerivation rec {
-      pname = "cpptrace";
-      version = "0.8.3";
+    let
+      baseDrv = clangStdenv.mkDerivation rec {
+        pname = "cpptrace";
+        version = "0.8.3";
 
-      src = fetchFromGitHub {
-        owner = "jeremy-rifkin";
-        repo = "cpptrace";
-        rev = "v${version}";
-        hash = "sha512-T+fmn1DvgAhUBjanRJBcXc3USAJe4Qs2v5UpiLj+HErLtRKoOCr9V/Pa5Nfpfla9v5H/q/2REKpBJ3r4exSSoQ==";
+        src = fetchFromGitHub {
+          owner = "jeremy-rifkin";
+          repo = "cpptrace";
+          rev = "v${version}";
+          hash = "sha512-T+fmn1DvgAhUBjanRJBcXc3USAJe4Qs2v5UpiLj+HErLtRKoOCr9V/Pa5Nfpfla9v5H/q/2REKpBJ3r4exSSoQ==";
+        };
+
+        nativeBuildInputs = [
+          cmake
+          ninja
+          pkg-config
+        ];
+        buildInputs = [
+          libdwarf.dev
+          zstd.dev
+        ] ++ extraBuildInputs;
+
+        cmakeFlags = [
+          "-G"
+          "Ninja"
+          "-DCMAKE_BUILD_TYPE=Release"
+          "-DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON"
+          "-DCPPTRACE_USE_EXTERNAL_ZSTD=ON"
+          "-DCPPTRACE_BUILD_TESTS=OFF"
+          "-DCPPTRACE_BUILD_EXAMPLES=OFF"
+          "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
+        ];
+
+        enableParallelBuilding = true;
+        strictDeps = true;
+
+        meta = with lib; {
+          description = "C++ stack trace library";
+          homepage = "https://github.com/jeremy-rifkin/cpptrace";
+          license = licenses.mit;
+          platforms = platforms.linux;
+        };
       };
-
-      nativeBuildInputs = [
-        cmake
-        ninja
-        pkg-config
-      ];
-      buildInputs = [
-        libdwarf.dev
-        zstd.dev
-      ] ++ extraBuildInputs;
-
-      sanitizedCompileFlags = lib.concatStringsSep " " sanitizeCompileFlags;
-      sanitizedLinkFlags = lib.concatStringsSep " " sanitizeLinkFlags;
-
-      NIX_CFLAGS_COMPILE = lib.optionalString (sanitizedCompileFlags != "") sanitizedCompileFlags;
-      NIX_CXXFLAGS_COMPILE = lib.optionalString (sanitizedCompileFlags != "") sanitizedCompileFlags;
-      NIX_CFLAGS_LINK = lib.optionalString (sanitizedLinkFlags != "") sanitizedLinkFlags;
-
-      cmakeFlags = [
-        "-G"
-        "Ninja"
-        "-DCMAKE_BUILD_TYPE=Release"
-        "-DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON"
-        "-DCPPTRACE_USE_EXTERNAL_ZSTD=ON"
-        "-DCPPTRACE_BUILD_TESTS=OFF"
-        "-DCPPTRACE_BUILD_EXAMPLES=OFF"
-        "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
-      ];
-
-      enableParallelBuilding = true;
-      strictDeps = true;
-
-      meta = with lib; {
-        description = "C++ stack trace library";
-        homepage = "https://github.com/jeremy-rifkin/cpptrace";
-        license = licenses.mit;
-        platforms = platforms.linux;
+    in
+    sanitizerSupport.sanitizePackage {
+      sanitizer = {
+        compileFlags = sanitizeCompileFlags;
+        linkFlags = sanitizeLinkFlags;
       };
+      drv = baseDrv;
     };
 
 in mkSanitizedPackage build

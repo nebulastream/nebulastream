@@ -10,9 +10,13 @@ on:
 
 jobs:
   nix-build:
-    name: "Nix Build"
+    name: "Nix Build (${{ matrix.sanitizer }})"
     timeout-minutes: 60
     runs-on: [ ubuntu-latest ]
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [ none, address, undefined, thread ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,24 +35,24 @@ jobs:
           mkdir -p ~/.config/nix
           echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
 
-      - name: Build with Nix
+      - name: Build with Nix (${{ matrix.sanitizer }})
         run: |
           # Source Nix environment
           . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
           
           # Configure the project
-          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B cmake-build-nix
+          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B cmake-build-nix-${{ matrix.sanitizer }} -DUSE_SANITIZER=${{ matrix.sanitizer }} -DNES_USE_SYSTEM_DEPS=OFF
                       
           # Build the project
-          ./.nix/nix-cmake.sh --build cmake-build-nix --target nes-single-node-worker -j$(nproc)
+          ./.nix/nix-cmake.sh --build cmake-build-nix-${{ matrix.sanitizer }} --target nes-single-node-worker -j$(nproc)
 
       - name: Upload build artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: nix-build-logs-${{ matrix.os }}
+          name: nix-build-logs-${{ matrix.sanitizer }}
           path: |
-            cmake-build-nix/CMakeFiles/CMakeOutput.log
-            cmake-build-nix/CMakeFiles/CMakeError.log
+            cmake-build-nix-${{ matrix.sanitizer }}/CMakeFiles/CMakeOutput.log
+            cmake-build-nix-${{ matrix.sanitizer }}/CMakeFiles/CMakeError.log
             vcpkg-repository/buildtrees/**/*.log
           retention-days: 7
