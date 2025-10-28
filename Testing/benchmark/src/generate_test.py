@@ -312,6 +312,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                 "selectivity": selectivity,
                                 "individual_selectivity": individual_selectivity,
                                 "threshold": threshold,
+                                'data_name': base_name + f"_cols{num_col}.csv"
                             }
 
                             with open(query_dir / "config.txt", 'w') as config_f:
@@ -353,7 +354,8 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                 "accessed_columns": access_col,
                                 "operator_chain": ["map"],
                                 "swap_strategy": "USE_SINGLE_LAYOUT",
-                                "function_type": func_type
+                                "function_type": func_type,
+                                "data_name": base_name + f"_cols{num_col}.csv"
                             }
 
                             with open(query_dir / "config.txt", 'w') as config_f:
@@ -416,7 +418,8 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                             "aggregation_function": agg_func,
                                             "window_size": window_size,
                                             "num_groups": num_groups,
-                                            "id_data_type": id_type
+                                            "id_data_type": id_type,
+                                            'data_name': base_name + f"_cols{num_col}_groups{num_groups}" + (f"_idtype{id_type}" if id_type != '' else '') + ".csv"
                                         }
                                         with open(query_dir / "config.txt", 'w') as config_f:
                                             for k, v in config.items():
