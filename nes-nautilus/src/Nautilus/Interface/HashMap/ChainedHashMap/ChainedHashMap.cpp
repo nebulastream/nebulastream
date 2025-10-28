@@ -24,9 +24,14 @@
 #include <memory>
 #include <span>
 #include <string>
+
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <absl/strings/internal/str_format/extension.h>
+#include <absl/strings/str_format.h>
+#include <google/protobuf/stubs/port.h>
+
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
@@ -263,37 +268,63 @@ void ChainedHashMap::clear() noexcept
 void ChainedHashMap::serialize(std::filesystem::path path) const
 {
     NES_INFO("Serializing chained hash map {}", path);
-    /// Serialize Header
-
     std::ofstream out(path, std::ios::binary);
     if (!out.is_open())
     {
         NES_ERROR("Cannot open output file {}", path);
         throw CheckpointError("Cannot open output file {}", path);
     }
-    const auto span = entrySpace.getAvailableMemoryArea<>();
-
-    if (entries != nullptr)
-    {
-        for (uint64_t entryIdx = 0; entryIdx < numberOfChains; ++entryIdx)
-        {
-            auto* entry = entries[entryIdx];
-            while (entry != nullptr)
-            {
-                NES_INFO("Found entry!")
-                entry = entry->next;
-            }
-        }
-    }
 
     ChainedHashMapHeader header{numberOfTuples, pageSize, entrySize, entriesPerPage, numberOfChains};
     out.write(reinterpret_cast<const char*>(&header), sizeof(ChainedHashMapHeader));
+    static constexpr uint64_t INVALID = UINT64_MAX;
     /// Serialize entrySpace
-    //const uint64_t entrySpaceSize = entrySpace.getBufferSize();
-    //out.write(reinterpret_cast<const char*>(&entrySpaceSize), sizeof(uint64_t));
-    //out.write(entrySpace.getAvailableMemoryArea<char>().data(), entrySpace.getBufferSize());
+    if (entries != nullptr)
+    {
+        std::unordered_map<const ChainedHashMapEntry*, std::pair<uint64_t, uint64_t>> entryMapping; /// mapping from pointer to (storageIndex, offset)
+        for (uint64_t pageIdx = 0; pageIdx < storageSpace.size(); ++pageIdx)
+        {
+            const auto& page = storageSpace[pageIdx];
+            auto pageData = page.getAvailableMemoryArea().data();
+
+            for (uint64_t entryIdx = 0; entryIdx < entriesPerPage; ++entryIdx)
+            {
+                auto* entry = reinterpret_cast<const ChainedHashMapEntry*>(
+                    pageData + (entryIdx * entrySize));
+                if (entry->hash != 0)
+                {
+                    entryMapping[entry] = {pageIdx, entryIdx*entrySize};
+                }
+            }
+        }
+
+        for (uint64_t i = 0; i < numberOfChains + 1; ++i)
+        {
+            const ChainedHashMapEntry* entry = entries[i];
+            if (auto it = entryMapping.find(entry); it != entryMapping.end())
+            {
+                auto [pageIdx, offset ] = it->second;
+                out.write(reinterpret_cast<const char*>(&pageIdx), sizeof(pageIdx));
+                out.write(reinterpret_cast<const char*>(&offset), sizeof(offset));
+            } else
+            {
+
+                out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
+                out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
+            }
+        }
+    } else
+    {
+        for (uint64_t i = 0; i < numberOfChains + 1; ++i)
+        {
+            out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
+            out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
+        }
+    }
 
     /// Serialize storageSpace
+    const auto numPages = storageSpace.size();
+    out.write(reinterpret_cast<const char*>(&numPages), sizeof(numPages));
     for (const auto& storageBuffer : storageSpace)
     {
         const uint64_t storageBufferSize = storageBuffer.getBufferSize();
@@ -323,9 +354,7 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
     this->numberOfTuples = header.numberOfTuples;
     this->pageSize = header.pageSize;
 
-    const auto numberOfPages = this->numberOfTuples;
-
-    /// Fill Entry Space
+    /// Setup Entryspace
     const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
     const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
     if (not entryBuffer)
@@ -337,20 +366,48 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
     std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
     entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
 
-    while (in.peek() != EOF)
+    /// Read Mappings
+    std::vector<std::pair<uint64_t, uint64_t>> entryMappings(numberOfChains + 1);
+    for (uint64_t i = 0; i < numberOfChains + 1; ++i)
     {
-        uint64_t storageBufferSize;
-        in.read(reinterpret_cast<char*>(&storageBufferSize), sizeof(uint64_t));
-        auto newPage = bufferProvider->getUnpooledBuffer(pageSize);
-        if (not newPage)
-        {
-            throw CannotAccessBuffer(
-                "Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(storageBufferSize));
-        }
-        std::ranges::fill(newPage.value().getAvailableMemoryArea(), std::byte{0});
-        in.read(newPage.value().getAvailableMemoryArea<char>().data(), storageBufferSize);
-        storageSpace.emplace_back(newPage.value());
+        uint64_t pageIdx, offset;
+        in.read(reinterpret_cast<char*>(&pageIdx), sizeof(pageIdx));
+        in.read(reinterpret_cast<char*>(&offset), sizeof(offset));
+        entryMappings[i] = {pageIdx, offset};
     }
+
+    uint64_t numPages;
+    in.read(reinterpret_cast<char*>(&numPages), sizeof(numPages));
+    uint64_t storageBufferSize;
+    for (uint64_t i = 0; i < numPages; ++i)
+    {
+        auto pageBuffer = bufferProvider->getUnpooledBuffer(pageSize);
+        if (not pageBuffer)
+        {
+            throw CannotAllocateBuffer("Could not allocate page during deserialization");
+        }
+        in.read(reinterpret_cast<char*>(&storageBufferSize), sizeof(storageBufferSize));
+        in.read(reinterpret_cast<char*>(pageBuffer->getAvailableMemoryArea().data()), storageBufferSize);
+        storageSpace.emplace_back(pageBuffer.value());
+    }
+
+    /// Rebuild Chains
+    for (uint64_t i = 0; i < numberOfChains + 1; ++i)
+    {
+        auto [pageIdx, offset] = entryMappings[i];
+        if (pageIdx != UINT64_MAX)
+        {
+            INVARIANT(pageIdx < storageSpace.size(), "Cannot rebuild a chain that has a pageIdx outside of storageSpace.size()!");
+            auto* entryPtr = reinterpret_cast<ChainedHashMapEntry*>(
+                storageSpace[pageIdx].getAvailableMemoryArea().data() + offset
+            );
+            entries[i] = entryPtr;
+        } else
+        {
+            entries[i] = nullptr;
+        }
+    }
+    in.close();
 }
 
 }

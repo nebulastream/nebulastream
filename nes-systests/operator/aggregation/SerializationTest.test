@@ -27,7 +27,6 @@ ATTACH INLINE
 0,6
 0,7
 0,8
-0,9
 
 CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i64_out UINT64)  TYPE File;
 CREATE SINK sinkStream2(stream2.start UINT64, stream2.end UINT64, stream2.i64_out UINT64)  TYPE File;
