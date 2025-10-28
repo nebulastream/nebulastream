@@ -763,95 +763,70 @@ def plot_eff_comp_tp(df, output_dir, operator):
         plt.close()
 
 def plot_latency(df, output_dir, pipelines):
-    """Plot latency vs. total_columns for ROW and COL layouts, including swaps and additional operators."""
-    for config in [ 'mean', 'acc_cols=1']:
+    """Plot latency variance with boxplots per pipeline and per layout."""
+    for config in ['mean', 'acc_cols=1']:
+        working_df = df.copy()
         if config == 'acc_cols=1':
-            df = df[df['accessed_columns'] == 1]
-        row_df = df[df['layout'] == 'ROW_LAYOUT']
-        col_df = df[df['layout'] == 'COLUMNAR_LAYOUT']
+            working_df = working_df[working_df['accessed_columns'] == 1]
 
-        # Calculate mean latency for ROW and COL
-        row_df['row_latency'] = row_df[[f'pipeline_{pid}_mean_latency' for pid in pipelines]].sum(axis=1)
-        col_df['col_latency'] = col_df[[f'pipeline_{pid}_mean_latency' for pid in pipelines]].sum(axis=1)
+        # collect available mean latency columns
+        latency_cols = [f'pipeline_{pid}_mean_latency' for pid in pipelines if f'pipeline_{pid}_mean_latency' in working_df.columns]
+        if not latency_cols:
+            continue
 
-        # Plot mean latency
-        plt.figure(figsize=(12, 8))
-        sns.lineplot(data=row_df, x='num_columns', y='row_latency', label='NSM Latency', marker='o')
-        sns.lineplot(data=col_df, x='num_columns', y='col_latency', label='PAX Latency', marker='o')
-        plt.title("Mean Latency vs. Total Columns")
-        plt.xlabel("Total Columns")
-        plt.ylabel("Mean Latency (ms)")
-        plt.grid(True, linestyle='--', alpha=0.7)
-        plt.tight_layout()
-        plt.savefig(output_dir / "mean_latency_vs_total_columns.png")
-        plt.close()
+        # Melt into long form: num_columns, layout, pipeline, latency
+        df_long = working_df.melt(
+            id_vars=['num_columns', 'layout'],
+            value_vars=latency_cols,
+            var_name='pipeline',
+            value_name='latency'
+        )
+        # normalize pipeline column to just the id (int)
+        df_long['pipeline'] = df_long['pipeline'].str.extract(r'pipeline_(\d+)_').astype(int)
 
-        # Plot swap_in, swap_out, and additional operators for COL
-        if len(pipelines) > 2:
+        # 1) Per-layout boxplots: x = num_columns, hue = pipeline
+        for layout in sorted(df_long['layout'].unique()):
+            subset = df_long[df_long['layout'] == layout]
+            if subset.empty:
+                continue
+            plt.figure(figsize=(12, 8))
+            sns.boxplot(data=subset, x='num_columns', y='latency', hue='pipeline', palette='viridis')
+            plt.title(f"{layout} - Pipeline Latency Distribution by Total Columns ({config})")
+            plt.xlabel("Total Columns")
+            plt.ylabel("Latency (ms)")
+            plt.yscale('log')
+            plt.grid(True, linestyle='--', alpha=0.6)
+            plt.tight_layout()
+            plt.savefig(output_dir / f"latency_box_{config}_{layout.replace(' ', '_').lower()}.png")
+            plt.close()
 
-
-            row_df.loc[:,'swap_in'] = row_df[f'pipeline_{pipelines[0]}_mean_latency']
-            row_df.loc[:,'swap_out'] = row_df[f'pipeline_{pipelines[-1]}_mean_latency']
-            col_df.loc[:,'swap_in'] = col_df[f'pipeline_{pipelines[0]}_mean_latency']
-            col_df.loc[:,'swap_out'] = col_df[f'pipeline_{pipelines[-1]}_mean_latency']
-
-            for values in ["swap", "swapIn", "swapOut", "all", "build", "probe"]:
-                plt.figure(figsize=(12, 8))
-                if 'swap' in values or 'all' in values:
-
-                    if values in ["swap", "swapIn", "all"]:
-                        sns.lineplot(data=col_df, x='num_columns', y='swap_in', label='PAX Swap In', marker='o')
-                        sns.lineplot(data=row_df, x='num_columns', y='swap_in', label='NSM Swap In', marker='o')
-                    if values in ["swap", "swapOut", "all"]:
-                        sns.lineplot(data=col_df, x='num_columns', y='swap_out', label='PAX Swap Out', marker='o')
-                        sns.lineplot(data=row_df, x='num_columns', y='swap_out', label='NSM Swap Out', marker='o')
-
-                if not 'swap' in values:
-
-                    # Add build and probe for agg operator
-                    if 'aggregation' in df['operator_type'].unique():
-                        if values in ["build", "all"]:
-                            row_df['build_latency'] = row_df[f'pipeline_{pipelines[1]}_mean_latency']
-                            col_df['build_latency'] = col_df[f'pipeline_{pipelines[1]}_mean_latency']
-                            sns.lineplot(data=col_df, x='num_columns', y='build_latency', label='PAX Build Latency', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='build_latency', label='NSM Build Latency', marker='o')
-
-                        if values in ["probe", "all"]:
-                            row_df['probe_latency'] = row_df[f'pipeline_{pipelines[2]}_mean_latency']
-                            col_df['probe_latency'] = col_df[f'pipeline_{pipelines[2]}_mean_latency']
-                            sns.lineplot(data=col_df, x='num_columns', y='probe_latency', label='PAX Probe Latency', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='probe_latency', label='NSM Probe Latency', marker='o')
-
-                    # Add filter/map operator latency
-                    elif values in ["all"]:
-                        #elif 'filter' in df['operator_type'].unique() or 'map' in df['operator_type'].unique() and values in ["all"]:
-                        col_df.loc[:,'filter_map_latency'] = col_df[f'pipeline_{pipelines[1]}_mean_latency']
-                        row_df.loc[:,'filter_map_latency'] = row_df[f'pipeline_{pipelines[1]}_mean_latency']
-
-                        if 'filter' in df['operator_type'].unique():
-                            sns.lineplot(data=col_df, x='num_columns', y='filter_map_latency', label='PAX Filter', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='filter_map_latency', label='NSM Filter', marker='o')
-                        else:
-                            sns.lineplot(data=col_df, x='num_columns', y='filter_map_latency', label='PAX Map', marker='o')
-                            sns.lineplot(data=row_df, x='num_columns', y='filter_map_latency', label='NSM Map', marker='o')
-                    else: #filter / map and probe/build
-                        break
-
-                title = f"{values} Operator Latency vs. Total Columns, accessed cols: 1"
-                if config == 'mean':
-                    title = f"{values} Operator Mean Latency vs. Total Columns"
-                plt.title(title)
-                plt.xlabel("Total Columns")
-                plt.ylabel("Latency (ms)")
-                plt.grid(True, linestyle='--', alpha=0.7)
-                plt.tight_layout()
-                if config == 'mean':
-                    plt.savefig(output_dir / f"{values}_operator_mean_latency.png")
-                plt.savefig(output_dir / f"{values}_operator_latency.png")
-                plt.close()
+        # 2) Combined boxplots per pipeline comparing layouts, faceted by num_columns to show distributions per size
+        unique_cols = sorted(df_long['num_columns'].unique())
+        if unique_cols:
+            # Use catplot (FacetGrid) to produce one box per pipeline per num_columns (col facet)
+            g = sns.catplot(
+                data=df_long,
+                x='pipeline',
+                y='latency',
+                hue='layout',
+                col='num_columns',
+                kind='box',
+                col_wrap=3,
+                height=4,
+                sharey=True,
+                palette='viridis'
+            )
+            g.fig.suptitle(f"Pipeline Latency Distribution by Pipeline and Layout ({config})", y=1.02)
+            g.set_axis_labels("Pipeline ID", "Latency (ms)")
+            for ax in g.axes.flatten():
+                ax.set_yscale('log')
+                ax.grid(True, linestyle='--', alpha=0.4)
+            g.tight_layout()
+            g.savefig(output_dir / f"latency_box_by_pipeline_and_numcols_{config}.png")
+            plt.close()
 
 def create_aggregation_plots(df, output_dir):
-    """Create aggregation-specific plots."""
+    """Create aggregation-specific plots (throughput + boxplot latency per pipeline)."""
     if df.empty:
         return
 
@@ -859,26 +834,18 @@ def create_aggregation_plots(df, output_dir):
 
     # Filter data for total_col = 10 and acc_col = 1
     df = df[(df['num_columns'] == 10) & (df['accessed_columns'] == 1)]
-    print("data types: ")
-    print(+df['id_data_type'].unique())
-    df['id_data_type'] = df['id_data_type'].replace(np.nan, 0)
-    df['group_by'] = df['id_data_type'].apply(lambda x: True if x != 0 else False)
 
-    row_df = df[df['layout'] == 'ROW_LAYOUT']
-    col_df = df[df['layout'] == 'COLUMNAR_LAYOUT']
+    if df.empty:
+        return
 
-    # Parameters for x-axis
-    x_params = ['window_size', 'num_groups', 'id_data_type', 'group_by'] #TODO: add group by on vs off plot
-    metrics = ['pipeline_3_eff_tp']#, 'pipeline_3_comp_tp']
-
+    # throughput plots unchanged (kept for context)
+    x_params = ['window_size', 'num_groups', 'id_data_type', 'group_by']
+    metrics = ['pipeline_3_eff_tp']
     for x_param in x_params:
         if x_param not in df.columns:
             continue
-
         for metric in metrics:
             plt.figure(figsize=(12, 8))
-
-
             sns.barplot(data=df, x=x_param, y=metric, hue='layout', palette='viridis')
             plt.title(f"Aggregation {metric.split('_')[2]} Throughput vs. {x_param}, accessed cols: 1/10 (3/12)")
             plt.xlabel(x_param.capitalize())
@@ -889,20 +856,57 @@ def create_aggregation_plots(df, output_dir):
             plt.savefig(output_dir / f"{metric}_vs_{x_param}.png")
             plt.close()
 
-        # Latency plots for the same x-axis parameters
-        row_df.loc[:, 'row_latency'] = row_df.loc[:,['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
-        col_df.loc[:, 'col_latency'] = col_df.loc[:,['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+    # --- New: boxplot latency per pipeline (shows variance) ---
+    # collect pipeline mean latency columns that exist
+    pipeline_ids = [2, 3, 4, 5]
+    latency_cols = [f'pipeline_{pid}_mean_latency' for pid in pipeline_ids if f'pipeline_{pid}_mean_latency' in df.columns]
+    if latency_cols:
+        # melt into long form: x_param (grouping), pipeline, latency, layout (if available)
+        id_vars = ['layout'] if 'layout' in df.columns else []
+        # include a grouping x param for plots (here we already filtered to num_columns==10, so use group_by or id_data_type)
+        group_var = 'group_by' if 'group_by' in df.columns else ( 'id_data_type' if 'id_data_type' in df.columns else None )
 
-        plt.figure(figsize=(12, 8))
-        sns.lineplot(data=row_df, x=x_param, y='row_latency', label='NSM Latency', marker='o')
-        sns.lineplot(data=col_df, x=x_param, y='col_latency', label='PAX Latency', marker='o')
-        plt.title(f"Mean Latency vs. {x_param}, accessed cols: 1/10 (3/12)")
-        plt.xlabel(x_param.capitalize())
-        plt.ylabel("Mean Latency (ms)")
-        plt.grid(True, linestyle='--', alpha=0.7)
-        plt.tight_layout()
-        plt.savefig(output_dir / f"mean_latency_vs_{x_param}.png")
-        plt.close()
+        melt_id_vars = id_vars + ([group_var] if group_var else [])
+        if not melt_id_vars:
+            # fallback to empty id_vars to allow melting
+            df_long = df.melt(value_vars=latency_cols, var_name='pipeline', value_name='latency')
+        else:
+            df_long = df.melt(id_vars=melt_id_vars, value_vars=latency_cols, var_name='pipeline', value_name='latency')
+
+        df_long['pipeline'] = df_long['pipeline'].str.extract(r'pipeline_(\d+)_').astype(int)
+
+        # If we have a grouping variable, facet by it; otherwise create a single plot
+        if group_var:
+            g = sns.catplot(
+                data=df_long,
+                x='pipeline',
+                y='latency',
+                hue='layout' if 'layout' in df_long.columns else None,
+                col=group_var,
+                kind='box',
+                col_wrap=3,
+                height=4,
+                palette='viridis'
+            )
+            g.fig.suptitle("Aggregation Pipeline Latency Distribution by Pipeline and Grouping", y=1.02)
+            g.set_axis_labels("Pipeline ID", "Latency (ms)")
+            for ax in g.axes.flatten():
+                ax.set_yscale('log')
+                ax.grid(True, linestyle='--', alpha=0.4)
+            g.tight_layout()
+            g.savefig(output_dir / "aggregation_latency_box_by_pipeline_and_group.png")
+            plt.close()
+        else:
+            plt.figure(figsize=(10, 6))
+            sns.boxplot(data=df_long, x='pipeline', y='latency', hue='layout' if 'layout' in df_long.columns else None, palette='viridis')
+            plt.title("Aggregation Pipeline Latency Distribution by Pipeline")
+            plt.xlabel("Pipeline ID")
+            plt.ylabel("Latency (ms)")
+            plt.yscale('log')
+            plt.grid(True, linestyle='--', alpha=0.5)
+            plt.tight_layout()
+            plt.savefig(output_dir / "aggregation_latency_box_by_pipeline.png")
+            plt.close()
 
 def main():
     import argparse
