@@ -140,7 +140,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
     function_types = params.get('function_types', ['add', 'exp'])
     selectivities = params.get('selectivities', [5, 50, 95])
     agg_functions = params.get('agg_functions', ['count', 'sum', 'avg', 'min', 'max'])
-    output_path = data_file + "/benchmark.test"
+    output_path = "/home/user/CLionProjects/nebulastream/Testing/benchmark/benchmark_results/data/benchmark.test"
     docker_base_path= "/tmp/nebulastream/Testing/benchmark/benchmark_results/data"
 
     base_name = os.path.basename(data_file).split('_cols')[0]
@@ -287,11 +287,13 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                             filter_col = cols_to_access[0]
                             filter_queries+=1
                             # Calculate individual selectivity needed for each column
-                            # For N columns with AND, each needs selectivity^(1/N) to achieve target selectivity
-                            individual_selectivity = selectivity**(1.0/access_col)
+                            # For N columns with AND, each needs root(selectivity)/10 to achieve target selectivity
+                            #95% selectivity -> 5% data remaining
+                            individual_selectivity = np.sqrt(selectivity)*0.1 if access_col >= 2 else selectivity*0.01
 
                             # Calculate threshold for this individual selectivity
-                            threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))
+                            threshold = int(individual_selectivity * (2**32-1))# 95% of 4 mrd
+                            # column > threshold = 100% - 95% = 5% remaining
 
 
                             # Create query directory
@@ -471,6 +473,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                     # Generate query only if parameters are relevant
                                     if ('map' in op_chain and func_type is None) or ('filter' in op_chain and selectivity is None):
                                         continue
+                                    #TODO: implement agg
 
                                     # Calculate individual selectivity needed for each column
                                     individual_selectivity = None
@@ -572,12 +575,12 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 400000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10],
         'num_rows': args.rows,
         'accessed_columns': [1, 10],
         'function_types': ['add', 'exp'],
-        'selectivities': [5,50, 95],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+        'selectivities': [5, 95],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
         'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
         'window_sizes': args.window_sizes, #[10000, 100000],
         'num_groups': args.groups, #[10, 100, 1000],
@@ -627,3 +630,7 @@ if __name__ == "__main__":
 
     #TODO: save params to benchmark dir
     generate_test_file(args.data, args.result_dir, params, args.run_options)
+
+    """
+    python3 src/generate_test.py --data /home/user/CLionProjects/nebulastream/Testing/benchmark/benchmark_results/data/benchmark_data_rows10000000  --result-dir /home/user/CLionProjects/nebulastream/Testing/benchmark/benchmark_results/benchmark14 --columns 1,10 --rows 10000000 --window-sizes 1000,10000,1000000 --groups 10,1000,100000 --id-data-types '',"32","64" --run-options single
+    """
