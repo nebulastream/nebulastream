@@ -33,9 +33,9 @@ std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdenti
 std::string bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
 
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
-std::unordered_map<std::string, std::string> getParserConfig(ConfigMap configOptions);
-std::unordered_map<std::string, std::string> getSourceConfig(ConfigMap configOptions);
-std::unordered_map<std::string, std::string> getSinkConfig(ConfigMap configOptions);
+std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions);
+std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions);
+std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& configOptions);
 std::optional<Schema> getSourceSchema(ConfigMap configOptions);
 std::optional<Schema> getSinkSchema(ConfigMap configOptions);
 

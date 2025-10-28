@@ -144,10 +144,8 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     const std::string& sourceType,
     const Schema& schema,
     std::unordered_map<std::string, std::string> parserConfigMap,
-    std::unordered_map<std::string, std::string> sourceConfigMap)
+    std::unordered_map<std::string, std::string> sourceConfigMap) const
 {
-    const std::unique_lock lock(catalogMutex);
-
     auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
     if (!descriptorConfig.has_value())
     {

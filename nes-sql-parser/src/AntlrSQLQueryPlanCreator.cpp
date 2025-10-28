@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
@@ -59,6 +60,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
+#include <Util/Overloaded.hpp>
 #include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
@@ -84,23 +86,18 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     }
     /// Todo #421: support multiple sinks
     INVARIANT(!sinks.empty(), "Need at least one sink!");
-
-    if (std::holds_alternative<std::string>(sinks.front()))
-    {
-        return LogicalPlanBuilder::addSink(std::get<std::string>(sinks.front()), queryPlans.top());
-    }
-    if (std::holds_alternative<std::pair<std::string, ConfigMap>>(sinks.front()))
-    {
-        auto [type, configOptions] = std::get<std::pair<std::string, ConfigMap>>(sinks.front());
-
-        const auto sinkConfig = getSinkConfig(configOptions);
-        const auto schemaOpt = getSinkSchema(configOptions);
-        const Schema schema = (schemaOpt.has_value() ? schemaOpt.value() : Schema{});
-
-        return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, queryPlans.top());
-    }
-
-    std::unreachable();
+    return std::visit(
+        Overloaded{
+            [&](const std::string& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
+            [&](const std::pair<std::string, ConfigMap>& inlineSink)
+            {
+                const auto& [type, configOptions] = inlineSink;
+                const auto sinkConfig = getSinkConfig(configOptions);
+                const auto schemaOpt = getSinkSchema(configOptions);
+                const Schema schema = (schemaOpt.has_value() ? schemaOpt.value() : Schema{});
+                return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, queryPlans.top());
+            }},
+        sinks.front());
 }
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)

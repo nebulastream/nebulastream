@@ -34,7 +34,7 @@ namespace NES
 {
 InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
 {
-    PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
+    PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
     return *this;
 }
 
@@ -62,9 +62,9 @@ std::string InlineSinkLogicalOperator::explain(ExplainVerbosity verbosity, Opera
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SOURCE(opId: {}, name: {}, traitSet: {})", id, NAME, traitSet.explain(verbosity));
+        return fmt::format("INLINE_SINK(opId: {}, name: {}, traitSet: {})", id, NAME, traitSet.explain(verbosity));
     }
-    return fmt::format("SOURCE({})", NAME);
+    return fmt::format("INLINE_SINK({})", NAME);
 }
 
 std::string_view InlineSinkLogicalOperator::getName() noexcept

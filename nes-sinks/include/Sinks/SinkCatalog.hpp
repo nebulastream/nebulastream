@@ -13,12 +13,14 @@
 */
 
 #pragma once
+#include <atomic>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
 
@@ -32,8 +34,8 @@ public:
 
     std::optional<SinkDescriptor> getSinkDescriptor(const std::string& sinkName) const;
 
-    [[nodiscard]] static std::optional<SinkDescriptor>
-    getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config);
+    [[nodiscard]] std::optional<SinkDescriptor>
+    getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config) const;
 
     bool removeSinkDescriptor(const std::string& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);
@@ -44,6 +46,7 @@ public:
     std::vector<SinkDescriptor> getAllSinkDescriptors() const;
 
 private:
+    mutable std::atomic<InlineSinkId::Underlying> nextInlineSinkId{INITIAL_INLINE_SINK_ID.getRawValue()};
     folly::Synchronized<std::unordered_map<std::string, SinkDescriptor>> sinks;
 };
 }

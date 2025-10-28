@@ -31,6 +31,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
+    const auto inlineSinkBindingPhase = InlineSinkBindingPhase{sinkCatalog};
     const auto inlineSourceBindingPhase = InlineSourceBindingPhase{sourceCatalog};
     const auto sourceInference = SourceInferencePhase{sourceCatalog};
     const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
@@ -39,7 +40,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
 
-    InlineSinkBindingPhase::apply(newPlan);
+    inlineSinkBindingPhase.apply(newPlan);
     sinkBindingRule.apply(newPlan);
     inlineSourceBindingPhase.apply(newPlan);
     sourceInference.apply(newPlan);

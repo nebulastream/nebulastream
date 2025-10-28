@@ -14,19 +14,21 @@
 
 #include <LegacyOptimizer/InlineSinkBindingPhase.hpp>
 
-#include <utility>
+#include <vector>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan)
+
+void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan) const
 {
-    for (auto rootOperators = queryPlan.getRootOperators(); const auto& rootOperator : rootOperators)
+    std::vector<LogicalOperator> newRootOperators;
+    for (const auto& rootOperator : queryPlan.getRootOperators())
     {
         if (auto sink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); sink.has_value())
         {
@@ -34,24 +36,24 @@ void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan)
             const auto type = sink.value()->getSinkType();
             const auto config = sink.value()->getSinkConfig();
 
-            const auto sinkDescriptor = SinkCatalog::getInlineSink(schema, type, config);
+            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, config);
 
             if (!sinkDescriptor.has_value())
             {
                 throw InvalidConfigParameter("Failed to create inline sink descriptor");
             }
 
-            const SinkLogicalOperator sinkOperator{sinkDescriptor.value()};
-
-            auto result = replaceOperator(queryPlan, sink->getId(), sinkOperator);
-
-            if (!result.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create inline sink operator");
-            }
-            queryPlan = std::move(result.value());
+            SinkLogicalOperator sinkOperator{sinkDescriptor.value()};
+            sinkOperator = sinkOperator.withChildren(sink.value().getChildren());
+            newRootOperators.emplace_back(sinkOperator);
+        }
+        else
+        {
+            newRootOperators.emplace_back(rootOperator);
         }
     }
+
+    queryPlan = queryPlan.withRootOperators(newRootOperators);
 }
 
 

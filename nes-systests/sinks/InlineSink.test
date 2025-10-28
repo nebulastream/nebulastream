@@ -1,4 +1,4 @@
-# name: sources/InlineSink.test
+# name: sinks/InlineSink.test
 # description: Creating sink inline
 # groups: [Sources]
 
@@ -25,12 +25,14 @@ INTO Checksum();
 ----
 5 1505
 
+CREATE SINK output_file(id UINT64, value UINT64, timestamp UINT64) TYPE File;
+
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
 	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
 	'CSV' AS PARSER.`TYPE`,
 	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
-INTO File();
+INTO output_file;
 ====
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
@@ -40,12 +42,15 @@ FROM File(
 INTO File();
 
 
+
+CREATE SINK output_checksum(id UINT64, value UINT64, timestamp UINT64) TYPE Checksum;
+
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
 	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
 	'CSV' AS PARSER.`TYPE`,
 	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
-INTO Checksum();
+INTO output_checksum;
 ====
 SELECT ID, VALUE, TIMESTAMP
 FROM File(

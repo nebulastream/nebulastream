@@ -38,7 +38,7 @@ public:
     }
 
 private:
-    std::shared_ptr<SourceCatalog> sourceCatalog;
-    std::shared_ptr<SinkCatalog> sinkCatalog;
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 }
