@@ -902,7 +902,13 @@ def main():
 
         print(f"Consolidated CSV written to {out_csv_path}")
 
-        #TODO: remove old .json trace files
+        #remove old trace files (large)
+        for trace_file in trace_files:
+            try:
+                os.remove(trace_file)
+                #print(f"Removed trace file: {trace_file}")
+            except Exception as e:
+                print(f"Warning: Could not remove trace file {trace_file}: {e}")
 
 if __name__ == "__main__":
     main()
