@@ -101,6 +101,11 @@ def create_double_operator_plots(df, output_dir):
         3: ['pipeline_3_eff_tp', 'pipeline_3_comp_tp'],
         5: ['pipeline_5_eff_tp', 'pipeline_5_comp_tp']
     }
+    if not operator_metrics[3][0] in df.columns or not operator_metrics[5][0] in df.columns:
+        operator_metrics={
+        3: ['pipeline_3_eff_tp_from_means', 'pipeline_3_comp_tp_from_means'],
+        5: ['pipeline_5_eff_tp_from_means', 'pipeline_5_comp_tp_from_means']
+        }
 
     # Group data by operator chain
     chain_groups = df.groupby('operator_chain')
@@ -639,8 +644,8 @@ def plot_aggregation_comparison(df, output_dir):
     ]
 
     # Add latency columns for ROW and COLUMNAR layouts
-    df.loc[df['layout'] == 'ROW', 'row_latency'] = df.loc[df['layout'] == 'ROW', ['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
-    df.loc[df['layout'] == 'COLUMNAR', 'row_latency'] = df.loc[df['layout'] == 'COLUMNAR', ['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+    df.loc[df['layout'] == 'ROW_LAYOUT', 'row_latency'] = df.loc[df['layout'] == 'ROW_LAYOUT', ['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
+    df.loc[df['layout'] == 'COLUMNAR_LAYOUT', 'row_latency'] = df.loc[df['layout'] == 'COLUMNAR_LAYOUT', ['pipeline_2_mean_latency', 'pipeline_3_mean_latency', 'pipeline_4_mean_latency', 'pipeline_5_mean_latency']].sum(axis=1)
 
     for metric, metric_label in metrics:
         plt.figure(figsize=(12, 8))
@@ -683,6 +688,7 @@ def create_test_plots(df, output_dir):
     # Generate plots for each operator
     for operator, pipelines in operators.items():
         operator_df = df[df['operator_chain'] == f"['{operator}']"] #df[df['operator_chain'].apply(lambda x: operator in x)]
+        #print(f"Generating plots for operator: {operator} with {len(operator_df)} entries.")
         if operator_df.empty:
             print(f"No data for operator: {operator}")
             continue
@@ -761,8 +767,8 @@ def plot_latency(df, output_dir, pipelines):
     for config in [ 'mean', 'acc_cols=1']:
         if config == 'acc_cols=1':
             df = df[df['accessed_columns'] == 1]
-        row_df = df[df['layout'] == 'ROW']
-        col_df = df[df['layout'] == 'COLUMNAR']
+        row_df = df[df['layout'] == 'ROW_LAYOUT']
+        col_df = df[df['layout'] == 'COLUMNAR_LAYOUT']
 
         # Calculate mean latency for ROW and COL
         row_df['row_latency'] = row_df[[f'pipeline_{pid}_mean_latency' for pid in pipelines]].sum(axis=1)
@@ -858,8 +864,8 @@ def create_aggregation_plots(df, output_dir):
     df['id_data_type'] = df['id_data_type'].replace(np.nan, 0)
     df['group_by'] = df['id_data_type'].apply(lambda x: True if x != 0 else False)
 
-    row_df = df[df['layout'] == 'ROW']
-    col_df = df[df['layout'] == 'COLUMNAR']
+    row_df = df[df['layout'] == 'ROW_LAYOUT']
+    col_df = df[df['layout'] == 'COLUMNAR_LAYOUT']
 
     # Parameters for x-axis
     x_params = ['window_size', 'num_groups', 'id_data_type', 'group_by'] #TODO: add group by on vs off plot
