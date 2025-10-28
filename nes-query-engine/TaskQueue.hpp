@@ -73,6 +73,7 @@ public:
         while (!stoken.stop_requested())
         {
             /// The order of operation upholds the invariant
+            /// NOLINTNEXTLINE(bugprone-use-after-move) no move happens if the write does not succeed. If a move happens, we return.
             if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
             {
                 /// tasksAvailable is only increased if write to admission queue was successful.
