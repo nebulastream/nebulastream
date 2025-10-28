@@ -79,23 +79,46 @@ Interface::HashMap* getAggHashMapProxy(
     return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
 }
 
+static bool serialized = false;
+
 void serializeHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
-    AbstractBufferProvider* bufferProvider,
+    [[maybe_unused]] AbstractBufferProvider* bufferProvider,
     const AggregationBuildPhysicalOperator* buildOperator)
 {
-    const auto hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, bufferProvider, buildOperator);
+    if (timestamp.getRawValue() != 9)
+    {
+        return;
+    }
+    if (serialized)
+    {
+        return;
+    }
+    auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
+    hashMap->serialize("/tmp/hashmap.bin");
+    serialized = true;
 }
 
 Interface::HashMap* deserializeHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
-    AbstractBufferProvider* bufferProvider,
+    [[maybe_unused]] AbstractBufferProvider* bufferProvider,
     const AggregationBuildPhysicalOperator* buildOperator)
 {
+    auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
+    if (timestamp.getRawValue() != 8)
+    {
+        return hashMap;
+    }
+    if (!serialized)
+    {
+        return hashMap;
+    }
+    hashMap->deserialize("/tmp/hashmap.bin", bufferProvider);
+    return hashMap;
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -148,11 +171,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy,
-        operatorHandler,
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     Interface::ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
@@ -185,16 +204,6 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
 
     /// Updating the aggregation states
-    if (timestamp == nautilus::val<Timestamp>(9))
-    {
-        nautilus::invoke(
-            serializeHashMapProxy,
-            operatorHandler,
-            timestamp,
-            ctx.workerThreadId,
-            ctx.pipelineMemoryProvider.bufferProvider,
-            nautilus::val<const AggregationBuildPhysicalOperator*>(this));
-    }
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(
         hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
@@ -204,7 +213,21 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 
-    /// Serialize and Deserialize
+    nautilus::invoke(
+        deserializeHashMapProxy,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        ctx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+
+    nautilus::invoke(
+        serializeHashMapProxy,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        ctx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
