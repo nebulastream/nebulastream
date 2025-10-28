@@ -17,6 +17,7 @@
 
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -24,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <variant>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
@@ -62,17 +64,14 @@ public:
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
-    [[nodiscard]] SinkDescriptor withNewSchema(const Schema& schema) const;
 
 private:
-    explicit SinkDescriptor(std::string sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
     explicit SinkDescriptor(
-        std::string sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config, bool isInline);
+        std::variant<std::string, uint64_t> sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
 
-    std::string sinkName;
+    std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
-    bool isInlineSink = false;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -95,6 +94,8 @@ public:
 
     static std::optional<DescriptorConfig::Config>
     validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);
+
+    friend struct SinkLogicalOperator;
 };
 }
 

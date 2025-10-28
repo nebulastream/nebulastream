@@ -44,11 +44,14 @@ INTO generator_output;
 8 5
 9 5
 
-SELECT ID, VALUE, TIMESTAMP
-FROM File(
-	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
-	'CSV' AS PARSER.`TYPE`,
-	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+
+CREATE LOGICAL SOURCE input(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH FILE small/stream8.csv
+
+
+SELECT input.ID AS ID, input.VALUE AS VALUE, input.TIMESTAMP AS TIMESTAMP
+FROM input
 INTO file_output;
 ====
 SELECT ID, VALUE, TIMESTAMP

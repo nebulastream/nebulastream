@@ -96,7 +96,7 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
     return boundConfigOptions;
 }
 
-std::unordered_map<std::string, std::string> getParserConfig(ConfigMap configOptions)
+std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions)
 {
     auto parserConfig = std::unordered_map<std::string, std::string>{};
 
@@ -111,7 +111,7 @@ std::unordered_map<std::string, std::string> getParserConfig(ConfigMap configOpt
     return parserConfig;
 }
 
-std::unordered_map<std::string, std::string> getSourceConfig(ConfigMap configOptions)
+std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions)
 {
     std::unordered_map<std::string, std::string> sourceOptions{};
     if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
@@ -126,7 +126,7 @@ std::unordered_map<std::string, std::string> getSourceConfig(ConfigMap configOpt
     return sourceOptions;
 }
 
-std::unordered_map<std::string, std::string> getSinkConfig(ConfigMap configOptions)
+std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& configOptions)
 {
     std::unordered_map<std::string, std::string> sinkOptions{};
     if (const auto sourceConfigIter = configOptions.find("SINK"); sourceConfigIter != configOptions.end())

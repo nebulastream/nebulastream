@@ -26,6 +26,11 @@
 
 namespace NES
 {
+
+/// InlineSourceLogicalOperator objects represent physical sources in the logical query plan that are defined within a query as opposed to
+/// sources defined in separate create statements. The InlineSourceLogicalOperator objects contain all necessary configurations to
+/// build a SourceDescriptorLogicalOperator within the InlineSourceBindingPhase of the optimizer.
+
 class InlineSourceLogicalOperator
 {
 public:
