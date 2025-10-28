@@ -48,6 +48,7 @@ def main():
     parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
     parser.add_argument('--repeats', type=int, default=2, help='Number of benchmark repetitions')
     parser.add_argument('--id-data-types', type=parse_str_list, default = ['', "32", "64"], help='Data type for id column (e.g., uint32, uint64), empty for no id column')
+    parser.add_argument('--threads', type=parse_int_list, default=[4], help='Number of worker threads to use')
     parser.add_argument('--output-dir', default='benchmark_results', help='Base output directory')
     parser.add_argument('--skip-data-gen', action='store_true', help='Skip data generation')
     parser.add_argument('--skip-test-gen', action='store_true', help='Skip test generation')
@@ -178,7 +179,8 @@ def main():
                 "--repeats", str(args.repeats),
                 "--build-dir", str(build_dir),
                 "--project-dir", str(project_dir),
-                "--run-options", args.run_options
+                "--run-options", args.run_options,
+                "--threads", ','.join(map(str, args.threads))
             ], text=True, capture_output=True, check=False)
 
             if result.returncode != 0:

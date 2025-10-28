@@ -595,6 +595,10 @@ def extract_metadata_from_filename(file_path):
     if buffer_match:
         metadata['buffer_size'] = int(buffer_match.group(1))
 
+    threads_match = re.search(r'_threads(\d+)_', filename)
+    if threads_match:
+        metadata['threads'] = int(threads_match.group(1))
+
     # Extract thread count with more specific pattern
     threads_match = re.search(r'_threads(\d+)_', filename)
     if threads_match:
@@ -666,7 +670,7 @@ def main():
                     #'filename': filename,
                     'layout': metadata.get('layout', ''),
                     #'buffer_size': metadata.get('buffer_size', ''),
-                    'threads': metadata.get('threads', '4'),#TODO: get correct threads from run config
+                    'threads': metadata.get('threads', '4'),
                     'query_id': metadata.get('query', ''),
                     'total_tasks_time': total_time,
                     'full_query_duration': full_time,
@@ -802,7 +806,7 @@ def main():
             row = {
                 'layout': metadata.get('layout', ''),
                 #'buffer_size': metadata.get('buffer_size', ''),
-                'threads': metadata.get('threads', '4'),#TODO: get correct threads from run config
+                'threads': metadata.get('threads', '4'),
                 'query_id': metadata.get('query', ''),
                 'total_tasks_time_mean': global_stats.get('total_tasks_time_mean', 0) if global_stats else 0,
                 'total_tasks_time_std': global_stats.get('total_tasks_time_std', 0) if global_stats else 0,

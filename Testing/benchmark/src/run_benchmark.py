@@ -12,6 +12,7 @@ import concurrent
 import multiprocessing
 import concurrent.futures
 from collections import defaultdict
+from benchmark_system import parse_int_list
 
 def get_config_from_file(config_file):
     # Read the query mapping file to get query configurations
@@ -93,7 +94,7 @@ def json_to_csv(trace_file):
         print(f"Failed file: {trace_file.name}")
         return None
 
-def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=None, build_dir="cmake-build-release", project_dir=None):
+def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[4], layouts=None, build_dir="cmake-build-release", project_dir=None):
     """Run benchmark for all queries with repetitions using the new directory structure."""
     if layouts is None:
         layouts = ["ROW_LAYOUT", "COLUMNAR_LAYOUT"]
@@ -213,85 +214,86 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", layouts=N
 
                 # Run for each layout
                 for layout in layouts:
-                    for run in range(1, repeats + 1):
-                        run_dir = query_dir
-                        if len(layouts) > 1:
-                            run_dir = run_dir / f"run{run}_{layout}"
-                        else:
-                            run_dir = run_dir / f"run{run}"
-                        run_dir.mkdir(exist_ok=True)
+                    for num_threads in threads:
+                        for run in range(1, repeats + 1):
+                            run_dir = query_dir
+                            if len(layouts) > 1:
+                                run_dir = run_dir / f"threads{num_threads}" / f"run{run}_{layout}"
+                            else:
+                                run_dir = run_dir / f"threads{num_threads}" / f"run{run}"
+                            run_dir.mkdir(exist_ok=True)
 
-                        # Calculate Docker path mapping for the test file
-                        docker_test_path = f"/tmp/nebulastream/Testing/benchmark/{os.path.relpath(buffer_test_file, project_dir)}"
-                        #print (f"Using test file in Docker: {docker_test_path}")
-                        #print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}, layout {layout}, strat {config_strategy}...")
-                        
-                        # Docker command using existing test file with query ID
-                        cmd = [
-                            "docker", "run", "--entrypoint=",
-                            "-v", f"{os.path.expanduser('~')}/.cache/ccache:/home/ubuntu/.ccache/ccache",
-                            "-v", f"/home/user/CLionProjects/nebulastream:/tmp/nebulastream",
-                            "--cap-add", "SYS_ADMIN", "--cap-add", "SYS_PTRACE", "--rm",
-                            "nebulastream/nes-development:local",
-                            "bash", "-c", (
-                                f"cd /tmp/nebulastream/cmake-build-release/nes-systests/systest/ && "
-                                f"/tmp/nebulastream/cmake-build-release/nes-systests/systest/systest -b "
-                                f"-t {docker_test_path}:{test_id} -- "
-                                f"--worker.queryEngine.numberOfWorkerThreads=4 "
-                                f"--worker.bufferSizeInBytes={buffer_size} "
-                                f"--worker.numberOfBuffersInGlobalBufferManager={numberOfBuffers} "
-                                f"--worker.defaultQueryExecution.operatorBufferSize={buffer_size} "
-                                f"--worker.defaultQueryExecution.memoryLayout={layout} "
-                                f"--worker.defaultQueryExecution.layoutStrategy={config_strategy} "
-                                f"--enableGoogleEventTrace=true"
-                            )
-                        ]
+                            # Calculate Docker path mapping for the test file
+                            docker_test_path = f"/tmp/nebulastream/Testing/benchmark/{os.path.relpath(buffer_test_file, project_dir)}"
+                            #print (f"Using test file in Docker: {docker_test_path}")
+                            #print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}, layout {layout}, strat {config_strategy}...")
 
-                        try:
-                            # Run the benchmark
-                            result = subprocess.run(cmd, capture_output=True, text=True)
+                            # Docker command using existing test file with query ID
+                            cmd = [
+                                "docker", "run", "--entrypoint=",
+                                "-v", f"{os.path.expanduser('~')}/.cache/ccache:/home/ubuntu/.ccache/ccache",
+                                "-v", f"/home/user/CLionProjects/nebulastream:/tmp/nebulastream",
+                                "--cap-add", "SYS_ADMIN", "--cap-add", "SYS_PTRACE", "--rm",
+                                "nebulastream/nes-development:local",
+                                "bash", "-c", (
+                                    f"cd /tmp/nebulastream/cmake-build-release/nes-systests/systest/ && "
+                                    f"/tmp/nebulastream/cmake-build-release/nes-systests/systest/systest -b "
+                                    f"-t {docker_test_path}:{test_id} -- "
+                                    f"--worker.queryEngine.numberOfWorkerThreads={num_threads} "
+                                    f"--worker.bufferSizeInBytes={buffer_size} "
+                                    f"--worker.numberOfBuffersInGlobalBufferManager={numberOfBuffers} "
+                                    f"--worker.defaultQueryExecution.operatorBufferSize={buffer_size} "
+                                    f"--worker.defaultQueryExecution.memoryLayout={layout} "
+                                    f"--worker.defaultQueryExecution.layoutStrategy={config_strategy} "
+                                    f"--enableGoogleEventTrace=true"
+                                )
+                            ]
 
-                            # Save output logs
-                            with open(run_dir / "stdout.log", 'w') as f:
-                                f.write(result.stdout)
-                            with open(run_dir / "stderr.log", 'w') as f:
-                                f.write(result.stderr)
+                            try:
+                                # Run the benchmark
+                                result = subprocess.run(cmd, capture_output=True, text=True)
 
-                            if result.returncode != 0:
-                                if result.stderr.strip():
-                                    print(f"  Error running benchmark, check logs in {run_dir}")
-                                    print(f"  Error output: {result.stderr[:200]}...")
+                                # Save output logs
+                                with open(run_dir / "stdout.log", 'w') as f:
+                                    f.write(result.stdout)
+                                with open(run_dir / "stderr.log", 'w') as f:
+                                    f.write(result.stderr)
 
-                            # Copy GoogleEventTrace file if it exists
-                            search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests/systest")
-                            trace_files = list(search_path.glob("**/GoogleEventTrace*"))
+                                if result.returncode != 0:
+                                    if result.stderr.strip():
+                                        print(f"  Error running benchmark, check logs in {run_dir}")
+                                        print(f"  Error output: {result.stderr[:200]}...")
 
-                            if trace_files:
-                                trace_files.sort()
-                                trace_file = trace_files[-1]
-                                if trace_file.stat().st_size == 0:
-                                    print(f"  Trace file is empty for Query {query_id}, Run {run}")
-                                    trace_file.unlink()
+                                # Copy GoogleEventTrace file if it exists
+                                search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests/systest")
+                                trace_files = list(search_path.glob("**/GoogleEventTrace*"))
+
+                                if trace_files:
+                                    trace_files.sort()
+                                    trace_file = trace_files[-1]
+                                    if trace_file.stat().st_size == 0:
+                                        print(f"  Trace file is empty for Query {query_id}, Run {run}")
+                                        trace_file.unlink()
+                                    else:
+                                        trace_dest = run_dir / f"threads{num_threads}" / f"GoogleEventTrace_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.json"
+                                        shutil.move(trace_file, trace_dest)
+                                        trace_files_to_process.append(trace_dest)
+
                                 else:
-                                    trace_dest = run_dir / f"GoogleEventTrace_{layout}_buffer{buffer_size}_query{query_id}.json"
-                                    shutil.move(trace_file, trace_dest)
-                                    trace_files_to_process.append(trace_dest)
+                                    print(f"  No trace file found for Query {query_id}, Run {run}")
+                                search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests")
+                                log_files = list(search_path.glob("**/*.log"))
+                                if log_files:
+                                    log_files.sort()
+                                    log_file = log_files[-1]
+                                    log_dest = run_dir / f"{log_file.name.replace('.log', '')}_{layout}_buffer{buffer_size}_query{query_id}.log"
+                                    shutil.copy(log_file, log_dest)
+                                    #print(f"  Saved most recent log file: {log_file.name} to {log_dest}")
+                                else:
+                                    print(f"  No log file found for Query {query_id}, Run {run}")
 
-                            else:
-                                print(f"  No trace file found for Query {query_id}, Run {run}")
-                            search_path = Path("/home/user/CLionProjects/nebulastream/cmake-build-release/nes-systests")
-                            log_files = list(search_path.glob("**/*.log"))
-                            if log_files:
-                                log_files.sort()
-                                log_file = log_files[-1]
-                                log_dest = run_dir / f"{log_file.name.replace('.log', '')}_{layout}_buffer{buffer_size}_query{query_id}.log"
-                                shutil.copy(log_file, log_dest)
-                                #print(f"  Saved most recent log file: {log_file.name} to {log_dest}")
-                            else:
-                                print(f"  No log file found for Query {query_id}, Run {run}")
-
-                        except Exception as e:
-                            print(f"Error running benchmark: {e}", file=os.sys.stderr)
+                            except Exception as e:
+                                print(f"Error running benchmark: {e}", file=os.sys.stderr)
 
     #with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
     #    executor.map(json_to_csv, trace_files_to_process)
@@ -308,6 +310,7 @@ if __name__ == "__main__":
     parser.add_argument('--build-dir', default='cmake-build-release', help='Build directory name')
     parser.add_argument('--project-dir', default=os.path.abspath(os.getcwd()), help='Project root directory')
     parser.add_argument('--run-options', default='all', help='options: all, single or double')
+    parser.add_argument('--threads', type=parse_int_list, default=[4], help='Number of worker threads to use')
     args = parser.parse_args()
 
     run_benchmark(
@@ -315,6 +318,7 @@ if __name__ == "__main__":
         args.output_dir,
         args.repeats,
         args.run_options,
+        args.threads,
         build_dir=args.build_dir,
         project_dir=args.project_dir
 
