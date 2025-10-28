@@ -95,6 +95,12 @@ public:
         return success;
     }
 
+    std::optional<SinkDescriptor>
+    getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config)
+    {
+        return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config));
+    }
+
     std::expected<SinkDescriptor, Exception>
     createActualSink(const std::string& sinkNameInFile, const std::string_view assignedSinkName, const std::filesystem::path& filePath)
     {
@@ -503,46 +509,55 @@ struct SystestBinder::Impl
         }
     }
 
-    void setInlineSources(LogicalPlan& plan) const
+    [[nodiscard]] LogicalOperator updateInlineSource(const LogicalOperator& current) const
     {
-        for (const auto& inlineSourceLogicalOperator : NES::getOperatorByType<InlineSourceLogicalOperator>(plan))
+        std::vector<LogicalOperator> newChildren;
+        for (const auto& child : current.getChildren())
         {
-            auto sourceConfig = inlineSourceLogicalOperator->getSourceConfig();
-            auto parserConfig = inlineSourceLogicalOperator->getParserConfig();
+            newChildren.emplace_back(updateInlineSource(child));
+        }
 
-            if (!parserConfig.contains("type"))
-            {
-                parserConfig.emplace("type", "CSV");
-            }
+        if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
+        {
+            auto sourceConfig = inlineSource.value()->getSourceConfig();
+            auto parserConfig = inlineSource.value()->getParserConfig();
 
+            parserConfig.try_emplace("type", "CSV");
+
+            /// By default, all relative paths are relative to the testDataDir.
             if (sourceConfig.contains("file_path") && !sourceConfig.at("file_path").starts_with("/"))
             {
-                auto filePath = inlineSourceLogicalOperator->getSourceConfig().at("file_path");
+                auto filePath = inlineSource.value()->getSourceConfig().at("file_path");
                 filePath = testDataDir / filePath;
                 sourceConfig.erase("file_path");
                 sourceConfig.emplace("file_path", filePath);
             }
 
-            if (sourceConfig != inlineSourceLogicalOperator->getSourceConfig()
-                || parserConfig != inlineSourceLogicalOperator->getParserConfig())
+            if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
                 const InlineSourceLogicalOperator newOperator{
-                    inlineSourceLogicalOperator->getSourceType(), inlineSourceLogicalOperator->getSchema(), sourceConfig, parserConfig};
+                    inlineSource.value()->getSourceType(), inlineSource.value()->getSchema(), sourceConfig, parserConfig};
 
-                auto newPlan = replaceOperator(plan, inlineSourceLogicalOperator.getId(), newOperator);
-
-                if (!newPlan.has_value())
-                {
-                    throw UnsupportedQuery();
-                }
-                plan = std::move(newPlan.value());
+                return newOperator.withChildren(newChildren);
             }
         }
+
+        return current.withChildren(std::move(newChildren));
     }
 
-    void setInlineSink(
-        LogicalPlan& plan,
+    void setInlineSources(LogicalPlan& plan) const
+    {
+        std::vector<LogicalOperator> newRoots;
+        for (const auto& root : plan.getRootOperators())
+        {
+            newRoots.emplace_back(updateInlineSource(root));
+        }
+        plan = plan.withRootOperators(newRoots);
+    }
+
+    LogicalOperator setInlineSink(
         const std::string_view& testFileName,
+        SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest,
         const TypedLogicalOperator<InlineSinkLogicalOperator>& sinkOperator) const
     {
@@ -559,24 +574,17 @@ struct SystestBinder::Impl
             sinkConfig.emplace("input_format", "CSV");
         }
 
-        auto sinkDescriptor = SinkCatalog::getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig);
+        auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig);
         if (not sinkDescriptor.has_value())
         {
-            throw UnsupportedQuery();
+            throw InvalidConfigParameter("Failed to create inline sink of type {}", sinkOperator->getSinkType());
         }
-        auto newOperator = SinkLogicalOperator{sinkDescriptor.value()};
-        auto newPlan = replaceOperator(plan, sinkOperator.getId(), newOperator);
+        const auto newOperator = SinkLogicalOperator{sinkDescriptor.value()};
 
-        if (!newPlan.has_value())
-        {
-            throw UnsupportedQuery();
-        }
-
-        plan = std::move(newPlan.value());
+        return newOperator.withChildren(sinkOperator->getChildren());
     }
 
-    void setNamedSink(
-        LogicalPlan& plan,
+    LogicalOperator setNamedSink(
         SystestQueryBuilder& currentBuilder,
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
@@ -598,16 +606,9 @@ struct SystestBinder::Impl
             currentBuilder.setException(sinkExpected.error());
         }
 
-        auto newOperator = SinkLogicalOperator{sinkExpected.value()};
+        const auto newOperator = SinkLogicalOperator{sinkExpected.value()};
 
-        auto newPlan = replaceOperator(plan, sinkOperator.getId(), newOperator);
-
-        if (!newPlan.has_value())
-        {
-            throw UnsupportedQuery();
-        }
-
-        plan = std::move(newPlan.value());
+        return newOperator.withChildren(sinkOperator->getChildren());
     }
 
     void setSinks(
@@ -617,20 +618,25 @@ struct SystestBinder::Impl
         SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest) const
     {
+        std::vector<LogicalOperator> newRoots;
         for (const auto& rootOperator : plan.getRootOperators())
         {
             if (auto inlineSink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); inlineSink.has_value())
             {
-                setInlineSink(plan, testFileName, currentQueryNumberInTest, inlineSink.value());
+                newRoots.emplace_back(setInlineSink(testFileName, sltSinkProvider, currentQueryNumberInTest, inlineSink.value()));
             }
             else if (auto namedSink = rootOperator.tryGetAs<SinkLogicalOperator>(); namedSink.has_value())
             {
-                setNamedSink(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, namedSink.value());
+                newRoots.emplace_back(
+                    setNamedSink(currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, namedSink.value()));
             }
             else
             {
-                throw UnsupportedQuery();
+                throw UnsupportedQuery(
+                    "Invalid root operator \"{}\". Root operators must be SinkLogicalOperators or InlineSinksLogicalOperators.",
+                    rootOperator.getName());
             }
+            plan = plan.withRootOperators(newRoots);
         }
     }
 

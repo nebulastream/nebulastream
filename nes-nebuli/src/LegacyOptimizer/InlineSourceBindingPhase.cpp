@@ -13,7 +13,8 @@
 */
 #include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 
-#include <utility>
+#include <vector>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -21,16 +22,23 @@
 
 namespace NES
 {
-void InlineSourceBindingPhase::apply(LogicalPlan& queryPlan) const
-{
-    for (const auto& inlineSource : getOperatorByType<InlineSourceLogicalOperator>(queryPlan))
-    {
-        auto type = inlineSource->getSourceType();
-        auto schema = inlineSource->getSchema();
-        auto parserConfig = inlineSource->getParserConfig();
-        auto sourceConfig = inlineSource->getSourceConfig();
 
-        auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, parserConfig, sourceConfig);
+LogicalOperator InlineSourceBindingPhase::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
+{
+    std::vector<LogicalOperator> newChildren;
+    for (const auto& child : current.getChildren())
+    {
+        newChildren.emplace_back(bindInlineSourceLogicalOperators(child));
+    }
+
+    if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
+    {
+        const auto type = inlineSource.value()->getSourceType();
+        const auto schema = inlineSource.value()->getSchema();
+        const auto parserConfig = inlineSource.value()->getParserConfig();
+        const auto sourceConfig = inlineSource.value()->getSourceConfig();
+
+        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, parserConfig, sourceConfig);
 
         if (!descriptorOpt.has_value())
         {
@@ -38,16 +46,20 @@ void InlineSourceBindingPhase::apply(LogicalPlan& queryPlan) const
         }
         const auto& descriptor = descriptorOpt.value();
         const SourceDescriptorLogicalOperator sourceDescriptorLogicalOperator{descriptor};
-
-        auto result = replaceOperator(queryPlan, inlineSource.getId(), sourceDescriptorLogicalOperator);
-
-        if (!result.has_value())
-        {
-            throw InvalidConfigParameter("Could not create an inline source descriptor operator because of invalid config parameters");
-        }
-
-        queryPlan = std::move(*result);
+        return sourceDescriptorLogicalOperator.withChildren(newChildren);
     }
+
+    return current.withChildren(newChildren);
+}
+
+void InlineSourceBindingPhase::apply(LogicalPlan& queryPlan) const
+{
+    std::vector<LogicalOperator> newRoots;
+    for (const auto& root : queryPlan.getRootOperators())
+    {
+        newRoots.emplace_back(bindInlineSourceLogicalOperators(root));
+    }
+    queryPlan = queryPlan.withRootOperators(newRoots);
 }
 
 }

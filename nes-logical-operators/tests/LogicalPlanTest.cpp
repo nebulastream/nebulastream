@@ -19,24 +19,22 @@
 #include <unordered_map>
 #include <utility>
 
+#include <gmock/gmock-matchers.h>
+#include <gtest/gtest.h>
+
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
-#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
-#include <gtest/gtest.h>
 
 using namespace NES;
 
@@ -230,38 +228,4 @@ TEST_F(LogicalPlanTest, OutputOperator)
     std::stringstream ss;
     ss << plan;
     EXPECT_FALSE(ss.str().empty());
-}
-
-TEST_F(LogicalPlanTest, InlineSourceOperator)
-{
-    Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-    const InlineSourceLogicalOperator inlineSource1{"File", schema, {{}}, {{}}};
-    const InlineSourceLogicalOperator inlineSource2{"File", schema, {{}}, {{}}};
-
-    EXPECT_TRUE(inlineSource1 == inlineSource2);
-    EXPECT_EQ("InlineSource", inlineSource1.getName());
-    const auto inlineSource3 = inlineSource2.withTraitSet(TraitSet{TestTrait{}});
-    EXPECT_EQ(TraitSet{TestTrait{}}, inlineSource3.getTraitSet());
-
-    EXPECT_EQ(1, inlineSource1.getInputSchemas().size());
-    EXPECT_EQ(schema, inlineSource1.getInputSchemas().at(0));
-    EXPECT_EQ(schema, inlineSource1.getOutputSchema());
-}
-
-TEST_F(LogicalPlanTest, InlineSinkOperator)
-{
-    Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-    const InlineSinkLogicalOperator inlineSink1{"File", schema, {{}}};
-    const InlineSinkLogicalOperator inlineSink2{"File", schema, {{}}};
-
-    EXPECT_TRUE(inlineSink1 == inlineSink2);
-    EXPECT_EQ("InlineSink", inlineSink1.getName());
-    const auto inlineSink3 = inlineSink2.withTraitSet(TraitSet{TestTrait{}});
-    EXPECT_EQ(TraitSet{TestTrait{}}, inlineSink3.getTraitSet());
-
-    EXPECT_EQ(1, inlineSink1.getInputSchemas().size());
-    EXPECT_EQ(schema, inlineSink1.getInputSchemas().at(0));
-    EXPECT_EQ(schema, inlineSink1.getOutputSchema());
 }

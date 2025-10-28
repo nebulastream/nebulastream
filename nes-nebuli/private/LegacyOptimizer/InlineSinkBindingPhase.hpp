@@ -21,15 +21,18 @@
 namespace NES
 {
 
+/// The InlineSinkBindingPhase replaces all sink that are defined within the query itself (InlineSinkLogicalOperators), as opposed to
+/// sinks that are created in separate CREATE statements, with SinkLogicalOperators based on the given inline sink configuration.
+
 class InlineSinkBindingPhase
 {
 public:
-    explicit InlineSinkBindingPhase(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit InlineSinkBindingPhase(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    static void apply(LogicalPlan& queryPlan);
+    void apply(LogicalPlan& queryPlan) const;
 
 private:
-    std::shared_ptr<SinkCatalog> sinkCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 
 }

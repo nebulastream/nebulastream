@@ -14,6 +14,9 @@
 
 #include <Serialization/OperatorSerializationUtil.hpp>
 
+#include <algorithm>
+#include <cctype>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -142,7 +145,17 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
 SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
-    auto sinkName = serializableSinkDescriptor.sinkname();
+    std::variant<std::string, uint64_t> sinkName;
+
+    if (std::ranges::all_of(serializableSinkDescriptor.sinkname(), [](const char character) { return std::isdigit(character); }))
+    {
+        sinkName = std::stoull(serializableSinkDescriptor.sinkname());
+    }
+    else
+    {
+        sinkName = serializableSinkDescriptor.sinkname();
+    }
+
     const auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
     auto sinkType = serializableSinkDescriptor.sinktype();
 

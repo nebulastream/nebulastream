@@ -70,9 +70,9 @@ std::string InlineSourceLogicalOperator::explain(ExplainVerbosity verbosity, Ope
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SOURCE(opId: {}, name: {}, traitSet: {})", id, NAME, traitSet.explain(verbosity));
+        return fmt::format("INLINE_SOURCE(opId: {}, type: {} traitSet: {})", id, getSourceType(), traitSet.explain(verbosity));
     }
-    return fmt::format("SOURCE({})", NAME);
+    return fmt::format("INLINE_SOURCE({})", getSourceType());
 }
 
 std::string_view InlineSourceLogicalOperator::getName() noexcept

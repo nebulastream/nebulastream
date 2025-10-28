@@ -77,7 +77,7 @@ public:
         const std::string& sourceType,
         const Schema& schema,
         std::unordered_map<std::string, std::string> parserConfigMap,
-        std::unordered_map<std::string, std::string> sourceConfigMap);
+        std::unordered_map<std::string, std::string> sourceConfigMap) const;
 
     /// @brief retrieves physical sources for a logical source
     /// @returns nullopt if the logical source is not registered anymore, else the set of source descriptors associated with it
@@ -89,7 +89,7 @@ public:
 
 private:
     mutable std::recursive_mutex catalogMutex;
-    std::atomic<PhysicalSourceId::Underlying> nextPhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()};
+    mutable std::atomic<PhysicalSourceId::Underlying> nextPhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()};
     std::unordered_map<std::string, LogicalSource> namesToLogicalSourceMapping;
     std::unordered_map<PhysicalSourceId, SourceDescriptor> idsToPhysicalSources;
     std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> logicalToPhysicalSourceMapping;
