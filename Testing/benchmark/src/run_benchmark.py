@@ -12,9 +12,11 @@ import concurrent
 import multiprocessing
 import concurrent.futures
 from collections import defaultdict
+
+from Testing.benchmark.src.enginestatsread import results_to_global_csv
 from benchmark_system import parse_int_list
 from generate_data import generate_data
-
+from enginestatsread import process_csv
 def get_config_from_file(config_file):
     # Read the query mapping file to get query configurations
     if config_file.suffix == '.txt':
@@ -113,7 +115,6 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
     # Find test file path
     test_file = Path(test_file)
 
-    trace_files_to_process = []
 
 
     # Determine which directories to process based on run_options
@@ -206,21 +207,19 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                     configs= queries_by_data.get(data_file, [])
                     configs.append(config)
                     queries_by_data[data_file] = config
-            for data_file, query_dirs in queries_by_data.items():
+            for data_file, configs in queries_by_data.items():
                 data_path= output_dir / "data" / Path(data_file)
                 generate_data(file_path=data_path)
-                for query_dir in query_dirs:
-                    # Extract query ID from config file
-                    config_file = query_dir / "config.txt"
-                    if not config_file.exists():
-                        print(f"Warning: No config file found in {query_dir}, skipping...")
-                        continue
-                    config = get_config_from_file(config_file)
+
+                trace_files_to_process = []
+                results=[]
+                for config in configs:
 
                     # Read config to get query ID and test ID
                     query_id = config["query_id"]
                     test_id = config["test_id"]
                     op_chain = config["operator_chain"]
+                    query_dir = config["test_file"]
 
                     # Get strategy from config or use extracted one
                     config_strategy = config.get("swap_strategy", strategy)
@@ -230,7 +229,6 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                         layouts = ["COLUMNAR_LAYOUT"] if config_strategy == "ALL_COL" else ["ROW_LAYOUT"]
                     else:
                         layouts = ["ROW_LAYOUT", "COLUMNAR_LAYOUT"]
-
                     # Run for each layout
                     for layout in layouts:
                         for num_threads in threads:
@@ -305,7 +303,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                     if log_files:
                                         log_files.sort()
                                         log_file = log_files[-1]
-                                        log_dest = run_dir / f"{log_file.name.replace('.log', '')}_{layout}_buffer{buffer_size}_query{query_id}.log"
+                                        log_dest = run_dir / f"{log_file.name.replace('.log', '')}_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.log"
                                         shutil.copy(log_file, log_dest)
                                         #print(f"  Saved most recent log file: {log_file.name} to {log_dest}")
                                     else:
@@ -313,8 +311,15 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
 
                                 except Exception as e:
                                     print(f"Error running benchmark: {e}", file=os.sys.stderr)
-                    #TODO: process trace files to generate compact csv and enginestats (for this query_dir, then append to global csv)
-                #TODO: delete generated data file if created
+                    results.append(process_csv(trace_files_to_process),config)
+                # Save combined results to CSV
+                results_to_global_csv(output_dir, results, configs)
+
+                for trace_file in trace_files_to_process:
+                    try:
+                        os.remove(trace_file)
+                    except Exception as e:
+                        print(f"Error deleting trace file {trace_file}: {e}")
 
     #with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
     #    executor.map(json_to_csv, trace_files_to_process)
