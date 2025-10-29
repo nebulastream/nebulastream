@@ -103,34 +103,29 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
 
             if run_options == "all" or run_options == "single": #TODO: use util func for query dir extraction
                 query_dirs.extend(list(buffer_dir.glob("query_*")))
-                for threads_dir in buffer_dir.iterdir():
-                    if threads_dir.is_dir():
-                        query_dirs.extend(list(threads_dir.glob("query_*")))
                 if run_options == "all":
-                    for threads_dir in buffer_dir.iterdir():
-                        if threads_dir.is_dir():
-                            for strategy_dir in threads_dir.iterdir():
-                                if strategy_dir.is_dir():
-                                    query_dirs.extend(list(strategy_dir.glob("query_*")))
+                    for dir in buffer_dir.iterdir():
+                        if dir.is_dir():
+                            query_dirs.extend(list(dir.glob("query_*")))
             else:
-                for threads_dir in buffer_dir.iterdir():
-                    if threads_dir.is_dir():
-                        for strategy_dir in threads_dir.iterdir():
-                            if strategy_dir.is_dir():
-                                query_dirs.extend(list(strategy_dir.glob("query_*")))
 
-            queries_by_data = {} #store all querie configs by data file used
+                for dir in buffer_dir.iterdir():
+                    if dir.is_dir():
+                        #print(f"running queries from subdirectory: {dir}")
+                        query_dirs.extend(list(dir.glob("query_*")))
+
+
+            queries_by_data = defaultdict(list) #store all querie configs by data file used
             for query in query_dirs:
                 config_file = query / "config.txt"
                 if config_file.exists():
                     config = get_config_from_file(config_file)
-                    config["test_file"] = str(query)
+                    config["test_file"] = query
                     data_file = config['data_name']
-                    configs= queries_by_data.get(data_file, [])
-                    configs.append(config)
-                    queries_by_data[data_file] = config
+
+                    queries_by_data[data_file].append(config)
             for data_file, configs in queries_by_data.items():
-                data_path= output_dir / "data" / Path(data_file)
+                data_path= output_dir.parent / "data" / Path(data_file)
                 generate_data(file_path=data_path)
 
                 trace_files_to_process = []
@@ -155,11 +150,15 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                     for layout in layouts:
                         for num_threads in threads:
                             for run in range(1, repeats + 1):
-                                run_dir = query_dir
+
+                                threads_dir = query_dir / f"threads{num_threads}"
+                                threads_dir.mkdir(exist_ok=True)
+
+                                run_dir = threads_dir
                                 if len(layouts) > 1:
-                                    run_dir = run_dir / f"threads{num_threads}" / f"run{run}_{layout}"
+                                    run_dir = run_dir / f"run{run}_{layout}"
                                 else:
-                                    run_dir = run_dir / f"threads{num_threads}" / f"run{run}"
+                                    run_dir = run_dir / f"run{run}"
                                 run_dir.mkdir(exist_ok=True)
 
                                 # Calculate Docker path mapping for the test file
@@ -225,7 +224,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                     if log_files:
                                         log_files.sort()
                                         log_file = log_files[-1]
-                                        log_dest = run_dir / f"{log_file.name.replace('.log', '')}_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.log"
+                                        log_dest = run_dir / f"threads{num_threads}" / f"{log_file.name.replace('.log', '')}_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.log"
                                         shutil.copy(log_file, log_dest)
                                         #print(f"  Saved most recent log file: {log_file.name} to {log_dest}")
                                     else:
@@ -233,9 +232,11 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
 
                                 except Exception as e:
                                     print(f"Error running benchmark: {e}", file=os.sys.stderr)
-                    results.append(process_csv(trace_files_to_process),config)
+                    result= process_csv(trace_files_to_process)
+                    results.append(result)
                 # Save combined results to CSV
-                results_to_global_csv(output_dir, results, configs)
+                benchmark_dir = output_dir#.parent
+                results_to_global_csv(benchmark_dir, results, configs)
 
                 for trace_file in trace_files_to_process:
                     try:
