@@ -7,16 +7,30 @@ import json
 from pathlib import Path
 from benchmark_system import parse_int_list, parse_str_list
 
-def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_type='',  file_path="benchmark_data.csv"):
+def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_type='',  file_path=None):
     """Generate test data with configurable columns, windows, and groups for different selectivities."""
+    if not file_path:
+        file_path += f"_cols{num_columns}"
+        if num_groups is not None:
+            if id_data_type != '':
+                file_path += f"_groups{num_groups}_idtype{id_data_type}"
+            else:
+                file_path += f"_groups{num_groups}"
+        file_path += ".csv"
+    else:
+        id_match = re.search(r'idtype(\d+)', file_path)
+        if id_match:
+            id_data_type = id_match.group(1)
+        groups_match = re.search(r'groups(\d+)', file_path)
+        if groups_match:
+            num_groups = int(groups_match.group(1))
+        cols_match = re.search(r'cols(\d+)', file_path)
+        if cols_match:
+            num_columns = int(cols_match.group(1))
+        rows_match = re.search(r'rows(\d+)', file_path)
+        if rows_match:
+            num_rows = int(rows_match.group(1))
 
-    file_path += f"_cols{num_columns}"
-    if num_groups is not None:
-        if id_data_type != '':
-            file_path += f"_groups{num_groups}_idtype{id_data_type}"
-        else:
-            file_path += f"_groups{num_groups}"
-    file_path += ".csv"
     meta_file_path = str(file_path) + (".meta")
 
     # Check if file already exists
