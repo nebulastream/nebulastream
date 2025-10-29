@@ -6,10 +6,13 @@ import argparse
 import json
 from pathlib import Path
 from utils import parse_int_list, parse_str_list
+import re
 
 def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_type='',  file_path=None):
     """Generate test data with configurable columns, windows, and groups for different selectivities."""
     if not file_path:
+        file_path = "benchmark_data"
+        print("Generating data with parameters")
         file_path += f"_cols{num_columns}"
         if num_groups is not None:
             if id_data_type != '':
@@ -18,6 +21,7 @@ def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_ty
                 file_path += f"_groups{num_groups}"
         file_path += ".csv"
     else:
+        file_path = str(file_path)
         id_match = re.search(r'idtype(\d+)', file_path)
         if id_match:
             id_data_type = id_match.group(1)
@@ -58,6 +62,8 @@ def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_ty
                 dtype = np.uint64
             elif '16' in id_data_type:
                 dtype = np.uint16
+            else:
+                print(f"Unknown id_data_type {id_data_type}, defaulting to uint8")
 
 
             data["id"] = np.random.randint(0, num_groups, size=num_rows, dtype=dtype)

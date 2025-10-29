@@ -101,6 +101,7 @@ def main():
 
     # Step 1: Generate data or use existing
     data_file = args.data_file
+    """
     if not args.skip_data_gen:
         print("Step 1: Generating benchmark data...")
         data_filename = f"benchmark_data_rows{args.rows}"
@@ -121,16 +122,17 @@ def main():
     #elif not data_file:
         #print("Error: --data-file must be specified when using --skip-data-gen")
        # return
-
+    """
     # Step 2: Generate test file
     test_file = args.test_file
+    data_base_name = f"benchmark_data_rows{args.rows}_cols{args.columns}.csv"
     if not args.skip_test_gen:
         print("Step 2: Generating benchmark test file...")
         test_file = data_dir / "benchmark.test"
         try:
             result = subprocess.run([
                 "python3", str(src_dir / "generate_test.py"),
-                "--data", str(data_file),
+                "--data", str(data_base_name),
                 "--result-dir", str(benchmark_dir),
                 "--columns", ','.join(map(str, args.columns)),
                 "--rows", str(args.rows),
