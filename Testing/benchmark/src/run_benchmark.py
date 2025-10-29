@@ -242,9 +242,10 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                         os.remove(trace_file)
                     except Exception as e:
                         print(f"Error deleting trace file {trace_file}: {e}")
-
-    #with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-    #    executor.map(json_to_csv, trace_files_to_process)
+                if os.path.exists(data_path):
+                    #remove all data files greater than 1GB
+                    if os.path.getsize(data_path) > 1 * 1024 * 1024 * 1024:
+                        os.remove(data_path)
 
 
     print(f"Benchmark complete. Results in {output_dir}")
