@@ -180,6 +180,16 @@ int32_t BufferControlBlock::getReferenceCount() const noexcept
 
 bool BufferControlBlock::release()
 {
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    {
+        std::unique_lock lock(owningThreadsMutex);
+        auto& v = owningThreads[std::this_thread::get_id()];
+        if (!v.empty())
+        {
+            v.pop_front();
+        }
+    }
+#endif
     if (const uint32_t prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
     {
         for (auto&& child : children)
@@ -202,16 +212,6 @@ bool BufferControlBlock::release()
     {
         INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
     }
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    {
-        std::unique_lock lock(owningThreadsMutex);
-        auto& v = owningThreads[std::this_thread::get_id()];
-        if (!v.empty())
-        {
-            v.pop_front();
-        }
-    }
-#endif
     return false;
 }
 
