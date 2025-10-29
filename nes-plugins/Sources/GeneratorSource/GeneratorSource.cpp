@@ -76,7 +76,14 @@ void GeneratorSource::open()
 void GeneratorSource::close()
 {
     auto totalElapsedTime = std::chrono::system_clock::now() - generatorStartTime;
-    NES_TRACE("Generated {} buffers in {}. Closing GeneratorSource.", generatedBuffers, totalElapsedTime);
+    if (generatedBuffers == 0)
+    {
+        NES_WARNING("Generated {} buffers in {}. Closing GeneratorSource.", generatedBuffers, totalElapsedTime);
+    }
+    else
+    {
+        NES_INFO("Generated {} buffers in {}. Closing GeneratorSource.", generatedBuffers, totalElapsedTime);
+    }
 }
 
 size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
