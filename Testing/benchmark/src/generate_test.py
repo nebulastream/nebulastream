@@ -235,7 +235,9 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                         if ['filter'] not in params['operator_chains']:
                             break
                         #add query dir to file path
-                        filter_test_path = filter_buffer_dir / f"query_sel{selectivity}_cols{num_col}_access{access_col}" / f"filter_queries_buffer{buffer_size}.test"
+                        query_dir = filter_buffer_dir / f"query_sel{selectivity}_cols{num_col}_access{access_col}"
+                        query_dir.mkdir(exist_ok=True)
+                        filter_test_path = query_dir / f"filter_queries_buffer{buffer_size}.test"
                         with open(filter_test_path, 'w') as filter_f:
                             filter_col = cols_to_access[0]
                             filter_queries+=1
@@ -248,10 +250,6 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                             threshold = int(individual_selectivity * (2**32-1))# 95% of 4 mrd
                             # column > threshold = 100% - 95% = 5% remaining
 
-
-                            # Create query directory
-                            query_dir = filter_buffer_dir / f"query_sel{selectivity}_cols{num_col}_access{access_col}"
-                            query_dir.mkdir(exist_ok=True)
 
                             # Write query config
                             config = {
@@ -274,7 +272,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                             # Store config in dictionary for later use
                             query_configs[query_id] = config
-                            header = build_header("bench_data{num_col}", "AllSink{num_col}", column_names[:num_col], docker_data_path)
+                            header = build_header(f"bench_data{num_col}", f"AllSink{num_col}", column_names[:num_col], docker_data_path)
 
                             # Write query to buffer-specific test file
                             query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
@@ -294,13 +292,13 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                     for func_type in function_types:
                         if ['map'] not in params['operator_chains']:
                             break
-                        map_test_path = map_buffer_dir / f"query_{func_type}_cols{num_col}_access{access_col}" / f"map_queries_buffer{buffer_size}.test"
+
+                        query_dir = filter_buffer_dir /  f"query_{func_type}_cols{num_col}_access{access_col}"
+                        query_dir.mkdir(exist_ok=True)
+                        map_test_path = query_dir  / f"map_queries_buffer{buffer_size}.test"
                         with open(map_test_path, 'w') as map_f:
 
                             map_queries+=1
-                            # Create query directory
-                            query_dir = map_buffer_dir / f"query_{func_type}_cols{num_col}_access{access_col}"
-                            query_dir.mkdir(exist_ok=True)
 
                             # Write query config
                             config = {
@@ -350,18 +348,18 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                         for window_size in params['window_sizes']:
                             for num_groups in params['num_groups']:
                                 for id_type in params['id_data_types']:
-                                    agg_test_path = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}"
+                                    query_dir = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}"
                                     if id_type != '':
-                                        agg_test_path = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}_idtype{id_type}"
+                                        query_dir = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}_idtype{id_type}"
 
-                                    with open(agg_test_path / f"agg_queries_buffer{buffer_size}.test", 'w') as agg_f:
+                                    query_dir.mkdir(exist_ok=True)
+                                    agg_test_path = query_dir / f"agg_queries_buffer{buffer_size}.test"
+
+                                    with open(agg_test_path, 'w') as agg_f:
                                         agg_queries+=1
                                         # Create query directory
-                                        query_dir = agg_buffer_dir / (f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}")
-                                        if id_type != '':
-                                            query_dir = agg_buffer_dir / (f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}_idtype{id_type}")
 
-                                        query_dir.mkdir(exist_ok=True)
+
 
                                         source = f"bench_data{num_col}_groups{num_groups}"
                                         if id_type != '':
@@ -410,7 +408,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                                         query += f"WINDOW TUMBLING(timestamp, SIZE {window_size} MS)\n"
 
-                                        query += f"INTO AggSink{num_cols};\n"
+                                        query += f"INTO AggSink{num_col};\n"
                                         query += "----\n1, 1\n\n"
 
                                         #TODO: add proper sink defs, try double
@@ -622,15 +620,15 @@ def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastre
 
     source = "# Source definitions\n"
     source += f"Source {sources}"
-    if len(sources.split('_'))>1: #filter/map source
-        for col in col_names:
-            source += f" UINT64 {col}"
 
-    else: #aggregation source
+    if "Agg" in sinks: #aggregation source
         source += f" UINT64 timestamp"
         if 'idtype' in sources:
             id_type = sources.split('idtype')[-1]
             source += f" UINT{id_type} id"
+        for col in col_names:
+            source += f" UINT64 {col}"
+    else:  #filter/map source
         for col in col_names:
             source += f" UINT64 {col}"
 

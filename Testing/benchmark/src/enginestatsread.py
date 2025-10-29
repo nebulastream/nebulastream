@@ -142,7 +142,15 @@ def process_csv(trace_paths):
         run = 0
         full_query_durations = {}
         pipeline_times_by_run = {}
+        empty= 0
+        print(f"Processing {len(trace_paths)} trace files...")
+        if len(trace_paths) == 0:
+            print("No trace files provided.")
+            return None, None, None, None, {}
+        print("e.g.:" + trace_paths[0])
         for trace_file in trace_paths:
+            if os.path.getsize(trace_file) == 0:
+                continue
             with open(trace_file, 'r') as f:
                 trace_data = json.load(f)
 
@@ -232,6 +240,11 @@ def process_csv(trace_paths):
             df['ts'] = (df['ts']  -  min_timestamp)
 
             dfs.append(df)
+        if empty > 0:
+            print(f"Warning: {empty} empty trace files skipped.")
+            if empty == len(trace_paths):
+                print("All trace files are empty.")
+                return None, None, None, None, {}
 
         if not dfs:
             print("No valid task events found in provided trace files.")
@@ -546,8 +559,8 @@ def results_to_global_csv(base_directory, results_iter, configs):
 
     csv_rows = []
     for config, result in zip(configs, results_iter):
-        if not result or len(result) < 4:
-            print("Warning: Incomplete result, skipping")
+        if not result or len(result) != 4:
+            print(f"Warning: Incomplete result len {len(result)}, skipping")
             continue
         windowed_stats, pipeline_stats, global_stats, metadata = result
 
@@ -556,16 +569,19 @@ def results_to_global_csv(base_directory, results_iter, configs):
             #buffer_dir = Path(base_directory) / operator_chain[0] / f"bufferSize{metadata.get('buffer_size','')}"
             #buffer_dir.mkdir(parents=True, exist_ok=True)
             #result dir = query dir = parent /  parent / filename
-            result_dir = Path(metadata['filename']).parent.parent
+            query_dir = Path(config['test_file']).parent
             #name= Path(metadata['filename']).stem.with_suffix('.csv')
+            if metadata == {}:
+                print(f"Warning: empty metadata for {config['test_file']}")
+                continue
             layout = metadata['layout']
             if windowed_stats is not None and not windowed_stats.empty:
-                windowed_stats.to_csv(result_dir / f"results_windowed_{layout}.csv",mode='a', index=False)
-                #print(f"writing csv file to {result_dir / f"results_windowed_{layout}.csv"}")
+                windowed_stats.to_csv(query_dir / f"results_windowed_{layout}.csv",mode='a', index=False)
+                print(f"writing csv file to {query_dir / f"results_windowed_{layout}.csv"}")
             else:
                 print(f"Warning: empty windowed_stats for {metadata['filename']}")
             if pipeline_stats is not None and not windowed_stats.empty:
-                pipeline_stats.to_csv(result_dir / f"results_pipelined_{layout}.csv", mode='a', index=False)
+                pipeline_stats.to_csv(query_dir / f"results_pipelined_{layout}.csv", mode='a', index=False)
             else:
                 print(f"Warning: empty pipeline_stats for {metadata['filename']}", flush=True)
         except Exception as e:
@@ -657,13 +673,13 @@ def results_to_global_csv(base_directory, results_iter, configs):
     out_csv_path = os.path.join(base_directory, os.path.basename(base_directory) + ".csv")
     if csv_rows:
         all_fields = sorted(set().union(*(r.keys() for r in csv_rows)))
-    if os.path.exists(out_csv_path) or os.stat(out_csv_path).st_size > 0:
+    if os.path.exists(out_csv_path) and os.stat(out_csv_path).st_size > 0:
         mode = 'a'
     else:
         mode = 'w'
+    if csv_rows:
+        with open(out_csv_path, mode, newline='') as f:
 
-    with open(out_csv_path, mode, newline='') as f:
-        if csv_rows:
             fieldnames = sorted(all_fields)
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             if mode =='w': #append, if new file write header
@@ -676,7 +692,8 @@ def results_to_global_csv(base_directory, results_iter, configs):
                         r[fn] = 0
                 writer.writerow(r)
 
-    print(f"Consolidated CSV written to {out_csv_path}")
+        print(f"Consolidated CSV written to {out_csv_path}")
+
 
 
 

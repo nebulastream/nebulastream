@@ -72,7 +72,7 @@ def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_ty
     for i in range(num_columns):
         column_name = f"col_{i}"
         columns.append(column_name)
-        data[column_name] = np.random.randint(0, 2 ^ 32 - 1, size=num_rows, dtype=np.uint64)
+        data[column_name] = np.random.randint(0, 2 ** 32, size=num_rows, dtype=np.uint64)
 
     # Create DataFrame and save to CSV
     df = pd.DataFrame(data)

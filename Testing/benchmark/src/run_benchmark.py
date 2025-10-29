@@ -76,67 +76,55 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
     # For each buffer directory, run all queries in the test files
     for buffer_dir in buffer_dirs:
         # Find test files in this buffer directory
-        test_files = list(buffer_dir.glob("*.test"))
+        query_dirs = list(buffer_dir.glob("query_*"))
+        test_files = []
+        for query_dir in query_dirs:
+            files= list(query_dir.glob("*.test"))
+            if files:
+                test_files.extend(files)
         if not test_files:
             print(f"Warning: No test files found in {buffer_dir}, skipping...")
             continue
 
-        # Process all test files in the directory
-        for buffer_test_file in test_files:
-            print(f"Processing test file: {buffer_test_file}")
-            buffer_size = re.search(r'bufferSize(\d+)', str(buffer_dir)).group(1)
-            #available_memory = 201,830,776,832//2  # Use half of 200GB for buffer allocation
-            #requiredMemory= buffer_size * numberOfBuffers
-            #numberOfBuffers = int(available_memory) // int(buffer_size)
-            numberOfBuffers = 1000 #TODO check for what needed when multiple operators
-            if 'agg' in buffer_test_file.name:
-                numberOfBuffers = 10000
-                if int(buffer_size) >= 20000000: #TODO have variable based on given bufferSize and ops + available memory
-                    numberOfBuffers = 5000
-            # Extract strategy from parent directory name for double operators
-            parent_dir = buffer_dir.parent
-            strategy = parent_dir.name if parent_dir.name in ["ALL_ROW", "ALL_COL", "FIRST", "SECOND"] else "USE_SINGLE_LAYOUT"
+        queries_by_data = defaultdict(list) #store all querie configs by data file used
+        for test_file in test_files:
+            query_dir= test_file.parent
+            config_file = query_dir / "config.txt"
+            if config_file.exists():
+                config = get_config_from_file(config_file)
+                config["test_file"] = test_file
+                data_file = config['data_name']
 
-            # Get query directories for this buffer size
+                queries_by_data[data_file].append(config)
 
-            query_dirs = []
-
-            if run_options == "all" or run_options == "single": #TODO: use util func for query dir extraction
-                query_dirs.extend(list(buffer_dir.glob("query_*")))
-                if run_options == "all":
-                    for dir in buffer_dir.iterdir():
-                        if dir.is_dir():
-                            query_dirs.extend(list(dir.glob("query_*")))
-            else:
-
-                for dir in buffer_dir.iterdir():
-                    if dir.is_dir():
-                        #print(f"running queries from subdirectory: {dir}")
-                        query_dirs.extend(list(dir.glob("query_*")))
-
-
-            queries_by_data = defaultdict(list) #store all querie configs by data file used
-            for query in query_dirs:
-                config_file = query / "config.txt"
-                if config_file.exists():
-                    config = get_config_from_file(config_file)
-                    config["test_file"] = query
-                    data_file = config['data_name']
-
-                    queries_by_data[data_file].append(config)
-            for data_file, configs in queries_by_data.items():
+        for data_file, configs in queries_by_data.items():
                 data_path= output_dir.parent / "data" / Path(data_file)
                 generate_data(file_path=data_path)
 
                 trace_files_to_process = []
                 results=[]
                 for config in configs:
+                    test_file = config['test_file']
+                    print(f"Processing test file in: {test_file.name}") # with data file: {data_path}")
+                    query_dir = test_file.parent
+                    buffer_dir = query_dir.parent
+                    buffer_size = re.search(r'bufferSize(\d+)', str(buffer_dir)).group(1)
+                    #available_memory = 201,830,776,832//2  # Use half of 200GB for buffer allocation
+                    #requiredMemory= buffer_size * numberOfBuffers
+                    #numberOfBuffers = int(available_memory) // int(buffer_size)
+                    numberOfBuffers = 1000 #TODO check for what needed when multiple operators
+                    if 'agg' in test_file.name:
+                        numberOfBuffers = 10000
+                        if int(buffer_size) >= 20000000: #TODO have variable based on given bufferSize and ops + available memory
+                            numberOfBuffers = 5000
+                    # Extract strategy from parent directory name for double operators
+                    parent_dir = buffer_dir.parent
+                    strategy = parent_dir.name if parent_dir.name in ["ALL_ROW", "ALL_COL", "FIRST", "SECOND"] else "USE_SINGLE_LAYOUT"
 
                     # Read config to get query ID and test ID
                     query_id = config["query_id"]
                     test_id = config["test_id"]
                     op_chain = config["operator_chain"]
-                    query_dir = config["test_file"]
 
                     # Get strategy from config or use extracted one
                     config_strategy = config.get("swap_strategy", strategy)
@@ -162,7 +150,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                 run_dir.mkdir(exist_ok=True)
 
                                 # Calculate Docker path mapping for the test file
-                                docker_test_path = f"/tmp/nebulastream/Testing/benchmark/{os.path.relpath(buffer_test_file, project_dir)}"
+                                docker_test_path = f"/tmp/nebulastream/Testing/benchmark/{os.path.relpath(test_file, project_dir)}"
                                 #print (f"Using test file in Docker: {docker_test_path}")
                                 #print(f"Running Query {query_id}, {layout}, Run {run}, BufferSize {buffer_size}, layout {layout}, strat {config_strategy}...")
 
@@ -176,7 +164,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                     "bash", "-c", (
                                         f"cd /tmp/nebulastream/cmake-build-release/nes-systests/systest/ && "
                                         f"/tmp/nebulastream/cmake-build-release/nes-systests/systest/systest -b "
-                                        f"-t {docker_test_path}:{test_id} -- "
+                                        f"-t {docker_test_path}:{1} -- "
                                         f"--worker.queryEngine.numberOfWorkerThreads={num_threads} "
                                         f"--worker.bufferSizeInBytes={buffer_size} "
                                         f"--worker.numberOfBuffersInGlobalBufferManager={numberOfBuffers} "
@@ -234,6 +222,8 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                     print(f"Error running benchmark: {e}", file=os.sys.stderr)
                     result= process_csv(trace_files_to_process)
                     results.append(result)
+                #TODO: optimize when to combine results and delete trace files (potential parallelism + faster time between runs)
+
                 # Save combined results to CSV
                 benchmark_dir = output_dir#.parent
                 results_to_global_csv(benchmark_dir, results, configs)
