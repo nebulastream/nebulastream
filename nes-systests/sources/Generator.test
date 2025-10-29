@@ -123,3 +123,19 @@ SELECT * FROM generatorInline INTO generator_sink_inline;
 7
 8
 9
+
+CREATE LOGICAL SOURCE generator_with_timeout(id FLOAT64);
+CREATE PHYSICAL SOURCE FOR generator_with_timeout TYPE Generator SET(
+       'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Normal Distribution Never finishes
+       2000 AS `SOURCE`.MAX_RUNTIME_MS,
+       1 AS `SOURCE`.SEED,
+       'NORMAL_DISTRIBUTION FLOAT64 0 10' AS `SOURCE`.GENERATOR_SCHEMA
+);
+CREATE SINK generator_sink_timeout(generator_with_timeout.id FLOAT64) TYPE File;
+
+# Predicate eliminates all tuples on purpose, as this test does not care about the result.
+# The test only validates that the query terminates based on the `MAX_RUNTIME_MS`
+SELECT * FROM generator_with_timeout
+WHERE BOOLEAN(FALSE)
+INTO generator_sink_timeout;
+----
