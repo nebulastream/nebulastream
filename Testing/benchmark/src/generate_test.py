@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import shutil
 import json
-from benchmark_system import parse_int_list, parse_str_list
+from utils import parse_int_list, parse_str_list
 
 def swap_config_to_strategy(swap_config):
     """Convert swap configuration to layout strategy name"""

@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-from run_benchmark import get_config_from_file
+from utils import get_config_from_file, extract_metadata_from_filename
 from pathlib import Path
 import concurrent
 import multiprocessing
@@ -684,66 +684,6 @@ def results_to_global_csv(base_directory, results_iter, configs):
 
 
 
-
-def write_results_with_pandas(base_directory, windowed_results, pipeline_results):
-    """Write results to CSV files."""
-    # Write windowed results
-    windowed_path = os.path.join(base_directory, 'results_windowed.csv')
-    windowed_results.to_csv(windowed_path, index=False)
-    print(f"Windowed results written to {windowed_path}")
-
-    # Write pipeline results
-    pipeline_path = os.path.join(base_directory, 'results_pipeline.csv')
-    pipeline_results.to_csv(pipeline_path, index=False)
-    print(f"Pipeline results written to {pipeline_path}")
-
-def extract_metadata_from_filename(file_path):
-    """Extract metadata (layout, buffer size, threads, query) from filename."""
-    # Get just the filename from path
-    filename = os.path.basename(file_path)
-
-    # Fix duplicate filenames like "file.jsonfile.json"
-    if filename.endswith(".csv"):
-        duplicate_pos = filename.find(".csv", 0, -5)
-        if duplicate_pos > 0:
-            filename = filename[:duplicate_pos + 5]
-
-    metadata = {}
-    metadata['filename'] = file_path
-    query_dir_path = Path(file_path).parent.parent
-    metadata['config'] = get_config_from_file(query_dir_path / "config.txt")
-    query_id= re.search(r'_query(\d+).json', filename)
-    if query_id:
-        metadata['query_id'] = int(query_id.group(1))
-
-    # Extract layout with more specific pattern
-    if '_ROW_LAYOUT_' in filename:
-        metadata['layout'] = 'ROW_LAYOUT'
-    elif '_COLUMNAR_LAYOUT_' in filename:
-        metadata['layout'] = 'COLUMNAR_LAYOUT'
-
-    # Extract buffer size with more specific pattern
-    buffer_match = re.search(r'_buffer(\d+)_', filename)
-    if buffer_match:
-        metadata['buffer_size'] = int(buffer_match.group(1))
-
-    threads_match = re.search(r'_threads(\d+)_', filename)
-    if threads_match:
-        metadata['threads'] = int(threads_match.group(1))
-
-    # Extract thread count with more specific pattern
-    threads_match = re.search(r'_threads(\d+)_', filename)
-    if threads_match:
-        metadata['threads'] = int(threads_match.group(1))
-
-    # Extract query number with more specific pattern
-    query_match = re.search(r'_query(\d+)', filename)
-    if query_match:
-        metadata['query'] = int(query_match.group(1))
-
-    if metadata == {}:
-        print(f"Warning: No metadata extracted from filename: {filename}")
-    return metadata
 
 def main():
 

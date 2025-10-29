@@ -12,90 +12,12 @@ import concurrent
 import multiprocessing
 import concurrent.futures
 from collections import defaultdict
+from utils import get_config_from_file
 
-from Testing.benchmark.src.enginestatsread import results_to_global_csv
 from benchmark_system import parse_int_list
 from generate_data import generate_data
-from enginestatsread import process_csv
-def get_config_from_file(config_file):
-    # Read the query mapping file to get query configurations
-    if config_file.suffix == '.txt':
-        config={}
-        with open(config_file, 'r') as f:
-            for line in f:
-                name, value = line.split(':')
-                config[name.strip()] = value.strip()
+from enginestatsread import process_csv, results_to_global_csv
 
-        return config
-
-    #else assume csv
-    query_configs = []
-    if config_file.exists():
-        query_configs = pd.read_csv(config_file, index_col='query_id').to_dict(orient='index')
-        #{'test_id': 1, 'buffer_size': 4000, 'num_columns': 1, 'accessed_columns': 1, 'operator_chain': "['filter']", 'swap_strategy': 'USE_SINGLE_LAYOUT', 'selectivity': 5.0, 'individual_selectivity': 5.0, 'threshold': 4080218930.0, 'function_type': nan, 'aggregation_function': nan, 'window_size': nan, 'num_groups': nan, 'id_data_type': nan}
-        if config_file.suffix == '.csvo': # old version
-            config=defaultdict(dict)
-            columns= []
-            for col in range(len(query_configs)):
-                columns.append(query_configs[col]['query_id'])
-            for query_id in range(len(query_configs[1])):
-                for col in range(len(columns)):
-                    config[query_id][col] = query_configs[col]['query_id']
-            return config
-
-    else:
-        #raise error if file does not exist
-        raise FileNotFoundError(f"Config file {config_file} does not exist.")
-
-
-    return query_configs
-
-def json_to_csv(trace_file):
-    output_csv = trace_file.with_suffix('.csv')
-
-    """Convert a JSON trace file to a compact CSV file."""
-    try:
-        # Load the JSON trace file
-        with open(trace_file, 'r') as f:
-            trace_data = json.load(f)
-
-        # Extract trace events
-        events = trace_data.get('traceEvents', [])
-
-        min_timestamp = min(event['ts'] for event in events if ('ts' in event and event.get('ph') == 'B' and event.get('cat') == 'task')) % 1_000_000_000
-        print(f"Minimum timestamp (mod 1_000_000_000): {min_timestamp}")
-        print(f"first timestamp: {events[0]['ts'] if 'ts' in events[0] else 'N/A'}")
-        print(f"second timestamp: {events[1]['ts'] if 'ts' in events[1] else 'N/A'}")
-        print(f"reduced first timestamp: {(events[0]['ts'] % 1_000_000_000) - min_timestamp if 'ts' in events[0] else 'N/A'}")
-        print(f"reduced second timestamp: {(events[1]['ts'] % 1_000_000_000) - min_timestamp if 'ts' in events[1] else 'N/A'}")
-        # Prepare compact CSV output
-        with open(output_csv, 'w', newline='') as csvfile:
-            fieldnames = ['p_id', 't_id', 'ph', 'ts', 'tuples']  # Shortened field names
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-
-            for event in events:
-                if event.get('ph') in ['B', 'E'] and event.get('cat') == 'task' and 'args' in event:
-
-                    args = event['args']
-                    # Ignore the first 9 digits of the timestamp
-                    reduced_ts = (event['ts'] % 1_000_000_000) - min_timestamp
-                    writer.writerow({
-                        'p_id': args.get('pipeline_id', ''),
-                        't_id': args.get('task_id', ''),
-                        'ph': event.get('ph', ''),
-                        'ts': reduced_ts,
-                        'tuples': args.get('tuples', 0) if event['ph'] == 'B' else ''
-                    })
-        #if os.path.exists(output_csv):
-        #    os.remove(trace_file)  # Remove original JSON file if CSV was created successfully
-        print(f"Compact CSV file created: {output_csv}")
-        return output_csv
-
-    except Exception as e:
-        print(f"Error converting JSON to compact CSV: {e}")
-        print(f"Failed file: {trace_file.name}")
-        return None
 
 def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[4], layouts=None, build_dir="cmake-build-release", project_dir=None):
     """Run benchmark for all queries with repetitions using the new directory structure."""

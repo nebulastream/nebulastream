@@ -5,7 +5,7 @@ import os
 import argparse
 import json
 from pathlib import Path
-from benchmark_system import parse_int_list, parse_str_list
+from utils import parse_int_list, parse_str_list
 
 def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_type='',  file_path=None):
     """Generate test data with configurable columns, windows, and groups for different selectivities."""
