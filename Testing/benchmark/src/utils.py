@@ -60,7 +60,7 @@ def extract_metadata_from_filename(file_path):
 
     metadata = {}
     metadata['filename'] = file_path
-    query_dir_path = Path(file_path).parent.parent
+    query_dir_path = Path(file_path).parent.parent.parent
     metadata['config'] = get_config_from_file(query_dir_path / "config.txt")
     query_id= re.search(r'_query(\d+).json', filename)
     if query_id:

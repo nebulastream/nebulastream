@@ -201,9 +201,9 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                             print(f"  Trace file is empty for Query {query_id}, Run {run}")
                                             trace_file.unlink()
                                         else:
-                                            trace_dest = run_dir / f"threads{num_threads}" / f"GoogleEventTrace_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.json"
+                                            trace_dest = run_dir / f"GoogleEventTrace_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.json"
                                             shutil.move(trace_file, trace_dest)
-                                            trace_files_to_process.append(trace_dest)
+                                            trace_files_to_process.append(str(trace_dest))
 
                                     else:
                                         print(f"  No trace file found for Query {query_id}, Run {run}")
@@ -212,7 +212,7 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                     if log_files:
                                         log_files.sort()
                                         log_file = log_files[-1]
-                                        log_dest = run_dir / f"threads{num_threads}" / f"{log_file.name.replace('.log', '')}_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.log"
+                                        log_dest = run_dir / f"{log_file.name.replace('.log', '')}_{layout}_threads{num_threads}_buffer{buffer_size}_query{query_id}.log"
                                         shutil.copy(log_file, log_dest)
                                         #print(f"  Saved most recent log file: {log_file.name} to {log_dest}")
                                     else:
@@ -221,18 +221,20 @@ def run_benchmark(test_file, output_dir, repeats=2, run_options="all", threads=[
                                 except Exception as e:
                                     print(f"Error running benchmark: {e}", file=os.sys.stderr)
                     result= process_csv(trace_files_to_process)
-                    results.append(result)
+                    #results.append(result)
+
+                    # Save combined results to CSV
+                    benchmark_dir = output_dir#.parent
+                    results_to_global_csv(benchmark_dir, [result], [config])
+                    return str(output_dir)
+                    for trace_file in trace_files_to_process:
+                        try:
+                            os.remove(trace_file)
+                        except Exception as e:
+                            print(f"Error deleting trace file {trace_file}: {e}")
+                    trace_files_to_process = []
                 #TODO: optimize when to combine results and delete trace files (potential parallelism + faster time between runs)
 
-                # Save combined results to CSV
-                benchmark_dir = output_dir#.parent
-                results_to_global_csv(benchmark_dir, results, configs)
-
-                for trace_file in trace_files_to_process:
-                    try:
-                        os.remove(trace_file)
-                    except Exception as e:
-                        print(f"Error deleting trace file {trace_file}: {e}")
                 if os.path.exists(data_path):
                     #remove all data files greater than 1GB
                     if os.path.getsize(data_path) > 1 * 1024 * 1024 * 1024:
