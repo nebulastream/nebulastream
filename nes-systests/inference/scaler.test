@@ -1,0 +1,38 @@
+# name: inference/scaler.test
+# description: Standard Scaling of Tuples in NES
+# groups: [Inference]
+
+### IREE inference plugin supports sklearn preprocessors, e.g., StandardScaler
+### They should be exported as ONNX objects using the hummingbird library
+### As far as IREE is concerned, a scaler is not any different from a model
+
+Source streamScale FLOAT32 p1 FLOAT32 p2 FLOAT32 p3 FLOAT32 p4 FLOAT32 p5 INLINE
+1.1,1.2,1.3,1.4,1.5
+
+SINK scaledValues FLOAT32 s1 FLOAT32 s2 FLOAT32 s3 FLOAT32 s4 FLOAT32 s5
+
+MODEL standardScaler TESTDATA/model/scaler.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 s1 FLOAT32 s2 FLOAT32 s3 FLOAT32 s4 FLOAT32 s5
+BATCH_SIZE 1
+CACHE NONE SIZE 1
+
+SELECT s1,s2,s3,s4,s5
+FROM (SELECT INFER_MODEL(standardScaler, (p1,p2,p3,p4,p5)) FROM streamScale)
+INTO scaledValues
+----
+-0.733117,-0.289777,0.386637,-0.83346,-1.481372
+
+SINK scaledValuesVarsized VARSIZED scaled
+
+MODEL standardScalerVarsized TESTDATA/model/scaler.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32 FLOAT32
+VARSIZED scaled
+BATCH_SIZE 1
+CACHE NONE SIZE 1
+
+SELECT scaled
+FROM (SELECT INFER_MODEL(standardScalerVarsized, (p1,p2,p3,p4,p5)) FROM streamScale)
+INTO scaledValuesVarsized
+----
+bytebytebytewhatever
