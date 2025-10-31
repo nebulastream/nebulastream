@@ -502,6 +502,36 @@ TEST_F(StatementBinderTest, ShowSinks)
     ASSERT_EQ(filteredQuotedSinksResult.value().sinks.at(0).getSinkName(), "TESTSINK1");
 }
 
+TEST_F(StatementBinderTest, ExplainStatement)
+{
+    const std::vector<std::string_view> validExplainStatement{
+        "EXPLAIN SELECT * FROM `source` INTO `sink`", "explain SELECT * FROM `source` INTO `sink`"};
+    const std::vector<std::string_view> matchingQueries{"SELECT * FROM `source` INTO `sink`", "SELECT * FROM `source` INTO `sink`"};
+
+    for (const auto& [explain, query] : std::views::zip(validExplainStatement, matchingQueries))
+    {
+        const auto explainStatementResult = binder->parseAndBindSingle(explain);
+        const auto queryStatementResult = binder->parseAndBindSingle(query);
+        ASSERT_TRUE(explainStatementResult.has_value());
+        ASSERT_TRUE(queryStatementResult.has_value());
+
+        auto explainStatement = std::get<ExplainQueryStatement>(explainStatementResult.value());
+        auto queryStatement = std::get<QueryStatement>(queryStatementResult.value());
+        EXPECT_EQ(explainStatement.plan, queryStatement.plan);
+    }
+
+    const std::vector<std::string_view> badExplainStatement{
+        "EXPLAIN CREATE SINK testSink1 (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS `SINK`.FILE_PATH, 'CSV' AS "
+        "`SINK`.INPUT_FORMAT)",
+        "EXPLAIN SHOW PHYSICAL SOURCES"};
+
+    for (const auto& explain : badExplainStatement)
+    {
+        const auto explainStatementResult = binder->parseAndBindSingle(explain);
+        ASSERT_FALSE(explainStatementResult.has_value());
+    }
+}
+
 ///NOLINTEND(bugprone-unchecked-optional-access)
 }
 }
