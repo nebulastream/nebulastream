@@ -672,7 +672,24 @@ def results_to_global_csv(base_directory, results_iter, configs):
         # Ensure we have at least some fields in consistent order and write consolidated CSV
     out_csv_path = os.path.join(base_directory, os.path.basename(base_directory) + ".csv")
     if csv_rows:
-        all_fields = sorted(set().union(*(r.keys() for r in csv_rows)))
+        #all_fields = sorted(set().union(*(r.keys() for r in csv_rows)))
+        pipeline_fields = ()
+        for p_id in range(1, 14):  # assuming max 13 pipelines
+            pipeline_1_comp_tp_from_means = f'pipeline_{p_id}_comp_tp_from_means'
+            pipeline_1_comp_tp_mean_of_runs = f'pipeline_{p_id}_comp_tp_mean_of_runs'
+            pipeline_1_count_mean = f'pipeline_{p_id}_count_mean'
+            pipeline_1_eff_tp_from_means = f'pipeline_{p_id}_eff_tp_from_means'
+            pipeline_1_eff_tp_mean_of_runs = f'pipeline_{p_id}_eff_tp_mean_of_runs'
+            pipeline_1_mean_latency = f'pipeline_{p_id}_mean_latency'
+            pipeline_1_runs = f'pipeline_{p_id}_runs'
+            pipeline_1_skipped_mean = f'pipeline_{p_id}_skipped_mean'
+            pipeline_1_skipped_std = f'pipeline_{p_id}_skipped_std'
+            pipeline_1_sum_latency_mean = f'pipeline_{p_id}_sum_latency_mean'
+            pipeline_1_sum_tuples_mean = f'pipeline_{p_id}_sum_tuples_mean'
+            pipeline_1_wall_time_mean = f'pipeline_{p_id}_wall_time_mean'
+            pipeline_fields.update([pipeline_1_comp_tp_from_means,pipeline_1_comp_tp_mean_of_runs,pipeline_1_count_mean,pipeline_1_eff_tp_from_means,pipeline_1_eff_tp_mean_of_runs,pipeline_1_mean_latency,pipeline_1_runs,pipeline_1_skipped_mean,pipeline_1_skipped_std,pipeline_1_sum_latency_mean,pipeline_1_sum_tuples_mean,pipeline_1_wall_time_mean])
+        all_fields = set("operator_chain", "layout", "buffer_size", "threads", "query_id", "test_id", "num_columns", "accessed_columns", "function_type", "aggregation_function", "id_data_type", "num_groups", "window_size", "selectivity", "individual_selectivity", "swap_strategy", "threshold", "total_tasks_time_mean", "total_tasks_time_std", "full_query_duration_mean", "full_query_duration_std")  # add all possible fields here
+        all_fields.update(pipeline_fields)
     if os.path.exists(out_csv_path) and os.stat(out_csv_path).st_size > 0:
         mode = 'a'
     else:
@@ -680,7 +697,7 @@ def results_to_global_csv(base_directory, results_iter, configs):
     if csv_rows:
         with open(out_csv_path, mode, newline='') as f:
 
-            fieldnames = sorted(all_fields)
+            fieldnames = all_fields
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             if mode =='w': #append, if new file write header
                 writer.writeheader()
