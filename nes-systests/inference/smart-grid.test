@@ -2,83 +2,301 @@
 # description: Smart Grid dataset experiments
 # groups: [Inference]
 
-### 1 sec = 1000 ms
-
 Source smartGridSource UINT64 timestamp FLOAT64 value UINT64 property UINT64 plug_id UINT64 household_id UINT64 house_id FILE
 TESTDATA/large/smartgrid/smartgrid-data-plug-13.csv
 
-SINK smartGridChecksum TYPE Checksum UINT64 smartGridSource$start UINT64 smartGridSource$end UINT64 smartGridSource$value_count FLOAT64 smartGridSource$value_avg FLOAT64 smartGridSource$value_median FLOAT64 smartGridSource$value_min FLOAT64 smartGridSource$value_max
-SINK smartGridScaledChecksum TYPE Checksum FLOAT32 count_sc FLOAT32 avg_sc FLOAT32 median_sc FLOAT32 min_sc FLOAT32 max_sc
-SINK smartGridScaledVarsizedChecksum TYPE Checksum VARSIZED loadPerMinute
+SINK smartGridVarsizedChecksum TYPE Checksum VARSIZED loadNext10Sec
 
-MODEL standardScaler TESTDATA/model/scaler.onnx
+MODEL standardScaler32 TESTDATA/model/scaler_fp32.onnx
 UINT64 FLOAT64 FLOAT64 FLOAT64 FLOAT64
 FLOAT32 count_sc FLOAT32 avg_sc FLOAT32 median_sc FLOAT32 min_sc FLOAT32 max_sc
 BATCH_SIZE 1
 CACHE NONE SIZE 1
 
-SELECT count_sc, avg_sc, median_sc, min_sc, max_sc
-FROM (
-    SELECT INFER_MODEL(standardScaler, (value_count, value_avg, value_median, value_min, value_max))
-    FROM (
-        SELECT COUNT(value) AS value_count, AVG(value) AS value_avg, MEDIAN(value) AS value_median, MIN(value) AS value_min, MAX(value) AS value_max
-        FROM smartGridSource
-        WHERE property == UINT64(1)
-        WINDOW TUMBLING(timestamp, SIZE 1000 ms)
-    )
-)
-INTO smartGridScaledChecksum
-----
-135084,321703146
-
-MODEL standardScalerVarsized TESTDATA/model/scaler.onnx
-UINT64 FLOAT64 FLOAT64 FLOAT64 FLOAT64
-VARSIZED loadVarsized
+MODEL lstm_none TESTDATA/model/smart-grid-lstm.onnx
+VARSIZED
+VARSIZED loadNext10Sec
 BATCH_SIZE 1
 CACHE NONE SIZE 1
 
-SELECT ARRAY_AGG(loadVarsized) AS loadPerMinute
+SELECT loadNext10Sec
 FROM (
-    SELECT INFER_MODEL(standardScalerVarsized, (value_count, value_avg, value_median, value_min, value_max))
+    SELECT INFER_MODEL(lstm_none, (featuresScaledVarsized))
     FROM (
-        SELECT start, COUNT(value) AS value_count, AVG(value) AS value_avg, MEDIAN(value) AS value_median, MIN(value) AS value_min, MAX(value) AS value_max
-        FROM smartGridSource
-        WHERE property == UINT64(1)
-        WINDOW TUMBLING(timestamp, SIZE 1000 ms)
+        SELECT
+            CONCAT(value_count_array,
+                CONCAT(value_avg_array,
+                    CONCAT(value_median_array,
+                        CONCAT(value_min_array, value_max_array)
+                    )
+                )
+            ) AS featuresScaledVarsized
+        FROM (
+            SELECT
+                start,
+                ARRAY_AGG(count_sc) AS value_count_array,
+                ARRAY_AGG(avg_sc) AS value_avg_array,
+                ARRAY_AGG(median_sc) AS value_median_array,
+                ARRAY_AGG(min_sc) AS value_min_array,
+                ARRAY_AGG(max_sc) AS value_max_array
+            FROM (
+                SELECT INFER_MODEL(standardScaler32, (value_count, value_avg, value_median, value_min, value_max))
+                FROM (
+                    SELECT
+                        start,
+                        COUNT(value) AS value_count,
+                        AVG(value) AS value_avg,
+                        MEDIAN(value) AS value_median,
+                        MIN(value) AS value_min,
+                        MAX(value) AS value_max
+                    FROM smartGridSource
+                    WHERE property == UINT64(1)
+                    WINDOW TUMBLING(timestamp, SIZE 1000 ms)
+                )
+            )
+            WINDOW SLIDING(start, SIZE 60000 ms, ADVANCE BY 1000 ms)
+        )
     )
 )
-WINDOW SLIDING(start, SIZE 60000 ms, ADVANCE BY 1000 ms)
-INTO smartGridScaledVarsizedChecksum
+INTO smartGridVarsizedChecksum
 ----
-139420,24580438
 
-Source smartGridSourceSmall UINT64 timestamp FLOAT64 value INLINE
-1735065600000123,0.132
-1735065600120456,0.185
-1735065600250789,0.241
-1735065600389102,0.392
-1735065600517321,0.367
-1735065600674988,0.433
-1735065600831204,0.518
-1735065600987543,0.507
-1735065601132011,0.593
-1735065601288777,0.624
-1735065601456344,0.689
-1735065601599344,0.731
-1735065601746543,0.769
-1735065601920088,0.758
-1735065602096123,0.695
-1735065602278789,0.618
-1735065602435011,0.584
-1735065602589980,0.529
-1735065602745677,0.486
-1735065602900456,0.442
+MODEL lstm_2q TESTDATA/model/smart-grid-lstm.onnx
+VARSIZED
+VARSIZED loadNext10Sec
+BATCH_SIZE 1
+CACHE 2Q SIZE 4096
 
-SINK smartGridSmall UINT64 smartGridSourceSmall$start UINT64 smartGridSourceSmall$end UINT64 smartGridSourceSmall$value_count FLOAT64 smartGridSourceSmall$value_avg FLOAT64 smartGridSourceSmall$value_median FLOAT64 smartGridSourceSmall$value_min FLOAT64 smartGridSourceSmall$value_max
-
-SELECT start, end, COUNT(value) AS value_count, AVG(value) AS value_avg, MEDIAN(value) AS value_median, MIN(value) AS value_min, MAX(value) AS value_max
-FROM smartGridSourceSmall WINDOW TUMBLING(timestamp, SIZE 1000000 ms) INTO smartGridSmall
+SELECT loadNext10Sec
+FROM (
+    SELECT INFER_MODEL(lstm_2q, (featuresScaledVarsized))
+    FROM (
+        SELECT
+            CONCAT(value_count_array,
+                CONCAT(value_avg_array,
+                    CONCAT(value_median_array,
+                        CONCAT(value_min_array, value_max_array)
+                    )
+                )
+            ) AS featuresScaledVarsized
+        FROM (
+            SELECT
+                start,
+                ARRAY_AGG(count_sc) AS value_count_array,
+                ARRAY_AGG(avg_sc) AS value_avg_array,
+                ARRAY_AGG(median_sc) AS value_median_array,
+                ARRAY_AGG(min_sc) AS value_min_array,
+                ARRAY_AGG(max_sc) AS value_max_array
+            FROM (
+                SELECT INFER_MODEL(standardScaler32, (value_count, value_avg, value_median, value_min, value_max))
+                FROM (
+                    SELECT
+                        start,
+                        COUNT(value) AS value_count,
+                        AVG(value) AS value_avg,
+                        MEDIAN(value) AS value_median,
+                        MIN(value) AS value_min,
+                        MAX(value) AS value_max
+                    FROM smartGridSource
+                    WHERE property == UINT64(1)
+                    WINDOW TUMBLING(timestamp, SIZE 1000 ms)
+                )
+            )
+            WINDOW SLIDING(start, SIZE 60000 ms, ADVANCE BY 1000 ms)
+        )
+    )
+)
+INTO smartGridVarsizedChecksum
 ----
-1735065601000000,1735065602000000,6,0.694,0.71,0.593,0.769
-1735065600000000,1735065601000000,8,0.346875,0.3795,0.132,0.518
-1735065602000000,1735065603000000,6,0.559,0.5565,0.442,0.695
+
+MODEL lstm_fifo TESTDATA/model/smart-grid-lstm.onnx
+VARSIZED
+VARSIZED loadNext10Sec
+BATCH_SIZE 1
+CACHE FIFO SIZE 4096
+
+SELECT loadNext10Sec
+FROM (
+    SELECT INFER_MODEL(lstm_fifo, (featuresScaledVarsized))
+    FROM (
+        SELECT
+            CONCAT(value_count_array,
+                CONCAT(value_avg_array,
+                    CONCAT(value_median_array,
+                        CONCAT(value_min_array, value_max_array)
+                    )
+                )
+            ) AS featuresScaledVarsized
+        FROM (
+            SELECT
+                start,
+                ARRAY_AGG(count_sc) AS value_count_array,
+                ARRAY_AGG(avg_sc) AS value_avg_array,
+                ARRAY_AGG(median_sc) AS value_median_array,
+                ARRAY_AGG(min_sc) AS value_min_array,
+                ARRAY_AGG(max_sc) AS value_max_array
+            FROM (
+                SELECT INFER_MODEL(standardScaler32, (value_count, value_avg, value_median, value_min, value_max))
+                FROM (
+                    SELECT
+                        start,
+                        COUNT(value) AS value_count,
+                        AVG(value) AS value_avg,
+                        MEDIAN(value) AS value_median,
+                        MIN(value) AS value_min,
+                        MAX(value) AS value_max
+                    FROM smartGridSource
+                    WHERE property == UINT64(1)
+                    WINDOW TUMBLING(timestamp, SIZE 1000 ms)
+                )
+            )
+            WINDOW SLIDING(start, SIZE 60000 ms, ADVANCE BY 1000 ms)
+        )
+    )
+)
+INTO smartGridVarsizedChecksum
+----
+
+MODEL lstm_lfu TESTDATA/model/smart-grid-lstm.onnx
+VARSIZED
+VARSIZED loadNext10Sec
+BATCH_SIZE 1
+CACHE LFU SIZE 4096
+
+SELECT loadNext10Sec
+FROM (
+    SELECT INFER_MODEL(lstm_lfu, (featuresScaledVarsized))
+    FROM (
+        SELECT
+            CONCAT(value_count_array,
+                CONCAT(value_avg_array,
+                    CONCAT(value_median_array,
+                        CONCAT(value_min_array, value_max_array)
+                    )
+                )
+            ) AS featuresScaledVarsized
+        FROM (
+            SELECT
+                start,
+                ARRAY_AGG(count_sc) AS value_count_array,
+                ARRAY_AGG(avg_sc) AS value_avg_array,
+                ARRAY_AGG(median_sc) AS value_median_array,
+                ARRAY_AGG(min_sc) AS value_min_array,
+                ARRAY_AGG(max_sc) AS value_max_array
+            FROM (
+                SELECT INFER_MODEL(standardScaler32, (value_count, value_avg, value_median, value_min, value_max))
+                FROM (
+                    SELECT
+                        start,
+                        COUNT(value) AS value_count,
+                        AVG(value) AS value_avg,
+                        MEDIAN(value) AS value_median,
+                        MIN(value) AS value_min,
+                        MAX(value) AS value_max
+                    FROM smartGridSource
+                    WHERE property == UINT64(1)
+                    WINDOW TUMBLING(timestamp, SIZE 1000 ms)
+                )
+            )
+            WINDOW SLIDING(start, SIZE 60000 ms, ADVANCE BY 1000 ms)
+        )
+    )
+)
+INTO smartGridVarsizedChecksum
+----
+
+MODEL lstm_lru TESTDATA/model/smart-grid-lstm.onnx
+VARSIZED
+VARSIZED loadNext10Sec
+BATCH_SIZE 1
+CACHE LRU SIZE 4096
+
+SELECT loadNext10Sec
+FROM (
+    SELECT INFER_MODEL(lstm_lru, (featuresScaledVarsized))
+    FROM (
+        SELECT
+            CONCAT(value_count_array,
+                CONCAT(value_avg_array,
+                    CONCAT(value_median_array,
+                        CONCAT(value_min_array, value_max_array)
+                    )
+                )
+            ) AS featuresScaledVarsized
+        FROM (
+            SELECT
+                start,
+                ARRAY_AGG(count_sc) AS value_count_array,
+                ARRAY_AGG(avg_sc) AS value_avg_array,
+                ARRAY_AGG(median_sc) AS value_median_array,
+                ARRAY_AGG(min_sc) AS value_min_array,
+                ARRAY_AGG(max_sc) AS value_max_array
+            FROM (
+                SELECT INFER_MODEL(standardScaler32, (value_count, value_avg, value_median, value_min, value_max))
+                FROM (
+                    SELECT
+                        start,
+                        COUNT(value) AS value_count,
+                        AVG(value) AS value_avg,
+                        MEDIAN(value) AS value_median,
+                        MIN(value) AS value_min,
+                        MAX(value) AS value_max
+                    FROM smartGridSource
+                    WHERE property == UINT64(1)
+                    WINDOW TUMBLING(timestamp, SIZE 1000 ms)
+                )
+            )
+            WINDOW SLIDING(start, SIZE 60000 ms, ADVANCE BY 1000 ms)
+        )
+    )
+)
+INTO smartGridVarsizedChecksum
+----
+
+MODEL lstm_second_chance TESTDATA/model/smart-grid-lstm.onnx
+VARSIZED
+VARSIZED loadNext10Sec
+BATCH_SIZE 1
+CACHE SecondChance SIZE 4096
+
+SELECT loadNext10Sec
+FROM (
+    SELECT INFER_MODEL(lstm_second_chance, (featuresScaledVarsized))
+    FROM (
+        SELECT
+            CONCAT(value_count_array,
+                CONCAT(value_avg_array,
+                    CONCAT(value_median_array,
+                        CONCAT(value_min_array, value_max_array)
+                    )
+                )
+            ) AS featuresScaledVarsized
+        FROM (
+            SELECT
+                start,
+                ARRAY_AGG(count_sc) AS value_count_array,
+                ARRAY_AGG(avg_sc) AS value_avg_array,
+                ARRAY_AGG(median_sc) AS value_median_array,
+                ARRAY_AGG(min_sc) AS value_min_array,
+                ARRAY_AGG(max_sc) AS value_max_array
+            FROM (
+                SELECT INFER_MODEL(standardScaler32, (value_count, value_avg, value_median, value_min, value_max))
+                FROM (
+                    SELECT
+                        start,
+                        COUNT(value) AS value_count,
+                        AVG(value) AS value_avg,
+                        MEDIAN(value) AS value_median,
+                        MIN(value) AS value_min,
+                        MAX(value) AS value_max
+                    FROM smartGridSource
+                    WHERE property == UINT64(1)
+                    WINDOW TUMBLING(timestamp, SIZE 1000 ms)
+                )
+            )
+            WINDOW SLIDING(start, SIZE 60000 ms, ADVANCE BY 1000 ms)
+        )
+    )
+)
+INTO smartGridVarsizedChecksum
+----

@@ -225,6 +225,22 @@ void IREECacheInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
     executionCtx.setLocalOperatorState(id, std::move(predictionCache));
 }
 
+void IREECacheInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
+    auto* predictionCache = dynamic_cast<PredictionCache*>(executionCtx.getLocalState(id));
+    auto inferModelHandler = predictionCache->getOperatorHandler();
+
+    auto hits = predictionCache->getHitsRef();
+    auto misses = predictionCache->getMissesRef();
+
+    nautilus::invoke(
+        +[](uint64_t* hits, uint64_t* misses)
+        {
+            NES_INFO("Hits: {}; Misses: {}", *hits, *misses);
+        }, hits, misses);
+}
+
 void IREECacheInferenceOperator::terminate(ExecutionContext& executionCtx) const
 {
     nautilus::invoke(
