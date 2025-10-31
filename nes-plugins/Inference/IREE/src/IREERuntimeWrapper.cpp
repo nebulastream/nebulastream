@@ -16,6 +16,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
 #include <ErrorHandling.hpp>
+#include <iostream>
 
 namespace NES
 {
