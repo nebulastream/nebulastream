@@ -331,6 +331,11 @@ public:
         {
             return QueryStatement{queryBinder(statementAST->query())};
         }
+        if (auto* const explainStatementAST = statementAST->explainStatement())
+        {
+            INVARIANT(explainStatementAST->query() != nullptr, "Should be enforced by antlr");
+            return ExplainQueryStatement{queryBinder(explainStatementAST->query())};
+        }
         try
         {
             if (auto* const createAST = statementAST->createStatement(); createAST != nullptr)
