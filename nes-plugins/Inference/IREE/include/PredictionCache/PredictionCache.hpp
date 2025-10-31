@@ -59,6 +59,8 @@ public:
     getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) = 0;
 
     virtual nautilus::val<std::byte*> getRecord(const nautilus::val<uint64_t>& pos);
+    nautilus::val<uint64_t*> getHitsRef();
+    nautilus::val<uint64_t*> getMissesRef();
 protected:
     virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
     void incrementNumberOfHits();

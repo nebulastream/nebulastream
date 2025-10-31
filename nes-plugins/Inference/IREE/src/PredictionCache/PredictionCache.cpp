@@ -95,4 +95,7 @@ nautilus::val<uint64_t> PredictionCache::searchInCache(const nautilus::val<std::
     }
     return nautilus::val<uint64_t>(NOT_FOUND);
 }
+
+nautilus::val<uint64_t*> PredictionCache::getHitsRef(){ return this->numberOfHits; }
+nautilus::val<uint64_t*> PredictionCache::getMissesRef(){ return this->numberOfMisses; }
 }

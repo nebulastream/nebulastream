@@ -87,7 +87,7 @@ struct ModelMetadataGraph
 
     std::vector<size_t> parseTensorShape(const std::string& label)
     {
-        std::regex tensor_regex(R"(tensor<([?0-9x]+)f32>)");
+        std::regex tensor_regex(R"(tensor<([?0-9x]+)f(16|32)>)");
         std::smatch match;
         std::vector<size_t> result;
         if (std::regex_search(label, match, tensor_regex))

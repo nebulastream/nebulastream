@@ -39,6 +39,7 @@ public:
     void setup(ExecutionContext& executionCtx) const override;
     void terminate(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override { return child; }
     void setChild(PhysicalOperator child) override { this->child = std::move(child); }
