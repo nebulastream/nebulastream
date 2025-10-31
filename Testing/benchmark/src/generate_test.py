@@ -348,6 +348,11 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                         for window_size in params['window_sizes']:
                             for num_groups in params['num_groups']:
                                 for id_type in params['id_data_types']:
+                                    if id_type != '':
+                                        max_value = 2**int(id_type)-1
+                                        if num_groups > max_value:
+                                            #print(f"Skipping aggregation query with id_data_type {id_type} and num_groups {num_groups} (exceeds max value {max_value})")
+                                            continue
                                     query_dir = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}"
                                     if id_type != '':
                                         query_dir = agg_buffer_dir / f"query_{agg_func}_cols{num_col}_access{access_col}_win-size{window_size}_num-groups{num_groups}_idtype{id_type}"
@@ -683,12 +688,12 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000, 4000000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10],
         'num_rows': args.rows,
-        'accessed_columns': [1, 10],
+        'accessed_columns': [1, 2, 10, 20],
         'function_types': ['add', 'exp'],
-        'selectivities': [5, 95],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+        'selectivities': [5, 50, 95],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
         'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
         'window_sizes': args.window_sizes, #[10000, 100000],
         'num_groups': args.groups, #[10, 100, 1000],
@@ -697,7 +702,7 @@ if __name__ == "__main__":
 
         'operator_chains': [
             #['map'],                  # Single map
-            ['filter'],               # Single filter
+            #['filter'],               # Single filter
             ['aggregation'],                 # Single aggregation
             ['map', 'filter'],        # Map followed by filter
             ['filter', 'map'],        # Filter followed by map
