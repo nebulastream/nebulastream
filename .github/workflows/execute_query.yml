@@ -66,11 +66,12 @@ jobs:
         with:
           ref: ${{ inputs.head_sha }}
       - uses: ./.github/steps/prepare-github
+        name: Prepare Github CI
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
-        name: build and test
+        name: Build and Test
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}
           run: |
