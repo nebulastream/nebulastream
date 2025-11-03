@@ -222,11 +222,10 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
 
     proto.set_operator_type(NAME);
 
-    const auto inputs = getInputSchemas();
-    for (size_t i = 0; i < inputs.size(); ++i)
+    for (auto& input : getInputSchemas())
     {
         auto* inSch = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
+        SchemaSerializationUtil::serializeSchema(input, inSch);
     }
 
     auto* outSch = proto.mutable_output_schema();
