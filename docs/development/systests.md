@@ -77,6 +77,27 @@ CREATE PHYSICAL SOURCE FOR input TYPE Generator SET(
 );
 ```
 
+#### Inline Sources
+
+Additionally, a source can be defined inline within a SQL query.
+Instead of naming a source, you can create an inline source by writing `[TYPE]([OPTIONS])` (cmp. the example below).
+The accepted options are mostly the same as when creating a source via a `CREATE SOURCE` statement. 
+The only difference is that a schema must be given via the options `SOURCE.SCHEMA` using the `SCHEMA` function.
+
+You cannot use the `ATTACH` statement to pipe a file or inline data into the source. 
+To use a file input, use the `SOURCE.FILE_PATH` option. If no absolut path is given, the sytests framework will assume 
+the test data directory of the systest as the root directory.
+
+Example:
+```sql
+SELECT ID, VALUE, TIMESTAMP
+FROM File(
+	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+	'CSV' AS PARSER.`TYPE`,
+	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+INTO output;
+```
+
 ### Sinks
 Sinks are also defined via SQL statements, can be written over multiple lines, and must be concluded with a semicolon or a trailing empty line.
 When creating a sink, the exact expected schema and the type of the sink must be provided.
@@ -88,6 +109,32 @@ CREATE SINK output(input.id UINT64, input.data FLOAT64) TYPE File;
 CREATE SINK output2(input.id UINT64) TYPE File;
 
 CREATE SINK output3(new_column UINT64) TYPE Checksum;
+```
+
+#### Inline Sinks
+Additionally, sinks can be defined inline within a SQL query. 
+Instead of naming the sink, you can create the inline sink by writing `[TYPE]([options])` (cmp. example below).
+The accepted options are mostly the same as when creating a sink via a `CREATE SINK` statement.
+The only difference is that a schema CAN OPTIONALLY be given via the options `SINK.SCHEMA` using the `SCHEMA` function.
+If no schema is given, the schema is inferred automatically.
+
+Because the systest framework automatically sets the sink file paths, `File` and `Generator` sinks can be created
+without any options. 
+
+Examples: 
+```sql
+
+SELECT ID, VALUE, TIMESTAMP
+FROM input_source
+INTO File();
+
+SELECT ID, VALUE, TIMESTAMP
+FROM input_source
+INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS `SINK`.`SCHEMA`);
+
+SELECT ID, VALUE, TIMESTAMP
+FROM input_source
+INTO Checksum();
 ```
 
 ### Test Cases
