@@ -1,9 +1,9 @@
 name: NES PR CI
-
-# The following pipeline is meant to run for every PR.
-# It will also apply the format check. If these steps are successful, it will try to build the PR and run the tests.
-# If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
-# Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
+description: |
+  The following pipeline is meant to run for every PR.
+  It will also apply the format check. If these steps are successful, it will try to build the PR and run the tests.
+  If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
+  Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
 on:
   pull_request:
     types: [ synchronize, opened, reopened ]
