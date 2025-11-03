@@ -1,8 +1,8 @@
 name: NES Docker Image On Demand
-
-# This workflow is triggered manually by the user to build docker images for the executable image.
-# The user can specify the branch for which the docker image needs to be built.
-# The docker image is built for the specified branch and pushed to the docker hub.
+description: |
+  This workflow is triggered manually by the user to build docker images for the executable image.
+  The user can specify the branch for which the docker image needs to be built.
+  The docker image is built for the specified branch and pushed to the docker hub.
 
 
 on:

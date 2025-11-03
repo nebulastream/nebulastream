@@ -1,5 +1,5 @@
-# This workflow builds and tests a head_sha over our large tests with random worker configurations
 name: Large Tests Random Worker Config
+description: This workflow builds and tests a head_sha over our large tests with random worker configurations
 on:
   workflow_call:
     inputs:

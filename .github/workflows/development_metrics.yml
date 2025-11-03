@@ -1,10 +1,10 @@
 name: Calculating Development Metrics
-
-# The following pipeline is meant to be run per milestone by a workflow dispatch call via the Github website.
-# It will calculate the development metrics for the milestone.
-# For example, the number of PRs, the number of commits, the number of issues, PR turnaround time, etc.
-# To count the changed no. files, insertions and deletions, one can use the following command:
-# git diff --shortstat <SHA FROM> <SHA TO>
+description: | 
+ The following pipeline is meant to be run per milestone by a workflow dispatch call via the Github website.
+ It will calculate the development metrics for the milestone.
+ For example, the number of PRs, the number of commits, the number of issues, PR turnaround time, etc.
+ To count the changed no. files, insertions and deletions, one can use the following command:
+ git diff --shortstat <SHA FROM> <SHA TO>
 
 on:
   workflow_dispatch:

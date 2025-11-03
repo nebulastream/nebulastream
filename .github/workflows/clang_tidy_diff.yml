@@ -1,7 +1,8 @@
-# This workflow computes the clang-tidy check for the git diff between base and head.
-# we generate GitHub PR annotations based on the output of clang-tidy if this workflow was called within the context
-# of a pr.
 name: Clang-Tidy-Diff
+description: |
+  This workflow computes the clang-tidy check for the git diff between base and head.
+  we generate GitHub PR annotations based on the output of clang-tidy if this workflow was called within the context
+  of a pr.
 on:
   workflow_call:
     inputs:

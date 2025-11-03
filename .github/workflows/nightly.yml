@@ -1,10 +1,10 @@
 name: NES Nightly
-
-# This workflow is triggered every night at 2:30 AM UTC.
-# This is a good way to ensure that the main branch is always in a good state.
-# For now, this workflow file runs the same tests as `pr.yml` and then creates a docker image nes-executable-image:nightly, if the test pass.
-# For pushing an image to the docker hub, we build debian packages (nes-amd64.deb and nes-arm64.deb) and then use them to build the docker image.
-# We will add long-running test for stability and performance checks in the future.
+description: |
+  This workflow is triggered every night at 2:30 AM UTC.
+  This is a good way to ensure that the main branch is always in a good state.
+  For now, this workflow file runs the same tests as `pr.yml` and then creates a docker image nes-executable-image:nightly, if the test pass.
+  For pushing an image to the docker hub, we build debian packages (nes-amd64.deb and nes-arm64.deb) and then use them to build the docker image.
+  We will add long-running test for stability and performance checks in the future.
 
 on:
   workflow_dispatch:
