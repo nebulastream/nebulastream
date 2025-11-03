@@ -1,4 +1,4 @@
-name: prepare github ci server instance
+name: Prepare GitHub CI Server Instance
 description: |
   Prepares a github ci server instance by removing unnecessary pre-installed software pulling the docker image and 
   preparing ccache.

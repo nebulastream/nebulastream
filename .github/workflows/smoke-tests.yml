@@ -1,4 +1,4 @@
-name: smoke-tests
+name: Run Smoke Tests
 description: Performs quick running tests to check for basic errors
 on:
   workflow_call:

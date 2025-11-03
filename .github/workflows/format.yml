@@ -1,4 +1,4 @@
-name: Run format.sh
+name: Check formatting rules
 description: This workflow calls our formatting script to verify the commit conforms to our formatting rules.
 on:
   workflow_call:
