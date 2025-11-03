@@ -1,5 +1,5 @@
-# .github/workflows/smoke-tests.yml
 name: smoke-tests
+description: Performs quick running tests to check for basic errors
 on:
   workflow_call:
     inputs:

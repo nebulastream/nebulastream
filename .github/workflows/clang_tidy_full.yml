@@ -1,8 +1,8 @@
-# This workflow computes a complete clang-tidy analysis based on the input head_sha.
-# This workflow output a list of clang-tidy warnings and their frequency and fails if we encounter any clang-tidy
-# warnings which have been flagged as errors.
-
 name: Clang-Tidy
+description: |
+  This workflow computes a complete clang-tidy analysis based on the input head_sha.
+  This workflow output a list of clang-tidy warnings and their frequency and fails if we encounter any clang-tidy
+  warnings which have been flagged as errors.
 on:
   workflow_call:
     inputs:

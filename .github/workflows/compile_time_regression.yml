@@ -1,8 +1,9 @@
-# We measure the compile time of a clean uncached rebuild of NebulaStream and apply Clang Build Analyzer to collect
-# statistics on the heavy hitter.
-# The workflow can be manually dispatched on demand for any branch, while the nightly version always builds the main
-# branch
 name: Compile Time Regression
+description: |
+  We measure the compile time of a clean uncached rebuild of NebulaStream and apply Clang Build Analyzer to collect
+  statistics on the heavy hitter.
+  The workflow can be manually dispatched on demand for any branch, while the nightly version always builds the main
+  branch
 on:
   workflow_call:
     inputs:

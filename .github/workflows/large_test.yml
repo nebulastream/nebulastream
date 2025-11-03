@@ -1,5 +1,5 @@
-# This workflow builds and tests a head_sha, on a combination of different architectures and standard libraries.
 name: Build and Run Large Tests
+description: This workflow builds and tests a head_sha, on a combination of different architectures and standard libraries.
 on:
   workflow_call:
     inputs:
