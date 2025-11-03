@@ -1,4 +1,4 @@
-name: run command in container
+name: Run Command in Container
 description: |
   Runs script or command directly in a development container. The container is mounted in the current working directory
   and uses the current user.
