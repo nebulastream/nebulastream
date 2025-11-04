@@ -13,17 +13,21 @@
 */
 
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <ostream>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <fmt/base.h>
-#include <fmt/ostream.h>
 #include <folly/Synchronized.h>
+
+#ifndef NO_ASSERT
+    #include <set>
+#endif
 
 namespace NES
 {
@@ -46,22 +50,26 @@ struct SequenceNumberForOriginId
 /// the SequenceState is only used inside 'folly::Synchronized' so its members do not need to be atomic themselves
 struct SequenceState
 {
-    uint64_t lastChunkNumber = INVALID_CHUNK_NUMBER.getRawValue();
-    uint64_t seenChunks = INVALID_CHUNK_NUMBER.getRawValue();
+    ChunkNumber::Underlying nextChunkNumberCounter = ChunkNumber::INITIAL;
+    ChunkNumber lastChunkNumber = INVALID<ChunkNumber>;
+    size_t seenChunks = 0;
 };
 
 class EmitOperatorHandler final : public OperatorHandler
 {
 public:
-    EmitOperatorHandler() = default;
-
-    void setChunkNumber(bool chunkCompleted, ChunkNumber currentChunkNumber, bool isCurrentBufferTheLastChunk, TupleBuffer& buffer);
+    void setChunkNumber(bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
-    folly::Synchronized<std::map<SequenceNumberForOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
-    folly::Synchronized<std::map<SequenceNumberForOriginId, ChunkNumber::Underlying>> seqNumberOriginIdToOutputChunkNumber;
+    folly::Synchronized<std::map<SequenceNumberForOriginId, SequenceState>> sequenceStates;
+
+#ifndef NO_ASSERT
+    /// We assume that every tuple of (SequenceNumber, ChunkNumber, OriginId) is unique per query.
+    /// In debug mode we track the completed sequence numbers to catch bugs related to bad sequence/chunk numbers
+    folly::Synchronized<std::set<SequenceNumberForOriginId>> completedSequences;
+#endif
 };
 }
 
