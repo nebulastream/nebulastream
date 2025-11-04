@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -32,7 +33,30 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     auto selection = logicalOperator.get<SelectionLogicalOperator>();
     auto function = selection.getPredicate();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+
+    std::vector<std::string> requiredFields;
+    std::unordered_set<std::string> dedup;
+    std::vector stack{function};
+    while (!stack.empty())
+    {
+        auto current = stack.back();
+        stack.pop_back();
+        if (auto fieldAccessFunction = current.tryGet<FieldAccessLogicalFunction>()) {
+            const std::string& name = fieldAccessFunction->getFieldName();
+            dedup.insert(name);
+        }
+        for (const auto& child : current.getChildren()) {
+            stack.push_back(child);
+        }
+    }
+
+    for (const auto& field : dedup)
+    {
+        requiredFields.push_back(field);
+    }
+
     auto physicalOperator = SelectionPhysicalOperator(func);
+    physicalOperator.setRequiredFields(requiredFields);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
         logicalOperator.getInputSchemas()[0],

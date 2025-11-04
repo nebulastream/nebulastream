@@ -32,8 +32,12 @@ public:
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
+    void setRequiredFields(std::vector<std::string> newRequiredFields) { this->requiredFields = std::move(newRequiredFields); };
+    [[nodiscard]] std::vector<std::string> getRequiredFields() const { return requiredFields; }
+
 private:
     const PhysicalFunction function;
     std::optional<PhysicalOperator> child;
+    std::vector<std::string> requiredFields;
 };
 }
