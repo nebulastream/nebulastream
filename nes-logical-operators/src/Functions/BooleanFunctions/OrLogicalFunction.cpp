@@ -114,7 +114,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrL
             arguments.children[0].getDataType(),
             arguments.children[1].getDataType());
     }
-    return OrLogicalFunction(arguments.children[0], arguments.children[1]);
+    return OrLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

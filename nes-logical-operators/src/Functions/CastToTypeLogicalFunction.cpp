@@ -105,7 +105,7 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
     {
         throw CannotDeserialize("CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return CastToTypeLogicalFunction(arguments.dataType, arguments.children[0]);
+    return CastToTypeLogicalFunction(arguments.dataType, arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

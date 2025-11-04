@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Phases/DecideFieldMappings.hpp"
+
+
 #include <QueryOptimizer.hpp>
 
 #include <Phases/DecideJoinTypes.hpp>
@@ -31,7 +34,9 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecut
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just decide the join type (if one exists in the query) and lower to physical operators in a pure function.
     DecideJoinTypes joinTypeDecider(defaultQueryExecution.joinStrategy);
-    const auto optimizedPlan = joinTypeDecider.apply(plan);
+    auto optimizedPlan = joinTypeDecider.apply(plan);
+    optimizedPlan = DecideFieldMappings{}.apply(optimizedPlan);
+
     return LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
 }
 

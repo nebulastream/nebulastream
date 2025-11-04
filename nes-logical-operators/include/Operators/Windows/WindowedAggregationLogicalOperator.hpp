@@ -21,6 +21,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -28,6 +29,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Traits/Trait.hpp>
@@ -38,13 +40,13 @@
 #include <WindowTypes/Types/WindowType.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Operators/Windows/WindowMetaData.hpp>
+#include "Operators/Reprojecter.hpp"
 
 namespace NES
 {
 
 
-class WindowedAggregationLogicalOperator final : public OriginIdAssigner
+class WindowedAggregationLogicalOperator final : public OriginIdAssigner, public Reprojecter
 {
 public:
     struct ProjectedAggregation
@@ -75,6 +77,7 @@ public:
 
     [[nodiscard]] NES::Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>
     getGroupingKeys() const;
+    [[nodiscard]] std::unordered_map<Field, std::unordered_set<Field>> getAccessedFieldsForOutput() const override;
     [[nodiscard]] const GroupingKeyType& getGroupingKeysWithName() const;
 
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
@@ -99,6 +102,7 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
 
     [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema() const;
+    [[nodiscard]] const DynamicBase* getDynamicBase() const;
 
     struct ConfigParameters
     {
@@ -157,7 +161,7 @@ private:
 
     LogicalOperator child;
     std::shared_ptr<Windowing::WindowType> windowType;
-    GroupingKeyType groupingKey;
+    GroupingKeyType groupingKeys;
     std::vector<ProjectedAggregation> aggregationFunctions;
 
     /// Set during schema inference

@@ -111,7 +111,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCei
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
-    return CeilLogicalFunction(arguments.children[0]);
+    return CeilLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

@@ -13,26 +13,24 @@
 */
 
 #pragma once
-#include <unordered_map>
 
-#include "Configurations/Descriptor.hpp"
-#include "DataTypes/UnboundSchema.hpp"
+
 #include "Schema/Field.hpp"
+
 
 #include "Trait.hpp"
 
 namespace NES
 {
 
-class FieldMappingTrait final : public TraitConcept
+class FieldOrderingTrait : public TraitConcept
 {
 public:
-    static constexpr std::string_view NAME = "FieldMapping";
+    static constexpr std::string_view NAME = "FieldOrdering";
 
-    explicit FieldMappingTrait(std::unordered_map<Field, IdentifierList> mapping);
+    explicit FieldOrderingTrait(std::vector<Field> orderedFields);
 
-    [[nodiscard]] std::optional<IdentifierList> getMapping(const Field& field) const;
-    [[nodiscard]] const std::unordered_map<Field, IdentifierList>& getUnderlying() const;
+    const std::vector<Field>& getOrderedFields() const;
 
     [[nodiscard]] const std::type_info& getType() const override;
     [[nodiscard]] std::string_view getName() const override;
@@ -42,7 +40,6 @@ public:
     [[nodiscard]] size_t hash() const override;
 
 private:
-    std::unordered_map<Field, IdentifierList> mapping;
+    std::vector<Field> orderedFields;
 };
-
 }

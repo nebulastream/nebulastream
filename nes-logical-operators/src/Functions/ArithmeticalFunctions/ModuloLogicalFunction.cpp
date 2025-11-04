@@ -108,7 +108,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMod
     {
         throw CannotDeserialize("ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return ModuloLogicalFunction(arguments.children[0], arguments.children[1]);
+    return ModuloLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 

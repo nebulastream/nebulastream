@@ -106,7 +106,7 @@ LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());
     }
-    return ConcatLogicalFunction(*(arguments.children.end() - 2), *(arguments.children.end() - 1));
+    return ConcatLogicalFunction(*(arguments.children.end() - 2), *(arguments.children.end() - 1)).withInferredDataType(arguments.schema);
 }
 
 }

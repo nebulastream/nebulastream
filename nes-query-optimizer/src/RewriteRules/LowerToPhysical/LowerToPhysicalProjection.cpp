@@ -18,6 +18,7 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+
 #include <Functions/FunctionProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -29,6 +30,7 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
+#include "Traits/FieldMappingTrait.hpp"
 
 namespace NES
 {
@@ -36,6 +38,16 @@ namespace NES
 RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto projection = projectionLogicalOperator.getAs<ProjectionLogicalOperator>();
+    const auto traitSet = projectionLogicalOperator.getTraitSet();
+
+    const auto outputFieldMappingOpt = traitSet.tryGet<FieldMappingTrait>();
+    PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
+    const auto& outputFieldMapping = outputFieldMappingOpt.value();
+
+    const auto inputFieldMappingOpt = projection->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
+    PRECONDITION(inputFieldMappingOpt.has_value(), "Expected FieldMappingTrait of child to be set");
+    const auto& inputFieldMapping = outputFieldMappingOpt.value();
+
     auto inputSchema = projection->getChild()->getOutputSchema();
     auto outputSchema = projection->getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
@@ -45,7 +57,15 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto accessedFields = projection->getAccessedFields();
     auto scan = ScanPhysicalOperator(
         scanBufferRef,
-        accessedFields | std::views::transform([](const auto& field) { return IdentifierList{field.getLastName()}; }) | std::ranges::to<std::vector>());
+        accessedFields
+            | std::views::transform(
+                [&inputFieldMapping](const auto& field)
+                {
+                    const auto foundMapping = inputFieldMapping.getMapping(field);
+                    PRECONDITION(foundMapping.has_value(), "Expected there to be a mapping for field {}", field);
+                    return foundMapping.value();
+                })
+            | std::ranges::to<std::vector>());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, inputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 

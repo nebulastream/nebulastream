@@ -108,7 +108,7 @@ LogicalFunctionGeneratedRegistrar::RegisterFloorLogicalFunction(LogicalFunctionR
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
-    return FloorLogicalFunction(arguments.children[0]);
+    return FloorLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

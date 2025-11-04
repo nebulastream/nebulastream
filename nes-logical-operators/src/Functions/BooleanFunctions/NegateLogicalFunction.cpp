@@ -106,7 +106,7 @@ LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("requires child of type bool, but got {}", arguments.children[0].getDataType());
     }
-    return NegateLogicalFunction(arguments.children[0]);
+    return NegateLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

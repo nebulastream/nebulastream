@@ -112,7 +112,7 @@ LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionR
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
-    return RoundLogicalFunction(arguments.children[0]);
+    return RoundLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

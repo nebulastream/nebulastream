@@ -158,9 +158,6 @@ LogicalPlan LogicalPlanBuilder::addJoin(
 
     INVARIANT(!rightLogicalPlan.getRootOperators().empty(), "RootOperators of rightLogicalPlan are empty");
     auto rootOperatorRhs = rightLogicalPlan.getRootOperators().front();
-    auto leftJoinType = leftLogicalPlan.getRootOperators().front().getOutputSchema();
-    auto rightLogicalPlanJoinType = rootOperatorRhs.getOutputSchema();
-
 
     NES_TRACE("LogicalPlanBuilder: add join operator to query plan");
     leftLogicalPlan = addBinaryOperatorAndUpdateSource(

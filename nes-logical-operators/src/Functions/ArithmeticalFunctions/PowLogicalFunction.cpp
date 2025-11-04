@@ -103,7 +103,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterPow
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
     }
-    return PowLogicalFunction(arguments.children[0], arguments.children[1]);
+    return PowLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

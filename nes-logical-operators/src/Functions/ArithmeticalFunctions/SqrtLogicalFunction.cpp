@@ -104,7 +104,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqr
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
-    return SqrtLogicalFunction(arguments.children[0]);
+    return SqrtLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

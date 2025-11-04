@@ -108,7 +108,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDiv
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
     }
-    return DivLogicalFunction(arguments.children[0], arguments.children[1]);
+    return DivLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 

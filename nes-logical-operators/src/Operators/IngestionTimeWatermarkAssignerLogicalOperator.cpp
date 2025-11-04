@@ -57,7 +57,7 @@ IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLog
     this->outputSchema = Schema{
         child.getOutputSchema()
         | std::views::transform([&](const auto& field) { return Field{*this, field.getLastName(), field.getDataType()}; })
-        | std::ranges::to<std::vector>()};
+        | std::ranges::to<std::unordered_set>()};
 }
 
 std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const noexcept
@@ -86,7 +86,7 @@ IngestionTimeWatermarkAssignerLogicalOperator IngestionTimeWatermarkAssignerLogi
     const auto& inputSchema = copy.child.getOutputSchema();
     copy.outputSchema = Schema{
         inputSchema | std::views::transform([&copy](const auto& field) { return Field{copy, field.getLastName(), field.getDataType()}; })
-        | std::ranges::to<std::vector>()};
+        | std::ranges::to<std::unordered_set>()};
     return copy;
 }
 

@@ -16,21 +16,15 @@
 
 #include <memory>
 #include <ostream>
+
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 
 namespace NES
 {
-
-namespace detail
-{
-struct ErasedLogicalOperator;
-}
-template <typename Checked>
-struct TypedLogicalOperator;
-using LogicalOperator = TypedLogicalOperator<NES::detail::ErasedLogicalOperator>;
 
 struct Field
 {
@@ -55,6 +49,36 @@ private:
     std::unique_ptr<LogicalOperator> producedBy;
     Identifier name;
     DataType dataType{};
+    friend struct WeakField;
+};
+
+struct WeakField
+{
+    ~WeakField();
+    WeakField(const WeakLogicalOperator& producedBy, Identifier name, DataType dataType);
+    WeakField(const WeakLogicalOperator& producedBy, Identifier name, DataType::Type dataType);
+    WeakField(const WeakField& other);
+    WeakField(WeakField&& other) noexcept;
+    WeakField& operator=(const WeakField& other);
+    WeakField& operator=(WeakField&& other) noexcept;
+
+    WeakField(const Field& other);
+    WeakField(Field&& other);
+    WeakField& operator=(const Field& other);
+    WeakField& operator=(Field&& other);
+
+    friend std::ostream& operator<<(std::ostream& os, const WeakField& field);
+
+    [[nodiscard]] std::optional<Field> tryLock() const;
+    [[nodiscard]] Field lock() const;
+
+    [[nodiscard]] const WeakLogicalOperator& getProducedBy() const;
+    [[nodiscard]] Identifier getLastName() const { return name; }
+    [[nodiscard]] DataType getDataType() const { return dataType; }
+private:
+    std::unique_ptr<WeakLogicalOperator> producedBy;
+    Identifier name;
+    DataType dataType{};
 };
 }
 
@@ -64,4 +88,11 @@ struct std::hash<NES::Field>
     std::size_t operator()(const NES::Field& field) const noexcept;
 };
 
+template <>
+struct std::hash<NES::WeakField>
+{
+    std::size_t operator()(const NES::WeakField& field) const noexcept;
+};
+
 FMT_OSTREAM(NES::Field);
+FMT_OSTREAM(NES::WeakField);

@@ -179,6 +179,27 @@ const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOpera
     return std::get<std::vector<Projection>>(projections);
 }
 
+std::unordered_map<Field, std::unordered_set<Field>> ProjectionLogicalOperator::getAccessedFieldsForOutput() const
+{
+    auto pairs = getProjections()
+        | std::views::filter([](const Projection& projection) { return !projection.second.tryGet<FieldAccessLogicalFunction>().has_value(); })
+        | std::views::transform(
+               [](const auto& projection)
+               {
+                   auto fields = BFSRange{projection.second}
+                       | std::views::filter([](const LogicalFunction& function)
+                                            { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
+                       | std::views::transform([](const LogicalFunction& function)
+                                               { return function.get<FieldAccessLogicalFunction>().getField(); })
+                       | std::ranges::to<std::vector>();
+                   return std::pair{
+                       projection.first,
+                       std::unordered_set<Field>{fields.begin(), fields.end()}};
+               })
+        | std::ranges::to<std::vector>();
+    return std::unordered_map<Field, std::unordered_set<Field>>{pairs.begin(), pairs.end()};
+}
+
 bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
     return projections == rhs.projections && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;

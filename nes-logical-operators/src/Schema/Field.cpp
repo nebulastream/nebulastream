@@ -45,7 +45,9 @@ Field::Field(Field&& other) noexcept
 Field& Field::operator=(const Field& other)
 {
     if (this == &other)
+    {
         return *this;
+    }
     producedBy = std::make_unique<LogicalOperator>(*other.producedBy);
     name = other.name;
     dataType = other.dataType;
@@ -55,7 +57,9 @@ Field& Field::operator=(const Field& other)
 Field& Field::operator=(Field&& other) noexcept
 {
     if (this == &other)
+    {
         return *this;
+    }
     producedBy = std::move(other.producedBy);
     name = std::move(other.name);
     dataType = std::move(other.dataType);
@@ -78,9 +82,103 @@ bool Field::operator==(const Field& other) const
 {
     return other.name == name && other.dataType == dataType && *other.producedBy == *producedBy;
 }
+
+WeakField::~WeakField() = default;
+
+WeakField::WeakField(const WeakLogicalOperator& producedBy, Identifier name, DataType dataType)
+    : producedBy(std::make_unique<WeakLogicalOperator>(producedBy)), name(std::move(name)), dataType(std::move(dataType))
+{
+}
+
+WeakField::WeakField(const WeakLogicalOperator& producedBy, Identifier name, DataType::Type dataType)
+    : producedBy(std::make_unique<WeakLogicalOperator>(producedBy)), name(std::move(name)), dataType(dataType)
+{
+}
+
+WeakField::WeakField(const WeakField& other)
+    : producedBy(std::make_unique<WeakLogicalOperator>(*other.producedBy)), name(other.name), dataType(other.dataType)
+{
+}
+
+WeakField::WeakField(WeakField&& other) noexcept = default;
+
+WeakField& WeakField::operator=(const WeakField& other)
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+    producedBy = std::make_unique<WeakLogicalOperator>(*other.producedBy);
+    name = other.name;
+    dataType = other.dataType;
+    return *this;
+}
+
+WeakField& WeakField::operator=(WeakField&& other) noexcept
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+    producedBy = std::move(other.producedBy);
+    name = std::move(other.name);
+    dataType = std::move(other.dataType);
+    return *this;
+}
+
+WeakField::WeakField(const Field& other)
+    : producedBy(std::make_unique<WeakLogicalOperator>(*other.producedBy)), name(other.name), dataType(other.dataType)
+{
+}
+
+WeakField::WeakField(Field&& other)
+    : producedBy(std::make_unique<WeakLogicalOperator>(*other.producedBy)), name(std::move(other.name)), dataType(std::move(other.dataType))
+{
+}
+
+WeakField& WeakField::operator=(const Field& other)
+{
+    producedBy = std::make_unique<WeakLogicalOperator>(*other.producedBy);
+    name = other.name;
+    dataType = other.dataType;
+    return *this;
+}
+
+WeakField& WeakField::operator=(Field&& other)
+{
+    producedBy = std::make_unique<WeakLogicalOperator>(*other.producedBy);
+    name = std::move(other.name);
+    dataType = std::move(other.dataType);
+    return *this;
+}
+
+std::ostream& operator<<(std::ostream& os, const WeakField& field)
+{
+    return os << fmt::format("WeakField(name: {}, DataType: {})", field.name, field.dataType);
+}
+
+std::optional<Field> WeakField::tryLock() const
+{
+    return producedBy->tryLock().transform([&](auto&& logicalOperator) { return Field{std::move(logicalOperator), name, dataType}; });
+}
+
+Field WeakField::lock() const
+{
+    return Field{producedBy->lock(), name, dataType};
+}
+
+const WeakLogicalOperator& WeakField::getProducedBy() const
+{
+    return *producedBy;
+}
 }
 
 std::size_t std::hash<NES::Field>::operator()(const NES::Field& field) const noexcept
 {
     return folly::hash::hash_combine(field.getLastName(), field.getProducedBy());
+}
+
+std::size_t std::hash<NES::WeakField>::operator()(const NES::WeakField& field) const noexcept
+{
+    return std::hash<NES::Identifier>{}(field.getLastName());
 }

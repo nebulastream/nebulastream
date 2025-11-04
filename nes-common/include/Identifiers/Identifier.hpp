@@ -242,12 +242,12 @@ struct std::hash<NES::IdentifierBase<Extent>>
     }
 };
 
-template <size_t Extent>
-struct std::hash<std::span<NES::IdentifierBase<Extent>>>
+template <size_t Extent, size_t SpanExtent>
+struct std::hash<std::span<NES::IdentifierBase<Extent>, SpanExtent>>
 {
     //taken from https://stackoverflow.com/a/72073933 from SO user see,
     //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
-    std::size_t operator()(const std::span<NES::IdentifierBase<Extent>>& arg) const noexcept
+    std::size_t operator()(const std::span<NES::IdentifierBase<Extent>, SpanExtent>& arg) const noexcept
     {
         std::size_t seed = std::ranges::size(arg);
         constexpr auto hasher = std::hash<NES::Identifier>{};
@@ -263,12 +263,12 @@ struct std::hash<std::span<NES::IdentifierBase<Extent>>>
     }
 };
 
-template <size_t Extent>
-struct std::hash<std::span<const NES::IdentifierBase<Extent>>>
+template <size_t Extent, size_t SpanExtent>
+struct std::hash<std::span<const NES::IdentifierBase<Extent>, SpanExtent>>
 {
     //taken from https://stackoverflow.com/a/72073933 from SO user see,
     //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
-    std::size_t operator()(const std::span<const NES::IdentifierBase<Extent>>& arg) const noexcept
+    std::size_t operator()(const std::span<const NES::IdentifierBase<Extent>, SpanExtent>& arg) const noexcept
     {
         std::size_t seed = std::ranges::size(arg);
         constexpr auto hasher = std::hash<NES::Identifier>{};
@@ -443,11 +443,12 @@ public:
         return tryCreate(std::move(identifiers));
     }
 
+    template <size_t SpanExtent>
     struct SpanEquals
     {
         constexpr SpanEquals() = default;
 
-        constexpr bool operator()(std::span<const Identifier> first, const std::span<const Identifier>& second) const
+        constexpr bool operator()(std::span<const Identifier, SpanExtent> first, const std::span<const Identifier, SpanExtent>& second) const
         {
             if (std::ranges::size(first) != std::ranges::size(second))
             {

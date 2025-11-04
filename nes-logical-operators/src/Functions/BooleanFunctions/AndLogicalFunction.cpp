@@ -114,7 +114,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAnd
         throw CannotDeserialize(
             "requires children of type bool, but got {} and {}", arguments.children[0].getDataType(), arguments.children[1].getDataType());
     }
-    return AndLogicalFunction(arguments.children[0], arguments.children[1]);
+    return AndLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

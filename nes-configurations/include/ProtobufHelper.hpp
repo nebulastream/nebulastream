@@ -66,6 +66,16 @@ inline std::ostream& operator<<(std::ostream& os, const SerializableFieldMapping
     return os << mapping.DebugString();
 }
 
+inline std::ostream& operator<<(std::ostream& os, const SerializableUnboundSchema& schema)
+{
+    return os << schema.DebugString();
+}
+
+inline std::ostream& operator<<(std::ostream& os, const SerializableOrderedFields& orderedFields)
+{
+    return os << orderedFields.DebugString();
+}
+
 inline bool operator==(const FunctionList& lhs, const FunctionList& rhs)
 {
     /// Compare by serializing to string.
@@ -112,5 +122,14 @@ inline bool operator==(const SerializableFieldMapping& lhs, const SerializableFi
     return lhs.SerializeAsString() == rhs.SerializeAsString();
 }
 
+inline bool operator==(const SerializableUnboundSchema& lhs, const SerializableUnboundSchema& rhs)
+{
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
+
+inline bool operator==(const SerializableOrderedFields& lhs, const SerializableOrderedFields& rhs)
+{
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
 
 }

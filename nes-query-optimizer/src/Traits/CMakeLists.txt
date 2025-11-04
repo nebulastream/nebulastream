@@ -16,8 +16,10 @@ add_source_files(nes-query-optimizer
         ImplementationTypeTrait.cpp
         OutputOriginIdsTrait.cpp
         FieldMappingTrait.cpp
+        FieldOrderingTrait.cpp
 )
 
 add_plugin(ImplementationType Trait nes-query-optimizer ImplementationTypeTrait.cpp)
 add_plugin(OutputOriginIds Trait nes-query-optimizer OutputOriginIdsTrait.cpp)
 add_plugin(FieldMapping Trait nes-query-optimizer FieldMappingTrait.cpp)
+add_plugin(FieldOrdering Trait nes-query-optimizer FieldOrderingTrait.cpp)

@@ -115,7 +115,7 @@ LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalF
         throw CannotDeserialize("ConstantValueLogicalFunction requires a constantValueAsString in its config");
     }
     auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
-    return ConstantValueLogicalFunction(std::move(arguments.dataType), constantValueAsString);
+    return ConstantValueLogicalFunction(std::move(arguments.dataType), constantValueAsString).withInferredDataType(arguments.schema);
 }
 
 }

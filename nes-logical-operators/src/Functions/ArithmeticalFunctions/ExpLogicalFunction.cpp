@@ -103,6 +103,6 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExp
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
-    return ExpLogicalFunction(arguments.children[0]);
+    return ExpLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 }

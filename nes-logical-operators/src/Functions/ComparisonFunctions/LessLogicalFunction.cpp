@@ -108,7 +108,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLes
     {
         throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return LessLogicalFunction(arguments.children[0], arguments.children[1]);
+    return LessLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

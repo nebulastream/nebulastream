@@ -142,15 +142,15 @@ JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children
     auto windowEndVariant = config[JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
 
     if (std::holds_alternative<NES::FunctionList>(functionVariant) and std::holds_alternative<EnumWrapper>(joinTypeVariant)
-        and std::holds_alternative<std::string>(windowStartVariant) and std::holds_alternative<std::string>(windowEndVariant)
+        and std::holds_alternative<Identifier>(windowStartVariant) and std::holds_alternative<Identifier>(windowEndVariant)
         and std::holds_alternative<SerializableWindowType>(windowTypeVariant)
         and std::holds_alternative<SerializableTimeCharacteristic>(characteristic1Variant)
         and std::holds_alternative<SerializableTimeCharacteristic>(characteristic2Variant))
     {
         auto functions = std::get<FunctionList>(functionVariant).functions();
         auto joinTypeEnum = std::get<EnumWrapper>(joinTypeVariant);
-        auto windowStartFieldName = std::get<std::string>(windowStartVariant);
-        auto windowEndFieldName = std::get<std::string>(windowEndVariant);
+        auto windowStartFieldName = std::get<Identifier>(windowStartVariant);
+        auto windowEndFieldName = std::get<Identifier>(windowEndVariant);
 
         INVARIANT(functions.size() == 1, "Expected exactly one function");
 
@@ -170,19 +170,9 @@ JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children
 
         this->joinFunction = FunctionSerializationUtil::deserializeFunction(functions[0], inputSchemaOrCollisions.value());
 
-        auto parseOrThrow = [](std::string str)
-        {
-            auto expected = Identifier::tryParse(std::move(str));
-            if (!expected.has_value())
-            {
-                throw expected.error();
-            }
-            return expected.value();
-        };
-        auto windowStartFieldIdentiifer = Identifier::tryParse(windowStartFieldName);
         this->startEndFields = std::array{
-            UnboundFieldBase{IdentifierList::create(parseOrThrow(std::move(windowStartFieldName))), DataType::Type::UINT64},
-            UnboundFieldBase{IdentifierList::create(parseOrThrow(std::move(windowEndFieldName))), DataType::Type::UINT64}};
+            UnboundFieldBase{IdentifierList::create(std::move(windowStartFieldName)), DataType::Type::UINT64},
+            UnboundFieldBase{IdentifierList::create(std::move(windowEndFieldName)), DataType::Type::UINT64}};
 
         if (std::holds_alternative<SerializableWindowType>(windowTypeVariant))
         {
@@ -235,6 +225,7 @@ JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children
         // Infer function and window types
         this->joinFunction = joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
 
+        this->children = std::move(children);
         this->outputSchema = inferOutputSchema(this->children, *this, this->startEndFields.value());
         return;
     }

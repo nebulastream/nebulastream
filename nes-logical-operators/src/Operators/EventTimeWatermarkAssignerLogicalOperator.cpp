@@ -67,7 +67,7 @@ EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOper
     const auto timeVariant = config[ConfigParameters::TIME_MS];
     const auto functionVariant = config[ConfigParameters::FUNCTION];
 
-    if (!(std::holds_alternative<uint64_t>(timeVariant) and std::holds_alternative<FunctionList>(functionVariant)))
+    if (std::holds_alternative<uint64_t>(timeVariant) and std::holds_alternative<FunctionList>(functionVariant))
     {
         this->child = std::move(child);
 
@@ -78,13 +78,15 @@ EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOper
         {
             throw CannotDeserialize("Expected exactly one function");
         }
-        this->onField = FunctionSerializationUtil::deserializeFunction(functions[0], child.getOutputSchema());
+        this->onField = FunctionSerializationUtil::deserializeFunction(functions[0], this->child.getOutputSchema());
         this->unit = time;
 
-        this->outputSchema = inferOutputSchema(child.getOutputSchema(), *this);
+        this->outputSchema = inferOutputSchema(this->child.getOutputSchema(), *this);
     }
-
-    throw CannotDeserialize("EventTimeWatermarkAssignerLogicalOperator: Unknown configuration variant");
+    else
+    {
+        throw CannotDeserialize("EventTimeWatermarkAssignerLogicalOperator: Unknown configuration variant");
+    }
 }
 
 std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noexcept

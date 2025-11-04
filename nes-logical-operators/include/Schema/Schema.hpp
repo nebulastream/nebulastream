@@ -45,40 +45,40 @@ class Schema
 {
 public:
 private:
+    using FieldRef = std::reference_wrapper<const Field>;
+
     //take const reference to make sure that the spans don't dangle
-    template <std::ranges::input_range Range>
-    std::pair<std::unordered_map<Identifier, size_t>, std::unordered_map<Identifier, std::vector<size_t>>> static initializeFields(
-        const Range& fields) noexcept
-    requires(std::same_as<Field, std::ranges::range_value_t<Range>>)
+    std::pair<std::unordered_map<Identifier, FieldRef>, std::unordered_map<Identifier, std::vector<FieldRef>>> static initializeFields(
+        const std::unordered_set<Field>& fields) noexcept
     {
-        std::unordered_map<Identifier, size_t> fieldsByName{};
-        std::unordered_map<Identifier, std::vector<size_t>> collisions{};
-        for (const auto& [idxSigned, field] : fields | std::views::enumerate)
+        std::unordered_map<Identifier, FieldRef> fieldsByName{};
+        std::unordered_map<Identifier, std::vector<FieldRef>> collisions{};
+        for (const auto& field : fields)
         {
-            INVARIANT(idxSigned >= 0, "negative index");
-            const auto idx = static_cast<size_t>(idxSigned);
             const auto& name = field.getLastName();
             auto collisionIter = collisions.find(name);
             if (collisionIter == collisions.end())
             {
                 if (auto existingIdList = fieldsByName.find(name); existingIdList != fieldsByName.end())
                 {
-                    collisions.insert(std::pair{name, std::vector{existingIdList->second, idx}});
+                    collisions.insert(std::pair{name, std::vector<FieldRef>{existingIdList->second, field}});
                     fieldsByName.erase(existingIdList);
                 }
                 else
                 {
-                    fieldsByName.insert(std::pair{name, idx});
+                    fieldsByName.insert(std::pair{name, field});
                 }
             }
             else
             {
-                collisionIter->second.push_back(idx);
+                collisionIter->second.push_back(field);
             }
         }
         if (!collisions.empty())
         {
-            NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
+            NES_DEBUG(
+                "Duplicate identifiers in schema: {}",
+                fmt::join(collisions | std::views::transform([](const auto& pair) { return pair.first; }), ", "));
         }
         return std::pair{std::move(fieldsByName), std::move(collisions)};
     }
@@ -87,7 +87,7 @@ private:
     {
     };
 
-    Schema(Private, std::vector<Field> fields, std::unordered_map<IdentifierList, size_t> nameToFields) noexcept
+    Schema(Private, std::unordered_set<Field> fields, std::unordered_map<IdentifierList, FieldRef> nameToFields) noexcept
         : fields(std::move(fields)), nameToField(std::move(nameToFields))
     {
     }
@@ -114,8 +114,8 @@ public:
     Schema& operator=(const Schema& other) = default;
     Schema& operator=(Schema&& other) noexcept = default;
 
-    Schema(std::initializer_list<Field> fields) noexcept;
-    explicit Schema(std::vector<Field> fields) noexcept;
+    Schema(std::initializer_list<Field> fields);
+    explicit Schema(std::unordered_set<Field> fields);
 
     //template overloading on input ranges for fields and schemas which require separate handling
     //Since std::initializer_list also implements std::input_range we need to make sure we don't overload it and exclude it
@@ -125,63 +125,45 @@ public:
     requires(
         std::same_as<Field, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Field>>
         && !std::same_as<Range, std::vector<Field>> && !std::same_as<Range, Schema>)
-    explicit Schema(Range&& input) noexcept : fields{input | std::ranges::to<std::vector>()}
+    explicit Schema(Range&& input) noexcept : fields{input | std::ranges::to<std::unordered_set>()}
     {
         auto [fieldsByName, collisions] = initializeFields(this->fields);
-        nameToField = fieldsByName
-            | std::views::transform([](auto pair)
-                                    { return std::make_pair<IdentifierList, size_t>(IdentifierList{pair.first}, std::move(pair.second)); })
-            | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
+        nameToField
+            = fieldsByName
+            | std::views::transform(
+                  [](auto pair) { return std::make_pair<IdentifierList, FieldRef>(IdentifierList{pair.first}, std::move(pair.second)); })
+            | std::ranges::to<std::unordered_map<IdentifierList, FieldRef>>();
     }
 
     template <std::ranges::input_range Range>
     requires(std::same_as<Field, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Field>>)
     static std::expected<Schema, std::unordered_map<IdentifierList, std::vector<Field>>> tryCreateCollisionFree(Range input) noexcept
     {
-        auto fields = input | std::ranges::to<std::vector>();
+        auto fields = input | std::ranges::to<std::unordered_set>();
         auto [fieldsByName, collisions] = initializeFields(fields);
         if (collisions.size() > 0)
         {
             return std::unexpected{
                 std::views::all(collisions)
                 | std::views::transform(
-                    [&fields](auto& pair)
+                    [](auto& pair)
                     {
                         return std::make_pair(
                             IdentifierList{pair.first},
-                            pair.second | std::views::transform([&fields](auto index) { return fields.at(index); })
+                            pair.second | std::views::transform([](auto& ref) { return ref.get(); })
                                 | std::ranges::to<std::vector<Field>>());
                     })
                 | std::ranges::to<std::unordered_map<IdentifierList, std::vector<Field>>>()};
         }
         auto nameToField = fieldsByName
             | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
-            | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
-        return Schema(Private{}, fields, nameToField);
+            | std::ranges::to<std::unordered_map<IdentifierList, FieldRef>>();
+        return Schema(Private{}, std::move(fields), std::move(nameToField));
     }
-
-    // template <std::ranges::input_range Range>
-    // requires(std::same_as<Schema, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Schema>>)
-    // static std::expected<Schema, std::unordered_map<IdentifierList, std::vector<Field>>> tryCreateCollisionFree(const Range& input) noexcept
-    // {
-    //     auto enumerated = views::enumerate(input | std::views::transform(&Schema::getFields) | std::views::join)
-    //         | std::views::transform([](auto pair) { return std::tuple{pair.second.first, pair.second.second, pair.first}; });
-    //     auto fields = enumerated | std::views::transform([](auto tuple) { return tuple.second; }) | std::ranges::to<std::vector<Field>>();
-    //     auto [fieldsByName, collisions] = initializeFields(enumerated);
-    //     if (collisions.size() > 0)
-    //     {
-    //         return collisions | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
-    //             | std::ranges::to<std::unordered_map<IdentifierList, std::vector<Field>>>();
-    //     }
-    //     auto nameToField = fieldsByName
-    //         | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
-    //         | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    //     return Schema(Private{}, fields, nameToField);
-    // }
 
     ~Schema() = default;
 
-    bool operator==(const Schema& other) const = default;
+    bool operator==(const Schema& other) const;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
     /// Replaces the type of the field
@@ -190,28 +172,36 @@ public:
     /// If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
     /// If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
     /// Note that this function does not return a field with an ambiguous field name.
+    ///
+    /// Note: we currently don't support relation aliases, so passing IdentifierLists
     [[nodiscard]] std::optional<Field> getFieldByName(const IdentifierList& fieldName) const;
-    // [[nodiscard]] std::optional<Field> getFieldByName(const Identifier& fieldName) const;
 
     bool contains(const IdentifierList& qualifiedFieldName) const;
 
     std::vector<IdentifierList> getUniqueFieldNames() const&;
-    [[nodiscard]] const std::vector<Field>& getFields() const;
+    [[nodiscard]] const std::unordered_set<Field>& getFields() const;
 
-    auto begin() const -> decltype(std::declval<const std::vector<Field>>().cbegin()) { return fields.cbegin(); }
+    auto begin() const -> decltype(std::declval<const std::unordered_set<Field>>().cbegin()) { return fields.cbegin(); }
 
-    auto end() const -> decltype(std::declval<const std::vector<Field>>().cend()) { return fields.cend(); }
+    auto end() const -> decltype(std::declval<const std::unordered_set<Field>>().cend()) { return fields.cend(); }
+
+    size_t size() const;
 
     static std::string createCollisionString(const std::unordered_map<IdentifierList, std::vector<Field>>& collisions);
 
-    operator UnboundSchema() const;
+    operator UnboundSchemaBase<1>() const;
 
 private:
-    /// Manipulating fields requires us to update the size of the schema (in bytes) and the 'nameToFieldMap', which maps names of fields to
-    /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
-    std::vector<Field> fields{};
-    std::unordered_map<IdentifierList, size_t> nameToField{};
+    /// This vector of fields does not imply an order of fields in the schema, it is just used to maintain stable references for the name aliases
+    std::unordered_set<Field> fields;
+    /// References to unordered set entries are stable until the element is erased, which this class doesn't permit anyway
+    std::unordered_map<IdentifierList, FieldRef> nameToField;
 };
+
+inline size_t Schema::size() const
+{
+    return fields.size();
+}
 
 static_assert(std::ranges::range<Schema>);
 static_assert(std::same_as<std::ranges::range_value_t<Schema>, Field>);

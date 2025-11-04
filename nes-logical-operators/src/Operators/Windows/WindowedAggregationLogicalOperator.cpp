@@ -27,6 +27,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <folly/Hash.h>
+#include "Iterators/BFSIterator.hpp"
 #include "Serialization/IdentifierSerializationUtil.hpp"
 #include "WindowTypes/Measures/TimeCharacteristic.hpp"
 
@@ -100,7 +101,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::shared_ptr<Windowing::WindowType> windowType,
     Windowing::TimeCharacteristic timeCharacteristic)
     : windowType(std::move(windowType))
-    , groupingKey(std::move(groupingKey))
+    , groupingKeys(std::move(groupingKey))
     , aggregationFunctions(std::move(aggregationFunctions))
     , timestampField(std::move(timeCharacteristic))
 {
@@ -155,7 +156,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(LogicalOp
             }
             keys.emplace_back(std::move(fieldAccessOpt).value(), std::move(projectedName));
         }
-        this->groupingKey = keys;
+        this->groupingKeys = keys;
 
         const auto serializedWindowType = std::get<SerializableWindowType>(windowTypeVariant);
         this->windowType = WindowTypeSerializationUtil::deserializeWindowType(serializedWindowType);
@@ -237,8 +238,8 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
                 }
                 return true;
             },
-            groupingKey,
-            rhs.groupingKey))
+            groupingKeys,
+            rhs.groupingKeys))
     {
         return false;
     }
@@ -280,7 +281,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
     if (isKeyed())
     {
-        copy.groupingKey = std::visit(
+        copy.groupingKeys = std::visit(
             [&inputSchema](const auto& visitingGroupingKey)
             {
                 return visitingGroupingKey
@@ -292,7 +293,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
                            })
                     | std::ranges::to<std::vector>();
             },
-            groupingKey);
+            groupingKeys);
     }
 
     std::vector<ProjectedAggregation> newFunctions;
@@ -306,6 +307,11 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     copy.timestampField = Windowing::TimeCharacteristicWrapper{std::move(copy.timestampField)}.withInferredSchema(inputSchema);
     copy.outputSchema = inferSchema(copy);
     return copy;
+}
+
+const detail::DynamicBase* WindowedAggregationLogicalOperator::getDynamicBase() const
+{
+    return static_cast<const Reprojecter*>(this);
 }
 
 TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
@@ -346,7 +352,7 @@ LogicalOperator WindowedAggregationLogicalOperator::getChild() const
 
 bool WindowedAggregationLogicalOperator::isKeyed() const
 {
-    return !std::visit([](const auto& keys) { return keys.empty(); }, groupingKey);
+    return !std::visit([](const auto& keys) { return keys.empty(); }, groupingKeys);
 }
 
 std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> WindowedAggregationLogicalOperator::getWindowAggregation() const
@@ -368,12 +374,36 @@ WindowedAggregationLogicalOperator::getGroupingKeys() const
             return Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>{
                 keys | std::views::transform([](const auto& key) { return key.first; }) | std::ranges::to<std::vector>()};
         },
-        groupingKey);
+        groupingKeys);
+}
+
+std::unordered_map<Field, std::unordered_set<Field>> WindowedAggregationLogicalOperator::getAccessedFieldsForOutput() const
+{
+    const auto isBound = std::holds_alternative<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(groupingKeys);
+    INVARIANT(isBound, "Tried accessing accessed fields for output before calling schema inference");
+    auto boundGroupingKeys = std::get<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(groupingKeys);
+
+    const auto outputSchema = getOutputSchema();
+
+    std::unordered_map<Field, std::unordered_set<Field>> accessedFields;
+    for (const auto& [aggFunction, name] : getWindowAggregation())
+    {
+        const auto writeFieldOpt = outputSchema.getFieldByName(name);
+        INVARIANT(writeFieldOpt.has_value(), "Field {} not found in output schema", name);
+        for (const auto& function : BFSRange{aggFunction->getInputFunction()})
+        {
+            if (const auto& fieldAccessOpt = function.tryGet<FieldAccessLogicalFunction>())
+            {
+                accessedFields[writeFieldOpt.value()].insert(fieldAccessOpt.value().getField());
+            }
+        }
+    }
+    return accessedFields;
 }
 
 const WindowedAggregationLogicalOperator::GroupingKeyType& WindowedAggregationLogicalOperator::getGroupingKeysWithName() const
 {
-    return groupingKey;
+    return groupingKeys;
 }
 
 const UnboundFieldBase<1>& WindowedAggregationLogicalOperator::getWindowStartField() const
@@ -475,7 +505,7 @@ std::size_t std::hash<NES::WindowedAggregationLogicalOperator>::operator()(
     return folly::hash::hash_combine(
         *windowedAggregationLogicalOperator.windowType,
         windowedAggregationLogicalOperator.aggregationFunctions,
-        windowedAggregationLogicalOperator.groupingKey,
+        windowedAggregationLogicalOperator.groupingKeys,
         windowedAggregationLogicalOperator.timestampField,
         windowedAggregationLogicalOperator.startEndField);
 }

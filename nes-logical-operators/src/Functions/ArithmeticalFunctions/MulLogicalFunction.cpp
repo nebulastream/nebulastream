@@ -109,7 +109,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMul
     {
         throw CannotDeserialize("MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return MulLogicalFunction(arguments.children[0], arguments.children[1]);
+    return MulLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

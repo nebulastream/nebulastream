@@ -37,95 +37,34 @@
 
 namespace NES
 {
+Schema::Schema(std::unordered_set<Field> fields) : fields(std::move(fields))
+{
+    auto [fieldsByName, collisions] = initializeFields(this->fields);
+    nameToField = fieldsByName
+        | std::views::transform([](auto& pair)
+                                { return std::pair<IdentifierList, FieldRef>{IdentifierList{pair.first}, pair.second}; })
+        | std::ranges::to<std::unordered_map<IdentifierList, FieldRef>>();
+}
 
-
-//
-// template <std::ranges::input_range Range>
-// requires(std::same_as<Schema::Field, std::ranges::range_value_t<Range>>)
-// Schema::Schema(Private _, const Range& input) noexcept
-// template <std::ranges::input_range Range>
-//     requires (std::same_as<Schema::Field, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Schema::Field>>)
-// Schema::Schema(const Range& input) noexcept : Schema(Private{}, input)
-// {
-// }
-//
-// template <std::ranges::input_range Range>
-//     requires (std::same_as<Schema, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Schema>>)
-//     Schema::Schema(const Range& input) noexcept : Schema(Private{}, input | std::views::transform(&Schema::getFields) | std::views::join)
-// {
-//     // fields =  | ranges::to<std::vector<Field>>();
-//     // auto enumerated = std::vector<std::pair<Field, size_t>>{};
-//     // enumerated.reserve(std::ranges::size(fields));
-//     // for (size_t i = 0; i < std::ranges::size(fields); ++i)
-//     // {
-//     //     enumerated.push_back({this->fields[i], i});
-//     // }
-//     // auto [fieldsByName, collisions] = initializeFields(enumerated);
-//     // nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
-//     //     | ranges::to<std::unordered_map<IdentifierList, size_t>>();
-//     // currentPrefix = findCommonPrefix(fields);
-// }
-
-
-Schema::Schema(std::vector<Field> fields) noexcept : fields(std::move(fields))
+Schema::Schema(std::initializer_list<Field> fields) : fields(std::move(fields))
 {
     auto [fieldsByName, collisions] = initializeFields(this->fields);
     nameToField = fieldsByName
         | std::views::transform([](auto pair)
-                                { return std::make_pair<IdentifierList, size_t>(IdentifierList{pair.first}, std::move(pair.second)); })
-        | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
+                                { return std::pair<IdentifierList, FieldRef>{IdentifierList{pair.first}, pair.second}; })
+        | std::ranges::to<std::unordered_map<IdentifierList, FieldRef>>();
 }
-
-Schema::Schema(std::initializer_list<Field> fields) noexcept : fields(std::move(fields))
-{
-    auto [fieldsByName, collisions] = initializeFields(this->fields);
-    nameToField = fieldsByName
-        | std::views::transform([](auto pair)
-                                { return std::make_pair<IdentifierList, size_t>(IdentifierList{pair.first}, std::move(pair.second)); })
-        | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
-}
-
-// Schema Schema::addField(const IdentifierList& name, const DataType::Type type)
-// {
-//     DataType dataType{type};
-//     sizeOfSchemaInBytes += dataType.getSizeInBytes();
-//     fields.emplace_back(Field{std::move(name), std::move(dataType)});
-//     auto enumerated = std::vector<std::pair<Field, size_t>>{};
-//     enumerated.reserve(std::ranges::size(fields));
-//     for (size_t i = 0; i < std::ranges::size(fields); ++i)
-//     {
-//         enumerated.push_back({this->fields[i], i});
-//     }
-//     auto [fieldsByName, collisions] = initializeFields(enumerated);
-//     nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
-//         | std::ranges::to<std::unordered_map<IdentifierList, size_t>>();
-//     currentPrefix = findCommonPrefix(fields);
-//     return *this;
-// }
 
 
 std::optional<Field> Schema::getFieldByName(const IdentifierList& fieldName) const
 {
     if (const auto found = nameToField.find(fieldName); found != nameToField.end())
     {
-        return fields[found->second];
+        return found->second.get();
     }
     return std::nullopt;
 }
 
-// std::optional<Field> Schema::getFieldByName(const Identifier& fieldName) const
-// {
-//     return getFieldByName(IdentifierList{fieldName});
-// }
-
-// Field Schema::getFieldAt(const size_t index) const
-// {
-//     if (index < fields.size())
-//     {
-//         return fields[index];
-//     }
-//     throw FieldNotFound("field with index {}  does not exist", std::to_string(index));
-// }
 
 std::ostream& operator<<(std::ostream& os, const Schema& schema)
 {
@@ -133,36 +72,19 @@ std::ostream& operator<<(std::ostream& os, const Schema& schema)
     return os;
 }
 
-// IdentifierList Schema::getSourceNameQualifier() const
-// {
-//     return currentPrefix;
-// }
-
-// std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const
-// {
-//     if (const auto qualifierName = getQualifierNameForSystemGeneratedFields(); qualifierName.has_value())
-//     {
-//         return qualifierName.value() + ATTRIBUTE_NAME_SEPARATOR;
-//     }
-//     return ATTRIBUTE_NAME_SEPARATOR;
-// }
-const std::vector<Field>& Schema::getFields() const
+const std::unordered_set<Field>& Schema::getFields() const
 {
     return fields;
 }
 
-// std::optional<IdentifierList> Schema::getQualifierNameForSystemGeneratedFields() const
-// {
-//     if (std::ranges::empty(currentPrefix))
-//     {
-//         return std::nullopt;
-//     }
-//     return currentPrefix;
-// }
-//
 bool Schema::contains(const IdentifierList& qualifiedFieldName) const
 {
     return nameToField.contains(qualifiedFieldName);
+}
+
+bool Schema::operator==(const Schema& other) const
+{
+    return this->fields == other.fields;
 }
 
 std::vector<IdentifierList> Schema::getUniqueFieldNames() const&
@@ -192,10 +114,10 @@ std::string Schema::createCollisionString(const std::unordered_map<IdentifierLis
             ", "));
 }
 
-Schema::operator UnboundSchema() const
+Schema::operator UnboundSchemaBase<1>() const
 {
-    return UnboundSchema{
-        *this | std::views::transform([](const Field& field) { return UnboundField{field.getLastName(), field.getDataType()}; })
+    return UnboundSchemaBase{
+        *this | std::views::transform([](const Field& field) { return UnboundFieldBase<1>{field.getLastName(), field.getDataType()}; })
         | std::ranges::to<std::vector>()};
 }
 

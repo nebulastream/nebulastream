@@ -116,7 +116,7 @@ LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFuncti
     {
         throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return AbsoluteLogicalFunction(arguments.children[0]);
+    return AbsoluteLogicalFunction(arguments.children[0]).withInferredDataType(arguments.schema);
 }
 
 }

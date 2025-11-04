@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <../../include/Phases/DecideFieldMappings.hpp>
+#include <unordered_map>
+#include <Phases/DecideFieldMappings.hpp>
 #include "Functions/FieldAccessLogicalFunction.hpp"
+#include "Identifiers/Identifier.hpp"
 #include "Operators/ProjectionLogicalOperator.hpp"
 #include "Operators/Sinks/SinkLogicalOperator.hpp"
 #include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
@@ -24,49 +26,77 @@ namespace NES
 
 LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperator)
 {
-    const auto childrenMap = logicalOperator->getChildren()
-        | std::views::transform([this](const auto& child) { return std::pair{child, apply(child)}; })
-        | std::ranges::to<std::unordered_map>();
+    const auto children = logicalOperator->getChildren() | std::views::transform([this](const auto& child) { return apply(child); })
+        | std::ranges::to<std::vector>();
+
+
+    const auto pairs
+        = children
+        | std::views::transform(
+              [](const auto& child)
+              /// Unfortunately at the moments the fields might have a pointer to a logical operator without the newly set traitset
+              { return child->getOutputSchema() | std::views::transform([&child](const auto& field) { return std::pair{field, child}; }); })
+        | std::views::join | std::views::transform([](const auto& pair) { return std::pair{pair.first.getLastName(), pair.second}; })
+        | std::ranges::to<std::vector>();
+    const auto inputFieldNamesToChildren = std::unordered_map(pairs.begin(), pairs.end());
 
     auto mapping = std::unordered_map<Field, IdentifierList>{};
 
-    if (const auto projectionOpt = logicalOperator.tryGetAs<ProjectionLogicalOperator>())
+    if (const auto reprojecterOpt = logicalOperator.tryGetAs<Reprojecter>())
     {
         /// We built up a map of the output field names of the child operator, that this projection accesses
         /// And check if there is any non-trivial projection that projects to the same name that could lead to a read-write conflict inside this projection
         /// If so, we redirect the write to a new field name with the field mapping trait WITHOUT changing the operator itself.
         /// By itself, this phase does not change anything in the execution of the plan, the lowering phase has to use this trait and integrate the mapping.
-        const auto& projectionOperator = projectionOpt.value();
-        auto foundReads = std::unordered_map<Identifier, std::vector<LogicalFunction>>{};
-        auto foundWrites = std::unordered_map<Field, LogicalFunction>{};
-        for (const auto& [projectAs, projection] : projectionOperator->getProjections())
+        ///
+        /// This phase could be improved by analyzing conflicts and representing the field mappings instead as a DAG of accesses.
+        /// Although this might generalize less well for some operators, it could avoid some unnesseccary copies
+        const auto& reprojecter = reprojecterOpt.value();
+        const auto accessedFieldsForOutput = (*reprojecter)->getAccessedFieldsForOutput();
+
+        /// Map of field names accessed when calculating the output of a field mapped to the fields using them
+        /// We use Identifier objects instead of Field since it would be a bit awkward searching for a field of the same name but produced by the child operator
+        auto readsToWrites = std::unordered_map<Identifier, std::unordered_set<Field>>{};
+        auto nonTrivialReads = std::unordered_map<Identifier, uint64_t>{};
+        for (const auto& writeField : logicalOperator->getOutputSchema())
         {
-            auto reads = BFSRange(projection)
-                | std::views::filter([](const LogicalFunction& function)
-                                     { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
-                | std::views::transform([](const LogicalFunction& function)
-                                        { return function.get<FieldAccessLogicalFunction>().getField(); });
-            for (const auto& read : reads)
+            if (accessedFieldsForOutput.contains(writeField))
             {
-                foundReads[read.getLastName()].push_back(projection);
+                const auto& accessedFieldsIter = accessedFieldsForOutput.find(writeField);
+                PRECONDITION(
+                    accessedFieldsIter != accessedFieldsForOutput.end(),
+                    "Field mapping trait does not contain mapping for output schema field {}",
+                    writeField);
+                for (const auto& access : accessedFieldsIter->second)
+                {
+                    readsToWrites[access.getLastName()].insert(writeField);
+                    nonTrivialReads[access.getLastName()]++;
+                }
             }
-            const auto [_, success] = foundWrites.try_emplace(projectAs, projection);
-            PRECONDITION(success, "Projecting to the same field twice");
+            else
+            {
+                readsToWrites[writeField.getLastName()].insert(writeField);
+            }
         }
 
-        for (const auto& [writeAs, projection] : foundWrites)
+        for (const auto& writeAs : logicalOperator->getOutputSchema())
         {
-            if (!projection.tryGet<FieldAccessLogicalFunction>().has_value() && foundReads.contains(writeAs.getLastName()))
+            auto writeFieldName = writeAs.getLastName();
+            const auto& readingFields = readsToWrites.at(writeFieldName);
+            const auto nonTrivialReadCount = nonTrivialReads[writeFieldName];
+            /// Find writes to fields that are accessed not just in the projection writing to the field
+            if ((readingFields.contains(writeAs) && nonTrivialReadCount >= 2)
+                || (!readingFields.contains(writeAs) && nonTrivialReadCount >= 1))
             {
                 /// We just append a "new" to the identifier list. Since this is a separate element in the identifier list, we should not
                 /// get into troubles with e.g. compound types, as this is just an extra qualifier for the field.
                 static constexpr auto newIdentifier = Identifier::parse("new");
-                const auto [_, success] = mapping.try_emplace(writeAs, IdentifierList::create(writeAs.getLastName(), newIdentifier));
+                const auto [_, success] = mapping.try_emplace(writeAs, IdentifierList::create(writeFieldName, newIdentifier));
                 PRECONDITION(success, "Projection to the same field twice");
             }
             else
             {
-                const auto [_, success] = mapping.try_emplace(writeAs, IdentifierList::create(writeAs.getLastName()));
+                const auto [_, success] = mapping.try_emplace(writeAs, IdentifierList::create(writeFieldName));
                 PRECONDITION(success, "Projection to the same field twice");
             }
         }
@@ -86,12 +116,20 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
     {
         for (const auto& field : logicalOperator->getOutputSchema())
         {
-            auto newChild = childrenMap.at(field.getProducedBy());
+            auto newChildIter = inputFieldNamesToChildren.find(field.getLastName());
+            const auto fieldInChild = [&]
+            {
+                if (newChildIter != inputFieldNamesToChildren.end())
+                {
+                    return newChildIter->second->getOutputSchema().getFieldByName(field.getLastName());
+                }
+                return std::optional<Field>{};
+            }();
             /// If field name exists in child operators, choose the same mapping. If it is a new field name, keep it.
             /// If an operator redefines a field name, then propagating the physical name is not neccessary, but it doesn't break anything and keeps it simple.
-            if (const auto fieldAtNewChildOpt = newChild.getOutputSchema().getFieldByName(field.getLastName()))
+            if (fieldInChild.has_value())
             {
-                auto childFieldMapOpt = newChild->getTraitSet().tryGet<FieldMappingTrait>();
+                auto childFieldMapOpt = newChildIter->second->getTraitSet().tryGet<FieldMappingTrait>();
                 PRECONDITION(childFieldMapOpt.has_value(), "Field mapping trait not set in field mapping recursion");
                 auto mappingInChildOpt = childFieldMapOpt->getMapping(field);
                 PRECONDITION(mappingInChildOpt.has_value(), "Field mapping trait does not contain mapping for field");
@@ -111,8 +149,7 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
     const auto success = tryInsert(traitSet, std::move(fieldMappingTrait));
     /// If there is a good reason why we would want to run this multiple times we can also disable this check and replace the trait instance.
     PRECONDITION(success, "Field mapping trait already set");
-    return logicalOperator.withTraitSet(std::move(traitSet))
-        .withChildren(childrenMap | std::views::transform([](const auto& pair) { return pair.second; }) | std::ranges::to<std::vector>());
+    return logicalOperator.withTraitSet(std::move(traitSet)).withChildren(children);
 }
 
 LogicalPlan DecideFieldMappings::apply(const LogicalPlan& queryPlan)

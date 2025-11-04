@@ -40,12 +40,6 @@ struct UnboundFieldBase
     {
     }
 
-    // UnboundFieldBase(Identifier name, DataType::Type dataType)
-    // requires(IdListExtent == std::dynamic_extent || IdListExtent == 1)
-    //     : name(IdentifierList::create(std::move(name))), dataType(DataTypeProvider::provideDataType(dataType))
-    // {
-    // }
-
     template <size_t OtherIdListExtent>
     UnboundFieldBase(const UnboundFieldBase<OtherIdListExtent>& other)
     requires(IdListExtent == std::dynamic_extent || IdListExtent != OtherIdListExtent)
@@ -83,15 +77,17 @@ struct fmt::formatter<NES::UnboundFieldBase<IdListExtent>> : fmt::ostream_format
 namespace NES
 {
 
-class UnboundSchema
+
+template <size_t IdListExtent>
+class UnboundSchemaBase
 {
 public:
     // explicit UnboundSchemaBase(std::initializer_list<UnboundFieldBase<MaxIdentifierSize>> fields);
-    explicit UnboundSchema(std::vector<UnboundField> fields) : fields(std::move(fields))
+    explicit UnboundSchemaBase(std::vector<UnboundFieldBase<IdListExtent>> fields) : fields(std::move(fields))
     {
-        using IdSpan = std::span<const Identifier>;
-        std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals> fieldsByName{};
-        std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals> collisions{};
+        using IdSpan = std::span<const Identifier, IdListExtent>;
+        std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>> fieldsByName{};
+        std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>> collisions{};
         for (const auto& [idxSigned, field] : this->fields | std::views::enumerate)
         {
             sizeInBytes += field.getDataType().getSizeInBytes();
@@ -100,7 +96,7 @@ public:
             const auto& fullName = field.getName();
             for (size_t i = 0; i < std::ranges::size(fullName); i++)
             {
-                IdSpan idSubSpan = std::span{std::ranges::begin(fullName) + i, std::ranges::size(fullName) - i};
+                IdSpan idSubSpan = IdSpan{std::ranges::begin(fullName) + i, std::ranges::size(fullName) - i};
                 if (auto existingCollisions = collisions.find(idSubSpan); existingCollisions == collisions.end())
                 {
                     if (auto existingIdList = fieldsByName.find(idSubSpan); existingIdList != fieldsByName.end())
@@ -128,13 +124,19 @@ public:
             | std::ranges::to<std::unordered_map>();
     }
 
-    explicit UnboundSchema(const std::initializer_list<UnboundField> fields) : UnboundSchema{std::vector(fields)} { }
+    explicit UnboundSchemaBase(const std::initializer_list<UnboundFieldBase<IdListExtent>> fields) : UnboundSchemaBase{std::vector(fields)}
+    {
+    }
 
-    UnboundSchema() = default;
+    UnboundSchemaBase() = default;
 
-    friend bool operator==(const UnboundSchema& lhs, const UnboundSchema& rhs) { return lhs.fields == rhs.fields; }
+    template <size_t RhsExtent>
+    friend bool operator==(const UnboundSchemaBase& lhs, const UnboundSchemaBase<RhsExtent>& rhs)
+    {
+        return lhs.fields == rhs.fields;
+    }
 
-    friend std::ostream& operator<<(std::ostream& os, const UnboundSchema& obj)
+    friend std::ostream& operator<<(std::ostream& os, const UnboundSchemaBase& obj)
     {
         return os << fmt::format("UnboundSchema: (fields: ({})", fmt::join(obj.fields, ", "));
     }
@@ -160,16 +162,20 @@ public:
 
     size_t getSizeInBytes() const { return sizeInBytes; }
 
-    [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<UnboundField>>().cbegin()) { return fields.cbegin(); }
+    [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<UnboundFieldBase<IdListExtent>>>().cbegin())
+    {
+        return fields.cbegin();
+    }
 
-    [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<UnboundField>>().cend()) { return fields.cend(); }
+    [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<UnboundFieldBase<IdListExtent>>>().cend()) { return fields.cend(); }
 
 private:
-    std::vector<UnboundField> fields;
-    std::unordered_map<IdentifierList, size_t> fieldsByName;
+    std::vector<UnboundFieldBase<IdListExtent>> fields;
+    std::unordered_map<IdentifierListBase<IdListExtent>, size_t> fieldsByName;
     size_t sizeInBytes = 0;
 };
 
+using UnboundSchema = UnboundSchemaBase<std::dynamic_extent>;
 
 }
 

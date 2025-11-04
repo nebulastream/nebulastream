@@ -111,7 +111,7 @@ LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctio
     {
         throw CannotDeserialize("GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return GreaterLogicalFunction(arguments.children[0], arguments.children[1]);
+    return GreaterLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

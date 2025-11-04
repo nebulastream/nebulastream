@@ -30,13 +30,15 @@
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
 
+#include "Reprojecter.hpp"
+
 namespace NES
 {
 
 class Schema;
 
 /// Combines both selecting the fields to project and renaming/mapping of fields
-class ProjectionLogicalOperator
+class ProjectionLogicalOperator : public Reprojecter
 {
 public:
     class Asterisk
@@ -44,7 +46,7 @@ public:
         bool value;
 
     public:
-        explicit Asterisk(bool value) : value(value) { }
+        explicit Asterisk(const bool value) : value(value) { }
 
         friend ProjectionLogicalOperator;
     };
@@ -57,6 +59,7 @@ public:
     ProjectionLogicalOperator(LogicalOperator children, DescriptorConfig::Config config);
 
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
+    [[nodiscard]] std::unordered_map<Field, std::unordered_set<Field>> getAccessedFieldsForOutput() const override;
 
     [[nodiscard]] bool operator==(const ProjectionLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
@@ -73,6 +76,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
+    /// @brief returns the fields of the child operator this projection accesses
     [[nodiscard]] std::vector<Field> getAccessedFields() const;
 
     [[nodiscard]] ProjectionLogicalOperator withInferredSchema() const;
@@ -102,8 +106,9 @@ private:
     bool asterisk = false;
     ProjectionVariant projections;
 
+
     /// Set during schema inference
-    std::optional<Schema> outputSchema;
+    std::optional<UnboundSchemaBase<1>> outputSchema;
 
     TraitSet traitSet;
 

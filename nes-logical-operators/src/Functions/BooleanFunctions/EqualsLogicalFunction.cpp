@@ -111,7 +111,7 @@ LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    return EqualsLogicalFunction(arguments.children[0], arguments.children[1]);
+    return EqualsLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }

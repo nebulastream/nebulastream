@@ -113,7 +113,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAdd
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
     }
-    return AddLogicalFunction(arguments.children[0], arguments.children[1]);
+    return AddLogicalFunction(arguments.children[0], arguments.children[1]).withInferredDataType(arguments.schema);
 }
 
 }
