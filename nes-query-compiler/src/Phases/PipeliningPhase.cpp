@@ -40,6 +40,10 @@
 #include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include "InputFormatters/InputFormatterProvider.hpp"
+#include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
+#include "Util/Strings.hpp"
+#include "SelectionPhysicalOperator.hpp"
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -48,6 +52,19 @@ namespace
 {
 
 using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipeline>>;
+
+static std::vector<Nautilus::Record::RecordFieldIdentifier>
+computeRequiredScanProjections(const PhysicalOperatorWrapper& wrappedOp) {
+    // Look at the first operator in the upcoming pipeline segment. If it’s a Selection, use its requirements.
+    if (auto sel = wrappedOp.getPhysicalOperator().tryGet<NES::SelectionPhysicalOperator>()) {
+        const auto& v = sel->getRequiredFields();
+        if (!v.empty()) { return v; }
+    }
+    // Fallback to all fields
+    auto schema = wrappedOp.getInputSchema();
+    INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
+    return schema->getFieldNames();
+}
 
 /// Helper function to add a default scan operator
 /// This is used only when the wrapped operator does not already provide a scan
@@ -81,6 +98,14 @@ PhysicalOperator createScanOperator(
                 provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
         }
     }
+    //return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    //OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
+//}();
+
+//auto requiredProjections = computeRequiredScanProjections(wrappedOp);
+//currentPipeline->prependOperator(
+//    FormatScanPhysicalOperator(requiredProjections, std::move(inputFormatterTaskPipeline), configuredBufferSize, false));
+
     return ScanPhysicalOperator(memoryProvider, inputSchema->getFieldNames());
 }
 

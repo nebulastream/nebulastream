@@ -17,6 +17,7 @@
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -34,11 +35,33 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
     const auto selection = logicalOperator.getAs<SelectionLogicalOperator>();
     const auto function = selection->getPredicate();
     const auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+
+    std::vector<std::string> requiredFields;
+    std::unordered_set<std::string> dedup;
+    std::vector stack{function};
+    while (!stack.empty())
+    {
+        auto current = stack.back();
+        stack.pop_back();
+        if (auto fieldAccessFunction = current.tryGet<FieldAccessLogicalFunction>()) {
+            const std::string& name = fieldAccessFunction->getFieldName();
+            dedup.insert(name);
+        }
+        for (const auto& child : current.getChildren()) {
+            stack.push_back(child);
+        }
+    }
+
+    for (const auto& field : dedup)
+    {
+        requiredFields.push_back(field);
+    }
     auto physicalOperator = SelectionPhysicalOperator(func);
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+    physicalOperator.setRequiredFields(requiredFields);
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
         logicalOperator.getInputSchemas()[0],
         logicalOperator.getOutputSchema(),
