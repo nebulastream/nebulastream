@@ -2,10 +2,6 @@ workers:
   - host: "localhost:8080"
     data: "localhost:9090"
     max_operators: 10000
-    config:
-      worker:
-        query_engine:
-          number_of_worker_threads: 8
 
 allow_source_placement:
   - "localhost:8080"
