@@ -59,6 +59,9 @@ on:
       image-tag:
         description: "Docker image tag for the current dependencies"
         value: ${{ jobs.detect-dependency-changes.outputs.tag }}
+      build-dependency:
+        description: "If the dependencies were built"
+        value: ${{ jobs.detect-dependency-changes.outputs.build-dependency }}
 
 jobs:
 
