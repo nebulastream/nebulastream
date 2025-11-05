@@ -20,6 +20,7 @@
 
 #include <Util/Pointers.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -35,7 +36,8 @@ public:
         const std::filesystem::path& workingDir,
         const std::filesystem::path& testDataDir,
         const std::filesystem::path& configDir,
-        const QueryOptimizerConfiguration& queryOptimizerConfiguration);
+        const QueryOptimizerConfiguration& queryOptimizerConfiguration,
+        SystestClusterConfiguration clusterConfig);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles);
