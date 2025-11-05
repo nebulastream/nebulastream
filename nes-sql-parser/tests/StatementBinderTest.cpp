@@ -262,7 +262,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::INPUT_FORMAT), InputFormat::CSV);
+    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::INPUT_FORMAT), InputFormat::CSV);
 
     const std::string dropSinkStatement = "DROP SINK testSink";
     const auto statement2 = binder->parseAndBindSingle(dropSinkStatement);
@@ -294,7 +294,7 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::INPUT_FORMAT), InputFormat::CSV);
+    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::INPUT_FORMAT), InputFormat::CSV);
 }
 
 TEST_F(StatementBinderTest, BindDropQuery)
