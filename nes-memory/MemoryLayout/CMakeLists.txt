@@ -12,7 +12,6 @@
 
 set(MEMORY_LAYOUT_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/ColumnLayout.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/MemoryLayoutTupleBuffer.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/RowLayout.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/MemoryLayout.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/VariableSizedAccess.cpp
