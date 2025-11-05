@@ -26,6 +26,7 @@
 #include <BaseUnitTest.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
+#include <WorkerConfig.hpp>
 
 namespace
 {
@@ -69,6 +70,11 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     const auto testFileName = fmt::format("MultipleCorrectAndIncorrect{}", EXTENSION);
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
+    config.clusterConfig = SystestClusterConfiguration{
+        .workers = {WorkerConfig{
+            .host = WorkerId("localhost:8080"), .connection = "localhost:9090", .capacity = 1000, .downstream = {}, .config = {}}},
+        .allowSourcePlacement = {WorkerId("localhost:8080")},
+        .allowSinkPlacement = {WorkerId("localhost:8080")}};
 
     ::NES::SystestExecutor executor(config);
     const auto systestResult = executor.executeSystests();
@@ -95,6 +101,11 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
+    config.clusterConfig = SystestClusterConfiguration{
+        .workers = {WorkerConfig{
+            .host = WorkerId("localhost:8080"), .connection = "localhost:9090", .capacity = 1000, .downstream = {}, .config = {}}},
+        .allowSourcePlacement = {WorkerId("localhost:8080")},
+        .allowSinkPlacement = {WorkerId("localhost:8080")}};
 
     ::NES::SystestExecutor executor(config);
     const auto systestResult = executor.executeSystests();
