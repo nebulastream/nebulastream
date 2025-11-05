@@ -1,0 +1,10 @@
+workers:
+  - host: "localhost:9090"
+    grpc: "localhost:8080"
+    capacity: 10000
+
+allow_source_placement:
+  - "localhost:9090"
+
+allow_sink_placement:
+  - "localhost:9090"
