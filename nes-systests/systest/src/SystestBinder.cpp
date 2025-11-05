@@ -66,11 +66,11 @@
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <QueryId.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -107,7 +107,10 @@ public:
                     formatConfig["quote_strings"] = "true";
                 }
 
-                std::string host = "localhost:8080";
+                PRECONDITION(
+                    not possibleSinkPlacements.empty(),
+                    "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
+                std::string host = possibleSinkPlacements.at(0).getRawValue();
                 if (auto hostIt = config.find("host"); hostIt != config.end())
                 {
                     host = hostIt->second;
@@ -384,7 +387,10 @@ struct SystestBinder::Impl
         , clusterConfiguration(std::move(clusterConfiguration))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
-        workerCatalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+        for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
+        {
+            workerCatalog->addWorker(host, data, capacity, downstream);
+        }
     }
 
     static std::vector<ConfigurationOverride>
@@ -562,7 +568,10 @@ struct SystestBinder::Impl
         const CreatePhysicalSourceStatement& statement,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
-        std::string host = "localhost:8080";
+        PRECONDITION(
+            not clusterConfiguration.allowSourcePlacement.empty(),
+            "Topology must list at least one worker in allow_source_placement to assign a default source host");
+        std::string host = clusterConfiguration.allowSourcePlacement.at(0).getRawValue();
         auto sourceConfigCopy = statement.sourceConfig;
         if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
         {
@@ -675,7 +684,10 @@ struct SystestBinder::Impl
                 sourceConfig.emplace("file_path", filePath);
             }
 
-            sourceConfig.try_emplace("host", "localhost:8080");
+            PRECONDITION(
+                not clusterConfiguration.allowSourcePlacement.empty(),
+                "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
+            sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
@@ -712,7 +724,6 @@ struct SystestBinder::Impl
         auto schema = sinkOperator->getSchema();
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
-        sinkConfig.try_emplace("host", "localhost:8080");
 
         if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
@@ -1010,6 +1021,8 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
     QueryOptimizerConfiguration queryOptimizerConfiguration;
+    SystestClusterConfiguration clusterConfiguration;
+
     SharedPtr<WorkerCatalog> workerCatalog;
 };
 

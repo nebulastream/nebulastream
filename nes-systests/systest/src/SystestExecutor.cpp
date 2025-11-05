@@ -98,7 +98,11 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     Systest::SystestProgressTracker& progressTracker)
 {
     auto workerCatalog = std::make_shared<WorkerCatalog>();
-    workerCatalog->addWorker(Host(grpcURI), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    {
+        workerCatalog->addWorker(host, data, capacity, downstream, config);
+    }
+
     Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createGRPCBackend()));
 
     while (true)
@@ -147,7 +151,11 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
             }
 
             auto workerCatalog = std::make_shared<WorkerCatalog>();
-            workerCatalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+            for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+            {
+                workerCatalog->addWorker(host, data, capacity, downstream);
+            }
+
             Systest::QuerySubmitter querySubmitter(
                 std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
 
@@ -279,11 +287,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
         Systest::SystestBinder binder{
-            config.workingDir.getValue(),
-            config.testDataDir.getValue(),
-            config.configDir.getValue(),
-            config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
-            config.clusterConfig};
+            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(),config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}), config.clusterConfig};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {

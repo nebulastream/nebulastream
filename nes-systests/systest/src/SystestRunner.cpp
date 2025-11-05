@@ -48,7 +48,6 @@
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
-#include <nlohmann/json_fwd.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -57,10 +56,6 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-
-/// If systest is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
-/// via an in-memory channel.
-extern void enable_memcom();
 
 namespace NES::Systest
 {
@@ -445,9 +440,12 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
-    enable_memcom();
     auto catalog = std::make_shared<WorkerCatalog>();
-    catalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    {
+        catalog->addWorker(host, data, capacity, downstream, config);
+    }
+
     auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
@@ -585,11 +583,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    enable_memcom();
     auto catalog = std::make_shared<WorkerCatalog>();
-    catalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
-    auto embeddedQueryManager = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
-    QuerySubmitter submitter(std::move(embeddedQueryManager));
+    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    {
+        catalog->addWorker(host, data, capacity, downstream, config);
+    }
+
+    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
@@ -601,7 +601,10 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto catalog = std::make_shared<WorkerCatalog>();
-    catalog->addWorker(Host(serverURI), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    {
+        catalog->addWorker(host, data, capacity, downstream, config);
+    }
     auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
     QuerySubmitter submitter(std::move(remoteQueryManager));
     return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
