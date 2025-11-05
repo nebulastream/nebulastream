@@ -67,7 +67,7 @@ jobs:
 
   # Artificial mutex as we need to have the concurrency in a job and not in the workflow.
   # GitHub applies a hidden "priority" rule to concurrency groups. If two workflow runs
-  # (one from pull_request, one from pull_request_target) hare the same concurrency group,
+  # (one from pull_request, one from pull_request_target) have the same concurrency group,
   # the lower-privilege (PR) run is cancelled. y moving concurrency control into this inner 'lock' job, both triggers
   # share the same queue in the base repository but are no longer cancelled —
   # instead, they wait their turn and run sequentially
