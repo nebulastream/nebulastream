@@ -24,21 +24,25 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Util.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 #include <SystestState.hpp>
 #include <Thread.hpp>
+#include <WorkerConfig.hpp>
 
 namespace
 {
-NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
+NES::SystestConfiguration parseConfiguration(int argc, const char** argv) /// NOLINT(readability-function-cognitive-complexity)
 {
     using argparse::ArgumentParser;
     ArgumentParser program("systest");
@@ -74,7 +78,8 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
               "/nes-systests/");
 
     /// server/remote mode
-    program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
+    program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
+    program.add_argument("-c", "--clusterConfig").nargs(1).help("path to the cluster topology file");
 
     /// test query order
     program.add_argument("--shuffle").flag().help("run queries in random order");
@@ -269,10 +274,34 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
         config.randomQueryOrder = true;
     }
 
-    if (program.is_used("-s"))
+    config.remoteWorker = program.get<bool>("--remote");
+
+    try
     {
-        config.remoteTestExecution.setValue(true);
-        config.grpcAddressUri.setValue(program.get<std::string>("-s"));
+        if (program.is_used("--clusterConfig"))
+        {
+            config.clusterConfigPath = program.get<std::string>("--clusterConfig");
+        }
+        auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath.getValue());
+        NES::SystestClusterConfiguration clusterConfig;
+        clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::WorkerId>>();
+        clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::WorkerId>>();
+        for (const auto& worker : clusterConfigYAML["workers"])
+        {
+            clusterConfig.workers.push_back(NES::WorkerConfig{
+                .host = worker["host"].as<NES::WorkerId>(),
+                .connection = worker["connection"].as<std::string>(),
+                .capacity = worker["capacity"].as<size_t>(),
+                .downstream
+                = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::WorkerId>>() : std::vector<NES::WorkerId>{},
+                .config = {}});
+        }
+        config.clusterConfig = clusterConfig;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Error loading cluster config: " << e.what() << '\n';
+        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
     if (program.is_used("-n"))
