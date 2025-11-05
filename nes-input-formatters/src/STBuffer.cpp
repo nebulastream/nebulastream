@@ -43,7 +43,7 @@ STBuffer::STBuffer(const size_t initialSize, TupleBuffer dummyBuffer) : buffer(s
     buffer.at(0).setStateOfFirstIndex(std::move(dummyBuffer));
 }
 
-STBuffer::ClaimingSearchResult STBuffer::searchAndTryClaimLeadingST(const SequenceNumber sequenceNumber)
+STBuffer::WithoutDelimiterSearchResult STBuffer::searchAndTryClaimWithoutDelimiter(const SequenceNumber sequenceNumber)
 {
     const auto [sequenceNumberBufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
     if (const auto leadingDistance = searchLeading(sequenceNumberBufferIdx, abaItNumber))
@@ -51,29 +51,11 @@ STBuffer::ClaimingSearchResult STBuffer::searchAndTryClaimLeadingST(const Sequen
         const auto stStartSN = SequenceNumber{sequenceNumber.getRawValue() - leadingDistance.value()};
         if (auto [startBuffer, stEndSN] = claimingTrailingDelimiterSearch(stStartSN, sequenceNumber); startBuffer.has_value())
         {
-            return ClaimingSearchResult{
-                .type = ClaimingSearchResult::Type::LEADING_ST_ONLY,
-                .leadingSTStartBuffer = std::move(startBuffer),
-                .trailingSTStartBuffer = std::nullopt,
-                .firstSequenceNumber = stStartSN,
-                .lastSequenceNumber = stEndSN};
+            return WithoutDelimiterSearchResult{
+                .leadingSTStartBuffer = std::move(startBuffer), .firstSequenceNumber = stStartSN, .lastSequenceNumber = stEndSN};
         }
     }
-    return ClaimingSearchResult{.type = ClaimingSearchResult::Type::NONE};
-}
-
-STBuffer::ClaimingSearchResult STBuffer::searchAndTryClaimLeadingAndTrailingST(const SequenceNumber sequenceNumber)
-{
-    auto [firstSTStartBuffer, firstSTStartSN] = claimingLeadingDelimiterSearch(sequenceNumber);
-    auto [secondSTStartBuffer, secondSTFinalSN] = claimingTrailingDelimiterSearch(sequenceNumber);
-    const auto rangeState = static_cast<ClaimingSearchResult::Type>(
-        (static_cast<uint8_t>(secondSTStartBuffer.has_value()) << 1UL) + static_cast<uint8_t>(firstSTStartBuffer.has_value()));
-    return ClaimingSearchResult{
-        .type = rangeState,
-        .leadingSTStartBuffer = std::move(firstSTStartBuffer),
-        .trailingSTStartBuffer = std::move(secondSTStartBuffer),
-        .firstSequenceNumber = firstSTStartSN,
-        .lastSequenceNumber = secondSTFinalSN};
+    return WithoutDelimiterSearchResult{};
 }
 
 void STBuffer::claimSTBuffers(const SequenceNumber stStartSn, const std::span<StagedBuffer> spanningTupleBuffers)
@@ -88,7 +70,8 @@ void STBuffer::claimSTBuffers(const SequenceNumber stStartSn, const std::span<St
     buffer[lastBufferIdx].claimLeadingBuffer(spanningTupleBuffers, lastOffset);
 }
 
-SequenceShredderResult STBuffer::tryFindSTsForBufferWithDelimiter(const SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer)
+SequenceShredderResult
+STBuffer::tryFindLeadingSTForBufferWithDelimiter(const SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
     /// Try to set 'indexedRawBuffer' at corresponding index in buffer. Return as 'out-of-range' buffer, if setting the buffer fails
     if (const auto [bufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
@@ -96,47 +79,34 @@ SequenceShredderResult STBuffer::tryFindSTsForBufferWithDelimiter(const Sequence
     {
         return SequenceShredderResult{.isInRange = false, .spanningBuffers = {}};
     }
-    switch (auto searchAndClaimResult = searchAndTryClaimLeadingAndTrailingST(sequenceNumber); searchAndClaimResult.type)
+    auto [firstSTStartBuffer, firstSTStartSN] = claimingLeadingDelimiterSearch(sequenceNumber);
+    if (firstSTStartBuffer.has_value())
     {
-        case ClaimingSearchResult::Type::NONE: {
-            return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(0, {indexedRawBuffer})};
-        }
-        case ClaimingSearchResult::Type::LEADING_ST_ONLY: {
-            const auto sizeOfSpanningTuple = sequenceNumber.getRawValue() - searchAndClaimResult.firstSequenceNumber.getRawValue() + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            INVARIANT(searchAndClaimResult.leadingSTStartBuffer.has_value(), "A leading spanning tuple must have start buffer value");
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTStartBuffer.value());
-            claimSTBuffers(searchAndClaimResult.firstSequenceNumber, spanningTupleBuffers);
-            return SequenceShredderResult{
-                .isInRange = true, .spanningBuffers = SpanningBuffers(sizeOfSpanningTuple - 1, std::move(spanningTupleBuffers))};
-        }
-        case ClaimingSearchResult::Type::TRAILING_ST_ONLY: {
-            const auto sizeOfSpanningTuple = searchAndClaimResult.lastSequenceNumber.getRawValue() - sequenceNumber.getRawValue() + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            INVARIANT(searchAndClaimResult.trailingSTStartBuffer.has_value(), "A trailing spanning tuple must have start buffer value");
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.trailingSTStartBuffer.value());
-            claimSTBuffers(sequenceNumber, spanningTupleBuffers);
-            return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(0, std::move(spanningTupleBuffers))};
-        }
-        case ClaimingSearchResult::Type::LEADING_AND_TRAILING_ST: {
-            const auto sizeOfFirstST = sequenceNumber.getRawValue() - searchAndClaimResult.firstSequenceNumber.getRawValue() + 1;
-            const auto sizeOfBothSTs
-                = searchAndClaimResult.lastSequenceNumber.getRawValue() - searchAndClaimResult.firstSequenceNumber.getRawValue() + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfBothSTs);
-            INVARIANT(searchAndClaimResult.leadingSTStartBuffer.has_value(), "A leading spanning tuple must have start buffer value");
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTStartBuffer.value());
-            /// Claim the remaining buffers of both STs (separately, to not double claim the trailing buffer of the entry at 'rbIdxOfSN')
-            claimSTBuffers(searchAndClaimResult.firstSequenceNumber, std::span{spanningTupleBuffers}.subspan(0, sizeOfFirstST));
-            claimSTBuffers(sequenceNumber, std::span{spanningTupleBuffers}.subspan(sizeOfFirstST - 1));
-            return SequenceShredderResult{
-                .isInRange = true, .spanningBuffers = SpanningBuffers(sizeOfFirstST - 1, std::move(spanningTupleBuffers))};
-        }
+        const auto sizeOfSpanningTuple = sequenceNumber.getRawValue() - firstSTStartSN.getRawValue() + 1;
+        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+        spanningTupleBuffers[0] = std::move(firstSTStartBuffer.value());
+        claimSTBuffers(firstSTStartSN, spanningTupleBuffers);
+        return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(std::move(spanningTupleBuffers))};
     }
-    std::unreachable();
+    return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers({indexedRawBuffer})};
+}
+
+SpanningBuffers STBuffer::tryFindTrailingSTForBufferWithDelimiter(const SequenceNumber sequenceNumber)
+{
+    auto [firstSTStartBuffer, lastSN] = claimingTrailingDelimiterSearch(sequenceNumber);
+    if (firstSTStartBuffer.has_value())
+    {
+        const auto sizeOfSpanningTuple = lastSN.getRawValue() - sequenceNumber.getRawValue() + 1;
+        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+        spanningTupleBuffers[0] = std::move(firstSTStartBuffer.value());
+        claimSTBuffers(sequenceNumber, spanningTupleBuffers);
+        return SpanningBuffers(std::move(spanningTupleBuffers));
+    }
+    return SpanningBuffers{};
 }
 
 SequenceShredderResult
-STBuffer::tryFindSTsForBufferWithoutDelimiter(const SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer)
+STBuffer::tryFindSTForBufferWithoutDelimiter(const SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
     /// Try to set 'indexedRawBuffer' at corresponding index in buffer. Return as 'out-of-range' buffer, if setting the buffer fails
     if (const auto [bufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
@@ -144,27 +114,18 @@ STBuffer::tryFindSTsForBufferWithoutDelimiter(const SequenceNumber sequenceNumbe
     {
         return SequenceShredderResult{.isInRange = false, .spanningBuffers = {}};
     }
-    switch (auto searchAndClaimResult = searchAndTryClaimLeadingST(sequenceNumber); searchAndClaimResult.type)
+    if (auto searchAndClaimResult = searchAndTryClaimWithoutDelimiter(sequenceNumber);
+        searchAndClaimResult.leadingSTStartBuffer.has_value())
     {
-        case ClaimingSearchResult::Type::NONE: {
-            return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(0, {indexedRawBuffer})};
-        }
-        case ClaimingSearchResult::Type::LEADING_ST_ONLY: {
-            const auto sizeOfSpanningTuple
-                = searchAndClaimResult.lastSequenceNumber.getRawValue() - searchAndClaimResult.firstSequenceNumber.getRawValue() + 1;
-            std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-            INVARIANT(searchAndClaimResult.leadingSTStartBuffer.has_value(), "A leading spanning tuple must have start buffer value");
-            spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTStartBuffer.value());
-            claimSTBuffers(searchAndClaimResult.firstSequenceNumber, spanningTupleBuffers);
-            const auto currentBufferIdx = sequenceNumber.getRawValue() - searchAndClaimResult.lastSequenceNumber.getRawValue();
-            return SequenceShredderResult{
-                .isInRange = true, .spanningBuffers = SpanningBuffers(currentBufferIdx, std::move(spanningTupleBuffers))};
-        }
-        case ClaimingSearchResult::Type::TRAILING_ST_ONLY:
-        case ClaimingSearchResult::Type::LEADING_AND_TRAILING_ST:
-            INVARIANT(false, "A buffer without a delimiter can only find one spanning tuple in leading direction.");
+        const auto sizeOfSpanningTuple
+            = searchAndClaimResult.lastSequenceNumber.getRawValue() - searchAndClaimResult.firstSequenceNumber.getRawValue() + 1;
+        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+        INVARIANT(searchAndClaimResult.leadingSTStartBuffer.has_value(), "A leading spanning tuple must have start buffer value");
+        spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTStartBuffer.value());
+        claimSTBuffers(searchAndClaimResult.firstSequenceNumber, spanningTupleBuffers);
+        return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers(std::move(spanningTupleBuffers))};
     }
-    std::unreachable();
+    return SequenceShredderResult{.isInRange = true, .spanningBuffers = SpanningBuffers({indexedRawBuffer})};
 }
 
 bool STBuffer::validate() const

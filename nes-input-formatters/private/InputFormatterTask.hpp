@@ -33,6 +33,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
@@ -338,29 +339,21 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        auto [isInRange, stagedBuffers] = sequenceShredder->findSTsWithDelimiter(StagedBuffer{
-            rawBuffer,
-            rawBuffer.getNumberOfBytes(),
-            fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
-            fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
+        auto [isInRange, leadingSTBuffers] = sequenceShredder->findLeadingSTWithDelimiter(StagedBuffer{
+            rawBuffer, fieldIndexFunction.getOffsetOfFirstTupleDelimiter(), fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
         if (not isInRange)
         {
+            NES_WARNING("Sequence Number {} was out of range", rawBuffer.getSequenceNumber().getRawValue());
             rawBuffer.repeat(pec);
-            return;
-        }
-
-        if (not stagedBuffers.hasSpanningTuples())
-        {
             return;
         }
 
         /// 1. process leading spanning tuple if required
         auto formattedBuffer = bufferProvider->getBufferBlocking();
-        if (/* hasLeadingSpanningTuple */ stagedBuffers.hasLeadingSpanningTuple())
+        if (/* hasLeadingSpanningTuple */ leadingSTBuffers.hasSpanningTuple())
         {
-            const auto spanningTupleBuffers = stagedBuffers.getLeadingST();
             processSpanningTuple<FormatterType>(
-                spanningTupleBuffers,
+                leadingSTBuffers.getSpanningBuffers(),
                 *bufferProvider,
                 formattedBuffer,
                 this->schemaInfo,
@@ -376,7 +369,8 @@ private:
         }
 
         /// 3. process trailing spanning tuple if required
-        if (/* hasTrailingSpanningTuple */ stagedBuffers.hasTrailingSpanningTuple())
+        if (const auto trailingSTBuffers = sequenceShredder->findTrailingSTWithDelimiter(rawBuffer.getSequenceNumber());
+            trailingSTBuffers.hasSpanningTuple())
         {
             const auto numBytesInFormattedBuffer = formattedBuffer.getNumberOfTuples() * this->schemaInfo.getSizeOfTupleInBytes();
             if (formattedBuffer.getBufferSize() - numBytesInFormattedBuffer < this->schemaInfo.getSizeOfTupleInBytes())
@@ -386,9 +380,8 @@ private:
                 formattedBuffer = bufferProvider->getBufferBlocking();
             }
 
-            const auto spanningTupleBuffers = stagedBuffers.getTrailingST();
             processSpanningTuple<FormatterType>(
-                spanningTupleBuffers,
+                trailingSTBuffers.getSpanningBuffers(),
                 *bufferProvider,
                 formattedBuffer,
                 this->schemaInfo,
@@ -413,11 +406,8 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        auto [isInRange, stagedBuffers] = sequenceShredder->findSTsWithoutDelimiter(StagedBuffer{
-            rawBuffer,
-            rawBuffer.getNumberOfBytes(),
-            fieldIndexFunction.getOffsetOfFirstTupleDelimiter(),
-            fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
+        auto [isInRange, stagedBuffers] = sequenceShredder->findSTWithoutDelimiter(StagedBuffer{
+            rawBuffer, fieldIndexFunction.getOffsetOfFirstTupleDelimiter(), fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
         if (not isInRange)
         {
             rawBuffer.repeat(pec);

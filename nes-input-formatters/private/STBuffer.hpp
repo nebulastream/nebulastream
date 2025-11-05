@@ -67,19 +67,9 @@ class STBuffer
     };
 
 public:
-    struct ClaimingSearchResult
+    struct WithoutDelimiterSearchResult
     {
-        enum class Type : uint8_t
-        {
-            NONE,
-            LEADING_ST_ONLY,
-            TRAILING_ST_ONLY,
-            LEADING_AND_TRAILING_ST,
-        };
-
-        Type type = Type::NONE;
         std::optional<StagedBuffer> leadingSTStartBuffer = std::nullopt;
-        std::optional<StagedBuffer> trailingSTStartBuffer = std::nullopt;
         SequenceNumber firstSequenceNumber = INVALID<SequenceNumber>;
         SequenceNumber lastSequenceNumber = INVALID<SequenceNumber>;
     };
@@ -91,9 +81,13 @@ public:
     /// Otherwise, searches for valid spanning tuples and on finding a spanning tuple, tries to claim the first buffer of the spanning tuple
     /// for the calling thread, which claims the entire spanning tuple.
     [[nodiscard]] SequenceShredderResult
-    tryFindSTsForBufferWithDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    tryFindLeadingSTForBufferWithDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    [[nodiscard]] SpanningBuffers tryFindTrailingSTForBufferWithDelimiter(SequenceNumber sequenceNumber);
+
+    /// Tries to find a reachable buffer with a delimiter in leading direction.
+    /// If successful, starts a claiming trailing delimiter search with that reachable buffer as the start (search starts at 'sequenceNumber')
     [[nodiscard]] SequenceShredderResult
-    tryFindSTsForBufferWithoutDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
+    tryFindSTForBufferWithoutDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
 
     /// Claims all trailing buffers of an ST (all buffers except the first, which the thread must have claimed already to claim the rest)
     /// Assumes size of 'spanningTupleBuffers' as the size of the ST, assigning using an index, instead of emplacing to the back
@@ -110,11 +104,11 @@ private:
 
     /// Searches for two buffers with delimiters that are connected by the buffer with the provided 'sequenceNumber'
     /// Tries to claim the (first buffer of the) leading spanning tuple, if search is successful
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingST(SequenceNumber sequenceNumber);
+    [[nodiscard]] WithoutDelimiterSearchResult searchAndTryClaimWithoutDelimiter(SequenceNumber sequenceNumber);
 
     /// Searches for spanning tuples both in leading and trailing direction of the 'sequenceNumber'
     /// Tries to claim the (first buffers of the) spanning tuples (and thereby the STs) if it finds valid STs.
-    [[nodiscard]] ClaimingSearchResult searchAndTryClaimLeadingAndTrailingST(SequenceNumber sequenceNumber);
+    [[nodiscard]] WithoutDelimiterSearchResult searchAndTryClaimLeadingAndTrailingST(SequenceNumber sequenceNumber);
 
     /// Searches for a reachable buffer that can start a spanning tuple (in leading direction - smaller SNs)
     /// 'Reachable' means that there is a path from 'searchStartBufferIdx' to a buffer that traverses 0 or more buffers without delimiters

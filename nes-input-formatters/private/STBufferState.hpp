@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <new>
 #include <optional>
 #include <ostream>
 #include <span>
@@ -52,22 +53,22 @@ class AtomicState
     friend STBufferEntry;
 
     /// 33:   000000000000000000000000000000100000000000000000000000000000000
-    static constexpr uint64_t hasTupleDelimiterBit = (1ULL << 32); /// NOLINT(readability-magic-numbers)
+    static constexpr uint64_t hasTupleDelimiterBit = (1ULL << 32ULL); /// NOLINT(readability-magic-numbers)
     /// 34:   000000000000000000000000000001000000000000000000000000000000000
-    static constexpr uint64_t claimedSpanningTupleBit = (1ULL << 33); /// NOLINT(readability-magic-numbers)
+    static constexpr uint64_t claimedSpanningTupleBit = (1ULL << 33ULL); /// NOLINT(readability-magic-numbers)
     /// 35:   000000000000000000000000000010000000000000000000000000000000000
-    static constexpr uint64_t usedLeadingBufferBit = (1ULL << 34); /// NOLINT(readability-magic-numbers)
+    static constexpr uint64_t usedLeadingBufferBit = (1ULL << 34ULL); /// NOLINT(readability-magic-numbers)
     /// 36:   000000000000000000000000000100000000000000000000000000000000000
-    static constexpr uint64_t usedTrailingBufferBit = (1ULL << 35); /// NOLINT(readability-magic-numbers)
+    static constexpr uint64_t usedTrailingBufferBit = (1ULL << 35ULL); /// NOLINT(readability-magic-numbers)
     ///       000000000000000000000000000110000000000000000000000000000000000
     static constexpr uint64_t usedLeadingAndTrailingBufferBits = (usedLeadingBufferBit | usedTrailingBufferBit);
 
     /// The STBuffer initializes all STBufferEntries, except for the very first entry, with the 'defaultState'
     /// Tag: 0, HasTupleDelimiter: True, ClaimedSpanningTuple: True, UsedLeading: True, UsedTrailing: True
-    static constexpr uint64_t defaultState = (0 | claimedSpanningTupleBit | usedLeadingBufferBit | usedTrailingBufferBit);
+    static constexpr uint64_t defaultState = (0ULL | claimedSpanningTupleBit | usedLeadingBufferBit | usedTrailingBufferBit);
     /// The STBuffer initializes the very first entry with a dummy buffer and a matching dummy state to trigger the first leading ST
     /// Tag: 1, HasTupleDelimiter: True, ClaimedSpanningTuple: False, UsedLeading: True, UsedTrailing: False
-    static constexpr uint64_t firstEntryDummy = (1 | hasTupleDelimiterBit | usedLeadingBufferBit);
+    static constexpr uint64_t firstEntryDummy = (1ULL | hasTupleDelimiterBit | usedLeadingBufferBit);
 
     /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
     /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end

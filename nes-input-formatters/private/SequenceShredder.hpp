@@ -18,7 +18,6 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
-#include <span>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -52,30 +51,15 @@ class SpanningBuffers
 public:
     SpanningBuffers() = default;
 
-    SpanningBuffers(const size_t indexOfInputBuffer, std::vector<StagedBuffer> spanningBuffers)
-        : indexOfInputBuffer(indexOfInputBuffer), spanningBuffers(std::move(spanningBuffers))
-    {
-    }
-
-    std::span<StagedBuffer> getLeadingST() { return std::span(this->spanningBuffers).subspan(0, this->indexOfInputBuffer + 1); }
-
-    std::span<StagedBuffer> getTrailingST()
-    {
-        return std::span(this->spanningBuffers).subspan(this->indexOfInputBuffer, this->spanningBuffers.size() - indexOfInputBuffer);
-    }
+    explicit SpanningBuffers(std::vector<StagedBuffer> spanningBuffers) : spanningBuffers(std::move(spanningBuffers)) { }
 
     [[nodiscard]] size_t getSize() const { return this->spanningBuffers.size(); }
 
-    [[nodiscard]] bool hasLeadingSpanningTuple() const { return indexOfInputBuffer != 0; }
-
-    [[nodiscard]] bool hasTrailingSpanningTuple() const { return indexOfInputBuffer < (spanningBuffers.size() - 1); }
-
-    [[nodiscard]] bool hasSpanningTuples() const { return not this->spanningBuffers.empty(); }
+    [[nodiscard]] bool hasSpanningTuple() const { return spanningBuffers.size() > 1; }
 
     [[nodiscard]] const std::vector<StagedBuffer>& getSpanningBuffers() const { return spanningBuffers; }
 
 private:
-    size_t indexOfInputBuffer = 0;
     std::vector<StagedBuffer> spanningBuffers;
 };
 
@@ -105,8 +89,9 @@ public:
 
     /// Uses the STBuffer to thread-safely determine whether the 'indexedRawBuffer' with the given 'sequenceNumber'
     /// completes spanning tuples and whether the calling thread is the first to claim the individual spanning tuples
-    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer);
-    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer);
+    SequenceShredderResult findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer);
+    SpanningBuffers findTrailingSTWithDelimiter(SequenceNumber sequenceNumber);
+    SequenceShredderResult findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
@@ -115,8 +100,8 @@ private:
 
     /// Enable 'ConcurrentSynchronizationTest' to used mocked buffer and provide 'sequenceNumber' as additional argument
     friend ConcurrentSynchronizationTest;
-    SequenceShredderResult findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
-    SequenceShredderResult findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
+    SequenceShredderResult findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
+    SequenceShredderResult findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
 };
 
 }

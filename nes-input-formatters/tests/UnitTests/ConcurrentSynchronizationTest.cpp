@@ -136,33 +136,35 @@ public:
                 /// Since all threads copy the same reference, all copies of that reference point to the same buffer control block
                 /// Thus, we can't set the sequence number in that control block. Instead, we exploit the 'offset of last tuple delimiter',
                 /// of the StagedBuffer, which we create during each iteration and which is not manipulated by other threads
-                const auto dummyStagedBuffer = NES::StagedBuffer{
-                    NES::RawTupleBuffer{dummyBuffer}, threadLocalSequenceNumber, 0, static_cast<uint32_t>(threadLocalSequenceNumber)};
+                const auto dummyStagedBuffer
+                    = NES::StagedBuffer{NES::RawTupleBuffer{dummyBuffer}, 0, static_cast<uint32_t>(threadLocalSequenceNumber)};
                 if (tupleDelimiter)
                 {
-                    NES::SequenceShredderResult result
-                        = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
-                    while (not result.isInRange)
+                    NES::SequenceShredderResult leadingSTResult
+                        = sequenceShredder.findLeadingSTWithDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
+                    while (not leadingSTResult.isInRange)
                     {
-                        result = sequenceShredder.findSTsWithDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
+                        leadingSTResult = sequenceShredder.findLeadingSTWithDelimiter(
+                            dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     }
-                    if (result.spanningBuffers.getSpanningBuffers().size() > 1)
-                    {
-                        /// The 'offset of last tuple delimiter' contains the sequence number (see comment above)
-                        const auto spanStart = result.spanningBuffers.getSpanningBuffers().front().getOffsetOfLastTupleDelimiter();
-                        const auto spanEnd = result.spanningBuffers.getSpanningBuffers().back().getOffsetOfLastTupleDelimiter();
-                        const auto localCheckSum = spanEnd - spanStart;
-                        threadLocalCheckSum.at(threadIdx) += localCheckSum;
-                    }
+                    const auto trailingSTResult
+                        = sequenceShredder.findTrailingSTWithDelimiter(NES::SequenceNumber{threadLocalSequenceNumber});
+                    const auto spanStart = (leadingSTResult.spanningBuffers.hasSpanningTuple())
+                        ? leadingSTResult.spanningBuffers.getSpanningBuffers().front().getOffsetOfLastTupleDelimiter()
+                        : threadLocalSequenceNumber;
+                    const auto spanEnd = (trailingSTResult.hasSpanningTuple())
+                        ? trailingSTResult.getSpanningBuffers().back().getOffsetOfLastTupleDelimiter()
+                        : threadLocalSequenceNumber;
+                    const auto localCheckSum = spanEnd - spanStart;
+                    threadLocalCheckSum.at(threadIdx) += localCheckSum;
                 }
                 else
                 {
                     NES::SequenceShredderResult result
-                        = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
+                        = sequenceShredder.findSTWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     while (not result.isInRange)
                     {
-                        result
-                            = sequenceShredder.findSTsWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
+                        result = sequenceShredder.findSTWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     }
                     if (result.spanningBuffers.getSpanningBuffers().size() > 1)
                     {
