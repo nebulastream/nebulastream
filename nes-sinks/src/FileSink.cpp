@@ -104,15 +104,14 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExec
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");
-    auto bufferSize = inputTupleBuffer.getBufferSize();
+
     {
-        ///auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-        NES_TRACE("Writing tuples to void sink; filePathOutput={}", outputFilePath);
+        auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
+        NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
-            /// todo: layout void sink
-            ///auto wlocked = outputFileStream.wlock();
-            ///wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
-            ///wlocked->flush();
+            auto wlocked = outputFileStream.wlock();
+            wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
+            wlocked->flush();
         }
     }
 }
