@@ -60,6 +60,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
+    [[nodiscard]] std::string_view getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
@@ -75,6 +76,12 @@ private:
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
+        "input_format",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
         "add_timestamp",
         false,
@@ -83,7 +90,7 @@ public:
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(ADD_TIMESTAMP);
+        = DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, ADD_TIMESTAMP);
 
     /// Well-known property for any sink that sends its data to a file
     /// NOLINTNEXTLINE(cert-err58-cpp)
