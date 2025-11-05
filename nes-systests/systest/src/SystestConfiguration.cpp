@@ -32,7 +32,7 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &testDataDir,
         &endlessMode,
         &excludeGroups,
-        &remoteTestExecution,
-        &grpcAddressUri};
+        &remoteWorker,
+        &clusterConfigPath};
 }
 }
