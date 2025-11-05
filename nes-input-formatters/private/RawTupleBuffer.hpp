@@ -90,20 +90,14 @@ private:
 
 public:
     StagedBuffer() = default;
+
     StagedBuffer(RawTupleBuffer rawTupleBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
         : rawBuffer(std::move(rawTupleBuffer))
         , sizeOfBufferInBytes(this->rawBuffer.getNumberOfBytes())
         , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
-        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
-    StagedBuffer(
-        RawTupleBuffer rawTupleBuffer,
-        const size_t sizeOfBufferInBytes,
-        const uint32_t offsetOfFirstTupleDelimiter,
-        const uint32_t offsetOfLastTupleDelimiter)
-        : rawBuffer(std::move(rawTupleBuffer))
-        , sizeOfBufferInBytes(sizeOfBufferInBytes)
-        , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
-        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
+        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter)
+    {
+    }
 
     [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }
 
