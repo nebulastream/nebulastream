@@ -67,18 +67,13 @@ private:
 
 struct ConfigParametersFile
 {
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
-        "input_format",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
     static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
         "append",
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SinkDescriptor::parameterMap, SinkDescriptor::FILE_PATH, INPUT_FORMAT, APPEND);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, SinkDescriptor::FILE_PATH, APPEND);
 };
 
 }
