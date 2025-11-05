@@ -46,53 +46,53 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
     this->spanningTupleBuffer = std::make_unique<STBuffer>(INITIAL_SIZE_OF_ST_BUFFER, std::move(dummyBuffer));
 }
 
-SequenceShredder::~SequenceShredder(){CPPTRACE_TRY{if (spanningTupleBuffer->validate()){NES_INFO("Successfully validated SequenceShredder");
-}
-
-else
+SequenceShredder::~SequenceShredder()
 {
-    NES_ERROR("Failed to validate SequenceShredder");
-}
-}
-
-CPPTRACE_CATCH(...)
-{
-    NES_ERROR("Unexpected exception during validation of SequenceShredder.");
-}
-}
-;
-
-SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer)
-{
-    return findSTsWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
-}
-
-SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
-{
-    return findSTsWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
-}
-
-SequenceShredderResult SequenceShredder::findSTsWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
-{
-    if (const auto stSearchResult = spanningTupleBuffer->tryFindSTsForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
-        stSearchResult.isInRange) [[likely]]
+    CPPTRACE_TRY
     {
-        return stSearchResult;
+        if (spanningTupleBuffer->validate())
+        {
+            NES_INFO("Successfully validated SequenceShredder");
+        }
+        else
+        {
+            NES_ERROR("Failed to validate SequenceShredder");
+        }
     }
-    else
+    CPPTRACE_CATCH(...)
     {
-        /// (Planned) Atomically count the number of out of range attempts
-        /// (Planned) Thread that increases atomic counter to threshold blocks access to the current STBUffer, allocates new STBuffer
-        /// (Planned) with double the size, copies over the current state, swaps out the pointer to the STBuffer, and then enables other
-        /// (Planned) threads to access the new STBuffer
-        NES_WARNING("Sequence number: {} was out of range of STBuffer", sequenceNumber);
-        return stSearchResult;
+        NES_ERROR("Unexpected exception during validation of SequenceShredder.");
     }
 }
 
-SequenceShredderResult SequenceShredder::findSTsWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
+SequenceShredderResult SequenceShredder::findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    if (const auto stSearchResult = spanningTupleBuffer->tryFindSTsForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
+    return findLeadingSTWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+}
+
+SpanningBuffers SequenceShredder::findTrailingSTWithDelimiter(const SequenceNumber sequenceNumber)
+{
+    return spanningTupleBuffer->tryFindTrailingSTForBufferWithDelimiter(sequenceNumber);
+}
+
+SequenceShredderResult SequenceShredder::findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
+{
+    return findSTWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+}
+
+SequenceShredderResult
+SequenceShredder::findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
+{
+    /// (Planned) Atomically count the number of out of range attempts
+    /// (Planned) Thread that increases atomic counter to threshold blocks access to the current STBUffer, allocates new STBuffer
+    /// (Planned) with double the size, copies over the current state, swaps out the pointer to the STBuffer, and then enables other
+    /// (Planned) threads to access the new STBuffer
+    return spanningTupleBuffer->tryFindLeadingSTForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
+}
+
+SequenceShredderResult SequenceShredder::findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
+{
+    if (const auto stSearchResult = spanningTupleBuffer->tryFindSTForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
         stSearchResult.isInRange) [[likely]]
     {
         return stSearchResult;
