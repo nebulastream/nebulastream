@@ -172,6 +172,14 @@ python3 scripts/check_preamble.py || FAIL=1
 
 DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE python3 scripts/check_todos.py || FAIL=1
 
+# error code uniqueness check
+DUPLICATES=$(sed -nE 's/^[[:space:]]*EXCEPTION\([^,]+,[[:space:]]*([0-9]+)[[:space:]]*,.*$/\1/p' nes-common/include/ExceptionDefinitions.inc | sort -n | uniq -d)
+if [ -n "$DUPLICATES" ]
+then
+    log_error "Duplicate exception codes found:"
+    echo "$DUPLICATES"
+fi
+
 [ "$FAIL" = "0" ] && echo "format.sh: no problems found"
 
 exit "$FAIL"
