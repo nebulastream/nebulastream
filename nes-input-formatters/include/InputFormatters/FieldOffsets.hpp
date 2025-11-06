@@ -128,7 +128,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        const nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
+        const nautilus::val<FieldOffsets*> fieldOffsetsPtr,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
     {
         /// static loop over number of fields (which don't change)
@@ -153,7 +154,13 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, currentField.name);
+            if (not includesField(requiredFields, fieldName))
+            {
+                parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName);
+            } else
+            {
+                parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName);
+            }
         }
         return record;
     }
