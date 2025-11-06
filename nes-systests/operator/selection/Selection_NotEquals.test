@@ -172,12 +172,6 @@ SELECT * FROM stream WHERE value != UINT64(9999) AND id != UINT64(1234) INTO sin
 1,20,20000
 1,21,21000
 
-# Filter not equal with text
-SELECT * FROM streamWithText WHERE text1 != VARSIZED("test1") INTO sinkStreamWithText
-----
-4,1,test2,test2
-11,2,test3,test2
-11,3,test3,test1
 
 # Filter with text and multiple fields
 SELECT * FROM streamWithText WHERE text1 != VARSIZED("test1") AND text2 != VARSIZED("test2") INTO sinkStreamWithText

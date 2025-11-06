@@ -70,8 +70,9 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     // - if we use 'outputSchema.getFieldNames()' we try to select input fields using output names (given renaming)
 
     auto accessedFields = projection.getAccessedFields();
+    std::vector<std::string> requiredFields;
     auto scan = FormatScanPhysicalOperator(
-        accessedFields, std::move(inputFormatterTaskPipeline), bufferSize, isFirstOperatorAfterSource);
+        accessedFields, std::move(inputFormatterTaskPipeline), bufferSize, isFirstOperatorAfterSource, requiredFields);
     // Todo: output -> output was already here
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);

@@ -41,11 +41,13 @@ FormatScanPhysicalOperator::FormatScanPhysicalOperator(
     std::vector<Record::RecordFieldIdentifier> projections,
     std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline,
     const size_t configuredBufferSize,
-    const bool isFirstOperatorAfterSource)
+    const bool isFirstOperatorAfterSource,
+    const std::vector<Record::RecordFieldIdentifier>& requiredFields)
     : projections(std::move(projections))
     , taskPipeline(std::move(inputFormatterTaskPipeline))
     , configuredBufferSize(configuredBufferSize)
-    , isFirstOperatorAfterSource(isFirstOperatorAfterSource)
+    , isFirstOperatorAfterSource(isFirstOperatorAfterSource),
+    requiredFields(requiredFields)
 {
 }
 
@@ -53,7 +55,7 @@ void FormatScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuff
 {
     // implement: use setup to set InputFormatterTaskPipeline in operatorHandler and initiate stuff like field offsets, etc.
     // -> if there are lifetime issues
-    this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), projections, configuredBufferSize, isFirstOperatorAfterSource);
+    this->taskPipeline->scan(executionCtx, recordBuffer, child.value(), projections, configuredBufferSize, isFirstOperatorAfterSource, requiredFields);
 }
 
 std::optional<PhysicalOperator> FormatScanPhysicalOperator::getChild() const

@@ -46,13 +46,19 @@ namespace
 
 using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipeline>>;
 
-static std::vector<Nautilus::Record::RecordFieldIdentifier>
+std::vector<Record::RecordFieldIdentifier>
 computeRequiredScanProjections(const PhysicalOperatorWrapper& wrappedOp) {
     // Look at the first operator in the upcoming pipeline segment. If it’s a Selection, use its requirements.
+    std::set<Record::RecordFieldIdentifier> allRequiredFields;
     if (auto sel = wrappedOp.getPhysicalOperator().tryGet<NES::SelectionPhysicalOperator>()) {
         const auto& v = sel->getRequiredFields();
-        if (!v.empty()) { return v; }
+        if (!v.empty()) { allRequiredFields.insert(v.begin(), v.end()); }
     }
+    if (!allRequiredFields.empty())
+    {
+        return std::vector(allRequiredFields.begin(), allRequiredFields.end());
+    }
+
     // Fallback to all fields
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
@@ -90,7 +96,7 @@ void addDefaultScan(
 
     auto requiredProjections = computeRequiredScanProjections(wrappedOp);
     currentPipeline->prependOperator(
-        FormatScanPhysicalOperator(requiredProjections, std::move(inputFormatterTaskPipeline), configuredBufferSize, false));
+        FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, false, requiredProjections));
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -117,8 +123,9 @@ std::shared_ptr<Pipeline> createNewPiplineWithScan(
             OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
     }();
 
+    std::vector<Record::RecordFieldIdentifier> requiredFields;
     const auto newPipeline = std::make_shared<Pipeline>(FormatScanPhysicalOperator(
-        schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, isFirstOperatorAfterSource));
+        schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, isFirstOperatorAfterSource, requiredFields));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
@@ -255,8 +262,9 @@ void buildPipelineRecursively(
                     OriginId(OriginId::INITIAL), schema.value(), inputFormatterConfig);
             }();
 
+            std::vector<Record::RecordFieldIdentifier> requiredFields;
             const auto sourcePipeline = std::make_shared<Pipeline>(
-                FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, true));
+                FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, true, requiredFields));
             currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
             addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);

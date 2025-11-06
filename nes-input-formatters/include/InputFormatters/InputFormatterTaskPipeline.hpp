@@ -52,7 +52,8 @@ public:
        const PhysicalOperator& child,
        const std::vector<Record::RecordFieldIdentifier>& projections,
        size_t configuredBufferSize,
-       bool isFirstOperatorAfterSource) const;
+       bool isFirstOperatorAfterSource,
+       const std::vector<Record::RecordFieldIdentifier>& requiredFields) const;
 
     /// Attempts to flush out a final (spanning) tuple that ends in the last byte of the last seen raw buffer.
     void stop(PipelineExecutionContext&) const;
@@ -75,7 +76,8 @@ public:
             const PhysicalOperator& child,
             const std::vector<Record::RecordFieldIdentifier>& projections,
             size_t configuredBufferSize,
-            bool isFirstOperatorAfterSource)
+            bool isFirstOperatorAfterSource,
+            const std::vector<Record::RecordFieldIdentifier>& requiredFields)
             = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
@@ -94,9 +96,11 @@ public:
             const PhysicalOperator& child,
             const std::vector<Record::RecordFieldIdentifier>& projections,
             const size_t configuredBufferSize,
-            const bool isFirstOperatorAfterSource) override
+            const bool isFirstOperatorAfterSource,
+            const std::vector<Record::RecordFieldIdentifier>& requiredFields) override
         {
-            inputFormatterTask.scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
+            inputFormatterTask.scanTask(
+                executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource, requiredFields);
         }
 
         std::ostream& toString(std::ostream& os) const override { return inputFormatterTask.taskToString(os); }

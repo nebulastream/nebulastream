@@ -536,9 +536,11 @@ public:
         const PhysicalOperator& child,
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const size_t /*configuredBufferSize*/,
-        const bool isFirstOperatorAfterSource)
+        const bool isFirstOperatorAfterSource,
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& requiredFields)
     requires(not(FormatterType::IsFormattingRequired) and not(FormatterType::HasSpanningTuple))
     {
+        (void) requiredFields;
         executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
         executionCtx.originId = recordBuffer.getOriginId();
         executionCtx.currentTs = recordBuffer.getCreatingTs();
@@ -568,7 +570,8 @@ public:
         const PhysicalOperator& child,
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const size_t configuredBufferSize,
-        const bool)
+        const bool,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields)
     requires(FormatterType::IsFormattingRequired and FormatterType::HasSpanningTuple)
     {
         /// initialize global state variables to keep track of the watermark ts and the origin id
@@ -603,8 +606,7 @@ public:
 
             /// 'leadingFIF.value' is essentially the static function FormatterType::readsSpanningRecord
             auto recordIndex = nautilus::val<uint64_t>(0);
-            auto record = leadingFIF.value->readSpanningRecord(
-                projections, spanningRecordPtr, recordIndex, indexerMetaData, leadingFIF);
+            auto record = leadingFIF.value->readSpanningRecord(projections, spanningRecordPtr, recordIndex, indexerMetaData, leadingFIF, requiredFields);
             child.execute(executionCtx, record);
         }
 
@@ -617,7 +619,7 @@ public:
         for (nautilus::val<uint64_t> i = static_cast<uint64_t>(0); i < totalNumberOfTuples; i = i + static_cast<uint64_t>(1))
         {
             auto record = rawFieldAccessFunction.value->readSpanningRecord(
-                projections, recordBuffer.getBuffer(), i, indexerMetaData, rawFieldAccessFunction);
+                projections, recordBuffer.getBuffer(), i, indexerMetaData, rawFieldAccessFunction, requiredFields);
             child.execute(executionCtx, record);
         }
 
@@ -632,7 +634,7 @@ public:
 
             auto recordIndex = nautilus::val<uint64_t>(0);
             auto record
-                = trailingFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, trailingFIF);
+                = trailingFIF.value->readSpanningRecord(projections, recordPtr, recordIndex, indexerMetaData, trailingFIF, requiredFields);
             child.execute(executionCtx, record);
         }
     }

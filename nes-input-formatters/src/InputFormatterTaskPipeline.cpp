@@ -26,7 +26,8 @@ void NES::InputFormatters::InputFormatterTaskPipeline::scan(
     const PhysicalOperator& child,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const size_t configuredBufferSize,
-    const bool isFirstOperatorAfterSource) const
+    const bool isFirstOperatorAfterSource,
+    const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
 {
     /// If the buffer is empty, we simply return without submitting any unnecessary work on empty buffers.
     // Todo: can't check if numRecords == 0, since it may be initialized with 0 during tracing
@@ -35,7 +36,7 @@ void NES::InputFormatters::InputFormatterTaskPipeline::scan(
     //     NES_WARNING("Received empty buffer in InputFormatterTask.");
     //     return;
     // }
-    this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource);
+    this->inputFormatterTask->scanTask(executionCtx, recordBuffer, child, projections, configuredBufferSize, isFirstOperatorAfterSource, requiredFields);
 }
 
 void NES::InputFormatters::InputFormatterTaskPipeline::stop(PipelineExecutionContext&) const

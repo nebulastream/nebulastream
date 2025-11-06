@@ -36,7 +36,8 @@ public:
         std::vector<Record::RecordFieldIdentifier> projections,
         std::unique_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTaskPipeline,
         size_t configuredBufferSize,
-        bool isFirstOperatorAfterSource);
+        bool isFirstOperatorAfterSource,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
@@ -48,6 +49,7 @@ private:
     std::optional<PhysicalOperator> child;
     size_t configuredBufferSize;
     bool isFirstOperatorAfterSource = false;
+    std::vector<Record::RecordFieldIdentifier> requiredFields;
 };
 
 }

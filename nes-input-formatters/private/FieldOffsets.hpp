@@ -65,7 +65,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
+        nautilus::val<FieldOffsets*> fieldOffsetsPtr,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     {
         /// static loop over number of fields (which don't change)
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
@@ -73,8 +74,21 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
         const auto indexBufferPtr = nautilus::invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr);
         for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
         {
-            if (const auto& fieldName = metaData.getSchema().getFieldAt(i).name; not includesField(projections, fieldName))
+            const auto& fieldName = metaData.getSchema().getFieldAt(i).name;
+            if (not includesField(projections, fieldName))
             {
+                continue;
+            }
+
+            // std::cout << "field: " << fieldName << std::endl;
+            // for (auto &field : requiredFields)
+            // {
+            //     std::cout << "required field: " << field << std::endl;
+            // }
+            if (not includesField(requiredFields, fieldName))
+            {
+                VarVal const stub = VarVal(nautilus::val<int>(42));
+                record.write(fieldName, stub);
                 continue;
             }
 
