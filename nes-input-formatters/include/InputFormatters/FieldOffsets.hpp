@@ -81,7 +81,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
+        nautilus::val<FieldOffsets*> fieldOffsetsPtr,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
     {
         /// static loop over number of fields (which don't change)
@@ -94,6 +95,18 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
             if (not includesField(projections, fieldName))
             {
+                continue;
+            }
+
+            // std::cout << "field: " << fieldName << std::endl;
+            // for (auto &field : requiredFields)
+            // {
+            //     std::cout << "required field: " << field << std::endl;
+            // }
+            if (not includesField(requiredFields, field.name))
+            {
+                VarVal const stub = VarVal(nautilus::val<int>(42));
+                record.write(field.name, stub);
                 continue;
             }
 

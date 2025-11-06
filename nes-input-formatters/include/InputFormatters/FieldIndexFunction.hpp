@@ -76,10 +76,11 @@ public:
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        nautilus::val<Derived*> fieldIndexFunction) const
+        nautilus::val<Derived*> fieldIndexFunction,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     {
         return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
-            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction);
+            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction, requiredFields);
     }
 };
 
