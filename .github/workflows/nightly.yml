@@ -65,7 +65,7 @@ jobs:
       number_of_commits: 10
 
   stress-test-23h:
-    uses: ./.github/workflows/execute_query.yml
+    uses: ./.github/workflows/stress-test-23h.yml
     needs: [ get-dev-images ]
     with:
       head_sha: ${{ github.event.pull_request.head.ref }}
