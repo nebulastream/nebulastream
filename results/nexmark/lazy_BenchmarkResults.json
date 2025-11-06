@@ -1,0 +1,32 @@
+[
+    {
+        "bytesPerSecond": 15646784.86245317,
+        "query name": "Nexmark:5",
+        "time": 48.731912,
+        "tuplesPerSecond": 408706.1266957882
+    },
+    {
+        "bytesPerSecond": 18720473.809971783,
+        "query name": "Nexmark:4",
+        "time": 73.165366,
+        "tuplesPerSecond": 494944.3975992685
+    },
+    {
+        "bytesPerSecond": 209242532.40097,
+        "query name": "Nexmark:3",
+        "time": 3.272973,
+        "tuplesPerSecond": 5532093.909726722
+    },
+    {
+        "bytesPerSecond": 75882884.68467909,
+        "query name": "Nexmark:2",
+        "time": 9.025028,
+        "tuplesPerSecond": 2006242.4183060704
+    },
+    {
+        "bytesPerSecond": 43271263.61512749,
+        "query name": "Nexmark:1",
+        "time": 15.826789,
+        "tuplesPerSecond": 1144034.585916322
+    }
+]

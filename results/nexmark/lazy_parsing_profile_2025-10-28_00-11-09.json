@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-10-28_00-11-09",
+  "parseLazyValueIntoRecord": {
+    "total_ms": 5.098,
+    "count": 1092,
+    "avg_ms": 0.005,
+    "total_ns": 5098468,
+    "avg_ns": 4668.93
+  },
+  "Record::read": {
+    "total_ms": 1097.210,
+    "count": 2129,
+    "avg_ms": 0.515,
+    "total_ns": 1097210262,
+    "avg_ns": 515364.14
+  },
+  "Record::materialize": {
+    "total_ms": 1096.498,
+    "count": 654,
+    "avg_ms": 1.677,
+    "total_ns": 1096498159,
+    "avg_ns": 1676602.69
+  },
+  "Record::write": {
+    "total_ms": 4.616,
+    "count": 1239,
+    "avg_ms": 0.004,
+    "total_ns": 4616449,
+    "avg_ns": 3725.95
+  }
+}
