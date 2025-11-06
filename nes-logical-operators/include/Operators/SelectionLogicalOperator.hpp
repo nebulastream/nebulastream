@@ -60,6 +60,7 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+    [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema, Schema outputSchema) const;
 
     struct ConfigParameters
     {

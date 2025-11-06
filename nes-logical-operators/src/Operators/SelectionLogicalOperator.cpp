@@ -74,6 +74,19 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity) const
     return fmt::format("SELECTION({})", predicate.explain(verbosity));
 }
 
+LogicalOperator SelectionLogicalOperator::withInferredSchema(Schema schemaIn, Schema schemaOut) const
+{
+    auto copy = *this;
+    copy.predicate = predicate.withInferredDataType(inputSchema);
+    if (not copy.predicate.getDataType().isType(DataType::Type::BOOLEAN))
+    {
+        throw CannotInferSchema("the selection expression is not a valid predicate");
+    }
+    copy.inputSchema = schemaIn;
+    copy.outputSchema = schemaOut;
+    return copy;
+}
+
 LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
