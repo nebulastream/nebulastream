@@ -85,12 +85,6 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
             // {
             //     std::cout << "required field: " << field << std::endl;
             // }
-            if (not includesField(requiredFields, fieldName))
-            {
-                VarVal const stub = VarVal(nautilus::val<int>(42));
-                record.write(fieldName, stub);
-                continue;
-            }
 
             // Todo: could access member: 'numberOfOffsetsPerTuple'
             const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getSchema().getNumberOfFields() + 1);
@@ -109,7 +103,13 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets>
             }
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             const auto& currentField = metaData.getSchema().getFieldAt(i);
-            RawValueParser::parseLazyValueIntoRecord(currentField.dataType.type, record, fieldAddress, fieldSize, currentField.name);
+            if (not includesField(requiredFields, fieldName))
+            {
+                RawValueParser::parseLazyValueIntoRecord(currentField.dataType.type, record, fieldAddress, fieldSize, currentField.name);
+            } else
+            {
+                RawValueParser::parseRawValueIntoRecord(currentField.dataType.type, record, fieldAddress, fieldSize, currentField.name);
+            }
         }
         return record;
     }
