@@ -13,6 +13,7 @@
 add_source_files(nes-legacy-optimizer
         SourceInferencePhase.cpp
         LogicalSourceExpansionRule.cpp
+        RedundantFieldRemovalRule.cpp
         RedundantUnionRemovalRule.cpp
         RedundantProjectionRemovalRule.cpp
         OriginIdInferencePhase.cpp

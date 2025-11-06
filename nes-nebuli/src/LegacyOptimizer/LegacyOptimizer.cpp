@@ -16,6 +16,7 @@
 
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/RedundantFieldRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
 #include <LegacyOptimizer/SinkBindingRule.hpp>
@@ -34,6 +35,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
     constexpr auto redundantUnionRemovalRule = NES::LegacyOptimizer::RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = NES::LegacyOptimizer::RedundantProjectionRemovalRule{};
+    auto redundantFieldRemovalRule = NES::LegacyOptimizer::RedundantFieldRemovalRule{};
 
     sinkBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
@@ -48,6 +50,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     originIdInferencePhase.apply(newPlan);
     typeInference.apply(newPlan);
+    redundantFieldRemovalRule.apply(newPlan);
     return newPlan;
 }
 }
