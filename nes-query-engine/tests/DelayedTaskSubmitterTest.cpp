@@ -38,6 +38,10 @@
 namespace NES::Testing
 {
 
+/// While the test attempts to bypass handling real time by using a TestClock, this test cannot ensure that the condition variable
+/// is checked. Thus, we still need to rely on real time delay to ensure that condition variable was checked.
+constexpr auto REAL_TIME_DELAY = std::chrono::milliseconds(400);
+
 /// Testing the DelayedTaskSubmitter with an actual clock is impractical. The TestClock implements
 /// the std::chrono::Clock concept and is injected into the DelayedTaskSubmitter, that way the test
 /// can actually control how time is passing.
@@ -60,7 +64,7 @@ struct TestClock
 
         if (doAnActualWait)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(REAL_TIME_DELAY);
         }
     };
 
@@ -179,7 +183,7 @@ TEST_F(DelayedTaskSubmitterTest, testTaskWithZeroDelay)
     submitter.submitTaskIn(std::move(task), std::chrono::milliseconds(0));
 
     /// Wait a bit for task to be executed
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(REAL_TIME_DELAY);
 
     ASSERT_EQ(getSubmittedTaskCount(), 1);
 }
