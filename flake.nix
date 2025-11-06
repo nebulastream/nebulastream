@@ -197,6 +197,8 @@
           pkg-config
           git
           ccache
+          rustc
+          cargo
         ];
 
         # LLVM 19 toolchain with versioned symlinks for vcpkg
@@ -321,6 +323,10 @@
                 ./scripts/format.sh -i
               '';
             };
+            upRunner = import ./.nix/apps/nes-distributed-up.nix { inherit pkgs defaultPackage; };
+            runRunner = import ./.nix/apps/nes-distributed-run.nix { inherit pkgs defaultPackage; };
+            downRunner = import ./.nix/apps/nes-distributed-down.nix { inherit pkgs defaultPackage; };
+            remoteRunner = import ./.nix/apps/nes-distributed.nix { inherit pkgs defaultPackage upRunner runRunner downRunner; };
           in
           {
             clion-setup = {
@@ -330,6 +336,22 @@
             format = {
               type = "app";
               program = "${formatRunner}/bin/nes-format";
+            };
+            nes-distributed = {
+              type = "app";
+              program = "${remoteRunner}/bin/nes-distributed";
+            };
+            nes-distributed-up = {
+              type = "app";
+              program = "${upRunner}/bin/nes-distributed-up";
+            };
+            nes-distributed-run = {
+              type = "app";
+              program = "${runRunner}/bin/nes-distributed-run";
+            };
+            nes-distributed-down = {
+              type = "app";
+              program = "${downRunner}/bin/nes-distributed-down";
             };
           };
 
