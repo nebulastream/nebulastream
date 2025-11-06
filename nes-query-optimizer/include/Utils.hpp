@@ -20,6 +20,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <PhysicalOperator.hpp>
 namespace NES
 {
+std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapBeforeOperator(const std::shared_ptr<PhysicalOperatorWrapper>& operatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf, Schema sourceSchema);
 std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapBeforeOperator(const std::shared_ptr<PhysicalOperatorWrapper>& operatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf);
+std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addScanAndEmitAroundOperator(const std::shared_ptr<PhysicalOperatorWrapper>& operatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf, Schema sourceSchema);
 MemoryLayoutTypeTrait getMemoryLayoutTypeTrait (const LogicalOperator& logicalOperator);
 }
