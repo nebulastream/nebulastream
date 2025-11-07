@@ -100,6 +100,12 @@ struct PipelineMemoryProvider
     nautilus::val<AbstractBufferProvider*> bufferProvider;
 };
 
+enum class ReturnState : uint8_t
+{
+    CONTINUE,
+    REPEAT,
+};
+
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
 /// as access to operator states from the nautilus-runtime.
 /// We differentiate between local and global operator state.
@@ -128,6 +134,9 @@ struct ExecutionContext final
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
+    void setReturnState(ReturnState returnState);
+    ReturnState getReturnState() const;
+
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<WorkerThreadId> workerThreadId;
     PipelineMemoryProvider pipelineMemoryProvider;
@@ -140,6 +149,7 @@ struct ExecutionContext final
 
 private:
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
+    ReturnState returnState{ReturnState::CONTINUE};
 };
 
 }

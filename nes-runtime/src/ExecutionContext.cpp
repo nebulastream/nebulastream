@@ -165,6 +165,16 @@ void ExecutionContext::emitBuffer(const Nautilus::RecordBuffer& buffer) const
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }
 
+void ExecutionContext::setReturnState(const ReturnState returnState)
+{
+    this->returnState = returnState;
+}
+
+ReturnState ExecutionContext::getReturnState() const
+{
+    return this->returnState;
+}
+
 OperatorState* ExecutionContext::getLocalState(const OperatorId operatorId)
 {
     const auto stateEntry = localStateMap.find(operatorId);
