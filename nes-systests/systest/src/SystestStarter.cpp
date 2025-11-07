@@ -268,7 +268,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
     if (program.is_used("-s"))
     {
-        config.grpcAddressUri = program.get<std::string>("-s");
+        config.grpcAddressUri.setValue(NES::URI(program.get<std::string>("-s")));
     }
 
     if (program.is_used("-n"))
