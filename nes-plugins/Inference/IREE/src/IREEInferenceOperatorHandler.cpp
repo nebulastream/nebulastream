@@ -25,17 +25,21 @@ IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(Nebuli::Inference::Mo
 {
 }
 
-void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pec, uint32_t)
+void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
 {
-    threadLocalAdapters.reserve(pec.getNumberOfWorkerThreads());
-    for (size_t threadId = 0; threadId < pec.getNumberOfWorkerThreads(); ++threadId)
+    threadLocalAdapters.reserve(pipelineExecutionContext.getNumberOfWorkerThreads());
+    for (size_t threadId = 0; threadId < pipelineExecutionContext.getNumberOfWorkerThreads(); ++threadId)
     {
         threadLocalAdapters.emplace_back(IREEAdapter::create());
         threadLocalAdapters.back()->initializeModel(model);
     }
 }
-void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
+void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext& pipelineExecutionContext)
 {
+    const uint64_t hits = this->getHits();
+    const uint64_t misses = this->getMisses();
+    if (model.getInputs()[0].isType(DataType::Type::VARSIZED))
+        NES_INFO("{{\"pipeline_id\": {}, \"hits\": {}, \"misses\": {}}}", pipelineExecutionContext.getPipelineId(), hits, misses)
 }
 
 const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const

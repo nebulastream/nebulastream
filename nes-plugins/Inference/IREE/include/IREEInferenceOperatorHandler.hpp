@@ -62,9 +62,16 @@ public:
 
     const int8_t* getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const override;
 
+    uint64_t getHits() { return hits.load(std::memory_order_relaxed); }
+    uint64_t getMisses() { return misses.load(std::memory_order_relaxed); }
+    void incrementHits(uint64_t currentHits) const noexcept { hits += currentHits; }
+    void incrementMisses(uint64_t currentMisses) const noexcept { misses += currentMisses; }
+
 private:
     Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
+    mutable std::atomic<uint64_t> hits{0};
+    mutable std::atomic<uint64_t> misses{0};
 };
 
 }
