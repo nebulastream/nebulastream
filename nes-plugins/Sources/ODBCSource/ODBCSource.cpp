@@ -155,17 +155,16 @@ const char* sqlTypeToString(SQLSMALLINT dataType)
     {
         return it->second;
     }
-    else
-    {
-        return "UNKNOWN";
-    }
+    return "UNKNOWN";
 }
 
 template <typename Handle>
 void checkError(SQLRETURN ret, Handle& handle, std::string_view message)
 {
     if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+    {
         return;
+    }
 
     SQLCHAR sqlState[6];
     SQLCHAR messageText[SQL_MAX_MESSAGE_LENGTH];
