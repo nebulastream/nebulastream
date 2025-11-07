@@ -29,5 +29,9 @@ VarVal FieldAccessPhysicalFunction::execute(const Record& record, ArenaRef&) con
 {
     return record.read(field);
 }
+Record::RecordFieldIdentifier FieldAccessPhysicalFunction::getField() const
+{
+    return field;
+}
 
 }

@@ -26,6 +26,7 @@ class FieldAccessPhysicalFunction : public PhysicalFunctionConcept
 public:
     explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    Record::RecordFieldIdentifier getField() const;
 
 private:
     const Record::RecordFieldIdentifier field;
