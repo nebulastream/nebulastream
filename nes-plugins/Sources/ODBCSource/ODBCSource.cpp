@@ -380,7 +380,7 @@ void verifyDriverExists(std::string_view driverName)
 }
 }
 
-namespace NES::Sources
+namespace NES
 {
 
 struct Context
@@ -470,7 +470,7 @@ void ODBCSource::open()
     context = std::make_unique<Context>(std::move(env), std::move(dbc), std::move(statement), numberOfCols);
 }
 
-size_t ODBCSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     size_t totalBytes = 0;
     if (!context->latest.empty())
