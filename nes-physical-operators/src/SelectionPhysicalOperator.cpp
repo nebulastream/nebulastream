@@ -35,6 +35,10 @@ std::optional<PhysicalOperator> SelectionPhysicalOperator::getChild() const
 {
     return child;
 }
+PhysicalFunction SelectionPhysicalOperator::getFunction() const
+{
+    return function;
+}
 
 void SelectionPhysicalOperator::setChild(PhysicalOperator child)
 {
