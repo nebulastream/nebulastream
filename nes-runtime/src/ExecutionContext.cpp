@@ -58,6 +58,8 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
+    , truncatedFields({})
+    , projections({})
 {
 }
 

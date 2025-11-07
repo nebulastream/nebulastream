@@ -13,6 +13,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 #pragma once
 
+#include <Functions/PhysicalFunction.hpp>
+
 #include <QueryExecutionConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -24,4 +26,8 @@ std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOper
 std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addSwapBeforeOperator(const std::shared_ptr<PhysicalOperatorWrapper>& operatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf);
 std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addScanAndEmitAroundOperator(const std::shared_ptr<PhysicalOperatorWrapper>& operatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf, Schema sourceSchema);
 MemoryLayoutTypeTrait getMemoryLayoutTypeTrait (const LogicalOperator& logicalOperator);
+std::vector<std::string> getAccessedFieldNames(PhysicalFunction func);
+std::vector<Record::RecordFieldIdentifier> getVectorDifference(
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames);
 }

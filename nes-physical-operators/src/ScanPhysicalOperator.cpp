@@ -20,12 +20,17 @@
 #include <optional>
 #include <utility>
 #include <vector>
+
+#include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsPhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <SelectionPhysicalOperator.hpp>
+#include <Utils.hpp>
 
 namespace NES
 {
@@ -46,13 +51,46 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
+    executionCtx.truncatedFields = {};
+    executionCtx.projections = projections;
+    auto fieldNames = projections;
+    if (getChild().has_value() && getChild()->tryGet<SelectionPhysicalOperator>().has_value())
+    {
+        auto selectionOp = getChild()->tryGet<SelectionPhysicalOperator>().value();
+        auto explain=  getChild().value().toString();
+        auto func = selectionOp.getFunction();
+        fieldNames = getAccessedFieldNames(func);
+        auto notInProjections = getVectorDifference(projections, fieldNames);
+        if (not fieldNames.empty() && fieldNames.size() < projections.size())//do only if not fitler over all fields
+        {
+            executionCtx.truncatedFields = notInProjections;
+        }
+    }
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        auto record = memoryProvider->readRecord(projections, recordBuffer, i);
+        //TODO: if projection afterwards: get filter fields
+        //if scan/emit around filter/agg/map (single op pipeline)
+            //only read fields used/accessed in operator + index
+            //execute on truncated projections
+
+            //TODO: add "row_identifier" to record fields
+
+
+
+            // only pass (or remove) all tuples with (no) index in results
+            //alternatively add remaining projection fields to each record using memoryProvider(record index)
+
+            //modify column buffer provider to writeRecords with added fields
+            //TODO: also implement for row provider
+        auto record = memoryProvider->readRecord(fieldNames, recordBuffer, i);
+        if (executionCtx.truncatedFields.size() > 0)
+        {
+            record.write("row_identifier", i);
+        }
         executeChild(executionCtx, record);
     }
 }

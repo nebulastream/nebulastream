@@ -28,11 +28,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
+#include <Util/Common.hpp>
+
 #include <EmitOperatorHandler.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <function.hpp>
+#include <SelectionPhysicalOperator.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -91,47 +94,99 @@ void removeSequenceState(ExecutionContext& context, OperatorHandlerId operatorHa
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()) { }
-
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()), recordBuffer(RecordBuffer(nullptr)) { }
+    void setRecordBuffer(const RecordBuffer& recordBuf)
+    {
+        this->recordBuffer = recordBuf;
+    }
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
+    std::vector<nautilus::val<uint64_t>> indexList;
+    RecordBuffer recordBuffer;
+
 };
 
-void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    /// initialize state variable and create new buffer
+    ///initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
     const auto resultBuffer = RecordBuffer(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
+
+
+    if (!ctx.truncatedFields.empty())
+    {
+        emitState->setRecordBuffer(recordBuffer);
+        //TODO: prepare arena for id list (memory allocation)
+    }
     ctx.setLocalOperatorState(id, std::move(emitState));
 }
 
 void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    //if id list: store index into ctx
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= getMaxRecordsPerBuffer())
+    ///
+    if (!ctx.truncatedFields.empty())
     {
-        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
-        const auto resultBufferRef = ctx.allocateBuffer();
-        emitState->resultBuffer = RecordBuffer(resultBufferRef);
-        emitState->bufferMemoryArea = emitState->resultBuffer.getBuffer();
-        emitState->outputIndex = 0_u64;
+        auto index = record.read("row_identifier").cast<nautilus::val<uint64_t>>();
+        // add id to indexList
+        emitState->indexList.push_back(index);
+    }else
+    {
+        if (emitState->outputIndex >= getMaxRecordsPerBuffer())
+        {
+            emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+            const auto resultBufferRef = ctx.allocateBuffer();
+            emitState->resultBuffer = RecordBuffer(resultBufferRef);
+            emitState->bufferMemoryArea = emitState->resultBuffer.getBuffer();
+            emitState->outputIndex = 0_u64;
+        }
+
+
+        /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
+        /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
+        /// to the brim, i.e., have no more space left.
+        memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+        emitState->outputIndex = emitState->outputIndex + 1;
     }
 
-    /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
-    /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
-    /// to the brim, i.e., have no more space left.
-    memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
-    emitState->outputIndex = emitState->outputIndex + 1;
+
 }
 
 void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
-    /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
+    if (!ctx.truncatedFields.empty())
+    {
+        //TODO: test to read incoming fields in execute and add truncatedFields in close
+        for (nautilus::val<uint64_t> index : emitState->indexList)
+        {
+            auto record = memoryProvider->readRecord(ctx.projections, emitState->recordBuffer, index);
+
+
+            if (emitState->outputIndex >= getMaxRecordsPerBuffer())
+            {
+                emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+                const auto resultBufferRef = ctx.allocateBuffer();
+                emitState->resultBuffer = RecordBuffer(resultBufferRef);
+                emitState->bufferMemoryArea = emitState->resultBuffer.getBuffer();
+                emitState->outputIndex = 0_u64;
+            }
+
+            memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+            emitState->outputIndex = emitState->outputIndex + 1;
+        }
+
+        //dont store anything until close, then get all fields for id list and write them to buffer
+    }
+
+    /// emit current buffer and set the metadata
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
+
+
 }
 
 void EmitPhysicalOperator::emitRecordBuffer(

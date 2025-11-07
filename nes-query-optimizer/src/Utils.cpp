@@ -3,6 +3,15 @@
 #include <Utils.hpp>
 
 #include <DataTypes/Schema.hpp>
+#include <Functions/ConstantValuePhysicalFunction.hpp>
+#include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Functions/BooleanFunctions/AndPhysicalFunction.hpp>
+#include <Functions/BooleanFunctions/EqualsPhysicalFunction.hpp>
+#include <Functions/BooleanFunctions/OrPhysicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsPhysicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterPhysicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsPhysicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessPhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -14,6 +23,7 @@
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ScanPhysicalOperator.hpp>
+#include <SelectionPhysicalOperator.hpp>
 /*
 Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -103,5 +113,67 @@ namespace NES
         PRECONDITION(memoryLayoutIter != traitSet.end(), "operator must have a memory layout type trait");
         auto memoryLayoutTrait = memoryLayoutIter->get<MemoryLayoutTypeTrait>();
         return memoryLayoutTrait;
+    }
+
+    std::vector<std::string> getAccessedFieldNames(PhysicalFunction func)
+    {
+        if (func.tryGet<FieldAccessPhysicalFunction>())
+        {
+            auto fieldAccessFunc = func.get<FieldAccessPhysicalFunction>();
+            return {fieldAccessFunc.getField()};
+        }
+
+        auto processChildren = [](auto&& specialized) {
+            auto [leftFunc, rightFunc] = specialized.getChildFunctions();
+            auto leftFields = getAccessedFieldNames(leftFunc);
+            auto rightFields = getAccessedFieldNames(rightFunc);
+            leftFields.insert(leftFields.end(), rightFields.begin(), rightFields.end());
+            return leftFields;
+        };
+
+        if (auto andFunc = func.tryGet<AndPhysicalFunction>())
+        {
+            return processChildren(*andFunc);
+        }
+        if (auto orFunc = func.tryGet<OrPhysicalFunction>())
+        {
+            return processChildren(*orFunc);
+        }
+        if (auto greaterFunc = func.tryGet<GreaterPhysicalFunction>())
+        {
+            return processChildren(*greaterFunc);
+        }
+        if (auto greaterEqualFunc = func.tryGet<GreaterEqualsPhysicalFunction>())
+        {
+            return processChildren(*greaterEqualFunc);
+        }
+        if (auto lessFunc = func.tryGet<LessPhysicalFunction>())
+        {
+            return processChildren(*lessFunc);
+        }
+        if (auto lessEqualFunc = func.tryGet<LessEqualsPhysicalFunction>())
+        {
+            return processChildren(*lessEqualFunc);
+        }
+        if (auto equalFunc = func.tryGet<EqualsPhysicalFunction>())
+        {
+            return processChildren(*equalFunc);
+        }
+        return {};
+    }
+
+    std::vector<Record::RecordFieldIdentifier> getVectorDifference(
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+    {
+        std::vector<Record::RecordFieldIdentifier> difference;
+        for (const auto& proj : projections)
+        {
+            if (std::find(fieldNames.begin(), fieldNames.end(), proj) == fieldNames.end())
+            {
+                difference.push_back(proj);
+            }
+        }
+        return difference;
     }
 }
