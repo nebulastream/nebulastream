@@ -476,7 +476,7 @@ size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_tok
     if (!context->latest.empty())
     {
         const auto truncatedNumberOfBytes = std::min(context->latest.size(), tupleBuffer.getBufferSize());
-        memcpy(tupleBuffer.getBuffer(), context->latest.data(), truncatedNumberOfBytes);
+        memcpy(tupleBuffer.getAvailableMemoryArea(), context->latest.data(), truncatedNumberOfBytes);
 
         if (context->latest.size() > truncatedNumberOfBytes)
         {
@@ -491,7 +491,7 @@ size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_tok
         auto row = SQL::convertRowToCSV(*context->statement.env, static_cast<SQLSMALLINT>(context->numberOfCols));
         size_t bytesLeft = tupleBuffer.getBufferSize() - totalBytes;
         size_t bytesToWrite = std::min(bytesLeft, row.size());
-        memcpy(tupleBuffer.getBuffer() + totalBytes, row.c_str(), bytesToWrite);
+        memcpy(tupleBuffer.getAvailableMemoryArea() + totalBytes, row.c_str(), bytesToWrite);
         totalBytes += bytesToWrite;
 
         if (bytesLeft < row.size() + 1)
@@ -502,7 +502,7 @@ size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_tok
         }
         else
         {
-            *(tupleBuffer.getBuffer() + totalBytes) = '\n';
+            *(tupleBuffer.getAvailableMemoryArea() + totalBytes) = '\n';
             totalBytes++;
         }
     }
