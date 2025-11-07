@@ -13,10 +13,8 @@
 add_plugin_as_library(ODBC Source nes-sources-registry ODBC_source_plugin_library ODBCSource.cpp)
 add_plugin_as_library(ODBC SourceValidation nes-sources-registry ODBC_source_validation_plugin_library ODBCSource.cpp)
 
-include(FindODBC)
-if (NOT ODBC_FOUND)
-    message(FATAL_ERROR "Could not find ODBC. Install `unixodbc-dev` or disable the plugin.")
-endif()
+#set(unofficial-unixodbc_DIR /vcpkg/gt)
+find_package(unixodbc CONFIG REQUIRED)
 
-target_link_libraries(ODBC_source_plugin_library PRIVATE ODBC::ODBC)
-target_link_libraries(ODBC_source_validation_plugin_library PRIVATE ODBC::ODBC)
+target_link_libraries(ODBC_source_plugin_library PRIVATE UNIX::odbc)
+target_link_libraries(ODBC_source_validation_plugin_library PRIVATE UNIX::odbc)

@@ -45,7 +45,8 @@
     "nameof",
     "scope-guard",
     "boost-url",
-    "simdjson"
+    "simdjson",
+    "unixodbc"
   ],
   "overrides": [
     {
