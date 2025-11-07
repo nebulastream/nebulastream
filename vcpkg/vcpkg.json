@@ -41,7 +41,8 @@
     "nautilus",
     "replxx",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "boost-url"
   ],
   "overrides": [
     {
