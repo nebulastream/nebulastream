@@ -1,0 +1,413 @@
+# name: inference/solar_power/short-term.test
+# description: Solar Power dataset experiments
+# groups: [Inference]
+
+Source solarPowerSource UINT64 timestamp FLOAT64 value FILE
+TESTDATA/large/solar_power/solar-power.csv
+
+SINK solarPowerVarsizedDiscard TYPE Discard VARSIZED powerProdNext2Min
+
+MODEL minMaxScalerSolar TESTDATA/model/solar_power/preprocessor/scaler_solar.onnx
+FLOAT64
+FLOAT32 value_sc
+BATCH_SIZE 1
+CACHE NONE SIZE 1
+
+MODEL nBeats_none TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE NONE SIZE 1
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_none, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE TWO_QUEUES SIZE 16
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_2q, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE TWO_QUEUES SIZE 32
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_2q, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE TWO_QUEUES SIZE 64
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_2q, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE TWO_QUEUES SIZE 128
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_2q, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE FIFO SIZE 16
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_fifo, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE FIFO SIZE 32
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_fifo, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE FIFO SIZE 64
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_fifo, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE FIFO SIZE 128
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_fifo, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LFU SIZE 16
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lfu, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LFU SIZE 32
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lfu, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LFU SIZE 64
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lfu, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LFU SIZE 128
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lfu, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LRU SIZE 16
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lru, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LRU SIZE 32
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lru, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LRU SIZE 64
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lru, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE LRU SIZE 128
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_lru, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE SECOND_CHANCE SIZE 16
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_second_chance, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE SECOND_CHANCE SIZE 32
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_second_chance, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE SECOND_CHANCE SIZE 64
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_second_chance, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+
+MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_600_stride_60.onnx
+VARSIZED
+VARSIZED powerProdNext2Min
+BATCH_SIZE 1
+CACHE SECOND_CHANCE SIZE 128
+
+SELECT powerProdNext2Min FROM (
+    SELECT INFER_MODEL(nBeats_second_chance, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value_sc) AS value_60_sec
+        FROM (
+            SELECT INFER_MODEL(minMaxScalerSolar, (value)) FROM solarPowerSource
+        )
+        WINDOW SLIDING(timestamp, SIZE 600000 ms, ADVANCE BY 60000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
