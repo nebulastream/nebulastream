@@ -27,6 +27,10 @@ class EqualsPhysicalFunction final : public PhysicalFunctionConcept
 public:
     EqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] std::pair<PhysicalFunction, PhysicalFunction> getChildFunctions() const
+    {
+        return {leftPhysicalFunction, rightPhysicalFunction};
+    }
 
 private:
     PhysicalFunction leftPhysicalFunction;
