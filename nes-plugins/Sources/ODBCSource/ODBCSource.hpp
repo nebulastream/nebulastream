@@ -33,7 +33,7 @@
 #include "Sources/SourceDescriptor.hpp"
 
 
-namespace NES::Sources
+namespace NES
 {
 
 struct Context;
@@ -56,14 +56,14 @@ public:
     ODBCSource(ODBCSource&&) = delete;
     ODBCSource& operator=(ODBCSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open ODBC connection.
     void open() override;
     /// Close ODBC connection.
     void close() override;
 
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    static std::unique_ptr<DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
@@ -85,38 +85,38 @@ private:
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all ODBC config parameters.
 struct ConfigParametersODBC
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
+    static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
         "host", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(HOST, config);
+            return DescriptorConfig::tryGet(HOST, config);
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> DATABASE{
+    static inline const DescriptorConfig::ConfigParameter<std::string> DATABASE{
         "database", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(DATABASE, config);
+            return DescriptorConfig::tryGet(DATABASE, config);
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> USERNAME{
+    static inline const DescriptorConfig::ConfigParameter<std::string> USERNAME{
         "username", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(USERNAME, config);
+            return DescriptorConfig::tryGet(USERNAME, config);
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> PASSWORD{
+    static inline const DescriptorConfig::ConfigParameter<std::string> PASSWORD{
         "password", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(PASSWORD, config);
+            return DescriptorConfig::tryGet(PASSWORD, config);
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> DRIVER{
+    static inline const DescriptorConfig::ConfigParameter<std::string> DRIVER{
         "driver", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string> {
-            return Configurations::DescriptorConfig::tryGet(DRIVER, config);
+            return DescriptorConfig::tryGet(DRIVER, config);
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> QUERY{
+    static inline const DescriptorConfig::ConfigParameter<std::string> QUERY{
         "query", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string> {
-            return Configurations::DescriptorConfig::tryGet(QUERY, config);
+            return DescriptorConfig::tryGet(QUERY, config);
         }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(HOST, DRIVER, QUERY, USERNAME, PASSWORD, DATABASE);
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(HOST, DRIVER, QUERY, USERNAME, PASSWORD, DATABASE);
 };
 
 }

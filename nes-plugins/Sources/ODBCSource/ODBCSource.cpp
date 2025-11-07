@@ -155,17 +155,16 @@ const char* sqlTypeToString(SQLSMALLINT dataType)
     {
         return it->second;
     }
-    else
-    {
-        return "UNKNOWN";
-    }
+    return "UNKNOWN";
 }
 
 template <typename Handle>
 void checkError(SQLRETURN ret, Handle& handle, std::string_view message)
 {
     if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+    {
         return;
+    }
 
     SQLCHAR sqlState[6];
     SQLCHAR messageText[SQL_MAX_MESSAGE_LENGTH];
@@ -380,7 +379,7 @@ void verifyDriverExists(std::string_view driverName)
 }
 }
 
-namespace NES::Sources
+namespace NES
 {
 
 struct Context
@@ -470,13 +469,13 @@ void ODBCSource::open()
     context = std::make_unique<Context>(std::move(env), std::move(dbc), std::move(statement), numberOfCols);
 }
 
-size_t ODBCSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     size_t totalBytes = 0;
     if (!context->latest.empty())
     {
         const auto truncatedNumberOfBytes = std::min(context->latest.size(), tupleBuffer.getBufferSize());
-        memcpy(tupleBuffer.getBuffer(), context->latest.data(), truncatedNumberOfBytes);
+        memcpy(tupleBuffer.getAvailableMemoryArea(), context->latest.data(), truncatedNumberOfBytes);
 
         if (context->latest.size() > truncatedNumberOfBytes)
         {
@@ -491,7 +490,7 @@ size_t ODBCSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const 
         auto row = SQL::convertRowToCSV(*context->statement.env, static_cast<SQLSMALLINT>(context->numberOfCols));
         size_t bytesLeft = tupleBuffer.getBufferSize() - totalBytes;
         size_t bytesToWrite = std::min(bytesLeft, row.size());
-        memcpy(tupleBuffer.getBuffer() + totalBytes, row.c_str(), bytesToWrite);
+        memcpy(tupleBuffer.getAvailableMemoryArea() + totalBytes, row.c_str(), bytesToWrite);
         totalBytes += bytesToWrite;
 
         if (bytesLeft < row.size() + 1)
@@ -502,7 +501,7 @@ size_t ODBCSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const 
         }
         else
         {
-            *(tupleBuffer.getBuffer() + totalBytes) = '\n';
+            *(tupleBuffer.getAvailableMemoryArea() + totalBytes) = '\n';
             totalBytes++;
         }
     }
