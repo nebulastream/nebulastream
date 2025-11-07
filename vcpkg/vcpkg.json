@@ -41,6 +41,7 @@
     "nautilus",
     "replxx",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "unixodbc"
   ]
 }
