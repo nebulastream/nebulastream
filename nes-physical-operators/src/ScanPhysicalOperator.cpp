@@ -51,20 +51,21 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.truncatedFields = {};
-    executionCtx.projections = projections;
+    executionCtx.truncatedFields = recordBuffer.getTruncatedFields();
+
     auto fieldNames = projections;
     if (getChild().has_value() && getChild()->tryGet<SelectionPhysicalOperator>().has_value())
     {
         auto selectionOp = getChild()->tryGet<SelectionPhysicalOperator>().value();
-        auto explain=  getChild().value().toString();
+        //auto explain=  getChild().value().toString();
         auto func = selectionOp.getFunction();
         fieldNames = getAccessedFieldNames(func);
-        auto notInProjections = getVectorDifference(projections, fieldNames);
-        if (not fieldNames.empty() && fieldNames.size() < projections.size())//do only if not fitler over all fields
-        {
-            executionCtx.truncatedFields = notInProjections;
-        }
+        //auto notInProjections = getVectorDifference(projections, fieldNames);
+        //if (fieldNames.size() > 0 && fieldNames.size() < projections.size())//do only if not fitler over all fields
+
+        recordBuffer.setTruncatedFields(true);
+        executionCtx.truncatedFields = true;
+
     }
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
@@ -87,9 +88,9 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
             //modify column buffer provider to writeRecords with added fields
             //TODO: also implement for row provider
         auto record = memoryProvider->readRecord(fieldNames, recordBuffer, i);
-        if (executionCtx.truncatedFields.size() > 0)
+        if (recordBuffer.getTruncatedFields())
         {
-            record.write("row_identifier", i);
+            record.write("row_identifier", nautilus::val(i));
         }
         executeChild(executionCtx, record);
     }

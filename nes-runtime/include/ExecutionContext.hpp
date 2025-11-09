@@ -189,8 +189,8 @@ struct ExecutionContext final
     nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
-    std::vector<Record::RecordFieldIdentifier> truncatedFields; /// Number of fields that have been truncated in the scan (e.g., for selection operator optimizations)
-    std::vector<Record::RecordFieldIdentifier> projections; /// Projections used in the scan operator
+    nautilus::val<bool> truncatedFields; /// Number of fields that have been truncated in the scan (e.g., for selection operator optimizations)
+    std::vector<Record::RecordFieldIdentifier> projections;
 
 private:
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;

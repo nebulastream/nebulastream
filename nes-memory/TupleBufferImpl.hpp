@@ -104,6 +104,8 @@ public:
     void setChunkNumber(ChunkNumber chunkNumber);
     [[nodiscard]] bool isLastChunk() const noexcept;
     void setLastChunk(bool lastChunk);
+    [[nodiscard]] bool hasTruncatedFields() const noexcept;
+    void setHasTruncatedFields(bool hasTruncatedFields);
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
@@ -123,6 +125,7 @@ private:
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
+    bool truncatedFields = false;
     Timestamp creationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;

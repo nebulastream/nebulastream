@@ -86,6 +86,16 @@ nautilus::val<bool> RecordBuffer::isLastChunk()
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_isLastChunk, tupleBufferRef)};
 }
 
+void RecordBuffer::setTruncatedFields(const nautilus::val<bool>& truncatedFields)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setHasTruncatedFields, tupleBufferRef, truncatedFields);
+}
+
+nautilus::val<bool> RecordBuffer::getTruncatedFields()
+{
+    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_hasTruncatedFields, tupleBufferRef)};
+}
+
 nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, tupleBufferRef)};

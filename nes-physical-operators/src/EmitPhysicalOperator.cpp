@@ -98,12 +98,14 @@ public:
     void setRecordBuffer(const RecordBuffer& recordBuf)
     {
         this->recordBuffer = recordBuf;
+        this->hasTruncatedFields = this->recordBuffer.getTruncatedFields();
     }
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
     std::vector<nautilus::val<uint64_t>> indexList;
     RecordBuffer recordBuffer;
+    nautilus::val<bool> hasTruncatedFields = false;
 
 };
 
@@ -114,10 +116,11 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffe
     const auto resultBuffer = RecordBuffer(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
 
+    emitState->setRecordBuffer(recordBuffer);
 
-    if (!ctx.truncatedFields.empty())
+    if (recordBuffer.getTruncatedFields())
     {
-        emitState->setRecordBuffer(recordBuffer);
+
         //TODO: prepare arena for id list (memory allocation)
     }
     ctx.setLocalOperatorState(id, std::move(emitState));
@@ -129,7 +132,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     /// emit buffer if it reached the maximal capacity
     ///
-    if (!ctx.truncatedFields.empty())
+    if (emitState->hasTruncatedFields)
     {
         auto index = record.read("row_identifier").cast<nautilus::val<uint64_t>>();
         // add id to indexList
@@ -159,14 +162,12 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    if (!ctx.truncatedFields.empty())
+    if (emitState->hasTruncatedFields)
     {
         //TODO: test to read incoming fields in execute and add truncatedFields in close
-        for (nautilus::val<uint64_t> index : emitState->indexList)
-        {
-            auto record = memoryProvider->readRecord(ctx.projections, emitState->recordBuffer, index);
-
-
+        auto fieldNames = memoryProvider->getMemoryLayout()->getSchema().getFieldNames();
+        for (auto index : nautilus::static_iterable(emitState->indexList)) {
+            auto record = memoryProvider->readRecord(fieldNames, emitState->recordBuffer, index);
             if (emitState->outputIndex >= getMaxRecordsPerBuffer())
             {
                 emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
@@ -200,6 +201,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
+    recordBuffer.setTruncatedFields(false);
 
     /// Chunk Logic. Order matters.
     /// A worker thread will clean up the sequence state for the current sequence number if its told it is the last

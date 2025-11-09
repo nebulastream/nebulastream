@@ -180,6 +180,17 @@ bool TupleBuffer::isLastChunk() const noexcept
     return controlBlock->isLastChunk();
 }
 
+void TupleBuffer::setHasTruncatedFields(bool truncatedFields) noexcept
+{
+    controlBlock->setHasTruncatedFields(truncatedFields);
+}
+
+bool TupleBuffer::hasTruncatedFields() const noexcept
+{
+    return controlBlock->hasTruncatedFields();
+}
+
+
 void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);

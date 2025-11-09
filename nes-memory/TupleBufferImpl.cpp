@@ -281,6 +281,16 @@ void BufferControlBlock::setLastChunk(const bool lastChunk)
     this->lastChunk = lastChunk;
 }
 
+void BufferControlBlock::setHasTruncatedFields(const bool hasTruncatedFields)
+{
+    this->truncatedFields = hasTruncatedFields;
+}
+
+bool BufferControlBlock::hasTruncatedFields() const noexcept
+{
+    return truncatedFields;
+}
+
 void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)
 {
     this->creationTimestamp = timestamp;

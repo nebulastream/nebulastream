@@ -90,6 +90,11 @@ inline void NES_Memory_TupleBuffer_setLastChunk(Memory::TupleBuffer* tupleBuffer
 {
     tupleBuffer->setLastChunk(isLastChunk);
 };
+inline void NES_Memory_TupleBuffer_setHasTruncatedFields(Memory::TupleBuffer* tupleBuffer, const bool truncatedFields)
+{
+    tupleBuffer->setHasTruncatedFields(truncatedFields);
+};
+
 
 inline ChunkNumber NES_Memory_TupleBuffer_getChunkNumber(const Memory::TupleBuffer* tupleBuffer)
 {
@@ -100,5 +105,11 @@ inline bool NES_Memory_TupleBuffer_isLastChunk(const Memory::TupleBuffer* tupleB
 {
     return tupleBuffer->isLastChunk();
 };
+
+inline bool NES_Memory_TupleBuffer_hasTruncatedFields(const Memory::TupleBuffer* tupleBuffer)
+{
+    return tupleBuffer->hasTruncatedFields();
+};
+
 
 }

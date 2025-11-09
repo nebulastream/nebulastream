@@ -178,6 +178,10 @@ public:
     /// @brief set if this is the last chunk of a sequence number
     void setLastChunk(bool isLastChunk) noexcept;
 
+    void setHasTruncatedFields(bool isLastChunk) noexcept;
+
+    bool hasTruncatedFields() const noexcept;
+
     /// @brief retrieves if this is the last chunk
     [[nodiscard]] bool isLastChunk() const noexcept;
 
