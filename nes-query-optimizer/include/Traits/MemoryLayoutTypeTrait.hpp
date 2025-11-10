@@ -15,31 +15,24 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <string>
 #include <string_view>
 #include <typeinfo>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableTrait.pb.h>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
-enum class JoinImplementation : uint8_t
-{
-    NESTED_LOOP_JOIN,
-    HASH_JOIN,
-    CHOICELESS
-};
 
-/// Struct that stores the join implementation type as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
-struct JoinImplementationTypeTrait final : public TraitConcept
+/// Struct that stores the memory layout type as traits. For now, we simply choose a row layout all the time
+struct MemoryLayoutTypeTrait final : public TraitConcept
 {
-    static constexpr std::string_view NAME = "JoinImplementationType";
-    JoinImplementation implementationType;
+    static constexpr std::string_view NAME = "MemoryLayoutType";
+    MemoryLayoutType memoryLayout;
 
-    explicit JoinImplementationTypeTrait(JoinImplementation implementationType);
+    explicit MemoryLayoutTypeTrait(MemoryLayoutType memoryLayout);
 
     [[nodiscard]] const std::type_info& getType() const override;
 
@@ -53,5 +46,4 @@ struct JoinImplementationTypeTrait final : public TraitConcept
 
     [[nodiscard]] std::string_view getName() const override;
 };
-
 }
