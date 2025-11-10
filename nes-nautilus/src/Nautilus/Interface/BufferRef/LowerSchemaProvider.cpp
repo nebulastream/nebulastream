@@ -64,8 +64,7 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 fields.begin(),
                 fields.end(),
                 0UL,
-                [](auto size, const ColumnTupleBufferRef::Field& field)
-                { return size + field.type.getSizeInBytes(); });
+                [](auto size, const ColumnTupleBufferRef::Field& field) { return size + field.type.getSizeInBytes(); });
 
             return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});
         }
