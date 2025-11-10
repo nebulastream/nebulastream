@@ -101,7 +101,7 @@ namespace NES
 void JSONInputFormatIndexer::indexRawBuffer(
     FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData& metaData) const
 {
-    fieldOffsets.startSetup(metaData.getSchema().getNumberOfFields(), FIELD_DELIMITER);
+    fieldOffsets.startSetup(metaData.getNumberOfFields(), FIELD_DELIMITER);
 
     const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(TUPLE_DELIMITER));
 
@@ -125,7 +125,7 @@ void JSONInputFormatIndexer::indexRawBuffer(
         const auto nextTuple = std::string_view(rawBuffer.getBufferView().begin() + startIdxOfNextTuple, sizeOfNextTuple);
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
-        setupFieldAccessFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData.getSchema().getNumberOfFields(), metaData);
+        setupFieldAccessFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData.getNumberOfFields(), metaData);
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
         startIdxOfNextTuple = endIdxOfNextTuple + DELIMITER_SIZE;
