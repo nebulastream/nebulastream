@@ -90,7 +90,7 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> 
     const auto& rightInputSchema = inputSchemas[1];
 
     auto copy = *this;
-    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
+    copy.outputSchema = Schema{};
     copy.leftInputSchema = leftInputSchema;
     copy.rightInputSchema = rightInputSchema;
 

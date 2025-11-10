@@ -143,7 +143,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
     copy.windowType->inferStamp(firstSchema);
     copy.inputSchema = firstSchema;
-    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
+    copy.outputSchema = Schema{};
 
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
     {
