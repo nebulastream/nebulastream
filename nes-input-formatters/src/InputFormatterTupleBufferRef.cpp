@@ -16,8 +16,6 @@
 
 #include <memory>
 #include <ostream>
-
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
@@ -25,11 +23,6 @@
 
 namespace NES
 {
-
-std::shared_ptr<MemoryLayout> InputFormatterTupleBufferRef::getMemoryLayout() const
-{
-    return this->inputFormatter->getMemoryLayout();
-}
 
 void InputFormatterTupleBufferRef::readBuffer(
     ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const

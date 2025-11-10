@@ -53,7 +53,7 @@ class UnpooledChunksManager
             size_t totalSize = 0;
             size_t usedSize = 0;
             uint8_t* startOfChunk = nullptr;
-            std::vector<std::unique_ptr<detail::MemorySegment>> unpooledMemorySegments;
+            std::vector<std::unique_ptr<NES::detail::MemorySegment>> unpooledMemorySegments;
             uint64_t activeMemorySegments = 0;
 
             friend std::ostream& operator<<(std::ostream& os, const ChunkControlBlock& chunkControlBlock)
@@ -68,7 +68,7 @@ class UnpooledChunksManager
         };
 
         explicit UnpooledChunk(uint64_t windowSize);
-        void emplaceChunkControlBlock(uint8_t* chunkKey, std::unique_ptr<detail::MemorySegment> newMemorySegment);
+        void emplaceChunkControlBlock(uint8_t* chunkKey, std::unique_ptr<NES::detail::MemorySegment> newMemorySegment);
         std::unordered_map<uint8_t*, ChunkControlBlock> chunks;
         uint8_t* lastAllocateChunkKey;
         RollingAverage<size_t> rollingAverage;

@@ -29,8 +29,6 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -103,8 +101,8 @@ public:
     explicit InputFormatter(
         FormatterType inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider, const ParserConfig& parserConfig)
         : inputFormatIndexer(std::move(inputFormatIndexer))
-        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider->getMemoryLayout()})
-        , projections(memoryProvider->getMemoryLayout()->getSchema().getFieldNames())
+        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider})
+        , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
         , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
     {
@@ -116,8 +114,6 @@ public:
     InputFormatter& operator=(const InputFormatter&) = delete;
     InputFormatter(InputFormatter&&) = default;
     InputFormatter& operator=(InputFormatter&&) = delete;
-
-    [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const { return memoryProvider->getMemoryLayout(); }
 
     /// Executes the first phase, which indexes a (raw) buffer enabling the second phase, which calls 'readBuffer()' to index specific
     /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
