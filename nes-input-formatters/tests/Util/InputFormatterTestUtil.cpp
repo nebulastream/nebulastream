@@ -202,15 +202,20 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const std::unordered_map<std::string, std::string>& parserConfiguration,
     const Schema& schema,
+    const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)
 {
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
-    return createInputFormatter(validatedParserConfiguration, schema, sizeOfFormattedBuffers, isCompiled);
+    return createInputFormatter(validatedParserConfiguration, schema, memoryLayoutType, sizeOfFormattedBuffers, isCompiled);
 }
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const ParserConfig& parserConfiguration, const Schema& schema, const size_t sizeOfFormattedBuffers, const bool isCompiled)
+    const ParserConfig& parserConfiguration,
+    const Schema& schema,
+    const MemoryLayoutType memoryLayoutType,
+    const size_t sizeOfFormattedBuffers,
+    const bool isCompiled)
 {
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
