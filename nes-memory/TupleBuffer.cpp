@@ -21,9 +21,9 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT: required for fmt
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
 #include <fmt/format.h>
+#include <include/Runtime/VariableSizedAccess.hpp>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
