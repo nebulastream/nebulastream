@@ -60,25 +60,31 @@ std::unique_ptr<HashFunction> NautilusTestUtils::getMurMurHashFunction()
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
+    const Schema& schema,
+    const MemoryLayoutType& memoryLayout,
+    const uint64_t numberOfTuples,
+    BufferManager& bufferManager,
+    const uint64_t minSizeVarSizedData)
 {
     /// We log the seed to gain reproducibility of the test
     const auto seed = std::random_device()();
     NES_INFO("Seed for creating values: {}", seed);
 
     const auto maxSizeVarSizedData = std::max(20UL, minSizeVarSizedData + 1);
-    return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
+    return createMonotonicallyIncreasingValues(
+        schema, memoryLayout, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
-std::vector<TupleBuffer>
-NautilusTestUtils::createMonotonicallyIncreasingValues(const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager)
+std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+    const Schema& schema, const MemoryLayoutType& memoryLayout, const uint64_t numberOfTuples, BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
-    return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
+    return createMonotonicallyIncreasingValues(schema, memoryLayout, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema& schema,
+    const MemoryLayoutType& memoryLayout,
     const uint64_t numberOfTuples,
     BufferManager& bufferManager,
     const uint64_t seed,
@@ -152,7 +158,7 @@ Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType:
 Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, const uint64_t typeIdxOffset)
 {
     /// Creating a schema for the memory provider
-    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    auto schema = Schema{};
     for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
     {
         const auto nameOfField = Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset));

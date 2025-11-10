@@ -172,7 +172,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     copy.inputSchema = firstSchema;
 
     /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
-    auto initial = Schema{copy.outputSchema.memoryLayoutType};
+    auto initial = Schema{};
     if (asterisk)
     {
         initial.appendFieldsFromOtherSchema(copy.inputSchema);

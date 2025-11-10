@@ -132,7 +132,7 @@ CLI::SchemaField::SchemaField(std::string name, DataType type) : name(std::move(
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 Schema YAMLBinder::bindSchema(const std::vector<SchemaField>& attributeFields) const
 {
-    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema schema;
     for (const auto& [name, type] : attributeFields)
     {
         schema.addField(name, type);

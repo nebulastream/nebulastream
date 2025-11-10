@@ -143,15 +143,20 @@ public:
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
         const Schema& schema,
+        const MemoryLayoutType& memoryLayout,
         uint64_t numberOfTuples,
         BufferManager& bufferManager,
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
     std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
-        const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager, uint64_t minSizeVarSizedData);
-    std::vector<TupleBuffer>
-    createMonotonicallyIncreasingValues(const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager);
+        const Schema& schema,
+        const MemoryLayoutType& memoryLayout,
+        uint64_t numberOfTuples,
+        BufferManager& bufferManager,
+        uint64_t minSizeVarSizedData);
+    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+        const Schema& schema, const MemoryLayoutType& memoryLayout, uint64_t numberOfTuples, BufferManager& bufferManager);
 
     void compileFillBufferFunction(
         std::string_view functionName,

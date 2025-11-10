@@ -115,7 +115,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     projectionValues = inputSchemaValue.getFieldNames();
 
     /// Creating the buffers with the values for the keys and values with a specific seed
-    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, params.numberOfItems, *bufferManager);
+    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
 }
 
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(
