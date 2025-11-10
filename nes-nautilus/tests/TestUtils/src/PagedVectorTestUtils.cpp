@@ -95,6 +95,7 @@ void runStoreTest(
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
     const Schema& testSchema,
+    const MemoryLayoutType& memoryLayout,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<TupleBuffer>& allRecords,
@@ -170,6 +171,7 @@ void runRetrieveTest(
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const Schema& schema,
+    const MemoryLayoutType& memoryLayout,
     const uint64_t entrySize,
     const uint64_t pageSize,
     const std::vector<std::vector<TupleBuffer>>& allRecordsAndVectors,
@@ -190,8 +192,8 @@ void insertAndAppendAllPagesTest(
         varPageSize += differentPageSizes * entrySize;
         const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(varPageSize, schema);
         allPagedVectors.emplace_back(std::make_unique<Interface::PagedVector>());
-        runStoreTest(*allPagedVectors.back(), schema, pageSize, projections, allRecords, nautilusEngine, bufferManager);
-        runRetrieveTest(*allPagedVectors.back(), schema, pageSize, projections, allRecords, nautilusEngine, bufferManager);
+        runStoreTest(*allPagedVectors.back(), schema, memoryLayout, pageSize, projections, allRecords, nautilusEngine, bufferManager);
+        runRetrieveTest(*allPagedVectors.back(), schema, memoryLayout, pageSize, projections, allRecords, nautilusEngine, bufferManager);
     }
 
     /// Appending and deleting all PagedVectors except for the first one
@@ -210,8 +212,9 @@ void insertAndAppendAllPagesTest(
 
     /// Checking for number of pagedVectors and correct values
     EXPECT_EQ(allPagedVectors.size(), 1);
-    const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(pageSize, schema);
-    runRetrieveTest(*firstPagedVec, schema, pageSize, projections, expectedRecordsAfterAppendAll, nautilusEngine, bufferManager);
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, schema, memoryLayout);
+    runRetrieveTest(
+        *firstPagedVec, schema, memoryLayout, pageSize, projections, expectedRecordsAfterAppendAll, nautilusEngine, bufferManager);
 }
 
 }
