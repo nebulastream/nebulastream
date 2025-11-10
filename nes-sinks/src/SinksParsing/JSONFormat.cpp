@@ -22,12 +22,12 @@
 #include <sstream>
 #include <string>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -72,7 +72,7 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
                       {
                           const VariableSizedAccess variableSizedAccess{
                               *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                          const auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                          const auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
                           return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedData);
                       }
                       return fmt::format("\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(&tuple[offset]));
