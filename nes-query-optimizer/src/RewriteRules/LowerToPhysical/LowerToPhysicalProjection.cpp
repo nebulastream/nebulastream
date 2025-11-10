@@ -21,12 +21,11 @@
 
 #include <Functions/FunctionProvider.hpp>
 #include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/ImplementationTypeTrait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
@@ -60,10 +59,21 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
-    const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(bufferSize, inputSchema);
-    auto scan = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(getParserConfig(projectionLogicalOperator), memoryProvider));
+    const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
+    auto scan = ScanPhysicalOperator(
+        provideInputFormatterTupleBufferRef(getParserConfig(projectionLogicalOperator), memoryProvider), inputSchema.getFieldNames());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+        scan,
+        outputSchema,
+        outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
+        std::nullopt,
+        std::nullopt,
+        PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
     auto child = scanWrapper;
 
@@ -78,6 +88,8 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
             physicalOperator,
             outputSchema,
             outputSchema,
+            memoryLayoutType,
+            memoryLayoutType,
             std::nullopt,
             std::nullopt,
             PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,

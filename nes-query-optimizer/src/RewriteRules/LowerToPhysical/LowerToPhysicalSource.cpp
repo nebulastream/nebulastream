@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
@@ -45,8 +46,16 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     const auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(
         inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
+    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator,
+        inputSchemas[0],
+        logicalOperator.getOutputSchema(),
+        memoryLayoutType,
+        memoryLayoutType,
+        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {}};
 }
 
