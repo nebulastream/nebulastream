@@ -15,13 +15,11 @@
 #pragma once
 
 #include <concepts>
-#include <cstddef>
 #include <ostream>
 #include <string_view>
 #include <type_traits>
 #include <utility>
-#include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <RawValueParser.hpp>
 
@@ -30,14 +28,17 @@ namespace NES
 
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatter
 template <typename T>
-concept IndexerMetaDataType
-    = requires(ParserConfig config, const MemoryLayout& memoryLayout, T indexerMetaData, std::ostream& spanningTuple) {
-          T(config, memoryLayout);
-          /// Assumes a fixed set of symbols that separate tuples
-          /// InputFormatIndexers without tuple delimiters should return an empty string
-          { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
-          { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
-      };
+concept IndexerMetaDataType = requires(
+    ParserConfig config,
+    const Nautilus::Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+    T indexerMetaData,
+    std::ostream& spanningTuple) {
+    T(config, tupleBufferRef);
+    /// Assumes a fixed set of symbols that separate tuples
+    /// InputFormatIndexers without tuple delimiters should return an empty string
+    { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
+    { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
+};
 
 template <typename T>
 concept FieldIndexFunctionType = requires(const T& indexFunction) {
