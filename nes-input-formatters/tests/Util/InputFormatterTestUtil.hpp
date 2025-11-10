@@ -250,29 +250,16 @@ compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, st
     sortTupleBuffers(expectedResult);
 
     bool allTuplesMatch = true;
-    TupleIterator expectedResultTupleIt(std::move(expectedResult), schema);
-    for (const auto& actualResultTupleBuffer : actualResult)
-    {
-        for (auto actualResultTestTupleBuffer = TestTupleBuffer::createTestTupleBuffer(actualResultTupleBuffer, schema);
-             const auto& actualResultTuple : actualResultTestTupleBuffer)
-        {
-            if (const auto expectedResultTuple = expectedResultTupleIt.getNextTuple())
-            {
-                if (actualResultTuple != expectedResultTuple)
-                {
-                    NES_ERROR(
-                        "Tuples don't match: {} != {}", actualResultTuple.toString(schema), expectedResultTuple.value().toString(schema));
-                    allTuplesMatch = false;
-                }
-            }
-            else
-            {
-                NES_ERROR("Found actual result tuple: {}, but exhausted expected", actualResultTuple.toString(schema));
-                allTuplesMatch = false;
-            }
+    auto bufferRef = LowerSchemaProvider::lowerSchema(expectedResult.at(0).getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
     TupleIterator expectedResultTupleIt(std::move(expectedResult), schema, MemoryLayoutType::ROW_LAYOUT);
     TupleIterator actualResultTupleIt(std::move(actualResult), schema, MemoryLayoutType::ROW_LAYOUT);
     while (const auto actualResultTuple = actualResultTupleIt.getNextTuple())
+    {
+        const auto expectedResultTuple = expectedResultTupleIt.getNextTuple();
+        if (actualResultTuple != expectedResultTuple)
+        {
+            NES_ERROR_EXEC("Tuples don't match: {} " << *actualResultTuple << " != " << *expectedResultTuple);
+            allTuplesMatch = false;
         }
     }
     while (const auto additionalRhsTuple = expectedResultTupleIt.getNextTuple())

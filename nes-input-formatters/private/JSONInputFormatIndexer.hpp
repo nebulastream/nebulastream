@@ -33,23 +33,33 @@ constexpr auto JSON_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::TWO;
 
 struct JSONMetaData
 {
-    explicit JSONMetaData(const ParserConfig& config, const MemoryLayout& memoryLayout)
-        : schema(memoryLayout.getSchema()), tupleDelimiter(config.tupleDelimiter)
+    explicit JSONMetaData(const ParserConfig& config, const Interface::BufferRef::TupleBufferRef& tupleBufferRef)
+        : fieldNames(tupleBufferRef.getAllFieldNames())
+        , fieldDataTypes(tupleBufferRef.getAllDataTypes())
+        , tupleDelimiter(config.tupleDelimiter)
     {
-        for (const auto& [fieldIdx, field] : schema | NES::views::enumerate)
+        for (const auto& [fieldIdx, field] : fieldNames | NES::views::enumerate)
         {
-            if (const auto& qualifierPosition = field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
+            if (const auto& qualifierPosition = field.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
             {
-                fieldNameToIndexOffset.emplace(field.name.substr(qualifierPosition + 1), fieldIdx);
+                fieldNameToIndexOffset.emplace(field.substr(qualifierPosition + 1), fieldIdx);
             }
             else
             {
-                fieldNameToIndexOffset.emplace(field.name, fieldIdx);
+                fieldNameToIndexOffset.emplace(field, fieldIdx);
             }
         }
     };
 
-    const Schema& getSchema() const { return this->schema; }
+    uint64_t getNumberOfFields() const
+    {
+        INVARIANT(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
+        return fieldNames.size();
+    }
+
+    const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNames[i]; }
+
+    const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
     std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
 
@@ -58,7 +68,8 @@ struct JSONMetaData
     const std::unordered_map<std::string, FieldIndex>& getFieldNameToIndexOffset() const { return this->fieldNameToIndexOffset; }
 
 private:
-    Schema schema;
+    std::vector<Record::RecordFieldIdentifier> fieldNames;
+    std::vector<DataType> fieldDataTypes;
     std::string tupleDelimiter;
     std::unordered_map<std::string, FieldIndex> fieldNameToIndexOffset;
 };

@@ -17,11 +17,12 @@
 #include <memory>
 #include <utility>
 
-#include <../../nes-physical-operators/include/ScanPhysicalOperator.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -40,8 +41,7 @@ std::shared_ptr<Interface::BufferRef::TupleBufferRef> provideInputFormatterTuple
         }
         throw UnknownParserType("unknown type of input formatter: {}", formatScanConfig.value().parserType);
     }
-    return Interface::BufferRef::TupleBufferRef::create(
-        memoryProvider->getMemoryLayout()->getBufferSize(), memoryProvider->getMemoryLayout()->getSchema());
+    return memoryProvider;
 }
 
 bool contains(const std::string& parserType)

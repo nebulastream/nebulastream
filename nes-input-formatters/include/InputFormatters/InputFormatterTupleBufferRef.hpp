@@ -39,13 +39,19 @@ public:
     template <typename T>
     requires(not std::same_as<std::decay_t<T>, InputFormatterTupleBufferRef>)
     explicit InputFormatterTupleBufferRef(T&& InputFormatter)
-        : InputFormatter(std::make_unique<InputFormatterModel<T>>(std::forward<T>(InputFormatter)))
+        /// As the InputFormatterTupleBufferRef are not using anything from the tuple buffer ref, we can simply add here dummy values
+        : TupleBufferRef(0, 0, 0), InputFormatter(std::make_unique<InputFormatterModel<T>>(std::forward<T>(InputFormatter)))
     {
     }
 
     ~InputFormatterTupleBufferRef() override = default;
 
-    [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
+    std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override
+    {
+        INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
+    }
+
+    std::vector<DataType> getAllDataTypes() const override { INVARIANT(false, "unsupported operation on InputFormatterBufferRef"); }
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -72,7 +78,6 @@ public:
             nautilus::val<uint64_t>& recordIndex) const
             = 0;
         virtual Interface::BufferRef::IndexBufferResult indexBuffer(RecordBuffer&, ArenaRef&) = 0;
-        virtual std::shared_ptr<MemoryLayout> getMemoryLayout() const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -96,8 +101,6 @@ public:
         {
             return InputFormatter.readRecord(projections, recordBuffer, recordIndex);
         }
-
-        [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override { return InputFormatter.getMemoryLayout(); }
 
     private:
         T InputFormatter;

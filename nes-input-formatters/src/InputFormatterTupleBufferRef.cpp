@@ -26,11 +26,6 @@
 namespace NES
 {
 
-std::shared_ptr<MemoryLayout> InputFormatterTupleBufferRef::getMemoryLayout() const
-{
-    return this->InputFormatter->getMemoryLayout();
-}
-
 Record InputFormatterTupleBufferRef::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,

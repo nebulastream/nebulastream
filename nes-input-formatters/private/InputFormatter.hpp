@@ -106,8 +106,8 @@ public:
         std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider,
         const ParserConfig& parserConfig)
         : inputFormatIndexer(std::move(inputFormatIndexer))
-        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider->getMemoryLayout()})
-        , projections(memoryProvider->getMemoryLayout()->getSchema().getFieldNames())
+        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider})
+        , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
         , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
     {
@@ -120,8 +120,6 @@ public:
     InputFormatter(InputFormatter&&) = default;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
-    std::shared_ptr<MemoryLayout> getMemoryLayout() const { return memoryProvider->getMemoryLayout(); }
-
     /// Executes the first phase, which indexes a (raw) buffer enabling the second phase, which calls 'readRecord()' to index specific
     /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
     /// to the second phase, which uses the index to access specific records/fields
@@ -132,7 +130,7 @@ public:
             indexBufferProxy,
             recordBuffer.getReference(),
             nautilus::val<InputFormatter*>(this),
-            nautilus::val<size_t>(memoryProvider->getMemoryLayout()->getBufferSize()),
+            nautilus::val<size_t>(memoryProvider->getBufferSize()),
             arenaRef.getArena()));
 
         tlArenaPtr = &arenaRef;

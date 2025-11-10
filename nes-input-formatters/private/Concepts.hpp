@@ -27,14 +27,14 @@ namespace NES
 {
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatter
 template <typename T>
-concept IndexerMetaDataType
-    = requires(ParserConfig config, const MemoryLayout& memoryLayout, T indexerMetaData, std::ostream& spanningTuple) {
-          T(config, memoryLayout);
-          /// Assumes a fixed set of symbols that separate tuples
-          /// InputFormatIndexers without tuple delimiters should return an empty string
-          { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
-          { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
-      };
+concept IndexerMetaDataType = requires(
+    ParserConfig config, const Interface::BufferRef::TupleBufferRef& tupleBufferRef, T indexerMetaData, std::ostream& spanningTuple) {
+    T(config, tupleBufferRef);
+    /// Assumes a fixed set of symbols that separate tuples
+    /// InputFormatIndexers without tuple delimiters should return an empty string
+    { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
+    { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
+};
 
 template <typename T>
 concept FieldIndexFunctionType = requires(const T& indexFunction) {
