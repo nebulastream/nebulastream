@@ -38,6 +38,7 @@
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
@@ -48,6 +49,7 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
@@ -155,8 +157,8 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
 }
 
 /// Creates for each field a map operator that has as its function a cast to the correct data type
-std::pair<Schema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>>
-addMapOperators(const Schema& inputSchemaOfJoin, const std::vector<FieldNamesExtension>& fieldNameExtensions)
+std::pair<Schema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
+    const Schema& inputSchemaOfJoin, const std::vector<FieldNamesExtension>& fieldNameExtensions, const MemoryLayoutType& memoryLayoutType)
 {
     Schema inputSchemaOfMap(inputSchemaOfJoin);
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> mapPhysicalOperators;
@@ -178,7 +180,11 @@ addMapOperators(const Schema& inputSchemaOfJoin, const std::vector<FieldNamesExt
 
         /// Create a new map operator with the cast as its function
         mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
-            MapPhysicalOperator(newName, castedPhysicalFunction), copyOfInputSchemaOfMap, inputSchemaOfMap));
+            MapPhysicalOperator(newName, castedPhysicalFunction),
+            copyOfInputSchemaOfMap,
+            inputSchemaOfMap,
+            memoryLayoutType,
+            memoryLayoutType));
     }
 
     return {inputSchemaOfMap, mapPhysicalOperators};
@@ -233,6 +239,9 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 2, "Expected two children");
     auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
     PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
+    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     auto& outputOriginIds = outputOriginIdsOpt.value();
     PRECONDITION(std::ranges::size(outputOriginIdsOpt.value()) == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
@@ -261,12 +270,12 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
     auto [leftJoinFields, rightJoinFields]
         = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
-    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields);
-    auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields);
-    auto leftBufferRef
-        = TupleBufferRef::create(conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
-    auto rightBufferRef
-        = TupleBufferRef::create(conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema);
+    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields, memoryLayoutType);
+    auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields, memoryLayoutType);
+    auto leftBufferRef = LowerSchemaProvider::lowerSchema(
+        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema, memoryLayoutType);
+    auto rightBufferRef = LowerSchemaProvider::lowerSchema(
+        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema, memoryLayoutType);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 
@@ -302,6 +311,8 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         std::move(leftBuildOperator),
         newLeftInputSchema,
         outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
@@ -310,6 +321,8 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         std::move(rightBuildOperator),
         newRightInputSchema,
         outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
@@ -318,6 +331,8 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         std::move(probeOperator),
         outputSchema,
         outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
