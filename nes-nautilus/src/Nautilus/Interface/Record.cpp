@@ -78,6 +78,11 @@ nautilus::val<uint64_t> Record::getNumberOfFields() const
     return recordFields.size();
 }
 
+bool Record::hasField(const std::string& fieldName) const
+{
+    return recordFields.contains(fieldName);
+}
+
 bool Record::operator==(const Record& rhs) const
 {
     return recordFields == rhs.recordFields;

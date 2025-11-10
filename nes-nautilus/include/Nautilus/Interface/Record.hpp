@@ -35,6 +35,7 @@ public:
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal);
     nautilus::val<uint64_t> getNumberOfFields() const;
+    [[nodiscard]] bool hasField(const std::string& fieldName) const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
     bool operator==(const Record& rhs) const;

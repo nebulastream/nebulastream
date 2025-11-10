@@ -27,11 +27,9 @@
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Ranges.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
@@ -48,34 +46,39 @@ namespace NES
 
 struct SIMDJSONMetaData
 {
-    explicit SIMDJSONMetaData(const ParserConfig& config, const MemoryLayout& memoryLayout)
-        : schema(memoryLayout.getSchema()), tupleDelimiter(config.tupleDelimiter)
-    {
-        for (const auto& [fieldIdx, field] : schema | NES::views::enumerate)
-        {
-            if (const auto& qualifierPosition = field.name.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
-            {
-                indexToFieldName.emplace_back(field.name.substr(qualifierPosition + 1));
-            }
-            else
-            {
-                indexToFieldName.emplace_back(field.name);
-            }
-        }
-    };
+    explicit SIMDJSONMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
+        : fieldNames(tupleBufferRef.getAllFieldNames())
+        , fieldDataTypes(tupleBufferRef.getAllDataTypes())
+        , tupleDelimiter(config.tupleDelimiter)
 
-    const Schema& getSchema() const { return this->schema; }
+    {
+        PRECONDITION(
+            config.fieldDelimiter.size() == 1,
+            "Delimiters must be of size '1 byte', but the field delimiter was {} (size {})",
+            config.fieldDelimiter,
+            config.fieldDelimiter.size());
+        PRECONDITION(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
+    };
 
     std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
 
     static QuotationType getQuotationType() { return QuotationType::DOUBLE_QUOTE; }
 
-    const std::vector<std::string>& getIndexToFieldName() const { return this->indexToFieldName; }
+    const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNames[i]; }
+
+    const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
+
+    uint64_t getNumberOfFields() const
+    {
+        INVARIANT(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
+        return fieldNames.size();
+    }
+
 
 private:
-    Schema schema;
+    std::vector<Record::RecordFieldIdentifier> fieldNames;
+    std::vector<DataType> fieldDataTypes;
     std::string tupleDelimiter;
-    std::vector<std::string> indexToFieldName;
 };
 
 class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
@@ -133,12 +136,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         return nautilus::invoke(
             +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
             {
-                INVARIANT(
-                    fieldIndex < metaData->getIndexToFieldName().size(),
-                    "fieldIndex {} is out or bounds for schema keys of size: {}",
-                    fieldIndex,
-                    metaData->getIndexToFieldName().size());
-                const auto& fieldName = metaData->getIndexToFieldName()[fieldIndex];
+                const auto& fieldName = metaData->getFieldNameAt(fieldIndex);
                 auto currentDoc = *fieldIndexFunction->docStreamIterator;
                 auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
                 /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
@@ -209,20 +207,21 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         ArenaRef& arenaRef) const
     {
         Record record;
-        for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getSchema().getNumberOfFields()); ++i)
+        for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)
         {
-            const auto& field = metaData.getSchema().getFieldAt(i);
-            if (std::ranges::find(projections, field.name) == projections.end())
+            const auto& fieldName = metaData.getFieldNameAt(i);
+
+            if (std::ranges::find(projections, fieldName) == projections.end())
             {
                 continue;
             }
 
             auto fieldIdx = static_cast<nautilus::val<FieldIndex>>(i);
-
+            const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
             writeValueToRecord(
-                field.dataType.type,
+                fieldDataType.type,
                 record,
-                field.name,
+                fieldName,
                 fieldIdx,
                 fieldIndexFunction,
                 nautilus::val<const IndexerMetaData*>(&metaData),

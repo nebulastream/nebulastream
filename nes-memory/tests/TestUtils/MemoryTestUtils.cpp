@@ -17,9 +17,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <span>
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Testing

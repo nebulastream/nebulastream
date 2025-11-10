@@ -59,12 +59,12 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
         +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena)
         {
             INVARIANT(
-                fieldIndex < metaData->getIndexToFieldName().size(),
+                fieldIndex < metaData->getNumberOfFields(),
                 "fieldIndex {} is out or bounds for schema keys of size: {}",
                 fieldIndex,
-                metaData->getIndexToFieldName().size());
+                metaData->getNumberOfFields());
             auto currentDoc = *fieldIndexFunction->docStreamIterator;
-            const auto& fieldName = metaData->getIndexToFieldName()[fieldIndex];
+            const auto& fieldName = metaData->getFieldNameAt(fieldIndex);
 
             /// Get the value from the document and convert it to a span of bytes
             const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);

@@ -14,10 +14,12 @@
 
 #pragma once
 
-#include <memory>
-#include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+
+namespace NES
+{
+class LowerSchemaProvider;
+}
 
 namespace NES
 {
@@ -25,12 +27,28 @@ namespace NES
 /// Implements BufferRef. Provides columnar memory access.
 class ColumnTupleBufferRef final : public TupleBufferRef
 {
+    struct Field
+    {
+        Record::RecordFieldIdentifier name;
+        DataType type;
+        uint64_t columnOffset;
+    };
+
+    std::vector<Field> fields;
+
+    /// Private constructor to prevent direct instantiation
+    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t capacity, uint64_t bufferSize);
+
+    /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
+    friend class NES::LowerSchemaProvider;
+
 public:
-    /// Creates a column memory provider based on a valid column memory layout pointer.
-    explicit ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
+    ColumnTupleBufferRef(const ColumnTupleBufferRef&) = default;
+    ColumnTupleBufferRef(ColumnTupleBufferRef&&) = default;
     ~ColumnTupleBufferRef() override = default;
 
-    [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
+    std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
+    std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
