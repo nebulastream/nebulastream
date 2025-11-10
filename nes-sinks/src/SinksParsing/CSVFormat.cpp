@@ -22,13 +22,14 @@
 #include <sstream>
 #include <string>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -73,7 +74,8 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
                               {
                                   const VariableSizedAccess variableSizedAccess{
                                       *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                                  auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                                  auto varSizedData = Nautilus::Interface::BufferRef::TupleBufferRef::readVarSizedDataAsString(
+                                      tbuffer, variableSizedAccess);
                                   if (copyOfEscapeStrings)
                                   {
                                       return "\"" + varSizedData + "\"";

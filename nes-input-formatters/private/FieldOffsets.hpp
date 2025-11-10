@@ -89,25 +89,25 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
         Record record;
         const auto indexBufferPtr = invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr);
-        for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
+        for (nautilus::static_val<uint64_t> i = 0; i < metaData.getNumberOfFields(); ++i)
         {
-            const auto& field = metaData.getSchema().getFieldAt(i);
-            if (not includesField(projections, field.name))
+            const auto& fieldName = metaData.getFieldNameAt(i);
+            const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
+            if (not includesField(projections, fieldName))
             {
                 continue;
             }
 
-            const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getSchema().getNumberOfFields() + 1);
+            const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getNumberOfFields() + 1);
             const auto recordOffsetAddress = indexBufferPtr + (numPriorFields + i);
             const auto recordOffsetEndAddress = indexBufferPtr + (numPriorFields + i + nautilus::static_val<uint64_t>(1));
             const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(recordOffsetAddress);
             const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(recordOffsetEndAddress);
 
-            const auto sizeOfDelimiter = (field == metaData.getSchema().getFields().back()) ? 0 : metaData.getFieldDelimitingBytes().size();
+            const auto sizeOfDelimiter = (i + 1 == metaData.getNumberOfFields()) ? 0 : metaData.getFieldDelimitingBytes().size();
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(
-                field.dataType.type, record, fieldAddress, fieldSize, field.name, metaData.getQuotationType(), arenaRef);
+            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), arenaRef);
         }
         return record;
     }
@@ -126,14 +126,15 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
         Record record;
         const auto indexBufferPtr = invoke(getTupleBufferForEntryProxy, fieldOffsetsPtr);
-        for (nautilus::static_val<uint64_t> i = 0; i < metaData.getSchema().getNumberOfFields(); ++i)
+        for (nautilus::static_val<uint64_t> i = 0; i < metaData.getNumberOfFields(); ++i)
         {
-            const auto& field = metaData.getSchema().getFieldAt(i);
-            if (not includesField(projections, field.name))
+            const auto& fieldName = metaData.getFieldNameAt(i);
+            const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
+            if (not includesField(projections, fieldName))
             {
                 continue;
             }
-            const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getSchema().getNumberOfFields());
+            const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getNumberOfFields());
             nautilus::static_val<uint64_t> offsetPairStart = i * 2;
             nautilus::static_val<uint64_t> offsetPairEnd = offsetPairStart + 1;
             const auto recordOffsetAddress = indexBufferPtr + ((numPriorFields * 2) + offsetPairStart);
@@ -143,9 +144,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            const auto& currentField = field;
-            parseRawValueIntoRecord(
-                field.dataType.type, record, fieldAddress, fieldSize, field.name, metaData.getQuotationType(), arenaRef);
+            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), arenaRef);
         }
         return record;
     }

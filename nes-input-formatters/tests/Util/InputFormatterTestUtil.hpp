@@ -251,29 +251,16 @@ compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, st
     InputFormatterTestUtil::sortTupleBuffers(expectedResult);
 
     bool allTuplesMatch = true;
-    TupleIterator expectedResultTupleIt(std::move(expectedResult), schema);
-    for (const auto& actualResultTupleBuffer : actualResult)
-    {
-        for (auto actualResultTestTupleBuffer = TestTupleBuffer::createTestTupleBuffer(actualResultTupleBuffer, schema);
-             const auto& actualResultTuple : actualResultTestTupleBuffer)
-        {
-            if (const auto expectedResultTuple = expectedResultTupleIt.getNextTuple())
-            {
-                if (actualResultTuple != expectedResultTuple)
-                {
-                    NES_ERROR(
-                        "Tuples don't match: {} != {}", actualResultTuple.toString(schema), expectedResultTuple.value().toString(schema));
-                    allTuplesMatch = false;
-                }
-            }
-            else
-            {
-                NES_ERROR("Found actual result tuple: {}, but exhausted expected", actualResultTuple.toString(schema));
-                allTuplesMatch = false;
-            }
+    auto bufferRef = LowerSchemaProvider::lowerSchema(expectedResult.at(0).getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
     TupleIterator expectedResultTupleIt(std::move(expectedResult), schema, MemoryLayoutType::ROW_LAYOUT);
     TupleIterator actualResultTupleIt(std::move(actualResult), schema, MemoryLayoutType::ROW_LAYOUT);
     while (const auto actualResultTuple = actualResultTupleIt.getNextTuple())
+    {
+        const auto expectedResultTuple = expectedResultTupleIt.getNextTuple();
+        if (actualResultTuple != expectedResultTuple)
+        {
+            NES_ERROR_EXEC("Tuples don't match: {} " << *actualResultTuple << " != " << *expectedResultTuple);
+            allTuplesMatch = false;
         }
     }
     while (const auto additionalRhsTuple = expectedResultTupleIt.getNextTuple())
@@ -333,6 +320,54 @@ inline void copyStringDataToTupleBuffer(const std::string_view rawData, TupleBuf
         rawData.size());
     std::ranges::copy(rawData, reinterpret_cast<char*>(tupleBuffer.getAvailableMemoryArea().data()));
     tupleBuffer.setNumberOfTuples(rawData.size());
+}
+
+template <typename T>
+void writeFieldToBuffer(
+    const T& fieldValue,
+    const size_t fieldIndex,
+    NES::TupleBuffer& tupleBuffer,
+    Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+    AbstractBufferProvider& bufferProvider)
+{
+    Nautilus::Record record;
+    NES::Nautilus::RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    const auto fieldName = tupleBufferRef.getAllFieldNames().at(fieldIndex);
+
+    /// Creating a Nautilus::Record containing the current field
+    if constexpr (std::is_same_v<T, std::string>)
+    {
+        const auto varSizedAccess
+            = NES::Interface::BufferRef::TupleBufferRef::writeVarSized<Interface::BufferRef::TupleBufferRef::PREPEND_LENGTH_AS_UINT32>(
+                tupleBufferRef, bufferProvider, fieldValue);
+        const nautilus::val<NES::VariableSizedAccess> access{varSizedAccess};
+        record.write(fieldName, access.convertToValue());
+    }
+    else
+    {
+        nautilus::val<T> value{fieldValue};
+        record.write(fieldName, value);
+    }
+
+    nautilus::val<AbstractBufferProvider*> bufferProviderVal{std::addressof(bufferProvider)};
+    auto recordIndex = recordBuffer.getNumRecords();
+    tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal);
+}
+
+inline void
+printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const Interface::BufferRef::TupleBufferRef& tupleBufferRef)
+{
+    const nautilus::val<const char*> messageVal{message.data()};
+    nautilus::stringstream ss;
+    ss << messageVal;
+    const NES::Nautilus::RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    for (nautilus::val<uint64_t> recordIndex = 0; recordIndex < recordBuffer.getNumRecords(); ++recordIndex)
+    {
+        const auto record = tupleBufferRef.readRecord(tupleBufferRef.getAllFieldNames(), recordBuffer, recordIndex);
+        ss << record << "\n";
+    }
+
+    NES_DEBUG_EXEC(ss.str().c_str());
 }
 
 /// Takes a schema, a buffer manager and tuples.

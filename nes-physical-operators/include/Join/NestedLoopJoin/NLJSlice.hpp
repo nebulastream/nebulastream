@@ -19,7 +19,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/Slice.hpp>

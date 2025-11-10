@@ -15,7 +15,7 @@
 #pragma once
 
 #include <type_traits>
-#include <MemoryLayout/VariableSizedAccess.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <nautilus/tracing/TypedValueRef.hpp>
 #include <nautilus/tracing/Types.hpp>
 #include <nautilus/val.hpp>

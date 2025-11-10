@@ -19,7 +19,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -35,12 +34,32 @@ namespace NES
 /// available, we fall back to an unpooled buffer.
 class TupleBufferRef
 {
+protected:
+    uint64_t capacity;
+    uint64_t bufferSize;
+    uint64_t tupleSize;
+
 public:
+    TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
     virtual ~TupleBufferRef();
 
-    static std::shared_ptr<TupleBufferRef> create(uint64_t bufferSize, const Schema& schema);
+    /// @brief Writes the varSizedValue to the tupleBuffer. Similar to writeVarSizedData, but this method expects the varSizedValue containing
+    /// the length of varSizedValue as its first 32-bits
+    static VariableSizedAccess writeVarSizedData(
+        TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const char* varSizedValue, uint32_t varSizedValueLength);
 
-    [[nodiscard]] virtual std::shared_ptr<MemoryLayout> getMemoryLayout() const = 0;
+    /// @brief Writes the variable sized data to the buffer
+    static VariableSizedAccess
+    writeVarSizedDataAndPrependLength(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::string_view varSizedValue);
+
+    /// @brief Reads the variable sized data and returns the pointer to the var sized data
+    /// @return Pointer to variable sized data
+    static const int8_t* loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
+
+    /// @brief Reads the variable sized data. Similar as loadAssociatedVarSizedValue, but returns a string
+    /// @return Variable sized data as a string
+    static std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
+
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
@@ -62,6 +81,14 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
+
+    virtual IndexBufferResult indexBuffer(RecordBuffer&, ArenaRef&) = 0;
+
+    uint64_t getCapacity() const;
+    uint64_t getBufferSize() const;
+    uint64_t getTupleSize() const;
+    virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
+    virtual std::vector<DataType> getAllDataTypes() const = 0;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

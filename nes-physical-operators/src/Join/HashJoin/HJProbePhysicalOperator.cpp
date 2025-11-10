@@ -113,7 +113,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                     rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
                 auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
                 const PagedVectorRef rightPagedVector{rightPagedVectorMem, rightBufferRef};
-                const auto rightFields = rightBufferRef->getMemoryLayout()->getSchema().getFieldNames();
+                const auto rightFields = rightBufferRef->getAllFieldNames();
                 auto rightItStart = rightPagedVector.begin(rightFields);
                 auto rightItEnd = rightPagedVector.end(rightFields);
 
@@ -125,7 +125,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                         leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
                     const PagedVectorRef leftPagedVector{leftPagedVectorMem, leftBufferRef};
-                    const auto leftFields = leftBufferRef->getMemoryLayout()->getSchema().getFieldNames();
+                    const auto leftFields = leftBufferRef->getAllFieldNames();
 
                     for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)
                     {

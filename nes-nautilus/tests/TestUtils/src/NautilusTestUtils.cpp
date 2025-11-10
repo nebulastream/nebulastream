@@ -28,9 +28,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -92,7 +92,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer = TupleBufferRef::create(bufferManager.getBufferSize(), schema);
+    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, memoryLayout);
 
 
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
@@ -122,7 +122,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
     std::vector<TupleBuffer> buffers;
-    const auto capacity = memoryProviderInputBuffer->getMemoryLayout()->getCapacity();
+    const auto capacity = memoryProviderInputBuffer->getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
     for (uint64_t i = 0; i < numberOfTuples; i = i + capacity)
@@ -216,9 +216,9 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::generate_n(randomString.begin(), size, randchar);
 
                             /// Adding the random string to the buffer and returning the pointer to the data
-                            const auto combinedIdxOffset = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(
+                            const auto combinedIdxOffset = TupleBufferRef::writeVarSized<TupleBufferRef::PREPEND_LENGTH_AS_UINT32>(
                                 *inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
-                            return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, combinedIdxOffset).data();
+                            return TupleBufferRef::loadAssociatedVarSizedValue(*inputBuffer, combinedIdxOffset).data();
                         },
                         recordBuffer.getReference(),
                         bufferProvider,
