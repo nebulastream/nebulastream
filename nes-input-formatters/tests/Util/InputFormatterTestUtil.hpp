@@ -77,6 +77,7 @@ struct TestConfig
     uint64_t sizeOfFormattedBuffers{};
     ParserConfig parserConfig;
     std::vector<TestDataTypes> testSchema;
+    const MemoryLayoutType memoryLayoutType;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
     std::vector<WorkerThreadResults<TupleSchemaTemplate>> expectedResults;
     std::vector<ThreadInputBuffers> rawBytesPerThread;
@@ -154,11 +155,19 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpe
 /// Compares two files and returns true if they are equal on a byte level.
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
-std::shared_ptr<CompiledExecutablePipelineStage>
-createInputFormatter(const ParserConfig& parserConfiguration, const Schema& schema, size_t sizeOfFormattedBuffers, bool isCompiled);
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
+    const ParserConfig& parserConfiguration,
+    const Schema& schema,
+    MemoryLayoutType memoryLayoutType,
+    size_t sizeOfFormattedBuffers,
+    bool isCompiled);
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    std::unordered_map<std::string, std::string> parserConfiguration, const Schema& schema, size_t sizeOfFormattedBuffers, bool isCompiled);
+    std::unordered_map<std::string, std::string> parserConfiguration,
+    const Schema& schema,
+    MemoryLayoutType memoryLayoutType,
+    size_t sizeOfFormattedBuffers,
+    bool isCompiled);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -168,6 +177,7 @@ struct TestHandle
     std::shared_ptr<BufferManager> formattedBufferManager;
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
     Schema schema;
+    const MemoryLayoutType memoryLayoutType;
     std::unique_ptr<SingleThreadedTestTaskQueue> testTaskQueue;
     std::vector<TupleBuffer> inputBuffers;
     std::vector<std::vector<TupleBuffer>> expectedResultVectors;
@@ -201,7 +211,7 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
 class TupleIterator
 {
 public:
-    TupleIterator(std::vector<TupleBuffer> buffers, Schema schema)
+    TupleIterator(std::vector<TupleBuffer> buffers, Schema schema, const MemoryLayoutType layoutType)
         : schema(std::move(schema))
         , buffers(std::move(buffers))
         , currentBuffer(TestTupleBuffer::createTestTupleBuffer(this->buffers.front(), this->schema))
@@ -260,6 +270,9 @@ compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, st
                 NES_ERROR("Found actual result tuple: {}, but exhausted expected", actualResultTuple.toString(schema));
                 allTuplesMatch = false;
             }
+    TupleIterator expectedResultTupleIt(std::move(expectedResult), schema, MemoryLayoutType::ROW_LAYOUT);
+    TupleIterator actualResultTupleIt(std::move(actualResult), schema, MemoryLayoutType::ROW_LAYOUT);
+    while (const auto actualResultTuple = actualResultTupleIt.getNextTuple())
         }
     }
     while (const auto additionalRhsTuple = expectedResultTupleIt.getNextTuple())
@@ -427,6 +440,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         formattedBufferManager,
         resultBuffers,
         std::move(schema),
+        testConfig.memoryLayoutType,
         std::make_unique<SingleThreadedTestTaskQueue>(formattedBufferManager, resultBuffers),
         {},
         {}};
@@ -436,7 +450,11 @@ template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     auto InputFormatter = createInputFormatter(
-        testHandle.testConfig.parserConfig, testHandle.schema, testHandle.formattedBufferManager->getBufferSize(), false);
+        testHandle.testConfig.parserConfig,
+        testHandle.schema,
+        testHandle.memoryLayoutType,
+        testHandle.formattedBufferManager->getBufferSize(),
+        false);
     std::vector<TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)

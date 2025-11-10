@@ -29,7 +29,6 @@
 
 #include <Configuration/WorkerConfiguration.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -164,6 +163,7 @@ public:
     struct SetupResult
     {
         Schema schema;
+        MemoryLayoutType memoryLayoutType;
         size_t sizeOfFormattedBuffers;
         size_t numberOfExpectedRawBuffers;
         size_t numberOfRequiredFormattedBuffers;
@@ -226,6 +226,7 @@ public:
 
         return SetupResult{
             .schema = schema,
+            .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
             .sizeOfFormattedBuffers = sizeOfFormattedBuffers,
             .numberOfExpectedRawBuffers = numberOfExpectedRawBuffers,
             .numberOfRequiredFormattedBuffers = numberOfRequiredFormattedBuffers,
@@ -288,7 +289,11 @@ public:
             const std::unordered_map<std::string, std::string> parserConfiguration{
                 {"type", std::move(testConfig.formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
             auto testStage = InputFormatterTestUtil::createInputFormatter(
-                parserConfiguration, setupResult.schema, setupResult.sizeOfFormattedBuffers, testConfig.isCompiled);
+                parserConfiguration,
+                setupResult.schema,
+                setupResult.memoryLayoutType,
+                setupResult.sizeOfFormattedBuffers,
+                testConfig.isCompiled);
 
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
             std::vector<TestPipelineTask> pipelineTasks;
