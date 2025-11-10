@@ -41,7 +41,9 @@ public:
         WindowMetaData windowMetaData,
         const JoinSchema& joinSchema,
         std::shared_ptr<TupleBufferRef> leftMemoryProvider,
-        std::shared_ptr<TupleBufferRef> rightMemoryProvider);
+        std::shared_ptr<TupleBufferRef> rightMemoryProvider,
+        std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
+        std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
     OpenReturnState open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
@@ -51,10 +53,14 @@ protected:
         const Interface::PagedVectorRef& innerPagedVector,
         Interface::BufferRef::TupleBufferRef& outerMemoryProvider,
         Interface::BufferRef::TupleBufferRef& innerMemoryProvider,
+        const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
+        const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
     std::shared_ptr<TupleBufferRef> leftMemoryProvider;
     std::shared_ptr<TupleBufferRef> rightMemoryProvider;
+    std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;
+    std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames;
 };
 }

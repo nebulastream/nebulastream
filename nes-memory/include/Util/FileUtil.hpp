@@ -27,10 +27,10 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
@@ -162,7 +162,8 @@ inline void writePagedSizeTupleBufferChunkToFile(
                     const auto currentTupleVarSizedFieldOffset = currentTupleOffset + varSizedFieldOffset;
                     const VariableSizedAccess varSizedAccess{
                         *reinterpret_cast<uint64_t*>(buffer.getMemArea() + currentTupleVarSizedFieldOffset)};
-                    const auto variableSizedData = MemoryLayout::readVarSizedDataAsString(buffer, varSizedAccess);
+                    const auto variableSizedData
+                        = Nautilus::Interface::BufferRef::TupleBufferRef::readVarSizedDataAsString(buffer, varSizedAccess);
                     appendFile.write(variableSizedData.data(), static_cast<std::streamsize>(variableSizedData.size()));
                 }
             }

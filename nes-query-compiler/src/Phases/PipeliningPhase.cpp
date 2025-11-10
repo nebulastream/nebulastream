@@ -21,7 +21,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
-#include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -49,16 +49,20 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 /// This is used only when the wrapped operator does not already provide a scan
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
 /// Do not add further parameters here that should be part of the QueryExecutionConfiguration.
-PhysicalOperator
-createScanOperator(const Pipeline& prevPipeline, const std::optional<Schema>& inputSchema, const uint64_t configuredBufferSize)
+PhysicalOperator createScanOperator(
+    const Pipeline& prevPipeline,
+    const std::optional<Schema>& inputSchema,
+    const std::optional<MemoryLayoutType>& memoryLayout,
+    const uint64_t configuredBufferSize)
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
+    INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
 
-    const auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(configuredBufferSize, inputSchema.value());
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(configuredBufferSize, inputSchema.value(), memoryLayout.value());
     const auto formatScanConfig = (prevPipeline.isSourcePipeline())
         ? std::optional{prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig()}
         : std::nullopt;
-    return ScanPhysicalOperator(provideInputFormatterTupleBufferRef(formatScanConfig, memoryProvider));
+    return ScanPhysicalOperator(provideInputFormatterTupleBufferRef(formatScanConfig, memoryProvider), inputSchema->getFieldNames());
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline
@@ -68,8 +72,8 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
     const PhysicalOperatorWrapper& wrappedOpAfterScan,
     const uint64_t configuredBufferSize)
 {
-    const auto newPipeline
-        = std::make_shared<Pipeline>(createScanOperator(*prevPipeline, wrappedOpAfterScan.getInputSchema(), configuredBufferSize));
+    const auto newPipeline = std::make_shared<Pipeline>(createScanOperator(
+        *prevPipeline, wrappedOpAfterScan.getInputSchema(), wrappedOpAfterScan.getInputMemoryLayoutType(), configuredBufferSize));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
@@ -83,11 +87,12 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
 void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
-    auto schema = wrappedOp.getOutputSchema();
+    const auto schema = wrappedOp.getOutputSchema();
+    const auto memoryLayoutType = wrappedOp.getOutputMemoryLayoutType();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
+    INVARIANT(memoryLayoutType.has_value(), "Wrapped operator has no output memory layout type");
 
-    auto layout = std::make_shared<RowLayout>(configuredBufferSize, schema.value());
-    const auto bufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout);
+    const auto bufferRef = LowerSchemaProvider::lowerSchema(configuredBufferSize, schema.value(), memoryLayoutType.value());
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->getOperatorHandlers().emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
@@ -189,8 +194,8 @@ void buildPipelineRecursively(
             ///  and would, without sorting, write out garabage. We could insert a sorting operator, or for sources with a dedicated thread,
             ///  attach the sink directly to the source, to guarantee order (the source should just forward buffers)).
 
-            const auto sourcePipeline
-                = std::make_shared<Pipeline>(createScanOperator(*currentPipeline, opWrapper->getInputSchema(), configuredBufferSize));
+            const auto sourcePipeline = std::make_shared<Pipeline>(createScanOperator(
+                *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
             currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
             addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
@@ -237,7 +242,8 @@ void buildPipelineRecursively(
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
         PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
-        newPipelinePtr->prependOperator(createScanOperator(*currentPipeline, opWrapper->getInputSchema(), configuredBufferSize));
+        newPipelinePtr->prependOperator(
+            createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
