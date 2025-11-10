@@ -41,7 +41,6 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>

@@ -14,7 +14,7 @@ include(ExternalProject)
 include(GoogleTest)
 
 add_library(nes-input-formatters-test-utils ${CMAKE_CURRENT_SOURCE_DIR}/Util/InputFormatterTestUtil.cpp)
-target_link_libraries(nes-input-formatters-test-utils PUBLIC nes-input-formatters nes-executable-test-utils)
+target_link_libraries(nes-input-formatters-test-utils PUBLIC nes-input-formatters nes-executable-test-utils nes-nautilus)
 target_include_directories(nes-input-formatters-test-utils PUBLIC ${CMAKE_SOURCE_DIR}/nes-input-formatters/private ${CMAKE_CURRENT_SOURCE_DIR}/Util/)
 
 function(add_nes_input_formatter_test)
