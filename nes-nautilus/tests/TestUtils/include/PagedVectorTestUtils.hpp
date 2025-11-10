@@ -30,6 +30,7 @@ namespace NES::TestUtils
 void runStoreTest(
     PagedVector& pagedVector,
     const Schema& testSchema,
+    const MemoryLayoutType& memoryLayout,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<TupleBuffer>& allRecords,
@@ -39,6 +40,7 @@ void runStoreTest(
 void runRetrieveTest(
     PagedVector& pagedVector,
     const Schema& testSchema,
+    const MemoryLayoutType& memoryLayout,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<TupleBuffer>& allRecords,
@@ -48,6 +50,7 @@ void runRetrieveTest(
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const Schema& schema,
+    const MemoryLayoutType& memoryLayout,
     uint64_t entrySize,
     uint64_t pageSize,
     const std::vector<std::vector<TupleBuffer>>& allRecordsAndVectors,
