@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <typeinfo>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -34,13 +35,33 @@ enum class JoinImplementation : uint8_t
     CHOICELESS
 };
 
-/// Struct that stores implementation types as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
-struct ImplementationTypeTrait final : public TraitConcept
+/// Struct that stores the join implementation type as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
+struct JoinImplementationTypeTrait final : public TraitConcept
 {
-    static constexpr std::string_view NAME = "ImplementationType";
+    static constexpr std::string_view NAME = "JoinImplementationType";
     JoinImplementation implementationType;
 
-    explicit ImplementationTypeTrait(JoinImplementation implementationType);
+    explicit JoinImplementationTypeTrait(JoinImplementation implementationType);
+
+    [[nodiscard]] const std::type_info& getType() const override;
+
+    [[nodiscard]] SerializableTrait serialize() const override;
+
+    bool operator==(const TraitConcept& other) const override;
+
+    [[nodiscard]] size_t hash() const override;
+
+    [[nodiscard]] std::string explain(ExplainVerbosity) const override;
+
+    [[nodiscard]] std::string_view getName() const override;
+};
+
+struct MemoryLayoutTypeTrait final : public TraitConcept
+{
+    static constexpr std::string_view NAME = "MemoryLayoutType";
+    MemoryLayoutType memoryLayout;
+
+    explicit MemoryLayoutTypeTrait(MemoryLayoutType memoryLayout);
 
     [[nodiscard]] const std::type_info& getType() const override;
 

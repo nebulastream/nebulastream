@@ -39,6 +39,7 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
@@ -72,6 +73,9 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto& outputOriginIds = outputOriginIdsOpt.value();
     PRECONDITION(std::ranges::size(outputOriginIdsOpt.value()) == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
+    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
 
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
@@ -83,7 +87,6 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());
     const auto pageSize = conf.pageSize.getValue();
-
 
     const auto inputOriginIds
         = join.getChildren()
@@ -97,10 +100,8 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
-    auto leftBufferRef = TupleBufferRef::create(pageSize, leftInputSchema);
-    leftBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(leftInputSchema, logicalJoinFunction));
-    auto rightBufferRef = TupleBufferRef::create(pageSize, rightInputSchema);
-    rightBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
+    auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
+    auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
 
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
 
@@ -111,23 +112,46 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
-    auto probeOperator
-        = NLJProbePhysicalOperator(handlerId, joinFunction, join->getWindowMetaData(), joinSchema, leftBufferRef, rightBufferRef);
+    auto probeOperator = NLJProbePhysicalOperator(
+        handlerId,
+        joinFunction,
+        join->getWindowMetaData(),
+        joinSchema,
+        leftBufferRef,
+        rightBufferRef,
+        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
+        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
     auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(leftBuildOperator), leftInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        std::move(leftBuildOperator),
+        leftInputSchema,
+        outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
+        handlerId,
+        handler,
+        PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(rightBuildOperator), rightInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        std::move(rightBuildOperator),
+        rightInputSchema,
+        outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
+        handlerId,
+        handler,
+        PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
         outputSchema,
         outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
