@@ -20,15 +20,10 @@ on:
         type: string
         default: |
           query: |
-            SELECT * FROM GENERATOR_SOURCE INTO void_sink
-          sinks:
-            - name: VOID_SINK
-              schema:
-                - name: GENERATOR_SOURCE$double
-                  type: FLOAT64
-              type: Void
-              config: {}
-                
+            SELECT * FROM GENERATOR_SOURCE INTO Void()
+          
+          sinks: []
+          
           logical:
             - name: GENERATOR_SOURCE
               schema:
