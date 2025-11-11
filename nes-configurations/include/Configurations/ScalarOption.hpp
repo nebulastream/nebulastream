@@ -17,6 +17,7 @@
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/URI.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 
@@ -74,6 +75,10 @@ private:
         else if constexpr (std::is_same<Type, uint64_t>::value)
         {
             return std::stoull(strValue);
+        }
+        else if constexpr (std::same_as<Type, NES::URI>)
+        {
+            return URI(strValue);
         }
         else if constexpr (std::is_same<Type, bool>::value)
         {
