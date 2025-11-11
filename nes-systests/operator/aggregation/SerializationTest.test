@@ -31,10 +31,10 @@ ATTACH INLINE
 CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i64_out UINT64)  TYPE File;
 CREATE SINK sinkStream2(stream2.start UINT64, stream2.end UINT64, stream2.i64_out UINT64)  TYPE File;
 
-SELECT start, end, COUNT(i64) as i64_out FROM stream WINDOW TUMBLING(ts, size 100ms) INTO sinkStream;
+SELECT start, end, COUNT(i64) as i64_out FROM stream WINDOW TUMBLING(ts, size 100ms) INTO sinkStream CHECKPOINT on;
 ----
 0,100,9
 
-SELECT start, end, COUNT(i64) as i64_out FROM stream2 WINDOW TUMBLING(ts, size 100ms) INTO sinkStream2;
+SELECT start, end, COUNT(i64) as i64_out FROM stream2 WINDOW TUMBLING(ts, size 100ms) INTO sinkStream2 CHECKPOINT restore;
 ----
 0,100,9

@@ -73,6 +73,74 @@ HashMap* getHashJoinHashMapProxy(
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
 }
 
+static std::atomic_bool serialized = false;
+static std::atomic_bool serialization_done = false;
+static std::atomic_bool deserialized = false;
+static std::mutex mtx;
+static std::condition_variable cv;
+
+
+void serializeHashMapProxy(
+    const HJOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const JoinBuildSideType buildSide,
+    [[maybe_unused]] AbstractBufferProvider* bufferProvider,
+    const HJBuildPhysicalOperator* buildOperator)
+{
+    if (timestamp.getRawValue() != 21000)
+    {
+        return;
+    }
+
+    if (serialized.exchange(true))
+        return;
+
+    const auto* const hashMap = getHashJoinHashMapProxy(operatorHandler, timestamp, workerThreadId, buildSide, buildOperator);
+    if (std::filesystem::exists("/tmp/nebulastream/hashmap.bin"))
+    {
+        std::filesystem::remove("/tmp/nebulastream/hashmap.bin");
+    }
+    hashMap->serialize("/tmp/nebulastream/hashmap.bin");
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        serialization_done = true;
+    }
+    cv.notify_all();
+    //serialized = true;
+}
+
+Interface::HashMap* deserializeHashMapProxy(
+    const HJOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const JoinBuildSideType buildSide,
+    AbstractBufferProvider* bufferProvider,
+    const HJBuildPhysicalOperator* buildOperator)
+{
+    auto* const hashMap = getHashJoinHashMapProxy(operatorHandler, timestamp, workerThreadId, buildSide, buildOperator);
+    if (timestamp.getRawValue() != 21000)
+    {
+        return hashMap;
+    }
+    if (!serialized.load() == true)
+    {
+        return hashMap;
+    }
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [] { return serialization_done.load(); });
+    }
+    if (deserialized.exchange(true))
+        return hashMap;
+
+
+
+    hashMap->deserialize("/tmp/nebulastream/hashmap.bin", bufferProvider);
+    return hashMap;
+}
+
+
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     StreamJoinBuildPhysicalOperator::setup(executionCtx, compilationContext);
@@ -171,6 +239,24 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     auto entryMemArea = entryRef.getValueMemArea();
     const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+
+    nautilus::invoke(
+        deserializeHashMapProxy,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        nautilus::val<JoinBuildSideType>(joinBuildSide),
+        ctx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<const HJBuildPhysicalOperator*>(this));
+
+    nautilus::invoke(
+        serializeHashMapProxy,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        nautilus::val<JoinBuildSideType>(joinBuildSide),
+        ctx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<const HJBuildPhysicalOperator*>(this));
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(
