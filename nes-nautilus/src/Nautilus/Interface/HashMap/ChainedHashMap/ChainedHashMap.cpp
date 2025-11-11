@@ -295,6 +295,10 @@ void ChainedHashMap::serialize(std::filesystem::path path) const
                 {
                     entryMapping[entry] = {pageIdx, entryIdx*entrySize};
                 }
+                if (entry->next != nullptr)
+                {
+                    NES_INFO("Found chained entry");
+                }
             }
         }
 
@@ -388,7 +392,13 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
         }
         in.read(reinterpret_cast<char*>(&storageBufferSize), sizeof(storageBufferSize));
         in.read(reinterpret_cast<char*>(pageBuffer->getAvailableMemoryArea().data()), storageBufferSize);
-        storageSpace.emplace_back(pageBuffer.value());
+        if ( i < this->storageSpace.size())
+        {
+            this->storageSpace[i] = pageBuffer.value();
+        } else
+        {
+            this->storageSpace.emplace_back(pageBuffer.value());
+        }
     }
 
     /// Rebuild Chains
