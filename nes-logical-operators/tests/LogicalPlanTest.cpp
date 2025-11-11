@@ -58,29 +58,22 @@ protected:
     }
 
     SourceCatalog sourceCatalog;
-    LogicalOperator sourceOp;
-    LogicalOperator sourceOp2;
-    LogicalOperator selectionOp;
-    LogicalOperator sinkOp;
+    std::optional<LogicalOperator> sourceOp;
+    std::optional<LogicalOperator> sourceOp2;
+    std::optional<LogicalOperator> selectionOp;
+    std::optional<LogicalOperator> sinkOp;
 };
-
-TEST_F(LogicalPlanTest, DefaultConstructor)
-{
-    const LogicalPlan plan;
-    EXPECT_TRUE(plan.getRootOperators().empty());
-    EXPECT_EQ(plan.getQueryId(), INVALID_QUERY_ID);
-}
 
 TEST_F(LogicalPlanTest, SingleRootConstructor)
 {
-    LogicalPlan plan(sourceOp);
+    const LogicalPlan plan(sourceOp.value());
     EXPECT_EQ(plan.getRootOperators().size(), 1);
     EXPECT_EQ(plan.getRootOperators()[0], sourceOp);
 }
 
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 {
-    const std::vector roots = {sourceOp, selectionOp};
+    const std::vector roots = {sourceOp.value(), selectionOp.value()};
     const auto queryId = QueryId(1);
     LogicalPlan plan(queryId, roots);
     EXPECT_EQ(plan.getRootOperators().size(), 2);
@@ -91,10 +84,10 @@ TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 
 TEST_F(LogicalPlanTest, CopyConstructor)
 {
-    const LogicalPlan original(sourceOp);
+    const LogicalPlan original(sourceOp.value());
     const LogicalPlan& copy(original);
     EXPECT_EQ(copy.getRootOperators().size(), 1);
-    EXPECT_EQ(copy.getRootOperators()[0], sourceOp);
+    EXPECT_EQ(copy.getRootOperators()[0], sourceOp.value());
 }
 
 TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
@@ -177,8 +170,8 @@ struct TestTrait final : DefaultTrait<TestTrait>
 
 TEST_F(LogicalPlanTest, AddTraits)
 {
-    EXPECT_TRUE(std::ranges::empty(sourceOp.getTraitSet()));
-    const auto sourceWithTrait = sourceOp.withTraitSet(TraitSet{TestTrait{}});
+    EXPECT_TRUE(std::ranges::empty(sourceOp.value().getTraitSet()));
+    const auto sourceWithTrait = sourceOp.value().withTraitSet(TraitSet{TestTrait{}});
     auto sourceTraitSet = sourceWithTrait.getTraitSet();
     EXPECT_EQ(std::ranges::size(sourceTraitSet), 1);
     EXPECT_TRUE(sourceTraitSet.tryGet<TestTrait>().has_value());
@@ -187,11 +180,11 @@ TEST_F(LogicalPlanTest, AddTraits)
 TEST_F(LogicalPlanTest, GetLeafOperators)
 {
     /// source1 -> selection -> source2
-    std::vector children = {sourceOp2};
-    selectionOp = selectionOp.withChildren(children);
-    children = {selectionOp};
-    sourceOp = sourceOp.withChildren(children);
-    const LogicalPlan plan(sourceOp);
+    std::vector children = {sourceOp2.value()};
+    selectionOp = selectionOp.value().withChildren(children);
+    children = {selectionOp.value()};
+    sourceOp = sourceOp.value().withChildren(children);
+    const LogicalPlan plan(sourceOp.value());
     auto leafOperators = getLeafOperators(plan);
     EXPECT_EQ(leafOperators.size(), 1);
     EXPECT_EQ(leafOperators[0], sourceOp2);
@@ -200,31 +193,31 @@ TEST_F(LogicalPlanTest, GetLeafOperators)
 TEST_F(LogicalPlanTest, GetAllOperators)
 {
     /// source1 -> selection -> source2
-    std::vector children = {sourceOp2};
-    selectionOp = selectionOp.withChildren(children);
-    children = {selectionOp};
-    sourceOp = sourceOp.withChildren(children);
-    const LogicalPlan plan(sourceOp);
+    std::vector children = {sourceOp2.value()};
+    selectionOp = selectionOp.value().withChildren(children);
+    children = {selectionOp.value()};
+    sourceOp = sourceOp.value().withChildren(children);
+    const LogicalPlan plan(sourceOp.value());
     const auto allOperators = flatten(plan);
     EXPECT_EQ(allOperators.size(), 3);
-    EXPECT_TRUE(allOperators.contains(sourceOp));
-    EXPECT_TRUE(allOperators.contains(selectionOp));
-    EXPECT_TRUE(allOperators.contains(sourceOp2));
+    EXPECT_TRUE(allOperators.contains(sourceOp.value()));
+    EXPECT_TRUE(allOperators.contains(selectionOp.value()));
+    EXPECT_TRUE(allOperators.contains(sourceOp2.value()));
 }
 
 TEST_F(LogicalPlanTest, EqualityOperator)
 {
-    const LogicalPlan plan1(sourceOp);
-    const LogicalPlan plan2(sourceOp);
+    const LogicalPlan plan1(sourceOp.value());
+    const LogicalPlan plan2(sourceOp.value());
     EXPECT_TRUE(plan1 == plan2);
 
-    const LogicalPlan plan3(selectionOp);
+    const LogicalPlan plan3(selectionOp.value());
     EXPECT_FALSE(plan1 == plan3);
 }
 
 TEST_F(LogicalPlanTest, OutputOperator)
 {
-    const LogicalPlan plan(sourceOp);
+    const LogicalPlan plan(sourceOp.value());
     std::stringstream ss;
     ss << plan;
     EXPECT_FALSE(ss.str().empty());

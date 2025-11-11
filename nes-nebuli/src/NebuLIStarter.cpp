@@ -255,20 +255,20 @@ int main(int argc, char** argv)
 
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
-        NES::LogicalPlan boundPlan;
-        if (input == "-")
+        const NES::LogicalPlan boundPlan = [&]
         {
-            boundPlan = yamlBinder.parseAndBind(std::cin);
-        }
-        else
-        {
+            if (input == "-")
+            {
+                return yamlBinder.parseAndBind(std::cin);
+            }
             std::ifstream file{input};
             if (!file)
             {
                 throw NES::QueryDescriptionNotReadable(std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
             }
-            boundPlan = yamlBinder.parseAndBind(file);
-        }
+            return yamlBinder.parseAndBind(file);
+        }();
+
 
         const NES::LogicalPlan optimizedQueryPlan = optimizer->optimize(boundPlan);
 
