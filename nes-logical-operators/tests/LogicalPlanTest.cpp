@@ -41,20 +41,22 @@ using namespace NES;
 class LogicalPlanTest : public ::testing::Test
 {
 protected:
-    void SetUp() override
+    LogicalPlanTest()
+        : sourceOp{SourceNameLogicalOperator("Source")}
+        , sourceOp2(
+              [this]
+              {
+                  const auto dummySchema = Schema{};
+                  const auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value();
+                  const std::unordered_map<std::string, std::string> dummyParserConfig
+                      = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
+                  auto dummySourceDescriptor
+                      = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig).value();
+                  return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
+              }())
+        , selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"))}
+        , sinkOp{SinkLogicalOperator()}
     {
-        /// Create some test operators
-        sourceOp = SourceNameLogicalOperator("Source");
-        auto dummySchema = Schema{};
-        auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value(); /// NOLINT
-        const std::unordered_map<std::string, std::string> dummyParserConfig
-            = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
-        auto dummySourceDescriptor = sourceCatalog /// NOLINT
-                                         .addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig)
-                                         .value();
-        sourceOp2 = SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor));
-        selectionOp = SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"));
-        sinkOp = SinkLogicalOperator();
     }
 
     SourceCatalog sourceCatalog;
@@ -64,16 +66,9 @@ protected:
     LogicalOperator sinkOp;
 };
 
-TEST_F(LogicalPlanTest, DefaultConstructor)
-{
-    const LogicalPlan plan;
-    EXPECT_TRUE(plan.getRootOperators().empty());
-    EXPECT_EQ(plan.getQueryId(), INVALID_QUERY_ID);
-}
-
 TEST_F(LogicalPlanTest, SingleRootConstructor)
 {
-    LogicalPlan plan(sourceOp);
+    const LogicalPlan plan(sourceOp);
     EXPECT_EQ(plan.getRootOperators().size(), 1);
     EXPECT_EQ(plan.getRootOperators()[0], sourceOp);
 }
