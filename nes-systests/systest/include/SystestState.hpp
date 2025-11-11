@@ -158,7 +158,7 @@ struct SystestQuery
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
 
-        PlanInfo() = default;
+        PlanInfo() = delete;
 
         PlanInfo(LogicalPlan plan, std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources, Schema sinkSchema)
             : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(std::move(sinkSchema))
