@@ -52,7 +52,6 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.truncatedFields = recordBuffer.getTruncatedFields();
-    executionCtx.projections = projections;
 
     auto fieldNames = projections;
     if (getChild().has_value() && getChild()->tryGet<SelectionPhysicalOperator>().has_value())
