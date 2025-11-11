@@ -28,7 +28,6 @@
 #include <variant>
 #include <vector>
 
-#include <span>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
