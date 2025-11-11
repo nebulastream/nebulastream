@@ -101,13 +101,11 @@ public:
         this->hasTruncatedFields = this->recordBuffer.getTruncatedFields();
     }
     nautilus::val<uint64_t> outputIndex = 0;
-    nautilus::val<uint64_t> inputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
     std::vector<nautilus::val<uint64_t>> indexList;
     RecordBuffer recordBuffer;
     nautilus::val<bool> hasTruncatedFields = false;
-    nautilus::val<int8_t*> indexListRef;
 
 };
 
@@ -122,8 +120,7 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffe
 
     if (recordBuffer.getTruncatedFields())
     {
-        auto arena = ctx.pipelineMemoryProvider.arena;
-        emitState->indexListRef = arena.allocateMemory(getMaxRecordsPerBuffer() * sizeof(uint64_t));
+
         //TODO: prepare arena for id list (memory allocation)
     }
     ctx.setLocalOperatorState(id, std::move(emitState));
@@ -139,13 +136,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     {
         auto index = record.read("row_identifier").cast<nautilus::val<uint64_t>>();
         // add id to indexList
-        if (emitState->indexListRef != nullptr) {
-            auto offset = emitState->inputIndex * sizeof(uint64_t);
-            *(emitState->indexListRef + offset) = index;
-            emitState->inputIndex = emitState->inputIndex + 1;
-        } else {
-
-        }
+        emitState->indexList.push_back(index);
     }else
     {
         if (emitState->outputIndex >= getMaxRecordsPerBuffer())
@@ -175,21 +166,8 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
     {
         //TODO: test to read incoming fields in execute and add truncatedFields in close
         auto fieldNames = memoryProvider->getMemoryLayout()->getSchema().getFieldNames();
-        auto count = emitState->inputIndex;
-        for (nautilus::val<uint64_t> i = 0_u64; i < count; i = i + 1_u64) {
-            nautilus::val<uint64_t> indexValue;
-            if (emitState->indexListRef != nullptr) {
-                auto valueRef = static_cast<nautilus::val<int8_t*>>(emitState->indexListRef + i * sizeof(uint64_t));
-
-                indexValue = *valueRef.value;
-                // indexListRef points to a packed array of uint64_t
-                //auto base = static_cast<nautilus::val<int8_t*>>(emitState->indexListRef);
-                //indexValue = *reinterpret_cast<nautilus::val<uint64_t*>>(base + i * sizeof(uint64_t));
-            } else {
-                continue;
-            }
-
-            auto record = memoryProvider->readRecord(fieldNames, emitState->recordBuffer, indexValue);
+        for (auto index : nautilus::static_iterable(emitState->indexList)) {
+            auto record = memoryProvider->readRecord(fieldNames, emitState->recordBuffer, index);
             if (emitState->outputIndex >= getMaxRecordsPerBuffer())
             {
                 emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
