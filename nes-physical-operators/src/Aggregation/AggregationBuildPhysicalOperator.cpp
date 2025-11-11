@@ -88,7 +88,7 @@ void serializeHashMapProxy(
     [[maybe_unused]] AbstractBufferProvider* bufferProvider,
     const AggregationBuildPhysicalOperator* buildOperator)
 {
-    if (timestamp.getRawValue() != 9)
+    if (timestamp.getRawValue() != 50000)
     {
         return;
     }
@@ -97,7 +97,7 @@ void serializeHashMapProxy(
         return;
     }
     auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
-    hashMap->serialize("/tmp/hashmap.bin");
+    hashMap->serialize("/tmp/nebulastream/hashmap.bin");
     serialized = true;
 }
 
@@ -109,15 +109,15 @@ Interface::HashMap* deserializeHashMapProxy(
     const AggregationBuildPhysicalOperator* buildOperator)
 {
     auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
-    if (timestamp.getRawValue() != 8)
+    if (timestamp.getRawValue() != 50000)
     {
         return hashMap;
     }
-    if (!serialized)
+    if (!std::filesystem::exists("/tmp/nebulastream/hashmap.bin"))
     {
         return hashMap;
     }
-    hashMap->deserialize("/tmp/hashmap.bin", bufferProvider);
+    hashMap->deserialize("/tmp/nebulastream/hashmap.bin", bufferProvider);
     return hashMap;
 }
 
@@ -212,7 +212,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
-
+    /*
     nautilus::invoke(
         deserializeHashMapProxy,
         operatorHandler,
@@ -228,6 +228,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         ctx.workerThreadId,
         ctx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+    */
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
