@@ -450,14 +450,12 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
 
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
-    LogicalPlan queryPlan;
-
-    if (not helpers.top().queryPlans.empty())
+    LogicalPlan queryPlan = [&]
     {
-        queryPlan = std::move(helpers.top().queryPlans[0]);
-    }
-    else
-    {
+        if (not helpers.top().queryPlans.empty())
+        {
+            return std::move(helpers.top().queryPlans[0]);
+        }
         if (helpers.top().getSource().empty())
         {
             const auto [type, configOptions] = helpers.top().getInlineSourceConfig();
@@ -469,13 +467,10 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
                 throw InvalidConfigParameter("Inline Source is missing schema definition");
             }
 
-            queryPlan = LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
+            return LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
         }
-        else
-        {
-            queryPlan = LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource());
-        }
-    }
+        return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource());
+    }();
 
     for (auto whereExpr = helpers.top().getWhereClauses().rbegin(); whereExpr != helpers.top().getWhereClauses().rend(); ++whereExpr)
     {
