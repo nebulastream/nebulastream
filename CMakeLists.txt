@@ -16,6 +16,9 @@ include(CMakeDependentOption)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_TOOLCHAIN_VERSION 19)
 
+# Needed to silence: Policy CMP0167 is not set
+cmake_policy(SET CMP0167 NEW)
+
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
