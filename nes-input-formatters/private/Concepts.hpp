@@ -13,6 +13,7 @@
 */
 
 #pragma once
+
 #include <concepts>
 #include <cstddef>
 #include <ostream>
@@ -25,6 +26,7 @@
 
 namespace NES
 {
+
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
 template <typename T>
 concept IndexerMetaDataType = requires(ParserConfig config, Schema schema, T indexerMetaData, std::ostream& spanningTuple) {
