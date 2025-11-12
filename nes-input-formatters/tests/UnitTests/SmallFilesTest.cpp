@@ -24,6 +24,7 @@
 #include <ranges>
 #include <span>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -349,58 +350,6 @@ TEST_F(SmallFilesTest, testFoodDataJSON)
     runTest(TestConfig{
         .testFileName = "Food",
         .formatterType = "JSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        .isCompiled = true});
-}
-
-TEST_F(SmallFilesTest, testTwoIntegerColumnsSIMDJSON)
-{
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .formatterType = "SIMDJSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 8,
-        .isCompiled = true});
-}
-
-TEST_F(SmallFilesTest, testBimboDataSIMDJSON)
-{
-    runTest(TestConfig{
-        .testFileName = "Bimbo",
-        .formatterType = "SIMDJSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        .isCompiled = true});
-}
-
-TEST_F(SmallFilesTest, testFoodDataSIMDJSON)
-{
-    runTest(TestConfig{
-        .testFileName = "Food",
-        .formatterType = "SIMDJSON",
-        .fileEnding = "JSON",
-        .hasSpanningTuples = true,
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
-        .isCompiled = true});
-}
-
-TEST_F(SmallFilesTest, testSpaceCraftTelemetrySIMDJSON)
-{
-    runTest(TestConfig{
-        .testFileName = "Spacecraft_Telemetry",
-        .formatterType = "SIMDJSON",
         .fileEnding = "JSON",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
