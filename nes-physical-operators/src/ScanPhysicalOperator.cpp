@@ -51,7 +51,6 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.truncatedFields = recordBuffer.getTruncatedFields();
 
     auto fieldNames = projections;
     if (getChild().has_value() && getChild()->tryGet<SelectionPhysicalOperator>().has_value())
@@ -64,7 +63,6 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
         //if (fieldNames.size() > 0 && fieldNames.size() < projections.size())//do only if not fitler over all fields
 
         recordBuffer.setTruncatedFields(true);
-        executionCtx.truncatedFields = true;
 
     }
     /// call open on all child operators
@@ -88,10 +86,10 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
             //modify column buffer provider to writeRecords with added fields
             //TODO: also implement for row provider
         auto record = memoryProvider->readRecord(fieldNames, recordBuffer, i);
-        if (recordBuffer.getTruncatedFields())
-        {
-            record.write("row_identifier", nautilus::val(i));
-        }
+        //if (recordBuffer.getTruncatedFields())
+        //{
+            record.write("row_identifier", i);
+        //}
         executeChild(executionCtx, record);
     }
 }
