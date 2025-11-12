@@ -91,8 +91,7 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const URI& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
-    auto queryManager
-        = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI.toString(), grpc::InsecureChannelCredentials()));
+    auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI.toString(), grpc::InsecureChannelCredentials()));
     Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
     while (true)

@@ -57,6 +57,6 @@ public:
 private:
     /// The start of this vector is the start of a Snappy frame. If we have accumulated a whole frame (index 1-3 tells the length of the frame)
     /// we can decode it.
-    std::vector<int8_t> encodedBufferStorage;
+    std::vector<char> encodedBufferStorage;
 };
 }

@@ -77,7 +77,7 @@ void ZstdDecoder::decodeAndEmit(
         /// Emit decoded buffer. If the encoded buffer was not fully encoded yet, provide a new, empty buffer.
         if (returnedCode == 0)
         {
-            auto result = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
+            auto _ = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
         }
         else
         {

@@ -97,7 +97,7 @@ void LZ4Decoder::decodeAndEmit(
         }
         else
         {
-            auto result = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
+            auto _ = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
         }
     }
 }
