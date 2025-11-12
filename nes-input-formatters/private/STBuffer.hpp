@@ -83,15 +83,12 @@ public:
     [[nodiscard]] SequenceShredderResult
     tryFindLeadingSTForBufferWithDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
     [[nodiscard]] SpanningBuffers tryFindTrailingSTForBufferWithDelimiter(SequenceNumber sequenceNumber);
+    [[nodiscard]] SpanningBuffers tryFindTrailingSTForBufferWithDelimiter(SequenceNumber sequenceNumber, FieldIndex offsetOfLastTuple);
 
     /// Tries to find a reachable buffer with a delimiter in leading direction.
     /// If successful, starts a claiming trailing delimiter search with that reachable buffer as the start (search starts at 'sequenceNumber')
     [[nodiscard]] SequenceShredderResult
     tryFindSTForBufferWithoutDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
-
-    /// Claims all trailing buffers of an ST (all buffers except the first, which the thread must have claimed already to claim the rest)
-    /// Assumes size of 'spanningTupleBuffers' as the size of the ST, assigning using an index, instead of emplacing to the back
-    void claimSTBuffers(SequenceNumber stStartSn, std::span<StagedBuffer> spanningTupleBuffers);
 
     [[nodiscard]] bool validate() const;
 
@@ -129,6 +126,10 @@ private:
 
     /// Calls claimingTrailingDelimiterSearch(spanningTupleStartSN, spanningTupleStartSN) <-- ST start is also where search should start
     [[nodiscard]] ClaimedSpanningTuple claimingTrailingDelimiterSearch(SequenceNumber stStartSN);
+
+    /// Claims all trailing buffers of an ST (all buffers except the first, which the thread must have claimed already to claim the rest)
+    /// Assumes size of 'spanningTupleBuffers' as the size of the ST, assigning using an index, instead of emplacing to the back
+    void claimSTBuffers(SequenceNumber stStartSn, std::span<StagedBuffer> spanningTupleBuffers);
 };
 }
 
