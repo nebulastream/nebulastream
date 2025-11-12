@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <RawTupleBuffer.hpp>
@@ -90,8 +89,14 @@ public:
     /// Uses the STBuffer to thread-safely determine whether the 'indexedRawBuffer' with the given 'sequenceNumber'
     /// completes spanning tuples and whether the calling thread is the first to claim the individual spanning tuples
     SequenceShredderResult findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer);
-    SpanningBuffers findTrailingSTWithDelimiter(SequenceNumber sequenceNumber);
     SequenceShredderResult findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer);
+
+    /// Assumes findLeadingSTWithDelimiter was already called and the StagedBuffer for 'sequenceNumber' already set
+    /// Searches for a reachable buffer that delimits tuples in trailing direction (higher SequenceNumbers)
+    SpanningBuffers findTrailingSTWithDelimiter(SequenceNumber sequenceNumber);
+    /// Overload that allows to lazily set the offset of the last record starting in the StagedBuffer (and the atomic state)
+    /// if the offset was not already known when 'findLeadingSTWithDelimiter' was called
+    SpanningBuffers findTrailingSTWithDelimiter(SequenceNumber sequenceNumber, FieldIndex offsetOfLastTuple);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 

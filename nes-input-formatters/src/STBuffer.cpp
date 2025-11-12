@@ -79,6 +79,8 @@ STBuffer::tryFindLeadingSTForBufferWithDelimiter(const SequenceNumber sequenceNu
     {
         return SequenceShredderResult{.isInRange = false, .spanningBuffers = {}};
     }
+
+    /// claimingLeadingDelimiterSearch checks if valid trailing delimiter offset
     auto [firstSTStartBuffer, firstSTStartSN] = claimingLeadingDelimiterSearch(sequenceNumber);
     if (firstSTStartBuffer.has_value())
     {
@@ -93,6 +95,23 @@ STBuffer::tryFindLeadingSTForBufferWithDelimiter(const SequenceNumber sequenceNu
 
 SpanningBuffers STBuffer::tryFindTrailingSTForBufferWithDelimiter(const SequenceNumber sequenceNumber)
 {
+    auto [firstSTStartBuffer, lastSN] = claimingTrailingDelimiterSearch(sequenceNumber);
+    if (firstSTStartBuffer.has_value())
+    {
+        const auto sizeOfSpanningTuple = lastSN.getRawValue() - sequenceNumber.getRawValue() + 1;
+        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
+        spanningTupleBuffers[0] = std::move(firstSTStartBuffer.value());
+        claimSTBuffers(sequenceNumber, spanningTupleBuffers);
+        return SpanningBuffers(std::move(spanningTupleBuffers));
+    }
+    return SpanningBuffers{};
+}
+
+SpanningBuffers STBuffer::tryFindTrailingSTForBufferWithDelimiter(const SequenceNumber sequenceNumber, const FieldIndex offsetOfLastTuple)
+{
+    const auto [sequenceNumberBufferIdx, _] = getBufferIdxAndABAItNo(sequenceNumber);
+    this->buffer.at(sequenceNumberBufferIdx.getRawValue()).setOffsetOfTrailingST(offsetOfLastTuple);
+
     auto [firstSTStartBuffer, lastSN] = claimingTrailingDelimiterSearch(sequenceNumber);
     if (firstSTStartBuffer.has_value())
     {
@@ -159,7 +178,7 @@ std::optional<size_t> STBuffer::searchLeading(const STBufferIdx searchStartBuffe
     auto isPriorIteration = searchStartBufferIdxV < leadingDistance;
     auto entryState = this->buffer[(searchStartBufferIdxV - leadingDistance) % buffer.size()].getEntryState(
         static_cast<ABAItNo>(abaItNumber.getRawValue() - static_cast<size_t>(isPriorIteration)));
-    while (entryState.hasCorrectABA and not(entryState.hasDelimiter))
+    while (entryState.hasCorrectABA and not entryState.hasValidTrailingDelimiterOffset and not(entryState.hasDelimiter))
     {
         ++leadingDistance;
         isPriorIteration = searchStartBufferIdxV < leadingDistance;
@@ -222,5 +241,5 @@ STBuffer::ClaimedSpanningTuple STBuffer::claimingTrailingDelimiterSearch(const S
         };
     }
     return ClaimedSpanningTuple{.firstBuffer = std::nullopt, .snOfLastBuffer = INVALID<SequenceNumber>};
-};
+}
 }
