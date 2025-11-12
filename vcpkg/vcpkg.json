@@ -42,7 +42,8 @@
     "replxx",
     "spdlog",
     "yaml-cpp",
-    "boost-url"
+    "boost-url",
+    "simdjson"
   ],
   "overrides": [
     {
