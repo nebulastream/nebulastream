@@ -37,7 +37,7 @@ public:
     void decodeAndEmit(
         TupleBuffer& encodedBuffer,
         TupleBuffer& emptyDecodedBuffer,
-        const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide) override;
+        const std::function<std::optional<TupleBuffer>(TupleBuffer&, const DecodeStatusType)>& emitAndProvide) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
