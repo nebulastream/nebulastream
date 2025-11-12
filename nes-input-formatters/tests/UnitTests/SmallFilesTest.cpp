@@ -154,6 +154,7 @@ public:
     {
         std::string testFileName;
         std::string formatterType;
+        std::string fileEnding;
         bool hasSpanningTuples;
         size_t numberOfIterations;
         size_t numberOfThreads;
@@ -188,17 +189,17 @@ public:
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes, currentTestFile.schemaFieldNames);
-        const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType;
-        const auto testFilePath
-            = [](const TestFile& currentTestFile, const std::filesystem::path& testDirPath, std::string_view formatterType)
+
+        const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.fileEnding;
+        const auto testFilePath = [](const TestFile& currentTestFile, const std::filesystem::path& testDirPath, std::string_view fileEnding)
         {
             if (const auto testFilePath = findFileByName(currentTestFile.fileName, testDirPath))
             {
                 return testFilePath.value();
             }
             throw InvalidConfigParameter(
-                "Could not find file test file: {}.<file_ending_of_{}>", testDirPath / currentTestFile.fileName, formatterType);
-        }(currentTestFile, testDirPath, testConfig.formatterType);
+                "Could not find file test file: {}.<file_ending_of_{}>", testDirPath / currentTestFile.fileName, fileEnding);
+        }(currentTestFile, testDirPath, testConfig.fileEnding);
 
         const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
         const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeOfSchemaInBytes());
@@ -322,6 +323,7 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
     runTest(TestConfig{
         .testFileName = "TwoIntegerColumns",
         .formatterType = "JSON",
+        .fileEnding = "JSON",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
@@ -334,6 +336,7 @@ TEST_F(SmallFilesTest, testBimboDataJSON)
     runTest(TestConfig{
         .testFileName = "Bimbo",
         .formatterType = "JSON",
+        .fileEnding = "JSON",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
@@ -346,6 +349,59 @@ TEST_F(SmallFilesTest, testFoodDataJSON)
     runTest(TestConfig{
         .testFileName = "Food",
         .formatterType = "JSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
+}
+
+TEST_F(SmallFilesTest, testTwoIntegerColumnsSIMDJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns",
+        .formatterType = "SIMDJSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 8,
+        .isCompiled = true});
+}
+
+TEST_F(SmallFilesTest, testBimboDataSIMDJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Bimbo",
+        .formatterType = "SIMDJSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
+}
+
+TEST_F(SmallFilesTest, testFoodDataSIMDJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Food",
+        .formatterType = "SIMDJSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
+}
+
+TEST_F(SmallFilesTest, testSpaceCraftTelemetrySIMDJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Spacecraft_Telemetry",
+        .formatterType = "SIMDJSON",
+        .fileEnding = "JSON",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
@@ -358,6 +414,7 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
     runTest(TestConfig{
         .testFileName = "Spacecraft_Telemetry",
         .formatterType = "JSON",
+        .fileEnding = "JSON",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
@@ -370,6 +427,7 @@ TEST_F(SmallFilesTest, testTwoIntegerColumns)
     runTest(TestConfig{
         .testFileName = "TwoIntegerColumns",
         .formatterType = "CSV",
+        .fileEnding = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
@@ -382,6 +440,7 @@ TEST_F(SmallFilesTest, testBimboData)
     runTest(TestConfig{
         .testFileName = "Bimbo",
         .formatterType = "CSV",
+        .fileEnding = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
@@ -394,6 +453,7 @@ TEST_F(SmallFilesTest, testFoodData)
     runTest(TestConfig{
         .testFileName = "Food",
         .formatterType = "CSV",
+        .fileEnding = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 10,
         .numberOfThreads = 8,
@@ -406,6 +466,7 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
     runTest(
         {.testFileName = "Spacecraft_Telemetry",
          .formatterType = "CSV",
+         .fileEnding = "CSV",
          .hasSpanningTuples = true,
          .numberOfIterations = 10,
          .numberOfThreads = 8,
