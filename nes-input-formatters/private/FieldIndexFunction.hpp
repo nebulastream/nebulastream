@@ -29,8 +29,6 @@
 namespace NES
 {
 
-using FieldIndex = uint32_t;
-
 class SchemaInfo
 {
 public:
