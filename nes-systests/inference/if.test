@@ -1,0 +1,36 @@
+Source solarPowerSource UINT64 timestamp FLOAT64 value FILE
+TESTDATA/large/solar_power/solar-power.csv
+
+SINK solarPowerVarsizedDiscard TYPE Checksum VARSIZED powerProdNext8Sec
+SINK solarPowerVarsizedDiscard2 TYPE Checksum VARSIZED solarPowerSource$value_60_sec
+
+MODEL minMaxScalerSolar TESTDATA/model/solar_power/preprocessor/scaler_solar.onnx
+FLOAT64
+FLOAT32 value_sc
+BATCH_SIZE 1
+CACHE NONE SIZE 1
+
+MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
+VARSIZED
+VARSIZED powerProdNext8Sec
+BATCH_SIZE 1
+CACHE TWO_QUEUES SIZE 16
+
+SELECT ARRAY_AGG(value) AS value_60_sec
+FROM solarPowerSource
+WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
+INTO solarPowerVarsizedDiscard2
+----
+111435000,1618839900
+
+SELECT powerProdNext8Sec FROM (
+    SELECT INFER_MODEL(nBeats_2q, (value_60_sec))
+    FROM (
+        SELECT ARRAY_AGG(value) AS value_60_sec
+        FROM solarPowerSource
+        WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
+    )
+)
+INTO solarPowerVarsizedDiscard
+----
+111435000,1618839900
