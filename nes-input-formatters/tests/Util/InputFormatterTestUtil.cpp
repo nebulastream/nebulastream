@@ -36,9 +36,11 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -47,7 +49,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
+#include <Pipeline.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace NES::InputFormatterTestUtil
@@ -181,15 +187,6 @@ std::unique_ptr<SourceHandle> createFileSource(
     return sourceProvider.lower(NES::OriginId(1), sourceDescriptor.value());
 }
 
-std::shared_ptr<InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema, std::string formatterType)
-{
-    const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", std::move(formatterType)}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
-    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
-
-    return provideInputFormatterTask(schema, validatedParserConfiguration);
-}
-
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
 {
     /// Wait for the file source to fill all expected tuple buffers. Timeout after 1 second (it should never take that long).
@@ -201,14 +198,32 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
     }
 }
 
-TestPipelineTask createInputFormatterTask(
-    const SequenceNumber sequenceNumber,
-    const WorkerThreadId workerThreadId,
-    TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatterTaskPipeline> inputFormatterTask)
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
+    const std::unordered_map<std::string, std::string>& parserConfiguration,
+    const Schema& schema,
+    const size_t sizeOfFormattedBuffers,
+    const bool isCompiled)
 {
-    taskBuffer.setSequenceNumber(sequenceNumber);
-    return TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};
+    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+    return createInputFormatter(validatedParserConfiguration, schema, sizeOfFormattedBuffers, isCompiled);
+}
+
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
+    const ParserConfig& parserConfiguration, const Schema& schema, const size_t sizeOfFormattedBuffers, const bool isCompiled)
+{
+    constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
+
+    auto memoryProvider = Interface::BufferRef::TupleBufferRef::create(sizeOfFormattedBuffers, schema);
+    auto scanOp = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(parserConfiguration, memoryProvider));
+    scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
+
+    auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));
+    physicalScanPipeline->getOperatorHandlers().emplace(emitOperatorHandlerId, std::make_shared<EmitOperatorHandler>());
+
+    auto nautilusOptions = nautilus::engine::Options{};
+    nautilusOptions.setOption("engine.Compilation", isCompiled);
+    return std::make_shared<CompiledExecutablePipelineStage>(
+        physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);
 }
 
 }

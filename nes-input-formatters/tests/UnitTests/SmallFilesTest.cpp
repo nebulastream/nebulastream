@@ -158,6 +158,7 @@ public:
         size_t numberOfIterations;
         size_t numberOfThreads;
         size_t sizeOfRawBuffers;
+        bool isCompiled;
     };
 
     struct SetupResult
@@ -191,7 +192,7 @@ public:
         const auto testFilePath
             = [](const TestFile& currentTestFile, const std::filesystem::path& testDirPath, std::string_view formatterType)
         {
-            if (const auto testFilePath = Util::findFileByName(currentTestFile.fileName, testDirPath))
+            if (const auto testFilePath = NES::Util::findFileByName(currentTestFile.fileName, testDirPath))
             {
                 return testFilePath.value();
             }
@@ -259,12 +260,12 @@ public:
         {
             const auto tmpExpectedResultsPath
                 = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-            Util::writeTupleBuffersToFile(resultBufferVec, setupResult.schema, tmpExpectedResultsPath, varSizedFieldOffsets);
+            NES::Util::writeTupleBuffersToFile(resultBufferVec, setupResult.schema, tmpExpectedResultsPath, varSizedFieldOffsets);
         }
         const auto expectedResultsPath
             = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
         auto expectedBuffers
-            = Util::loadTupleBuffersFromFile(testBufferManager, setupResult.schema, expectedResultsPath, varSizedFieldOffsets);
+            = NES::Util::loadTupleBuffersFromFile(testBufferManager, setupResult.schema, expectedResultsPath, varSizedFieldOffsets);
         return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultBufferVec, expectedBuffers, setupResult.schema);
     }
 
@@ -282,23 +283,21 @@ public:
             /// Prepare TestTaskQueue for processing the input formatter tasks
             auto testBufferManager
                 = BufferManager::create(setupResult.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(setupResult.schema, testConfig.formatterType);
-            auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
 
+            /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
+            const std::unordered_map<std::string, std::string> parserConfiguration{
+                {"type", testConfig.formatterType}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
+            auto testStage = InputFormatterTestUtil::createInputFormatter(
+                parserConfiguration, setupResult.schema, setupResult.sizeOfFormattedBuffers, testConfig.isCompiled);
+
+            auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
             std::vector<TestPipelineTask> pipelineTasks;
             pipelineTasks.reserve(setupResult.numberOfExpectedRawBuffers);
             rawBuffers.modifyBuffer(
-                [&](auto& rawBuffersRef)
+                [&pipelineTasks, &testStage](const auto& buffers)
                 {
-                    for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffersRef)
-                    {
-                        const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
-                        const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
-                        rawBuffer.setSequenceNumber(currentSequenceNumber);
-                        auto pipelineTask = TestPipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
-                        pipelineTasks.emplace_back(std::move(pipelineTask));
-                        ++bufferIdx;
-                    }
+                    std::ranges::for_each(
+                        buffers, [&pipelineTasks, &testStage](const auto& rawBuffer) { pipelineTasks.emplace_back(rawBuffer, testStage); });
                 });
 
             /// Create test task queue and process input formatter tasks
@@ -327,7 +326,8 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testBimboDataJSON)
@@ -338,7 +338,8 @@ TEST_F(SmallFilesTest, testBimboDataJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testFoodDataJSON)
@@ -349,7 +350,8 @@ TEST_F(SmallFilesTest, testFoodDataJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
@@ -360,7 +362,8 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
@@ -371,7 +374,8 @@ TEST_F(SmallFilesTest, testTwoIntegerColumns)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testBimboData)
@@ -380,9 +384,10 @@ TEST_F(SmallFilesTest, testBimboData)
         .testFileName = "Bimbo",
         .formatterType = "CSV",
         .hasSpanningTuples = true,
-        .numberOfIterations = 10,
+        .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16});
+        .sizeOfRawBuffers = 2,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testFoodData)
@@ -392,8 +397,9 @@ TEST_F(SmallFilesTest, testFoodData)
         .formatterType = "CSV",
         .hasSpanningTuples = true,
         .numberOfIterations = 10,
-        .numberOfThreads = 1,
-        .sizeOfRawBuffers = 16});
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 2,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
@@ -404,22 +410,10 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
          .hasSpanningTuples = true,
          .numberOfIterations = 10,
          .numberOfThreads = 8,
-         .sizeOfRawBuffers = 16});
+         .sizeOfRawBuffers = 2,
+         .isCompiled = true});
 }
 
-/// Simple test that confirms that we forward already formatted buffers without spanning tuples correctly
-TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
-{
-    runTest(TestConfig{
-        .testFileName = "TwoIntegerColumns",
-        .formatterType = "Native",
-        .hasSpanningTuples = false,
-        /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
-        /// raw tuple buffer when the tuple buffer is in 'Native' format and has no spanning tuples
-        .numberOfIterations = 1,
-        .numberOfThreads = 8,
-        .sizeOfRawBuffers = 4096});
-}
 }
 
 /// NOLINTEND(readability-magic-numbers)

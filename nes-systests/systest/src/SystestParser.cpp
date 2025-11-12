@@ -518,7 +518,7 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
         {
             if (!queryString.empty())
             {
-                const auto trimmedQuerySoFar = Util::trimWhiteSpaces(std::string_view(queryString));
+                const auto trimmedQuerySoFar = NES::Util::trimWhiteSpaces(std::string_view(queryString));
                 if (!trimmedQuerySoFar.empty() && trimmedQuerySoFar.back() == ';')
                 {
                     break;
@@ -548,8 +548,8 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
             }
             else
             {
-                const auto trimmedLineView = Util::trimWhiteSpaces(std::string_view(line));
-                if (!trimmedLineView.empty() && Util::toLowerCase(trimmedLineView) == "differential")
+                const auto trimmedLineView = NES::Util::trimWhiteSpaces(std::string_view(line));
+                if (!trimmedLineView.empty() && NES::Util::toLowerCase(trimmedLineView) == "differential")
                 {
                     throw SLTUnexpectedToken(
                         "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);

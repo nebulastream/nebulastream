@@ -12,17 +12,20 @@
     limitations under the License.
 */
 
-#include <NativeInputFormatIndexer.hpp>
+#pragma once
 
+#include <memory>
 
-#include <InputFormatIndexerRegistry.hpp>
+#include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
 
-InputFormatIndexerRegistryReturnType RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
-{
-    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer>({}, QuotationType::NONE);
-}
+std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> provideInputFormatterTupleBufferRef(
+    ParserConfig formatScanConfig, std::shared_ptr<NES::Nautilus::Interface::BufferRef::TupleBufferRef> memoryProvider);
 
+bool contains(const std::string& parserType);
 }
