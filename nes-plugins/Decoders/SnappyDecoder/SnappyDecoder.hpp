@@ -50,13 +50,13 @@ public:
     void decodeAndEmit(
         TupleBuffer& encodedBuffer,
         TupleBuffer& emptyDecodedBuffer,
-        const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide) override;
+        const std::function<std::optional<TupleBuffer>(TupleBuffer&, const DecodeStatusType)>& emitAndProvide) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     /// The start of this vector is the start of a Snappy frame. If we have accumulated a whole frame (index 1-3 tells the length of the frame)
     /// we can decode it.
-    std::vector<int8_t> encodedBufferStorage;
+    std::vector<char> encodedBufferStorage;
 };
 }

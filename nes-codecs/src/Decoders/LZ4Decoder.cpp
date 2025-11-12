@@ -52,7 +52,7 @@ LZ4Decoder::~LZ4Decoder()
 void LZ4Decoder::decodeAndEmit(
     TupleBuffer& encodedBuffer,
     TupleBuffer& emptyDecodedBuffer,
-    const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
+    const std::function<std::optional<TupleBuffer>(TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
 {
     TupleBuffer currentDecodedBuffer = emptyDecodedBuffer;
 
@@ -97,7 +97,7 @@ void LZ4Decoder::decodeAndEmit(
         }
         else
         {
-            auto result = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
+            auto _ = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
         }
     }
 }

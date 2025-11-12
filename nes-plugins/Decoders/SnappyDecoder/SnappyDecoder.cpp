@@ -33,7 +33,7 @@ SnappyDecoder::SnappyDecoder() = default;
 void SnappyDecoder::decodeAndEmit(
     TupleBuffer& encodedBuffer,
     TupleBuffer& emptyDecodedBuffer,
-    const std::function<std::optional<TupleBuffer>(const TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
+    const std::function<std::optional<TupleBuffer>(TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
 {
     /// Add the data of the encoded buffer to the vector.
     encodedBufferStorage.insert(
@@ -49,22 +49,21 @@ void SnappyDecoder::decodeAndEmit(
     }
     /// Type of frame (compressed, uncompressed, stream identifier)
     const int8_t type = encodedBufferStorage[0];
-    const uint32_t length = static_cast<uint8_t>(encodedBufferStorage[1]) | (static_cast<uint8_t>(encodedBufferStorage[2]) << 8)
-        | (static_cast<uint8_t>(encodedBufferStorage[3]) << 16);
-
+    uint32_t length = 0;
+    /// 3 bytes for content length
+    std::memcpy(&length, &encodedBufferStorage[1], 3);
 
     switch (type)
     {
-        case 0: {
+        case 0: { /// Compressed frame
             /// Is the whole frame already stored (4 bytes header + length of payload)?
             if (encodedBufferStorage.size() < 4 + length)
             {
                 /// We need to obtain more buffers before being able to decode
                 return;
             }
-            /// Compressed frame
             /// Pure payload without header. We need to skip the 4 byte header and the 4 byte checksum at the start of the payload
-            const char* encodedData = reinterpret_cast<const char*>(encodedBufferStorage.data() + 8);
+            const char* encodedData = &encodedBufferStorage[8];
             /// We use a string as decoded data sink, since the decompress function expects this.
             std::string decodedString;
             /// Length of the body, without the checksum
@@ -99,7 +98,7 @@ void SnappyDecoder::decodeAndEmit(
                 }
                 else
                 {
-                    auto result = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
+                    auto _ = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
                 }
             }
             /// Remove the frame from our temporary storage
@@ -115,7 +114,7 @@ void SnappyDecoder::decodeAndEmit(
 
             /// Send the uncompressed frame
             size_t emittedBytes = 0;
-            /// The decoded bytes amount is equal to length without the 4 byte payload
+            /// The decoded bytes amount is equal to length without the 4 byte checksum
             const size_t amountOfDecodedBytes = length - 4;
             auto currentDecodedBuffer = emptyDecodedBuffer;
 
@@ -138,14 +137,14 @@ void SnappyDecoder::decodeAndEmit(
                 }
                 else
                 {
-                    auto result = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
+                    auto _ = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
                 }
             }
 
             encodedBufferStorage.erase(encodedBufferStorage.begin(), encodedBufferStorage.begin() + length + 4);
             break;
         }
-        case -1: {
+        case -1: { /// Format identifier
             if (encodedBufferStorage.size() < 4 + length)
             {
                 /// We need to obtain more buffers before being able to decode
