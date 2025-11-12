@@ -235,12 +235,13 @@ void IREECacheInferenceOperator::close(ExecutionContext& executionCtx, RecordBuf
     auto misses = predictionCache->getMissesRef();
 
     nautilus::invoke(
-        +[](OperatorHandler* opHandler,uint64_t* hits, uint64_t* misses)
+        +[](OperatorHandler* opHandler,uint64_t* hits, uint64_t* misses, WorkerThreadId thread)
         {
             auto handler = static_cast<IREEInferenceOperatorHandler*>(opHandler);
-            handler->incrementHits(*hits);
-            handler->incrementMisses(*misses);
-        }, inferModelHandler, hits, misses);
+            std::scoped_lock lock(handler->mutex);
+            handler->incrementHits(*hits, thread);
+            handler->incrementMisses(*misses, thread);
+        }, inferModelHandler, hits, misses, executionCtx.workerThreadId);
 }
 
 void IREECacheInferenceOperator::terminate(ExecutionContext& executionCtx) const
