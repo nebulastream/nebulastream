@@ -78,12 +78,21 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
     const Record& rec,
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
+    ((void)recordIndex);
+    ((void)recordBuffer);
+    ((void)rec);
+    ((void)bufferProvider);
     const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getBuffer();
     for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
+        const auto fieldName = schema.getFieldAt(i).name;
+        if (not rec.hasField(fieldName))
+        {
+            continue;
+        }
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        const auto value = rec.read(schema.getFieldAt(i).name);
+        const auto value = rec.read(fieldName);
         storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }

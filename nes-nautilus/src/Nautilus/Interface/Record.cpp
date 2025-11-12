@@ -16,6 +16,9 @@
 #include <cstdint>
 #include <numeric>
 #include <ostream>
+#include <fmt/base.h>
+#include <fmt/ranges.h>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -28,6 +31,11 @@ namespace NES::Nautilus
 {
 Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : recordFields(fields)
 {
+}
+
+bool Record::hasField(const RecordFieldIdentifier& recordFieldIdentifier) const
+{
+    return recordFields.contains(recordFieldIdentifier);
 }
 
 const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) const

@@ -78,7 +78,8 @@ uint64_t MemoryLayout::getTupleSize() const
 
 uint64_t MemoryLayout::getFieldSize(const uint64_t fieldIndex) const
 {
-    return physicalFieldSizes[fieldIndex];
+    PRECONDITION(fieldIndex < physicalFieldSizes.size(), "Field index out of range");
+    return physicalFieldSizes.at(fieldIndex);
 }
 
 MemoryLayout::MemoryLayout(const uint64_t bufferSize, Schema schema) : bufferSize(bufferSize), schema(std::move(schema)), recordSize(0)

@@ -16,6 +16,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <fmt/base.h>
+#include <fmt/ranges.h>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
@@ -79,14 +81,23 @@ void RowTupleBufferMemoryProvider::writeRecord(
     const Record& rec,
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
+    ((void)recordIndex);
+    ((void)recordBuffer);
+    ((void)rec);
+    ((void)bufferProvider);
     auto tupleSize = rowMemoryLayout->getTupleSize();
     const auto bufferAddress = recordBuffer.getBuffer();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     const auto schema = rowMemoryLayout->getSchema();
     for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
+        const auto fieldName = schema.getFieldAt(i).name;
+        if (not rec.hasField(fieldName))
+        {
+            continue;
+        }
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
-        const auto& value = rec.read(schema.getFieldAt(i).name);
+        const auto& value = rec.read(fieldName);
         storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }

@@ -82,7 +82,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     CPPTRACE_TRY
     {
         plan.setQueryId(QueryId(queryIdCounter++));
-        auto queryPlan = optimizer->optimize(plan);
+        auto queryPlan = optimizer->optimize(plan); //decide memory layout phase on already legacy optimized plan
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         request->dumpCompilationResult = configuration.workerConfiguration.dumpQueryCompilationIntermediateRepresentations.getValue();

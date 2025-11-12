@@ -47,7 +47,7 @@ uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const
         "field index: {} is larger the number of field in the memory layout {}",
         fieldIndex,
         physicalFieldSizes.size());
-    return fieldOffSets[fieldIndex];
+    return fieldOffSets.at(fieldIndex);
 }
 
 uint64_t RowLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const

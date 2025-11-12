@@ -25,17 +25,16 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
-#include <Util/Common.hpp>
 
 #include <EmitOperatorHandler.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <function.hpp>
-#include <SelectionPhysicalOperator.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -113,9 +112,7 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffe
     auto emitState = std::make_unique<EmitState>(resultBuffer);
 
 
-        auto arena = ctx.pipelineMemoryProvider.arena;
-        emitState->indexListRef = arena.allocateMemory(getMaxRecordsPerBuffer() * sizeof(uint64_t));
-        //TODO: prepare arena for id list (memory allocation)
+        emitState->indexListRef = ctx.allocateMemory(getMaxRecordsPerBuffer() * sizeof(uint64_t));
     if (recordBuffer.getTruncatedFields())
     {
         emitState->hasTruncatedFields = true;
@@ -125,20 +122,18 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffe
 
 void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    ((void)record);
     //if id list: store index into ctx
-    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
+    auto* emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     /// emit buffer if it reached the maximal capacity
     ///
     if (emitState->hasTruncatedFields)
     {
         auto index = record.read("row_identifier").cast<nautilus::val<uint64_t>>();
-        // add id to indexList
-
-        // auto offset = emitState->inputIndex * sizeof(uint64_t);
         emitState->indexListRef[emitState->inputIndex] = index;
         emitState->inputIndex = emitState->inputIndex + 1_u64;
-
-    }else
+    }
+    else
     {
         if (emitState->outputIndex >= getMaxRecordsPerBuffer())
         {
@@ -156,23 +151,18 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
         emitState->outputIndex = emitState->outputIndex + 1_u64;
     }
-
-
 }
 
 void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
+    auto* emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     if (emitState->hasTruncatedFields)
     {
         //TODO: test to read incoming fields in execute and add truncatedFields in close
         auto fieldNames = memoryProvider->getMemoryLayout()->getSchema().getFieldNames();
-
-        for (nautilus::val<uint64_t> i = 0_u64; i < emitState->inputIndex; i = i + 1_u64) {
-
-            nautilus::val<uint64_t> indexValue = emitState->indexListRef[i];
-
-            auto record = memoryProvider->readRecord(fieldNames, recordBuffer, indexValue);
+        for (nautilus::val<uint64_t> i = 0_u64; i < emitState->inputIndex; i = i + 1_u64)
+        {
+            nautilus::val<uint64_t> indexValue; indexValue = Nautilus::Util::readValueFromMemRef<uint64_t>(emitState->indexListRef + i);
 
             if (emitState->outputIndex >= getMaxRecordsPerBuffer())
             {
@@ -183,6 +173,7 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuff
                 emitState->outputIndex = 0_u64;
             }
 
+            auto record = memoryProvider->readRecord(fieldNames, recordBuffer, indexValue);
             memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
             emitState->outputIndex = emitState->outputIndex + 1_u64;
         }
@@ -192,8 +183,6 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuff
 
     /// emit current buffer and set the metadata
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
-
-
 }
 
 void EmitPhysicalOperator::emitRecordBuffer(

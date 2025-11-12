@@ -71,25 +71,8 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        //TODO: if projection afterwards: get filter fields
-        //if scan/emit around filter/agg/map (single op pipeline)
-            //only read fields used/accessed in operator + index
-            //execute on truncated projections
-
-            //TODO: add "row_identifier" to record fields
-
-
-
-            // only pass (or remove) all tuples with (no) index in results
-            //alternatively add remaining projection fields to each record using memoryProvider(record index)
-
-            //modify column buffer provider to writeRecords with added fields
-            //TODO: also implement for row provider
         auto record = memoryProvider->readRecord(fieldNames, recordBuffer, i);
-        //if (recordBuffer.getTruncatedFields())
-        //{
-            record.write("row_identifier", i);
-        //}
+        record.write("row_identifier", i);
         executeChild(executionCtx, record);
     }
 }
