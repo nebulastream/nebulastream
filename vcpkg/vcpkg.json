@@ -43,7 +43,9 @@
     "yaml-cpp",
     "boost-url",
     "nameof",
-    "scope-guard"
+    "scope-guard",
+    "boost-url",
+    "simdjson"
   ],
   "overrides": [
     {
