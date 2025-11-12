@@ -21,6 +21,8 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Concepts.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -34,10 +36,14 @@ using SequenceNumberType = SequenceNumber::Underlying;
 /// 3. It selectively exposes the reduced set of functions, to prohibit setting, e.g., the SequenceNumber in InputFormatIndexer
 /// 4. It exposes functions with more descriptive names, e.g., `getNumberOfBytes()` instead of `getNumberOfTuples`
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
+
+template <InputFormatIndexerType FormatterType>
+class InputFormatter;
+
 class RawTupleBuffer
 {
-    TupleBuffer rawBuffer;
-    std::string_view bufferView;
+    template <InputFormatIndexerType FormatterType>
+    friend class InputFormatter;
 
 public:
     RawTupleBuffer() = default;
@@ -79,6 +85,13 @@ public:
     [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
 
     void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
+
+private:
+    TupleBuffer rawBuffer;
+    std::string_view bufferView;
+
+    /// Used by InputFormatter to pass an arena-allocated spanning tuple to an InputFormatIndexer
+    explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple) : bufferView(rawDataPtr, sizeOfSpanningTuple) { };
 };
 
 /// A staged buffer represents a raw buffer that the input formatter cannot process independently, because it contains spanning tuples.
@@ -110,14 +123,21 @@ public:
     /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
     [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
     {
+        INVARIANT(
+            sizeOfBufferInBytes >= offsetOfLastTupleDelimiter + sizeOfTupleDelimiter,
+            "Invalid trailing bytes. Size of buffer: {} < {} (offsetOfLastTupleDelimiter: {} + sizeOfTupleDelimiter: {}",
+            sizeOfBufferInBytes,
+            offsetOfLastTupleDelimiter + sizeOfTupleDelimiter,
+            offsetOfLastTupleDelimiter,
+            sizeOfTupleDelimiter);
         const auto sizeOfTrailingSpanningTuple = sizeOfBufferInBytes - (offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
         const auto startOfTrailingSpanningTuple = offsetOfLastTupleDelimiter + sizeOfTupleDelimiter;
         return rawBuffer.getBufferView().substr(startOfTrailingSpanningTuple, sizeOfTrailingSpanningTuple);
     }
 
-    [[nodiscard]] uint32_t getOffsetOfFirstTupleDelimiter() const { return offsetOfFirstTupleDelimiter; }
+    [[nodiscard]] FieldIndex getOffsetOfLastTuple() const { return offsetOfFirstTupleDelimiter; }
 
-    [[nodiscard]] uint32_t getOffsetOfLastTupleDelimiter() const { return offsetOfLastTupleDelimiter; }
+    [[nodiscard]] FieldIndex getByteOffsetOfLastTuple() const { return offsetOfLastTupleDelimiter; }
 
     [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
 
@@ -129,8 +149,8 @@ public:
 protected:
     RawTupleBuffer rawBuffer;
     size_t sizeOfBufferInBytes{};
-    uint32_t offsetOfFirstTupleDelimiter{};
-    uint32_t offsetOfLastTupleDelimiter{};
+    FieldIndex offsetOfFirstTupleDelimiter{};
+    FieldIndex offsetOfLastTupleDelimiter{};
 };
 
 }

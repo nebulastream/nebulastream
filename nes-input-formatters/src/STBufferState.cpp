@@ -15,6 +15,7 @@
 #include <STBufferState.hpp>
 
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <ostream>
 #include <span>
@@ -24,8 +25,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <RawTupleBuffer.hpp>
-
-#include <FieldIndexFunction.hpp>
 
 namespace NES
 {
@@ -80,8 +79,8 @@ void STBufferEntry::setBuffersAndOffsets(const StagedBuffer& indexedBuffer)
 {
     this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
     this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-    this->firstDelimiterOffset = indexedBuffer.getOffsetOfFirstTupleDelimiter();
-    this->lastDelimiterOffset = indexedBuffer.getOffsetOfLastTupleDelimiter();
+    this->firstDelimiterOffset = indexedBuffer.getOffsetOfLastTuple();
+    this->lastDelimiterOffset = indexedBuffer.getByteOffsetOfLastTuple();
 }
 
 bool STBufferEntry::trySetWithDelimiter(const ABAItNo abaItNumber, const StagedBuffer& indexedBuffer)
@@ -89,7 +88,7 @@ bool STBufferEntry::trySetWithDelimiter(const ABAItNo abaItNumber, const StagedB
     if (isCurrentEntryUsedUp(abaItNumber))
     {
         setBuffersAndOffsets(indexedBuffer);
-        if (indexedBuffer.getOffsetOfLastTupleDelimiter() != std::numeric_limits<FieldIndex>::max())
+        if (indexedBuffer.getByteOffsetOfLastTuple() != std::numeric_limits<FieldIndex>::max())
         {
             this->atomicState.setHasTupleDelimiterAndValidTrailingSTState(abaItNumber);
         }

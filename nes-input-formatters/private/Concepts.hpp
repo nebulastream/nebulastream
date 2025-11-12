@@ -21,36 +21,36 @@
 #include <type_traits>
 #include <utility>
 #include <DataTypes/Schema.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawValueParser.hpp>
 
 namespace NES
 {
 
-/// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatterTask
+/// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatter
 template <typename T>
-concept IndexerMetaDataType = requires(ParserConfig config, Schema schema, T indexerMetaData, std::ostream& spanningTuple) {
-    T(config, schema);
-    /// Assumes a fixed set of symbols that separate tuples
-    /// InputFormatIndexers without tuple delimiters should return an empty string
-    { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
-};
+concept IndexerMetaDataType
+    = requires(ParserConfig config, const MemoryLayout& memoryLayout, T indexerMetaData, std::ostream& spanningTuple) {
+          T(config, memoryLayout);
+          /// Assumes a fixed set of symbols that separate tuples
+          /// InputFormatIndexers without tuple delimiters should return an empty string
+          { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
+          { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
+      };
 
 template <typename T>
 concept FieldIndexFunctionType = requires(const T& indexFunction) {
-    { indexFunction.getOffsetOfFirstTupleDelimiter() };
-    { indexFunction.getOffsetOfLastTupleDelimiter() };
+    { indexFunction.getByteOffsetOfFirstTuple() };
+    { indexFunction.getByteOffsetOfLastTuple() };
     { indexFunction.getTotalNumberOfTuples() };
-    {
-        indexFunction.readFieldAt(std::declval<std::string_view>(), std::declval<size_t>(), std::declval<size_t>())
-    } -> std::same_as<std::string_view>;
 };
 
+
+class RawTupleBuffer;
 template <typename T>
-concept InputFormatIndexerType
-    = IndexerMetaDataType<typename T::IndexerMetaData> && std::same_as<std::remove_cv_t<decltype(T::IsFormattingRequired)>, bool>
-    && std::same_as<std::remove_cv_t<decltype(T::HasSpanningTuple)>, bool> && FieldIndexFunctionType<typename T::FieldIndexFunctionType>
-    && requires(const T& indexer) {
+concept InputFormatIndexerType = IndexerMetaDataType<typename T::IndexerMetaData>
+    && FieldIndexFunctionType<typename T::FieldIndexFunctionType> && requires(const T& indexer) {
            {
                indexer.indexRawBuffer(
                    std::declval<typename T::FieldIndexFunctionType&>(),

@@ -35,7 +35,7 @@
 #include <vector>
 
 #include <DataTypes/DataTypeProvider.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
