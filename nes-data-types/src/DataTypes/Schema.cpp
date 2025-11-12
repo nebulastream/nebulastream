@@ -107,7 +107,7 @@ Schema::Field Schema::getFieldAt(const size_t index) const
 {
     if (index < fields.size())
     {
-        return fields[index];
+        return fields.at(index);
     }
     throw FieldNotFound("field with index {}  does not exist", std::to_string(index));
 }

@@ -16,6 +16,9 @@
 #include <cstdint>
 #include <numeric>
 #include <ostream>
+#include <fmt/base.h>
+#include <fmt/ranges.h>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -30,8 +33,18 @@ Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : rec
 {
 }
 
+bool Record::hasField(const RecordFieldIdentifier& recordFieldIdentifier) const
+{
+    return recordFields.contains(recordFieldIdentifier);
+}
+
 const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) const
 {
+    std::cout << "recordFieldIdentifier: " << recordFieldIdentifier << " allFields: " << fmt::format("{}", fmt::join(recordFields | std::views::keys, ",")) << std::endl;
+    if (recordFieldIdentifier == "row_identifier" or recordFieldIdentifier == "bench_data10$col_0")
+    {
+        std::cout << "recordFieldIdentifier: " << recordFieldIdentifier << std::endl;
+    }
     if (not recordFields.contains(recordFieldIdentifier))
     {
         const std::string allFields = std::accumulate(
