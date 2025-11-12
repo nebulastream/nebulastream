@@ -2,9 +2,6 @@
 # description: tests that the json input formatter supports padded keys and values
 # groups: [Formatter, JSON]
 
-# TODO #1036
-# Allow to configure input format indexers and to specify that (specific?) fields should be trimmed
-
 CREATE LOGICAL SOURCE paddedValuesStream(key UINT64, value UINT64, name VARSIZED);
 CREATE PHYSICAL SOURCE FOR paddedValuesStream TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
@@ -14,24 +11,24 @@ ATTACH INLINE
 CREATE SINK keySink(paddedValuesStream.key UINT64)  TYPE File;
 CREATE SINK valueSink(paddedValuesStream.value UINT64)  TYPE File;
 CREATE SINK nameSink(paddedValuesStream.name VARSIZED)  TYPE File;
-CREATE SINK allFieldsSink(paddedValuesStream.key UINT64, paddedValuesStream.value UINT64, paddedValuesStream.name VARSIZED)  TYPE File;
+CREATE SINK allFieldsSink(paddedValuesStream.key UINT64, paddedValuesStream.value UINT64, paddedValuesStream.name VARSIZED) TYPE File;
 
-SELECT key FROM paddedValuesStream INTO keySink
+SELECT key FROM paddedValuesStream INTO keySink;
 ----
 1
 1
 
-SELECT value FROM paddedValuesStream INTO valueSink
+SELECT value FROM paddedValuesStream INTO valueSink;
 ----
 1
 2
 
-SELECT name FROM paddedValuesStream INTO nameSink
+SELECT name FROM paddedValuesStream INTO nameSink;
 ----
 john
 max
 
-SELECT * FROM paddedValuesStream INTO allFieldsSink
+SELECT * FROM paddedValuesStream INTO allFieldsSink;
 ----
 1,1,john
 1,2,max
