@@ -55,6 +55,7 @@
           tbb
           python3
           openjdk21
+          simdjson
         ]) ++ [ follyPkg antlr4Pkg ];
 
         antlr4Jar = pkgs.fetchurl {
