@@ -310,17 +310,19 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
     std::vector<RunningQuery> failedQueries;
     for (const auto& queryRan : queries)
     {
-    const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
-    resultJson.push_back({
-        {"query_id", queryRan.systestQuery.queryIdInFile.getRawValue()},
-        {"time", executionTimeInSeconds},
-        {"bytes_per_second",
-         queryRan.bytesProcessed.has_value() ? static_cast<double>(queryRan.bytesProcessed.value()) / executionTimeInSeconds
-                                             : std::numeric_limits<double>::quiet_NaN()},
-        {"tuples_per_second",
-         queryRan.tuplesProcessed.has_value() ? static_cast<double>(queryRan.tuplesProcessed.value()) / executionTimeInSeconds
-                                              : std::numeric_limits<double>::quiet_NaN()},
-    });
+        if (!queryRan.passed)
+        {
+            failedQueries.emplace_back(queryRan);
+        }
+        const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
+        resultJson.push_back({
+            {"query name", queryRan.systestQuery.testName},
+            {"time", executionTimeInSeconds},
+            {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
+            {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
+        });
+    }
+    return failedQueries;
 }
 }
 

@@ -22,7 +22,7 @@ namespace NES
 {
 class SinkCatalog;
 class SourceCatalog;
-class Nebuli::Inference::ModelCatalog;
+class ModelCatalog;
 }
 
 namespace NES
