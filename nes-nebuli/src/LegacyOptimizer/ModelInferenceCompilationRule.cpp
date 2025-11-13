@@ -28,27 +28,27 @@ ModelInferenceCompilationRule::ModelInferenceCompilationRule(std::shared_ptr<con
 {
 }
 
-void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan)
+void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
 {
     NES_DEBUG("ModelInferenceCompilationRule: Plan before\n{}", queryPlan);
 
     for (auto modelNameOperator : NES::getOperatorByType<InferModel::InferModelNameLogicalOperator>(queryPlan))
     {
-        auto name = modelNameOperator.getModelName();
+        auto name = modelNameOperator->getModelName();
         auto model = catalog->load(name);
-        auto inferModel = InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields());
+        auto inferModel = InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields());
 
         if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
         {
             USED_IN_DEBUG auto shouldReplace = replaceOperator(
-            queryPlan, modelNameOperator.id, InferModel::InferModelLogicalOperator(model, modelNameOperator.getInputFields()));
+            queryPlan, modelNameOperator.getId(), InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields()));
             queryPlan = std::move(shouldReplace.value());
         }
         else
         {
             queryPlan = replaceSubtree(
                             queryPlan,
-                            modelNameOperator.id,
+                            modelNameOperator.getId(),
                             inferModel.withChildren({SequenceLogicalOperator().withChildren(modelNameOperator.getChildren())}))
                             .value();
         }

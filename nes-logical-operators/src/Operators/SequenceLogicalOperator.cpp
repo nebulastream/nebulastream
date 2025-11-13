@@ -44,26 +44,21 @@ std::string_view SequenceLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool SequenceLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
+bool SequenceLogicalOperator::operator==(const SequenceLogicalOperator& rhs) const
 {
-    if (const auto* const rhsOperator = dynamic_cast<const SequenceLogicalOperator*>(&rhs))
-    {
-        return getOutputSchema() == rhsOperator->getOutputSchema() && getInputSchemas() == rhsOperator->getInputSchemas()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
-    }
-    return false;
+    return getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas();
 };
 
-std::string SequenceLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string SequenceLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SEQUENCE(opId: {})", id);
+        return fmt::format("SEQUENCE(opId: {})", opId);
     }
     return fmt::format("SEQUENCE()");
 }
 
-LogicalOperator SequenceLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+SequenceLogicalOperator SequenceLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
     INVARIANT(!inputSchemas.empty(), "Selection should have at least one input");
@@ -81,13 +76,13 @@ LogicalOperator SequenceLogicalOperator::withInferredSchema(std::vector<Schema> 
     copy.outputSchema = firstSchema;
     return copy;
 }
-LogicalOperator SequenceLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
+SequenceLogicalOperator SequenceLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
     copy.inputSchema = inputSchemas.at(0);
     return copy;
 }
-LogicalOperator SequenceLogicalOperator::setOutputSchema(const Schema& outputSchema) const
+SequenceLogicalOperator SequenceLogicalOperator::setOutputSchema(const Schema& outputSchema) const
 {
     auto copy = *this;
     copy.outputSchema = outputSchema;
@@ -96,17 +91,17 @@ LogicalOperator SequenceLogicalOperator::setOutputSchema(const Schema& outputSch
 
 TraitSet SequenceLogicalOperator::getTraitSet() const
 {
-    return {};
+    return {traitSet};
 }
 
-LogicalOperator SequenceLogicalOperator::withTraitSet(TraitSet traitSet) const
+SequenceLogicalOperator SequenceLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
     copy.traitSet = traitSet;
     return copy;
 }
 
-LogicalOperator SequenceLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+SequenceLogicalOperator SequenceLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
     copy.children = children;
@@ -123,30 +118,6 @@ Schema SequenceLogicalOperator::getOutputSchema() const
     return outputSchema;
 }
 
-std::vector<std::vector<OriginId>> SequenceLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
-}
-
-std::vector<OriginId> SequenceLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-LogicalOperator SequenceLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    auto copy = *this;
-    copy.inputOriginIds = ids[0];
-    return copy;
-}
-
-LogicalOperator SequenceLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = ids;
-    return copy;
-}
-
 std::vector<LogicalOperator> SequenceLogicalOperator::getChildren() const
 {
     return children;
@@ -157,35 +128,17 @@ void SequenceLogicalOperator::serialize(SerializableOperator& serializableOperat
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
-    {
-        *traitSetProto->add_traits() = trait.serialize();
-    }
 
     auto inputs = getInputSchemas();
-    auto originLists = getInputOriginIds();
     for (size_t i = 0; i < inputs.size(); ++i)
     {
         auto* schProto = proto.add_input_schemas();
         SchemaSerializationUtil::serializeSchema(inputs[i], schProto);
-
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originLists[i])
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
     }
 
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());
@@ -198,12 +151,6 @@ LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSequenceLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     auto logicalOperator = SequenceLogicalOperator();
-    if (auto& id = arguments.id)
-    {
-        logicalOperator.id = *id;
-    }
-    return logicalOperator.withInferredSchema(arguments.inputSchemas)
-        .withInputOriginIds(arguments.inputOriginIds)
-        .withOutputOriginIds(arguments.outputOriginIds);
+    return logicalOperator.withInferredSchema(arguments.inputSchemas);
 }
 }

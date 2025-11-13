@@ -36,7 +36,7 @@ public:
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        ExecutionContext& pipelineMemoryProvider,
+        PipelineMemoryProvider& pipelineMemoryProvider,
         const Nautilus::Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,

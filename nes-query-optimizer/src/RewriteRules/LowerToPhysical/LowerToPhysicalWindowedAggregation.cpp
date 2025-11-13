@@ -212,7 +212,10 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), aggregation.requiresSequentialAggregation(), conf.maxNumberOfBuckets);
+        inputOriginIds | std::ranges::to<std::vector>(),
+        outputOriginId, std::move(sliceAndWindowStore),
+        aggregation->requiresSequentialAggregation(),
+        conf.maxNumberOfBuckets);
     auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions);
     auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData);
 

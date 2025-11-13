@@ -69,7 +69,7 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
         EXPECT_EQ(varSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
@@ -83,7 +83,7 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
         EXPECT_EQ(varSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
@@ -98,7 +98,7 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
     constexpr auto sizeInBytes = 1024;
     auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
     const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-    const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
+    const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
     /// Test, if we can copy the variable sized data object by copy operator=
     const VarVal copiedVarSizedData = varSizedData;
@@ -124,7 +124,7 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
@@ -140,7 +140,7 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
@@ -159,7 +159,7 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData = VarVal(VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false)));
+        const VarVal varSizedData = VarVal(VariableSizedData(ptrToVariableSized));
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
@@ -175,7 +175,7 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
@@ -195,7 +195,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
         const VarVal copiedVarSizedData = varSizedData;
         EXPECT_TRUE(copiedVarSizedData.cast<VariableSizedData>() == varSizedData.cast<VariableSizedData>());
@@ -210,8 +210,8 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         auto variableSizedDataDouble = createVariableSizedRandomData(sizeInBytes + sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const nautilus::val<int8_t*> ptrToVariableSizedDouble(variableSizedDataDouble.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
-        const VarVal varSizedDataDouble{VariableSizedData(ptrToVariableSizedDouble, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+        const VarVal varSizedDataDouble{VariableSizedData(ptrToVariableSizedDouble)};
         EXPECT_FALSE(varSizedData.cast<VariableSizedData>() == varSizedDataDouble.cast<VariableSizedData>());
         EXPECT_TRUE(varSizedData.cast<VariableSizedData>() != varSizedDataDouble.cast<VariableSizedData>());
     }
@@ -230,8 +230,8 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         auto otherVariableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const nautilus::val<int8_t*> ptrToOtherVariableSized(otherVariableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
-        const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized, VariableSizedData::Owned(false))};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+        const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized)};
 
         const bool isEqual = variableSizedData == otherVariableSizedData;
         EXPECT_EQ(isEqual, varSizedData.cast<VariableSizedData>() == otherVarSizedData.cast<VariableSizedData>());
@@ -251,7 +251,7 @@ TEST_F(VariableSizedDataTest, ostreamTest)
     constexpr auto sizeInBytes = 1024;
     auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
     const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-    const VarVal varSizedData{VariableSizedData(ptrToVariableSized, VariableSizedData::Owned(false))};
+    const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
     /// Comparing the output of the ostream operator with the expected output
     std::stringstream expectedOutput;

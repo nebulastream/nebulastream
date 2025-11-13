@@ -75,8 +75,7 @@ public:
         AggregationFunctionList,
         WindowInfos,
         ProjectionList,
-        UInt64List>;
-        ProjectionList,
+        UInt64List,
         SerializableModel>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
