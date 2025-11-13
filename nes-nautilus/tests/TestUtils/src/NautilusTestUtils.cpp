@@ -226,7 +226,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                         bufferProvider,
                         sizeVarSizedDataVal);
 
-                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData, VariableSizedData::Owned(true))));
+                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData)));
                 }
                 else
                 {

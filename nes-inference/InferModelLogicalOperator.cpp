@@ -40,11 +40,11 @@ InferModelLogicalOperator::InferModelLogicalOperator(Nebuli::Inference::Model mo
 {
 }
 
-std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity) const
+std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
 {
     return fmt::format(
         "INFER_MODEL(opId: {}, inputFields: [{}])",
-        id,
+        opId,
         fmt::join(std::views::transform(inputFields, [&](const auto& field) { return field.explain(verbosity); }), ", "));
 }
 
@@ -52,12 +52,7 @@ void InferModelLogicalOperator::serialize(SerializableOperator& serializableOper
 {
     SerializableLogicalOperator proto;
 
-    proto.set_operator_type(getName());
-    auto* traitSetProto = proto.mutable_trait_set();
-    for (const auto& trait : getTraitSet())
-    {
-        *traitSetProto->add_traits() = trait.serialize();
-    }
+    proto.set_operator_type(NAME);
 
     for (const auto& inputSchema : getInputSchemas())
     {
@@ -65,24 +60,9 @@ void InferModelLogicalOperator::serialize(SerializableOperator& serializableOper
         SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
     }
 
-    for (const auto& originList : getInputOriginIds())
-    {
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originList)
-        {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds())
-    {
-        proto.add_output_origin_ids(outId.getRawValue());
-    }
-
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
 
-    serializableOperator.set_operator_id(id.getRawValue());
     for (auto& child : getChildren())
     {
         serializableOperator.add_children_ids(child.getId().getRawValue());
@@ -98,14 +78,14 @@ void InferModelLogicalOperator::serialize(SerializableOperator& serializableOper
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-LogicalOperator InferModelLogicalOperator::withTraitSet(TraitSet traitSet) const
+InferModelLogicalOperator InferModelLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
     copy.traitSet = traitSet;
     return copy;
 }
 
-LogicalOperator InferModelLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+InferModelLogicalOperator InferModelLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     PRECONDITION(inputSchemas.size() == 1, "Expected exactly one input schema");
 
@@ -168,15 +148,6 @@ NES::LogicalOperatorGeneratedRegistrar::RegisterInferenceModelLogicalOperator(NE
     auto model = Nebuli::Inference::deserializeModel(std::get<SerializableModel>(arguments.config.at("MODEL")));
     auto logicalOperator = InferModel::InferModelLogicalOperator(model, functions);
 
-    if (auto& id = arguments.id)
-    {
-        logicalOperator.id = *id;
-    }
-
-    auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
-                         .withOutputOriginIds(arguments.outputOriginIds)
-                         .get<InferModel::InferModelLogicalOperator>()
-                         .setInputSchema(arguments.inputSchemas)
-                         .setOutputSchema(arguments.outputSchema);
+    auto logicalOp = logicalOperator.withInferredSchema(arguments.inputSchemas);
     return logicalOp;
 }

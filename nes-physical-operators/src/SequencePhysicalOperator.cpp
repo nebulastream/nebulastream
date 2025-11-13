@@ -34,7 +34,7 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
         +[](OperatorHandler* handler, uint8_t* bufferMemory) -> TupleBuffer*
         { return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(bufferMemory).value_or(nullptr); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
-        recordBuffer.getBuffer());
+        recordBuffer.getReference());
 
     while (buffer)
     {
@@ -50,13 +50,13 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
             buffer);
     }
 }
-void SequencePhysicalOperator::setup(ExecutionContext& executionCtx) const
+void SequencePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationCtx) const
 {
     nautilus::invoke(
         +[](OperatorHandler* handler, PipelineExecutionContext* ctx) { handler->start(*ctx, 0); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         executionCtx.pipelineContext);
-    scan.setup(executionCtx);
+    scan.setup(executionCtx, compilationCtx);
 }
 void SequencePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {

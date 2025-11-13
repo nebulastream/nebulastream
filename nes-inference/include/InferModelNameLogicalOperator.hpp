@@ -19,7 +19,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include <Operators/OriginIdAssigner.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 
@@ -29,13 +29,11 @@ namespace NES::InferModel
 /**
  * @brief Infer model operator
  */
-class InferModelNameLogicalOperator : public LogicalOperatorConcept
+class InferModelNameLogicalOperator : public OriginIdAssigner
 {
     std::string modelName;
     std::vector<LogicalFunction> inputFields;
     LogicalOperator child;
-    std::vector<OriginId> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
 
 public:
     InferModelNameLogicalOperator(std::string modelName, std::vector<LogicalFunction> inputFields)
@@ -44,9 +42,9 @@ public:
     }
 
     [[nodiscard]] const std::string& getModelName() const { return modelName; }
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return {child}; }
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const ;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return {child}; }
+    [[nodiscard]] InferModelNameLogicalOperator withChildren(std::vector<LogicalOperator> children) const
     {
         PRECONDITION(children.size() == 1, "Expected exactly one child");
         auto copy = *this;
@@ -54,47 +52,32 @@ public:
         return copy;
     }
 
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override
+    [[nodiscard]] bool operator==(const InferModelNameLogicalOperator& rhs) const 
     {
-        if (const auto* casted = dynamic_cast<const InferModelNameLogicalOperator*>(&rhs))
-        {
-            return modelName == casted->modelName && inputFields == casted->inputFields && child == casted->child
-                && inputOriginIds == casted->inputOriginIds && outputOriginIds == casted->outputOriginIds;
-        }
-        return false;
+        return modelName == rhs.modelName && inputFields == rhs.inputFields && child == rhs.child;
     }
 
     [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const { return inputFields; }
-    [[nodiscard]] std::string_view getName() const noexcept override { return "InferenceModelName"; }
-    void serialize(SerializableOperator& serializableOperator) const override
+    [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
+    void serialize(SerializableOperator& serializableOperator) const 
     {
         SerializableLogicalOperator proto;
 
-        proto.set_operator_type(getName());
-        auto* traitSetProto = proto.mutable_trait_set();
-        for (const auto& trait : getTraitSet())
-        {
-            *traitSetProto->add_traits() = trait.serialize();
-        }
+        proto.set_operator_type(NAME);
 
-        for (const auto& originList : getInputOriginIds())
+        for (const auto& inputSchema : getInputSchemas())
         {
-            auto* olist = proto.add_input_origin_lists();
-            for (auto originId : originList)
-            {
-                olist->add_origin_ids(originId.getRawValue());
-            }
-        }
-
-        for (auto outId : getOutputOriginIds())
-        {
-            proto.add_output_origin_ids(outId.getRawValue());
+            auto* schProto = proto.add_input_schemas();
+            SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
         }
 
         auto* outSch = proto.mutable_output_schema();
         SchemaSerializationUtil::serializeSchema(Schema{}, outSch);
 
-        serializableOperator.set_operator_id(id.getRawValue());
+        for (const auto& child : getChildren())
+        {
+            serializableOperator.add_children_ids(child.getId().getRawValue());
+        }
 
         FunctionList funcList;
         for (const auto & inputField : inputFields)
@@ -113,41 +96,23 @@ public:
 
         serializableOperator.mutable_operator_()->CopyFrom(proto);
     }
-    [[nodiscard]] TraitSet getTraitSet() const override { return {}; }
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override
+    [[nodiscard]] TraitSet getTraitSet() const { return {traitSet}; }
+    [[nodiscard]] InferModelNameLogicalOperator withTraitSet(TraitSet traitSet) const 
     {
         auto copy = *this;
         copy.traitSet = traitSet;
         return copy;
     }
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const 
     {
         throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
     }
-    [[nodiscard]] Schema getOutputSchema() const override
+    [[nodiscard]] Schema getOutputSchema() const 
     {
         throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
     }
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {inputOriginIds}; }
 
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override { return outputOriginIds; }
-
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> originIds) const override
-    {
-        PRECONDITION(originIds.size() == 1, "Expected exactly one set of origin ids");
-        auto copy = *this;
-        copy.inputOriginIds = std::move(originIds.front());
-        return copy;
-    }
-
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> originIds) const override
-    {
-        auto copy = *this;
-        copy.outputOriginIds = std::move(originIds);
-        return copy;
-    }
-
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema>) const override
+    [[nodiscard]] InferModelNameLogicalOperator withInferredSchema(std::vector<Schema>) const 
     {
         throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
     }
@@ -164,6 +129,7 @@ public:
             = DescriptorConfig::createConfigParameterContainerMap(MODEL_NAME);
     };
 private:
+    static constexpr std::string_view NAME = "InferModelName";
     TraitSet traitSet;
 };
 }

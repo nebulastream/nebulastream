@@ -42,7 +42,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto sequentialAggregationRule = SequentialAggregationRule{};
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
-    auto modelCompilationRule = ModelInferenceCompilationRule(modelCatalog);
+    constexpr auto modelCompilationRule = ModelInferenceCompilationRule{modelCatalog};
 
     inlineSinkBindingPhase.apply(newPlan);
     sinkBindingRule.apply(newPlan);

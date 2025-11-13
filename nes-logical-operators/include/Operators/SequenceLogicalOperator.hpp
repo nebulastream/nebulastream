@@ -20,6 +20,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/OriginIdAssigner.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
@@ -27,36 +28,31 @@
 namespace NES
 {
 
-class SequenceLogicalOperator : public LogicalOperatorConcept
+class SequenceLogicalOperator : public OriginIdAssigner
 {
 public:
     explicit SequenceLogicalOperator();
 
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-    void serialize(SerializableOperator&) const override;
+    [[nodiscard]] bool operator==(const SequenceLogicalOperator& rhs) const;
+    void serialize(SerializableOperator&) const;
 
-    [[nodiscard]] TraitSet getTraitSet() const override;
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
+    [[nodiscard]] TraitSet getTraitSet() const;
+    [[nodiscard]] SequenceLogicalOperator withTraitSet(TraitSet traitSet) const;
 
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+    [[nodiscard]] SequenceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
+    [[nodiscard]] Schema getOutputSchema() const;
 
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
-
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+    [[nodiscard]] SequenceLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
     /// Set the schemas directly without inference used for operator registration
-    [[nodiscard]] LogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
-    [[nodiscard]] LogicalOperator setOutputSchema(const Schema& outputSchema) const;
+    [[nodiscard]] SequenceLogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] SequenceLogicalOperator setOutputSchema(const Schema& outputSchema) const;
 
 private:
     static constexpr std::string_view NAME = "Sequence";

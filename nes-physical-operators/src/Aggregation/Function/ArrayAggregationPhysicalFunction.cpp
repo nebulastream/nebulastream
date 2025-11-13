@@ -21,8 +21,6 @@
 #include <utility>
 
 #include <MemoryLayout/ColumnLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -44,20 +42,20 @@ ArrayAggregationPhysicalFunction::ArrayAggregationPhysicalFunction(
     DataType resultType,
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
+    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> bufferRefPagedVector)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
-    , memProviderPagedVector(std::move(memProviderPagedVector))
+    , bufferRefPagedVector(std::move(bufferRefPagedVector))
 {
 }
 
 void ArrayAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Nautilus::Record& record)
 {
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     Record aggregateStateRecord(
-        {{std::string(StateFieldName), inputFunction.execute(record, executionContext.pipelineMemoryProvider.arena)}});
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector);
-    pagedVectorRef.writeRecord(aggregateStateRecord, executionContext.pipelineMemoryProvider.bufferProvider);
+        {{std::string(StateFieldName), inputFunction.execute(record, pipelineMemoryProvider.arena)}});
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
+    pagedVectorRef.writeRecord(aggregateStateRecord, pipelineMemoryProvider.bufferProvider);
 }
 
 void ArrayAggregationPhysicalFunction::combine(
@@ -82,8 +80,8 @@ Nautilus::Record ArrayAggregationPhysicalFunction::lower(
 {
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector);
-    const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
+    const auto allFieldNames = bufferRefPagedVector->getMemoryLayout()->getSchema().getFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
         {
@@ -93,7 +91,7 @@ Nautilus::Record ArrayAggregationPhysicalFunction::lower(
         },
         pagedVectorPtr);
 
-    auto entrySize = memProviderPagedVector->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
+    auto entrySize = bufferRefPagedVector->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
 
     auto variableSized = pipelineMemoryProvider.arena.allocateVariableSizedData(numberOfEntries * entrySize);
 
@@ -158,17 +156,14 @@ void ArrayAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterArray_AggAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    auto memoryLayoutSchema = Schema().addField(std::string(StateFieldName), arguments.inputType);
-    auto layout = std::make_shared<ColumnLayout>(8192, memoryLayoutSchema);
-    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
-        = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+    INVARIANT(arguments.bufferRefPagedVector.has_value(), "Memory provider paged vector not set");
 
     return std::make_shared<ArrayAggregationPhysicalFunction>(
         std::move(arguments.inputType),
         std::move(arguments.resultType),
         arguments.inputFunction,
         arguments.resultFieldIdentifier,
-        memoryProvider);
+        arguments.bufferRefPagedVector.value());
 }
 
 }

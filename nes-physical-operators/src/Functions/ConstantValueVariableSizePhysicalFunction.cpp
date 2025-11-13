@@ -46,7 +46,7 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
 
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
 {
-    VariableSizedData result(const_cast<int8_t*>(data.data()), VariableSizedData::Owned(false));
+    VariableSizedData result(const_cast<int8_t*>(data.data()));
     return result;
 }
 

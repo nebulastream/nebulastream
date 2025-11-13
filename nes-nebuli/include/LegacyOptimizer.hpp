@@ -15,14 +15,14 @@
 #pragma once
 #include <memory>
 #include <utility>
-
+#include <ModelCatalog.hpp>
 #include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
 class SinkCatalog;
 class SourceCatalog;
-class ModelCatalog;
+class Nebuli::Inference::ModelCatalog;
 }
 
 namespace NES
@@ -36,16 +36,16 @@ public:
     explicit LegacyOptimizer(
         std::shared_ptr<SourceCatalog> sourceCatalog,
         std::shared_ptr<SinkCatalog> sinkCatalog,
-        std::shared_ptr<ModelCatalog> modelCatalog)
+        std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog)
         : sourceCatalog(std::move(sourceCatalog)),
         sinkCatalog(std::move(sinkCatalog)),
-        modelCatalog(std::move(sinkCatalog))
+        modelCatalog(std::move(modelCatalog))
     {
     }
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
-    std::shared_ptr<const SinkCatalog> modelCatalog;
+    std::shared_ptr<const Nebuli::Inference::ModelCatalog> modelCatalog;
 };
 }

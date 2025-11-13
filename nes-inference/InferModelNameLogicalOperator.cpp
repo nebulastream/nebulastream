@@ -33,9 +33,9 @@ namespace NES::InferModel
 {
 
 
-std::string InferModelNameLogicalOperator::explain(ExplainVerbosity) const
+std::string InferModelNameLogicalOperator::explain(ExplainVerbosity, OperatorId opId) const
 {
-    return fmt::format("INFER_MODEL_NAME(opId: {}, modelName: {})", id, modelName);
+    return fmt::format("INFER_MODEL_NAME(opId: {}, modelName: {})", opId, modelName);
 }
 }
 
@@ -49,14 +49,5 @@ NES::LogicalOperatorGeneratedRegistrar::RegisterInferenceModelNameLogicalOperato
 
     auto logicalOperator = InferModel::InferModelNameLogicalOperator(
         std::get<std::string>(arguments.config.at(InferModel::InferModelNameLogicalOperator::ConfigParameters::MODEL_NAME)), functions);
-
-    if (auto& id = arguments.id)
-    {
-        logicalOperator.id = *id;
-    }
-
-    auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
-                         .withOutputOriginIds(arguments.outputOriginIds)
-                         .get<InferModel::InferModelNameLogicalOperator>();
-    return logicalOp;
+    return logicalOperator;
 }
