@@ -21,6 +21,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/OriginIdAssigner.hpp>
 #include <Model.hpp>
 
 namespace NES::InferModel
@@ -29,7 +30,7 @@ namespace NES::InferModel
 /**
  * @brief Infer model operator
  */
-class InferModelLogicalOperator : public LogicalOperatorConcept
+class InferModelLogicalOperator : public OriginIdAssigner
 {
     Nebuli::Inference::Model model;
     std::vector<LogicalFunction> inputFields;
@@ -43,30 +44,25 @@ public:
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const { return model; }
     [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const { return inputFields; }
     InferModelLogicalOperator(NES::Nebuli::Inference::Model, std::vector<LogicalFunction> inputFields);
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return {child}; }
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return {child}; }
+    [[nodiscard]] InferModelLogicalOperator withChildren(std::vector<LogicalOperator> children) const
     {
         PRECONDITION(children.size() == 1, "Expected exactly one child");
         auto copy = *this;
         copy.child = std::move(children.front());
         return copy;
     }
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override
+    [[nodiscard]] bool operator==(const InferModelLogicalOperator& rhs) const 
     {
-        if (const auto* casted = dynamic_cast<const InferModelLogicalOperator*>(&rhs))
-        {
-            return model == casted->model && inputFields == casted->inputFields && child == casted->child
-                && casted->getInputSchemas() == getInputSchemas() && casted->getOutputSchema() == getOutputSchema()
-                && casted->getInputOriginIds() == getInputOriginIds() && casted->getOutputOriginIds() == getOutputOriginIds();
-        }
-        return false;
+        return model == rhs.model && inputFields == rhs.inputFields && child == rhs.child
+            && rhs.getInputSchemas() == getInputSchemas() && rhs.getOutputSchema() == getOutputSchema();
     }
-    [[nodiscard]] std::string_view getName() const noexcept override { return "InferenceModel"; }
-    void serialize(SerializableOperator&) const override;
-    [[nodiscard]] TraitSet getTraitSet() const override { return {}; }
-    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return {inputSchema}; }
+    [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
+    void serialize(SerializableOperator&) const ;
+    [[nodiscard]] TraitSet getTraitSet() const { return {traitSet}; }
+    [[nodiscard]] InferModelLogicalOperator withTraitSet(TraitSet traitSet) const ;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return {inputSchema}; }
     [[nodiscard]] const Schema& getInputSchema() const { return inputSchema; }
     InferModelLogicalOperator setInputSchema(std::vector<Schema> inputSchemas) const
     {
@@ -75,31 +71,16 @@ public:
         copy.inputSchema = std::move(inputSchemas.at(0));
         return copy;
     }
-    [[nodiscard]] Schema getOutputSchema() const override { return outputSchema; }
+    [[nodiscard]] Schema getOutputSchema() const { return outputSchema; }
     InferModelLogicalOperator setOutputSchema(Schema outputSchema) const
     {
         auto copy = *this;
         copy.outputSchema = std::move(outputSchema);
         return copy;
     }
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {inputOriginIds}; }
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override { return outputOriginIds; }
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> originIds) const override
-    {
-        PRECONDITION(originIds.size() == 1, "Expected exactly one set of origin ids");
-        auto copy = *this;
-        copy.inputOriginIds = std::move(originIds.front());
-        return copy;
-    }
-
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> originIds) const override
-    {
-        auto copy = *this;
-        copy.outputOriginIds = std::move(originIds);
-        return copy;
-    }
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
+    [[nodiscard]] InferModelLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const ;
 private:
+    static constexpr std::string_view NAME = "InferModel";
     TraitSet traitSet;
 };
 }

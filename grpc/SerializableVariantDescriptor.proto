@@ -117,7 +117,6 @@ message SerializableVariantDescriptor {
     WindowInfos window_infos = 13;
     ProjectionList projections = 14;
     UInt64List ulongs = 15;
-    SerializableModel model = 14;
-    ProjectionList projections = 15;
+    SerializableModel model = 16;
   }
 }

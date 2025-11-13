@@ -25,7 +25,7 @@ class ModelInferenceCompilationRule
 {
 public:
     explicit ModelInferenceCompilationRule(std::shared_ptr<const NES::Nebuli::Inference::ModelCatalog> modelCatalog);
-    void apply(LogicalPlan& queryPlan);
+    void apply(LogicalPlan& queryPlan) const;
 
 private:
     std::shared_ptr<const NES::Nebuli::Inference::ModelCatalog> catalog;
