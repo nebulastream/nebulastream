@@ -43,6 +43,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <ModelCatalog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -51,8 +52,6 @@
 #include <SystestConfiguration.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
-
-#include <ModelCatalog.hpp>
 
 namespace NES::Systest
 {
