@@ -107,7 +107,8 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         const std::string entryExt = toLowerCopy(entry.path().extension().string());
         if (!fileExtension || entryExt == desiredExtension)
         {
-            const TestFile testfile(entry.path(),
+            const TestFile testfile(
+                entry.path(),
                 std::make_shared<SourceCatalog>(),
                 std::make_shared<SinkCatalog>(),
                 std::make_shared<Nebuli::Inference::ModelCatalog>());
@@ -154,7 +155,7 @@ TestFile::TestFile(
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
-    , modelCatalog(std::move(modelCatalog)) { };
+    , modelCatalog(std::move(modelCatalog)){ };
 
 TestFile::TestFile(
     const std::filesystem::path& file,
@@ -167,7 +168,7 @@ TestFile::TestFile(
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
-    , modelCatalog(std::move(modelCatalog)) { };
+    , modelCatalog(std::move(modelCatalog)){ };
 
 struct TestGroupFiles
 {
@@ -204,7 +205,8 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
 
         if (config.testQueryNumbers.empty()) /// case: load all tests
         {
-            const auto testfile = TestFile(directlySpecifiedTestFiles,
+            const auto testfile = TestFile(
+                directlySpecifiedTestFiles,
                 std::make_shared<SourceCatalog>(),
                 std::make_shared<SinkCatalog>(),
                 std::make_shared<Nebuli::Inference::ModelCatalog>());
@@ -216,7 +218,9 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             scalarTestNumbers | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
 
         const auto testfile
-            = TestFile(directlySpecifiedTestFiles, testNumbers,
+            = TestFile(
+                directlySpecifiedTestFiles,
+                testNumbers,
                 std::make_shared<SourceCatalog>(),
                 std::make_shared<SinkCatalog>(),
                 std::make_shared<Nebuli::Inference::ModelCatalog>());
