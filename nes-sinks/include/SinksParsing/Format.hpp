@@ -61,10 +61,12 @@ public:
     {
         PRECONDITION(schema.hasFields(), "Encountered schema without fields.");
         std::stringstream ss;
-        ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);
+        ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type) << ":"
+           << (schema.getFields().front().dataType.isNullable ? "true" : "false");
         for (const auto& field : schema.getFields() | std::views::drop(1))
         {
-            ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type);
+            ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type) << ":"
+               << (field.dataType.isNullable ? "true" : "false");
         }
         return fmt::format("{}\n", ss.str());
     }
