@@ -88,6 +88,23 @@ TEST_F(StatementBinderTest, BindQuery)
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 }
 
+TEST_F(StatementBinderTest, Nullable)
+{
+    const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE `testSource` (`attribute1` UINT32 NULL, `attribute2` VARSIZED)";
+    const auto statement1 = binder->parseAndBindSingle(createLogicalSourceStatement);
+    ASSERT_TRUE(statement1.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
+    const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement1));
+    ASSERT_TRUE(createdSourceResult.has_value());
+    const auto [actualSource] = createdSourceResult.value();
+    Schema expectedSchema{};
+    auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
+    expectedSchema.addField("testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32, true));
+    expectedSchema.addField("testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
+    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
+}
+
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 {
     const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE `testSource` (`attribute1` UINT32, `attribute2` VARSIZED)";

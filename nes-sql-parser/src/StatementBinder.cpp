@@ -221,9 +221,11 @@ public:
         std::unreachable();
     }
 
-    DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST) const
+    DataType
+    bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, AntlrSQLParser::NullableDefinitionContext* nullableDefAST) const
     {
         std::string dataTypeText = typeDefAST->getText();
+        const auto isNullable = nullableDefAST != nullptr and (not nullableDefAST->getText().empty());
 
         bool translated = false;
         bool isUnsigned = false;
@@ -249,7 +251,7 @@ public:
                 return found->second;
             }();
         }
-        const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText);
+        const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);
         if (not dataType.has_value())
         {
             if (translated)
@@ -267,7 +269,7 @@ public:
 
         for (auto* const column : schemaDefAST->columnDefinition())
         {
-            auto dataType = bindDataType(column->typeDefinition());
+            auto dataType = bindDataType(column->typeDefinition(), column->nullableDefinition());
             /// TODO #764 Remove qualification of column names in schema declarations, it's only needed as a hack now to make it work with the per-operator-lexical-scopes.
             std::stringstream qualifiedAttributeName;
             for (const auto& unboundIdentifier : column->identifierChain()->strictIdentifier())
