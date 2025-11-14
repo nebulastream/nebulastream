@@ -15,6 +15,7 @@
 #pragma once
 
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES
 {
@@ -31,13 +32,14 @@ class ColumnTupleBufferRef final : public TupleBufferRef
     {
         Record::RecordFieldIdentifier name;
         DataType type;
+        size_t dataTypeSize;
         uint64_t columnOffset;
     };
 
     std::vector<Field> fields;
 
     /// Private constructor to prevent direct instantiation
-    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t capacity, uint64_t bufferSize);
+    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
 
     /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
@@ -60,13 +62,6 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
-
-private:
-    nautilus::val<int8_t*>
-    calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
-
-    /// It is fine that we are storing here a non nautilus value, as they are trace-time-constants.
-    std::shared_ptr<ColumnLayout> columnMemoryLayout;
 };
 
 }
