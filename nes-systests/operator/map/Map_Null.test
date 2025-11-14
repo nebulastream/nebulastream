@@ -1,0 +1,39 @@
+
+# name: map/Map_Null.test
+# description: Simple map tests with add function and null values
+# groups: [Map, NullHandling]
+
+CREATE LOGICAL SOURCE stream(id UINT64, value1 INT32 NULL, value2 INT32 NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+0,0,4
+1,1,1
+2,5,10
+3,13,-2
+4,,
+5,7,
+6,,-5
+
+CREATE SINK sink(stream.id UINT64, result INT32 NULL) TYPE File;
+
+# Adds a constant to a field
+SELECT id, value1 + INT32(1) AS result FROM stream INTO sink;
+----
+0,1
+1,2
+2,6
+3,14
+4,NULL
+5,8
+6,NULL
+
+# Adds to fields together
+SELECT id, value1 + value2 AS result FROM stream INTO sink;
+----
+0,4
+1,2
+2,15
+3,11
+4,NULL
+5,NULL
+6,NULL
