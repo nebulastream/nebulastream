@@ -83,7 +83,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
                 return varSizedData;
             }
 
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
             return varVal;
         }
     }
