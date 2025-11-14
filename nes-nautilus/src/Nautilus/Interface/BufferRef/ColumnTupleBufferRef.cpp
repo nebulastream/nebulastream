@@ -18,6 +18,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -58,12 +59,12 @@ Record ColumnTupleBufferRef::readRecord(
     const auto bufferAddress = recordBuffer.getMemArea();
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
-        const auto& [name, type, columnOffset] = fields.at(i);
+        const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);
         if (not includesField(projections, name))
         {
             continue;
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytesWithNull(), columnOffset);
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, dataTypeSize, columnOffset);
         const auto& value = loadValue(type, recordBuffer, fieldAddress);
         record.write(name, value);
     }
@@ -79,13 +80,13 @@ void ColumnTupleBufferRef::writeRecord(
     const auto bufferAddress = recordBuffer.getMemArea();
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
-        const auto& [name, type, columnOffset] = fields.at(i);
+        const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);
         if (not rec.hasField(name))
         {
             /// Skipping any fields that are not part of the record
             continue;
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytesWithNull(), columnOffset);
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, dataTypeSize, columnOffset);
         const auto& value = rec.read(name);
         storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
     }
