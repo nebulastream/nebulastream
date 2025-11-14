@@ -73,6 +73,7 @@ EXCEPTION(CannotFormatMalformedStringValue, 3002, "cannot format malformed strin
 EXCEPTION(CannotAllocateBuffer, 3003, "cannot allocate buffer")
 EXCEPTION(SkippingDelayedTaskDuringShutdown, 3004, "skipping delayed task during shutdown")
 EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipeline buffer size")
+EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
