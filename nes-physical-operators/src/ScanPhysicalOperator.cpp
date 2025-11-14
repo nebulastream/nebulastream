@@ -28,7 +28,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
-#include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <SelectionPhysicalOperator.hpp>
 #include <Utils.hpp>
@@ -54,46 +53,16 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.lastChunk = recordBuffer.isLastChunk();
 
     auto fieldNames = projections;
-    if (getChild().has_value())
+    if (getChild().has_value() && getChild()->tryGet<SelectionPhysicalOperator>().has_value())
     {
-        if (getChild()->tryGet<SelectionPhysicalOperator>().has_value())
-        {
-            auto selectionOp = getChild()->tryGet<SelectionPhysicalOperator>().value();
-            //auto explain=  getChild().value().toString();
-            auto func = selectionOp.getFunction();
-            fieldNames = getAccessedFieldNames(func);
-            //auto notInProjections = getVectorDifference(projections, fieldNames);
-            //if (fieldNames.size() > 0 && fieldNames.size() < projections.size())//do only if not fitler over all fields
+        auto selectionOp = getChild()->tryGet<SelectionPhysicalOperator>().value();
+        //auto explain=  getChild().value().toString();
+        auto func = selectionOp.getFunction();
+        fieldNames = getAccessedFieldNames(func);
+        //auto notInProjections = getVectorDifference(projections, fieldNames);
+        //if (fieldNames.size() > 0 && fieldNames.size() < projections.size())//do only if not fitler over all fields
 
-            recordBuffer.setTruncatedFields(true);
-        }
-        else if (getChild()->tryGet<MapPhysicalOperator>().has_value())
-        {
-            auto curOp = getChild().value();
-            std::unordered_set<Record::RecordFieldIdentifier> accessedFields;
-            auto fields = getAccessedFieldNames(curOp.tryGet<MapPhysicalOperator>().value().getFunction());
-            accessedFields.insert(fields.begin(), fields.end());
-            accessedFields.insert(curOp.tryGet<MapPhysicalOperator>()->getFieldToWriteTo());
-            while (curOp.getChild().has_value())
-            {
-                if (not curOp.tryGet<MapPhysicalOperator>().has_value())
-                {
-                    break;
-                }
-                auto mapOp = curOp.getChild().value().tryGet<MapPhysicalOperator>().value();
-                auto newFields = getAccessedFieldNames(mapOp.getFunction());
-                accessedFields.insert(newFields.begin(), newFields.end());
-                accessedFields.insert(mapOp.getFieldToWriteTo());
-                if (mapOp.getChild().has_value()) {
-                    curOp = mapOp.getChild().value();
-                } else {
-                    break;
-                }
-            }
-            std::vector<Record::RecordFieldIdentifier> accessedFieldsVec(accessedFields.begin(), accessedFields.end());
-            fieldNames = accessedFieldsVec;
-            recordBuffer.setTruncatedFields(true);
-        }
+        recordBuffer.setTruncatedFields(true);
 
     }
     /// call open on all child operators
@@ -103,7 +72,6 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(fieldNames, recordBuffer, i);
-//TODO: why col 0 and col1 0 and not just resulkt1 and result2? fields in provider +schema +inputschema scan
         record.write("row_identifier", i);
         executeChild(executionCtx, record);
     }
@@ -117,11 +85,6 @@ std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const
 void ScanPhysicalOperator::setChild(PhysicalOperator child)
 {
     this->child = std::move(child);
-}
-
-std::vector<Record::RecordFieldIdentifier> ScanPhysicalOperator::getProjections() const
-{
-    return projections;
 }
 
 }

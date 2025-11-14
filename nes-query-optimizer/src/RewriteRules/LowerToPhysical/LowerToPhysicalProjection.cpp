@@ -37,7 +37,7 @@ namespace NES
 RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto projection = projectionLogicalOperator.get<ProjectionLogicalOperator>();
-    auto inputSchema = projectionLogicalOperator.getChildren()[0].getOutputSchema();
+    auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
@@ -49,11 +49,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         outputSchema = outputSchema.withMemoryLayoutType(memoryLayoutTrait.targetLayoutType);
     }
 
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> scanMemoryProvider = nullptr;
-    if (conf.layoutStrategy != MemoryLayoutStrategy::LEGACY)
-    {
-        scanMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, inputSchema);
-    }
+    auto scanMemoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferSize, inputSchema);
     auto accessedFields = projection.getAccessedFields();
     auto scan = ScanPhysicalOperator(scanMemoryProvider, accessedFields);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
@@ -81,13 +77,13 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     {
         auto memoryLayoutTrait = getMemoryLayoutTypeTrait(projectionLogicalOperator);
 
-        auto ref = addScanAndEmitAroundOperator(child, memoryLayoutTrait, conf, inputSchema);
+        auto ref = addSwapBeforeOperator(scanWrapper, memoryLayoutTrait, conf);
             //addSwapBeforeProjection(scanWrapper, projectionLogicalOperator, conf);
         auto leaf = ref.second;
         /// ref.first is ignored, because childs are deeper than new swap:
         /// scan (ref.second), emit, scan (ref.first), childs
         std::vector leafes(projectionLogicalOperator.getChildren().size(), leaf);
-        return {.root = ref.first, .leafs = {leafes}};
+        return {.root = child, .leafs = {leafes}};
     }
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

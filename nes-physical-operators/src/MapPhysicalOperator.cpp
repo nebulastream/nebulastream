@@ -42,16 +42,6 @@ std::optional<PhysicalOperator> MapPhysicalOperator::getChild() const
     return child;
 }
 
-PhysicalFunction MapPhysicalOperator::getFunction() const
-{
-    return mapFunction;
-}
-
-Record::RecordFieldIdentifier MapPhysicalOperator::getFieldToWriteTo() const
-{
-    return fieldToWriteTo;
-}
-
 void MapPhysicalOperator::setChild(PhysicalOperator child)
 {
     this->child = std::move(child);

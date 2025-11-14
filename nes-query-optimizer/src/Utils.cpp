@@ -1,17 +1,10 @@
 #include <string>
 #include <vector>
-
-#include <Aggregation/Function/SumAggregationPhysicalFunction.hpp>
-
 #include <Utils.hpp>
 
 #include <DataTypes/Schema.hpp>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/AddPhysicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/DivPhysicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/MulPhysicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/SubPhysicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndPhysicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsPhysicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrPhysicalFunction.hpp>
@@ -29,7 +22,6 @@
 
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
-#include <MapPhysicalOperator.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <SelectionPhysicalOperator.hpp>
 /*
@@ -47,51 +39,19 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 namespace NES
 {
-    std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addScanAndEmitAroundOperator(std::shared_ptr<PhysicalOperatorWrapper>& oldOperatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf, Schema sourceSchema)
+    std::pair<std::shared_ptr<PhysicalOperatorWrapper>, std::shared_ptr<PhysicalOperatorWrapper>> addScanAndEmitAroundOperator(const std::shared_ptr<PhysicalOperatorWrapper>& oldOperatorWrapper, MemoryLayoutTypeTrait memoryLayoutTrait, QueryExecutionConfiguration conf, Schema sourceSchema)
     {
-        std::shared_ptr<PhysicalOperatorWrapper> firstMap;
-        std::shared_ptr<PhysicalOperatorWrapper> lastMap = oldOperatorWrapper;
-        std::vector<Record::RecordFieldIdentifier> projections;
-
-        if (oldOperatorWrapper->getPhysicalOperator().tryGet<MapPhysicalOperator>().has_value())
-        {
-            auto children = oldOperatorWrapper->getChildren();
-            firstMap = children[0];
-            while (firstMap->getPhysicalOperator().tryGet<MapPhysicalOperator>().has_value() && !firstMap->getChildren().empty())
-            {
-                if (firstMap->getChildren()[0]->getPhysicalOperator().tryGet<ScanPhysicalOperator>())
-                {
-                    break;
-                }
-                firstMap = firstMap->getChildren()[0];
-            }
-            projections = firstMap->getChildren()[0]->getPhysicalOperator().tryGet<ScanPhysicalOperator>()->getProjections();
-            firstMap->setChildren({});//remove empty scan before first map
-            //oldOperatorWrapper = child;
-        }
-
-        auto res= addSwapBeforeOperator(firstMap, memoryLayoutTrait, conf, sourceSchema);
+        auto res= addSwapBeforeOperator(oldOperatorWrapper, memoryLayoutTrait, conf, sourceSchema);
 
         auto operatorWrapper= res.first;
         auto swapScanWrapper= res.second;
 
         auto inputSchema = operatorWrapper->getInputSchema().value();
         auto outputSchema = operatorWrapper->getOutputSchema().value();
-        if (!projections.empty())
-        {
-            for (const auto& fieldName : projections)
-            {
-                auto field = sourceSchema.getFieldByName(fieldName);
-                inputSchema = inputSchema.addField(field->name, field->dataType);
-            }
-        }
-        auto provider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(conf.operatorBufferSize, inputSchema);
-        if (projections.empty())
-        {
-            projections = outputSchema.getFieldNames();
-        }
-        auto scan = ScanPhysicalOperator(provider, projections);
 
+        auto provider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(conf.operatorBufferSize, inputSchema);
+
+        auto scan = ScanPhysicalOperator(provider, outputSchema.getFieldNames());
         auto handlerId = getNextOperatorHandlerId();
         auto emit = EmitPhysicalOperator(handlerId, provider);
         auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
@@ -101,28 +61,14 @@ namespace NES
             emit, outputSchema, outputSchema, handlerId, std::make_shared<EmitOperatorHandler>(),
             PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
-        auto swapEmitWrapper = operatorWrapper->getChildren()[0];
+        auto children = operatorWrapper->getChildren();
         //filter -> emit -> scan -> else
-        // scan -> map 1 -> map X -> emit -> scan -> else
 
 
-        scanWrapper->addChild(swapEmitWrapper);
-        //filter -> scan -> emit -> scan -> else
+        scanWrapper->addChild(children[0]);
         operatorWrapper->setChildren({scanWrapper});
-        //filter -> scan -> emit -> scan -> else
-
-        if (operatorWrapper->getPhysicalOperator().tryGet<MapPhysicalOperator>().has_value())
-        {
-            emitWrapper->addChild(lastMap);
-            // emit -> map 1 -> map X -> scan -> emit -> scan -> else
-        }else
-        {
-            emitWrapper->addChild(operatorWrapper);
-            // emit -> filter -> scan -> emit -> scan
-        }
-
-
-
+        emitWrapper->addChild(operatorWrapper);
+        // emit -> filter -> scan -> emit -> scan
         return {emitWrapper, swapScanWrapper};
     }
 
@@ -213,24 +159,6 @@ namespace NES
         {
             return processChildren(*equalFunc);
         }
-        if (auto addFunc = func.tryGet<AddPhysicalFunction>())
-        {
-            return processChildren(*addFunc);
-        }
-        if (auto subFunc = func.tryGet<SubPhysicalFunction>())
-        {
-            return processChildren(*subFunc);
-        }
-        if (auto mulFunc = func.tryGet<MulPhysicalFunction>())
-        {
-            return processChildren(*mulFunc);
-        }
-        if (auto divFunc = func.tryGet<DivPhysicalFunction>())
-        {
-            return processChildren(*divFunc);
-        }
-        // TODO: agg functions
-
         return {};
     }
 

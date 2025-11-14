@@ -31,8 +31,6 @@ public:
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    [[nodiscard]] PhysicalFunction getFunction() const;
-    [[nodiscard]] Record::RecordFieldIdentifier getFieldToWriteTo() const;
     void setChild(PhysicalOperator child) override;
 
 private:
