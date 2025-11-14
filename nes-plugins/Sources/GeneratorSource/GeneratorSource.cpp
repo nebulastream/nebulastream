@@ -88,7 +88,6 @@ void GeneratorSource::close()
 
 size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
-    NES_DEBUG("Filling buffer in GeneratorSource.");
     try
     {
         const auto elapsedTime
@@ -107,7 +106,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
         {
             const auto endOfInterval = startOfInterval + (flushInterval * noIntervals);
             numberOfTuplesToGenerate = generatorRate->calcNumberOfTuplesForInterval(startOfInterval, endOfInterval);
-            NES_DEBUG("numberOfTuplesToGenerate: {}", numberOfTuplesToGenerate);
+            NES_TRACE("numberOfTuplesToGenerate: {}", numberOfTuplesToGenerate);
             if (numberOfTuplesToGenerate == 0)
             {
                 std::this_thread::sleep_for(std::chrono::microseconds{flushInterval});
@@ -143,7 +142,7 @@ size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::sto
         tuplesStream.read(tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), writtenBytes);
         ++generatedBuffers;
         tuplesStream.str("");
-        NES_DEBUG("Wrote {} bytes", writtenBytes);
+        NES_TRACE("Wrote {} bytes", writtenBytes);
 
         /// Calculating how long to sleep. The whole method should take the duration of the flushInterval. If we have some time left, we
         /// sleep for the remaining duration. If there is no time left, we print a warning.
