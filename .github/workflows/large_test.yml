@@ -74,7 +74,6 @@ jobs:
               --worker.default_query_execution.execution_mode=COMPILER \
               --worker.query_engine.number_of_worker_threads=${{ inputs.number_of_worker_threads }} \
               --worker.default_query_execution.operator_buffer_size=${{ inputs.buffer_size }} \
-              --worker.buffer_size_in_bytes=${{ inputs.buffer_size }} \
               --worker.default_query_execution.page_size=${{ inputs.page_size }} \
               --worker.default_query_execution.number_of_partitions=${{ inputs.number_of_partitions }} \
               --worker.number_of_buffers_in_global_buffer_manager=200000

@@ -44,13 +44,6 @@ public:
            "Number buffers in global buffer pool.",
            {std::make_shared<NumberValidation>()}};
 
-    /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.
-    UIntOption bufferSizeInBytes
-        = {"buffer_size_in_bytes",
-           "4096",
-           "Configures the buffer size of individual TupleBuffers in bytes.",
-           {std::make_shared<NumberValidation>()}};
-
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
     UIntOption defaultMaxInflightBuffers
         = {"default_max_inflight_buffers",
@@ -72,7 +65,6 @@ private:
             &defaultQueryExecution,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
-            &bufferSizeInBytes,
             &dumpQueryCompilationIntermediateRepresentations};
     }
 };
