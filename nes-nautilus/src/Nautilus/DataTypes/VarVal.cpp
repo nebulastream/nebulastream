@@ -32,11 +32,11 @@
 namespace NES
 {
 
-VarVal::VarVal(const VarVal& other) : value(other.value)
+VarVal::VarVal(const VarVal& other) : value(other.value), null(other.null), nullable(other.nullable)
 {
 }
 
-VarVal::VarVal(VarVal&& other) noexcept : value(std::move(other.value))
+VarVal::VarVal(VarVal&& other) noexcept : value(std::move(other.value)), null(std::move(other.null)), nullable(other.nullable)
 {
 }
 
@@ -47,6 +47,8 @@ VarVal& VarVal::operator=(const VarVal& other)
         throw UnknownOperation("Not allowed to change the data type via the assignment operator, please use castToType()!");
     }
     value = other.value;
+    null = other.null;
+    nullable = other.nullable;
     return *this;
 }
 
@@ -57,6 +59,8 @@ VarVal& VarVal::operator=(VarVal&& other) /// NOLINT, as we need to have the opt
         throw UnknownOperation("Not allowed to change the data type via the assignment operator, please use castToType()!");
     }
     value = std::move(other.value);
+    null = std::move(other.null);
+    nullable = std::move(other.nullable);
     return *this;
 }
 
@@ -77,17 +81,28 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
         value);
 }
 
+nautilus::val<bool> VarVal::isNull() const
+{
+    return null;
+}
+
+bool VarVal::isNullable() const
+{
+    return nullable == NULLABLE_ENUM::NULLABLE;
+}
+
 VarVal::operator bool() const
 {
-    return std::visit(
-        []<typename T>(T& val) -> nautilus::val<bool>
+    /// We use an val<int> to use bitwise operators to reduce the number of branches created in the nautilus trace.
+    const nautilus::val<int> valueInt = std::visit(
+        []<typename T>(T& val) -> nautilus::val<int>
         {
             if constexpr (requires(T t) { t == nautilus::val<bool>(true); })
             {
                 /// We have to do it like this. The reason is that during the comparison of the two values, @val is NOT converted to a bool
                 /// but rather the val<bool>(false) is converted to std::common_type<T, bool>. This is a problem for any val that is not set to 1.
                 /// As we will then compare val == 1, which will always be false.
-                return !(val == nautilus::val<bool>(false));
+                return nautilus::val<int>{!(val == nautilus::val<bool>(false))};
             }
             else
             {
@@ -95,6 +110,7 @@ VarVal::operator bool() const
             }
         },
         value);
+    return (static_cast<nautilus::val<int>>(not(isNullable() & isNull())) & valueInt) == 1;
 }
 
 VarVal VarVal::castToType(const DataType::Type type) const
@@ -102,40 +118,40 @@ VarVal VarVal::castToType(const DataType::Type type) const
     switch (type)
     {
         case DataType::Type::BOOLEAN: {
-            return {cast<nautilus::val<bool>>()};
+            return {cast<nautilus::val<bool>>(), nullable, null};
         }
         case DataType::Type::INT8: {
-            return {cast<nautilus::val<int8_t>>()};
+            return {cast<nautilus::val<int8_t>>(), nullable, null};
         }
         case DataType::Type::INT16: {
-            return {cast<nautilus::val<int16_t>>()};
+            return {cast<nautilus::val<int16_t>>(), nullable, null};
         }
         case DataType::Type::INT32: {
-            return {cast<nautilus::val<int32_t>>()};
+            return {cast<nautilus::val<int32_t>>(), nullable, null};
         }
         case DataType::Type::INT64: {
-            return {cast<nautilus::val<int64_t>>()};
+            return {cast<nautilus::val<int64_t>>(), nullable, null};
         }
         case DataType::Type::UINT8: {
-            return {cast<nautilus::val<uint8_t>>()};
+            return {cast<nautilus::val<uint8_t>>(), nullable, null};
         }
         case DataType::Type::UINT16: {
-            return {cast<nautilus::val<uint16_t>>()};
+            return {cast<nautilus::val<uint16_t>>(), nullable, null};
         }
         case DataType::Type::UINT32: {
-            return {cast<nautilus::val<uint32_t>>()};
+            return {cast<nautilus::val<uint32_t>>(), nullable, null};
         }
         case DataType::Type::UINT64: {
-            return {cast<nautilus::val<uint64_t>>()};
+            return {cast<nautilus::val<uint64_t>>(), nullable, null};
         }
         case DataType::Type::FLOAT32: {
-            return {cast<nautilus::val<float>>()};
+            return {cast<nautilus::val<float>>(), nullable, null};
         }
         case DataType::Type::FLOAT64: {
-            return {cast<nautilus::val<double>>()};
+            return {cast<nautilus::val<double>>(), nullable, null};
         }
         case DataType::Type::VARSIZED: {
-            return cast<VariableSizedData>();
+            return {cast<VariableSizedData>(), nullable, null};
         }
         case DataType::Type::VARSIZED_POINTER_REP:
             throw UnknownDataType(
@@ -148,56 +164,70 @@ VarVal VarVal::castToType(const DataType::Type type) const
     std::unreachable();
 }
 
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const DataType::Type type)
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const DataType type)
 {
-    switch (type)
+    PRECONDITION(
+        not type.isNullable,
+        "This function can only be called if the data type is not nullable. Please use the overloaded function readVarValFromMemory(const "
+        "nautilus::val<int8_t*>&, DataType, const nautilus::val<bool>&) instead!");
+    return VarVal::readVarValFromMemory(memRef, type, nautilus::val<bool>(false));
+}
+
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const DataType type, const nautilus::val<bool>& null)
+{
+    switch (type.type)
     {
         case DataType::Type::BOOLEAN: {
-            return {readValueFromMemRef<bool>(memRef)};
+            return {readValueFromMemRef<bool>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::INT8: {
-            return {readValueFromMemRef<int8_t>(memRef)};
+            return {readValueFromMemRef<int8_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::INT16: {
-            return {readValueFromMemRef<int16_t>(memRef)};
+            return {readValueFromMemRef<int16_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::INT32: {
-            return {readValueFromMemRef<int32_t>(memRef)};
+            return {readValueFromMemRef<int32_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::INT64: {
-            return {readValueFromMemRef<int64_t>(memRef)};
+            return {readValueFromMemRef<int64_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::CHAR: {
-            return {readValueFromMemRef<char>(memRef)};
+            return {readValueFromMemRef<char>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::UINT8: {
-            return {readValueFromMemRef<uint8_t>(memRef)};
+            return {readValueFromMemRef<uint8_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::UINT16: {
-            return {readValueFromMemRef<uint16_t>(memRef)};
+            return {readValueFromMemRef<uint16_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::UINT32: {
-            return {readValueFromMemRef<uint32_t>(memRef)};
+            return {readValueFromMemRef<uint32_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::UINT64: {
-            return {readValueFromMemRef<uint64_t>(memRef)};
+            return {readValueFromMemRef<uint64_t>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::FLOAT32: {
-            return {readValueFromMemRef<float>(memRef)};
+            return {readValueFromMemRef<float>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::FLOAT64: {
-            return {readValueFromMemRef<double>(memRef)};
+            return {readValueFromMemRef<double>(memRef), type.isNullable ? NULLABLE_ENUM::NULLABLE : NULLABLE_ENUM::NOT_NULLABLE, null};
         }
         case DataType::Type::VARSIZED:
         case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::UNDEFINED:
-            throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
+            throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type.type));
     }
     std::unreachable();
 }
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal)
 {
+    if (varVal.null)
+    {
+        return os << "NULL";
+    }
+
     return std::visit(
         [&os]<typename T>(T& value) -> nautilus::val<std::ostream>&
         {
@@ -220,7 +250,7 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
             else
             {
                 throw UnknownOperation();
-                return os;
+                std::unreachable();
             }
         },
         varVal.value);

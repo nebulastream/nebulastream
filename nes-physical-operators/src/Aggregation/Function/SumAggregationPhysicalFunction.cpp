@@ -43,7 +43,7 @@ void SumAggregationPhysicalFunction::lift(
 {
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType.type);
+    const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType);
 
     /// Updating the sum and count with the new value
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
@@ -60,11 +60,11 @@ void SumAggregationPhysicalFunction::combine(
 {
     /// Reading the sum from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType.type);
+    const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType);
 
     /// Reading the sum from the second aggregation state
     const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType.type);
+    const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType);
 
     /// Adding the sums together
     const auto newSum = sum1 + sum2;
@@ -77,7 +77,7 @@ Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 {
     /// Reading the sum from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType.type);
+    const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType);
 
     /// Creating a record with the sum
     Record record;
