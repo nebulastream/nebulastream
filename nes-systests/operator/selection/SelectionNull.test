@@ -1,0 +1,242 @@
+# name: selection/Selection_Null.test
+# description: Selection tests with null values
+# groups: [Selection, NullHandling]
+
+CREATE LOGICAL SOURCE stream(ts UINT64 NOT NULL, value1 INT32, value2 VARSIZED);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,,
+2,,
+3,1,one
+4,1,one
+5,1,one
+6,,empty
+7,2,two
+8,0,zero
+9,-1,
+10,,
+
+CREATE LOGICAL SOURCE stream2(id UINT64 NOT NULL, value1 INT32, value2 INT32, ts UINT64 NOT NULL, text VARSIZED);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+1,1,2,100,alpha
+2,,3,101,beta
+3,4,,102,
+4,5,6,103,gamma
+5,,,104,
+6,-1,1,105,
+7,0,0,106,zero
+8,2,-3,107,delta
+9,,9,108,
+10,10,,109,omega
+
+CREATE LOGICAL SOURCE bool_stream(id UINT64 NOT NULL, flag BOOLEAN, flag2 BOOLEAN);
+CREATE PHYSICAL SOURCE FOR bool_stream TYPE File;
+ATTACH INLINE
+1,true,true
+2,true,false
+3,false,true
+4,false,false
+5,,true
+6,true,
+7,,
+8,false,
+9,,false
+
+CREATE LOGICAL SOURCE cmp_stream(id UINT64 NOT NULL, a INT32, b INT32);
+CREATE PHYSICAL SOURCE FOR cmp_stream TYPE File;
+ATTACH INLINE
+1,1,2
+2,,2
+3,3,
+4,4,4
+5,,-1
+6,0,0
+
+CREATE SINK sink0(stream.ts UINT64 NOT NULL, stream.value1 INT32, stream.value2 VARSIZED) TYPE File;
+CREATE SINK sink1(stream.ts UINT64 NOT NULL, stream.value1 INT32) TYPE File;
+CREATE SINK sinkMapped(stream2.id UINT64 NOT NULL, v1_plus INT32, v2_minus INT32) TYPE File;
+CREATE SINK sinkTextSuffix(stream2.id UINT64 NOT NULL, text_suffix VARSIZED) TYPE File;
+CREATE SINK sinkBoolCmp(stream2.id UINT64 NOT NULL, v1_eq_1 BOOLEAN, v2_eq_2 BOOLEAN, v1_eq_v2 BOOLEAN, v1_self_eq BOOLEAN, v2_self_eq BOOLEAN) TYPE File;
+CREATE SINK sinkBoolOps(stream2.id UINT64 NOT NULL, v1_and_v2 BOOLEAN, v1_or_v2 BOOLEAN, not_v1_eq_1 BOOLEAN, v1_eq_1_isnull BOOLEAN NOT NULL) TYPE File;
+CREATE SINK sinkTextCmp(stream2.id UINT64 NOT NULL, is_beta BOOLEAN, text_self_eq BOOLEAN, concat_isnull BOOLEAN NOT NULL) TYPE File;
+CREATE SINK bool_sinkBool(bool_stream.id UINT64 NOT NULL, bool_stream.flag BOOLEAN, bool_stream.flag2 BOOLEAN, flag_and BOOLEAN, flag_or BOOLEAN, not_flag BOOLEAN, flag_eq_true BOOLEAN, flag_eq_false BOOLEAN, flag2_eq_true BOOLEAN, flag_isnull BOOLEAN NOT NULL, flag2_isnull BOOLEAN NOT NULL) TYPE File;
+CREATE SINK bool_sinkIds(bool_stream.id UINT64 NOT NULL) TYPE File;
+CREATE SINK cmp_sinkCmp(cmp_stream.id UINT64 NOT NULL, a_lt_3 BOOLEAN, b_gt_0 BOOLEAN, a_lt_b BOOLEAN) TYPE File;
+
+# Filter equal on INT32 with null
+SELECT * FROM stream WHERE value1 == INT32(1) INTO sink0;
+----
+3,1,one
+4,1,one
+5,1,one
+
+# Filter equal on VARSIZED with null
+SELECT ts, value1 FROM stream WHERE value2 == VARSIZED("one") INTO sink1;
+----
+3,1
+4,1
+5,1
+
+# Filter < 1, keep all values
+SELECT * FROM stream WHERE value1 < INT32(1) INTO sink0;
+----
+8,0,zero
+9,-1,NULL
+
+# Filter that keeps only non null values
+SELECT * FROM stream WHERE NOT ISNULL(value1) INTO sink0;
+----
+3,1,one
+4,1,one
+5,1,one
+7,2,two
+8,0,zero
+9,-1,NULL
+
+# Filter that keeps only null values
+SELECT * FROM stream WHERE ISNULL(value2) INTO sink0;
+----
+1,NULL,NULL
+2,NULL,NULL
+9,-1,NULL
+10,NULL,NULL
+
+SELECT id,
+       value1 + INT32(5) AS v1_plus,
+       value2 - INT32(1) AS v2_minus
+FROM stream2
+WHERE NOT ISNULL(value1) AND NOT ISNULL(value2)
+INTO sinkMapped;
+----
+1,6,1
+4,10,5
+6,4,0
+7,5,-1
+8,7,-4
+
+SELECT id,
+       CONCAT(text, VARSIZED("_x")) AS text_suffix
+FROM stream2
+INTO sinkTextSuffix;
+----
+1,alpha_x
+2,beta_x
+3,NULL
+4,gamma_x
+5,NULL
+6,NULL
+7,zero_x
+8,delta_x
+9,NULL
+10,omega_x
+
+SELECT id,
+       value1 == INT32(1) AS v1_eq_1,
+       value2 == INT32(2) AS v2_eq_2,
+       value1 == value2 AS v1_eq_v2,
+       value1 == value1 AS v1_self_eq,
+       value2 == value2 AS v2_self_eq
+FROM stream2
+INTO sinkBoolCmp;
+----
+1,1,1,0,1,1
+2,NULL,0,NULL,NULL,1
+3,0,NULL,NULL,1,NULL
+4,0,0,0,1,1
+5,NULL,NULL,NULL,NULL,NULL
+6,0,0,0,1,1
+7,0,0,1,1,1
+8,0,0,0,1,1
+9,NULL,0,NULL,NULL,1
+10,0,NULL,NULL,1,NULL
+
+SELECT id,
+       (value1 == INT32(1)) AND (value2 == INT32(2)) AS v1_and_v2,
+       (value1 == INT32(1)) OR (value2 == INT32(2)) AS v1_or_v2,
+       NOT (value1 == INT32(1)) AS not_v1_eq_1,
+       ISNULL(value1 == INT32(1)) AS v1_eq_1_isnull
+FROM stream2
+INTO sinkBoolOps;
+----
+1,1,1,0,0
+2,0,NULL,NULL,1
+3,0,NULL,1,0
+4,0,0,1,0
+5,NULL,NULL,NULL,1
+6,0,0,1,0
+7,0,0,1,0
+8,0,0,1,0
+9,0,NULL,NULL,1
+10,0,NULL,1,0
+
+SELECT id,
+       text == VARSIZED("beta") AS is_beta,
+       text == text AS text_self_eq,
+       ISNULL(CONCAT(text, VARSIZED("_x"))) AS concat_isnull
+FROM stream2
+INTO sinkTextCmp;
+----
+1,0,1,0
+2,1,1,0
+3,NULL,NULL,1
+4,0,1,0
+5,NULL,NULL,1
+6,NULL,NULL,1
+7,0,1,0
+8,0,1,0
+9,NULL,NULL,1
+10,0,1,0
+
+SELECT id,
+       flag,
+       flag2,
+       flag AND flag2 AS flag_and,
+       flag OR flag2 AS flag_or,
+       NOT flag AS not_flag,
+       flag == BOOLEAN(TRUE) AS flag_eq_true,
+       flag == BOOLEAN(FALSE) AS flag_eq_false,
+       flag2 == BOOLEAN(TRUE) AS flag2_eq_true,
+       ISNULL(flag) AS flag_isnull,
+       ISNULL(flag2) AS flag2_isnull
+FROM bool_stream
+INTO bool_sinkBool;
+----
+1,1,1,1,1,0,1,0,1,0,0
+2,1,0,0,1,0,1,0,0,0,0
+3,0,1,0,1,1,0,1,1,0,0
+4,0,0,0,0,1,0,1,0,0,0
+5,NULL,1,NULL,1,NULL,NULL,NULL,1,1,0
+6,1,NULL,NULL,1,0,1,0,NULL,0,1
+7,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,1
+8,0,NULL,0,NULL,1,0,1,NULL,0,1
+9,NULL,0,0,NULL,NULL,NULL,NULL,0,1,0
+
+SELECT id
+FROM bool_stream
+WHERE flag AND flag2
+INTO bool_sinkIds;
+----
+1
+
+SELECT id,
+       a < INT32(3) AS a_lt_3,
+       b > INT32(0) AS b_gt_0,
+       a < b AS a_lt_b
+FROM cmp_stream
+INTO cmp_sinkCmp;
+----
+1,1,1,1
+2,NULL,1,NULL
+3,0,NULL,NULL
+4,0,1,0
+5,NULL,0,NULL
+6,1,0,0
+
+SELECT id FROM bool_stream WHERE flag OR flag2 INTO bool_sinkIds;
+----
+1
+2
+3
+5
+6
