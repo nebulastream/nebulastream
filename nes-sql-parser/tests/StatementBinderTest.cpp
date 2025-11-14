@@ -91,72 +91,26 @@ TEST_F(StatementBinderTest, BindQuery)
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 }
 
-TEST_F(StatementBinderTest, InlineSinkQuery)
+TEST_F(StatementBinderTest, Nullable)
 {
-    const std::string query = "SELECT id, text \n"
-                              "FROM input\n"
-                              "INTO FILE(\n"
-                              "'out.csv' AS `SINK`.FILE_PATH,\n"
-                              "'CSV' as `SINK`.INPUT_FORMAT,\n"
-                              "SCHEMA(id UINT64, text VARSIZED) AS `SINK`.`SCHEMA`)\n";
-    const auto statement = binder->parseAndBindSingle(query);
-    ASSERT_TRUE(statement.has_value());
-    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
-
-    const auto plan = std::get<QueryStatement>(*statement);
-
-    const auto inlineSinkOperatorList = getOperatorByType<InlineSinkLogicalOperator>(plan);
-    ASSERT_EQ(1, inlineSinkOperatorList.size());
-
-    const auto& inlineSinkOperator = inlineSinkOperatorList.at(0);
-
-    ASSERT_EQ("FILE", inlineSinkOperator->getSinkType());
-
-    const std::unordered_map<std::string, std::string> expectedSinkConfig = {{"file_path", "out.csv"}, {"input_format", "CSV"}};
-    ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
-
-    Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    ASSERT_EQ(schema, inlineSinkOperator->getSchema());
-}
-
-TEST_F(StatementBinderTest, InlineSourceQuery)
-{
-    const std::string query = "SELECT id, text \n"
-                              "FROM File(\n"
-                              "'input.csv' AS `SOURCE`.FILE_PATH,\n"
-                              "'CSV' AS PARSER.`TYPE`,\n"
-                              "SCHEMA(id UINT64, text VARSIZED) AS `SOURCE`.`SCHEMA`)\n"
-                              "INTO output\n";
-    const auto statement = binder->parseAndBindSingle(query);
-    ASSERT_TRUE(statement.has_value());
-    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
-
-    const auto plan = std::get<QueryStatement>(*statement);
-
-    const auto inlineSourceOperatorList = getOperatorByType<InlineSourceLogicalOperator>(plan);
-    ASSERT_EQ(1, inlineSourceOperatorList.size());
-
-    const auto& inlineSourceOperator = inlineSourceOperatorList.at(0);
-
-    ASSERT_EQ("FILE", inlineSourceOperator->getSourceType());
-
-    const std::unordered_map<std::string, std::string> expectedSourceConfig = {{"file_path", "input.csv"}};
-    ASSERT_EQ(expectedSourceConfig, inlineSourceOperator->getSourceConfig());
-
-    const std::unordered_map<std::string, std::string> expectedParserConfig = {{"type", "CSV"}};
-    ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
-
-    Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    ASSERT_EQ(schema, inlineSourceOperator->getSchema());
+    const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE `testSource` (`attribute1` UINT32, `attribute2` VARSIZED NOT NULL)";
+    const auto statement1 = binder->parseAndBindSingle(createLogicalSourceStatement);
+    ASSERT_TRUE(statement1.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
+    const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement1));
+    ASSERT_TRUE(createdSourceResult.has_value());
+    const auto [actualSource] = createdSourceResult.value();
+    Schema expectedSchema{};
+    auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
+    expectedSchema.addField("testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32, true));
+    expectedSchema.addField("testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
+    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
 
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 {
-    const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE `testSource` (`attribute1` UINT32, `attribute2` VARSIZED)";
+    const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE `testSource` (`attribute1` UINT32 NOT NULL, `attribute2` VARSIZED NOT NULL)";
     const auto statement1 = binder->parseAndBindSingle(createLogicalSourceStatement);
     ASSERT_TRUE(statement1.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
@@ -173,7 +127,7 @@ TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 
 TEST_F(StatementBinderTest, BindCreateBindSource)
 {
-    const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE testSource (attribute1 UINT32, attribute2 VARSIZED)";
+    const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE testSource (attribute1 UINT32 NOT NULL, attribute2 VARSIZED NOT NULL)";
     const auto statement1 = binder->parseAndBindSingle(createLogicalSourceStatement);
     ASSERT_TRUE(statement1.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
@@ -256,8 +210,8 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
     Schema expectedSchema{};
-    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, true));
+    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, true));
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
@@ -279,7 +233,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
 /// TODO #764 Remove test when we have proper schema inference and don't require matching source names in sinks anymore
 TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
 {
-    const std::string createSinkStatement = "CREATE SINK testSink (testSource.attribute1 UINT32, testSource.attribute2 VARSIZED) TYPE File "
+    const std::string createSinkStatement = "CREATE SINK testSink (testSource.attribute1 UINT32, testSource.attribute2 VARSIZED NOT NULL) TYPE File "
                                             "SET ('/dev/null' AS `SINK`.FILE_PATH, 'CSV' AS `SINK`.INPUT_FORMAT)";
     const auto statement = binder->parseAndBindSingle(createSinkStatement);
     ASSERT_TRUE(statement.has_value());
@@ -288,7 +242,7 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
     Schema expectedSchema{};
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
+    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, true));
     expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
