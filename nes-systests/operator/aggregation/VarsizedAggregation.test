@@ -833,3 +833,15 @@ SELECT start, end, ARRAY_AGG(character) as text
 FROM streamLong WINDOW TUMBLING(timestamp, size 1000 ms) INTO sinkStream2;
 ----
 1000000000,1000001000,HelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorld
+
+GlobalConfiguration worker.buffer_size_in_bytes: [4096, 8192, 16384, 32768]
+
+CREATE LOGICAL SOURCE solarFile(timestamp UINT64, value FLOAT64);
+
+CREATE PHYSICAL SOURCE FOR solarFile TYPE File;
+ATTACH FILE large/solar-power.csv
+
+SELECT start, end, MAX(value) as text
+FROM solarFile WINDOW SLIDING(timestamp, size 60000 ms, advance by 4000 ms) INTO Checksum();
+----
+7498276 18021799635
