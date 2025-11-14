@@ -76,7 +76,7 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Checksum Sink completed. Checksum: {}", fmt::streamed(checksum));
 
-    outputFileStream << "S$Count:UINT64,S$Checksum:UINT64" << '\n';
+    outputFileStream << "S$Count:UINT64:false,S$Checksum:UINT64:false" << '\n';
     outputFileStream << checksum.numberOfTuples << "," << checksum.checksum << '\n';
     outputFileStream.close();
     isOpen = false;
