@@ -15,7 +15,11 @@
 #pragma once
 
 
+#include <cstdint>
+#include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES
 {
@@ -49,9 +53,9 @@ public:
 
     ~RowTupleBufferRef() override = default;
 
-    std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
+    [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 
-    std::vector<DataType> getAllDataTypes() const override;
+    [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -63,8 +67,6 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
-
-    IndexBufferResult indexBuffer(RecordBuffer&, ArenaRef&) override { return IndexBufferResult::INITIALIZED; }
 };
 
 }

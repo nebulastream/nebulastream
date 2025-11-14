@@ -14,7 +14,12 @@
 
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 
+#include <cstdint>
+#include <memory>
 #include <numeric>
+#include <utility>
+#include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
@@ -46,21 +51,21 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
         }
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
-            const uint64_t capacity = bufferSize / schema.getSizeOfSchemaInBytes();
+            const auto tupleSize = std::accumulate(
+                schema.begin(),
+                schema.end(),
+                0UL,
+                [](auto size, const Schema::Field& field) { return size + field.dataType.getSizeInBytes(); });
+
+            const uint64_t capacity = bufferSize / tupleSize;
             std::vector<ColumnTupleBufferRef::Field> fields;
             fields.reserve(schema.getNumberOfFields());
             uint64_t columnOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.name, field.dataType, columnOffset);
+                fields.emplace_back(field.name, field.dataType, field.dataType.getSizeInBytes(), columnOffset);
                 columnOffset += (field.dataType.getSizeInBytes() * capacity);
             }
-            const auto tupleSize = std::accumulate(
-                fields.begin(),
-                fields.end(),
-                0UL,
-                [](auto size, const Nautilus::Interface::BufferRef::ColumnTupleBufferRef::Field& field)
-                { return size + field.type.getSizeInBytes(); });
 
             return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});
         }

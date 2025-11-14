@@ -14,14 +14,20 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
+#include <string>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -43,23 +49,24 @@ public:
     TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
     virtual ~TupleBufferRef();
 
-    /// @brief Writes the varSizedValue to the tupleBuffer. Similar to writeVarSizedData, but this method expects the varSizedValue containing
-    /// the length of varSizedValue as its first 32-bits
-    static VariableSizedAccess writeVarSizedData(
-        TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const char* varSizedValue, uint32_t varSizedValueLength);
+    enum PrependMode : uint8_t
+    {
+        PREPEND_NONE,
+        PREPEND_LENGTH_AS_UINT32
+    };
 
     /// @brief Writes the variable sized data to the buffer
+    template <PrependMode PrependMode>
     static VariableSizedAccess
-    writeVarSizedDataAndPrependLength(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::string_view varSizedValue);
+    writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 
     /// @brief Reads the variable sized data and returns the pointer to the var sized data
     /// @return Pointer to variable sized data
-    static const int8_t* loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
+    static std::span<std::byte> loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
 
     /// @brief Reads the variable sized data. Similar as loadAssociatedVarSizedValue, but returns a string
     /// @return Variable sized data as a string
     static std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
-
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
@@ -82,13 +89,11 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
 
-    virtual IndexBufferResult indexBuffer(RecordBuffer&, ArenaRef&) = 0;
-
-    uint64_t getCapacity() const;
-    uint64_t getBufferSize() const;
-    uint64_t getTupleSize() const;
-    virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
-    virtual std::vector<DataType> getAllDataTypes() const = 0;
+    [[nodiscard]] uint64_t getCapacity() const;
+    [[nodiscard]] uint64_t getBufferSize() const;
+    [[nodiscard]] uint64_t getTupleSize() const;
+    [[nodiscard]] virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
+    [[nodiscard]] virtual std::vector<DataType> getAllDataTypes() const = 0;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

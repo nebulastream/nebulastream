@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
 namespace NES
