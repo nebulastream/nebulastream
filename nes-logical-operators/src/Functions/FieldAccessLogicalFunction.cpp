@@ -85,7 +85,13 @@ LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& s
     const auto existingField = schema.getFieldByName(fieldName);
     if (!existingField)
     {
-        throw CannotInferSchema("field {} is not part of the schema {}", fieldName, schema);
+        NES_WARNING("field {} is not part of the schema {}", fieldName, schema);
+        auto copy = *this;
+        auto field = schema.getFields()[0];
+        copy.dataType = field.dataType;
+        copy.fieldName = field.name;
+        return copy;
+        //throw CannotInferSchema("field {} is not part of the schema {}", fieldName, schema);
     }
 
     auto copy = *this;
