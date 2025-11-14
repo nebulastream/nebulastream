@@ -63,8 +63,6 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
-
-    IndexBufferResult indexBuffer(RecordBuffer&, ArenaRef&) override { return IndexBufferResult::INITIALIZED; }
 };
 
 }
