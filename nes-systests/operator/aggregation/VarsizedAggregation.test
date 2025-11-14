@@ -2,8 +2,10 @@
 # description: Test window aggregations into a varsized
 # groups: [Aggregation, WindowOperators]
 
+CREATE LOGICAL SOURCE stream(timestamp UINT64, character UINT8);
 
-Source stream UINT64 timestamp UINT8 character INLINE
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
 0,72
 1,101
 2,108
@@ -35,34 +37,40 @@ Source stream UINT64 timestamp UINT8 character INLINE
 28,108
 29,100
 
-SINK sinkStream UINT64 stream$start UINT64 stream$end VARSIZED stream$text
+CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.text VARSIZED) TYPE File;
 
 
 # Tests Merge Aggregation using characters
 SELECT start, end, ARRAY_AGG(character) as text
-FROM stream WINDOW TUMBLING(timestamp, size 10 ms) INTO sinkStream
+FROM stream WINDOW TUMBLING(timestamp, size 10 ms) INTO sinkStream;
 ----
 0,10,HelloWorld
 10,20,HelloWorld
 20,30,HelloWorld
 
 
-Source stream8ByteStream UINT64 timestamp UINT64 character INLINE
+CREATE LOGICAL SOURCE stream8ByteStream(timestamp UINT64, character UINT64);
+
+CREATE PHYSICAL SOURCE FOR stream8ByteStream TYPE File;
+ATTACH INLINE
 0,8245905578810697032
 1,8307297884220712044
 2,8388331938618102849
 3,8382157055477956968
 4,3761405301554571634
 
-SINK sinkStream8Byte UINT64 stream8ByteStream$start UINT64 stream8ByteStream$end VARSIZED stream8ByteStream$text
+CREATE SINK sinkStream8Byte(stream8ByteStream.start UINT64, stream8ByteStream.end UINT64, stream8ByteStream.text VARSIZED) TYPE File;
 
 # Tests Merge Aggregation using 8 byte integers. Note this test only works on small endian machines
 SELECT start, end, ARRAY_AGG(character) as text
-FROM stream8ByteStream WINDOW TUMBLING(timestamp, size 5 ms) INTO sinkStream8Byte
+FROM stream8ByteStream WINDOW TUMBLING(timestamp, size 5 ms) INTO sinkStream8Byte;
 ----
 0,5,HelloWorldThisIsATestWithALongString1234
 
-Source streamLong UINT64 timestamp UINT8 character INLINE
+CREATE LOGICAL SOURCE streamLong(timestamp UINT64, character UINT8);
+
+CREATE PHYSICAL SOURCE FOR streamLong TYPE File;
+ATTACH INLINE
 1000000000,72
 1000000001,101
 1000000002,108
@@ -814,7 +822,7 @@ Source streamLong UINT64 timestamp UINT8 character INLINE
 1000000748,108
 1000000749,100
 
-SINK sinkStream2 UINT64 streamLong$start UINT64 streamLong$end VARSIZED streamLong$text
+CREATE SINK sinkStream2(streamLong.start UINT64, streamLong.end UINT64, streamLong.text VARSIZED) TYPE File;
 
 # Test in order behavior of the ARRAY_AGG. This currently requires a work around which prevents the CSV formatter
 # from introducing chunked sequence numbers, which is why the timestamp is so large to prevent a scenario where the raw
@@ -822,6 +830,6 @@ SINK sinkStream2 UINT64 streamLong$start UINT64 streamLong$end VARSIZED streamLo
 # property you would observe that the output string does not match the expected. (Might require a few tries).
 
 SELECT start, end, ARRAY_AGG(character) as text
-FROM streamLong WINDOW TUMBLING(timestamp, size 1000 ms) INTO sinkStream2
+FROM streamLong WINDOW TUMBLING(timestamp, size 1000 ms) INTO sinkStream2;
 ----
 1000000000,1000001000,HelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorldHelloWorld
