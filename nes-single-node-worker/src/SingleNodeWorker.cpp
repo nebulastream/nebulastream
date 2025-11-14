@@ -58,15 +58,6 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
-
-    if (configuration.workerConfiguration.bufferSizeInBytes.getValue()
-        < configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue())
-    {
-        throw InvalidConfigParameter(
-            "Currently, we require the bufferSizeInBytes {} to be at least the operatorBufferSize {}",
-            configuration.workerConfiguration.bufferSizeInBytes.getValue(),
-            configuration.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
-    }
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
