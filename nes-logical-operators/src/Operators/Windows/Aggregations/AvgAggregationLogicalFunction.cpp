@@ -31,8 +31,8 @@ namespace NES
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field)
 {
 }
@@ -41,8 +41,8 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field,
           asField)
 {
@@ -67,18 +67,20 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     {
         if (onField.getDataType().isSignedInteger())
         {
-            newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64)).get<FieldAccessLogicalFunction>();
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64, onField.getDataType().isNullable))
+                             .get<FieldAccessLogicalFunction>();
         }
         else
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, onField.getDataType().isNullable))
+                      .get<FieldAccessLogicalFunction>();
         }
     }
     else
     {
-        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).get<FieldAccessLogicalFunction>();
+        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, onField.getDataType().isNullable))
+                         .get<FieldAccessLogicalFunction>();
     }
 
     ///Set fully qualified name for the as Field

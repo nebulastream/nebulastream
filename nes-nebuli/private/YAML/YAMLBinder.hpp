@@ -37,7 +37,7 @@ namespace NES::CLI
 /// These types should not be used anywhere else in NES; instead we use the bound and validated types, such as LogicalSource and SourceDescriptor.
 struct SchemaField
 {
-    SchemaField(std::string name, const std::string& typeName);
+    SchemaField(std::string name, const std::string& typeName, bool isNullable);
     SchemaField(std::string name, DataType type);
     SchemaField() = default;
 

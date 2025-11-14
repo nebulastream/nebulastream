@@ -32,18 +32,18 @@ namespace NES
 {
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           std::move(field),
           std::move(asField))
 {
@@ -73,8 +73,10 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
         }
 
         /// a count aggregation is always on an uint 64
-        this->onField = onField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
-        this->asField = asField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+        this->onField = onField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, onField.getDataType().isNullable))
+                            .get<FieldAccessLogicalFunction>();
+        this->asField = asField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, asField.getDataType().isNullable))
+                            .get<FieldAccessLogicalFunction>();
     }
     else
     {

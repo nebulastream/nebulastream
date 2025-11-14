@@ -33,8 +33,8 @@ namespace NES
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field)
 {
 }
@@ -43,8 +43,8 @@ MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field,
           std::move(asField))
 {
@@ -80,7 +80,7 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
     inputStamp = onField.getDataType();
-    finalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    finalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64, onField.getDataType().isNullable);
     asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 

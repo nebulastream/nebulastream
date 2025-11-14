@@ -99,8 +99,8 @@ TEST_F(StatementBinderTest, BindQuotedIdentifiers)
     const auto [actualSource] = createdSourceResult.value();
     Schema expectedSchema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedSchema.addField("testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    expectedSchema.addField("testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32, false));
+    expectedSchema.addField("testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
@@ -116,8 +116,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto [actualSource] = createdSourceResult.value();
     Schema expectedSchema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, false));
+    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     ASSERT_EQ(actualSource.getLogicalSourceName(), "TESTSOURCE");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
@@ -167,8 +167,8 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
 {
     Schema schema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    schema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    schema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    schema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, false));
+    schema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     const auto logicalSourceOpt = sourceCatalog->addLogicalSource("TESTSOURCE", schema);
     ASSERT_TRUE(logicalSourceOpt.has_value());
 
@@ -190,8 +190,8 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
     Schema expectedSchema{};
-    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, false));
+    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
@@ -222,8 +222,8 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
     Schema expectedSchema{};
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, false));
+    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");

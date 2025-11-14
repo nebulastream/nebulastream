@@ -107,8 +107,8 @@ public:
     static inline const Schema checksumSchema = []
     {
         Schema checksumSinkSchema;
-        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
+        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
         return checksumSinkSchema;
     }();
 
