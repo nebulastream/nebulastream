@@ -1,0 +1,33 @@
+# name: projection/Projection_Null.test
+# description: Projection tests with null edge cases
+# groups: [Projection, NullHandling]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64, timestamp UINT64 NOT NULL, text VARSIZED);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,,0,
+2,100,1,hello
+3,,2,
+4,200,3,world
+5,,4,
+6,300,5,
+7,400,6,!
+8,,7,
+9,,8,nullend
+10,500,9,
+
+CREATE SINK sink(stream.value UINT64, stream.text VARSIZED) TYPE File;
+
+# 0: [value, text]
+SELECT value, text FROM stream INTO sink;
+----
+NULL,NULL
+100,hello
+NULL,NULL
+200,world
+NULL,NULL
+300,NULL
+400,!
+NULL,NULL
+NULL,nullend
+500,NULL
