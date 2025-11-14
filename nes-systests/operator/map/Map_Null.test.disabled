@@ -1,0 +1,36 @@
+# name: map/Map_Null.test
+# description: Simple map tests with add function and null values
+# groups: [Map]
+
+Source stream UINT64 id INT32 value1_NULLABLE INT32 value2_NULLABLE
+0,0,4
+1,1,1
+2,5,10
+3,13,-2
+4,,
+5,7,
+6,,-5
+
+SINK sink UINT64 stream$id INT32 stream$result
+
+# Adds a constant to a field
+SELECT id, value1_NULLABLE + 1 AS result FROM stream INTO sink
+----
+0,1
+1,2
+2,6
+3,14
+4,
+5,8
+6,
+
+# Adds to fields together
+SELECT id, value1_NULLABLE + value2_NULLABLE AS result FROM stream INTO sink
+----
+0,4
+1,2
+2,15
+3,11
+4,
+5,
+6,
