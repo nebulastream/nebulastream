@@ -19,7 +19,7 @@
 #include <PhysicalOperator.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <WindowProbePhysicalOperator.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 
 namespace NES
@@ -32,7 +32,7 @@ public:
         const OperatorHandlerId operatorHandlerId,
         std::vector<PhysicalFunction> inputs,
         std::vector<std::string> outputFieldNames,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -51,12 +51,12 @@ private:
     const std::vector<PhysicalFunction> inputs;
     const std::vector<std::string> outputFieldNames;
     std::optional<PhysicalOperator> child;
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef;
 
 protected:
     void performInference(
         const Interface::PagedVectorRef& pagedVectorRef,
-        Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
+        Interface::BufferRef::TupleBufferRef& tupleBufferRef,
         ExecutionContext& executionCtx) const;
 };
 

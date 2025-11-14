@@ -17,7 +17,6 @@
 #include <IREEInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <nautilus/function.hpp>
 #include <ranges>
@@ -124,7 +123,7 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
     child->execute(ctx, record);
 }
 
-void IREEInferenceOperator::setup(ExecutionContext& executionCtx) const
+void IREEInferenceOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
     nautilus::invoke(
         +[](OperatorHandler* opHandler, PipelineExecutionContext* pec) { opHandler->start(*pec, 0); },

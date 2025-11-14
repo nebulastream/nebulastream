@@ -19,7 +19,7 @@
 #include <PhysicalOperator.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <WindowProbePhysicalOperator.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <PredictionCacheConfiguration.hpp>
 
@@ -33,12 +33,12 @@ public:
         const OperatorHandlerId operatorHandlerId,
         std::vector<PhysicalFunction> inputs,
         std::vector<std::string> outputFieldNames,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef,
         Configurations::PredictionCacheOptions predictionCacheOptions);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void setup(ExecutionContext& executionCtx) const override;
+    void setup(ExecutionContext& executionCtx, CompilationContext&) const override;
 
     [[nodiscard]] Record createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const;
 
@@ -54,13 +54,13 @@ private:
     const std::vector<PhysicalFunction> inputs;
     const std::vector<std::string> outputFieldNames;
     std::optional<PhysicalOperator> child;
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef;
     Configurations::PredictionCacheOptions predictionCacheOptions;
 
 protected:
     void performInference(
         const Interface::PagedVectorRef& pagedVectorRef,
-        Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
+        Interface::BufferRef::TupleBufferRef& tupleBufferRef,
         ExecutionContext& executionCtx) const;
 };
 

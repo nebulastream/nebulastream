@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <memory>
 
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <BatchingPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
@@ -65,8 +65,8 @@ void emitBatchesProxy(
 
 BatchingPhysicalOperator::BatchingPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
-    : WindowBuildPhysicalOperator(operatorHandlerId), memoryProvider(std::move(std::move(memoryProvider)))
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef)
+    : WindowBuildPhysicalOperator(operatorHandlerId), tupleBufferRef(std::move(std::move(tupleBufferRef)))
 {
 }
 
@@ -90,7 +90,7 @@ void BatchingPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
             return batch->getPagedVectorRef();
         }, batchMemRef);
 
-    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, memoryProvider);
+    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
     batchPagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 

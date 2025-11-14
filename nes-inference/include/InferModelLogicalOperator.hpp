@@ -18,69 +18,55 @@
 #include <string>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
+#include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
 #include <Model.hpp>
 
 namespace NES::InferModel
 {
 
-/**
- * @brief Infer model operator
- */
-class InferModelLogicalOperator : public OriginIdAssigner
+class InferModelLogicalOperator final : public OriginIdAssigner
 {
-    Nebuli::Inference::Model model;
-    std::vector<LogicalFunction> inputFields;
-    LogicalOperator child;
-    Schema inputSchema;
-    Schema outputSchema;
-    std::vector<OriginId> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
-
 public:
-    [[nodiscard]] const Nebuli::Inference::Model& getModel() const { return model; }
-    [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const { return inputFields; }
-    InferModelLogicalOperator(NES::Nebuli::Inference::Model, std::vector<LogicalFunction> inputFields);
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return {child}; }
-    [[nodiscard]] InferModelLogicalOperator withChildren(std::vector<LogicalOperator> children) const
-    {
-        PRECONDITION(children.size() == 1, "Expected exactly one child");
-        auto copy = *this;
-        copy.child = std::move(children.front());
-        return copy;
-    }
-    [[nodiscard]] bool operator==(const InferModelLogicalOperator& rhs) const 
-    {
-        return model == rhs.model && inputFields == rhs.inputFields && child == rhs.child
-            && rhs.getInputSchemas() == getInputSchemas() && rhs.getOutputSchema() == getOutputSchema();
-    }
-    [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
-    void serialize(SerializableOperator&) const ;
-    [[nodiscard]] TraitSet getTraitSet() const { return {traitSet}; }
+    explicit InferModelLogicalOperator(NES::Nebuli::Inference::Model, std::vector<LogicalFunction> inputFields);
+
+    [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
+    [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const;
+
+    [[nodiscard]] bool operator==(const InferModelLogicalOperator& rhs) const;
+
+    void serialize(SerializableOperator& serializableOperator) const;
+
     [[nodiscard]] InferModelLogicalOperator withTraitSet(TraitSet traitSet) const ;
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return {inputSchema}; }
-    [[nodiscard]] const Schema& getInputSchema() const { return inputSchema; }
-    InferModelLogicalOperator setInputSchema(std::vector<Schema> inputSchemas) const
-    {
-        PRECONDITION(inputSchemas.size() == 1, "Expected exactly one schema");
-        auto copy = *this;
-        copy.inputSchema = std::move(inputSchemas.at(0));
-        return copy;
-    }
-    [[nodiscard]] Schema getOutputSchema() const { return outputSchema; }
-    InferModelLogicalOperator setOutputSchema(Schema outputSchema) const
-    {
-        auto copy = *this;
-        copy.outputSchema = std::move(outputSchema);
-        return copy;
-    }
+    [[nodiscard]] TraitSet getTraitSet() const;
+
+    [[nodiscard]] InferModelLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
+    [[nodiscard]] Schema getOutputSchema() const;
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
+
     [[nodiscard]] InferModelLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const ;
+
 private:
     static constexpr std::string_view NAME = "InferModel";
+    Nebuli::Inference::Model model;
+    std::vector<LogicalFunction> inputFields;
+
+    std::vector<LogicalOperator> children;
     TraitSet traitSet;
+    Schema inputSchema, outputSchema;
 };
+
+static_assert(LogicalOperatorConcept<InferModelLogicalOperator>);
 }

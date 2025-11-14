@@ -77,15 +77,15 @@ void IREEBatchInferenceOperatorHandler::emitBatchesToProbe(
     tupleBuffer.setWatermark(watermarkTs);
     tupleBuffer.setNumberOfTuples(numberOfTuples);
 
-    auto* bufferMemory = tupleBuffer.getBuffer<EmittedBatch>();
-    bufferMemory->batchId = batch.batchId;
+    auto bufferMemory = tupleBuffer.getAvailableMemoryArea();
+    new (bufferMemory.data()) EmittedBatch{batch.batchId};
 
     pipelineCtx->emitBuffer(tupleBuffer);
     batch.setState(BatchState::MARKED_AS_EMITTED);
 
     NES_TRACE(
         "Emitted batch {} with watermarkTs {} sequenceNumber {} originId {} tuples {}",
-        bufferMemory->batchId,
+        batch.batchId,
         tupleBuffer.getWatermark(),
         tupleBuffer.getSequenceDataAsString(),
         tupleBuffer.getOriginId(),
@@ -156,27 +156,27 @@ void IREEBatchInferenceOperatorHandler::allocatePredictionCacheEntries(
     }
 
     PRECONDITION(bufferProvider != nullptr, "Buffer provider should not be null");
-    for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
+    for (uint64_t i = 0; i < threadLocalAdapters.size(); ++i)
     {
         const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
         INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
 
         auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
         INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
-        std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
+        std::ranges::fill(bufferOpt.value().getAvailableMemoryArea(), std::byte{0});
         predictionCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
     }
 }
 
 const int8_t* IREEBatchInferenceOperatorHandler::getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const
 {
-    PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
+    PRECONDITION(threadLocalAdapters.size() > 0, "Number of worker threads should be set before calling this method");
     const auto startPredictionCacheEntriesIREE = dynamic_cast<const StartPredictionCacheEntriesIREEInference&>(startPredictionCacheEntriesArgs);
     const auto pos = startPredictionCacheEntriesIREE.workerThreadId % predictionCacheEntriesBufferForWorkerThreads.size();
     INVARIANT(
         not predictionCacheEntriesBufferForWorkerThreads.empty() and pos < predictionCacheEntriesBufferForWorkerThreads.size(),
         "Position should be smaller than the size of the predictionCacheEntriesBufferForWorkerThreads");
-    return predictionCacheEntriesBufferForWorkerThreads.at(pos).getBuffer();
+    return predictionCacheEntriesBufferForWorkerThreads.at(pos).getAvailableMemoryArea<int8_t>().data();
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
