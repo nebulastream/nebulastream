@@ -32,19 +32,24 @@ namespace NES::Nautilus
 #define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
     VarVal operatorName(const VarVal& rhs) const \
     { \
+        if (isNullable() and (this->isNull() or rhs.isNull())) \
+        { \
+            return std::visit( \
+                []<typename RHS>(const RHS& rhsVal) { return VarVal{rhsVal, VarVal::NULLABLE_ENUM::NULLABLE, true}; }, this->value); \
+        } \
         return std::visit( \
             [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
             { \
                 if constexpr (requires(LHS l, RHS r) { l op r; }) \
                 { \
-                    return detail::var_val_t(lhsVal op rhsVal); \
+                    return VarVal{lhsVal op rhsVal, VarVal::joinNullable(this->nullable, rhs.nullable), false}; \
                 } \
                 else \
                 { \
                     throw UnknownOperation( \
                         std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(LHS).name() + " " \
                         + typeid(RHS).name()); \
-                    return detail::var_val_t(lhsVal); \
+                    return VarVal{lhsVal, VarVal::NULLABLE_ENUM::NULLABLE, true}; \
                 } \
             }, \
             this->value, \
@@ -54,6 +59,10 @@ namespace NES::Nautilus
 #define DEFINE_OPERATOR_VAR_VAL_UNARY(operatorName, op) \
     VarVal operatorName() const \
     { \
+        if (isNullable() and isNull()) \
+        { \
+            return VarVal{*this}; \
+        } \
         return std::visit( \
             [&]<typename RHS>(const RHS& rhsVal) \
             { \
@@ -61,30 +70,15 @@ namespace NES::Nautilus
                 { \
                     throw UnknownOperation( \
                         std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(decltype(rhsVal)).name()); \
-                    return detail::var_val_t(rhsVal); \
+                    return VarVal{detail::var_val_t(rhsVal), VarVal::NULLABLE_ENUM::NULLABLE, false}; \
                 } \
                 else \
                 { \
                     detail::var_val_t result = op rhsVal; \
-                    return result; \
+                    return VarVal{detail::var_val_t(result), this->nullable, this->null}; \
                 } \
             }, \
             this->value); \
-    }
-
-#define EVALUATE_FUNCTION(func) \
-    [&](const auto& val) \
-    { \
-        if constexpr (!requires { func(val); }) \
-        { \
-            throw UnknownOperation(std::string("VarVal function not implemented: ") + typeid(decltype(val)).name()); \
-            return Nautilus::detail::var_val_t(val); \
-        } \
-        else \
-        { \
-            Nautilus::detail::var_val_t result = func(val); \
-            return result; \
-        } \
     }
 
 namespace detail
@@ -111,31 +105,44 @@ struct is_one_of<T, std::variant<Ts...>> : std::bool_constant<(std::is_same_v<T,
 class VarVal
 {
 public:
+    enum class NULLABLE_ENUM : uint8_t
+    {
+        NOT_NULLABLE = 0,
+        NULLABLE = 1,
+    };
+
+    static NULLABLE_ENUM joinNullable(const NULLABLE_ENUM left, const NULLABLE_ENUM right)
+    {
+        return (left == NULLABLE_ENUM::NOT_NULLABLE and right == NULLABLE_ENUM::NOT_NULLABLE) ? NULLABLE_ENUM::NOT_NULLABLE
+                                                                                              : NULLABLE_ENUM::NULLABLE;
+    }
+
     /// Construct a VarVal object from memory
-    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType::Type type);
+    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type);
+    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type, const nautilus::val<bool>& null);
 
     /// Construct a VarVal object for example via VarVal(32)
     template <typename T>
-    explicit VarVal(const T t)
+    explicit VarVal(const T t, const NULLABLE_ENUM nullable = NULLABLE_ENUM::NOT_NULLABLE, const nautilus::val<bool>& null = false)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(nautilus::val<T>(t))
+        : value(nautilus::val<T>(t)), null(null), nullable(nullable)
     {
     }
 
     /// Construct via VarVal(nautilus::val<int>(32)), also allows conversion from static to dynamic
     template <typename T>
-    VarVal(const nautilus::val<T> t)
+    VarVal(const nautilus::val<T> t, const NULLABLE_ENUM nullable = NULLABLE_ENUM::NOT_NULLABLE, const nautilus::val<bool>& null = false)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(t)
+        : value(t), null(null), nullable(nullable)
     {
     }
 
     /// Construct a VarVal object for all other types that are part of var_val_helper but are not wrapped
     /// in a nautilus::val<> can be constructed via this constructor, e.g, VarVal(VariableSize).
     template <typename T>
-    VarVal(const T t)
     requires(detail::is_one_of<T, detail::var_val_t>::value)
-        : value(t)
+    VarVal(const T t, const NULLABLE_ENUM nullable = NULLABLE_ENUM::NOT_NULLABLE, const nautilus::val<bool>& null = false)
+        : value(t), null(null), nullable(nullable)
     {
     }
 
@@ -179,6 +186,12 @@ public:
     template <typename T>
     VarVal customVisit(T t) const
     {
+        if (isNullable() and isNull())
+        {
+            /// We decide to do nothing, if the value is null and simply return it to not call any function that would potentially throw
+            /// an exception
+            return value;
+        }
         return std::visit(t, value);
     }
 
@@ -208,19 +221,37 @@ public:
     /// Writes the underlying value to the given memory reference.
     /// We call the operator= after the cast to the underlying type.
     void writeToMemory(const nautilus::val<int8_t*>& memRef) const;
+    nautilus::val<bool> isNull() const;
+    bool isNullable() const;
 
 protected:
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    VarVal(const detail::var_val_t t) : value(std::move(t)) { }
+    VarVal(const detail::var_val_t t, const NULLABLE_ENUM nullable = NULLABLE_ENUM::NOT_NULLABLE, nautilus::val<bool> null = false)
+        : value(std::move(t)), null(std::move(null)), nullable(nullable)
+    {
+    }
 
     detail::var_val_t value;
+    nautilus::val<bool> null;
+    NULLABLE_ENUM nullable; /// Allows us to not run the null code parts, if the VarVal is not nullable
 };
 
 static_assert(!std::is_default_constructible_v<VarVal>, "Should not be default constructible");
 static_assert(std::is_constructible_v<VarVal, int32_t>, "Should be constructible from int32_t");
-static_assert(std::is_constructible_v<VarVal, nautilus::val<uint32_t>>, "Should be constructible from nautilus::val<uint32_t>");
-static_assert(std::is_convertible_v<nautilus::val<uint32_t>, VarVal>, "Should allow conversion from nautilus::val<uint32_t> to VarVal");
-static_assert(std::is_constructible_v<VarVal, VariableSizedData>, "Should be constructible from VariableSizedData");
+static_assert(
+    std::is_constructible_v<VarVal, int32_t, VarVal::NULLABLE_ENUM, bool>,
+    "Should be constructible from int32_t, VarVal::NULLABLE_ENUM and bool");
+static_assert(!std::is_constructible_v<VarVal, int32_t, bool>, "Should not be constructible from int32_t and bool");
+static_assert(
+    std::is_constructible_v<VarVal, VariableSizedData, VarVal::NULLABLE_ENUM, bool>,
+    "Should be constructible from VariableSizedData, VarVal::NULLABLE_ENUM and bool");
+static_assert(
+    std::is_constructible_v<VarVal, nautilus::val<uint32_t>, VarVal::NULLABLE_ENUM, nautilus::val<bool>>,
+    "Should be constructible from nautilus::val<uint32_t> and nautilus::val<bool>");
+static_assert(std::is_convertible_v<nautilus::val<uint32_t>, VarVal>, "Should not allow conversion from nautilus::val<uint32_t> to VarVal");
+static_assert(
+    std::is_constructible_v<VarVal, VariableSizedData, VarVal::NULLABLE_ENUM, nautilus::val<bool>>,
+    "Should be constructible from VariableSizedData");
 static_assert(std::is_convertible_v<VariableSizedData, VarVal>, "Should allow conversion from VariableSizedData to VarVal");
 static_assert(!std::is_convertible_v<int32_t, VarVal>, "Should not allow conversion from underlying to VarVal");
 
