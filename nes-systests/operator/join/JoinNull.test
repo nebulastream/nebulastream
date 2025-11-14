@@ -1,0 +1,74 @@
+# name: join/JoinNull.test
+# description: Test join operator with null values
+# groups: [WindowOperators, Join, NullHandling]
+
+# Source definitions
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64 NULL, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+0,,0
+0,5,200
+1,,500
+1,3,700
+1,1,999
+0,7,1000
+1,7,1001
+1,9,1500
+0,,2100
+
+CREATE LOGICAL SOURCE stream2(id2 UINT64, value2 UINT64 NULL, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+0,0,100
+0,2,300
+1,,800
+1,6,900
+0,8,998
+0,7,1300
+1,,1800
+1,12,2500
+
+CREATE SINK sink(streamstream2.start UINT64, streamstream2.end UINT64, stream.id UINT64, stream.value UINT64 NULL, stream.timestamp UINT64, stream2.id2 UINT64, stream2.value2 UINT64 NULL, stream2.timestamp UINT64) TYPE File;
+
+# Query 1 - Join two streams
+SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
+ON (id = id2)
+WINDOW TUMBLING (timestamp, size 1 sec)
+INTO sink;
+----
+0,1000,0,NULL,0,0,0,100
+0,1000,0,NULL,0,0,2,300
+0,1000,0,NULL,0,0,8,998
+0,1000,0,5,200,0,0,100
+0,1000,0,5,200,0,2,300
+0,1000,0,5,200,0,8,998
+0,1000,1,NULL,500,1,NULL,800
+0,1000,1,NULL,500,1,6,900
+0,1000,1,3,700,1,NULL,800
+0,1000,1,3,700,1,6,900
+0,1000,1,1,999,1,NULL,800
+0,1000,1,1,999,1,6,900
+1000,2000,0,7,1000,0,7,1300
+1000 2000 1 7 1001 1 NULL 1800
+1000,2000,1,9,1500,1,NULL,1800
+
+# Query 2
+SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
+ON (value = value2)
+WINDOW TUMBLING (timestamp, size 1 sec)
+INTO sink;
+----
+1000,2000,0,7,1000,0,7,1300
+1000,2000,1,7,1001,0,7,1300
+
+
+# Query 3
+SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
+ON (value = value2 AND id = id2)
+WINDOW TUMBLING (timestamp, size 1 sec)
+INTO sink;
+----
+1000,2000,0,7,1000,0,7,1300
