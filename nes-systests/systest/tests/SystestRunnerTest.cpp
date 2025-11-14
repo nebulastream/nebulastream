@@ -44,9 +44,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SystestState.hpp>
+#include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 #include <WorkerStatus.hpp>
 
 namespace
@@ -100,7 +103,8 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor
+        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", "localhost", {{"input_format", "CSV"}}).value();
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
@@ -114,10 +118,29 @@ public:
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
 };
 
+namespace
+{
+std::pair<QuerySubmitter, MockQuerySubmissionBackend*> createQuerySubmitter()
+{
+    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
+    auto* mockBackendPtr = mockBackend.get();
+    auto workerCatalog = std::make_unique<WorkerCatalog>();
+    workerCatalog->addWorker(HostAddr("localhost:9090"), GrpcAddr("localhost:8080"), INFINITE_CAPACITY, {});
+    QuerySubmitter submitter{std::make_unique<QueryManager>(
+        std::move(workerCatalog),
+        [mockBackend = std::move(mockBackend)](const WorkerConfig&) mutable
+        {
+            INVARIANT(mockBackend != nullptr, "mockBackend should only be moved once");
+            return std::move(mockBackend);
+        })};
+    return {std::move(submitter), mockBackendPtr};
+}
+}
+
 TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 {
     const testing::InSequence seq;
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::make_unique<MockQuerySubmissionBackend>())};
+    auto [submitter, _] = createQuerySubmitter();
     SystestProgressTracker progressTracker;
     constexpr ErrorCode expectedCode = ErrorCode::InvalidQuerySyntax;
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
@@ -137,7 +160,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const LocalQueryId id(UUIDToString(generateUUID()));
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
-    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
+    auto [submitter, mockBackend] = createQuerySubmitter();
     EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
@@ -145,21 +168,23 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
     SystestProgressTracker progressTracker;
 
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    DecomposedLogicalPlan decomposedPlan{
+        std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost:8080"), std::vector{plan}}}};
+    const DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), plan};
 
-    const auto result
-        = runQueries({makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
+    const auto result = runQueries(
+        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, Schema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
-    EXPECT_EQ(result.front().exception->code(), 10000);
+    EXPECT_THAT(result.front().exception->what(), ::testing::HasSubstr("runtime boom(10000)"));
 }
 
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
@@ -167,7 +192,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const testing::InSequence seq;
     const LocalQueryId id(UUIDToString(generateUUID()));
 
-    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
+    auto [submitter, mockBackend] = createQuerySubmitter();
     EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<LocalQueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
@@ -175,17 +200,21 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
         .WillRepeatedly(testing::Return(LocalQueryStatus{}));
     SystestProgressTracker progressTracker;
 
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    DecomposedLogicalPlan decomposedPlan{
+        std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost:8080"), std::vector{plan}}}};
+    const DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), plan};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
+        {makeQuery(
+            SystestQuery::PlanInfo{distributedPlan, {}, Schema{}},
+            ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
         progressTracker,

@@ -131,7 +131,11 @@ public:
         const auto sourceConfig = getSourceConfig(configOptions);
 
         return CreatePhysicalSourceStatement{
-            .attachedTo = logicalSourceName, .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
+            .attachedTo = logicalSourceName,
+            .sourceType = type,
+            .workerId = "",
+            .sourceConfig = sourceConfig,
+            .parserConfig = parserConfig};
     }
 
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
@@ -157,7 +161,7 @@ public:
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
-        return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions};
+        return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .workerId = "", .schema = schema, .sinkConfig = sinkOptions};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
@@ -265,7 +269,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
             }
-            return ShowQueriesStatement{.id = LocalQueryId{std::get<std::string>(value)}, .format = format};
+            return ShowQueriesStatement{.id = DistributedQueryId{std::get<std::string>(value)}, .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -346,8 +350,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for DROP QUERY must be a string");
             }
-            const auto id = LocalQueryId{std::get<std::string>(value)};
-            return DropQueryStatement{.id = id};
+            return DropQueryStatement{.id = DistributedQueryId(std::get<std::string>(value))};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
         {

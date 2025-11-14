@@ -1,0 +1,29 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream1$a, stream1$b ]
+    host: "sink-node-host:9090"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0 ]
+  - name: stream1
+    schema: [ ts, id1, a, b ]
+
+physical:
+  - logical: stream0
+    host: "source-node-host:9090"
+  - logical: stream1
+    host: "source-node-host:9090"
+
+workers:
+  - host: "sink-node-host:9090"
+    grpc: "sink-node:8080"
+    capacity: 10
+  - host: "source-node-host:9090"
+    grpc: "source-node:8080"
+    capacity: 3
+    downstream:
+      - "sink-node-host:9090"
