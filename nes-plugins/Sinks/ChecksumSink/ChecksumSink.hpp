@@ -36,7 +36,7 @@ namespace NES
 
 /// A sink that counts the number of tuples and accumulates a checksum, which is written to file once the query is stopped.
 /// Example output of the sink:
-/// S$Count:UINT64,S$Checksum:UINT64
+/// S$Count:UINT64:false,S$Checksum:UINT64:false
 /// 1042, 12390478290
 class ChecksumSink : public Sink
 {
