@@ -47,14 +47,14 @@ void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx, CompilationC
     setupChild(executionCtx, compilationContext);
 }
 
-void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    openChild(executionCtx, rb);
+    openChild(executionCtx, recordBuffer);
 }
 
-void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    closeChild(executionCtx, rb);
+    closeChild(executionCtx, recordBuffer);
 }
 
 void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const

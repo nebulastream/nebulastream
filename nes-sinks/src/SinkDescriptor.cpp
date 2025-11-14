@@ -30,6 +30,8 @@
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <magic_enum/magic_enum.hpp>
+
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
@@ -47,6 +49,11 @@ SinkDescriptor::SinkDescriptor(
 std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
 {
     return schema;
+}
+
+std::string_view SinkDescriptor::getFormatType() const
+{
+    return magic_enum::enum_name(getFromConfig(INPUT_FORMAT));
 }
 
 std::string SinkDescriptor::getSinkType() const

@@ -60,6 +60,8 @@ class AtomicState
     static constexpr uint64_t usedLeadingBufferBit = (1ULL << 34ULL); /// NOLINT(readability-magic-numbers)
     /// 36:   000000000000000000000000000100000000000000000000000000000000000
     static constexpr uint64_t usedTrailingBufferBit = (1ULL << 35ULL); /// NOLINT(readability-magic-numbers)
+    /// 36:   000000000000000000000000001000000000000000000000000000000000000
+    static constexpr uint64_t hasValidLastDelimiterOffsetBit = (1ULL << 36ULL); /// NOLINT(readability-magic-numbers)
     ///       000000000000000000000000000110000000000000000000000000000000000
     static constexpr uint64_t usedLeadingAndTrailingBufferBits = (usedLeadingBufferBit | usedTrailingBufferBit);
 
@@ -67,8 +69,8 @@ class AtomicState
     /// Tag: 0, HasTupleDelimiter: True, ClaimedSpanningTuple: True, UsedLeading: True, UsedTrailing: True
     static constexpr uint64_t defaultState = (0ULL | claimedSpanningTupleBit | usedLeadingBufferBit | usedTrailingBufferBit);
     /// The STBuffer initializes the very first entry with a dummy buffer and a matching dummy state to trigger the first leading ST
-    /// Tag: 1, HasTupleDelimiter: True, ClaimedSpanningTuple: False, UsedLeading: True, UsedTrailing: False
-    static constexpr uint64_t firstEntryDummy = (1ULL | hasTupleDelimiterBit | usedLeadingBufferBit);
+    /// Tag: 1, HasTupleDelimiter: True, ClaimedSpanningTuple: False, UsedLeading: True, UsedTrailing: False, HasValidLastDelimiterOffset: True
+    static constexpr uint64_t firstEntryDummy = (1ULL | hasTupleDelimiterBit | usedLeadingBufferBit | hasValidLastDelimiterOffsetBit);
 
     /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
     /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end
@@ -89,6 +91,11 @@ class AtomicState
         [[nodiscard]] bool hasUsedTrailingBuffer() const { return (state & usedTrailingBufferBit) == usedTrailingBufferBit; }
 
         [[nodiscard]] bool hasClaimedSpanningTuple() const { return (state & claimedSpanningTupleBit) == claimedSpanningTupleBit; }
+
+        [[nodiscard]] bool hasValidLastDelimiterOffset() const
+        {
+            return (state & hasValidLastDelimiterOffsetBit) == hasValidLastDelimiterOffsetBit;
+        }
 
         void updateLeading(const BitmapState other) { this->state |= (other.getBitmapState() & usedLeadingBufferBit); }
 
@@ -117,6 +124,11 @@ class AtomicState
 
     void setHasTupleDelimiterState(const ABAItNo abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber.getRawValue()); }
 
+    void setHasTupleDelimiterAndValidTrailingSTState(const ABAItNo abaItNumber)
+    {
+        this->state = (hasTupleDelimiterBit | hasValidLastDelimiterOffsetBit | abaItNumber.getRawValue());
+    }
+
     void setNoTupleDelimiterState(const ABAItNo abaItNumber) { this->state = abaItNumber.getRawValue(); }
 
     void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
@@ -124,6 +136,8 @@ class AtomicState
     void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
 
     void setUsedLeadingAndTrailingBuffer() { this->state |= usedLeadingAndTrailingBufferBits; }
+
+    void setHasValidLastDelimiterOffset() { this->state |= hasValidLastDelimiterOffsetBit; }
 
     friend std::ostream& operator<<(std::ostream& os, const AtomicState& atomicBitmapState);
 
@@ -143,12 +157,17 @@ public:
     {
         bool hasCorrectABA = false;
         bool hasDelimiter = false;
+        bool hasValidTrailingDelimiterOffset = false;
     };
 
     STBufferEntry() = default;
 
     /// Sets the state of the first entry to a value that allows triggering the first leading spanning tuple of a stream
     void setStateOfFirstIndex(TupleBuffer dummyBuffer);
+
+    /// Overwrites an invalid offset to the trailing ST and sets flips the AtomicState-bit that represents a valid trailing offset
+    /// After calling this function, any thread can find an ST starting with this entry
+    void setOffsetOfTrailingST(FieldIndex offsetOfLastTuple);
 
     /// A thread can claim a spanning tuple by claiming the first buffer of the spanning tuple (ST).
     /// Multiple threads may concurrently call 'tryClaimSpanningTuple()', but only one thread can successfully claim the ST.

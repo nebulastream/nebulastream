@@ -34,6 +34,10 @@ namespace NES
 {
 bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
 {
+    if (resultBuffer.getNumberOfTuples() == 0)
+    {
+        return true;
+    }
     switch (continuationPolicy)
     {
         case ContinuationPolicy::NEVER: {
@@ -124,6 +128,7 @@ void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestPipelineTask> pip
 
 void SingleThreadedTestTaskQueue::runTasks()
 {
+    tasks.front().task.eps->start(*tasks.front().pipelineExecutionContext);
     while (not tasks.empty())
     {
         const auto [task, pipelineExecutionContext] = std::move(tasks.front());
@@ -149,24 +154,16 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     , timer("ConcurrentTestTaskQueue")
 {
     PRECONDITION(not testTasks.empty(), "Test tasks must not be empty.");
+    /// Store a pointer to the executable pipeline stage to call 'stop()' after completion
     this->eps = testTasks.front().eps;
+    /// Start/Compile the executable pipeline stage
+    auto pec = TestPipelineExecutionContext(this->bufferProvider, WorkerThreadId(0), PipelineId(0), this->resultBuffers);
+    this->eps->start(pec);
 
+    /// Fill the task queue with test tasks
     for (const auto& testTask : testTasks)
     {
-        auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(
-            this->bufferProvider, WorkerThreadId(WorkerThreadId(0)), PipelineId(0), this->resultBuffers);
-        /// There is a circular dependency, because the repeatTaskCallback needs to know about the pec and the pec needs to know about the
-        /// repeatTaskCallback. The Tasks own the pec. When a tasks goes out of scope, so should the pec and the repeatTaskCallback.
-        /// Thus, we give a weak_ptr of the pec to the repeatTaskCallback, which is guaranteed to be alive during the lifetime of the repeatTaskCallback.
-        const std::weak_ptr weakPipelineExecutionContext = pipelineExecutionContext;
-        auto repeatTaskCallback = [this, testTask, weakPipelineExecutionContext]()
-        {
-            const auto pecFromWeakCapturedPtr = weakPipelineExecutionContext.lock();
-            PRECONDITION(pecFromWeakCapturedPtr != nullptr, "The pipelineExecutionContext must be valid in the repeat callback function");
-            threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pecFromWeakCapturedPtr});
-        };
-        pipelineExecutionContext->setRepeatTaskCallback(std::move(repeatTaskCallback));
-        threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
+        threadTasks.blockingWrite(testTask);
     }
 }
 
@@ -190,11 +187,15 @@ void MultiThreadedTestTaskQueue::waitForCompletion()
 
 void MultiThreadedTestTaskQueue::threadFunction(const size_t threadIdx)
 {
-    WorkTask workTask{};
-    while (threadTasks.readIfNotEmpty(workTask))
+    TestPipelineTask testTask{};
+    while (threadTasks.readIfNotEmpty(testTask))
     {
-        workTask.pipelineExecutionContext->workerThreadId = WorkerThreadId(threadIdx);
-        workTask.task.execute(*workTask.pipelineExecutionContext);
+        /// Create the pipeline execution context and set the repeat task callback (in case the thread can't execute the task immediately)
+        auto pec = std::make_shared<TestPipelineExecutionContext>(
+            this->bufferProvider, WorkerThreadId(WorkerThreadId(threadIdx)), PipelineId(0), this->resultBuffers);
+        pec->setRepeatTaskCallback([this, testTask]() { threadTasks.blockingWrite(testTask); });
+
+        testTask.execute(*pec);
     }
     completionLatch.count_down();
 }

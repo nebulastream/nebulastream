@@ -47,7 +47,7 @@ FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersFile::INPUT_FORMAT))
+    switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
     {
         case InputFormat::CSV:
             formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
