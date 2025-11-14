@@ -14,9 +14,11 @@
 
 #include <QueryExecutionConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
 #include <InferModelLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <BatchingPhysicalOperator.hpp>
 #include <IREEBatchInferenceOperator.hpp>
@@ -31,15 +33,15 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
     explicit LowerToPhysicalIREEInferenceOperator(NES::QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
     NES::RewriteRuleResultSubgraph apply(NES::LogicalOperator logicalOperator) override
     {
-        auto inferModelOperator = logicalOperator.get<NES::InferModel::InferModelLogicalOperator>();
+        auto inferModelOperator = logicalOperator.getAs<NES::InferModel::InferModelLogicalOperator>();
 
-        const auto& model = inferModelOperator.getModel();
+        const auto& model = inferModelOperator->getModel();
         auto handlerId = NES::getNextOperatorHandlerId();
 
-        auto inputSchema = logicalOperator.getInputSchemas().at(0);
+        auto inputSchema = logicalOperator->getInputSchemas().at(0);
 
         auto inputFunctions = std::views::transform(
-                                  inferModelOperator.getInputFields(),
+                                  inferModelOperator->getInputFields(),
                                   [](const auto& function) { return NES::QueryCompilation::FunctionProvider::lowerFunction(function); })
             | std::ranges::to<std::vector>();
         auto outputNames = model.getOutputs() | std::views::keys | std::ranges::to<std::vector>();
@@ -59,8 +61,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 case NES::Configurations::PredictionCacheType::NONE: {
                     NES_DEBUG("Lower InferModel operator to IREEInferenceOperator");
                     auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames);
-                    if (inferModelOperator.getInputFields().size() == 1
-                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    if (inferModelOperator->getInputFields().size() == 1
+                        && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
                     {
                         ireeOperator.isVarSizedInput = true;
                     }
@@ -74,8 +76,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 
                     auto wrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
                         ireeOperator,
-                        logicalOperator.getInputSchemas().at(0),
-                        logicalOperator.getOutputSchema(),
+                        logicalOperator->getInputSchemas().at(0),
+                        logicalOperator->getOutputSchema(),
                         handlerId,
                         std::move(handler),
                         NES::PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
@@ -93,8 +95,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                         predictionCacheSize};
                     auto ireeOperator = NES::IREECacheInferenceOperator(handlerId, inputFunctions, outputNames, predictionCacheOptions);
 
-                    if (inferModelOperator.getInputFields().size() == 1
-                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    if (inferModelOperator->getInputFields().size() == 1
+                        && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
                     {
                         ireeOperator.isVarSizedInput = true;
                     }
@@ -108,8 +110,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 
                     auto wrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
                         ireeOperator,
-                        logicalOperator.getInputSchemas().at(0),
-                        logicalOperator.getOutputSchema(),
+                        logicalOperator->getInputSchemas().at(0),
+                        logicalOperator->getOutputSchema(),
                         handlerId,
                         std::move(handler),
                         NES::PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
@@ -119,14 +121,20 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
         }
         else
         {
-            auto nested = logicalOperator.getInputOriginIds();
-            auto flatView = nested | std::views::join;
-            const std::vector inputOriginIds(flatView.begin(), flatView.end());
-            auto outputOriginId = inferModelOperator.getOutputOriginIds()[0];
+            auto outputOriginIdsOpt = getTrait<NES::OutputOriginIdsTrait>(logicalOperator->getTraitSet());
+            auto inputOriginIdsOpt = getTrait<NES::OutputOriginIdsTrait>(logicalOperator->getChildren().at(0).getTraitSet());
+            PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
+            PRECONDITION(inputOriginIdsOpt.has_value(), "Expected the inputOriginIds trait to be set");
+
+            auto& outputOriginIds = outputOriginIdsOpt.value();
+            auto outputOriginId = outputOriginIds[0];
+            auto inputOriginIds = inputOriginIdsOpt.value();
+
             const auto pageSize = conf.pageSize.getValue();
 
-            auto memoryProvider = NES::Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, inputSchema);
-            auto handler = std::make_shared<NES::IREEBatchInferenceOperatorHandler>(inputOriginIds, outputOriginId, model);
+            auto memoryProvider = NES::Interface::BufferRef::TupleBufferRef::create(pageSize, inputSchema);
+            auto handler = std::make_shared<NES::IREEBatchInferenceOperatorHandler>(
+                inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, model);
 
             auto batchingOperator = NES::BatchingPhysicalOperator(handlerId, memoryProvider);
             auto batchingWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
@@ -139,8 +147,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                     NES_DEBUG("Lower InferModel operator to IREEBatchInferenceOperator");
                     auto ireeOperator = NES::IREEBatchInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider);
 
-                    if (inferModelOperator.getInputFields().size() == 1
-                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    if (inferModelOperator->getInputFields().size() == 1
+                        && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
                     {
                         ireeOperator.isVarSizedInput = true;
                     }
@@ -155,7 +163,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                     auto ireeWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
                         ireeOperator,
                         inputSchema,
-                        logicalOperator.getOutputSchema(),
+                        logicalOperator->getOutputSchema(),
                         handlerId,
                         handler,
                         NES::PhysicalOperatorWrapper::PipelineLocation::SCAN,
@@ -173,8 +181,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                         predictionCacheSize};
                     auto ireeOperator = NES::IREEBatchCacheInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions);
 
-                    if (inferModelOperator.getInputFields().size() == 1
-                        && inferModelOperator.getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
+                    if (inferModelOperator->getInputFields().size() == 1
+                        && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
                     {
                         ireeOperator.isVarSizedInput = true;
                     }
@@ -189,7 +197,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                     auto ireeWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
                         ireeOperator,
                         inputSchema,
-                        logicalOperator.getOutputSchema(),
+                        logicalOperator->getOutputSchema(),
                         handlerId,
                         handler,
                         NES::PhysicalOperatorWrapper::PipelineLocation::SCAN,

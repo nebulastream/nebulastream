@@ -36,7 +36,7 @@ public:
         , predictionCacheOptions(predictionCacheOptions) { }
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
-    void setup(ExecutionContext& executionCtx) const override;
+    void setup(ExecutionContext& executionCtx, CompilationContext&) const override;
     void terminate(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

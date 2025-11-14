@@ -29,7 +29,7 @@ public:
         : inferModelHandlerIndex(inferModelHandlerIndex), inputs(std::move(inputs)), outputFieldNames(std::move(outputFieldNames)) { }
 
     void execute(ExecutionContext& ctx, Record& record) const override;
-    void setup(ExecutionContext& executionCtx) const override;
+    void setup(ExecutionContext& executionCtx, CompilationContext&) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override { return child; }

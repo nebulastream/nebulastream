@@ -68,7 +68,7 @@ void IREEInferenceOperatorHandler::allocatePredictionCacheEntries(
 
         auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
         INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
-        std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
+        std::ranges::fill(bufferOpt.value().getAvailableMemoryArea(), std::byte{0});
         predictionCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
     }
 }
@@ -81,7 +81,7 @@ const int8_t* IREEInferenceOperatorHandler::getStartOfPredictionCacheEntries(con
     INVARIANT(
         not predictionCacheEntriesBufferForWorkerThreads.empty() and pos < predictionCacheEntriesBufferForWorkerThreads.size(),
         "Position should be smaller than the size of the predictionCacheEntriesBufferForWorkerThreads");
-    return predictionCacheEntriesBufferForWorkerThreads.at(pos).getBuffer();
+    return predictionCacheEntriesBufferForWorkerThreads.at(pos).getAvailableMemoryArea<int8_t>().data();
 }
 
 }

@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <PhysicalOperator.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 
@@ -28,7 +28,7 @@ class BatchingPhysicalOperator final : public WindowBuildPhysicalOperator
 public:
     explicit BatchingPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
-        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef);
 
     BatchingPhysicalOperator(const BatchingPhysicalOperator& other) = default;
 
@@ -37,11 +37,11 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer&) const override;
 
-    void setup(ExecutionContext&) const override { /*noop*/ };
+    void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ };
     void terminate(ExecutionContext&) const override { /*noop*/ };
 
 protected:
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    const std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef;
 };
 
 }

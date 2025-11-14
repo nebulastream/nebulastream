@@ -16,7 +16,6 @@
 #include <IREEAdapter.hpp>
 #include <IREEBatchInferenceOperator.hpp>
 #include <IREEBatchInferenceOperatorHandler.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -86,20 +85,20 @@ IREEBatchInferenceOperator::IREEBatchInferenceOperator(
     const OperatorHandlerId operatorHandlerId,
     std::vector<PhysicalFunction> inputs,
     std::vector<std::string> outputFieldNames,
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef)
     : WindowProbePhysicalOperator(operatorHandlerId)
     , inputs(std::move(inputs))
     , outputFieldNames(std::move(outputFieldNames))
-    , memoryProvider(std::move(memoryProvider))
+    , tupleBufferRef(std::move(tupleBufferRef))
 {
 }
 
 void IREEBatchInferenceOperator::performInference(
     const Interface::PagedVectorRef& pagedVectorRef,
-    Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProvider,
+    Interface::BufferRef::TupleBufferRef& tupleBufferRef,
     ExecutionContext& executionCtx) const
 {
-    const auto fields = memoryProvider.getMemoryLayout()->getSchema().getFieldNames();
+    const auto fields = tupleBufferRef.getMemoryLayout()->getSchema().getFieldNames();
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
 
     nautilus::val<int> rowIdx(0);
@@ -171,7 +170,7 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
     executionCtx.originId = recordBuffer.getOriginId();
     openChild(executionCtx, recordBuffer);
 
-    const auto emittedBatch = static_cast<nautilus::val<EmittedBatch*>>(recordBuffer.getBuffer());
+    const auto emittedBatch = static_cast<nautilus::val<EmittedBatch*>>(recordBuffer.getReference());
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
 
     const auto batchMemRef = nautilus::invoke(
@@ -190,8 +189,8 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
             return batch->getPagedVectorRef();
         }, batchMemRef);
 
-    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, memoryProvider);
-    performInference(batchPagedVectorRef, *memoryProvider, executionCtx);
+    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
+    performInference(batchPagedVectorRef, *tupleBufferRef, executionCtx);
 
     nautilus::invoke(
         +[](OperatorHandler* ptrOpHandler, const EmittedBatch* currentBatch)
