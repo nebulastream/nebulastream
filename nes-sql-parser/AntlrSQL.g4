@@ -72,9 +72,10 @@ createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identi
 
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
-columnDefinition: identifierChain typeDefinition;
+columnDefinition: identifierChain typeDefinition nullableDefinition?;
 
 typeDefinition: DATA_TYPE;
+nullableDefinition: NULLTOKEN;
 
 fromQuery: AS query;
 
