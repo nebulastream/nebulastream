@@ -232,6 +232,18 @@ std::string DataType::formattedBytesToString(const void* data) const
     std::unreachable();
 }
 
+bool DataType::isNullableAsBool() const
+{
+    switch (isNullable)
+    {
+        case NULLABLE::IS_NULLABLE:
+            return true;
+        case NULLABLE::NOT_NULLABLE:
+            return false;
+    }
+    std::unreachable();
+}
+
 bool DataType::isType(const Type type) const
 {
     return this->type == type;
