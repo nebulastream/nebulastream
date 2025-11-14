@@ -27,6 +27,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/inline.hpp>
 #include <nautilus/val.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <ExecutionContext.hpp>
@@ -38,7 +39,7 @@
 namespace NES
 {
 
-uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
+NAUT_INLINE uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
@@ -47,7 +48,8 @@ uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, Se
     return chunkNumber;
 }
 
-bool isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool isLastChunk)
+NAUT_INLINE bool
+isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool isLastChunk)
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
@@ -55,7 +57,7 @@ bool isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumbe
         {.sequenceNumber = SequenceNumber(sequenceNumber), .originId = OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
-void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
+NAUT_INLINE void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);

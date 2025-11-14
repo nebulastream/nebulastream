@@ -31,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
+#include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -90,17 +91,17 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
     return result;
 }
 
+NAUT_INLINE int8_t* allocateMemoryProxy(Arena* arena, const size_t sizeInBytesVal)
+{
+    return reinterpret_cast<int8_t*>(arena->allocateMemory(sizeInBytesVal).data());
+}
+
 nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
 {
     /// If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
     /// We use the arena's allocateMemory function to allocate a new buffer and set the available space for the pointer to the last allocation size.
     /// Further, we set the space pointer to the beginning of the new buffer.
-    const auto currentArenaPtr = nautilus::invoke(
-        +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t*
-        { return reinterpret_cast<int8_t*>(arena->allocateMemory(sizeInBytesVal).data()); },
-        arenaRef,
-        sizeInBytes);
-    return currentArenaPtr;
+    return nautilus::invoke(allocateMemoryProxy, arenaRef, sizeInBytes);
 }
 
 VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<uint32_t>& sizeInBytes)
@@ -123,22 +124,21 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
+NAUT_INLINE TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pipelineCtx)
+{
+    PRECONDITION(pipelineCtx, "pipeline execution context should not be null");
+    /// We allocate a new tuple buffer for the runtime.
+    /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+    /// This increases the reference counter in the buffer.
+    /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
+    const auto buffer = pipelineCtx->allocateTupleBuffer();
+    auto* tb = new TupleBuffer(buffer);
+    return tb;
+}
+
 nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
-    auto bufferPtr = nautilus::invoke(
-        +[](PipelineExecutionContext* pec)
-        {
-            PRECONDITION(pec, "pipeline execution context should not be null");
-            /// We allocate a new tuple buffer for the runtime.
-            /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
-            /// This increases the reference counter in the buffer.
-            /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-            const auto buffer = pec->allocateTupleBuffer();
-            auto* tb = new TupleBuffer(buffer);
-            return tb;
-        },
-        pipelineContext);
-    return bufferPtr;
+    return nautilus::invoke(allocateBufferProxy, pipelineContext);
 }
 
 nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
@@ -146,7 +146,7 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
 }
 
-void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
+NAUT_INLINE void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 
@@ -177,7 +177,7 @@ void ExecutionContext::setLocalOperatorState(const OperatorId operatorId, std::u
     localStateMap.emplace(operatorId, std::move(state));
 }
 
-static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
+NAUT_INLINE static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
 {
     auto handlers = pipelineCtx->getOperatorHandlers();
     return handlers[index].get();
