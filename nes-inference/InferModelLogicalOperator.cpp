@@ -40,12 +40,20 @@ InferModelLogicalOperator::InferModelLogicalOperator(Nebuli::Inference::Model mo
 {
 }
 
-std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
+const Nebuli::Inference::Model& InferModelLogicalOperator::getModel() const
 {
-    return fmt::format(
-        "INFER_MODEL(opId: {}, inputFields: [{}])",
-        opId,
-        fmt::join(std::views::transform(inputFields, [&](const auto& field) { return field.explain(verbosity); }), ", "));
+    return model;
+}
+
+const std::vector<LogicalFunction>& InferModelLogicalOperator::getInputFields() const
+{
+    return inputFields;
+}
+
+bool InferModelLogicalOperator::operator==(const InferModelLogicalOperator& rhs) const
+{
+    return model == rhs.model && inputFields == rhs.inputFields && getInputSchemas() == rhs.getInputSchemas()
+        && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
 }
 
 void InferModelLogicalOperator::serialize(SerializableOperator& serializableOperator) const
@@ -81,8 +89,48 @@ void InferModelLogicalOperator::serialize(SerializableOperator& serializableOper
 InferModelLogicalOperator InferModelLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
+}
+
+TraitSet InferModelLogicalOperator::getTraitSet() const
+{
+    return traitSet;
+}
+
+InferModelLogicalOperator InferModelLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+{
+    PRECONDITION(children.size() == 1, "Expected exactly one child");
+    auto copy = *this;
+    copy.children = std::move(children);
+    return copy;
+}
+
+std::vector<LogicalOperator> InferModelLogicalOperator::getChildren() const
+{
+    return children;
+}
+
+std::vector<Schema> InferModelLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+}
+Schema InferModelLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
+{
+    return fmt::format(
+        "INFER_MODEL(opId: {}, inputFields: [{}])",
+        opId,
+        fmt::join(std::views::transform(inputFields, [&](const auto& field) { return field.explain(verbosity); }), ", "));
+}
+
+std::string_view InferModelLogicalOperator::getName() const noexcept
+{
+    return NAME;
 }
 
 InferModelLogicalOperator InferModelLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
@@ -145,9 +193,9 @@ NES::LogicalOperatorGeneratedRegistrar::RegisterInferenceModelLogicalOperator(NE
         | std::views::transform([](const auto& serializedFunction)
                                 { return FunctionSerializationUtil::deserializeFunction(serializedFunction); })
         | std::ranges::to<std::vector>();
-    auto model = Nebuli::Inference::deserializeModel(std::get<SerializableModel>(arguments.config.at("MODEL")));
-    auto logicalOperator = InferModel::InferModelLogicalOperator(model, functions);
 
-    auto logicalOp = logicalOperator.withInferredSchema(arguments.inputSchemas);
-    return logicalOp;
+    auto model = Nebuli::Inference::deserializeModel(std::get<SerializableModel>(arguments.config.at("MODEL")));
+
+    auto logicalOperator = InferModel::InferModelLogicalOperator(model, functions);
+    return logicalOperator.withInferredSchema(arguments.inputSchemas);
 }

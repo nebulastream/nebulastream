@@ -17,7 +17,6 @@
 #include <IREECacheInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <PredictionCache/PredictionCache2Q.hpp>
 #include <PredictionCache/PredictionCacheFIFO.hpp>
 #include <PredictionCache/PredictionCacheLFU.hpp>
@@ -157,7 +156,7 @@ void IREECacheInferenceOperator::execute(ExecutionContext& executionCtx, NES::Na
     child->execute(executionCtx, record);
 }
 
-void IREECacheInferenceOperator::setup(ExecutionContext& executionCtx) const
+void IREECacheInferenceOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex);
     nautilus::invoke(
