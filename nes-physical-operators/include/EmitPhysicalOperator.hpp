@@ -40,7 +40,7 @@ public:
 
     void terminate(ExecutionContext&) const override { /*noop*/ }
 
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    OpenReturnState open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void emitRecordBuffer(
