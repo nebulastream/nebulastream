@@ -13,6 +13,7 @@ import multiprocessing
 import concurrent.futures
 import json
 import re
+import gc
 
 def compute_stats(trace_path):
     """Process a single trace file and return the results."""
@@ -548,6 +549,20 @@ def process_csv(trace_paths):
             #'total_skipped_tasks': total_skipped_tasks
         }
 
+        try:
+        # delete common large locals that hold DataFrames / lists
+            del dfs
+            del df
+            del merged
+            del begin_df
+            del end_df
+            del per_run_window
+            del grouped_run
+            del per_run_pipeline
+            del trace_data
+        except Exception:
+            pass
+        gc.collect()  # force collection in worker process
 
         return windowed_stats, pipeline_stats, global_stats, metadata
 

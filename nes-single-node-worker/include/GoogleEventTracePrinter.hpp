@@ -64,7 +64,7 @@ struct GoogleEventTracePrinter final : StatisticListener
     void flush();
 
 private:
-    static constexpr size_t QUEUE_LENGTH = 10000000;
+    static constexpr size_t QUEUE_LENGTH = 100000000;
 
     enum class Category : int
     {
