@@ -37,13 +37,13 @@ def find_latest_benchmark_dir(base_dir):
 
 def main():
     parser = argparse.ArgumentParser(description='NebulaBenchmark: Complete Benchmark System')
-    parser.add_argument('--columns', type=parse_int_list, default=[1, 2, 5, 10], help='List of number of columns to use (comma-separated)')
-    parser.add_argument('--window-sizes', type=parse_int_list, default=[10], help='Number of windows')
-    parser.add_argument('--groups', type=parse_int_list, default=[100], help='Number of unique groups per column')
-    parser.add_argument('--rows', type=int, default=10000000, help='Maximum number of rows')
+    parser.add_argument('--columns', type=parse_int_list, default=[1,2,10,20,50], help='List of number of columns to use (comma-separated)') #TODO more than 1k cols -> run seperately
+    parser.add_argument('--window-sizes', type=parse_int_list, default=[10000, 1000000], help='Number of windows')
+    parser.add_argument('--groups', type=parse_int_list, default=[10, 100000], help='Number of unique groups per column')
+    parser.add_argument('--rows', type=int, default=1000000, help='Maximum number of rows')
     parser.add_argument('--repeats', type=int, default=2, help='Number of benchmark repetitions')
-    parser.add_argument('--id-data-types', type=parse_str_list, default = ['', "32", "64"], help='Data type for id column (e.g., uint32, uint64), empty for no id column')
-    parser.add_argument('--threads', type=parse_int_list, default=[4], help='Number of worker threads to use')
+    parser.add_argument('--id-data-types', type=parse_str_list, default = ['', "16", "64"], help='Data type for id column (e.g., uint32, uint64), empty for no id column')
+    parser.add_argument('--threads', type=parse_int_list, default=[1, 4], help='Number of worker threads to use')
     parser.add_argument('--output-dir', default='benchmark_results', help='Base output directory')
     parser.add_argument('--skip-data-gen', action='store_true', help='Skip data generation')
     parser.add_argument('--skip-test-gen', action='store_true', help='Skip test generation')
@@ -56,7 +56,7 @@ def main():
     parser.add_argument('--project-dir', default=os.environ.get('PWD', os.getcwd()), help='Project root directory')
     parser.add_argument('--run-options', default='single', help='options: all, single or double')
     parser.add_argument('--use-latest', action='store_true', help='Use latest benchmark directory instead of creating new one')
-    args = parser.parse_args()
+    args = parser.parse_args()#TODO: store output into log file
 
     start_time = time.time()
 
@@ -116,7 +116,8 @@ def main():
                 "--output", str(data_file),
                 "--rows", str(args.rows),
                 "--columns", ','.join(map(str, args.columns)),
-                "--groups", ','.join(map(str, args.groups))
+                "--groups", ','.join(map(str, args.groups)),
+                "--id-data-types", ','.join(args.id_data_types)
 
             ], check=True)
     #elif not data_file:
@@ -165,6 +166,8 @@ def main():
             print("Error: No test file specified and none found in data or benchmark directory")
             return
 
+    #TODO: let run benchmark print in real time
+
     # Step 3: Run benchmark
     if not args.skip_benchmark:
         print(f"Step 3: Running benchmarks with {args.repeats} repetitions...")
@@ -182,6 +185,7 @@ def main():
 
             if result.returncode != 0:
                 print(f"Error running tests: {result.stderr}")
+                print(f"flushing stdout: {result.stdout}")
                 return
             else:
                 print(result.stdout)
@@ -194,7 +198,7 @@ def main():
     benchmark_result_dir = str(benchmark_dir)
 
     print(f"Using benchmark result directory: {benchmark_result_dir}")
-
+    """
     # Step 4: Process results
     if not args.skip_processing:
         print("Step 4: Processing benchmark results...")
@@ -234,7 +238,7 @@ def main():
             import traceback
             traceback.print_exc()
             results_csv = None
-
+    """
     # Step 5: Generate plots
     if not args.skip_plotting:
         print("Step 5: Creating visualization plots...")
@@ -261,7 +265,7 @@ def main():
                 charts_dir.mkdir(exist_ok=True, parents=True)
 
                 # Find main results CSV for global charts
-                main_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_avg_results.csv"
+                main_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}.csv"
                 if main_results.exists():
                     print(f"Found main results CSV: {main_results}")
 
@@ -325,9 +329,9 @@ def main():
                 if double_op_dir.exists():
                     try:
                         # First create a consolidated CSV for all double operator results
-                        double_op_avg_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_double_operator_avg_results.csv"
+                        double_op_results = Path(benchmark_result_dir) / f"{Path(benchmark_result_dir).name}_double_operator_results.csv"
 
-                        if double_op_avg_results.exists():
+                        if double_op_results.exists():
                             # Create plots directory
                             double_op_plots_dir = double_op_dir / "plots"
                             double_op_plots_dir.mkdir(exist_ok=True, parents=True)
@@ -335,7 +339,7 @@ def main():
                             # Generate plots using enhanced_plots.py
                             subprocess.run(
                                 ["python3", str(enhanced_plots_path),
-                                 "--results-csv", str(double_op_avg_results),
+                                 "--results-csv", str(double_op_results),
                                  "--output-dir", str(double_op_plots_dir)],
                                 check=True
                             )
@@ -352,7 +356,7 @@ def main():
                                         # Find query results for this chain
                                         chain_data = []
                                         for query_dir in chain_dir.glob("query_*"):
-                                            avg_results = query_dir / "avg_results.csv"
+                                            avg_results = query_dir / "results.csv"
                                             if avg_results.exists():
                                                 chain_data.append(pd.read_csv(avg_results))
 

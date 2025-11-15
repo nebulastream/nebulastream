@@ -77,10 +77,6 @@ def extract_metadata_from_filename(file_path):
     if buffer_match:
         metadata['buffer_size'] = int(buffer_match.group(1))
 
-    threads_match = re.search(r'_threads(\d+)_', filename)
-    if threads_match:
-        metadata['threads'] = int(threads_match.group(1))
-
     # Extract thread count with more specific pattern
     threads_match = re.search(r'_threads(\d+)_', filename)
     if threads_match:

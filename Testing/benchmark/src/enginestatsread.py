@@ -504,7 +504,7 @@ def process_csv(trace_paths):
             eff_tp_mean_of_runs=('eff_tp_run', 'mean'),
             eff_tp_std_of_runs=('eff_tp_run', 'std'),
             max_ts=('max_ts', 'max'),
-            max_ts_std=('max_ts', 'max'),
+            max_ts_std=('max_ts', 'std'),
             max_ts_mean=('max_ts', 'mean'),
         ).reset_index().fillna(0)
 
@@ -555,10 +555,10 @@ def process_csv(trace_paths):
         print(f"Error processing CSV with pandas: {e}")
         return None, None, None, {}
 
-def results_to_global_csv(base_directory, results_iter, configs):
+def results_to_global_csv(base_directory, results_iter, config):
 
     csv_rows = []
-    for config, result in zip(configs, results_iter):
+    for result in results_iter:
         if not result or len(result) != 4:
             print(f"Warning: Incomplete result len {len(result)}, skipping")
             continue
@@ -575,13 +575,14 @@ def results_to_global_csv(base_directory, results_iter, configs):
                 print(f"Warning: empty metadata for {config['test_file']}")
                 continue
             layout = metadata['layout']
+            threads = metadata.get('threads', '4')
             if windowed_stats is not None and not windowed_stats.empty:
-                windowed_stats.to_csv(query_dir / f"results_windowed_{layout}.csv",mode='a', index=False)
-                print(f"writing csv file to {query_dir / f"results_windowed_{layout}.csv"}")
+                windowed_stats.to_csv(query_dir / f"threads{threads}" / f"results_windowed_{layout}.csv",mode='a', index=False)
+                print(f"writing csv file to {query_dir / f"threads{threads}" / f"results_windowed_{layout}.csv"}")
             else:
                 print(f"Warning: empty windowed_stats for {metadata['filename']}")
-            if pipeline_stats is not None and not windowed_stats.empty:
-                pipeline_stats.to_csv(query_dir / f"results_pipelined_{layout}.csv", mode='a', index=False)
+            if pipeline_stats is not None and not pipeline_stats.empty:
+                pipeline_stats.to_csv(query_dir / f"threads{threads}" / f"results_pipelined_{layout}.csv", mode='a', index=False)
             else:
                 print(f"Warning: empty pipeline_stats for {metadata['filename']}", flush=True)
         except Exception as e:
@@ -603,6 +604,9 @@ def results_to_global_csv(base_directory, results_iter, configs):
         config.update(row)
 
         row = config.copy()
+
+        row.pop('test_file', None)  # remove test_file from final CSV
+        row.pop('data_name', None)  # remove data_name from final CSV
 
         # Pull pipeline-level metrics from pipeline_stats DataFrame if present
         if pipeline_stats is not None and not pipeline_stats.empty:
@@ -673,7 +677,7 @@ def results_to_global_csv(base_directory, results_iter, configs):
     out_csv_path = os.path.join(base_directory, os.path.basename(base_directory) + ".csv")
     if csv_rows:
         #all_fields = sorted(set().union(*(r.keys() for r in csv_rows)))
-        pipeline_fields = ()
+        pipeline_fields = []
         for p_id in range(1, 14):  # assuming max 13 pipelines
             pipeline_1_comp_tp_from_means = f'pipeline_{p_id}_comp_tp_from_means'
             pipeline_1_comp_tp_mean_of_runs = f'pipeline_{p_id}_comp_tp_mean_of_runs'
@@ -687,9 +691,22 @@ def results_to_global_csv(base_directory, results_iter, configs):
             pipeline_1_sum_latency_mean = f'pipeline_{p_id}_sum_latency_mean'
             pipeline_1_sum_tuples_mean = f'pipeline_{p_id}_sum_tuples_mean'
             pipeline_1_wall_time_mean = f'pipeline_{p_id}_wall_time_mean'
-            pipeline_fields.update([pipeline_1_comp_tp_from_means,pipeline_1_comp_tp_mean_of_runs,pipeline_1_count_mean,pipeline_1_eff_tp_from_means,pipeline_1_eff_tp_mean_of_runs,pipeline_1_mean_latency,pipeline_1_runs,pipeline_1_skipped_mean,pipeline_1_skipped_std,pipeline_1_sum_latency_mean,pipeline_1_sum_tuples_mean,pipeline_1_wall_time_mean])
-        all_fields = set("operator_chain", "layout", "buffer_size", "threads", "query_id", "test_id", "num_columns", "accessed_columns", "function_type", "aggregation_function", "id_data_type", "num_groups", "window_size", "selectivity", "individual_selectivity", "swap_strategy", "threshold", "total_tasks_time_mean", "total_tasks_time_std", "full_query_duration_mean", "full_query_duration_std")  # add all possible fields here
-        all_fields.update(pipeline_fields)
+            pipeline_fields.extend([
+                pipeline_1_comp_tp_from_means,
+                pipeline_1_comp_tp_mean_of_runs,
+                pipeline_1_count_mean,
+                pipeline_1_eff_tp_from_means,
+                pipeline_1_eff_tp_mean_of_runs,
+                pipeline_1_mean_latency,
+                pipeline_1_runs,
+                pipeline_1_skipped_mean,
+                pipeline_1_skipped_std,
+                pipeline_1_sum_latency_mean,
+                pipeline_1_sum_tuples_mean,
+                pipeline_1_wall_time_mean
+            ])
+        all_fields = ["operator_chain", "layout", "buffer_size", "threads", "query_id", "test_id", "num_columns", "accessed_columns", "function_type", "aggregation_function", "id_data_type", "num_groups", "window_size", "selectivity", "individual_selectivity", "swap_strategy", "threshold", "total_tasks_time_mean", "total_tasks_time_std", "full_query_duration_mean", "full_query_duration_std"]  # add all possible fields here
+        all_fields.extend(pipeline_fields)
     if os.path.exists(out_csv_path) and os.stat(out_csv_path).st_size > 0:
         mode = 'a'
     else:

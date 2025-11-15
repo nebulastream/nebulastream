@@ -242,14 +242,14 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                             filter_col = cols_to_access[0]
                             filter_queries+=1
                             # Calculate individual selectivity needed for each column
-                            # For N columns with AND, each needs root(selectivity)/10 to achieve target selectivity
+                            # For N columns with AND, each needs nth root(selectivity) to achieve target selectivity
                             #95% selectivity -> 5% data remaining
-                            individual_selectivity = np.sqrt(selectivity)*0.1 if access_col >= 2 else selectivity*0.01
+                            individual_selectivity = selectivity**(1.0/access_col)
 
                             # Calculate threshold for this individual selectivity
-                            threshold = int(individual_selectivity * (2**32-1))# 95% of 4 mrd
+                            threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))# 95% of 4 mrd
                             # column > threshold = 100% - 95% = 5% remaining
-
+                            #3:
 
                             # Write query config
                             config = {
@@ -278,7 +278,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                             query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
                             query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
 
-                            query += (f"SELECT * FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
+                            query += (f"SELECT {cols_to_access[0]} FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
                             for col_name in cols_to_access[1:]:
                                 query += (f" AND {col_name} > UINT64({threshold})")
 
@@ -688,12 +688,12 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 4000000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000, 400000, 4000000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10],
         'num_rows': args.rows,
-        'accessed_columns': [1, 2, 10, 20],
+        'accessed_columns': [1, 2, 10, 20, 50],
         'function_types': ['add', 'exp'],
-        'selectivities': [5, 50, 95],# 15, 25, 35, 45, 50, 55, 65, 75, 85, 95],
+        'selectivities': [0.0001,0.1, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 99, 99.9999], #[0.0001,0.1, 1, 5, 25, 50, 75, 95, 99, 99.9999],
         'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
         'window_sizes': args.window_sizes, #[10000, 100000],
         'num_groups': args.groups, #[10, 100, 1000],
@@ -702,8 +702,8 @@ if __name__ == "__main__":
 
         'operator_chains': [
             #['map'],                  # Single map
-            #['filter'],               # Single filter
-            ['aggregation'],                 # Single aggregation
+            ['filter'],               # Single filter
+            #['aggregation'],                 # Single aggregation
             ['map', 'filter'],        # Map followed by filter
             ['filter', 'map'],        # Filter followed by map
             #['filter', 'agg'],
