@@ -42,8 +42,6 @@ public:
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     void serialize(SerializableOperator&) const override;
 
-    [[nodiscard]] std::vector<std::string> getAccessedFieldNames() const;
-
     [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const override;
     [[nodiscard]] TraitSet getTraitSet() const override;
 

@@ -24,7 +24,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Util/Common.hpp>
 
 #include <ErrorHandling.hpp>
-#include <MapPhysicalOperator.hpp>
 
 namespace NES::LegacyOptimizer
 {
@@ -33,29 +32,15 @@ void RedundantFieldRemovalRule::apply(LogicalPlan& queryPlan) ///NOLINT(readabil
 {
 
     auto sink = queryPlan.getRootOperators()[0];
-    //TODO: remove fields from schemas that arent used in the whole query
-    std::unordered_set<std::string> fieldNames;
-    /*if (sink.getChildren().size() > 0)
+    //TODO: find all used fields in query
+    auto fieldNames = sink.getOutputSchema().getFieldNames();
+    if (sink.getChildren().size() > 0)
     {
         //avoid schema recreation on sink
         auto child = recursiveApply(sink.getChildren()[0], fieldNames);
         sink = sink.withChildren({child});
     }
-    queryPlan = queryPlan.withRootOperators({sink});*/
-    /*
-    auto curOp = sink;
-    while (!curOp.getChildren().empty())
-    {
-        if ( curOp.tryGet<SelectionLogicalOperator>().has_value() || curOp.tryGet<ProjectionLogicalOperator>().has_value())
-        {
-            fieldNames.insert(curOp.getAccessedFieldNames());
-        }
-        else
-        {
-            curOp = curOp.getChildren()[0];
-        }
-    }*/
-
+    queryPlan = queryPlan.withRootOperators({sink});
 
 }
 

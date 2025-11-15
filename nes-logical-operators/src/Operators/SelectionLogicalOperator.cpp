@@ -27,7 +27,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -66,17 +65,6 @@ bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) con
     return false;
 };
 
-std::vector<std::string> SelectionLogicalOperator::getAccessedFieldNames() const
-{
-    return BFSRange(predicate)
-        | std::views::filter([](const LogicalFunction& function)
-                             { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
-        | std::views::transform([](const LogicalFunction& function)
-                                { return function.get<FieldAccessLogicalFunction>().getFieldName(); })
-        | std::ranges::to<std::vector>();
-}
-
-
 std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
@@ -89,7 +77,7 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 LogicalOperator SelectionLogicalOperator::withInferredSchema(Schema schemaIn, Schema schemaOut) const
 {
     auto copy = *this;
-    copy.predicate = predicate.withInferredDataType(schemaIn);
+    copy.predicate = predicate.withInferredDataType(inputSchema);
     if (not copy.predicate.getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
@@ -243,7 +231,7 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::Logical
         {
             logicalOperator.id = *id;
         }
-        return logicalOperator.withInferredSchema(arguments.inputSchemas[0], arguments.outputSchema)
+        return logicalOperator.withInferredSchema(arguments.inputSchemas)
             .withInputOriginIds(arguments.inputOriginIds)
             .withOutputOriginIds(arguments.outputOriginIds);
     }
