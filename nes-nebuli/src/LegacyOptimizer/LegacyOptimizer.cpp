@@ -50,7 +50,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     originIdInferencePhase.apply(newPlan);
     typeInference.apply(newPlan);
-    redundantFieldRemovalRule.apply(newPlan);
+    redundantFieldRemovalRule.apply(newPlan);//sets inputSchema of first op after sink to op outputSchema (for lowering selection, map and agg)
     return newPlan;
 }
 }
