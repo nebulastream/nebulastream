@@ -151,10 +151,11 @@ std::vector<RunningQuery> runQueries(
             SystestQuery nextQuery = std::move(pending.front());
             pending.pop();
 
-            if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
+            if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value()
+                and nextQuery.planInfoOrException.value().queryPlan.has_value())
             {
                 /// Start both differential queries
-                auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan);
+                auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan.value());
                 auto regDiff = querySubmitter.registerQuery(nextQuery.differentialQueryPlan.value());
                 if (reg and regDiff)
                 {
@@ -170,10 +171,10 @@ std::vector<RunningQuery> runQueries(
                         std::make_shared<RunningQuery>(nextQuery), progressTracker, failed, {reg.error()}, queryPerformanceMessage);
                 }
             }
-            else if (nextQuery.planInfoOrException.has_value())
+            else if (nextQuery.planInfoOrException.has_value() and nextQuery.planInfoOrException.value().queryPlan.has_value())
             {
                 /// Registration
-                if (auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan))
+                if (auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan.value()))
                 {
                     hasOneMoreQueryToStart = true;
                     querySubmitter.startQuery(*reg);
@@ -339,13 +340,13 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     progressTracker.setTotalQueries(queries.size());
     for (const auto& queryToRun : queries)
     {
-        if (not queryToRun.planInfoOrException.has_value())
+        if (not queryToRun.planInfoOrException.has_value() or not queryToRun.planInfoOrException.value().queryPlan.has_value())
         {
             NES_ERROR("skip failing query: {}", queryToRun.testName);
             continue;
         }
 
-        const auto registrationResult = submitter.registerQuery(queryToRun.planInfoOrException.value().queryPlan);
+        const auto registrationResult = submitter.registerQuery(queryToRun.planInfoOrException.value().queryPlan.value());
         if (not registrationResult.has_value())
         {
             NES_ERROR("skip failing query: {}", queryToRun.testName);

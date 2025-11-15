@@ -154,7 +154,7 @@ struct SystestQuery
 
     struct PlanInfo
     {
-        LogicalPlan queryPlan;
+        std::optional<LogicalPlan> queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
 
