@@ -1,40 +1,45 @@
 # The Problem
-Currently, NebulaStream is able to receive and process data in `formats` such as CSV, JSON and Native, more formats like HL7 v2 are likely going to be added in the future. The component responsible for detecting tuples in the raw buffers filled with data in these formats is the `nes-input-formatter`. 
+## Motivation
+Currently, NebulaStream is able to receive data in the `formats` CSV, JSON and Native, more formats like XML are likely going to be added in the future. The component responsible for detecting tuples in the raw buffers filled with data in these formats is the `nes-input-formatter`. 
 
-However, we currently do not consider codecs when treating incoming data. Data of any format can be encoded according to the rules of a certain codec. Exemplary of this are general purpose `compression codecs` like Facebook's "Zstandard" (Zstd)[1]or Google's "Snappy"[2], which are able to compress and decompress data byte per byte, independent of the data type or format. 
-`Protobuf`, a commonly used encoding strategy, can also be considered a codec.
-Since codecs oftentimes reduce the size of data, supporting them could lead to a more efficient use of bandwidth when sending data to the worker.
+However, we currently do not consider codecs when treating incoming data. Data of any format can be encoded according to the rules of a certain codec. Exemplary of this are general purpose `compression codecs` like Facebook's "Zstandard" (Zstd)[1] or Google's "Snappy" [2], which are able to compress and decompress data byte per byte, independent of the data type or format. 
+`Protobuf`, as a serialization format, could also be considered a codec.
 
-There are a few hazards to be overcome when implementing codec support:
+Codecs, especially compression codecs, enable multiple use-cases in NebulaStream: 
+Transmitting compressed data between workers utilizes available bandwidth more efficiently, potentially mitigating the bottleneck that low bandwidth can cause.
+It enables efficient `state persistency`, Apache Flink for example uses general purpose compression to encode checkpoints [6].
+Furthermore, after implementing light-weight and general purpose compression codecs, we could utilize formats like the columnar `Apache Parquet` [4], which cascade codecs for a high compression ratio, as internal storage format.
 
-**P1** If data are encoded, the input-formatter cannot rely on the characteristic `tuple and field delimiters` of the format to extract tuples from the raw buffers. 
-Therefore, simply adding a new indexer will not be sufficient to process for example protobuf encoded data.
+## Problem of current Implementation
+The mentioned motivations can be narrowed down to the following problem:
 
-**P2** The topic of codecs is already addressed in the readme file of the nes-input-formatter[3], section "Codecs". There, it is stated that decoders should either belong to the `nes-sources` or the `nes-input-formatters` component. The latter currently receives and formats buffers in an asynchronous and unordered fashion. 
-However, many compression codecs such as `LZ4`[4] need the data to arrive `in-order`, since encoded data usually reference reoccurring byte patterns via pointer to previous raw bytes. 
+**P1** We currently have no means of `significantly reducing data size` or handling compressed, incoming data but would definitely benefit from it considering the size of our systest datasets and the problem of low bandwidth.
 
-**P3** Furthermore, there is a broad variety of codecs, and we cannot offer decoders for each one of them. 
-For example, data formats like `Apache Parquet`[5] use multiple light weight and general purpose compression codecs to encode the data of column pages. 
-If we want to support Parquet as a format, we firstly would need decoders for all the possibly used encodings. 
+Since formats and codecs seem similar at first, one might consider implementing the decoders as `input-formatter indexers`. However, encoded data might have properties that make this solution not feasible:
+
+**P2** Many compression codecs such as `LZ4`[3] need the data to arrive `in-order` for incremental decoding, since encoded data usually reference reoccurring byte patterns via pointer to previous raw bytes. However, the `input-formatter` component already receives the buffers `out-of-order`.
+
+**P3** Especially general purpose codecs produce encoded data of `any underlying format`.
+If we were to implement decoders as indexers, we would therefore have to create an indexer implementation `per format` for a new codec (like SnappyCSV, SnappyJSON) which hinders extensibility.
 
 # Goals
 To solve the described problems, a nes-codec component with the following properties should be added:
 
 **G1** Decoders for codecs. 
 For each codec, that we decide to support, a decoding function should be provided.
-It should be able to decode tuple buffers incrementally since we operate in a data stream context and do not receive one encoded block at a time.
+It should be able to decode tuple buffers incrementally since we operate in a data stream context and usually do not receive one encoded block at a time.
 (**P1, P3**)
 
 **G2** In-order decoding. 
 The decoding functions assume that the tuple buffers arrive in-order.
 Thus, tuple buffers should be decoded in a component, where the system still obtains them in-order.
 Except for the decoding itself, the integration of the decoder should ideally not cause any additional work like ordering of the buffers or waiting for missing buffers.
-(**P2**)
+(**P2, P3**)
 
 **G3** Easily extensible.
 Adding a decoder should only require the addition of the decoding function, without changing any other components of the system.
 This way, adding support for a new codec or format with codecs is straightforward. 
-(**P3**)
+(**P1, P3**)
 
 # Non-Goals
 **NG1** Encoders for codecs.
@@ -48,14 +53,18 @@ However, such a feature would require changes of many components such as the que
 
 # Solution Background
 We conducted an experiment regarding the improvement of throughput for TCP data sources on the branch `benchmark-ingestion-decoding-experiment`.
-On this branch, we implemented a TCP source that expected LZ4 encoded data. The `fillBuffer` method of this source in `nes-sources/src/Blocking/Sources/BlockingTCPLZ4Source.cpp` decodes the received compressed bytes incrementally before writing them into the tuple buffer.
+On this branch, we implemented a TCP source that expects LZ4 encoded data. The `fillBuffer` method of this source in `nes-sources/src/Blocking/Sources/BlockingTCPLZ4Source.cpp` decodes the received compressed bytes incrementally before writing them into the tuple buffer.
 
 For the experiment, we connected the rust server at `testing/rustE2EBenchmarking/src/tcp_server.rs` to the worker and let it send the LZ4-encoded data with a constant sending rate of 125mb/s.
 We used the `ysb1k_more_data_3GB` data set, which was compressed to the size of 937mb by the compression algorithm.
 
-For queries using only stateless operators like selections and projections, the server was able to keep up the 125mb/s sending rate, effectively tripling the throughput for these queries.
+For queries using only stateless operators like selections and projections, the worker was able to handle the new decoding overhead without reducing the 125mb/s sending rate, effectively tripling the throughput for these queries.
 
 While the implementation of the decoder on this branch was a mere prototype and does not match the proposed solution, the results of the experiment show that including decoders for compression codecs comes with benefits.
+
+Furthermore, we encoded every systest dataset with LZ4, Zstd and Snappy to evaluate the compression ratio. 
+We discovered that especially Zstd achieves high compression ratios, not rarely reducing a dataset to less than 20% of its original size. 
+The exact sizes of each encoded dataset can be found on the table at [7].
 
 
 # Our Proposed Solution
@@ -77,7 +86,7 @@ Each implementation of the Decoder class for a codec must implement the function
 This function obtains a single tuple buffer filled with encoded data and an initial empty tuple buffer. It should decode the contents of the `encodedBuffer` argument and write the decoded data in the `emptyDecodedBuffer`.
 
 Afterward, the third argument, the `emitAndProvide()` function, should be called. Its purpose is to emit the decoded buffer to the input-formatter. 
-Alongside the decoded buffer, a `DecoderStatusType` instance is passed to `emitAndProvide()`. This is an enum class, defined in the `Decoder` class, and defines two status:
+Alongside the decoded buffer, a `DecoderStatusType` instance is passed to `emitAndProvide()`. This is an enum class, defined in the `Decoder` class, and consists of two status:
 ```c++
  enum class DecodeStatusType : uint8_t
     {
@@ -106,7 +115,7 @@ The `provideDecoder()` function, which is responsible for creating decoder insta
 std::unique_ptr<Decoder> provideDecoder(std::string decoderType);
 ```
 
-Should future decoder implementations require it, we could add a `decoder configuration` map to the `DecoderArguments`.
+Should future decoder implementations require information about the data types or user configurations, we could add a `decoder configuration` map and the `Schema` to the `DecoderArguments`.
 
 ## Integration in nes-sources
 
@@ -153,7 +162,7 @@ if (decoder.has_value())
             }
 ```
 
-While the addition of decoders in general affects the `SourceDescriptor`, `SourceProvider`, `SourceHandle` and `SourceThread` components of `nes-sources`, adding a decoder implementation for a new codec only requires the implementation of `emitAndDecode()` in a new decoder subclass as plugin, which makes extensions straightforward.
+While the addition of decoders in general affects the `SourceDescriptor`, `SourceProvider`, `SourceHandle` and `SourceThread` components of `nes-sources`, adding a decoder implementation for a new codec only requires the implementation of `decodeAndEmit()` in a new decoder subclass as plugin, which makes extensions straightforward.
 Thus, **G3** is achieved.
 
 # Proof of Concept
@@ -161,7 +170,7 @@ On the branch [PoC-decoders-for-source](https://github.com/nebulastream/nebulast
 
 
 The `Decoder` abstract class and a `LZ4Decoder` implementation, as well as the `DecoderProvider` and the `DecoderRegistry` can be found in [nes-codecs](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-for-source/nes-codecs). 
-In [nes-plugins](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-for-source/nes-plugins), two additional decoders for the `Snappy-Framing`[6] and `Zstd` codecs are implemented.
+In [nes-plugins](https://github.com/nebulastream/nebulastream/tree/PoC-decoders-for-source/nes-plugins), two additional decoders for the `Snappy-Framing`[5] and `Zstd` codecs are implemented.
 
 # Alternatives
 ## A1 Integrating the decoders in nes-input-formatters
@@ -178,7 +187,7 @@ This could cause slow-downs and also contradicts the asynchronous out-of-order a
 # Summary
 In this design document, we proposed a solution for decoder support in NebulaStream. 
 
-To use limited bandwidth more efficiently and be able to directly process compressed source data without depending on an external component like Apache Kafka [8] between the data producer and our system, a decoder component should be added to the system.
+To use limited bandwidth more efficiently and to enable efficient fault tolerance and potential internal storage formats in the future, a decoder component should be added to the system.
 
 Our proposed solution adds a `Decoder` abstract class with a simple decoding interface.
 Implementations for the decoder can be added as plugins with the help of the `DecoderRegistry`, making the component easily extensible without affecting other system components.
@@ -196,12 +205,12 @@ Since this feature is not implemented yet either, proposing a solution for this 
 
 [2] https://github.com/google/snappy
 
-[3] https://github.com/nebulastream/nebulastream/blob/main/nes-input-formatters/README.md
+[3] https://github.com/lz4/lz4
 
-[4] https://github.com/lz4/lz4
+[4] https://parquet.apache.org/docs/file-format/
 
-[5] https://parquet.apache.org/docs/file-format/
+[5] https://github.com/google/snappy/blob/main/framing_format.txt
 
-[6] https://github.com/google/snappy/blob/main/framing_format.txt
+[6] https://nightlies.apache.org/flink/flink-docs-masterdocs/ops/state/large_state_tuning/#compression
 
-[7] https://kafka.apache.org/documentation/#brokerconfigs_compression.type
+[7] https://docs.google.com/spreadsheets/d/1V_6wUDSKYtx51CS7hssRD_hR5veEw3AOnpYKd9kX82Y/edit?usp=sharing
