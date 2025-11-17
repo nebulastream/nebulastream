@@ -13,8 +13,8 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF 8e822c5ace0ebd4fd11a49cd6c0bf29b622d7956
-        SHA512 3f33d24d43772ec1a82e166403d86890e07441b8e970a7324365cc3d2c3d8af1b0892ae3af3a1c15c3e18bbd40ed1aa5ceeb738fe9c0e8bc172abe37f3f2ba7f
+		REF 5fa4c9043d961238d283bf129b82c59e1476974a
+        SHA512 9f5aab18b0e171357d912130e3f28a3772f6264cb89a1ec330a9683793c4c2de66d4537cb31ff072ae5dca1cc6084dffe65b3beae891e54dbf4895b39dcbf829
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-fix-ambiguous-val-overload.patch
