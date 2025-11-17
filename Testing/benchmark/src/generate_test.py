@@ -228,7 +228,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                 cols_to_use = column_names[:num_col]
 
                 for access_col in [a for a in accessed_columns_list if a <= num_col]:
-                    cols_to_access = cols_to_use[:access_col]
+                    cols_to_access = cols_to_use[:access_col]#TODO: change based on field rearrangements
 
                     # Filter queries with different selectivities
                     for selectivity in selectivities:
@@ -281,7 +281,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                                 # Store config in dictionary for later use
                                 query_configs[query_id] = config
-                                header = build_header(f"bench_data{num_col}", f"AllSink{num_col}", column_names[:num_col], docker_data_path, data_size)
+                                header = build_header(f"bench_data{num_col}", f"AllSink{num_col}", cols_to_use, docker_data_path, data_size)
 
                                 # Write query to buffer-specific test file
                                 query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
@@ -337,7 +337,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                                 # Store config in dictionary for later use
                                 sink = f"AllSink{num_col}"
-                                header = build_header(f"bench_data{num_col}", sink,  column_names[:num_col], docker_data_path, data_size)
+                                header = build_header(f"bench_data{num_col}", sink,  cols_to_use, docker_data_path, data_size)
 
                                 # Write query to buffer-specific test file
                                 query = f"# Query {query_id}: Map with {func_type} function\n"
@@ -389,7 +389,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                         if id_type != '':
                                             source += f"_idtype{id_type}"
 
-                                        header = build_header(source, f"AggSink{num_col}", column_names, docker_data_path, col_acc = cols_to_access)
+                                        header = build_header(source, f"AggSink{num_col}", cols_to_use, docker_data_path, col_acc = cols_to_access)
 
                                         # Write query config
                                         config = {
@@ -417,7 +417,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                         query = f"# Query {query_id}: Aggregation with {agg_func} function\n"
                                         query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, WindowSize: {window_size}, NumGroups: {num_groups}, ID_data_type: {id_type}, AggregationFunction: {agg_func}\n"
 
-                                        query += f"SELECT "#timestamp"
+                                        query += f"SELECT start, end,"#timestamp"
                                         if id_type != '':
                                             query += "id, " #", id"
                                         query += (f"{agg_func}({cols_to_access[0]}) AS {cols_to_access[0]}")
