@@ -74,7 +74,6 @@ Interface::HashMap* getHashJoinHashMapProxy(
 }
 
 static std::atomic_bool serialized = false;
-static std::atomic_bool serialization_done = false;
 static std::atomic_bool deserialized = false;
 static std::mutex mtx;
 static std::condition_variable cv;
@@ -92,9 +91,11 @@ void serializeHashMapProxy(
     {
         return;
     }
-
-    if (serialized.exchange(true))
+    bool expected = false;
+    if (serialized.compare_exchange_strong(expected, true))
+    {
         return;
+    }
 
     const auto* const hashMap = getHashJoinHashMapProxy(operatorHandler, timestamp, workerThreadId, buildSide, buildOperator);
     if (std::filesystem::exists("/tmp/nebulastream/hashmap.bin"))
@@ -102,12 +103,7 @@ void serializeHashMapProxy(
         std::filesystem::remove("/tmp/nebulastream/hashmap.bin");
     }
     hashMap->serialize("/tmp/nebulastream/hashmap.bin");
-    {
-        std::lock_guard<std::mutex> lock(mtx);
-        serialization_done = true;
-    }
     cv.notify_all();
-    //serialized = true;
 }
 
 Interface::HashMap* deserializeHashMapProxy(
@@ -123,21 +119,18 @@ Interface::HashMap* deserializeHashMapProxy(
     {
         return hashMap;
     }
-    if (!serialized.load() == true)
+    if (!serialized.load())
     {
         return hashMap;
     }
+
+    bool expected = false;
+    if (!deserialized.compare_exchange_strong(expected, true))
     {
-        std::unique_lock<std::mutex> lock(mtx);
-        cv.wait(lock, [] { return serialization_done.load(); });
-    }
-    if (deserialized.load())
         return hashMap;
-
-
+    }
 
     hashMap->deserialize("/tmp/nebulastream/hashmap.bin", bufferProvider);
-    deserialized.store(true);
     return hashMap;
 }
 
@@ -244,22 +237,25 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
 
     nautilus::invoke(
-        deserializeHashMapProxy,
-        operatorHandler,
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide),
-        ctx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<const HJBuildPhysicalOperator*>(this));
+    deserializeHashMapProxy,
+    operatorHandler,
+    timestamp,
+    ctx.workerThreadId,
+    nautilus::val<JoinBuildSideType>(joinBuildSide),
+    ctx.pipelineMemoryProvider.bufferProvider,
+    nautilus::val<const HJBuildPhysicalOperator*>(this));
+
 
     nautilus::invoke(
-        serializeHashMapProxy,
-        operatorHandler,
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide),
-        ctx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<const HJBuildPhysicalOperator*>(this));
+          serializeHashMapProxy,
+          operatorHandler,
+          timestamp,
+          ctx.workerThreadId,
+          nautilus::val<JoinBuildSideType>(joinBuildSide),
+          ctx.pipelineMemoryProvider.bufferProvider,
+          nautilus::val<const HJBuildPhysicalOperator*>(this));
+
+
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(
