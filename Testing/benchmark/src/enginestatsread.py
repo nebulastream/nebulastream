@@ -720,7 +720,7 @@ def results_to_global_csv(base_directory, results_iter, config):
                 pipeline_1_sum_tuples_mean,
                 pipeline_1_wall_time_mean
             ])
-        all_fields = ["operator_chain", "layout", "buffer_size", "threads", "query_id", "test_id", "num_columns", "accessed_columns", "function_type", "aggregation_function", "id_data_type", "num_groups", "window_size", "selectivity", "individual_selectivity", "swap_strategy", "threshold", "total_tasks_time_mean", "total_tasks_time_std", "full_query_duration_mean", "full_query_duration_std"]  # add all possible fields here
+        all_fields = ["operator_chain", "layout", "buffer_size", "threads", "query_id", "test_id", "num_columns", "accessed_columns", "data_size", "selectivity", "individual_selectivity", "function_type", "aggregation_function", "id_data_type", "num_groups", "window_size",  "swap_strategy", "threshold", "total_tasks_time_mean", "total_tasks_time_std", "full_query_duration_mean", "full_query_duration_std"]  # add all possible fields here
         all_fields.extend(pipeline_fields)
     if os.path.exists(out_csv_path) and os.stat(out_csv_path).st_size > 0:
         mode = 'a'

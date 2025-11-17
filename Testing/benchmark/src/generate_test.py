@@ -238,7 +238,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                             #add query dir to file path
                             query_dir = filter_buffer_dir
                             query = f"query_sel{selectivity}_cols{num_col}_access{access_col}"
-                            if data_size:
+                            if not data_size:
                                 query += "_uint8"
                             query_dir = query_dir / query
                             query_dir.mkdir(exist_ok=True)
@@ -253,9 +253,12 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                                 # Calculate threshold for this individual selectivity
                                 threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))# 95% of 4 mrd
+                                if not data_size:
+                                    threshold = int((100 - individual_selectivity) * 0.01 * (2**7-1))# 95% of 4 mrd
+
                                 # column > threshold = 100% - 95% = 5% remaining
                                 #3:
-
+                                data_size_size = "" if data_size else "_uint8"
                                 # Write query config
                                 config = {
                                     "query_id": query_id,
@@ -268,8 +271,8 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                     "selectivity": selectivity,
                                     "individual_selectivity": individual_selectivity,
                                     "threshold": threshold,
-                                    "data_size": "" if data_size else "_uint8",
-                                    'data_name': base_name + f"_cols{num_col}.csv"
+                                    "data_size": data_size_size,
+                                    'data_name': base_name + f"_cols{num_col}{data_size_size}.csv"
                                 }
 
                                 with open(query_dir / "config.txt", 'w') as config_f:
@@ -299,9 +302,9 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                         if ['map'] not in params['operator_chains']:
                             break
                         for data_size in  [True, False]:
-                            query_dir = filter_buffer_dir
+                            query_dir = map_buffer_dir
                             query = f"query_{func_type}_cols{num_col}_access{access_col}"
-                            if data_size:
+                            if not data_size:
                                 query += "_uint8"
                             query_dir = query_dir / query
                             query_dir.mkdir(exist_ok=True)
@@ -309,6 +312,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                             with open(map_test_path, 'w') as map_f:
 
                                 map_queries+=1
+                                data_size_size = "" if data_size else "_uint8"
 
                                 # Write query config
                                 config = {
@@ -320,8 +324,8 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                     "operator_chain": ["map"],
                                     "swap_strategy": "USE_SINGLE_LAYOUT",
                                     "function_type": func_type,
-                                    "data_size": "" if data_size else "_uint8",
-                                    "data_name": base_name + f"_cols{num_col}.csv"
+                                    "data_size": data_size_size,
+                                    "data_name": base_name + f"_cols{num_col}{data_size_size}.csv"
                                 }
 
                                 with open(query_dir / "config.txt", 'w') as config_f:
@@ -329,14 +333,17 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                         config_f.write(f"{k}: {v}\n")
 
                                 # Store config in dictionary for later use
+                                query_configs[query_id] = config
+
+                                # Store config in dictionary for later use
                                 sink = f"AllSink{num_col}"
-                                header = build_header(f"bench_data{num_col}", sink, [access_col], docker_data_path, data_size)
+                                header = build_header(f"bench_data{num_col}", sink,  column_names[:num_col], docker_data_path, data_size)
 
                                 # Write query to buffer-specific test file
                                 query = f"# Query {query_id}: Map with {func_type} function\n"
                                 query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
                                 asterisk = "+" if func_type == 'add' else "*"
-                                expression_template = f"{{}} {asterisk} UINT64(2) AS col_{{}}"
+                                expression_template = f"{{}} {asterisk} UINT64(2) AS {{}}"
                                 col_index=1
                                 if len(cols_to_access)>1:
                                     query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
@@ -485,7 +492,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
     # Write query mapping to a file for later reference
     with open(result_dir / "query_configs.csv", 'w') as f:
         cols = ['query_id', 'test_id', 'buffer_size', 'num_columns', 'accessed_columns',
-                'operator_chain', 'swap_strategy', 'selectivity', 'individual_selectivity',
+                'operator_chain', 'swap_strategy', 'data_size', 'selectivity', 'individual_selectivity',
                 'threshold', 'function_type', 'aggregation_function', 'window_size',
                 'num_groups', 'id_data_type']
         f.write(','.join(cols) + '\n')
@@ -652,9 +659,10 @@ def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastre
     else:  #filter/map source
         for col in col_names:
             source += f" UINT{data} {col}"
-
-    source += f" FILE\n{str(docker_data_path).format(source_file)}\n\n"
-
+    if data_size:
+        source += f" FILE\n{str(docker_data_path).format(source_file)}\n\n"
+    else:
+        source += f" FILE\n{str(docker_data_path).format(source_file+"_uint8")}\n\n"
     sink = "# Sink definitions\n"
     qualifier = f"{sources}$"
     if "All" in sinks: #filter sink
@@ -704,12 +712,12 @@ if __name__ == "__main__":
 
     # Customizable parameters
     params = {
-        'buffer_sizes': [4000, 400000, 4000000, 20000000],#40000, 400000, 4000000, 10000000, 20000000],
+        'buffer_sizes': [4000000],#40000, 400000, 4000000, 10000000, 20000000],
         'num_columns': args.columns, #, 5, 10],
         'num_rows': args.rows,
-        'accessed_columns': [1, 2, 10, 20, 50],
-        'function_types': ['add', 'exp'],
-        'selectivities': [0.0001,0.1, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 99, 99.9999], #[0.0001,0.1, 1, 5, 25, 50, 75, 95, 99, 99.9999],
+        'accessed_columns': [1, 2, 10],
+        'function_types': ['add', 'mul'],
+        'selectivities': [0.0001,0.1, 99, 99.9999], #[0.0001,0.1, 1, 5, 25, 50, 75, 95, 99, 99.9999],
         'agg_functions': ['count'],#'sum', 'count', 'avg', 'min', 'max'],
         'window_sizes': args.window_sizes, #[10000, 100000],
         'num_groups': args.groups, #[10, 100, 1000],
@@ -717,7 +725,7 @@ if __name__ == "__main__":
 
 
         'operator_chains': [
-            #['map'],                  # Single map
+            ['map'],                  # Single map
             ['filter'],               # Single filter
             #['aggregation'],                 # Single aggregation
             ['map', 'filter'],        # Map followed by filter
