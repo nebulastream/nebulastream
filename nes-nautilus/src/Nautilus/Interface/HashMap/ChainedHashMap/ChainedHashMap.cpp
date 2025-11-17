@@ -340,9 +340,6 @@ void ChainedHashMap::serialize(std::filesystem::path path) const
 
 void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider)
 {
-    /// Clear instance
-    this->clear();
-
     std::ifstream in(path, std::ios::binary);
     if (!in.is_open())
     {
@@ -360,14 +357,14 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
 
     /// Setup Entryspace
     const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-    const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
-    if (not entryBuffer)
-    {
-        throw CannotAccessBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
-    }
-    entrySpace = entryBuffer.value();
+    //const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
+    //if (not entryBuffer)
+    //{
+    //    throw CannotAccessBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
+    //}
+    //entrySpace = entryBuffer.value();
     entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-    std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
+    std::memset(static_cast<void*>(entries), 0, totalSpace);
     entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
 
     /// Read Mappings
@@ -385,18 +382,19 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
     uint64_t storageBufferSize;
     for (uint64_t i = 0; i < numPages; ++i)
     {
-        auto pageBuffer = bufferProvider->getUnpooledBuffer(pageSize);
-        if (not pageBuffer)
-        {
-            throw CannotAllocateBuffer("Could not allocate page during deserialization");
-        }
+
         in.read(reinterpret_cast<char*>(&storageBufferSize), sizeof(storageBufferSize));
-        in.read(reinterpret_cast<char*>(pageBuffer->getAvailableMemoryArea().data()), storageBufferSize);
         if ( i < this->storageSpace.size())
         {
-            this->storageSpace[i] = pageBuffer.value();
+            in.read(reinterpret_cast<char*>(this->storageSpace[i].getAvailableMemoryArea().data()), storageBufferSize);
         } else
         {
+            auto pageBuffer = bufferProvider->getUnpooledBuffer(pageSize);
+            if (not pageBuffer)
+            {
+                throw CannotAllocateBuffer("Could not allocate page during deserialization");
+            }
+            in.read(reinterpret_cast<char*>(pageBuffer->getAvailableMemoryArea().data()), storageBufferSize);
             this->storageSpace.emplace_back(pageBuffer.value());
         }
     }

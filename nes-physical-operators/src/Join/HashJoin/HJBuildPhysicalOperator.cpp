@@ -131,12 +131,13 @@ Interface::HashMap* deserializeHashMapProxy(
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [] { return serialization_done.load(); });
     }
-    if (deserialized.exchange(true))
+    if (deserialized.load())
         return hashMap;
 
 
 
     hashMap->deserialize("/tmp/nebulastream/hashmap.bin", bufferProvider);
+    deserialized.store(true);
     return hashMap;
 }
 
