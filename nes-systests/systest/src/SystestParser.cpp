@@ -718,7 +718,7 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
 
         for (const auto& [type, name] : parseSchemaFields(outputSchema))
         {
-            model.outputs.addField(name, type);
+            model.outputs.addField(boost::to_upper_copy(name), type);
         }
 
         auto batchSize = NES::Util::splitWithStringDelimiter<std::string>(batchSizeLine, " ");
