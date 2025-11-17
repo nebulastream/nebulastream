@@ -8,7 +8,7 @@ from pathlib import Path
 from utils import parse_int_list, parse_str_list
 import re
 
-def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_type='',  file_path=None):
+def generate_data(num_rows=10000000, num_columns=10, num_groups=None, data_size="", id_data_type='',  file_path=None):
     """Generate test data with configurable columns, windows, and groups for different selectivities."""
     if not file_path:
         file_path = "benchmark_data"
@@ -34,6 +34,10 @@ def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_ty
         rows_match = re.search(r'rows(\d+)', file_path)
         if rows_match:
             num_rows = int(rows_match.group(1))
+
+        data_match = re.search(r'int(\d+)', file_path)
+        if data_match:
+            data_size = int(rows_match.group(1))
 
     meta_file_path = str(file_path) + (".meta")
 
@@ -72,7 +76,10 @@ def generate_data(num_rows=10000000, num_columns=10, num_groups=None, id_data_ty
     for i in range(num_columns):
         column_name = f"col_{i}"
         columns.append(column_name)
-        data[column_name] = np.random.randint(0, 2 ** 32, size=num_rows, dtype=np.uint64)
+        if data_size == "":
+            data[column_name] = np.random.randint(0, 2 ** 32 - 1, size=num_rows, dtype=np.uint64)
+        else:
+            data[column_name] = np.random.randint(0, 2 ** 7 - 1, size=num_rows, dtype=np.uint8)
 
     # Create DataFrame and save to CSV
     df = pd.DataFrame(data)

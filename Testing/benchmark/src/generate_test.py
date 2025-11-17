@@ -234,113 +234,124 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                     for selectivity in selectivities:
                         if ['filter'] not in params['operator_chains']:
                             break
-                        #add query dir to file path
-                        query_dir = filter_buffer_dir / f"query_sel{selectivity}_cols{num_col}_access{access_col}"
-                        query_dir.mkdir(exist_ok=True)
-                        filter_test_path = query_dir / f"filter_queries_buffer{buffer_size}.test"
-                        with open(filter_test_path, 'w') as filter_f:
-                            filter_col = cols_to_access[0]
-                            filter_queries+=1
-                            # Calculate individual selectivity needed for each column
-                            # For N columns with AND, each needs nth root(selectivity) to achieve target selectivity
-                            #95% selectivity -> 5% data remaining
-                            individual_selectivity = selectivity**(1.0/access_col)
+                        for data_size in  [True, False]:
+                            #add query dir to file path
+                            query_dir = filter_buffer_dir
+                            query = f"query_sel{selectivity}_cols{num_col}_access{access_col}"
+                            if data_size:
+                                query += "_uint8"
+                            query_dir = query_dir / query
+                            query_dir.mkdir(exist_ok=True)
+                            filter_test_path = query_dir / f"filter_queries_buffer{buffer_size}.test"
+                            with open(filter_test_path, 'w') as filter_f:
+                                filter_col = cols_to_access[0]
+                                filter_queries+=1
+                                # Calculate individual selectivity needed for each column
+                                # For N columns with AND, each needs nth root(selectivity) to achieve target selectivity
+                                #95% selectivity -> 5% data remaining
+                                individual_selectivity = selectivity**(1.0/access_col)
 
-                            # Calculate threshold for this individual selectivity
-                            threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))# 95% of 4 mrd
-                            # column > threshold = 100% - 95% = 5% remaining
-                            #3:
+                                # Calculate threshold for this individual selectivity
+                                threshold = int((100 - individual_selectivity) * 0.01 * (2**32-1))# 95% of 4 mrd
+                                # column > threshold = 100% - 95% = 5% remaining
+                                #3:
 
-                            # Write query config
-                            config = {
-                                "query_id": query_id,
-                                "test_id": filter_queries,
-                                "buffer_size": buffer_size,
-                                "num_columns": num_col,
-                                "accessed_columns": access_col,
-                                "operator_chain": ["filter"],
-                                "swap_strategy": "USE_SINGLE_LAYOUT",
-                                "selectivity": selectivity,
-                                "individual_selectivity": individual_selectivity,
-                                "threshold": threshold,
-                                'data_name': base_name + f"_cols{num_col}.csv"
-                            }
+                                # Write query config
+                                config = {
+                                    "query_id": query_id,
+                                    "test_id": filter_queries,
+                                    "buffer_size": buffer_size,
+                                    "num_columns": num_col,
+                                    "accessed_columns": access_col,
+                                    "operator_chain": ["filter"],
+                                    "swap_strategy": "USE_SINGLE_LAYOUT",
+                                    "selectivity": selectivity,
+                                    "individual_selectivity": individual_selectivity,
+                                    "threshold": threshold,
+                                    "data_size": "" if data_size else "_uint8",
+                                    'data_name': base_name + f"_cols{num_col}.csv"
+                                }
 
-                            with open(query_dir / "config.txt", 'w') as config_f:
-                                for k, v in config.items():
-                                    config_f.write(f"{k}: {v}\n")
+                                with open(query_dir / "config.txt", 'w') as config_f:
+                                    for k, v in config.items():
+                                        config_f.write(f"{k}: {v}\n")
 
-                            # Store config in dictionary for later use
-                            query_configs[query_id] = config
-                            header = build_header(f"bench_data{num_col}", f"AllSink{num_col}", column_names[:num_col], docker_data_path)
+                                # Store config in dictionary for later use
+                                query_configs[query_id] = config
+                                header = build_header(f"bench_data{num_col}", f"AllSink{num_col}", column_names[:num_col], docker_data_path, data_size)
 
-                            # Write query to buffer-specific test file
-                            query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
-                            query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
+                                # Write query to buffer-specific test file
+                                query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
+                                query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
 
-                            query += (f"SELECT * FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
-                            for col_name in cols_to_access[1:]:
-                                query += (f" AND {col_name} > UINT64({threshold})")
+                                query += (f"SELECT * FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
+                                for col_name in cols_to_access[1:]:
+                                    query += (f" AND {col_name} > UINT64({threshold})")
 
-                            query += (f") INTO AllSink{num_col};\n")
-                            query += "----\n1, 1\n\n"
-                            filter_f.write(header + query)
+                                query += (f") INTO AllSink{num_col};\n")
+                                query += "----\n1, 1\n\n"
+                                filter_f.write(header + query)
 
-                            query_id += 1
+                                query_id += 1
 
                     # Map queries with different function types
                     for func_type in function_types:
                         if ['map'] not in params['operator_chains']:
                             break
+                        for data_size in  [True, False]:
+                            query_dir = filter_buffer_dir
+                            query = f"query_{func_type}_cols{num_col}_access{access_col}"
+                            if data_size:
+                                query += "_uint8"
+                            query_dir = query_dir / query
+                            query_dir.mkdir(exist_ok=True)
+                            map_test_path = query_dir  / f"map_queries_buffer{buffer_size}.test"
+                            with open(map_test_path, 'w') as map_f:
 
-                        query_dir = filter_buffer_dir /  f"query_{func_type}_cols{num_col}_access{access_col}"
-                        query_dir.mkdir(exist_ok=True)
-                        map_test_path = query_dir  / f"map_queries_buffer{buffer_size}.test"
-                        with open(map_test_path, 'w') as map_f:
+                                map_queries+=1
 
-                            map_queries+=1
+                                # Write query config
+                                config = {
+                                    "query_id": query_id,
+                                    "test_id": map_queries,
+                                    "buffer_size": buffer_size,
+                                    "num_columns": num_col,
+                                    "accessed_columns": access_col,
+                                    "operator_chain": ["map"],
+                                    "swap_strategy": "USE_SINGLE_LAYOUT",
+                                    "function_type": func_type,
+                                    "data_size": "" if data_size else "_uint8",
+                                    "data_name": base_name + f"_cols{num_col}.csv"
+                                }
 
-                            # Write query config
-                            config = {
-                                "query_id": query_id,
-                                "test_id": map_queries,
-                                "buffer_size": buffer_size,
-                                "num_columns": num_col,
-                                "accessed_columns": access_col,
-                                "operator_chain": ["map"],
-                                "swap_strategy": "USE_SINGLE_LAYOUT",
-                                "function_type": func_type,
-                                "data_name": base_name + f"_cols{num_col}.csv"
-                            }
+                                with open(query_dir / "config.txt", 'w') as config_f:
+                                    for k, v in config.items():
+                                        config_f.write(f"{k}: {v}\n")
 
-                            with open(query_dir / "config.txt", 'w') as config_f:
-                                for k, v in config.items():
-                                    config_f.write(f"{k}: {v}\n")
+                                # Store config in dictionary for later use
+                                sink = f"AllSink{num_col}"
+                                header = build_header(f"bench_data{num_col}", sink, [access_col], docker_data_path, data_size)
 
-                            # Store config in dictionary for later use
-                            sink = f"AllSink{num_col}"
-                            header = build_header(f"bench_data{num_col}", sink, [access_col], docker_data_path, data_size)
+                                # Write query to buffer-specific test file
+                                query = f"# Query {query_id}: Map with {func_type} function\n"
+                                query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
+                                asterisk = "+" if func_type == 'add' else "*"
+                                expression_template = f"{{}} {asterisk} UINT64(2) AS col_{{}}"
+                                col_index=1
+                                if len(cols_to_access)>1:
+                                    query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
+                                else:
+                                    query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[0], col_index)}"
 
-                            # Write query to buffer-specific test file
-                            query = f"# Query {query_id}: Map with {func_type} function\n"
-                            query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
-                            asterisk = "+" if func_type == 'add' else "*"
-                            expression_template = f"{{}} {asterisk} UINT64(2) AS col_{{}}"
-                            col_index=1
-                            if len(cols_to_access)>1:
-                                query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
-                            else:
-                                query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[0], col_index)}"
+                                for col_index in range(2,len(cols_to_access)):#cols_to_access[1:]:
+                                    query += f", {expression_template.format(cols_to_access[col_index-1], cols_to_access[col_index], col_index)}"
+                                for col_index in range (len(cols_to_access), num_col):
+                                    query += f", col_{col_index}"
+                                query += f" FROM bench_data{num_col} INTO {sink};\n"#two accessed fields result in one output field
+                                query += "----\n1, 1\n\n"
+                                map_f.write(header + query)
 
-                            for col_index in range(2,len(cols_to_access)):#cols_to_access[1:]:
-                                query += f", {expression_template.format(cols_to_access[col_index-1], cols_to_access[col_index], col_index)}"
-                            for col_index in range (len(cols_to_access), num_col):
-                                query += f", col_{col_index}"
-                            query += f" FROM bench_data{num_col} INTO {sink};\n"#two accessed fields result in one output field
-                            query += "----\n1, 1\n\n"
-                            map_f.write(header + query)
-
-                            query_id += 1
+                                query_id += 1
 
                     # Aggregation queries
                     for agg_func in agg_functions:
@@ -603,7 +614,7 @@ def build_sinks(num_cols, id_type, column_names, num_columns_list, accessed_colu
             sink_def += sink + "\n"
     sink_def +="\n"
 
-def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastream/Testing/benchmark/benchmark_results/data/benchmark_data"):
+def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastream/Testing/benchmark/benchmark_results/data/benchmark_data", data_size = True):
 
     #single operator:
 
@@ -623,20 +634,24 @@ def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastre
     #sink = f"AggSink{num_col}"
     #strip bench_data prefix from file name
     source_file = sources.replace("bench_data","")
+    data = "64"
+    if not data_size:
+        data = "8"
+
 
     source = "# Source definitions\n"
     source += f"Source {sources}"
 
     if "Agg" in sinks: #aggregation source
-        source += f" UINT64 timestamp"
+        source += f" UINT{data} timestamp"
         if 'idtype' in sources:
             id_type = sources.split('idtype')[-1]
             source += f" UINT{id_type} id"
         for col in col_names:
-            source += f" UINT64 {col}"
+            source += f" UINT{data} {col}"
     else:  #filter/map source
         for col in col_names:
-            source += f" UINT64 {col}"
+            source += f" UINT{data} {col}"
 
     source += f" FILE\n{str(docker_data_path).format(source_file)}\n\n"
 
@@ -645,15 +660,15 @@ def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastre
     if "All" in sinks: #filter sink
         sink += f"SINK {sinks} TYPE Checksum"
         for col in col_names:
-            sink += f" UINT64 {qualifier}{col}"
+            sink += f" UINT{data} {qualifier}{col}"
         sink += "\n"
     elif "Agg" in sinks: #agg sink
-        sink += f"SINK {sinks} TYPE Checksum UINT64 {qualifier}timestamp"
+        sink += f"SINK {sinks} TYPE Checksum UINT{data} {qualifier}timestamp"
         if 'idtype' in sources:
             id_type = sources.split('idtype')[-1]
             sink += f" UINT{id_type} {qualifier}id"
         for col in col_names:
-            sink += f" UINT64 {qualifier}{col}"
+            sink += f" UINT{data} {qualifier}{col}"
         sink += "\n"
     else: #map sink
         for acc_cols in col_names:
@@ -661,9 +676,9 @@ def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastre
                 acc_cols -= 1
             if acc_cols < 2:
                 continue
-            sink += f"SINK {sinks} TYPE Checksum UINT64 result1"
+            sink += f"SINK {sinks} TYPE Checksum UINT{data} result1"
             for col_index in range(2,acc_cols + 1):#)column_names[1:acc_cols]:
-                sink +=f" UINT64 result{col_index}"
+                sink +=f" UINT{data} result{col_index}"
             sink += "\n"
 
     header = "# name: custom_benchmark.test\n"
