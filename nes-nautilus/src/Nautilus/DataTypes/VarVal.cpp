@@ -29,7 +29,7 @@
 #include <ErrorHandling.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 VarVal::VarVal(const VarVal& other) : value(other.value)

@@ -22,7 +22,6 @@
 
 namespace NES
 {
-using namespace Nautilus;
 
 /// Concept defining the interface for all physical functions.
 struct PhysicalFunctionConcept

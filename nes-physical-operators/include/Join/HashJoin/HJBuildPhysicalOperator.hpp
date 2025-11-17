@@ -31,7 +31,7 @@
 namespace NES
 {
 class HJBuildPhysicalOperator;
-Interface::HashMap* getHashJoinHashMapProxy(
+HashMap* getHashJoinHashMapProxy(
     const HJOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
@@ -44,7 +44,7 @@ Interface::HashMap* getHashJoinHashMapProxy(
 class HJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
 {
 public:
-    friend Interface::HashMap* getHashJoinHashMapProxy(
+    friend HashMap* getHashJoinHashMapProxy(
         const HJOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
@@ -54,7 +54,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& bufferRef,
+        const std::shared_ptr<TupleBufferRef>& bufferRef,
         HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;

@@ -16,7 +16,7 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <static.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 HashFunction::HashValue HashFunction::calculate(const VarVal& value) const
 {

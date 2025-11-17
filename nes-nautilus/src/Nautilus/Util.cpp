@@ -23,7 +23,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus::Util
+namespace NES::Util
 {
 void logProxy(const char* message, const LogLevel logLevel)
 {

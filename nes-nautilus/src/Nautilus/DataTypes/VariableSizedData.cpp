@@ -24,7 +24,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size)

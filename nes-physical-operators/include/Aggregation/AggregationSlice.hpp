@@ -34,8 +34,8 @@ public:
 
     /// Returns the pointer to the underlying hashmap.
     /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.
-    [[nodiscard]] Nautilus::Interface::HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] Nautilus::Interface::HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId);
+    [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId);
 };
 
 }

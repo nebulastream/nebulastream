@@ -26,7 +26,7 @@
 #include <nautilus/val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
@@ -61,7 +61,7 @@ nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
 }
 
 PagedVectorRef::PagedVectorRef(
-    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<BufferRef::TupleBufferRef>& bufferRef)
+    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<TupleBufferRef>& bufferRef)
     : pagedVectorRef(pagedVectorRef), bufferRef(bufferRef), memoryLayout(bufferRef->getMemoryLayout().get())
 {
 }
@@ -112,7 +112,7 @@ nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) cons
 
 PagedVectorRefIter::PagedVectorRefIter(
     PagedVectorRef pagedVector,
-    const std::shared_ptr<BufferRef::TupleBufferRef>& bufferRef,
+    const std::shared_ptr<TupleBufferRef>& bufferRef,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<TupleBuffer*>& curPage,
     const nautilus::val<uint64_t>& posOnPage,

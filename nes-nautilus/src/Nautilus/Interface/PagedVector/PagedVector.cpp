@@ -27,7 +27,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider, const MemoryLayout* memoryLayout)
