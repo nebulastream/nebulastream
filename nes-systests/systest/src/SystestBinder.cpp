@@ -745,7 +745,7 @@ struct SystestBinder::Impl
     }
 
     void differentialQueryBlocksCallback(
-        SystestQueryId& lastParsedQueryId,
+        SystestQueryId&,
         const std::string_view& testFileName,
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
         SLTSinkFactory& sltSinkProvider,
