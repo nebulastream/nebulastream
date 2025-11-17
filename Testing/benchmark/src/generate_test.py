@@ -389,7 +389,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                         if id_type != '':
                                             source += f"_idtype{id_type}"
 
-                                        header = build_header(source, f"AggSink{num_col}", column_names[:num_col], docker_data_path)
+                                        header = build_header(source, f"AggSink{num_col}", column_names, docker_data_path, col_acc = cols_to_access)
 
                                         # Write query config
                                         config = {
@@ -422,7 +422,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                             query += "id, " #", id"
                                         query += (f"{agg_func}({cols_to_access[0]}) AS {cols_to_access[0]}")
                                         for col_name in cols_to_access[1:]:
-                                            query += f" ,{agg_func}({col_name}) AS {col_name}"
+                                            query += f", {agg_func}({col_name}) AS {col_name}"
                                         query += " \n"
                                         query += f"FROM {source} \n"
 
@@ -548,80 +548,8 @@ def generate_operator_chain_query(query_id, buffer_size, num_cols, op_chain, swa
 
     return query, config
 
-def build_sources(docker_data_path, num_columns_list, column_names, params):
-    source_def=""
-    # Source definition with Docker-compatible path
-    source_def += "# Source definitions\n"
-    for num_cols in num_columns_list:
-        docker_path = str(docker_data_path).format(num_cols)
-        #if not os.path.exists(docker_path):
-        #print(f"Warning: Data file for {num_cols} columns does not exist at {docker_path}")
-        source_def += f"Source bench_data{num_cols}"
-        names = column_names[:num_cols]#TODO: not depend on same column names?
-        for col in names:
-            source_def += f" UINT64 {col}"
-        source_def += f" FILE\n{docker_path}\n\n"
-        for num_groups in params['num_groups']:
-            for id_type in params['id_data_types']:
-                if id_type != '':
-                    source_def += f"Source bench_data{num_cols}_groups{num_groups}_idtype{id_type}"
-                    source_def += f" UINT64 timestamp UINT{id_type} id"
-                    for col in names:
-                        source_def += f" UINT64 {col}"
-                    source_def += f" FILE\n{str(docker_data_path).format( f"{num_cols}_groups{num_groups}_idtype{id_type}")}\n\n"
-                else:
-                    source_def += f"Source bench_data{num_cols}_groups{num_groups}"
-                    source_def += f" UINT64 timestamp"
-                    for col in names:
-                        source_def += f" UINT64 {col}"
-                    source_def += f" FILE\n{str(docker_data_path).format(f"{num_cols}_groups{num_groups}")}\n\n"
 
-        return source_def
-
-def build_sinks(num_cols, id_type, column_names, num_columns_list, accessed_columns_list):
-    sink_def =""
-    # Sink definitions
-    sink_def += "# Sink definitions\n"
-    qualifier = f"bench_data{num_cols}$"
-    for num_cols in num_columns_list:
-        sink_def += f"SINK AllSink{num_cols} TYPE Checksum"
-        agg_sink = f"SINK AggSink{num_cols} TYPE Checksum UINT64 {qualifier}timestamp"
-        if id_type != '':
-            agg_sink += f" UINT{id_type} {qualifier}id"
-        names = column_names[:num_cols]
-        for col in names:
-            sink_def += f" UINT64 {qualifier}{col}"
-            agg_sink += f" UINT64 {qualifier}{col}"
-        sink_def += "\n"
-        sink_def += agg_sink + "\n"
-
-
-    for acc_cols in accessed_columns_list:
-        #smallest_num_cols = np.min([n for n in num_columns_list if n >= acc_cols], default=None)
-        #if smallest_num_cols is None:
-        #continue
-        #source_qualifier = f"bench_data{smallest_num_cols}$"
-        if acc_cols != 1:
-            acc_cols -= 1
-            if acc_cols < 2:
-                continue
-        sink = f"SINK MapSink{acc_cols} TYPE Checksum UINT64 result1"
-        for col_index in range(2,acc_cols + 1):#)column_names[1:acc_cols]:
-            sink +=(f" UINT64 result{col_index}")
-        sink_def += sink + "\n"
-
-    sink_def += "SINK MapSink TYPE Checksum UINT64 result\n\n"
-    sink_def += "SINK MixedSink1 TYPE Checksum UINT64 result1\n"
-    #f.write("SINK MixedSink2 TYPE Checksum UINT64 result1 UINT64 result2\n\n")
-    for acc_cols in accessed_columns_list:
-        if acc_cols>1:
-            sink= f"SINK MixedSink{acc_cols} TYPE Checksum"
-            for col_index in range(1,acc_cols + 1):#)column_names[1:acc_cols]:
-                sink +=(f" UINT64 result{col_index}")
-            sink_def += sink + "\n"
-    sink_def +="\n"
-
-def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastream/Testing/benchmark/benchmark_results/data/benchmark_data", data_size = True):
+def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastream/Testing/benchmark/benchmark_results/data/benchmark_data", data_size = True, col_acc = []):
 
     #single operator:
 
@@ -671,11 +599,11 @@ def build_header(sources, sinks, col_names=[], docker_data_path="/tmp/nebulastre
             sink += f" UINT{data} {qualifier}{col}"
         sink += "\n"
     elif "Agg" in sinks: #agg sink
-        sink += f"SINK {sinks} TYPE Checksum UINT{data} {qualifier}timestamp"
+        sink += f"SINK {sinks} TYPE Checksum UINT{data} {qualifier}start UINT{data} {qualifier}end"
         if 'idtype' in sources:
             id_type = sources.split('idtype')[-1]
             sink += f" UINT{id_type} {qualifier}id"
-        for col in col_names:
+        for col in col_acc:
             sink += f" UINT{data} {qualifier}{col}"
         sink += "\n"
     else: #map sink
