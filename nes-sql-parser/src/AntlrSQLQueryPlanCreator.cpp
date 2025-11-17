@@ -14,6 +14,7 @@
 
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
@@ -426,9 +427,9 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     else if (helpers.top().isInferModelInput)
     {
         if (helpers.top().isInFunctionCall())
-            helpers.top().functionBuilder.push_back(FieldAccessLogicalFunction(context->getText()));
+            helpers.top().functionBuilder.push_back(FieldAccessLogicalFunction(boost::to_upper_copy(context->getText())));
         else
-            helpers.top().inferModelInputs.push_back(FieldAccessLogicalFunction(context->getText()));
+            helpers.top().inferModelInputs.push_back(FieldAccessLogicalFunction(boost::to_upper_copy(context->getText())));
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
