@@ -44,7 +44,8 @@ enum class TokenType : uint8_t
     ERROR_EXPECTATION,
     CONFIGURATION,
     GLOBAL_CONFIGURATION,
-    DIFFERENTIAL
+    DIFFERENTIAL,
+    MODEL
 };
 
 enum class TestDataIngestionType : uint8_t
@@ -158,6 +159,7 @@ public:
     using CreateCallback = std::function<void(std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>)>;
     using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
+    using ModelCallback = std::function<void(Nebuli::Inference::ModelDescriptor&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -167,6 +169,7 @@ public:
     void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
     void registerOnConfigurationCallback(ConfigurationCallback callback);
     void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
+    void registerOnModelCallback(ModelCallback callback);
 
     void parse();
     void parseResultLines();
@@ -193,6 +196,7 @@ private:
     [[nodiscard]] ErrorExpectation expectError() const;
     [[nodiscard]] std::vector<ConfigurationOverride> expectConfiguration();
     [[nodiscard]] std::vector<ConfigurationOverride> expectGlobalConfiguration();
+    [[nodiscard]] Nebuli::Inference::ModelDescriptor expectModel();
 
     std::vector<SubstitutionRule> substitutionRules;
     QueryCallback onQueryCallback;
@@ -202,6 +206,7 @@ private:
     DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;
     ConfigurationCallback onConfigurationCallback;
     GlobalConfigurationCallback onGlobalConfigurationCallback;
+    ModelCallback onModelCallback;
 
     std::optional<std::string> lastParsedQuery;
     std::optional<SystestQueryId> lastParsedQueryId;
