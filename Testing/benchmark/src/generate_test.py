@@ -278,7 +278,7 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                             query = f"# Query {query_id}: Filter with {selectivity}% selectivity\n"
                             query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: filter, Selectivity: {selectivity}\n"
 
-                            query += (f"SELECT {cols_to_access[0]} FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
+                            query += (f"SELECT * FROM bench_data{num_col} WHERE ({filter_col} > UINT64({threshold})")
                             for col_name in cols_to_access[1:]:
                                 query += (f" AND {col_name} > UINT64({threshold})")
 
@@ -318,14 +318,14 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
                                     config_f.write(f"{k}: {v}\n")
 
                             # Store config in dictionary for later use
-                            sink = f"MapSink{access_col-1}" if access_col != 1 else f"MapSink{access_col}"
-                            header = build_header(f"bench_data{num_col}", sink, [access_col], docker_data_path)
+                            sink = f"AllSink{num_col}"
+                            header = build_header(f"bench_data{num_col}", sink, [access_col], docker_data_path, data_size)
 
                             # Write query to buffer-specific test file
                             query = f"# Query {query_id}: Map with {func_type} function\n"
                             query += f"# BufferSize: {buffer_size}, NumColumns: {num_col}, AccessedColumns: {access_col}, OperatorType: map, FunctionType: {func_type}\n"
-                            asterisk = "*" if func_type == 'add' else "+"
-                            expression_template = f"{{}} {asterisk} {{}} AS result{{}}"
+                            asterisk = "+" if func_type == 'add' else "*"
+                            expression_template = f"{{}} {asterisk} UINT64(2) AS col_{{}}"
                             col_index=1
                             if len(cols_to_access)>1:
                                 query += f"SELECT {expression_template.format(cols_to_access[0], cols_to_access[1], col_index)}"
@@ -334,7 +334,8 @@ def generate_test_file(data_file, result_dir, params, run_options='all'):
 
                             for col_index in range(2,len(cols_to_access)):#cols_to_access[1:]:
                                 query += f", {expression_template.format(cols_to_access[col_index-1], cols_to_access[col_index], col_index)}"
-
+                            for col_index in range (len(cols_to_access), num_col):
+                                query += f", col_{col_index}"
                             query += f" FROM bench_data{num_col} INTO {sink};\n"#two accessed fields result in one output field
                             query += "----\n1, 1\n\n"
                             map_f.write(header + query)
