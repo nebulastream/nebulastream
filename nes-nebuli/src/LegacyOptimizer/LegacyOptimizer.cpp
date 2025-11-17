@@ -50,7 +50,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     originIdInferencePhase.apply(newPlan);
     typeInference.apply(newPlan);
-    redundantFieldRemovalRule.apply(newPlan);
+    //redundantFieldRemovalRule.apply(newPlan);
     return newPlan;
 }
 }
