@@ -412,7 +412,7 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider, *testfile.modelCatalog);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog, testfile.modelCatalog};
@@ -784,7 +784,8 @@ struct SystestBinder::Impl
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
-        SLTSinkFactory& sltSinkProvider)
+        SLTSinkFactory& sltSinkProvider,
+        Nebuli::Inference::ModelCatalog& modelCatalog)
     {
         uint64_t sourceIndex = 0;
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
@@ -878,6 +879,12 @@ struct SystestBinder::Impl
         parser.registerOnCreateCallback(
             [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
             { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+
+        parser.registerOnModelCallback(
+            [&](Nebuli::Inference::ModelDescriptor&& model)
+        {
+            modelCatalog.registerModel(std::move(model));
+        });
 
         try
         {

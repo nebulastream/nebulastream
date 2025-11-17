@@ -134,6 +134,7 @@ static constexpr std::string_view ErrorToken = "ERROR"sv;
 static constexpr std::string_view DifferentialToken = "===="sv;
 static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
 static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
+static constexpr std::string_view ModelToken = "MODEL";
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
@@ -142,7 +143,8 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {ErrorToken, TokenType::ERROR_EXPECTATION},
      {ConfigurationToken, TokenType::CONFIGURATION},
      {GlobalConfigurationToken, TokenType::GLOBAL_CONFIGURATION},
-     {DifferentialToken, TokenType::DIFFERENTIAL}});
+     {DifferentialToken, TokenType::DIFFERENTIAL},
+     {ModelToken, TokenType::MODEL}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -314,10 +316,7 @@ void SystestParser::parse()
             }
             case TokenType::MODEL: {
                 auto model = expectModel();
-                if (onModelCallback)
-                {
-                    onModelCallback(std::move(model));
-                }
+                onModelCallback(std::move(model));
                 break;
             }
             case TokenType::ERROR_EXPECTATION:
@@ -349,6 +348,11 @@ std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
     if (toLowerCase(line).starts_with(toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
+    }
+
+    if (Util::toLowerCase(line).starts_with(Util::toLowerCase(ModelToken)))
+    {
+        return TokenType::MODEL;
     }
 
     std::string potentialToken;
@@ -634,6 +638,42 @@ std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
     return parseConfigurationLine(lines[currentLine], "global configuration");
 }
 
+SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
+{
+    SystestParser::SystestSchema schema;
+    if (arguments.size() % 2 != 0)
+    {
+        if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
+        {
+            throw SLTUnexpectedToken(
+                "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
+                fmt::join(arguments, ","),
+                lastArg);
+        }
+        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
+    }
+
+    for (size_t i = 0; i < arguments.size(); i += 2)
+    {
+        DataType dataType;
+        if (auto type = magic_enum::enum_cast<DataType::Type>(arguments[i]); type.has_value())
+        {
+            dataType = DataTypeProvider::provideDataType(type.value());
+        }
+        else if (Util::toLowerCase(arguments[i]) == "varsized")
+        {
+            dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+        }
+        else
+        {
+            throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
+        }
+        schema.emplace_back(dataType, arguments[i + 1]);
+    }
+
+    return schema;
+}
+
 Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
 {
     try
@@ -646,6 +686,12 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
         ++currentLine;
 
         auto& outputLine = lines[currentLine];
+        ++currentLine;
+
+        auto& batchSizeLine = lines[currentLine];
+        ++currentLine;
+
+        auto& predictionCacheLine = lines[currentLine];
         ++currentLine;
 
         std::istringstream stream(modelNameLine);
@@ -672,15 +718,25 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
 
         for (const auto& [type, name] : parseSchemaFields(outputSchema))
         {
-            model.outputs.addField(boost::to_upper_copy(name), type);
+            model.outputs.addField(name, type);
         }
+
+        auto batchSize = NES::Util::splitWithStringDelimiter<std::string>(batchSizeLine, " ");
+        model.batchSize = static_cast<size_t>(std::stoull(batchSize[1]));
+
+        auto predictionCache = NES::Util::splitWithStringDelimiter<std::string>(predictionCacheLine, " ");
+        model.predictionCacheType = boost::to_upper_copy(predictionCache[1]);
+        model.predictionCacheSize = static_cast<size_t>(std::stoull(predictionCache[3]));
+
         return model;
     }
     catch (Exception& e)
     {
         auto modelParserSchema = "MODEL <model_name> <model_path>"
                                  "<type-0> ... <type-N>"
-                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"sv;
+                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"
+                                 "BATCH_SIZE <batch_size>"
+                                 "CACHE <cache_type> SIZE <cache_size>"sv;
         e.what() += fmt::format("\nWhen Parsing a Model Statement:\n{}", modelParserSchema);
         throw;
     }
