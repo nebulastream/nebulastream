@@ -32,7 +32,7 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThrea
         [[nodiscard]] bool isValid(const std::string& stringValue) const override
         {
             size_t value{};
-            if (auto parsed = Util::from_chars<size_t>(stringValue))
+            if (auto parsed = from_chars<size_t>(stringValue))
             {
                 value = *parsed;
             }
@@ -70,7 +70,7 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::queueSizeVali
     {
         [[nodiscard]] bool isValid(const std::string& stringValue) const override
         {
-            if (!Util::from_chars<size_t>(stringValue))
+            if (!from_chars<size_t>(stringValue))
             {
                 NES_ERROR("Invalid TaskQueueSize configuration: {}.", stringValue.data());
                 return false;

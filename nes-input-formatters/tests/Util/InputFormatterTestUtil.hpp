@@ -244,8 +244,8 @@ private:
 inline bool
 compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, std::vector<TupleBuffer>& expectedResult, Schema schema)
 {
-    sortTupleBuffers(actualResult);
-    sortTupleBuffers(expectedResult);
+    InputFormatterTestUtil::sortTupleBuffers(actualResult);
+    InputFormatterTestUtil::sortTupleBuffers(expectedResult);
 
     bool allTuplesMatch = true;
     TupleIterator expectedResultTupleIt(std::move(expectedResult), schema);

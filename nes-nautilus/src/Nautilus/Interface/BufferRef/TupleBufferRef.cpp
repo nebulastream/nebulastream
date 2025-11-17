@@ -54,7 +54,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
     nautilus::val<VariableSizedAccess> combinedIdxOffset{
-        Util::readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
+        readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
     const auto varSizedPtr = invoke(
         +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess variableSizedAccess)
         {
@@ -77,8 +77,8 @@ VarVal TupleBufferRef::storeValue(
     {
         /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
-        if (const auto storeFunction = Util::storeValueFunctionMap.find(physicalType.type);
-            storeFunction != Util::storeValueFunctionMap.end())
+        if (const auto storeFunction = storeValueFunctionMap.find(physicalType.type);
+            storeFunction != storeValueFunctionMap.end())
         {
             return storeFunction->second(value, fieldReference);
         }

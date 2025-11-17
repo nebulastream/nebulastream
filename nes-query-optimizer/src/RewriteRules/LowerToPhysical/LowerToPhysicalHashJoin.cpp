@@ -243,7 +243,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = outputOriginIds[0];
     auto logicalJoinFunction = join->getJoinFunction();
-    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join->getWindowType());
+    auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join.get(), windowType);
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
     const auto inputOriginIds

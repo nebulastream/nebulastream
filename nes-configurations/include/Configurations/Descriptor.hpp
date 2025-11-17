@@ -207,10 +207,10 @@ private:
     static std::optional<T> stringParameterAs(std::string stringParameter)
     {
         if constexpr (requires(std::string string) {
-                          NES::Util::from_chars<T>(string);
+                          from_chars<T>(string);
                       }) /// TODO #1035: check if two Util namespaces are needed
         {
-            return NES::Util::from_chars<T>(stringParameter);
+            return from_chars<T>(stringParameter);
         }
         else if constexpr (std::is_same_v<T, EnumWrapper>)
         {

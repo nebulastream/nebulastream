@@ -94,9 +94,9 @@ void Generator::parseSchema(const std::string_view rawSchema)
 {
     PRECONDITION(!rawSchema.empty(), "Cannot parse a schema from an empty string!");
 
-    for (const auto schemaLine = Util::splitOnMultipleDelimiters(rawSchema, {'\n', ','}); const auto& field : schemaLine)
+    for (const auto schemaLine = splitOnMultipleDelimiters(rawSchema, {'\n', ','}); const auto& field : schemaLine)
     {
-        parseRawSchemaLine(Util::trimWhiteSpaces(std::string_view(field)));
+        parseRawSchemaLine(trimWhiteSpaces(std::string_view(field)));
     }
 }
 

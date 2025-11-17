@@ -154,7 +154,7 @@ public:
                 | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
                 | std::views::transform(
                               [](auto& pair)
-                              { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+                              { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());

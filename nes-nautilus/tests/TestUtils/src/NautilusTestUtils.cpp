@@ -189,7 +189,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 const auto fieldName = field.name;
                 if (not field.dataType.isType(DataType::Type::VARSIZED))
                 {
-                    const auto varValue = Util::createNautilusConstValue(value, physicalType.type);
+                    const auto varValue = createNautilusConstValue(value, physicalType.type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }

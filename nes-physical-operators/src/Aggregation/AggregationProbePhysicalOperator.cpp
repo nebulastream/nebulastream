@@ -61,17 +61,17 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getMemArea());
-    const auto numberOfHashMaps = Util::readValueFromMemRef<uint64_t>(
-        Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::numberOfHashMaps));
-    const auto windowInfoRef = Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::windowInfo);
+    const auto numberOfHashMaps = readValueFromMemRef<uint64_t>(
+        getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::numberOfHashMaps));
+    const auto windowInfoRef = getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::windowInfo);
     const nautilus::val<Timestamp> windowStart{
-        Util::readValueFromMemRef<uint64_t>(Util::getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
+        readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
     const nautilus::val<Timestamp> windowEnd{
-        Util::readValueFromMemRef<uint64_t>(Util::getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    auto hashMapRefs = Util::readValueFromMemRef<HashMap**>(
-        Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::hashMaps));
-    auto finalHashMapPtr = Util::readValueFromMemRef<HashMap*>(
-        Util::getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::finalHashMapPtr));
+        readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
+    auto hashMapRefs = readValueFromMemRef<HashMap**>(
+        getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::hashMaps));
+    auto finalHashMapPtr = readValueFromMemRef<HashMap*>(
+        getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::finalHashMapPtr));
 
     /// Combining all keys from all hash maps in the final hash map, and then iterating over the final hash map once to lower the aggregation states
     ChainedHashMapRef finalHashMap(

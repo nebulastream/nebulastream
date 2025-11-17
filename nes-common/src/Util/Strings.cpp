@@ -27,7 +27,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Util
+namespace NES
 {
 
 template <>

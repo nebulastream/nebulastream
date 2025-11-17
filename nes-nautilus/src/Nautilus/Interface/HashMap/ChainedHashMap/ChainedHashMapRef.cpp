@@ -127,14 +127,14 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
 HashFunction::HashValue ChainedHashMapRef::ChainedEntryRef::getHash() const
 {
     /// Assuming that the hash value is stored after the next pointer in the ChainedHashMapEntry
-    const auto hashRef = Util::getMemberRef(entryRef, &ChainedHashMapEntry::hash);
-    return Util::readValueFromMemRef<uint64_t>(hashRef);
+    const auto hashRef = getMemberRef(entryRef, &ChainedHashMapEntry::hash);
+    return readValueFromMemRef<uint64_t>(hashRef);
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext() const
 {
-    const auto nextRef = Util::getMemberRef(entryRef, &ChainedHashMapEntry::next);
-    auto next = Util::readValueFromMemRef<ChainedHashMapEntry**>(nextRef);
+    const auto nextRef = getMemberRef(entryRef, &ChainedHashMapEntry::next);
+    auto next = readValueFromMemRef<ChainedHashMapEntry**>(nextRef);
     return next;
 }
 
@@ -295,24 +295,24 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
     const auto numberOfTuples
-        = Util::readValueFromMemRef<uint64_t>(Util::getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
+        = readValueFromMemRef<uint64_t>(getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
     return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
-    const auto numberOfTuplesRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
-    const auto numberOfTuples = Util::readValueFromMemRef<uint64_t>(numberOfTuplesRef);
+    const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
+    const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
     if (numberOfTuples == 0)
     {
         return nullptr;
     }
 
-    const auto maskRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::mask);
-    auto mask = Util::readValueFromMemRef<uint64_t>(maskRef);
+    const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
+    auto mask = readValueFromMemRef<uint64_t>(maskRef);
     const auto entryStartPos = hash & mask;
-    const auto entriesRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::entries);
-    auto entries = Util::readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
+    const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
+    auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
     const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
     return chainStart;
 }

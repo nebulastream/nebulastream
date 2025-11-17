@@ -89,7 +89,7 @@ void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*
 {
     /// Resetting the min value to the maximum value
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = Util::createNautilusMaxValue(inputType.type);
+    const auto min = createNautilusMaxValue(inputType.type);
     min.writeToMemory(memAreaMin);
 }
 
