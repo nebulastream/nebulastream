@@ -1,0 +1,161 @@
+# name: custom_benchmark.test
+# description: Generated benchmark test for filter and map operations
+# groups: [benchmark]
+
+# Source definitions
+Source bench_data1 UINT64 col_0 FILE
+/tmp/nebulastream/Testing/benchmark/benchmark_results/data/benchmark_data_rows10000000_cols1.csv
+
+#Source bench_data2 UINT64 col_0 UINT64 col_1 FILE
+#/tmp/nebulastream/Testing/benchmark/benchmark_results/data/benchmark_data_rows10000000_cols2.csv
+
+Source bench_data10 UINT64 col_0 UINT64 col_1 UINT64 col_2 UINT64 col_3 UINT64 col_4 UINT64 col_5 UINT64 col_6 UINT64 col_7 UINT64 col_8 UINT64 col_9 FILE
+/tmp/nebulastream/Testing/benchmark/benchmark_results/data/example.csv
+
+
+SINK MixedSink1 TYPE Checksum UINT64 result1
+SINK MixedSink2 TYPE Checksum UINT64 result1 UINT64 result2
+SINK MixedSink3 UINT64 bench_data10$col_0 UINT64 result1 UINT64 result2
+SINK AllSink1 TYPE Checksum UINT64 avg_val
+SINK AllSink TYPE Checksum UINT64 bench_data1$col_0
+SINK FilterSink UINT64 bench_data10$col_0
+SINK FilterSink2 UINT64 bench_data10$col_0 UINT64 bench_data10$col_1
+SINK FilterSink3 UINT64 bench_data10$col_0 UINT64 bench_data10$col_1 UINT64 bench_data10$col_2
+SINK MapSink UINT64 result1
+SINK MapSink2 UINT64 result1 UINT64 result2
+SINK MapSink3 UINT64 result1 UINT64 result2 UINT64 result3
+SINK AllSink2 UINT64 bench_data10$col_0 UINT64 bench_data10$col_1
+SINK AllSink10 UINT64 bench_data10$col_0 UINT64 bench_data10$col_1 UINT64 bench_data10$col_2 UINT64 bench_data10$col_3 UINT64 bench_data10$col_4 UINT64 bench_data10$col_5 UINT64 bench_data10$col_6 UINT64 bench_data10$col_7 UINT64 bench_data10$col_8 UINT64 bench_data10$col_9
+SINK AllSink3 UINT64 bench_data10$col_0 UINT64 bench_data10$col_1 UINT64 bench_data10$col_2
+
+SELECT col_0 FROM bench_data10 WHERE (col_0 > UINT64(3)) INTO FilterSink;
+----
+4
+5
+
+SELECT col_0, col_1 FROM bench_data10 WHERE (col_0 > UINT64(3)) INTO FilterSink2;
+----
+4,5
+5,6
+
+SELECT col_0, col_1, col_2 FROM bench_data10 WHERE (col_1 > UINT64(4) AND col_2 > UINT64(5)) INTO FilterSink3;
+----
+4,5,6
+5,6,7
+
+SELECT col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9 FROM bench_data10 WHERE (col_1 > UINT64(4) AND col_2 > UINT64(5)) INTO AllSink10;
+----
+4,5,6,7,8,9,10,11,12,13
+5,6,7,8,9,10,11,12,13,14
+
+SELECT (col_0 + UINT64(1)) AS col_0 FROM bench_data10 INTO FilterSink;
+----
+2
+3
+4
+5
+6
+
+SELECT col_0 + UINT64(1) AS result1, col_1 + UINT64(2) AS result2 FROM bench_data10 INTO FilterSink2;
+----
+2,4
+3,5
+4,6
+5,7
+6,8
+
+SELECT col_0, col_2 + UINT64(3) AS col_2, col_4 + UINT64(4) AS result2 FROM bench_data10 INTO FilterSink3;
+----
+1,6,9
+2,7,10
+3,8,11
+4,9,12
+5,10,13
+
+SELECT col_0, col_1, col_2 + UINT64(3) AS col_2, col_3, col_4 + UINT64(4) AS col_4, col_5, col_6, col_7, col_8, col_9 FROM bench_data10 INTO AllSink10;
+----
+1,2,6,4,9,6,7,8,9,10
+2,3,7,5,10,7,8,9,10,11
+3,4,8,6,11,8,9,10,11,12
+4,5,9,7,12,9,10,11,12,13
+5,6,10,8,13,10,11,12,13,14
+
+
+SELECT col_0 + col_0 AS result1 FROM (SELECT * FROM bench_data1 WHERE (col_0 > UINT64(4080218930))) INTO MixedSink1;
+----
+14236360, 35170842947
+
+SELECT col_0 + col_0 AS col_0, col_1 + col_1 AS col_1 FROM (SELECT * FROM bench_data2 WHERE (col_0 > UINT64(4080218930) AND col_1 > UINT64(4190532878))) INTO MixedSink2;
+----
+14236360, 35170842947
+
+# BufferSize: 4000, NumColumns: 10, AccessedColumns: 1, OperatorType: filter, Selectivity: 5
+SELECT result1 FROM (SELECT col_0 + col_0 AS result1 FROM bench_data1) WHERE (result1 > UINT64(4080218930)) INTO MixedSink1;
+----
+14236360, 35170842947
+
+# BufferSize: 4000, NumColumns: 10, AccessedColumns: 2, OperatorType: filter, Selectivity: 5 # notice threshold = 2* calculated threshold (4198928906)
+SELECT result1, result2 FROM (SELECT col_0 + col_0 AS result1, col_1 + col_1 AS result2 FROM bench_data2) WHERE (result1 > UINT64(8397857812) AND result2 > UINT64(8397857812)) INTO MixedSink2;
+----
+14236360, 35170842947
+
+#agg
+SELECT COUNT(col_0) AS col_0 FROM bench_data1
+GROUP BY col_0
+WINDOW TUMBLING(col_0, SIZE 10000 MS)
+INTO AllSink;
+----
+1, 1
+
+#agg2
+SELECT COUNT(col_1) AS col_1, COUNT(col_2) AS col_2, col_3 FROM bench_data5
+GROUP BY col_3
+WINDOW TUMBLING(col_0, SIZE 10000 MS)
+INTO AllSink2;
+----
+1, 1
+
+#agg2 2
+SELECT start, end, COUNT(col_1) AS col_1, col_2
+FROM (SELECT start, end, col_1, COUNT(col_2) AS col_2
+       FROM bench_data5
+       GROUP BY col_1
+       WINDOW TUMBLING(col_0, SIZE 10000 MS))
+GROUP BY col_2
+WINDOW TUMBLING(start, SIZE 20000 MS)
+INTO AllSink3;
+----
+1, 1
+
+#filter, agg
+SELECT COUNT(col_0) AS col_0
+FROM (SELECT * FROM bench_data1 WHERE (col_0 > UINT64(4080218930)))
+GROUP BY col_0
+WINDOW TUMBLING(col_0, SIZE 10000 MS) INTO AllSink1;
+----
+1, 1
+
+
+#agg filter
+SELECT COUNT(col_0) AS col_0
+FROM bench_data1
+GROUP BY col_0
+WINDOW TUMBLING(col_0, SIZE 10000 MS)
+WHERE (col_0 > UINT64(4080218930))
+INTO AllSink1;
+----
+1, 1
+
+# map, agg
+SELECT col_0 + UINT64(100) AS col_0
+FROM (SELECT COUNT(col_0) AS col_0 FROM bench_data1 GROUP BY col_0 WINDOW TUMBLING(col_0, SIZE 10000 MS))
+INTO AllSink1;
+----
+1, 1
+
+#TODO: group by ID?, window size?
+
+#SELECT AVG(avg_val) AS avg_val, col_1 FROM (SELECT col_0 + UINT64(100) AS avg_val, col_0 AS col_1 FROM bench_data1) GROUP BY avg_val
+          #                                                                                       WINDOW TUMBLING(col_1, SIZE 10000 MS) INTO AllSink1;
+#----
+#1, 1
