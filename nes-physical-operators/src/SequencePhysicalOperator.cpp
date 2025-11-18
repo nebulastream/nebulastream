@@ -31,8 +31,10 @@ namespace NES::Runtime::Execution::Operators
 void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const
 {
     auto buffer = nautilus::invoke(
-        +[](OperatorHandler* handler, uint8_t* bufferMemory) -> TupleBuffer*
-        { return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(bufferMemory).value_or(nullptr); },
+        +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
+        {
+            return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(tupleBuffer).value_or(nullptr);
+        },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         recordBuffer.getReference());
 
@@ -45,7 +47,9 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
 
         buffer = nautilus::invoke(
             +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
-            { return dynamic_cast<SequenceOperatorHandler*>(handler)->markBufferAsDone(tupleBuffer).value_or(nullptr); },
+            {
+                return dynamic_cast<SequenceOperatorHandler*>(handler)->markBufferAsDone(tupleBuffer).value_or(nullptr);
+            },
             executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
             buffer);
     }
