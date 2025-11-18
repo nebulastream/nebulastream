@@ -49,7 +49,6 @@ concept HasParameterMap = requires(T configuration) {
 };
 }
 
-/// Todo #355 : refactor usages of Descriptor, specifically in Sources and Sinks, into general configuration
 /// Config: The design principle of the Descriptor config is that the entire definition of the configuration happens in one place.
 /// When defining a 'ConfigParameter', all information relevant for a configuration parameter are defined:
 /// - the type
