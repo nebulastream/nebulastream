@@ -56,7 +56,6 @@ public:
 
     void addField(std::unique_ptr<GeneratorFields::GeneratorFieldType> field);
 
-    /// TODO #355: Parse from YAML Nodes instead of a string
     /// Parses the generator schema from the @param rawSchema string
     void parseSchema(std::string_view rawSchema);
 
@@ -74,7 +73,6 @@ private:
     size_t numStoppedFields{0};
     size_t numStoppableFields{0};
 
-    /// TODO #355: Parse from YAML Nodes instead of a string
     void parseRawSchemaLine(std::string_view line);
 };
 }

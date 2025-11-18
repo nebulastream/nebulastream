@@ -65,7 +65,6 @@ private:
     folly::Synchronized<std::ofstream> outputFileStream;
 };
 
-/// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersFile
 {
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{

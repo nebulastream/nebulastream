@@ -60,7 +60,6 @@ private:
     std::unique_ptr<Format> outputParser;
 };
 
-/// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersPrint
 {
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{

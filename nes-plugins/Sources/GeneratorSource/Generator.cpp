@@ -70,7 +70,6 @@ void Generator::addField(std::unique_ptr<GeneratorFields::GeneratorFieldType> fi
     this->fields.emplace_back(std::move(field));
 }
 
-/// TODO #355: Parse from YAML Nodes instead of a string
 void Generator::parseRawSchemaLine(std::string_view line)
 {
     PRECONDITION(!line.empty(), "Line to parse cannot be empty!");
@@ -89,7 +88,6 @@ void Generator::parseRawSchemaLine(std::string_view line)
     }
 }
 
-/// TODO #355: Parse from YAML Nodes instead of a string
 void Generator::parseSchema(const std::string_view rawSchema)
 {
     PRECONDITION(!rawSchema.empty(), "Cannot parse a schema from an empty string!");
