@@ -76,18 +76,6 @@ SequenceLogicalOperator SequenceLogicalOperator::withInferredSchema(std::vector<
     copy.outputSchema = firstSchema;
     return copy;
 }
-SequenceLogicalOperator SequenceLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
-{
-    auto copy = *this;
-    copy.inputSchema = inputSchemas.at(0);
-    return copy;
-}
-SequenceLogicalOperator SequenceLogicalOperator::setOutputSchema(const Schema& outputSchema) const
-{
-    auto copy = *this;
-    copy.outputSchema = outputSchema;
-    return copy;
-}
 
 TraitSet SequenceLogicalOperator::getTraitSet() const
 {

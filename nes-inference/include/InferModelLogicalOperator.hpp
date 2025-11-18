@@ -22,7 +22,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/OriginIdAssigner.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -32,7 +31,7 @@
 namespace NES::InferModel
 {
 
-class InferModelLogicalOperator final : public OriginIdAssigner
+class InferModelLogicalOperator
 {
 public:
     explicit InferModelLogicalOperator(NES::Nebuli::Inference::Model, std::vector<LogicalFunction> inputFields);
