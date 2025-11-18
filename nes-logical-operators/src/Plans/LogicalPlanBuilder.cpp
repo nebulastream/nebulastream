@@ -137,7 +137,7 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     std::unordered_set<LogicalFunction> visitedFunctions;
     /// We are iterating over all binary functions and check if each side's leaf is a constant value, as we are supposedly not supporting this
     /// I am not sure why this is the case, but I will keep it for now. IMHO, the whole LogicalPlanBuilder should be refactored to be more readable and
-    /// also to be more maintainable. TODO #506
+    /// also to be more maintainable.
     for (const LogicalFunction& itr : BFSRange(joinFunction))
     {
         if (itr.getChildren().size() == 2)
