@@ -47,8 +47,7 @@ void runStoreTest(
     AbstractBufferProvider& bufferManager)
 {
     /// Creating the memory provider for the paged vector
-    const std::shared_ptr<TupleBufferRef> bufferRef
-        = TupleBufferRef::create(pageSize, testSchema);
+    const std::shared_ptr<TupleBufferRef> bufferRef = TupleBufferRef::create(pageSize, testSchema);
 
     /// Compiling the function that inserts the records into the PagedVector, if it is not already compiled.
     const auto inputBufferRef = TupleBufferRef::create(allRecords[0].getBufferSize(), testSchema);

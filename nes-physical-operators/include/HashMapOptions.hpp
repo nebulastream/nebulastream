@@ -132,8 +132,7 @@ struct HashMapOptions
     std::function<void(const std::vector<std::unique_ptr<HashMap>>&)>
     getSliceCleanupFunction(std::shared_ptr<NautilusCleanupExecFunc> nautilusCleanupExecutable) const
     {
-        return [copyOfCleanupStateNautilusFunction
-                = nautilusCleanupExecutable](const std::vector<std::unique_ptr<HashMap>>& hashMaps)
+        return [copyOfCleanupStateNautilusFunction = nautilusCleanupExecutable](const std::vector<std::unique_ptr<HashMap>>& hashMaps)
         {
             for (const auto& hashMap :
                  hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr and hashMapPtr->getNumberOfTuples() > 0; }))

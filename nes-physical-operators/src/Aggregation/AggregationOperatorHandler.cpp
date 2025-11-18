@@ -92,8 +92,7 @@ void AggregationOperatorHandler::triggerSlices(
                     totalNumberOfTuples += hashMap->getNumberOfTuples();
                     if (not finalHashMap)
                     {
-                        finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(
-                            *dynamic_cast<ChainedHashMap*>(hashMap));
+                        finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(*dynamic_cast<ChainedHashMap*>(hashMap));
                     }
                 }
             }

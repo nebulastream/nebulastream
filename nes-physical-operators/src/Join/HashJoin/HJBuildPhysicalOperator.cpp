@@ -152,8 +152,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         [&](const nautilus::val<AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
-            const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+            const ChainedHashMapRef::ChainedEntryRef entryRefReset{entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
             const auto state = entryRefReset.getValueMemArea();
             nautilus::invoke(
                 +[](int8_t* pagedVectorMemArea) -> void
@@ -168,8 +167,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         ctx.pipelineMemoryProvider.bufferProvider);
 
     /// Inserting the tuple into the corresponding hash entry
-    const ChainedHashMapRef::ChainedEntryRef entryRef{
-        hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+    const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
     auto entryMemArea = entryRef.getValueMemArea();
     const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);

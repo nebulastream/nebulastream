@@ -108,8 +108,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     inputBufferRef = TupleBufferRef::create(bufferManager->getBufferSize(), inputSchema);
 
     /// Creating the fields for the key and value from the schema
-    std::tie(fieldKeys, fieldValues)
-        = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
+    std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
     projectionKeys = inputSchemaKey.getFieldNames();
@@ -381,8 +380,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     }
 }
 
-void ChainedHashMapTestUtils::checkEntryIterator(
-    ChainedHashMap& hashMap, const std::map<TestUtils::RecordWithFields, Record>& exactMap)
+void ChainedHashMapTestUtils::checkEntryIterator(ChainedHashMap& hashMap, const std::map<TestUtils::RecordWithFields, Record>& exactMap)
 {
     /// Ensuring that the number of tuples is correct.
     ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());

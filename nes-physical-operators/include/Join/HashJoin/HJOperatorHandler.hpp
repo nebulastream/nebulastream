@@ -38,9 +38,7 @@ namespace NES
 struct EmittedHJWindowTrigger
 {
     EmittedHJWindowTrigger(
-        const WindowInfo windowInfo,
-        const std::vector<HashMap*>& leftHashMaps,
-        const std::vector<HashMap*>& rightHashMaps)
+        const WindowInfo windowInfo, const std::vector<HashMap*>& leftHashMaps, const std::vector<HashMap*>& rightHashMaps)
         : windowInfo(windowInfo), leftNumberOfHashMaps(leftHashMaps.size()), rightNumberOfHashMaps(rightHashMaps.size())
     {
         /// Copying the left and right hashmap pointer pointers after this object, hence this + 1
@@ -56,8 +54,7 @@ struct EmittedHJWindowTrigger
     WindowInfo windowInfo;
     uint64_t leftNumberOfHashMaps;
     uint64_t rightNumberOfHashMaps;
-    HashMap**
-        leftHashMaps; /// Pointer to the stored pointers of all hash maps of the left input stream that the probe should iterate over
+    HashMap** leftHashMaps; /// Pointer to the stored pointers of all hash maps of the left input stream that the probe should iterate over
     HashMap**
         rightHashMaps; /// Pointer to the stored pointers of all hash maps of the right input stream that the probe should iterate over
 };

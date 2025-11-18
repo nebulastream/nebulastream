@@ -294,8 +294,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
-    const auto numberOfTuples
-        = readValueFromMemRef<uint64_t>(getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
+    const auto numberOfTuples = readValueFromMemRef<uint64_t>(getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
     return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
 }
 

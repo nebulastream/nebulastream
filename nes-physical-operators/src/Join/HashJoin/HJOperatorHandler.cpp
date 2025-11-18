@@ -140,8 +140,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// We need a buffer that is large enough to store:
     /// - all pointers to (left + right) hashmaps of the window to be triggered
     /// - size of EmittedHJWindowTrigger
-    const auto neededBufferSize
-        = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(HashMap*));
+    const auto neededBufferSize = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(HashMap*));
     const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
     if (not tupleBufferVal.has_value())
     {

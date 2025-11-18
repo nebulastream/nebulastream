@@ -104,8 +104,7 @@ public:
     /// Compiles a function that finds the entry and updates the value.
     /// This enables us to perform a comparison in the c++ code by comparing every value in the record buffer with the exact value.
     /// We are using the findOrCreateEntry() of the hash map interface.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, HashMap*>
-    compileFindAndInsert() const;
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, HashMap*> compileFindAndInsert() const;
 
     /// Compiles a function that finds the entry and updates the value.
     /// This enables us to perform a comparison in the c++ code by comparing every value in the record buffer with the exact value.

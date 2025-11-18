@@ -40,9 +40,7 @@ AvgAggregationPhysicalFunction::AvgAggregationPhysicalFunction(
 }
 
 void AvgAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);

@@ -41,10 +41,7 @@ class AggregationPhysicalFunction
 {
 public:
     AggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier);
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
     virtual void

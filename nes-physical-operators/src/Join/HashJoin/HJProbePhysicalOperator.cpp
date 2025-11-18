@@ -71,10 +71,10 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
 
     /// Getting number of hash maps and return if there are no hashmaps
     const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
-    const auto leftNumberOfHashMaps = readValueFromMemRef<uint64_t>(
-        getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
-    const auto rightNumberOfHashMaps = readValueFromMemRef<uint64_t>(
-        getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightNumberOfHashMaps));
+    const auto leftNumberOfHashMaps
+        = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
+    const auto rightNumberOfHashMaps
+        = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightNumberOfHashMaps));
     if (leftNumberOfHashMaps == 0 and rightNumberOfHashMaps == 0)
     {
         return;
@@ -82,14 +82,10 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
 
     /// Getting necessary values from the record buffer
     const auto windowInfoRef = getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
-    const nautilus::val<Timestamp> windowStart{
-        readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
-    const nautilus::val<Timestamp> windowEnd{
-        readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    auto leftHashMapRefs = readValueFromMemRef<HashMap**>(
-        getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
-    auto rightHashMapRefs = readValueFromMemRef<HashMap**>(
-        getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
+    const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
+    const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
+    auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
+    auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
 
 
     /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps

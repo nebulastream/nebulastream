@@ -65,10 +65,7 @@ void MedianAggregationPhysicalFunction::combine(
     const auto memArea2 = static_cast<nautilus::val<PagedVector*>>(aggregationState2);
 
     /// Calling the copyFrom function of the paged vector to combine the two paged vectors by copying the content of the second paged vector to the first paged vector
-    nautilus::invoke(
-        +[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); },
-        memArea1,
-        memArea2);
+    nautilus::invoke(+[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); }, memArea1, memArea2);
 }
 
 Record MedianAggregationPhysicalFunction::lower(
@@ -178,8 +175,7 @@ void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>
         +[](AggregationState* pagedVectorMemArea) -> void
         {
             /// Calls the destructor of the PagedVector
-            auto* pagedVector
-                = reinterpret_cast<PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             pagedVector->~PagedVector();
         },
         aggregationState);

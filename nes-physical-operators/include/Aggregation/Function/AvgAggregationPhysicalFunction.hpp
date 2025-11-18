@@ -30,10 +30,7 @@ class AvgAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     AvgAggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier);
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,

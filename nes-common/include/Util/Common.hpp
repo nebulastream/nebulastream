@@ -47,7 +47,6 @@ inline std::ostream& operator<<(std::ostream& os, const VerbosityLevel& level)
     return os;
 }
 
-
 /// check if the given object is an instance of the specified type.
 template <typename Out, typename In>
 bool instanceOf(const std::shared_ptr<In>& obj)

@@ -229,8 +229,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             const auto& [name, testFile] = nameAndFile;
             if (!includedGroups.empty())
             {
-                if (std::ranges::none_of(
-                        testFile.groups, [&](const auto& group) { return includedGroups.contains(toLowerCase(group)); }))
+                if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(toLowerCase(group)); }))
                 {
                     std::cout << fmt::format(
                         "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);

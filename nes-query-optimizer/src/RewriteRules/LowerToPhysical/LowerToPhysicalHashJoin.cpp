@@ -211,8 +211,7 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
     const auto entriesPerPage = pageSize / entrySize;
 
     /// As we are using a paged vector for the value, we do not need to set the fieldNameValues for the chained hashmap
-    const auto& [fieldKeys, fieldValues]
-        = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
+    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
     HashMapOptions hashMapOptions{
         std::make_unique<MurMur3HashFunction>(),
         std::move(keyFunctions),
@@ -264,10 +263,10 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields);
-    auto leftBufferRef = TupleBufferRef::create(
-        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
-    auto rightBufferRef = TupleBufferRef::create(
-        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema);
+    auto leftBufferRef
+        = TupleBufferRef::create(conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
+    auto rightBufferRef
+        = TupleBufferRef::create(conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 

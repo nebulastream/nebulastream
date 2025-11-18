@@ -60,8 +60,7 @@ nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
     return nautilus::invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
 }
 
-PagedVectorRef::PagedVectorRef(
-    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<TupleBufferRef>& bufferRef)
+PagedVectorRef::PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<TupleBufferRef>& bufferRef)
     : pagedVectorRef(pagedVectorRef), bufferRef(bufferRef), memoryLayout(bufferRef->getMemoryLayout().get())
 {
 }

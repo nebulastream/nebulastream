@@ -39,9 +39,7 @@ SumAggregationPhysicalFunction::SumAggregationPhysicalFunction(
 }
 
 void SumAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);

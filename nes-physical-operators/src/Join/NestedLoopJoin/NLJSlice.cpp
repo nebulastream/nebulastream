@@ -70,8 +70,7 @@ PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadI
     return rightPagedVectors[pos].get();
 }
 
-PagedVector*
-NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+PagedVector* NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {
