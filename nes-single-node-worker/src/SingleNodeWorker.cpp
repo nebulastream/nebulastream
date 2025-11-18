@@ -60,7 +60,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
 }
 
-/// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
+/// This is a workaround to get again unique queryId after our initial worker refactoring.
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
