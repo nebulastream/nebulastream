@@ -2,10 +2,11 @@
 # description: Solar Power dataset experiments
 # groups: [Inference]
 
-Source solarPowerSource UINT64 timestamp FLOAT64 value FILE
-TESTDATA/large/solar_power/solar-power.csv
+CREATE LOGICAL SOURCE solarPowerSource(timestamp UINT64, value FLOAT64);
+CREATE PHYSICAL SOURCE FOR solarPowerSource TYPE File;
+ATTACH FILE large/solar_power/solar-power.csv
 
-SINK solarPowerVarsizedDiscard TYPE Discard VARSIZED powerProdNext8Sec
+CREATE SINK solarPowerVarsizedDiscard(powerProdNext8Sec VARSIZED) TYPE Checksum;
 
 MODEL minMaxScalerSolar TESTDATA/model/solar_power/preprocessor/scaler_solar.onnx
 FLOAT64
@@ -29,7 +30,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -48,7 +49,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -67,7 +68,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -86,7 +87,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_2q TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -105,7 +106,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -124,7 +125,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -143,7 +144,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -162,7 +163,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_fifo TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -181,7 +182,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -200,7 +201,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -219,7 +220,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -238,7 +239,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lfu TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -257,7 +258,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -276,7 +277,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -295,7 +296,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -314,7 +315,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_lru TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -333,7 +334,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -352,7 +353,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -371,7 +372,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -390,7 +391,7 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
 
 MODEL nBeats_second_chance TESTDATA/model/solar_power/pretrained/nbeats/nbeats_solar_size_60_stride_4.onnx
@@ -409,5 +410,5 @@ SELECT powerProdNext8Sec FROM (
         WINDOW SLIDING(timestamp, SIZE 60000 ms, ADVANCE BY 4000 ms)
     )
 )
-INTO solarPowerVarsizedDiscard
+INTO solarPowerVarsizedDiscard;
 ----
