@@ -28,16 +28,17 @@
 namespace NES
 {
 
-class SequenceLogicalOperator : public OriginIdAssigner
+class SequenceLogicalOperator
 {
 public:
     explicit SequenceLogicalOperator();
 
     [[nodiscard]] bool operator==(const SequenceLogicalOperator& rhs) const;
+
     void serialize(SerializableOperator&) const;
 
-    [[nodiscard]] TraitSet getTraitSet() const;
     [[nodiscard]] SequenceLogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] TraitSet getTraitSet() const;
 
     [[nodiscard]] SequenceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
@@ -50,19 +51,13 @@ public:
 
     [[nodiscard]] SequenceLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
-    /// Set the schemas directly without inference used for operator registration
-    [[nodiscard]] SequenceLogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
-    [[nodiscard]] SequenceLogicalOperator setOutputSchema(const Schema& outputSchema) const;
-
 private:
-    static constexpr std::string_view NAME = "Sequence";
+    static constexpr std::string_view NAME = "SEQUENCE";
 
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
-    std::vector<OriginId> inputOriginIds;
-    std::vector<OriginId> outputOriginIds;
     TraitSet traitSet;
 };
 
-
+static_assert(LogicalOperatorConcept<SequenceLogicalOperator>);
 }

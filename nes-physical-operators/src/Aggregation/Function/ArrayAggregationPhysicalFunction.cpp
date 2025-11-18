@@ -35,8 +35,6 @@
 namespace NES
 {
 
-constexpr static std::string_view StateFieldName = "value";
-
 ArrayAggregationPhysicalFunction::ArrayAggregationPhysicalFunction(
     DataType inputType,
     DataType resultType,
@@ -51,11 +49,10 @@ ArrayAggregationPhysicalFunction::ArrayAggregationPhysicalFunction(
 void ArrayAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Nautilus::Record& record)
 {
+    /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    Record aggregateStateRecord(
-        {{std::string(StateFieldName), inputFunction.execute(record, pipelineMemoryProvider.arena)}});
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
-    pagedVectorRef.writeRecord(aggregateStateRecord, pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
+    pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
 }
 
 void ArrayAggregationPhysicalFunction::combine(
@@ -101,7 +98,7 @@ Nautilus::Record ArrayAggregationPhysicalFunction::lower(
     for (auto candidateIt = pagedVectorRef.begin(allFieldNames); candidateIt != endIt; ++candidateIt)
     {
         const auto itemRecord = *candidateIt;
-        const auto itemValue = itemRecord.read(std::string(StateFieldName));
+        const auto itemValue = inputFunction.execute(itemRecord, pipelineMemoryProvider.arena);
         auto _ = itemValue.customVisit(
             [&]<typename T>(const T& type) -> VarVal
             {
