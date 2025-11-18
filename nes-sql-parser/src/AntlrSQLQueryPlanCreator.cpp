@@ -102,7 +102,7 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
 {
-    switch (timebase) /// TODO #619: improve this switch case
+    switch (timebase)
     {
         case AntlrSQLLexer::MS:
             return API::Milliseconds(size);
@@ -123,7 +123,7 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
 
 static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction, LogicalFunction rightFunction, const uint64_t tokenType)
 {
-    switch (tokenType) /// TODO #619: improve this switch case
+    switch (tokenType)
     {
         case AntlrSQLLexer::EQ:
             return EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
@@ -146,7 +146,7 @@ static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction,
 
 static LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction, LogicalFunction rightFunction, const uint64_t tokenType)
 {
-    switch (tokenType) /// TODO #619: improve this switch case
+    switch (tokenType)
     {
         case AntlrSQLLexer::AND:
             return AndLogicalFunction(std::move(leftFunction), std::move(rightFunction));
@@ -299,7 +299,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     const auto leftFunction = helpers.top().functionBuilder.back();
     helpers.top().functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
-    switch (opTokenType) /// TODO #619: improve this switch case
+    switch (opTokenType)
     {
         case AntlrSQLLexer::ASTERISK:
             function = MulLogicalFunction(leftFunction, rightFunction);
@@ -337,7 +337,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     const auto innerFunction = helpers.top().functionBuilder.back();
     helpers.top().functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
-    switch (opTokenType) /// TODO #619: improve this switch case
+    switch (opTokenType)
     {
         case AntlrSQLLexer::PLUS:
             function = innerFunction;
@@ -831,7 +831,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto tokenType = context->getStart()->getType();
 
     helpers.top().hasUnnamedAggregation = true;
-    switch (tokenType) /// TODO #619: improve this switch case
+    switch (tokenType)
     {
         case AntlrSQLLexer::COUNT:
             if (helpers.top().functionBuilder.empty())
