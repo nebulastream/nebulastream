@@ -29,8 +29,8 @@ class SequenceOperatorHandler final : public OperatorHandler
 public:
     SequenceOperatorHandler() = default;
 
-    std::optional<TupleBuffer*> getNextBuffer(uint8_t* buffer);
-    std::optional<TupleBuffer*> markBufferAsDone(TupleBuffer* buffer);
+    std::optional<TupleBuffer*> getNextBuffer(TupleBuffer* tupleBuffer);
+    std::optional<TupleBuffer*> markBufferAsDone(TupleBuffer* tupleBuffer);
 
     void start(PipelineExecutionContext&, uint32_t) override { sequencer = {}; }
     void stop(QueryTerminationType, PipelineExecutionContext&) override { /*noop*/ }

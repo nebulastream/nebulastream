@@ -205,7 +205,7 @@ void IREEBatchCacheInferenceOperator::open(ExecutionContext& executionCtx, Recor
     executionCtx.originId = recordBuffer.getOriginId();
     openChild(executionCtx, recordBuffer);
 
-    const auto emittedBatch = static_cast<nautilus::val<EmittedBatch*>>(recordBuffer.getReference());
+    const auto emittedBatch = static_cast<nautilus::val<EmittedBatch*>>(recordBuffer.getMemArea());
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
 
     const auto batchMemRef = nautilus::invoke(
