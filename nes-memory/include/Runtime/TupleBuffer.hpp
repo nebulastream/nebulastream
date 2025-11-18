@@ -181,14 +181,6 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
-    /**
-     * @brief Interprets the void* as a pointer to the content of tuple buffer
-     * @note if bufferPointer is not pointing to the begin of an data buffer the behavior of this function is undefined.
-     * @param bufferPointer
-     * @return TupleBuffer
-     */
-    [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
-
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
