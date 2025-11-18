@@ -11,9 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+
 #include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <static.hpp>
 
 namespace NES
