@@ -59,7 +59,7 @@ public:
     [[nodiscard]] InferModelLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const ;
 
 private:
-    static constexpr std::string_view NAME = "InferModel";
+    static constexpr std::string_view NAME = "INFERENCEMODEL";
     Nebuli::Inference::Model model;
     std::vector<LogicalFunction> inputFields;
 
