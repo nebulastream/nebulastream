@@ -288,7 +288,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
     const auto numberOfPages = nautilus::invoke(
         +[](const HashMap* hashMap) { return dynamic_cast<const ChainedHashMap*>(hashMap)->getNumberOfPages(); }, hashMapRef);
 
-    return {hashMapRef, currentEntry, entrySize, tupleIndex, indexOnPage, numberOfTuplesInCurrentPage, pageIndex, numberOfPages};
+    return {hashMapRef, currentEntry, entrySize, indexOnPage, numberOfTuplesInCurrentPage, pageIndex, numberOfPages};
 }
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
@@ -296,7 +296,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
     const auto numberOfTuples
         = Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
-    return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
+    return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1};
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
@@ -374,7 +374,6 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
     const nautilus::val<HashMap*>& hashMapRef,
     const nautilus::val<ChainedHashMapEntry*>& currentEntry,
     const nautilus::val<uint64_t>& entrySize,
-    const nautilus::val<uint64_t>& tupleIndex,
     const nautilus::val<uint64_t>& indexOnPage,
     const nautilus::val<uint64_t>& numberOfTuplesInCurrentPage,
     const nautilus::val<uint64_t>& pageIndex,
@@ -382,9 +381,32 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
     : hashMapRef(hashMapRef)
     , currentEntry(currentEntry)
     , entrySize(entrySize)
-    , tupleIndex(tupleIndex)
-    , indexOnPage(indexOnPage)
-    , numberOfTuplesInCurrentPage(numberOfTuplesInCurrentPage)
+    , indexOnPageRollover(
+          RolloverIndex<uint64_t>{
+              indexOnPage,
+              numberOfTuplesInCurrentPage,
+              [&](const nautilus::val<uint64_t>& oldRolloverValue, const nautilus::val<uint64_t>&)
+              {
+                  if (this->pageIndex + 1 >= this->numberOfPages)
+                  {
+                      return oldRolloverValue;
+                  }
+                  ++this->pageIndex;
+                  this->currentEntry = nautilus::invoke(
+                      +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
+                      {
+                          const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
+                          return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
+                      },
+                      this->hashMapRef,
+                      this->pageIndex,
+                      oldRolloverValue);
+                  return nautilus::invoke(
+                      +[](const HashMap* hashMap, const uint64_t pageIndexVal)
+                      { return dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal).getNumberOfTuples(); },
+                      this->hashMapRef,
+                      this->pageIndex);
+              }})
     , pageIndex(pageIndex)
     , numberOfPages(numberOfPages)
 {
@@ -393,41 +415,14 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
 ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
 {
     /// We have to increment the tupleIndex, as we have seen a new tuple.
-    ++tupleIndex;
-    ++indexOnPage;
-    if (indexOnPage >= numberOfTuplesInCurrentPage)
-    {
-        indexOnPage = 0;
-        if (pageIndex + 1 >= numberOfPages)
-        {
-            return *this;
-        }
-        ++pageIndex;
-        currentEntry = nautilus::invoke(
-            +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
-            {
-                const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
-                return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
-            },
-            hashMapRef,
-            pageIndex,
-            indexOnPage);
-        numberOfTuplesInCurrentPage = nautilus::invoke(
-            +[](const HashMap* hashMap, const uint64_t pageIndexVal)
-            { return dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal).getNumberOfTuples(); },
-            hashMapRef,
-            pageIndex);
-
-        return *this;
-    }
+    indexOnPageRollover.increment();
     currentEntry = static_cast<nautilus::val<int8_t*>>(currentEntry) + entrySize;
-
     return *this;
 }
 
 nautilus::val<bool> ChainedHashMapRef::EntryIterator::operator==(const EntryIterator& other) const
 {
-    return tupleIndex == other.tupleIndex;
+    return indexOnPageRollover.getOverallIndex() == other.indexOnPageRollover.getOverallIndex();
 }
 
 nautilus::val<bool> ChainedHashMapRef::EntryIterator::operator!=(const EntryIterator& other) const

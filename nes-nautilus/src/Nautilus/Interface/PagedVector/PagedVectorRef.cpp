@@ -91,7 +91,8 @@ PagedVectorRefIter PagedVectorRef::begin(const std::vector<Record::RecordFieldId
     const auto numberOfTuplesInPagedVector = invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
     const auto curPage = nautilus::invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos);
     const auto posOnPage = nautilus::invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
-    PagedVectorRefIter pagedVectorRefIter(*this, bufferRef, projections, curPage, posOnPage, pos, numberOfTuplesInPagedVector);
+    const auto tuplesOnPage = RecordBuffer(curPage).getNumRecords();
+    PagedVectorRefIter pagedVectorRefIter(*this, bufferRef, projections, curPage, posOnPage, tuplesOnPage, numberOfTuplesInPagedVector);
     return pagedVectorRefIter;
 }
 
@@ -100,8 +101,7 @@ PagedVectorRefIter PagedVectorRef::end(const std::vector<Record::RecordFieldIden
     /// End does not point to any existing page. Therefore, we only set the pos
     const auto pos = invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
     const nautilus::val<TupleBuffer*> curPage(nullptr);
-    const nautilus::val<uint64_t> posOnPage(0);
-    PagedVectorRefIter pagedVectorRefIter(*this, bufferRef, projections, curPage, posOnPage, pos, pos);
+    PagedVectorRefIter pagedVectorRefIter(*this, bufferRef, projections, curPage, pos, pos, pos);
     return pagedVectorRefIter;
 }
 
@@ -116,13 +116,24 @@ PagedVectorRefIter::PagedVectorRefIter(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<TupleBuffer*>& curPage,
     const nautilus::val<uint64_t>& posOnPage,
-    const nautilus::val<uint64_t>& pos,
+    const nautilus::val<uint64_t>& numberOfTuplesOnPage,
     const nautilus::val<uint64_t>& numberOfTuplesInPagedVector)
     : pagedVector(std::move(pagedVector))
+    , posOnPageRollOver(RolloverIndex<uint64_t>{
+          posOnPage,
+          numberOfTuplesOnPage,
+          [&](const nautilus::val<uint64_t>& oldRolloverValue, const nautilus::val<uint64_t>& overallValue)
+          {
+              /// Go to the next page
+              if (overallValue < this->numberOfTuplesInPagedVector)
+              {
+                  this->curPage = nautilus::invoke(getTupleBufferForEntryProxy, this->pagedVector.pagedVectorRef, overallValue);
+                  return RecordBuffer(this->curPage).getNumRecords();
+              }
+              return oldRolloverValue;
+          }})
     , projections(projections)
-    , pos(pos)
     , numberOfTuplesInPagedVector(numberOfTuplesInPagedVector)
-    , posOnPage(posOnPage)
     , curPage(curPage)
     , bufferRef(bufferRef)
 {
@@ -131,25 +142,13 @@ PagedVectorRefIter::PagedVectorRefIter(
 Record PagedVectorRefIter::operator*() const
 {
     const RecordBuffer recordBuffer(curPage);
-    auto recordEntry = posOnPage;
+    auto recordEntry = posOnPageRollOver.getCurrentIndex();
     return bufferRef->readRecord(projections, recordBuffer, recordEntry);
 }
 
 PagedVectorRefIter& PagedVectorRefIter::operator++()
 {
-    pos = pos + 1;
-    posOnPage = posOnPage + 1;
-    const auto tuplesOnPage = RecordBuffer(curPage).getNumRecords();
-    if (posOnPage >= tuplesOnPage)
-    {
-        /// Go to the next page
-        posOnPage = 0;
-        if (pos < numberOfTuplesInPagedVector)
-        {
-            curPage = nautilus::invoke(getTupleBufferForEntryProxy, this->pagedVector.pagedVectorRef, this->pos);
-            posOnPage = nautilus::invoke(getBufferPosForEntryProxy, this->pagedVector.pagedVectorRef, this->pos);
-        }
-    }
+    posOnPageRollOver.increment();
     return *this;
 }
 
@@ -160,7 +159,7 @@ nautilus::val<bool> PagedVectorRefIter::operator==(const PagedVectorRefIter& oth
         return true;
     }
 
-    const auto samePos = pos == other.pos;
+    const auto samePos = posOnPageRollOver.getOverallIndex() == other.posOnPageRollOver.getOverallIndex();
     const auto samePagedVector = pagedVector == other.pagedVector;
     const auto sameProjections = projections == other.projections;
     return samePos && samePagedVector && sameProjections;
@@ -173,7 +172,7 @@ nautilus::val<bool> PagedVectorRefIter::operator!=(const PagedVectorRefIter& oth
 
 nautilus::val<uint64_t> PagedVectorRefIter::operator-(const PagedVectorRefIter& other) const
 {
-    return pos - other.pos;
+    return posOnPageRollOver.getOverallIndex() - other.posOnPageRollOver.getOverallIndex();
 }
 
 }

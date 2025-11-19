@@ -17,56 +17,49 @@
 namespace NES::Nautilus::Interface
 {
 
-RolloverIndex::RolloverIndex(unsigned long rolloverValue, Callback onRollover)
-    : index_(0), rolloverValue_(rolloverValue), callback_(onRollover)
+template <typename T>
+RolloverIndex<T>::RolloverIndex(const nautilus::val<T>& startIndex, const nautilus::val<T>& rolloverValue, Callback onRollover)
+    : index(startIndex), overallIndex(startIndex), rolloverValue(rolloverValue), callback(std::move(onRollover))
 {
-    PRECONDITION(rolloverValue_ > 0, "RolloverIndex: rolloverValue must be > 0");
 }
 
-void RolloverIndex::setIndex(unsigned long index)
+template <typename T>
+nautilus::val<T> RolloverIndex<T>::getCurrentIndex() const
 {
-    index_ = index;
-    if (index_ >= rolloverValue_)
+    return index;
+}
+
+template <typename T>
+nautilus::val<T> RolloverIndex<T>::getOverallIndex() const
+{
+    return overallIndex;
+}
+
+template <typename T>
+void RolloverIndex<T>::increment()
+{
+    ++index;
+    ++overallIndex;
+    if (index >= rolloverValue)
     {
-        rollover();
+        index = 0;
+
+        if (callback)
+        {
+            rolloverValue = callback(rolloverValue, overallIndex);
+        }
     }
 }
 
-unsigned long RolloverIndex::getIndex() const
-{
-    return index_;
-}
-
-void RolloverIndex::setRolloverValue(unsigned long rolloverValue)
-{
-    PRECONDITION(rolloverValue > 0, "RolloverIndex: rolloverValue must be > 0");
-
-    rolloverValue_ = rolloverValue;
-}
-
-unsigned long RolloverIndex::getRolloverValue() const
-{
-    return rolloverValue_;
-}
-
-void RolloverIndex::increment()
-{
-    ++index_;
-
-    if (index_ >= rolloverValue_)
-    {
-        rollover();
-    }
-}
-
-void RolloverIndex::rollover()
-{
-    index_ = 0;
-
-    if (callback_)
-    {
-        callback_();
-    }
-}
+template class RolloverIndex<uint8_t>;
+template class RolloverIndex<uint16_t>;
+template class RolloverIndex<uint32_t>;
+template class RolloverIndex<uint64_t>;
+template class RolloverIndex<int8_t>;
+template class RolloverIndex<int16_t>;
+template class RolloverIndex<int32_t>;
+template class RolloverIndex<int64_t>;
+template class RolloverIndex<float>;
+template class RolloverIndex<double>;
 
 }

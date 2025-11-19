@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/Rollover/RolloverIndex.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
@@ -70,7 +71,7 @@ public:
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<TupleBuffer*>& curPage,
         const nautilus::val<uint64_t>& posOnPage,
-        const nautilus::val<uint64_t>& pos,
+        const nautilus::val<uint64_t>& numberOfTuplesOnPage,
         const nautilus::val<uint64_t>& numberOfTuplesInPagedVector);
 
     Record operator*() const;
@@ -81,11 +82,9 @@ public:
 
 private:
     PagedVectorRef pagedVector;
+    RolloverIndex<uint64_t> posOnPageRollOver;
     std::vector<Record::RecordFieldIdentifier> projections;
-    nautilus::val<uint64_t> pos;
     nautilus::val<uint64_t> numberOfTuplesInPagedVector;
-    /// TODO #1152 create a custom class for these indices
-    nautilus::val<uint64_t> posOnPage;
     nautilus::val<TupleBuffer*> curPage;
     std::shared_ptr<BufferRef::TupleBufferRef> bufferRef;
 };

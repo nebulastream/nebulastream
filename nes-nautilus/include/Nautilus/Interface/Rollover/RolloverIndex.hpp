@@ -13,71 +13,36 @@
 */
 
 #pragma once
+#include <functional>
+#include <nautilus/val.hpp>
 
 namespace NES::Nautilus::Interface
 {
 
-/**
-         * @brief Index with rollover behavior and a callback on rollover.
-         *
-         * When the index reaches or exceeds the rollover value, it is reset
-         * to zero and the callback passed in the constructor is invoked.
-         */
+/// Index with rollover behavior and a callback on rollover.
+/// When the index reaches or exceeds the rollover value, the counter is reset to zero and the callback is called.
+template <typename T>
 class RolloverIndex
 {
 public:
-    /// Callback type: plain function pointer with no arguments and no return.
-    typedef void (*Callback)();
+    /// The return value will be used as its new rolloverValue. The other param is the old roll over value
+    using Callback = std::function<nautilus::val<T>(const nautilus::val<T>&, const nautilus::val<uint64_t>&)>;
+    explicit RolloverIndex(const nautilus::val<T>& startIndex, const nautilus::val<T>& rolloverValue, Callback onRollover);
 
-    /**
-             * @brief Construct a new RolloverIndex.
-             *
-             * @param rolloverValue Value at which the index rolls over back to 0.
-             * @param onRollover    Function that is called whenever a rollover happens.
-             */
-    RolloverIndex(unsigned long rolloverValue, Callback onRollover);
+    /// Returns the index of this current loop before a rollover happened
+    nautilus::val<T> getCurrentIndex() const;
 
-    /**
-             * @brief Explicitly set the current index.
-             *
-             * If the new index is >= rolloverValue, a rollover is triggered.
-             */
-    void setIndex(unsigned long index);
+    /// Returns the index that stores the overall number of increment calls without ever being resetted
+    nautilus::val<T> getOverallIndex() const;
 
-    /**
-             * @brief Get the current index.
-             */
-    unsigned long getIndex() const;
-
-    /**
-             * @brief Set a new rollover value.
-             *
-             * The current index is kept unchanged.
-             */
-    void setRolloverValue(unsigned long rolloverValue);
-
-    /**
-             * @brief Get the current rollover value.
-             */
-    unsigned long getRolloverValue() const;
-
-    /**
-             * @brief Convenience function: increment index by 1.
-             *
-             * If the incremented index reaches or exceeds the rollover value,
-             * a rollover is triggered.
-             */
+    /// Increment the underlying indices and potentially calling
     void increment();
 
 private:
-    /**
-             * @brief Perform rollover: reset index to 0 and call the callback.
-             */
-    void rollover();
-
-    unsigned long index_;
-    unsigned long rolloverValue_;
-    Callback callback_;
+    nautilus::val<T> index;
+    nautilus::val<T> overallIndex;
+    nautilus::val<T> rolloverValue;
+    Callback callback;
 };
 
 }
