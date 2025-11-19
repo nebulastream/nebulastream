@@ -56,7 +56,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
     if (!containsLogicalSource(logicalSourceName))
     {
         LogicalSource logicalSource{logicalSourceName, newSchema};
-        namesToLogicalSourceMapping.emplace(logicalSourceName, logicalSource);
+        namesToLogicalSourceMapping.emplace(toUpperCase(logicalSourceName), logicalSource);
         logicalToPhysicalSourceMapping.emplace(logicalSource, std::unordered_set<SourceDescriptor>{});
         NES_DEBUG("Added logical source {}", logicalSourceName);
         return logicalSource;
@@ -102,7 +102,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
 std::optional<LogicalSource> SourceCatalog::getLogicalSource(const std::string& logicalSourceName) const
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto found = namesToLogicalSourceMapping.find(logicalSourceName); found != namesToLogicalSourceMapping.end())
+    if (const auto found = namesToLogicalSourceMapping.find(toUpperCase(logicalSourceName)); found != namesToLogicalSourceMapping.end())
     {
         return found->second;
     }
