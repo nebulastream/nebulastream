@@ -31,7 +31,11 @@ namespace NES
 {
 
 ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right)
+    : dataType(left.getDataType()
+                   .join(right.getDataType())
+                   .value_or(DataType{DataType::Type::UNDEFINED, left.getDataType().isNullable or right.getDataType().isNullable}))
+    , left(left)
+    , right(right)
 {
 }
 
@@ -77,7 +81,11 @@ LogicalFunction ModuloLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType().join(children[1].getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    copy.dataType
+        = children[0]
+              .getDataType()
+              .join(children[1].getDataType())
+              .value_or(DataType{DataType::Type::UNDEFINED, copy.left.getDataType().isNullable or copy.right.getDataType().isNullable});
     return copy;
 };
 
@@ -101,7 +109,7 @@ SerializableFunction ModuloLogicalFunction::serialize() const
     serializedFunction.set_function_type(NAME);
     serializedFunction.add_children()->CopyFrom(left.serialize());
     serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
+    DataTypeSerializationUtil::serializeDataType(getDataType(), serializedFunction.mutable_data_type());
     return serializedFunction;
 }
 

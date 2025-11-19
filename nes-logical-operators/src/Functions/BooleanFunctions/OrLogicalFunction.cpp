@@ -32,7 +32,9 @@
 namespace NES
 {
 OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, left.getDataType().isNullable or right.getDataType().isNullable))
+    , left(std::move(left))
+    , right(std::move(right))
 {
 }
 

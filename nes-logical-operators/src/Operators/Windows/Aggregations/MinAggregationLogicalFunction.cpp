@@ -67,9 +67,11 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
+    inputStamp = onField.getDataType();
+    /// The output of an aggregation is never NULL
+    finalAggregateStamp = onField.getDataType();
+    finalAggregateStamp.isNullable = false;
+    this->asField = asField.withDataType(finalAggregateStamp).get<FieldAccessLogicalFunction>();
 }
 
 SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const
