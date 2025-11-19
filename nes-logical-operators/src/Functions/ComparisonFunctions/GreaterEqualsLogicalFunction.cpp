@@ -33,7 +33,10 @@ namespace NES
 {
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(left))
+    , right(std::move(right))
+    , dataType(DataTypeProvider::provideDataType(
+          DataType::Type::BOOLEAN, this->left.getDataType().isNullable or this->right.getDataType().isNullable))
 {
 }
 

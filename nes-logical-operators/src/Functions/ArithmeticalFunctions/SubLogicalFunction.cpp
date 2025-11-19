@@ -32,7 +32,12 @@ namespace NES
 {
 
 SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
+    : dataType(left.getDataType()
+                   .join(right.getDataType())
+                   .value_or(DataType{
+                       .type = DataType::Type::UNDEFINED, .isNullable = left.getDataType().isNullable or right.getDataType().isNullable}))
+    , left(left)
+    , right(right) { };
 
 bool SubLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -85,7 +90,12 @@ LogicalFunction SubLogicalFunction::withChildren(const std::vector<LogicalFuncti
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType().join(children[1].getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    copy.dataType = children[0]
+                        .getDataType()
+                        .join(children[1].getDataType())
+                        .value_or(DataType{
+                            .type = DataType::Type::UNDEFINED,
+                            .isNullable = copy.left.getDataType().isNullable or copy.right.getDataType().isNullable});
     return copy;
 };
 
