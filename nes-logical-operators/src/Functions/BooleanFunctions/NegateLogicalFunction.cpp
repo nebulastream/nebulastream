@@ -33,7 +33,8 @@ namespace NES
 {
 
 NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(std::move(std::move(child)))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, child.getDataType().isNullable))
+    , child(std::move(std::move(child)))
 {
 }
 
