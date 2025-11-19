@@ -344,7 +344,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
             break;
         case AntlrSQLLexer::MINUS:
             function = MulLogicalFunction(
-                ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UINT64), "-1"), innerFunction);
+                ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UINT64, false), "-1"), innerFunction);
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
@@ -878,7 +878,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default:
             /// Check if the function is a constructor for a datatype
-            if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
+            if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName, false); dataType.has_value())
             {
                 if (helpers.top().constantBuilder.empty())
                 {

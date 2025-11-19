@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
