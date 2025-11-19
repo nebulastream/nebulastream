@@ -47,7 +47,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
 
     const auto lockedSinks = sinks.wlock();
     auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(descriptorConfigOpt.value())};
-    lockedSinks->emplace(std::move(sinkName), sinkDescriptor);
+    lockedSinks->emplace(toUpperCase(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }
 
