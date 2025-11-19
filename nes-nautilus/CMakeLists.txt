@@ -17,7 +17,9 @@ add_subdirectory(src)
 get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
+add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES}
+        src/Nautilus/Interface/Rollover/RolloverIndex.cpp
+        include/Nautilus/Interface/Rollover/RolloverIndex.hpp)
 target_link_libraries(nes-nautilus PUBLIC nes-memory)
 
 
