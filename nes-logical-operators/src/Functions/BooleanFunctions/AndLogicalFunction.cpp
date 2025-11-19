@@ -33,7 +33,7 @@ namespace NES
 {
 
 AndLogicalFunction::AndLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, left.getDataType().isNullable or right.getDataType().isNullable))
     , left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
 {

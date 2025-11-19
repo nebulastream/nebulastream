@@ -69,6 +69,8 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     }
     inputStamp = onField.getDataType();
     finalAggregateStamp = onField.getDataType();
+    /// The output of an aggregation is never NULL
+    finalAggregateStamp.isNullable = false;
     asField = asField.withDataType(finalAggregateStamp).get<FieldAccessLogicalFunction>();
 }
 

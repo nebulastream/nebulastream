@@ -68,7 +68,9 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
     inputStamp = onField.getDataType();
+    /// The output of an aggregation is never NULL
     finalAggregateStamp = onField.getDataType();
+    finalAggregateStamp.isNullable = false;
     asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 

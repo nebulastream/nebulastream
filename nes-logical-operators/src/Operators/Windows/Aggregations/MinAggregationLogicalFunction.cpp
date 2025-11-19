@@ -68,8 +68,10 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
     inputStamp = onField.getDataType();
+    /// The output of an aggregation is never NULL
     finalAggregateStamp = onField.getDataType();
-    this->asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
+    finalAggregateStamp.isNullable = false;
+    this->asField = asField.withDataType(finalAggregateStamp).get<FieldAccessLogicalFunction>();
 }
 
 SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const

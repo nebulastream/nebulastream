@@ -32,7 +32,11 @@ namespace NES
 {
 
 AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right)
+    : dataType(left.getDataType()
+                   .join(right.getDataType())
+                   .value_or(DataType{DataType::Type::UNDEFINED, left.getDataType().isNullable or right.getDataType().isNullable}))
+    , left(left)
+    , right(right)
 {
 }
 
@@ -69,7 +73,10 @@ LogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFuncti
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType().join(children[1].getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    copy.dataType = children[0]
+                        .getDataType()
+                        .join(children[1].getDataType())
+                        .value_or(DataType{DataType::Type::UNDEFINED, left.getDataType().isNullable or right.getDataType().isNullable});
     return copy;
 };
 

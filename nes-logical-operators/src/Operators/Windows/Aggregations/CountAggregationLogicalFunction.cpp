@@ -32,18 +32,18 @@ namespace NES
 {
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           std::move(field),
           std::move(asField))
 {
@@ -72,9 +72,11 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
             asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
         }
 
-        /// a count aggregation is always on an uint 64
-        this->onField = onField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
-        this->asField = asField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+        /// a count aggregation is always on an uint 64 and is never NULL
+        this->onField = onField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
+                            .get<FieldAccessLogicalFunction>();
+        this->asField = asField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
+                            .get<FieldAccessLogicalFunction>();
     }
     else
     {
