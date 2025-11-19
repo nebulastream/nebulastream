@@ -188,7 +188,7 @@ HashMapOptions
 createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Schema& inputSchema, const QueryExecutionConfiguration& conf)
 {
     uint64_t keySize = 0;
-    constexpr auto valueSize = sizeof(Nautilus::Interface::PagedVector);
+    constexpr auto valueSize = sizeof(PagedVector);
     std::vector<PhysicalFunction> keyFunctions;
     std::vector<std::string> fieldKeyNames;
     for (auto& fieldExtension : joinFieldExtensions)
@@ -207,14 +207,13 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
 
     const auto pageSize = conf.pageSize.getValue();
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
-    const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
+    const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto entriesPerPage = pageSize / entrySize;
 
     /// As we are using a paged vector for the value, we do not need to set the fieldNameValues for the chained hashmap
-    const auto& [fieldKeys, fieldValues]
-        = Interface::BufferRef::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
+    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
     HashMapOptions hashMapOptions{
-        std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+        std::make_unique<MurMur3HashFunction>(),
         std::move(keyFunctions),
         fieldKeys,
         fieldValues,
@@ -243,7 +242,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = outputOriginIds[0];
     auto logicalJoinFunction = join->getJoinFunction();
-    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join->getWindowType());
+    auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join.get(), windowType);
     auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
     const auto inputOriginIds
@@ -264,10 +263,10 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields);
-    auto leftBufferRef = Interface::BufferRef::TupleBufferRef::create(
-        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
-    auto rightBufferRef = Interface::BufferRef::TupleBufferRef::create(
-        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema);
+    auto leftBufferRef
+        = TupleBufferRef::create(conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema);
+    auto rightBufferRef
+        = TupleBufferRef::create(conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 

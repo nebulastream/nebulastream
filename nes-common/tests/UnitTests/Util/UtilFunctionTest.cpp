@@ -40,16 +40,16 @@ TEST(UtilFunctionTest, replaceNothing)
     const std::string origin = "I do not have the search string in me.";
     const std::string search = "nebula";
     const std::string replace = "replacing";
-    const std::string replacedString = Util::replaceFirst(origin, search, replace);
+    const std::string replacedString = replaceFirst(origin, search, replace);
     EXPECT_TRUE(replacedString == origin);
 }
 
 TEST(UtilFunctionTest, trimWhiteSpaces)
 {
-    EXPECT_EQ(Util::trimWhiteSpaces("   1234  "), "1234");
-    EXPECT_EQ(Util::trimWhiteSpaces("   12  34  "), "12  34");
-    EXPECT_EQ(Util::trimWhiteSpaces("     "), "");
-    EXPECT_EQ(Util::trimWhiteSpaces(""), "");
+    EXPECT_EQ(trimWhiteSpaces("   1234  "), "1234");
+    EXPECT_EQ(trimWhiteSpaces("   12  34  "), "12  34");
+    EXPECT_EQ(trimWhiteSpaces("     "), "");
+    EXPECT_EQ(trimWhiteSpaces(""), "");
 }
 
 TEST(UtilFunctionTest, replaceOnceWithOneFinding)
@@ -57,7 +57,7 @@ TEST(UtilFunctionTest, replaceOnceWithOneFinding)
     const std::string origin = "I do  have the search string nebula in me, but only once.";
     const std::string search = "nebula";
     const std::string replace = "replacing";
-    const std::string replacedString = Util::replaceFirst(origin, search, replace);
+    const std::string replacedString = replaceFirst(origin, search, replace);
     const std::string expectedReplacedString = "I do  have the search string replacing in me, but only once.";
     EXPECT_TRUE(replacedString == expectedReplacedString);
 }
@@ -67,7 +67,7 @@ TEST(UtilFunctionTest, replaceOnceWithMultipleFindings)
     const std::string origin = "I do  have the search string nebula in me, but multiple times nebula";
     const std::string search = "nebula";
     const std::string replace = "replacing";
-    const std::string replacedString = Util::replaceFirst(origin, search, replace);
+    const std::string replacedString = replaceFirst(origin, search, replace);
     const std::string expectedReplacedString = "I do  have the search string replacing in me, but multiple times nebula";
     EXPECT_TRUE(replacedString == expectedReplacedString);
 }
@@ -78,7 +78,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterNothing)
     test.emplace_back("This is a random test line with no delimiter.");
     const std::string line = "This is a random test line with no delimiter.";
     const std::string delimiter = "x";
-    const auto tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    const auto tokens = splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -89,7 +89,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterOnce)
     test.emplace_back(" delimiter.");
     const std::string line = "This is a random test line with x delimiter.";
     const std::string delimiter = "x";
-    const auto tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    const auto tokens = splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -101,7 +101,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice)
     test.emplace_back(" delimiter.");
     const std::string line = "This is a random x line with x delimiter.";
     const std::string delimiter = "x";
-    const auto tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    const auto tokens = splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -116,14 +116,14 @@ TEST(UtilFunctionTest, splitStringOnMultipleSpaces)
     test.emplace_back("with");
     test.emplace_back("delimiter.");
     const std::string line = "This is a random   line with    delimiter.";
-    const auto tokens = Util::splitWithStringDelimiter<std::string>(line, " ");
+    const auto tokens = splitWithStringDelimiter<std::string>(line, " ");
     EXPECT_TRUE(tokens == test);
 }
 
 TEST(UtilFunctionTest, splitIntegersWithWhiteSpaces)
 {
     const std::string line = "123,43,123,532, 12, 432,12,43   ,2341,321";
-    EXPECT_THAT(Util::splitWithStringDelimiter<int>(line, ","), ::testing::ElementsAre(123, 43, 123, 532, 12, 432, 12, 43, 2341, 321));
+    EXPECT_THAT(splitWithStringDelimiter<int>(line, ","), ::testing::ElementsAre(123, 43, 123, 532, 12, 432, 12, 43, 2341, 321));
 }
 
 TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
@@ -134,7 +134,7 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
     test.emplace_back(" delimiter. ");
     const std::string line = "This is a random x line with x delimiter. x";
     const std::string delimiter = "x";
-    const auto tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    const auto tokens = splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_EQ(tokens, test);
 }
 

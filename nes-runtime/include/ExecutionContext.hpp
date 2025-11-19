@@ -42,7 +42,6 @@
 
 namespace NES
 {
-using namespace Nautilus;
 
 /// The arena is a memory management system that provides memory to the operators during a pipeline invocation.
 /// As the memory is destroyed / returned to the arena after the pipeline invocation, the memory is not persistent and thus, it is not

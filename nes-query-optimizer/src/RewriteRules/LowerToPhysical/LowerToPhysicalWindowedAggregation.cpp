@@ -120,7 +120,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->getOnField());
         const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
         auto layout = std::make_shared<ColumnLayout>(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
-        auto bufferRef = std::make_shared<Interface::BufferRef::ColumnTupleBufferRef>(layout);
+        auto bufferRef = std::make_shared<ColumnTupleBufferRef>(layout);
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
@@ -186,19 +186,18 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
         keySize += DataTypeProvider::provideDataType(loweredFunctionType.type).getSizeInBytes();
     }
-    const auto entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
+    const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(*aggregation);
-    const auto& [fieldKeys, fieldValues]
-        = Interface::BufferRef::ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
+    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
 
     const auto windowMetaData = WindowMetaData{aggregation->getWindowStartFieldName(), aggregation->getWindowEndFieldName()};
 
     const HashMapOptions hashMapOptions(
-        std::make_unique<Interface::MurMur3HashFunction>(),
+        std::make_unique<MurMur3HashFunction>(),
         keyFunctions,
         fieldKeys,
         fieldValues,

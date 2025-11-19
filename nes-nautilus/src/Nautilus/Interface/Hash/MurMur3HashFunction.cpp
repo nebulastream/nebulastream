@@ -22,7 +22,7 @@
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 HashFunction::HashValue MurMur3HashFunction::init() const
 {

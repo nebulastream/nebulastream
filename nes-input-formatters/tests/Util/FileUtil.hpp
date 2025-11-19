@@ -34,7 +34,7 @@
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Util
+namespace NES
 {
 
 struct BinaryFileHeader

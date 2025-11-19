@@ -21,7 +21,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 /// This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages.

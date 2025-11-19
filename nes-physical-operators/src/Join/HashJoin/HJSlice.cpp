@@ -33,7 +33,7 @@ HJSlice::HJSlice(
 {
 }
 
-Nautilus::Interface::HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const
+HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const
 {
     /// Hashmaps of the left build side come before right
     auto pos = (workerThreadId % numberOfHashMapsPerInputStream)
@@ -48,7 +48,7 @@ Nautilus::Interface::HashMap* HJSlice::getHashMapPtr(const WorkerThreadId worker
     return hashMaps[pos].get();
 }
 
-Nautilus::Interface::HashMap* HJSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
+HashMap* HJSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
 {
     /// Hashmaps of the left build side come before right
     auto pos = (workerThreadId % numberOfHashMapsPerInputStream)
@@ -64,7 +64,7 @@ Nautilus::Interface::HashMap* HJSlice::getHashMapPtrOrCreate(const WorkerThreadI
     if (hashMaps.at(pos) == nullptr)
     {
         /// Hashmap at pos has not been initialized
-        hashMaps.at(pos) = std::make_unique<Nautilus::Interface::ChainedHashMap>(
+        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
             createNewHashMapSliceArgs.keySize,
             createNewHashMapSliceArgs.valueSize,
             createNewHashMapSliceArgs.numberOfBuckets,

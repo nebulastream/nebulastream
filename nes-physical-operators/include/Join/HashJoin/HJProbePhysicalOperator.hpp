@@ -37,8 +37,8 @@ public:
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         JoinSchema joinSchema,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> leftBufferRef,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> rightBufferRef,
+        std::shared_ptr<TupleBufferRef> leftBufferRef,
+        std::shared_ptr<TupleBufferRef> rightBufferRef,
         HashMapOptions leftHashMapBasedOptions,
         HashMapOptions rightHashMapBasedOptions);
 
@@ -47,7 +47,7 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> leftBufferRef, rightBufferRef;
+    std::shared_ptr<TupleBufferRef> leftBufferRef, rightBufferRef;
     HashMapOptions leftHashMapOptions, rightHashMapOptions;
 };
 

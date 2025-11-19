@@ -172,9 +172,9 @@ struct ConfigParametersGenerator
             }
 
 
-            for (const auto lines = Util::splitOnMultipleDelimiters(schema, {',', '\n'}); auto line : lines)
+            for (const auto lines = splitOnMultipleDelimiters(schema, {',', '\n'}); auto line : lines)
             {
-                line = Util::trimWhiteSpaces(line);
+                line = trimWhiteSpaces(line);
                 const auto foundIdentifier = line.substr(0, line.find_first_of(' '));
                 bool validatorExists = false;
                 for (const auto& [identifier, validator] : GeneratorFields::Validators)

@@ -23,7 +23,7 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus::Util
+namespace NES
 {
 
 /// Get member returns the MemRef to a specific class member as an offset to a objectReference.

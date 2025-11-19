@@ -62,7 +62,6 @@ TEST_F(VarValTest, SimpleConstruction)
 {
     auto testVarValConstruction = []<typename T>(const T value)
     {
-        using namespace NES::Nautilus;
         const VarVal varVal = nautilus::val<T>(value);
         EXPECT_EQ(varVal.cast<nautilus::val<T>>(), value);
         return 0;
@@ -85,7 +84,6 @@ TEST_F(VarValTest, SimpleMove)
 {
     auto testVarValMove = []<typename T>(const T value)
     {
-        using namespace NES::Nautilus;
         const VarVal varVal = nautilus::val<T>(value);
         const VarVal varValCopy = varVal;
         const VarVal varValMove = std::move(varVal);
@@ -112,7 +110,6 @@ TEST_F(VarValTest, SimpleMove)
     { \
         auto testVarValArithOperation = []<typename T>(const T value1, const T value2) -> int \
         { \
-            using namespace NES::Nautilus; \
             if constexpr (requires { nautilus::val<T>(value1) op nautilus::val<T>(value2); }) \
             { \
                 const VarVal varVal1 = nautilus::val<T>(value1); \
@@ -142,7 +139,6 @@ TEST_F(VarValTest, SimpleMove)
     { \
         auto testVarValLogicalOperation = []<typename T>(const T value1, const T value2) -> int \
         { \
-            using namespace NES::Nautilus; \
             if constexpr (requires { nautilus::val<T>(value1) op nautilus::val<T>(value2); }) \
             { \
                 const VarVal varVal1 = nautilus::val<T>(value1); \
@@ -166,7 +162,6 @@ TEST_F(VarValTest, SimpleMove)
     { \
         auto testVarValLogicalOperation = []<typename T>(const T value1, const T value2) -> int \
         { \
-            using namespace NES::Nautilus; \
             if constexpr (requires { nautilus::val<T>(value1) op nautilus::val<T>(value2); }) \
             { \
                 const VarVal varVal1 = nautilus::val<T>(value1); \
@@ -227,7 +222,6 @@ TEST_F(VarValTest, unaryOperatorOverloads)
 {
     auto testVarValOperation = []<typename T>(const T value)
     {
-        using namespace NES::Nautilus;
         const VarVal varVal = nautilus::val<T>(value);
         const VarVal result = !varVal;
         EXPECT_EQ(result.cast<nautilus::val<bool>>(), !value);
@@ -252,7 +246,6 @@ TEST_F(VarValTest, writeToMemoryTest)
 {
     auto testVarValWriteToMemory = []<typename T>(const T value)
     {
-        using namespace NES::Nautilus;
         const VarVal varVal = nautilus::val<T>(value);
         std::vector<int8_t> memory(sizeof(T));
         const auto memoryRef = nautilus::val<int8_t*>(memory.data());
@@ -281,7 +274,6 @@ TEST_F(VarValTest, readFromMemoryTest)
 {
     auto testVarValReadFromMemory = []<typename T>(const T value, const DataType::Type& type)
     {
-        using namespace NES::Nautilus;
         std::vector<int8_t> memory(sizeof(T));
         std::memcpy(memory.data(), &value, sizeof(T));
         const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), type);
@@ -307,7 +299,6 @@ TEST_F(VarValTest, operatorBoolTest)
 {
     auto testVarValOperatorBool = []<typename T>(const T value, const bool expectedValue)
     {
-        using namespace NES::Nautilus;
         const VarVal varVal = nautilus::val<T>(value);
         const auto varValBool = static_cast<bool>(varVal);
         EXPECT_EQ(varValBool, expectedValue);
@@ -349,7 +340,6 @@ TEST_F(VarValTest, ostreamTest)
 {
     auto testVarValOstream = []<typename T>(const T value)
     {
-        using namespace NES::Nautilus;
         VarVal varVal = nautilus::val<T>(value);
         nautilus::stringstream strStreamVarVal;
         std::stringstream strStreamExpected;
@@ -406,14 +396,14 @@ TEST_F(VarValTest, testDataTypesChange)
         /// Checking if the data types are equal / the same
         if constexpr (std::is_same_v<std::decay_t<From>, std::decay_t<From>>)
         {
-            const Nautilus::VarVal varValFrom{nautilus::val<From>(42)};
-            Nautilus::VarVal varValTo{nautilus::val<To>(43)};
+            const VarVal varValFrom{nautilus::val<From>(42)};
+            VarVal varValTo{nautilus::val<To>(43)};
             ASSERT_NO_THROW(varValTo = varValFrom);
         }
         else
         {
-            const Nautilus::VarVal varValFrom{nautilus::val<From>(42)};
-            Nautilus::VarVal varValTo{nautilus::val<To>(43)};
+            const VarVal varValFrom{nautilus::val<From>(42)};
+            VarVal varValTo{nautilus::val<To>(43)};
             ASSERT_EXCEPTION_ERRORCODE(varValTo = varValFrom, ErrorCode::UnknownOperation);
         }
     };
@@ -421,8 +411,8 @@ TEST_F(VarValTest, testDataTypesChange)
     /// Explicit data type change should work
     auto testExplicitDataTypeChange = []<typename From, typename To>(From, To)
     {
-        const Nautilus::VarVal varValFrom{nautilus::val<From>(42)};
-        Nautilus::VarVal varValTo{nautilus::val<To>(43)};
+        const VarVal varValFrom{nautilus::val<From>(42)};
+        VarVal varValTo{nautilus::val<To>(43)};
         ASSERT_NO_THROW(varValTo = varValFrom);
         ASSERT_EQ(varValTo, varValFrom);
     };

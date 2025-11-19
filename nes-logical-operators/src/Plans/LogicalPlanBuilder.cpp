@@ -196,7 +196,7 @@ LogicalPlan
 LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType)
 {
     NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
-    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
+    auto timeBasedWindowType = as<Windowing::TimeBasedWindowType>(windowType);
 
     if (getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(queryPlan).empty()
         and getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(queryPlan).empty())

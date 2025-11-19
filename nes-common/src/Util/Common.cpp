@@ -31,9 +31,3 @@
 namespace NES
 {
 }
-
-namespace NES::Util
-{
-
-
-}

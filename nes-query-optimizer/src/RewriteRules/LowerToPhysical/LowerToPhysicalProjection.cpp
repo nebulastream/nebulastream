@@ -41,7 +41,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto bufferSize = conf.pageSize.getValue();
 
     auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema);
-    auto scanBufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(scanLayout);
+    auto scanBufferRef = std::make_shared<RowTupleBufferRef>(scanLayout);
     auto accessedFields = projection->getAccessedFields();
     auto scan = ScanPhysicalOperator(scanBufferRef, accessedFields);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(

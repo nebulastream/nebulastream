@@ -102,10 +102,10 @@ std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& co
 
     if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
     {
-        parserConfig
-            = parserConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform(
-                  [](auto& pair) { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+        parserConfig = parserConfigIter->second
+            | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            | std::views::transform([](auto& pair)
+                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();
     }
     return parserConfig;
@@ -116,10 +116,10 @@ std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& co
     std::unordered_map<std::string, std::string> sourceOptions{};
     if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
     {
-        sourceOptions
-            = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform(
-                  [](auto& pair) { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+        sourceOptions = sourceConfigIter->second
+            | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            | std::views::transform([](auto& pair)
+                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();
     }
 
@@ -131,10 +131,9 @@ std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& conf
     std::unordered_map<std::string, std::string> sinkOptions{};
     if (const auto sourceConfigIter = configOptions.find("SINK"); sourceConfigIter != configOptions.end())
     {
-        sinkOptions
-            = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform(
-                  [](auto& pair) { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+        sinkOptions = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            | std::views::transform([](auto& pair)
+                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();
     }
 

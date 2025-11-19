@@ -26,7 +26,7 @@
 #include <ErrorHandling.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus::Util
+namespace NES
 {
 void logProxy(const char* message, const LogLevel logLevel);
 
@@ -37,7 +37,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_TRACE); \
-        nautilus::invoke(Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_DEBUG_EXEC(TEXT) \
@@ -46,7 +46,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_DEBUG); \
-        nautilus::invoke(Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_INFO_EXEC(TEXT) \
@@ -55,7 +55,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_INFO); \
-        nautilus::invoke(Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_WARNING_EXEC(TEXT) \
@@ -64,7 +64,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_WARNING); \
-        nautilus::invoke(Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_ERROR_EXEC(TEXT) \
@@ -73,7 +73,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_ERROR); \
-        nautilus::invoke(Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 
@@ -86,25 +86,25 @@ static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
     switch (physicalType)
     {
         case DataType::Type::INT8:
-            return Nautilus::VarVal(nautilus::val<int8_t>(value));
+            return VarVal(nautilus::val<int8_t>(value));
         case DataType::Type::INT16:
-            return Nautilus::VarVal(nautilus::val<int16_t>(value));
+            return VarVal(nautilus::val<int16_t>(value));
         case DataType::Type::INT32:
-            return Nautilus::VarVal(nautilus::val<int32_t>(value));
+            return VarVal(nautilus::val<int32_t>(value));
         case DataType::Type::INT64:
-            return Nautilus::VarVal(nautilus::val<int64_t>(value));
+            return VarVal(nautilus::val<int64_t>(value));
         case DataType::Type::UINT8:
-            return Nautilus::VarVal(nautilus::val<uint8_t>(value));
+            return VarVal(nautilus::val<uint8_t>(value));
         case DataType::Type::UINT16:
-            return Nautilus::VarVal(nautilus::val<uint16_t>(value));
+            return VarVal(nautilus::val<uint16_t>(value));
         case DataType::Type::UINT32:
-            return Nautilus::VarVal(nautilus::val<uint32_t>(value));
+            return VarVal(nautilus::val<uint32_t>(value));
         case DataType::Type::UINT64:
-            return Nautilus::VarVal(nautilus::val<uint64_t>(value));
+            return VarVal(nautilus::val<uint64_t>(value));
         case DataType::Type::FLOAT32:
-            return Nautilus::VarVal(nautilus::val<float>(value));
+            return VarVal(nautilus::val<float>(value));
         case DataType::Type::FLOAT64:
-            return Nautilus::VarVal(nautilus::val<double>(value));
+            return VarVal(nautilus::val<double>(value));
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR:
         case DataType::Type::VARSIZED:

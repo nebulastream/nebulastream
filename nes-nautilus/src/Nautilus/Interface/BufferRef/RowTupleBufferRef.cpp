@@ -28,7 +28,7 @@
 #include <static.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
 {
 
 RowTupleBufferRef::RowTupleBufferRef(std::shared_ptr<RowLayout> rowMemoryLayout) : rowMemoryLayout(std::move(rowMemoryLayout)) { };

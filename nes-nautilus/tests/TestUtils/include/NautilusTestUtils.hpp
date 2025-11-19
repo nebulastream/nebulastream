@@ -35,7 +35,7 @@
 #include <options.hpp>
 #include <static.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 
 /// We need a simple wrapper around the Record class to be able to compare the records with the fields.
@@ -133,7 +133,7 @@ public:
 
 
     /// Returns a MurMur3 hash function
-    static std::unique_ptr<Interface::HashFunction> getMurMurHashFunction();
+    static std::unique_ptr<HashFunction> getMurMurHashFunction();
 
     /// Creates a schema from the provided basic types. The field names will be field<counter> with the counter starting at typeIdxOffset
     /// For example, the call createSchemaFromBasicTypes({DataType::Type::INT_32, DataType::Type::FLOAT}, 1) will create a schema with the fields field1 and field2
@@ -158,7 +158,7 @@ public:
         ExecutionMode backend,
         nautilus::engine::Options& options,
         const Schema& schema,
-        const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& memoryProviderInputBuffer);
+        const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
     static std::string
@@ -178,8 +178,8 @@ public:
     static std::string compareRecordBuffers(
         const std::vector<TupleBuffer>& actualRecords,
         const std::vector<TupleBuffer>& expectedRecords,
-        const Nautilus::Interface::BufferRef::TupleBufferRef& memoryProviderActualBuffer,
-        const Nautilus::Interface::BufferRef::TupleBufferRef& memoryProviderInputBuffer);
+        const TupleBufferRef& memoryProviderActualBuffer,
+        const TupleBufferRef& memoryProviderInputBuffer);
 
 
 protected:

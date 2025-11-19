@@ -39,8 +39,8 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     DataType inputType,
     DataType resultType,
     PhysicalFunction inputFunction,
-    Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> bufferRefPagedVector)
+    Record::RecordFieldIdentifier resultFieldIdentifier,
+    std::shared_ptr<TupleBufferRef> bufferRefPagedVector)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , bufferRefPagedVector(std::move(bufferRefPagedVector))
 {
@@ -51,7 +51,7 @@ void MedianAggregationPhysicalFunction::lift(
 {
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const Interface::PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
+    const PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
     pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
 }
 
@@ -61,25 +61,22 @@ void MedianAggregationPhysicalFunction::combine(
     PipelineMemoryProvider&)
 {
     /// Getting the paged vectors from the aggregation states
-    const auto memArea1 = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState1);
-    const auto memArea2 = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState2);
+    const auto memArea1 = static_cast<nautilus::val<PagedVector*>>(aggregationState1);
+    const auto memArea2 = static_cast<nautilus::val<PagedVector*>>(aggregationState2);
 
     /// Calling the copyFrom function of the paged vector to combine the two paged vectors by copying the content of the second paged vector to the first paged vector
-    nautilus::invoke(
-        +[](Interface::PagedVector* vector1, const Interface::PagedVector* vector2) -> void { vector1->copyFrom(*vector2); },
-        memArea1,
-        memArea2);
+    nautilus::invoke(+[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); }, memArea1, memArea2);
 }
 
-Nautilus::Record MedianAggregationPhysicalFunction::lower(
+Record MedianAggregationPhysicalFunction::lower(
     const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
     /// Getting the paged vector from the aggregation state
-    const auto pagedVectorPtr = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState);
-    const Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
+    const auto pagedVectorPtr = static_cast<nautilus::val<PagedVector*>>(aggregationState);
+    const PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
     const auto allFieldNames = bufferRefPagedVector->getMemoryLayout()->getSchema().getFieldNames();
     const auto numberOfEntries = invoke(
-        +[](const Interface::PagedVector* pagedVector)
+        +[](const PagedVector* pagedVector)
         {
             const auto numberOfEntriesVal = pagedVector->getTotalNumberOfEntries();
             INVARIANT(numberOfEntriesVal > 0, "The number of entries in the paged vector must be greater than 0");
@@ -166,8 +163,8 @@ void MedianAggregationPhysicalFunction::reset(const nautilus::val<AggregationSta
         +[](AggregationState* pagedVectorMemArea) -> void
         {
             /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-            auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea);
-            new (pagedVector) Nautilus::Interface::PagedVector();
+            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+            new (pagedVector) PagedVector();
         },
         aggregationState);
 }
@@ -178,8 +175,7 @@ void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>
         +[](AggregationState* pagedVectorMemArea) -> void
         {
             /// Calls the destructor of the PagedVector
-            auto* pagedVector
-                = reinterpret_cast<Interface::PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             pagedVector->~PagedVector();
         },
         aggregationState);
@@ -187,7 +183,7 @@ void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>
 
 size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return sizeof(Interface::PagedVector);
+    return sizeof(PagedVector);
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(

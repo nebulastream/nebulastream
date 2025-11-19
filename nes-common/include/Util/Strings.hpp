@@ -24,7 +24,7 @@
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Util
+namespace NES
 {
 
 /// Removes leading and trailing whitespaces from the input string_view.

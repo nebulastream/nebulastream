@@ -26,7 +26,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 /// Forward declaration of the ChainedHashMapRef, to avoid cyclic dependencies between ChainedHashMap and ChainedHashMapRef
 class ChainedHashMapRef;

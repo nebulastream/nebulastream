@@ -43,7 +43,7 @@
 
 namespace NES
 {
-Interface::HashMap* getHashJoinHashMapProxy(
+HashMap* getHashJoinHashMapProxy(
     const HJOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -90,9 +90,9 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
 
     const auto cleanupStateNautilusFunction
         = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-            [copyOfHashMapOptions = hashMapOptions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
             {
-                const Interface::ChainedHashMapRef hashMapRef{
+                const ChainedHashMapRef hashMapRef{
                     hashMap,
                     copyOfHashMapOptions.fieldKeys,
                     copyOfHashMapOptions.fieldValues,
@@ -100,7 +100,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
                     copyOfHashMapOptions.entrySize};
                 for (const auto entry : hashMapRef)
                 {
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
                         entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
                     const auto state = entryRefReset.getValueMemArea();
                     nautilus::invoke(
@@ -108,7 +108,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
                         {
                             /// Calls the destructor of the PagedVector
                             /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                            auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea);
+                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
                             pagedVector->~PagedVector();
                         },
                         state);
@@ -133,7 +133,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         ctx.workerThreadId,
         nautilus::val<JoinBuildSideType>(joinBuildSide),
         nautilus::val<const HJBuildPhysicalOperator*>(this));
-    Interface::ChainedHashMapRef hashMap{
+    ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
     /// Calling the key functions to add/update the keys to the record
@@ -149,29 +149,27 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     const auto hashMapEntry = hashMap.findOrCreateEntry(
         record,
         *hashMapOptions.hashFunction,
-        [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+        [&](const nautilus::val<AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+            const ChainedHashMapRef::ChainedEntryRef entryRefReset{entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
             const auto state = entryRefReset.getValueMemArea();
             nautilus::invoke(
                 +[](int8_t* pagedVectorMemArea) -> void
                 {
                     /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
                     /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                    auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea);
-                    new (pagedVector) Nautilus::Interface::PagedVector();
+                    auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                    new (pagedVector) PagedVector();
                 },
                 state);
         },
         ctx.pipelineMemoryProvider.bufferProvider);
 
     /// Inserting the tuple into the corresponding hash entry
-    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef{
-        hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+    const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
     auto entryMemArea = entryRef.getValueMemArea();
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
+    const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
 }
 
@@ -179,7 +177,7 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& bufferRef,
+    const std::shared_ptr<TupleBufferRef>& bufferRef,
     HashMapOptions hashMapOptions)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
     , hashMapOptions(std::move(hashMapOptions))

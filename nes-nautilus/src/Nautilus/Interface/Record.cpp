@@ -24,7 +24,7 @@
 #include <static.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : recordFields(fields)
 {

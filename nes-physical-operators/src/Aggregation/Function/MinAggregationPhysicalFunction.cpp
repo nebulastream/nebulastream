@@ -32,7 +32,7 @@ namespace NES
 {
 
 MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }
@@ -72,14 +72,14 @@ void MinAggregationPhysicalFunction::combine(
     }
 }
 
-Nautilus::Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the min value from the aggregation state
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType.type);
 
     /// Creating a record with the min value
-    Nautilus::Record record;
+    Record record;
     record.write(resultFieldIdentifier, min);
 
     return record;
@@ -89,7 +89,7 @@ void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*
 {
     /// Resetting the min value to the maximum value
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = Nautilus::Util::createNautilusMaxValue(inputType.type);
+    const auto min = createNautilusMaxValue(inputType.type);
     min.writeToMemory(memAreaMin);
 }
 

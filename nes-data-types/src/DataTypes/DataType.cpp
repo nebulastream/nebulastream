@@ -172,9 +172,9 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::UINT64:
             return std::to_string(*static_cast<const uint64_t*>(data));
         case Type::FLOAT32:
-            return Util::formatFloat(*static_cast<const float*>(data));
+            return formatFloat(*static_cast<const float*>(data));
         case Type::FLOAT64:
-            return Util::formatFloat(*static_cast<const double*>(data));
+            return formatFloat(*static_cast<const double*>(data));
         case Type::BOOLEAN:
             return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case Type::CHAR: {

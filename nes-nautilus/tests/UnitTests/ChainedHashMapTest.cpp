@@ -31,7 +31,7 @@
 #include <ChainedHashMapTestUtils.hpp>
 #include <NautilusTestUtils.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 class ChainedHashMapTest
     : public Testing::BaseUnitTest,

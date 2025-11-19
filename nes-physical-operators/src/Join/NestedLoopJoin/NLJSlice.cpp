@@ -31,12 +31,12 @@ NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const u
 {
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+        leftPagedVectors.emplace_back(std::make_unique<PagedVector>());
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+        rightPagedVectors.emplace_back(std::make_unique<PagedVector>());
     }
 }
 
@@ -58,20 +58,19 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
         [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
-Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
+PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % leftPagedVectors.size();
     return leftPagedVectors[pos].get();
 }
 
-Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
+PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % rightPagedVectors.size();
     return rightPagedVectors[pos].get();
 }
 
-Nautilus::Interface::PagedVector*
-NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+PagedVector* NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {

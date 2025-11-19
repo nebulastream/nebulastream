@@ -74,8 +74,8 @@ void AggregationOperatorHandler::triggerSlices(
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
         /// Getting all hashmaps for each slice that has at least one tuple
-        std::unique_ptr<Nautilus::Interface::ChainedHashMap> finalHashMap;
-        std::vector<Nautilus::Interface::HashMap*> allHashMaps;
+        std::unique_ptr<ChainedHashMap> finalHashMap;
+        std::vector<HashMap*> allHashMaps;
         uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
@@ -92,8 +92,7 @@ void AggregationOperatorHandler::triggerSlices(
                     totalNumberOfTuples += hashMap->getNumberOfTuples();
                     if (not finalHashMap)
                     {
-                        finalHashMap = Nautilus::Interface::ChainedHashMap::createNewMapWithSameConfiguration(
-                            *dynamic_cast<Nautilus::Interface::ChainedHashMap*>(hashMap));
+                        finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(*dynamic_cast<ChainedHashMap*>(hashMap));
                     }
                 }
             }
@@ -104,7 +103,7 @@ void AggregationOperatorHandler::triggerSlices(
         /// - all pointers to all hashmaps of the window to be triggered
         /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
-        const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(Nautilus::Interface::HashMap*));
+        const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(HashMap*));
         const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
         if (not tupleBufferVal.has_value())
         {

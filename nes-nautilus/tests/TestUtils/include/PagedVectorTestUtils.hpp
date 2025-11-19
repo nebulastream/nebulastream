@@ -23,12 +23,12 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 
 
 void runStoreTest(
-    Interface::PagedVector& pagedVector,
+    PagedVector& pagedVector,
     const Schema& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -37,7 +37,7 @@ void runStoreTest(
     AbstractBufferProvider& bufferManager);
 
 void runRetrieveTest(
-    Interface::PagedVector& pagedVector,
+    PagedVector& pagedVector,
     const Schema& testSchema,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,

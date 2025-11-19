@@ -137,8 +137,8 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
                descriptor.getParserConfig().parserType,
-               Util::escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
-               Util::escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
+               escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
+               escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
 }
 
 SerializableSourceDescriptor SourceDescriptor::serialize() const

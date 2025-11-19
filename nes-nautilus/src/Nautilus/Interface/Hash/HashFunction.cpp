@@ -11,12 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+
 #include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <static.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 HashFunction::HashValue HashFunction::calculate(const VarVal& value) const
 {

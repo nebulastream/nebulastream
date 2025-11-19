@@ -33,10 +33,10 @@ namespace NES
 struct HashMapOptions
 {
     HashMapOptions(
-        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
+        std::unique_ptr<HashFunction> hashFunction,
         std::vector<PhysicalFunction> keyFunctions,
-        std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldKeys,
-        std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldValues,
+        std::vector<FieldOffsets> fieldKeys,
+        std::vector<FieldOffsets> fieldValues,
         const uint64_t entriesPerPage,
         const uint64_t entrySize,
         const uint64_t keySize,
@@ -129,11 +129,10 @@ struct HashMapOptions
 
     /// Method that gets called, once a hash map based slice gets destroyed.
     template <typename NautilusCleanupExecFunc>
-    std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)>
+    std::function<void(const std::vector<std::unique_ptr<HashMap>>&)>
     getSliceCleanupFunction(std::shared_ptr<NautilusCleanupExecFunc> nautilusCleanupExecutable) const
     {
-        return [copyOfCleanupStateNautilusFunction
-                = nautilusCleanupExecutable](const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>& hashMaps)
+        return [copyOfCleanupStateNautilusFunction = nautilusCleanupExecutable](const std::vector<std::unique_ptr<HashMap>>& hashMaps)
         {
             for (const auto& hashMap :
                  hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr and hashMapPtr->getNumberOfTuples() > 0; }))
@@ -145,10 +144,10 @@ struct HashMapOptions
     }
 
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
-    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
+    std::unique_ptr<HashFunction> hashFunction;
     std::vector<PhysicalFunction> keyFunctions;
-    std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldKeys;
-    std::vector<Nautilus::Interface::BufferRef::FieldOffsets> fieldValues;
+    std::vector<FieldOffsets> fieldKeys;
+    std::vector<FieldOffsets> fieldValues;
     uint64_t entriesPerPage;
     uint64_t entrySize;
     uint64_t keySize;

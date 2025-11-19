@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
-namespace NES::Util
+namespace NES
 {
 
 TEST(TrimWhiteSpacesTest, TrimLeadingAndTrailingSpaces)

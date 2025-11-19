@@ -50,7 +50,7 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 
 TestParams::TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue& minMaxNumberOfBuckets, const MinMaxValue& minMaxPageSize)
@@ -90,7 +90,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     /// Setting the hash map configurations
     keySize = inputSchemaKey.getSizeOfSchemaInBytes();
     valueSize = inputSchemaValue.getSizeOfSchemaInBytes();
-    entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
+    entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     entriesPerPage = params.pageSize / entrySize;
 
     /// Creating a buffer manager with a buffer size of 4k (default) and enough buffers to hold all input tuples
@@ -105,11 +105,10 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
-    inputBufferRef = Interface::BufferRef::TupleBufferRef::create(bufferManager->getBufferSize(), inputSchema);
+    inputBufferRef = TupleBufferRef::create(bufferManager->getBufferSize(), inputSchema);
 
     /// Creating the fields for the key and value from the schema
-    std::tie(fieldKeys, fieldValues)
-        = Interface::BufferRef::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
+    std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
     projectionKeys = inputSchemaKey.getFieldNames();
@@ -149,7 +148,7 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
 
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     const TupleBuffer& bufferActual,
-    const Interface::BufferRef::TupleBufferRef& memoryProviderInputBuffer,
+    const TupleBufferRef& memoryProviderInputBuffer,
     const std::map<TestUtils::RecordWithFields, Record>& exactMap)
 {
     PRECONDITION(
@@ -175,7 +174,7 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     return ss.str();
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, Interface::HashMap*>
+nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
 ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -186,9 +185,9 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
             nautilus::val<TupleBuffer*> keyBufferRef,
             nautilus::val<TupleBuffer*> outputBufferForValues,
             nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<Interface::HashMap*> hashMapVal)
+            nautilus::val<HashMap*> hashMapVal)
         {
-            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(keyBufferRef);
             for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
             {
@@ -196,8 +195,8 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
                 auto foundEntry = hashMapRef.findOrCreateEntry(
                     recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
-                const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(foundEntry);
-                const Interface::ChainedHashMapRef::ChainedEntryRef entry(castedEntry, hashMapVal, fieldKeys, fieldValues);
+                const auto castedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry);
+                const ChainedHashMapRef::ChainedEntryRef entry(castedEntry, hashMapVal, fieldKeys, fieldValues);
 
                 /// Writing the read value from the chained hash map into the buffer.
                 Record outputRecord;
@@ -214,7 +213,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, Interface::HashMap*, AbstractBufferProvider*>
+nautilus::engine::CallableFunction<void, TupleBuffer*, HashMap*, AbstractBufferProvider*>
 ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -223,17 +222,17 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
     return nautilusEngine->registerFunction(std::function(
         [this](
             nautilus::val<TupleBuffer*> bufferOutput,
-            nautilus::val<Interface::HashMap*> hashMapVal,
+            nautilus::val<HashMap*> hashMapVal,
             nautilus::val<AbstractBufferProvider*> bufferProvider)
         {
-            const Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            const ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             RecordBuffer recordBufferOutput(bufferOutput);
             nautilus::val<uint64_t> outputBufferIndex(0);
             for (auto entry : hashMapRef)
             {
                 /// Writing the read value from the chained hash map into the buffer.
                 Record outputRecord;
-                const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, hashMapVal, fieldKeys, fieldValues);
+                const ChainedHashMapRef::ChainedEntryRef entryRef(entry, hashMapVal, fieldKeys, fieldValues);
                 const auto keyRecord = entryRef.getKey();
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
@@ -246,7 +245,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, Interface::HashMap*>
+nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, HashMap*>
 ChainedHashMapTestUtils::compileFindAndInsert() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -256,9 +255,9 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
         [this](
             nautilus::val<TupleBuffer*> inputBufferPtr,
             nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<Interface::HashMap*> hashMapVal)
+            nautilus::val<HashMap*> hashMapVal)
         {
-            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             const RecordBuffer recordBuffer(inputBufferPtr);
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
@@ -267,10 +266,10 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
                 auto foundEntry = hashMapRef.findOrCreateEntry(
                     recordKey,
                     *NautilusTestUtils::getMurMurHashFunction(),
-                    [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                    [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                     {
-                        const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(entry);
-                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(castedEntry, hashMapVal, fieldKeys, fieldValues);
+                        const auto castedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(entry);
+                        const ChainedHashMapRef::ChainedEntryRef ref(castedEntry, hashMapVal, fieldKeys, fieldValues);
                         ref.copyValuesToEntry(recordValue, bufferManagerVal);
                     },
                     bufferManagerVal);
@@ -279,7 +278,7 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, Interface::HashMap*>
+nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
 ChainedHashMapTestUtils::compileFindAndUpdate() const
 {
     /// Compiling a function that finds the entry and updates the value.
@@ -291,9 +290,9 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
             nautilus::val<TupleBuffer*> keyBufferRef,
             nautilus::val<TupleBuffer*> valueBufferUpdatedRef,
             nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<Interface::HashMap*> hashMapVal)
+            nautilus::val<HashMap*> hashMapVal)
         {
-            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(keyBufferRef);
             const RecordBuffer recordBufferValue(valueBufferUpdatedRef);
 
@@ -304,17 +303,17 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
                 auto foundEntry = hashMapRef.findOrCreateEntry(
                     recordKey,
                     *NautilusTestUtils::getMurMurHashFunction(),
-                    [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                    [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                     {
-                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
+                        const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
                         ref.copyValuesToEntry(recordValue, bufferManagerVal);
                     },
                     bufferManagerVal);
                 hashMapRef.insertOrUpdateEntry(
                     foundEntry,
-                    [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                    [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                     {
-                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
+                        const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
                         ref.copyValuesToEntry(recordValue, bufferManagerVal);
                     },
                     ASSERT_VIOLATION_FOR_ON_INSERT,
@@ -351,7 +350,7 @@ std::map<RecordWithFields, Record> ChainedHashMapTestUtils::createExactMap(const
 }
 
 void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
-    Interface::ChainedHashMap& hashMap, const std::map<RecordWithFields, Record>& exactMap)
+    ChainedHashMap& hashMap, const std::map<RecordWithFields, Record>& exactMap)
 {
     /// Ensuring that the number of tuples is correct.
     ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());
@@ -381,8 +380,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     }
 }
 
-void ChainedHashMapTestUtils::checkEntryIterator(
-    Interface::ChainedHashMap& hashMap, const std::map<TestUtils::RecordWithFields, Record>& exactMap)
+void ChainedHashMapTestUtils::checkEntryIterator(ChainedHashMap& hashMap, const std::map<TestUtils::RecordWithFields, Record>& exactMap)
 {
     /// Ensuring that the number of tuples is correct.
     ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());

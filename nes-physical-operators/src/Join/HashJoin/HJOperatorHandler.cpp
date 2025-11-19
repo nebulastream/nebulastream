@@ -117,7 +117,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// Getting all hash maps for the left and right slice
     auto getHashMapsForSlice = [&](const Slice& slice, const JoinBuildSideType& buildSide)
     {
-        std::vector<Nautilus::Interface::HashMap*> allHashMaps;
+        std::vector<HashMap*> allHashMaps;
         const auto* const hashJoinSlice = dynamic_cast<const HJSlice*>(&slice);
         INVARIANT(hashJoinSlice != nullptr, "Slice must be of type HashMapSlice!");
         for (uint64_t hashMapIdx = 0; hashMapIdx < hashJoinSlice->getNumberOfHashMapsForSide(); ++hashMapIdx)
@@ -140,8 +140,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// We need a buffer that is large enough to store:
     /// - all pointers to (left + right) hashmaps of the window to be triggered
     /// - size of EmittedHJWindowTrigger
-    const auto neededBufferSize
-        = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(Nautilus::Interface::HashMap*));
+    const auto neededBufferSize = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(HashMap*));
     const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
     if (not tupleBufferVal.has_value())
     {

@@ -30,11 +30,11 @@ FixedGeneratorRate::FixedGeneratorRate(const std::string_view configString)
 
 std::optional<double> FixedGeneratorRate::parseAndValidateConfigString(std::string_view configString)
 {
-    if (const auto params = Util::splitWithStringDelimiter<std::string_view>(configString, " "); params.size() == 2)
+    if (const auto params = splitWithStringDelimiter<std::string_view>(configString, " "); params.size() == 2)
     {
-        if (Util::toLowerCase(params[0]) == "emit_rate")
+        if (toLowerCase(params[0]) == "emit_rate")
         {
-            return Util::from_chars<double>(params[1]);
+            return from_chars<double>(params[1]);
         }
     }
     return {};

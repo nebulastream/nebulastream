@@ -12,19 +12,19 @@
     limitations under the License.
 */
 
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 
 #include <cstdint>
 #include <ostream>
 #include <utility>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size)
@@ -33,7 +33,7 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 }
 
 VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
-    : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData))
+    : VariableSizedData(pointerToVarSizedData, readValueFromMemRef<uint32_t>(pointerToVarSizedData))
 {
 }
 
@@ -134,7 +134,7 @@ nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
     oss << "Size(" << variableSizedData.size << "): ";
     for (nautilus::val<uint32_t> i = 0; i < variableSizedData.size; ++i)
     {
-        const nautilus::val<int> byte = Util::readValueFromMemRef<int8_t>((variableSizedData.getContent() + i)) & nautilus::val<int>(0xff);
+        const nautilus::val<int> byte = readValueFromMemRef<int8_t>((variableSizedData.getContent() + i)) & nautilus::val<int>(0xff);
         oss << nautilus::hex;
         oss.operator<<(byte);
         oss << " ";
