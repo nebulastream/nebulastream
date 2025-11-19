@@ -145,14 +145,14 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     copy.inputSchema = firstSchema;
     copy.outputSchema = Schema{};
 
-    if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
+    if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()) != nullptr)
     {
         const auto& newQualifierForSystemField = firstSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator();
 
         copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
         copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "END";
-        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
-        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
+        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64, false);
+        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64, false);
     }
     else
     {

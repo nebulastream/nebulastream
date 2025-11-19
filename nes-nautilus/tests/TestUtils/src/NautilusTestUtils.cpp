@@ -162,7 +162,7 @@ Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType:
     for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
     {
         const auto nameOfField = Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset));
-        schema.addField(nameOfField, type);
+        schema.addField(nameOfField, type, false);
     }
     return schema;
 }

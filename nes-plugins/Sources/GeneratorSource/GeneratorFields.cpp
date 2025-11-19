@@ -60,7 +60,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
     const auto end = parameters[3];
     const auto step = parameters[4];
 
-    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type});
+    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type}, false);
     if (not dataType.has_value())
     {
         throw InvalidConfigParameter("Invalid SequenceField type of {}!", type);
@@ -167,7 +167,7 @@ SequenceField::SequenceField(std::string_view rawSchemaLine)
     const auto start = parameters[2];
     const auto end = parameters[3];
     const auto step = parameters[4];
-    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type});
+    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type}, false);
     if (not dataType.has_value())
     {
         throw InvalidConfigParameter("Invalid SequenceField type of {}!", type);

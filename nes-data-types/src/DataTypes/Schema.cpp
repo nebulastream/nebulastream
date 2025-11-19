@@ -53,12 +53,12 @@ std::string Schema::Field::getUnqualifiedName() const
 
 Schema Schema::addField(std::string name, const DataType& dataType)
 {
-    return addField(std::move(name), dataType.type);
+    return addField(std::move(name), dataType.type, dataType.isNullable);
 }
 
-Schema Schema::addField(std::string name, const DataType::Type type)
+Schema Schema::addField(std::string name, const DataType::Type type, const bool isNullable)
 {
-    DataType dataType{type};
+    DataType dataType{.type = type, .isNullable = isNullable};
     sizeOfSchemaInBytes += dataType.getSizeInBytes();
     fields.emplace_back(std::move(name), std::move(dataType));
     nameToField.emplace(fields.back().name, fields.size() - 1);
