@@ -19,14 +19,10 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
+activate_optional_plugin("Sources/ODBCSource" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
   activate_optional_plugin("Sinks/ChecksumSink" ON)
 endif()
-
-option(ENABLE_ODBC_SOURCE "Enables the ODBC Source" OFF)
-if (ENABLE_ODBC_SOURCE)
-    activate_optional_plugin("Sources/ODBCSource" ON)
-endif ()

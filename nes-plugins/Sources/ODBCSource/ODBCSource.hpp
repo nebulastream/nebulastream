@@ -31,12 +31,11 @@
 #include <sys/types.h>
 #include "Configurations/Descriptor.hpp"
 #include "Sources/SourceDescriptor.hpp"
+#include "ODBCConnection.hpp"
 
 
 namespace NES
 {
-
-struct Context;
 
 class ODBCSource : public Source
 {
@@ -63,20 +62,23 @@ public:
     /// Close ODBC connection.
     void close() override;
 
-    static std::unique_ptr<DescriptorConfig::Config>
+    static DescriptorConfig::Config
     validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     std::string host;
+    std::string port;
     std::string database;
     std::string username;
     std::string password;
     std::string driver;
     std::string query;
+    bool trustServerCertificate;
 
-    std::unique_ptr<Context> context;
+    bool firstCall = true;
+    std::unique_ptr<ODBCConnection> connection;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };
@@ -88,6 +90,10 @@ struct ConfigParametersODBC
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
         "host", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
             return DescriptorConfig::tryGet(HOST, config);
+        }};
+    static inline const DescriptorConfig::ConfigParameter<std::string> PORT{
+        "port", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+            return DescriptorConfig::tryGet(PORT, config);
         }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> DATABASE{
@@ -115,8 +121,13 @@ struct ConfigParametersODBC
             return DescriptorConfig::tryGet(QUERY, config);
         }};
 
+    static inline const DescriptorConfig::ConfigParameter<bool> TRUST_SERVER_CERTIFICATE{
+        "trust_server_certificate", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) -> std::optional<bool> {
+            return DescriptorConfig::tryGet(TRUST_SERVER_CERTIFICATE, config);
+        }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(HOST, DRIVER, QUERY, USERNAME, PASSWORD, DATABASE);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, HOST, PORT, DRIVER, QUERY, USERNAME, PASSWORD, DATABASE, TRUST_SERVER_CERTIFICATE);
 };
 
 }

@@ -13,8 +13,16 @@
 add_plugin_as_library(ODBC Source nes-sources-registry ODBC_source_plugin_library ODBCSource.cpp)
 add_plugin_as_library(ODBC SourceValidation nes-sources-registry ODBC_source_validation_plugin_library ODBCSource.cpp)
 
-#set(unofficial-unixodbc_DIR /vcpkg/gt)
+set(unofficial-unixodbc_DIR /vcpkg/gt)
 find_package(unixodbc CONFIG REQUIRED)
 
 target_link_libraries(ODBC_source_plugin_library PRIVATE UNIX::odbc)
 target_link_libraries(ODBC_source_validation_plugin_library PRIVATE UNIX::odbc)
+
+#find_package(ODBC REQUIRED)
+#target_link_libraries(ODBC_source_plugin_library PRIVATE ODBC::ODBC)
+#target_link_libraries(ODBC_source_validation_plugin_library PRIVATE ODBC::ODBC)
+
+add_executable(msconnect connectTest.cpp
+        ODBCConnection.hpp)
+target_link_libraries(msconnect PUBLIC UNIX::odbc)

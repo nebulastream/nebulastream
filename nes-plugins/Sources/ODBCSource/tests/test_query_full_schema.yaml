@@ -1,0 +1,72 @@
+#  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
+query: |
+  SELECT mlife_FallNr FROM odbc_source INTO csv_sink
+logical:
+  - name: odbc_source
+    schema:
+      - name: mlife_ANR
+        type: INT32
+      - name: mlife_FallNr
+        type: INT32
+      - name: Herzfrequenz
+        type: FLOAT64
+      - name: BPdias
+        type: FLOAT64
+      - name: BPM
+        type: FLOAT64
+      - name: BPsys
+        type: FLOAT64
+      - name: Temp
+        type: FLOAT64
+      - name: ZVD
+        type: FLOAT64
+      - name: dPAP
+        type: FLOAT64
+      - name: mPAP
+        type: FLOAT64
+      - name: sPAP
+        type: FLOAT64
+      - name: dNiB
+        type: FLOAT64
+      - name: mNiB
+        type: FLOAT64
+      - name: sNiB
+        type: FLOAT64
+      - name: SPO2
+        type: FLOAT64
+      - name: PulsRate
+        type: FLOAT64
+      - name: LAP
+        type: FLOAT64
+      - name: ZentTemp
+        type: FLOAT64
+      - name: BIS
+        type: FLOAT64
+      - name: HZV
+        type: FLOAT64
+physical:
+  - logical: odbc_source
+    type: ODBC
+    parser_config:
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+      type: CSV
+    source_config:
+      host: "localhost"
+      port: "1433"
+      database: "master"
+      username: "sa"
+      password: "samplePassword1!"
+      driver: "ODBC Driver 18 for SQL Server"
+      query: "SELECT * FROM dbo.v_Vitalwerte_unvalidiert"
+      trust_server_certificate: true
+
+sinks:
+  - name: csv_SiNk
+    schema:
+      - name: odbc_source$mlife_FallNr
+        type: INT32
+    type: File
+    config:
+      file_path: "/home/rudi/dima/nebulastream-public/nes-plugins/Sources/ODBCSource/tests/output.csv"
+      input_format: "CSV"
