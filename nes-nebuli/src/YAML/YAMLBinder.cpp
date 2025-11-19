@@ -39,11 +39,11 @@
 
 namespace
 {
-NES::DataType stringToFieldType(const std::string& fieldNodeType)
+NES::DataType stringToFieldType(const std::string& fieldNodeType, const bool isNullable)
 {
     try
     {
-        return NES::DataTypeProvider::provideDataType(fieldNodeType);
+        return NES::DataTypeProvider::provideDataType(fieldNodeType, isNullable);
     }
     catch (std::runtime_error& e)
     {
@@ -61,7 +61,7 @@ struct convert<NES::CLI::SchemaField>
     static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
     {
         rhs.name = node["name"].as<std::string>();
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
+        rhs.type = stringToFieldType(node["type"].as<std::string>(), node["nullable"].as<bool>());
         return true;
     }
 };
@@ -121,7 +121,8 @@ namespace NES::CLI
 {
 
 
-CLI::SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
+CLI::SchemaField::SchemaField(std::string name, const std::string& typeName, const bool isNullable)
+    : SchemaField(std::move(name), stringToFieldType(typeName, isNullable))
 {
 }
 
