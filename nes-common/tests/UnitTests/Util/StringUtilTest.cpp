@@ -468,12 +468,6 @@ TEST(EscapeSpecialCharactersTest, MixedContent)
     EXPECT_EQ("\\aAlert!\\bBackspace", escapeSpecialCharacters("\aAlert!\bBackspace"));
 }
 
-TEST(EscapeSpecialCharactersTest, AlreadyEscapedCharacters)
-{
-    /// Backslashes that are already part of the string should be preserved
-    EXPECT_EQ("\\n", escapeSpecialCharacters("\\n"));
-}
-
 TEST(EscapeSpecialCharactersTest, UnicodeAndSpecialMixed)
 {
     EXPECT_EQ("Unicode: 😀\\nNext line", escapeSpecialCharacters("Unicode: 😀\nNext line"));

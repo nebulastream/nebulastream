@@ -216,6 +216,9 @@ std::string escapeSpecialCharacters(const std::string_view input)
             case '\v':
                 result += "\\v";
                 break;
+            case '\\':
+                result += "\\\\";
+                break;
             default:
                 result += character;
                 break;
