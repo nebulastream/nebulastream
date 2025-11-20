@@ -1,0 +1,61 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This topology contains a cycle and should be rejected:
+# worker-a → worker-b → worker-c → worker-a (cycle)
+
+query: |
+  SELECT * FROM stream INTO VOID_SINK
+
+sinks:
+  - name: VOID_SINK
+    host: worker-a:8080
+    schema:
+      - name: stream$value
+        type: UINT64
+    type: Void
+    config: { }
+
+logical:
+  - name: stream
+    schema:
+      - name: value
+        type: UINT64
+
+physical:
+  - logical: stream
+    host: worker-a:8080
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100 1
+
+workers:
+  - host: worker-a:9090
+    grpc: worker-a:8080
+    capacity: 10000
+    downstream: [ worker-b:8080 ]
+  - host: worker-b:9090
+    grpc: worker-b:8080
+    capacity: 10000
+    downstream: [ worker-c:8080 ]
+  - host: worker-c:9090
+    grpc: worker-c:8080
+    capacity: 10000
+    downstream: [ worker-a:8080 ]  # This creates a cycle: a → b → c → a
