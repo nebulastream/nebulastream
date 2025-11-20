@@ -62,7 +62,9 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
     if (status.ok())
     {
         NES_DEBUG("Registration to node {} was successful.", workerConfig.grpc);
-        return QueryId{LocalQueryId(reply.queryid())};
+        /// The worker returns its assigned LocalQueryId, but we need to return the full QueryId
+        /// which includes the DistributedQueryId from the plan
+        return QueryId(LocalQueryId(reply.queryid()), localPlan.getQueryId().getGlobalQueryId());
     }
     return std::unexpected{QueryRegistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
@@ -141,7 +143,8 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
         return std::unexpected{
             QueryStatusFailed("Unknown query state `{}` for query: {}", magic_enum::enum_name(response.state()), queryId)};
     }
-    return LocalQueryStatus(QueryId{LocalQueryId(response.queryid())}, *state, metrics);
+    /// Return the full QueryId (with both local and global IDs) instead of just constructing from local
+    return LocalQueryStatus(queryId, *state, metrics);
 }
 
 std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
@@ -195,4 +198,10 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(QueryId qu
     return std::unexpected{QueryUnregistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
+
+BackendProvider createGRPCBackend()
+{
+    return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
+}
+
 }

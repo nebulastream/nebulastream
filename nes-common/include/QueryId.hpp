@@ -21,85 +21,118 @@
 namespace NES
 {
 
+/// Forward declare DistributedQueryId (defined in nes-nebuli)
+using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">;
+
 /**
- * @brief Unified query identifier that encapsulates query identification.
+ * @brief Unified query identifier combining local and distributed query IDs.
  *
- * This class serves as a unified container for query IDs, currently wrapping
- * the LocalQueryId. This abstraction allows for future extension to include
- * distributed query identifiers without changing the API.
+ * This class encapsulates both the LocalQueryId (UUID) used for worker-local tracking
+ * and the DistributedQueryId (human-readable name) used for distributed coordination.
  *
- * The QueryId can be in an invalid state if constructed with an invalid LocalQueryId.
+ * Usage patterns:
+ * - createLocal(): For local-only queries (no distributed ID)
+ * - createDistributed(globalId): For new distributed queries
+ * - QueryId(localId, globalId): When both IDs are already known
+ * - QueryId(localId): For local-only or when global ID is not yet known
  */
 class QueryId
 {
 public:
     /**
-     * @brief Default constructor - creates an invalid QueryId
-     */
-    QueryId() : localQueryId(INVALID_LOCAL_QUERY_ID) { }
-
-    /**
-     * @brief Construct from a LocalQueryId
-     * @param localQueryId The local query identifier
-     */
-    QueryId(LocalQueryId localQueryId) : localQueryId(localQueryId) { }
-
-    /**
-     * @brief Create a new QueryId with a freshly generated UUID
-     * @return A valid QueryId with a new local ID
+     * @brief Creates a new QueryId with a freshly generated local UUID and no distributed ID.
+     * Use this for local-only queries that are not part of a distributed query plan.
      */
     static QueryId createLocal();
 
     /**
-     * @brief Check if this QueryId is valid
-     * @return true if the local query ID is valid
+     * @brief Creates a distributed query id, with an invalid local query id.
+     * Use this on the coordinator when submitting a new distributed query.
      */
-    [[nodiscard]] bool isValid() const { return localQueryId != INVALID_LOCAL_QUERY_ID; }
+    static QueryId createDistributed(DistributedQueryId globalQueryId);
 
     /**
-     * @brief Get the local query ID
-     * @return The LocalQueryId
+     * @brief Creates a QueryId from existing IDs.
+     * Use this when both IDs are already known (e.g., when deserializing from RPC).
      */
-    [[nodiscard]] LocalQueryId getLocalQueryId() const { return localQueryId; }
+    QueryId(LocalQueryId localQueryId, DistributedQueryId globalQueryId);
 
     /**
-     * @brief Equality operator
+     * @brief Creates a QueryId with only a local ID (distributed ID will be INVALID).
+     * Use this for local-only queries or when the distributed ID is not yet known.
      */
-    bool operator==(const QueryId& other) const { return localQueryId == other.localQueryId; }
+    explicit QueryId(LocalQueryId localQueryId);
+
+    /**
+     * @brief Default constructor creates an INVALID QueryId.
+     * Should only be used in contexts where the QueryId will be immediately assigned a valid value.
+     */
+    QueryId();
+
+    /**
+     * @brief Returns true if this QueryId represents a distributed query (has a valid global ID)
+     */
+    [[nodiscard]] bool isDistributed() const;
+
+    /**
+     * @brief Returns true if this QueryId is valid (has a valid local ID)
+     */
+    [[nodiscard]] bool isValid() const;
+
+    /**
+     * @brief Returns the local query ID component
+     */
+    [[nodiscard]] const LocalQueryId& getLocalQueryId() const { return localQueryId; }
+
+    /**
+     * @brief Returns the distributed query ID component (may be INVALID)
+     */
+    [[nodiscard]] const DistributedQueryId& getGlobalQueryId() const { return globalQueryId; }
+
+    /**
+     * @brief Equality based on local query ID only (since local ID is the primary identifier)
+     */
+    bool operator==(const QueryId& other) const;
 
     /**
      * @brief Inequality operator
      */
-    bool operator!=(const QueryId& other) const { return !(*this == other); }
+    bool operator!=(const QueryId& other) const;
 
     /**
      * @brief Equality operator with LocalQueryId
      */
-    bool operator==(const LocalQueryId& other) const { return localQueryId == other; }
+    bool operator==(const LocalQueryId& other) const;
 
     /**
      * @brief Inequality operator with LocalQueryId
      */
-    bool operator!=(const LocalQueryId& other) const { return !(*this == other); }
+    bool operator!=(const LocalQueryId& other) const;
 
     /**
      * @brief Output stream operator for logging
      */
     friend std::ostream& operator<<(std::ostream& os, const QueryId& queryId);
 
-private:
+    /// Public members for direct access (maintaining backward compatibility)
     LocalQueryId localQueryId;
+    DistributedQueryId globalQueryId;
 };
 
 }
 
-/// Hash support for unordered containers
+/// Hash support for unordered containers (combines both local and global IDs)
 namespace std
 {
 template <>
 struct hash<NES::QueryId>
 {
-    size_t operator()(const NES::QueryId& queryId) const noexcept { return std::hash<NES::LocalQueryId>{}(queryId.getLocalQueryId()); }
+    size_t operator()(const NES::QueryId& queryId) const noexcept
+    {
+        size_t h1 = std::hash<NES::LocalQueryId>{}(queryId.localQueryId);
+        size_t h2 = std::hash<NES::DistributedQueryId>{}(queryId.globalQueryId);
+        return h1 ^ (h2 << 1);
+    }
 };
 }
 
@@ -112,6 +145,10 @@ struct fmt::formatter<NES::QueryId>
     template <typename FormatContext>
     auto format(const NES::QueryId& queryId, FormatContext& ctx) const
     {
-        return fmt::format_to(ctx.out(), "{}", queryId.getLocalQueryId());
+        if (queryId.isDistributed())
+        {
+            return fmt::format_to(ctx.out(), "QueryId(local={}, global={})", queryId.localQueryId, queryId.globalQueryId);
+        }
+        return fmt::format_to(ctx.out(), "QueryId(local={})", queryId.localQueryId);
     }
 };

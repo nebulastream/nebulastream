@@ -15,6 +15,7 @@
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 
 #include <chrono>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -76,6 +77,12 @@ std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend:
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
     return worker.getWorkerStatus(after);
+}
+
+BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)
+{
+    return [workerConfiguration](const WorkerConfig& config)
+    { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, workerConfiguration); };
 }
 
 }
