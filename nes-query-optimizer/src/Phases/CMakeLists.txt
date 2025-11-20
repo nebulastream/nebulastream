@@ -13,4 +13,5 @@
 add_source_files(nes-query-optimizer
         SemanticAnalyzer.cpp
         QueryOptimizer.cpp
+        QueryDecomposition.cpp
 )

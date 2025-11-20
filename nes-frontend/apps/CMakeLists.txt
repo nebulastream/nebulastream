@@ -51,8 +51,9 @@ if (ENABLE_BATS_TESTS)
             COMMAND
             env NES_REPL=$<TARGET_FILE:nes-repl-embedded>
             env NES_REPL_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
+            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
             env SYSTEST_TESTDATA=${CMAKE_CURRENT_BINARY_DIR}/../../nes-systests/testdata
-            ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/embedded.bats
+            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/embedded.bats
     )
 
     add_test(
@@ -60,8 +61,9 @@ if (ENABLE_BATS_TESTS)
             COMMAND
             env NES_CLI=$<TARGET_FILE:nes-cli>
             env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
+            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
             env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-            ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/offline.bats
+            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/offline.bats
     )
 endif ()
 
@@ -76,7 +78,7 @@ if (ENABLE_DOCKER_TESTS)
                 env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
                 env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
                 env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
-                ${BATS} -x --jobs 19 --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/distributed.bats
+                ${BATS} --jobs 19 --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/distributed.bats
         )
         set_tests_properties(distributed-cli-test PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
 
@@ -88,7 +90,7 @@ if (ENABLE_DOCKER_TESTS)
                 env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
                 env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
                 env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
-                ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/distributed.bats
+                ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/distributed.bats
         )
         set_tests_properties(distributed-repl-tests PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
     endif ()

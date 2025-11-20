@@ -11,13 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
-#include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
 
-namespace NES::LowerToPhysicalOperators
+
+#include <Operators/LogicalOperator.hpp>
+#include <NetworkTopology.hpp>
+
+namespace NES
 {
-PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf);
+
+/// Obtain the placement for op. Asserts that the operator has a placement trait.
+NetworkTopology::NodeId getPlacementFor(const LogicalOperator& op);
+
 }
