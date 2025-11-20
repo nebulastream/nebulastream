@@ -26,6 +26,26 @@
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
+// MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
+//     : WindowAggregationLogicalFunction(
+//           field.getDataType(),
+//           DataTypeProvider::provideDataType(partialAggregateStampType),
+//           DataTypeProvider::provideDataType(finalAggregateStampType),
+//           field)
+// {
+// }
+//
+// MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
+//     const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
+//     : WindowAggregationLogicalFunction(
+//           field.getDataType(),
+//           DataTypeProvider::provideDataType(partialAggregateStampType),
+//           DataTypeProvider::provideDataType(finalAggregateStampType),
+//           field,
+//           std::move(asField))
+// {
+// }
+
 namespace NES
 {
 ArrayAggregationLogicalFunction::ArrayAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
@@ -38,25 +58,14 @@ ArrayAggregationLogicalFunction::ArrayAggregationLogicalFunction(const FieldAcce
 }
 
 ArrayAggregationLogicalFunction::ArrayAggregationLogicalFunction(
-    const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
+    const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
           DataTypeProvider::provideDataType(partialAggregateStampType),
           DataTypeProvider::provideDataType(finalAggregateStampType),
           field,
-          asField)
+          std::move(asField))
 {
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction>
-ArrayAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
-{
-    return std::make_shared<ArrayAggregationLogicalFunction>(onField, asField);
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction> ArrayAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
-{
-    return std::make_shared<ArrayAggregationLogicalFunction>(onField);
 }
 
 std::string_view ArrayAggregationLogicalFunction::getName() const noexcept
@@ -66,42 +75,42 @@ std::string_view ArrayAggregationLogicalFunction::getName() const noexcept
 void ArrayAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
-    onField = onField.withInferredDataType(schema).get<FieldAccessLogicalFunction>();
-    if (!onField.getDataType().isNumeric())
+    this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
+    if (not this->getOnField().getDataType().isNumeric())
     {
-        NES_ERROR("MergeAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", this->getOnField().getDataType());
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = onField.getFieldName();
-    const auto asFieldName = asField.getFieldName();
+    const auto onFieldName = this->getOnField().getFieldName();
+    const auto asFieldName = this->getAsField().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    auto newAsField = asField.withDataType(getFinalAggregateStamp());
-    asField = newAsField.get<FieldAccessLogicalFunction>();
-    inputStamp = onField.getDataType();
+    this->setInputStamp(this->getOnField().getDataType());
+    this->setFinalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
 }
 
 NES::SerializableAggregationFunction ArrayAggregationLogicalFunction::serialize() const
 {
-    NES::SerializableAggregationFunction serializedAggregationFunction;
+    SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
     auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(onField.serialize());
+    onFieldFuc.CopyFrom(this->getOnField().serialize());
 
     auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(asField.serialize());
+    asFieldFuc.CopyFrom(this->getAsField().serialize());
 
     serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
     serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
@@ -111,8 +120,10 @@ NES::SerializableAggregationFunction ArrayAggregationLogicalFunction::serialize(
 AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterArray_AggAggregationLogicalFunction(
     AggregationLogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(
-        arguments.fields.size() == 2, "ArrayAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
-    return ArrayAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+    if (arguments.fields.size() != 2)
+    {
+        throw CannotDeserialize("ArrayAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    }
+    return std::make_shared<ArrayAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
 }
 }
