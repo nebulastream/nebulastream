@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <SourcePhysicalOperator.hpp>
+
 #include <memory>
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <PhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
 
 namespace NES
 {
