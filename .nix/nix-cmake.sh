@@ -31,6 +31,9 @@ if [ -z "$IN_NIX_RUN" ]; then
         USE_LIBCXX_IF_AVAILABLE=*)
           REQUESTED_STDLIB="${ARG#USE_LIBCXX_IF_AVAILABLE=}"
           ;;
+        USE_LIBCXX_IF_AVAILABLE)
+          REQUESTED_STDLIB="ON"
+          ;;
       esac
     elif [ "$PREVIOUS_ARG" = "--build" ]; then
       BUILD_DIR="$ARG"
@@ -42,6 +45,9 @@ if [ -z "$IN_NIX_RUN" ]; then
         ;;
       -DUSE_LIBCXX_IF_AVAILABLE=*)
         REQUESTED_STDLIB="${ARG#-DUSE_LIBCXX_IF_AVAILABLE=}"
+        ;;
+      -DUSE_LIBCXX_IF_AVAILABLE)
+        REQUESTED_STDLIB="ON"
         ;;
       --build)
         PREVIOUS_ARG="--build"
@@ -68,7 +74,7 @@ if [ -z "$IN_NIX_RUN" ]; then
         REQUESTED_SANITIZER="$CACHE_SANITIZER"
       fi
       if [ -z "$REQUESTED_STDLIB" ]; then
-        CACHE_STDLIB=$(sed -n 's/^USE_LIBCXX_IF_AVAILABLE:BOOL=\(.*\)$/\1/p' "$CACHE_FILE" | head -n 1)
+        CACHE_STDLIB=$(sed -n 's/^USE_LIBCXX:BOOL=\(.*\)$/\1/p' "$CACHE_FILE" | head -n 1)
         if [ -n "$CACHE_STDLIB" ]; then
           REQUESTED_STDLIB="$CACHE_STDLIB"
         fi
@@ -82,6 +88,10 @@ if [ -z "$IN_NIX_RUN" ]; then
 
   if [ -z "$REQUESTED_STDLIB" ] && [ -n "${NES_STDLIB:-}" ]; then
     REQUESTED_STDLIB="$NES_STDLIB"
+  fi
+
+  if [ -z "USE_LIBCXX_IF_AVAILABLE" ] && [ -n "${USE_LIBCXX_IF_AVAILABLE:-}" ]; then
+    REQUESTED_STDLIB="USE_LIBCXX_IF_AVAILABLE"
   fi
 
   SANITIZER_SELECTOR=""
