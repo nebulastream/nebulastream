@@ -55,6 +55,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
@@ -69,6 +70,7 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -105,7 +107,7 @@ public:
                     formatConfig["quote_strings"] = "true";
                 }
 
-                std::string host = "localhost";
+                std::string host = "localhost:8080";
                 if (auto hostIt = config.find("host"); hostIt != config.end())
                 {
                     host = hostIt->second;
@@ -382,10 +384,7 @@ struct SystestBinder::Impl
         , clusterConfiguration(std::move(clusterConfiguration))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
-        for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
-        {
-            workerCatalog->addWorker(host, data, capacity, downstream);
-        }
+        workerCatalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
     }
 
     static std::vector<ConfigurationOverride>
@@ -473,8 +472,7 @@ struct SystestBinder::Impl
         std::unordered_set<SystestQueryId> foundQueries;
 
         const SemanticAnalyzer semanticAnalyser{testfile.sourceCatalog, testfile.sinkCatalog};
-        const QueryOptimizer queryOptimizer{
-            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
+        const QueryOptimizer queryOptimizer{queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -518,7 +516,17 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] static std::filesystem::path generateSourceFilePath() { return std::tmpnam(nullptr); }
+    [[nodiscard]] std::filesystem::path generateSourceFilePath() const
+    {
+        auto sourceDir = workingDir / "sources";
+        if (not is_directory(sourceDir))
+        {
+            create_directory(sourceDir);
+            std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
+        }
+
+        return createTemporaryFile(fmt::format("{}/input", sourceDir), ".csv").second;
+    }
 
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
 
@@ -554,7 +562,7 @@ struct SystestBinder::Impl
         const CreatePhysicalSourceStatement& statement,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
-        std::string host = "localhost";
+        std::string host = "localhost:8080";
         auto sourceConfigCopy = statement.sourceConfig;
         if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
         {
@@ -667,7 +675,7 @@ struct SystestBinder::Impl
                 sourceConfig.emplace("file_path", filePath);
             }
 
-            sourceConfig.try_emplace("host", "localhost");
+            sourceConfig.try_emplace("host", "localhost:8080");
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
@@ -704,7 +712,7 @@ struct SystestBinder::Impl
         auto schema = sinkOperator->getSchema();
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
-        sinkConfig.try_emplace("host", "localhost");
+        sinkConfig.try_emplace("host", "localhost:8080");
 
         if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
@@ -1002,8 +1010,6 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
     QueryOptimizerConfiguration queryOptimizerConfiguration;
-    SystestClusterConfiguration clusterConfiguration;
-
     SharedPtr<WorkerCatalog> workerCatalog;
 };
 

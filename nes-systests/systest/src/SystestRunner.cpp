@@ -48,6 +48,7 @@
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
+#include <nlohmann/json_fwd.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -56,6 +57,10 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+
+/// If systest is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
+/// via an in-memory channel.
+extern void enable_memcom();
 
 namespace NES::Systest
 {
@@ -110,14 +115,16 @@ void processQueryWithError(
             if (auto* expectedError = std::get_if<ExpectedError>(&runningQuery->systestQuery.expectedResultsOrExpectedError))
             {
                 const DistributedException& actualException = runningQuery->exception.value();
-                auto allExceptionByAddress = std::views::join(std::views::transform(
-                    actualException.details(),
-                    [](auto& exceptionsByAddress)
-                    {
-                        return std::views::transform(
-                            exceptionsByAddress.second,
-                            [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
-                    }));
+                auto allExceptionByAddress = std::views::join(
+                    std::views::transform(
+                        actualException.details(),
+                        [](auto& exceptionsByAddress)
+                        {
+                            return std::views::transform(
+                                exceptionsByAddress.second,
+                                [address = exceptionsByAddress.first](auto& exception)
+                                { return std::pair{address, std::cref(exception)}; });
+                        }));
 
                 auto unexpectedErrors = std::ranges::any_of(
                     allExceptionByAddress | std::views::values,
@@ -261,7 +268,7 @@ std::vector<RunningQuery> runQueries(
                 else
                 {
                     processQueryWithError(
-                        std::make_shared<RunningQuery>(nextQuery, nextQuery.planInfoOrException.value().queryPlan.getQueryId()),
+                        std::make_shared<RunningQuery>(nextQuery),
                         progressTracker,
                         failed,
                         DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
@@ -280,7 +287,7 @@ std::vector<RunningQuery> runQueries(
                 else
                 {
                     processQueryWithError(
-                        std::make_shared<RunningQuery>(nextQuery, nextQuery.planInfoOrException.value().queryPlan.getQueryId()),
+                        std::make_shared<RunningQuery>(nextQuery),
                         progressTracker,
                         failed,
                         DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
@@ -294,8 +301,9 @@ std::vector<RunningQuery> runQueries(
                     std::make_shared<RunningQuery>(nextQuery),
                     progressTracker,
                     failed,
-                    DistributedException(std::unordered_map<Host, std::vector<Exception>>{
-                        {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
+                    DistributedException(
+                        std::unordered_map<Host, std::vector<Exception>>{
+                            {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
                     queryPerformanceMessage);
             }
         }
@@ -437,8 +445,10 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
-    auto worker = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
+    enable_memcom();
+    auto catalog = std::make_shared<WorkerCatalog>();
+    catalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
@@ -575,8 +585,10 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    auto embeddedQueryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-        WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
+    enable_memcom();
+    auto catalog = std::make_shared<WorkerCatalog>();
+    catalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+    auto embeddedQueryManager = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
     QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
@@ -588,8 +600,9 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    auto remoteQueryManager = std::make_unique<QueryManager>(
-        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr(serverURI), .config = {}}));
+    auto catalog = std::make_shared<WorkerCatalog>();
+    catalog->addWorker(Host(serverURI), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
+    auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
     QuerySubmitter submitter(std::move(remoteQueryManager));
     return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }

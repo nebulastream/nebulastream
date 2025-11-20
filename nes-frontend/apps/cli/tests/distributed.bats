@@ -139,13 +139,7 @@ teardown() {
 
 function setup_distributed() {
   tests/util/create_compose.sh "$1" > docker-compose.yaml
-  local compose_output exit_code=0
-  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
-  if [ "$exit_code" -ne 0 ]; then
-    echo "# [docker compose up] (status=$exit_code):" >&3
-    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
-  fi
-  return $exit_code
+  docker compose up -d --wait
 }
 
 DOCKER_NES_CLI() {
@@ -219,8 +213,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -234,8 +228,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -252,20 +246,16 @@ assert_json_contains() {
 
   run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
-  for i in $(seq 1 20); do
-    sleep 1
-    run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
-    [ "$status" -eq 0 ]
-    QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
-    if [ "$QUERY_STATUS" = "Running" ]; then
-      break
-    fi
-  done
+  sleep 1
+
+  run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
+  [ "$status" -eq 0 ]
   echo "${output}" | jq -e '(. | length) == 3' # 1 global + 2 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
 
@@ -274,8 +264,8 @@ assert_json_contains() {
 
   run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -294,8 +284,9 @@ assert_json_contains() {
 
   run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   # Poll until the fast source has stopped and the query becomes PartiallyStopped
@@ -465,10 +456,8 @@ EOF
   assert_json_contains "[{\"local_query_id\":\"$local_query_id\", \"query_status\":\"Running\", \"started\": {}}]" "$output"
 }
 
-  echo "# Using TEST_DIR: $output" >&3
-  local_query_id=$(echo "$output" | jq -r '.[0].local_query_id')
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status
-  assert_json_contains "[{\"local_query_id\":\"$local_query_id\", \"query_status\":\"Running\", \"started\": {}}]" "$output"
+@test "back pressure" {
+  setup_distributed tests/good/backpressure.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]
@@ -484,40 +473,12 @@ EOF
   done
 
   run DOCKER_NES_CLI stop $query_id
-  # 0 means there is no overwrite and the worker default will be picked.
-  grep "host: worker-2:8080" worker-2/singleNodeWorker.log
-  grep "max_pending_acks: 0" worker-2/singleNodeWorker.log
-  grep "sender_queue_size: 0" worker-2/singleNodeWorker.log
-  grep "Backpressure" worker-2/singleNodeWorker.log
-  [ $status -eq 0 ]
-}
-
-@test "back pressure using optimizer flags" {
-  setup_distributed tests/good/backpressure-optimizer-flags.yaml
-
-  run DOCKER_NES_CLI start
-  [ $status -eq 0 ]
-  query_id=$output
-
-  # Poll until backpressure is observed in the worker log
-  for i in $(seq 1 30); do
-    sleep 1
-    sync_workdir
-    if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
-      break
-    fi
-  done
-
-  run DOCKER_NES_CLI stop $query_id
-  grep "host: worker-2:8080" worker-2/singleNodeWorker.log
-  grep "max_pending_acks: 25" worker-2/singleNodeWorker.log
-  grep "sender_queue_size: 32" worker-2/singleNodeWorker.log
   grep "Backpressure" worker-2/singleNodeWorker.log
   [ $status -eq 0 ]
 }
 
 @test "order of worker termination when backpressure is applied. terminate sink" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+  setup_distributed tests/good/backpressure.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]
@@ -571,7 +532,7 @@ EOF
 }
 
 @test "order of worker termination when backpressure is applied. terminate source" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+  setup_distributed tests/good/backpressure.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]
@@ -639,8 +600,7 @@ EOF
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (numeric)
   QUERY_ID=$output
 
   sleep 1
@@ -654,8 +614,7 @@ EOF
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (numeric)
   QUERY_ID=$output
 
   sleep 1

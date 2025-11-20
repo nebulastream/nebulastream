@@ -91,7 +91,8 @@ using QueryStatusOutputRowType = std::tuple<
 constexpr std::array<std::string_view, 8> queryStatusOutputColumns{
     "query_id", "local_query_id", "worker", "query_status", "error", "started", "running", "stopped"};
 using WorkerStatusOutputRowType = std::tuple<
-    LocalQueryId,
+    Host,
+    std::string,
     QueryState,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
@@ -387,17 +388,35 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
         std::vector<OutputRowType> output;
         for (const auto& [grpc, workerStatusResult] : result.status.workerStatus)
         {
-            output.emplace_back(
-                activeQuery.queryId.getLocalQueryId(), QueryState::Running, std::nullopt, activeQuery.started, std::nullopt);
-        }
-        for (const auto& terminatedQuery : status.terminatedQueries)
-        {
-            output.emplace_back(
-                terminatedQuery.queryId.getLocalQueryId(),
-                terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
-                terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
-                terminatedQuery.started,
-                terminatedQuery.terminated);
+            if (!workerStatusResult)
+            {
+                output.emplace_back(grpc, "", QueryState::Failed, workerStatusResult.error().what(), std::nullopt, std::nullopt);
+            }
+            else
+            {
+                auto status = workerStatusResult.value();
+                output.reserve(status.activeQueries.size() + status.terminatedQueries.size());
+                for (const auto& activeQuery : status.activeQueries)
+                {
+                    output.emplace_back(
+                        grpc,
+                        activeQuery.queryId.getLocalQueryId().getRawValue(),
+                        QueryState::Running,
+                        std::nullopt,
+                        activeQuery.started,
+                        std::nullopt);
+                }
+                for (const auto& terminatedQuery : status.terminatedQueries)
+                {
+                    output.emplace_back(
+                        grpc,
+                        terminatedQuery.queryId.getLocalQueryId().getRawValue(),
+                        terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
+                        terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
+                        terminatedQuery.started,
+                        terminatedQuery.terminated);
+                }
+            }
         }
         return std::make_pair(workerStatusOutputColumns, output);
     }

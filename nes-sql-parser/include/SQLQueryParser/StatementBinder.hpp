@@ -116,7 +116,7 @@ struct DropSinkStatement
 struct QueryStatement
 {
     LogicalPlan plan;
-    std::optional<QueryId> id;
+    std::optional<DistributedQueryId> id;
 };
 
 struct ExplainQueryStatement

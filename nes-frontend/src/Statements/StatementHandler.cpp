@@ -245,12 +245,12 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
 {
     return queryManager->stop(statement.id)
         .transform_error(
-            [](auto vecOfErrors)
-            {
-                return QueryStopFailed(
-                    "Could not stop query: {}",
-                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
-            })
+                              [](auto vecOfErrors)
+                              {
+                                  return QueryStopFailed(
+                                      "Could not stop query: {}",
+                                      fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+                              })
         .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 
@@ -294,7 +294,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 
         if (statement.id)
         {
-            plan.setQueryId(*statement.id);
+            distributedPlan.setQueryId(*statement.id);
         }
 
         const auto queryResult = queryManager->registerQuery(distributedPlan);

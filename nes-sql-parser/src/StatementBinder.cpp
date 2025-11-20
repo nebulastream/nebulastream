@@ -342,7 +342,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
             }
-            return ShowQueriesStatement{.id = QueryId::createLocal(LocalQueryId(std::get<std::string>(value))), .format = format};
+            return ShowQueriesStatement{.id = DistributedQueryId{std::get<std::string>(value)}, .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -423,8 +423,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for DROP QUERY must be a string");
             }
-            const auto id = QueryId::createLocal(LocalQueryId(std::get<std::string>(value)));
-            return DropQueryStatement{id};
+            return DropQueryStatement{.id = DistributedQueryId(std::get<std::string>(value))};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
         {
@@ -465,7 +464,7 @@ public:
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {
-                std::optional<QueryId> queryId;
+                std::optional<DistributedQueryId> queryId;
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
@@ -478,7 +477,7 @@ public:
                             {
                                 throw InvalidQuerySyntax("Query id must be a string");
                             }
-                            queryId = QueryId::createLocal(LocalQueryId(std::get<std::string>(*literal)));
+                            queryId = DistributedQueryId(std::get<std::string>(*literal));
                         }
                     }
                 }

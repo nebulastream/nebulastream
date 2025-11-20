@@ -20,13 +20,9 @@ activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
-<<<<<<< New base: feat(Source/Sink): attach host configuration to source and sink
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
-||||||| Common ancestor
-=======
 activate_optional_plugin("Sources/NetworkSource" ON)
 activate_optional_plugin("Sinks/NetworkSink" ON)
->>>>>>> Current commit: feat(Distributed): adds network source/sink
 
 activate_optional_plugin("Sources/NetworkSource" ON)
 activate_optional_plugin("Sinks/NetworkSink" ON)

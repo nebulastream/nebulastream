@@ -22,9 +22,10 @@
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
+#include <Rules/BottomUpPlacement.hpp>
+#include <Rules/QueryDecomposition.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <DistributedQuery.hpp>
 
 namespace NES
 {
@@ -47,8 +48,7 @@ DistributedLogicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
     optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
 
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(optimizedPlan);
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
-        .decompose(optimizedPlan, defaultQueryOptimization.network);
+    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog)).decompose(optimizedPlan);
 }
 
 }

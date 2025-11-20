@@ -24,7 +24,6 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
-#include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <WorkerCatalog.hpp>
@@ -33,16 +32,6 @@
 
 namespace NES
 {
-
-using HostAddr = NESStrongStringType<struct HostAddr_, "INVALID">;
-using GrpcAddr = NESStrongStringType<struct GrpcAddr_, "INVALID">;
-
-struct WorkerConfig
-{
-    HostAddr host;
-    GrpcAddr grpc;
-    SingleNodeWorkerConfiguration config;
-};
 
 class QuerySubmissionBackend
 {

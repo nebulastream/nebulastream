@@ -12,10 +12,20 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+#include <Rules/OperatorPlacement.hpp>
 
-message SerializableQueryId {
-    string local_query_id = 1;
-    string distributed_query_id = 2;
+#include <Operators/LogicalOperator.hpp>
+#include <Traits/PlacementTrait.hpp>
+#include <Traits/TraitSet.hpp>
+#include <NetworkTopology.hpp>
+
+namespace NES
+{
+
+NetworkTopology::NodeId getPlacementFor(const LogicalOperator& op)
+{
+    auto placementTrait = op.getTraitSet().get<PlacementTrait>();
+    return placementTrait->onNode;
+}
+
 }

@@ -195,7 +195,7 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     /// The query is expected to be moved into the started state pretty quickly after lowering, it is very unlikely to even observe
     /// the status not changing immediatly, so a rapid polling interval is appropriate.
     constexpr auto statusPollInterval = std::chrono::milliseconds(10);
-    constexpr size_t statusRetries = 17;
+    constexpr size_t statusRetries = 15;
     for (size_t i = 0; i < statusRetries; ++i)
     {
         std::erase_if(

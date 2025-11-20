@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include <memory>
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <DistributedQuery.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES

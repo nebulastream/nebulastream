@@ -106,7 +106,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       interval: 1s
       timeout: 5s
       retries: 3
-      start_period: 60s
+      start_period: 0s
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
