@@ -15,19 +15,22 @@
 
 #include <LegacyOptimizer.hpp>
 
+#include <LegacyOptimizer/BottomUpPlacement.hpp>
 #include <LegacyOptimizer/InlineSinkBindingPhase.hpp>
 #include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/QueryDecomposition.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
 #include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <DistributedQuery.hpp>
 
 namespace NES
 {
-LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
+DistributedLogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
@@ -55,6 +58,9 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     originIdInferencePhase.apply(newPlan);
     typeInference.apply(newPlan);
-    return newPlan;
+
+
+    BottomUpOperatorPlacer(workerCatalog).apply(newPlan);
+    return QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(newPlan);
 }
 }

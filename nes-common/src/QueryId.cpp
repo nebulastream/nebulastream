@@ -14,12 +14,59 @@
 
 #include <QueryId.hpp>
 
+#include <utility>
+
 namespace NES
 {
 
+QueryId::QueryId(LocalQueryId localQueryId, DistributedQueryId distributedQueryId)
+    : localQueryId(std::move(localQueryId)), distributedQueryId(std::move(distributedQueryId))
+{
+}
+
+QueryId QueryId::createLocal(LocalQueryId localQueryId)
+{
+    return QueryId(std::move(localQueryId), DistributedQueryId(DistributedQueryId::INVALID));
+}
+
+QueryId QueryId::createDistributed(DistributedQueryId distributedQueryId)
+{
+    return QueryId(INVALID_LOCAL_QUERY_ID, std::move(distributedQueryId));
+}
+
+QueryId QueryId::create(LocalQueryId localQueryId, DistributedQueryId distributedQueryId)
+{
+    return QueryId(std::move(localQueryId), std::move(distributedQueryId));
+}
+
+bool QueryId::isDistributed() const
+{
+    return distributedQueryId != DistributedQueryId(DistributedQueryId::INVALID);
+}
+
+bool QueryId::operator==(const QueryId& other) const
+{
+    return localQueryId == other.localQueryId && distributedQueryId == other.distributedQueryId;
+}
+
 std::ostream& operator<<(std::ostream& os, const QueryId& queryId)
 {
-    os << queryId.localQueryId;
+    if (queryId.isValid() && queryId.isDistributed())
+    {
+        os << "QueryId(local=" << queryId.localQueryId << ", distributed=" << queryId.distributedQueryId << ")";
+    }
+    else if (queryId.isValid())
+    {
+        os << "QueryId(local=" << queryId.localQueryId << ")";
+    }
+    else if (queryId.isDistributed())
+    {
+        os << "QueryId(distributed=" << queryId.distributedQueryId << ")";
+    }
+    else
+    {
+        os << "QueryId(INVALID)";
+    }
     return os;
 }
 
