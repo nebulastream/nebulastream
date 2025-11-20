@@ -28,7 +28,7 @@
 
 namespace NES
 {
-VoidSink::VoidSink(const SinkDescriptor&)
+VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor&) : Sink(std::move(backpressureController))
 {
 }
 
@@ -59,7 +59,7 @@ SinkValidationRegistryReturnType RegisterVoidSinkValidation(SinkValidationRegist
 
 SinkRegistryReturnType RegisterVoidSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<VoidSink>(sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<VoidSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }
