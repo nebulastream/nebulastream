@@ -29,7 +29,7 @@ VarVal NegatePhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     return !value;
 }
 
-NegatePhysicalFunction::NegatePhysicalFunction(PhysicalFunction childFunction) : childFunction(std::move(std::move(childFunction)))
+NegatePhysicalFunction::NegatePhysicalFunction(PhysicalFunction childFunction) : childFunction(std::move(childFunction))
 {
 }
 

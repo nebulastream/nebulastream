@@ -34,7 +34,7 @@ VarVal MulPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 }
 
 MulPhysicalFunction::MulPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 

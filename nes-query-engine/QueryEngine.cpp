@@ -401,7 +401,7 @@ public:
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
         const size_t admissionQueueSize)
         : listener(std::move(listener))
-        , statistic(std::move(std::move(stats)))
+        , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
