@@ -32,7 +32,7 @@ target_include_directories(nes-nebuli-lib
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-nebuli-lib
-        PUBLIC nes-logical-operators nes-sql-parser
+        PUBLIC nes-logical-operators nes-sql-parser nes-single-node-worker-interface
         PRIVATE yaml-cpp::yaml-cpp
 )
 
@@ -45,7 +45,7 @@ target_include_directories(nes-nebuli-embedded-lib
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-nebuli-embedded-lib
-        PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser
+        PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser nes-single-node-worker-interface
         PRIVATE nes-sql-parser yaml-cpp::yaml-cpp
 )
 
