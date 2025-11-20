@@ -102,9 +102,10 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
     config.clusterConfig = SystestClusterConfiguration{
-        .workers = {WorkerConfig{.host = HostAddr(""), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}}},
-        .allowSourcePlacement = {HostAddr("")},
-        .allowSinkPlacement = {HostAddr("")}};
+        .workers
+        = {WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}}},
+        .allowSourcePlacement = {HostAddr("localhost:9090")},
+        .allowSinkPlacement = {HostAddr("localhost:9090")}};
 
     ::NES::SystestExecutor executor(config);
     const auto systestResult = executor.executeSystests();
