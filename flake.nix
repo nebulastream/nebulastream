@@ -22,6 +22,8 @@
         nautilusPkg = nautilusPackages.nautilus;
 
         nlohmann_jsonPkg = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
+        nameofPkg = pkgs.callPackage ./.nix/nameof/package.nix { };
+        scope_guardPkg = pkgs.callPackage ./.nix/scope_guard/package.nix { };
         cpptracePkg = pkgs.callPackage ./.nix/cpptrace/package.nix { };
         argparsePkg = pkgs.callPackage ./.nix/argparse/package.nix { };
         libcuckooPkg = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
@@ -120,6 +122,8 @@
           libcuckooPkg
           nautilusPkg
           nlohmann_jsonPkg
+          nameofPkg
+          scope_guardPkg
         ];
 
         cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;
