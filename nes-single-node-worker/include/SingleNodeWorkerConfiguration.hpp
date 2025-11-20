@@ -37,7 +37,7 @@ connections.  Valid values include dns:///localhost:1234,
 
     /// Enable Google Event Trace logging (Chrome tracing format)
     BoolOption enableGoogleEventTrace
-        = {"enable_google_eventTrace",
+        = {"enable_event_trace",
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
