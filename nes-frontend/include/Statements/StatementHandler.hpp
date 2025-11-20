@@ -34,9 +34,9 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Pointers.hpp>
-#include <experimental/propagate_const>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <WorkerStatus.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace NES
 {
@@ -89,7 +89,32 @@ struct DropSinkStatementResult
 
 struct QueryStatementResult
 {
-    QueryId id;
+    DistributedQueryId id;
+};
+
+struct ShowQueriesStatementResult
+{
+    std::unordered_map<DistributedQueryId, DistributedQueryStatus> queries;
+};
+
+struct DropQueryStatementResult
+{
+    DistributedQueryId id;
+};
+
+struct WorkerStatusStatementResult
+{
+    DistributedWorkerStatus status;
+};
+
+struct CreateWorkerStatementResult
+{
+    Host host;
+};
+
+struct DropWorkerStatementResult
+{
+    Host host;
 };
 
 struct ExplainQueryStatementResult
@@ -97,25 +122,13 @@ struct ExplainQueryStatementResult
     std::string explainString;
 };
 
-struct WorkerStatusStatementResult
-{
-    WorkerStatus status;
-};
-
-struct ShowQueriesStatementResult
-{
-    std::unordered_map<QueryId, LocalQueryStatus> queries;
-};
-
-struct DropQueryStatementResult
-{
-    QueryId id;
-};
-
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
     CreateSinkStatementResult,
+    DropWorkerStatementResult,
+    CreateWorkerStatementResult,
+    WorkerStatusStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
@@ -125,8 +138,7 @@ using StatementResult = std::variant<
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
-    DropQueryStatementResult,
-    WorkerStatusStatementResult>;
+    DropQueryStatementResult>;
 
 /// A bit of CRTP magic for nicer syntax when the object is in a shared ptr
 template <typename HandlerImpl>
@@ -196,6 +208,7 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
     SharedPtr<QueryManager> queryManager;
     SharedPtr<const SemanticAnalyzer> semanticAnalyser;
     SharedPtr<const QueryOptimizer> queryOptimizer;
+    SharedPtr<WorkerCatalog> workerCatalog;
 
 public:
     explicit QueryStatementHandler(
@@ -211,11 +224,14 @@ public:
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;
+    SharedPtr<WorkerCatalog> workerCatalog;
 
 public:
-    explicit TopologyStatementHandler(SharedPtr<QueryManager> queryManager);
+    TopologyStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog);
 
     std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
+    std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
+    std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
 };
 
 template <typename HandlerT>

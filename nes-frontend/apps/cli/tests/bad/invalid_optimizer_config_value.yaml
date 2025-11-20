@@ -16,6 +16,7 @@ query: |
   INTO sink;
 sinks:
   - name: sink
+    host: "worker-1:8080"
     schema:
       - name: stream$timestamp
         type: UINT64
@@ -24,7 +25,7 @@ sinks:
     type: File
     config:
       file_path: out.csv
-      input_format: CSV
+      output_format: CSV
     parser_config: { }
 
 logical:
@@ -37,6 +38,7 @@ logical:
 
 physical:
   - logical: stream
+    host: "worker-1:8080"
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -51,3 +53,8 @@ physical:
         SEQUENCE UINT64 0 100 1
 optimizer:
   join_strategy: INVALID
+
+workers:
+  - host: worker-1:8080
+    data: worker-1:9090
+    max_operators: 10000

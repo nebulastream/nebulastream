@@ -15,10 +15,10 @@
 
 #include <chrono>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 
 namespace NES
 {

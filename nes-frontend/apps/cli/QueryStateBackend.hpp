@@ -18,16 +18,17 @@
 #include <string>
 #include <string_view>
 #include <Identifiers/Identifiers.hpp>
+#include <DistributedQuery.hpp>
 #include <QueryId.hpp>
 
 namespace NES::CLI
 {
 
 /// Type-safe wrapper for persisted query IDs
-/// Contains the query ID and can be serialized for CLI output
+/// Contains the distributed query ID and can be serialized for CLI output
 struct PersistedQueryId
 {
-    QueryId queryId;
+    DistributedQueryId queryId;
 
     /// Convert to string for CLI output
     [[nodiscard]] std::string toString() const;
@@ -37,17 +38,17 @@ struct PersistedQueryId
 };
 
 /// Manages persistent storage of query state in XDG-compliant directories
-/// Stores query metadata in JSON files
+/// Stores mapping from DistributedQueryId to DistributedQuery (containing local query IDs)
 class QueryStateBackend
 {
 public:
     QueryStateBackend();
 
-    /// Store query state, returns persisted query ID for user
-    PersistedQueryId store(QueryId queryId);
+    /// Store distributed query state, returns persisted query ID for user
+    PersistedQueryId store(const DistributedQueryId& distributedQueryId, const DistributedQuery& distributedQuery);
 
-    /// Load query state from persisted ID, returns the actual query ID
-    QueryId load(PersistedQueryId persistedId);
+    /// Load distributed query from persistent state
+    DistributedQuery load(PersistedQueryId persistedId);
 
     /// Remove query state file
     void remove(PersistedQueryId persistedId);
@@ -58,7 +59,7 @@ private:
     [[nodiscard]] std::filesystem::path getStateDirectory();
 
     /// Get the full path to a query state file
-    [[nodiscard]] std::filesystem::path getQueryFilePath(QueryId queryId);
+    [[nodiscard]] std::filesystem::path getQueryFilePath(const DistributedQueryId& distributedQueryId);
 
     /// Cached state directory path
     std::filesystem::path stateDirectory;

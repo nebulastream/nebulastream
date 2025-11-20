@@ -20,6 +20,16 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+if [ -z "$WORKER_IMAGE" ]; then
+  echo "ERROR: WORKER_IMAGE is not set"
+  exit 1
+fi
+
+if [ -z "$REPL_IMAGE" ]; then
+  echo "ERROR: REPL_IMAGE is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -69,8 +79,8 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   # Extract worker data
   HOST=$(yq -r ".workers[$i].host" "$WORKERS_FILE")
   HOST_NAME=$(echo $HOST | cut -d':' -f1)
-  GRPC=$(yq -r ".workers[$i].grpc" "$WORKERS_FILE")
-  GRPC_PORT=$(echo $GRPC | cut -d':' -f2)
+  HOST_PORT=$(echo $HOST | cut -d':' -f2)
+  DATA=$(yq -r ".workers[$i].data" "$WORKERS_FILE")
 
   # Generate service definition
   cat <<EOF
@@ -79,13 +89,14 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     pull_policy: never
     working_dir: /workdir/$HOST_NAME
     healthcheck:
-      test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$GRPC_PORT", "-connect-timeout", "5s" ]
+      test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$HOST_PORT", "-connect-timeout", "5s" ]
       interval: 1s
       timeout: 5s
       retries: 3
       start_period: 0s
     command: [
-      "--grpc=$HOST_NAME:$GRPC_PORT",
+      "--grpc=$HOST_NAME:$HOST_PORT",
+      "--data=$DATA",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:

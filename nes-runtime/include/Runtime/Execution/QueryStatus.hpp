@@ -13,26 +13,4 @@
 */
 
 #pragma once
-#include <cstdint>
-#include <ostream>
-#include <Util/Logger/Formatter.hpp>
-#include <magic_enum/magic_enum.hpp>
-
-namespace NES
-{
-enum class QueryState : uint8_t
-{
-    Registered,
-    Started,
-    Running, /// Deployed->Running when calling start()
-    Stopped, /// Running->Stopped when calling stop() and in Running state
-    Failed,
-};
-
-inline std::ostream& operator<<(std::ostream& ostream, const QueryState& status)
-{
-    return ostream << magic_enum::enum_name(status);
-}
-}
-
-FMT_OSTREAM(NES::QueryState);
+#include <QueryStatus.hpp>

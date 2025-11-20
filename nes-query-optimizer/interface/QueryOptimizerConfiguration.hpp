@@ -20,6 +20,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
+#include <QueryOptimizerNetworkConfiguration.hpp>
 
 namespace NES
 {
@@ -43,8 +44,10 @@ public:
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
+    QueryOptimizerNetworkConfiguration network = {"network", "Network configuration overrides for query decomposition"};
+
 private:
-    std::vector<BaseOption*> getOptions() override { return {&joinStrategy}; }
+    std::vector<BaseOption*> getOptions() override { return {&joinStrategy, &network}; }
 };
 
 }

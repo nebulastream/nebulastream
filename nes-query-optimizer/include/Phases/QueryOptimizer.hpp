@@ -16,23 +16,37 @@
 
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
+#include <Util/Pointers.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace NES
 {
+class SourceCatalog;
+class SinkCatalog;
 
 class QueryOptimizer final
 {
 public:
-    explicit QueryOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
-        : defaultQueryOptimization(std::move(defaultQueryOptimization)) { };
+    explicit QueryOptimizer(
+        QueryOptimizerConfiguration defaultQueryOptimization,
+        SharedPtr<const SourceCatalog> sourceCatalog,
+        SharedPtr<const SinkCatalog> sinkCatalog,
+        SharedPtr<const WorkerCatalog> workerCatalog)
+        : defaultQueryOptimization(std::move(defaultQueryOptimization))
+        , sourceCatalog(std::move(sourceCatalog))
+        , sinkCatalog(std::move(sinkCatalog))
+        , workerCatalog(std::move(workerCatalog)) { };
 
-    /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
-    [[nodiscard]] static LogicalPlan optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization);
+    /// Takes the query plan as a logical plan and returns a distributed plan with placement and decomposition
+    [[nodiscard]] DistributedLogicalPlan optimize(const LogicalPlan& plan) const;
 
 private:
     QueryOptimizerConfiguration defaultQueryOptimization;
+    SharedPtr<const SourceCatalog> sourceCatalog;
+    SharedPtr<const SinkCatalog> sinkCatalog;
+    SharedPtr<const WorkerCatalog> workerCatalog;
 };
 
 }
