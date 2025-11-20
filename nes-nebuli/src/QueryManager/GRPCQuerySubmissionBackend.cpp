@@ -40,7 +40,7 @@
 namespace NES
 {
 GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
-    : stub{WorkerRPCService::NewStub(grpc::CreateChannel(config.grpc.getRawValue(), grpc::InsecureChannelCredentials()))}
+    : stub{WorkerRPCService::NewStub(grpc::CreateChannel(config.host.getRawValue(), grpc::InsecureChannelCredentials()))}
     , workerConfig{std::move(config)}
 {
     if (workerConfig.config.isExplicitlySet())
@@ -48,7 +48,7 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
         NES_WARNING(
             "Topology specifies a non-default configuration for remote worker {}. "
             "This configuration is ignored for remote workers and might not match the actual worker configuration.",
-            workerConfig.grpc);
+            workerConfig.host);
     }
 }
 
@@ -61,8 +61,10 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
     const auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {
-        NES_DEBUG("Registration to node {} was successful.", workerConfig.grpc);
-        return QueryId{LocalQueryId(reply.queryid())};
+        NES_DEBUG("Registration to node {} was successful.", workerConfig.host);
+        /// The worker returns its assigned LocalQueryId, but we need to return the full QueryId
+        /// which includes the DistributedQueryId from the plan
+        return QueryId(LocalQueryId(reply.queryid()), localPlan.getQueryId().getGlobalQueryId());
     }
     return std::unexpected{QueryRegistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
@@ -77,7 +79,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId
     const auto status = stub->StartQuery(&context, request, &response);
     if (status.ok())
     {
-        NES_DEBUG("Starting query {} on node {} was successful.", queryId, workerConfig.grpc);
+        NES_DEBUG("Starting query {} on node {} was successful.", queryId, workerConfig.host);
         return {};
     }
 
@@ -94,7 +96,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
 
     if (const auto status = stub->RequestQueryStatus(&context, request, &response); status.ok())
     {
-        NES_DEBUG("Status of query {} on node {} was successful.", queryId, workerConfig.grpc);
+        NES_DEBUG("Status of query {} on node {} was successful.", queryId, workerConfig.host);
     }
     else
     {
@@ -141,7 +143,8 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
         return std::unexpected{
             QueryStatusFailed("Unknown query state `{}` for query: {}", magic_enum::enum_name(response.state()), queryId)};
     }
-    return LocalQueryStatus(QueryId{LocalQueryId(response.queryid())}, *state, metrics);
+    /// Return the full QueryId (with both local and global IDs) instead of just constructing from local
+    return LocalQueryStatus(queryId, *state, metrics);
 }
 
 std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
@@ -170,7 +173,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
     const auto status = stub->StopQuery(&context, request, &response);
     if (status.ok())
     {
-        NES_DEBUG("Stopping query {} on node {} was successful.", queryId, workerConfig.grpc);
+        NES_DEBUG("Stopping query {} on node {} was successful.", queryId, workerConfig.host);
         return {};
     }
 
@@ -188,11 +191,17 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(QueryId qu
     const auto status = stub->UnregisterQuery(&context, request, &response);
     if (status.ok())
     {
-        NES_DEBUG("Unregister of query {} on node {} was successful.", queryId, workerConfig.grpc);
+        NES_DEBUG("Unregister of query {} on node {} was successful.", queryId, workerConfig.host);
         return {};
     }
 
     return std::unexpected{QueryUnregistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
+
+BackendProvider createGRPCBackend()
+{
+    return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
+}
+
 }

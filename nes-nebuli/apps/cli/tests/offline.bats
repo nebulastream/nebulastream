@@ -98,24 +98,24 @@ assert_json_contains() {
 }
 
 @test "nebucli dump" {
-  run $NES_CLI -t tests/good/crazy-join.yaml dump
+  run $NES_CLI -t tests/good/chained-joins.yaml dump
   [ "$status" -eq 0 ]
 }
 
 @test "nebucli dump with debug" {
-  run $NES_CLI -d -t tests/good/crazy-join.yaml dump
+  run $NES_CLI -d -t tests/good/chained-joins.yaml dump
   [ "$status" -eq 0 ]
 }
 
 @test "nebucli dump using environment" {
 
-  NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NES_CLI dump
+  NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump
   [ "$status" -eq 0 ]
 }
 
 @test "nebucli dump using environment and adhoc query" {
 
-  NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NES_CLI dump 'SELECT * FROM stream INTO VOID_SINK'
+  NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump 'SELECT * FROM stream INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
@@ -168,12 +168,12 @@ JSONEOF
 }
 
 @test "nebucli dump with topology from stdin" {
-  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI -t - dump"
+  run bash -c "cat tests/good/chained-joins.yaml | $NES_CLI -t - dump"
   [ "$status" -eq 0 ]
 }
 
 @test "nebucli dump with topology from stdin and adhoc query" {
-  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI -t - dump 'SELECT * FROM stream INTO VOID_SINK'"
+  run bash -c "cat tests/good/chained-joins.yaml | $NES_CLI -t - dump 'SELECT * FROM stream INTO VOID_SINK'"
   [ "$status" -eq 0 ]
 }
 
@@ -181,30 +181,30 @@ JSONEOF
   # Put a valid topology as topology.yaml in cwd — should be ignored
   cp tests/good/select-gen-into-void.yaml topology.yaml
   # Set env to a different valid topology — should be ignored
-  NES_TOPOLOGY_FILE=tests/good/select-gen-into-void.yaml run $NES_CLI -t tests/good/crazy-join.yaml dump
+  NES_TOPOLOGY_FILE=tests/good/select-gen-into-void.yaml run $NES_CLI -t tests/good/chained-joins.yaml dump
   [ "$status" -eq 0 ]
 }
 
 @test "topology resolution: NES_TOPOLOGY_FILE takes priority over working directory" {
   cp tests/good/select-gen-into-void.yaml topology.yaml
-  NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NES_CLI dump
+  NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump
   [ "$status" -eq 0 ]
 }
 
 @test "topology resolution: topology.yaml in working directory" {
-  cp tests/good/crazy-join.yaml topology.yaml
+  cp tests/good/chained-joins.yaml topology.yaml
   run $NES_CLI dump
   [ "$status" -eq 0 ]
 }
 
 @test "topology resolution: topology.yml in working directory" {
-  cp tests/good/crazy-join.yaml topology.yml
+  cp tests/good/chained-joins.yaml topology.yml
   run $NES_CLI dump
   [ "$status" -eq 0 ]
 }
 
 @test "topology resolution: topology.yaml preferred over topology.yml" {
-  cp tests/good/crazy-join.yaml topology.yaml
+  cp tests/good/chained-joins.yaml topology.yaml
   echo "invalid yaml: [" > topology.yml
   run $NES_CLI dump
   [ "$status" -eq 0 ]
@@ -229,6 +229,55 @@ JSONEOF
 }
 
 @test "topology resolution: -t - reads from stdin" {
-  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI -t - dump"
+  run bash -c "cat tests/good/chained-joins.yaml | $NES_CLI -t - dump"
   [ "$status" -eq 0 ]
+}
+
+@test "topology validation: reject topology with cycle" {
+  run $NES_CLI -d -t tests/good/topology-with-cycle.yaml dump
+  [ "$status" -eq 1 ]
+  grep -i "cycle" nes-cli.log
+}
+
+@test "topology without capacity field defaults to infinite capacity" {
+  # Create a minimal topology without capacity field
+  cat > topology-no-capacity.yaml << 'TOPEOF'
+query: |
+  SELECT * FROM stream INTO VOID_SINK
+sinks:
+  - name: VOID_SINK
+    host: worker-1:8080
+    schema:
+      - name: stream$value
+        type: UINT64
+    type: Void
+    config: { }
+logical:
+  - name: stream
+    schema:
+      - name: value
+        type: UINT64
+physical:
+  - logical: stream
+    host: worker-1:8080
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100 1
+workers:
+  - host: worker-1:9090
+    grpc: worker-1:8080
+TOPEOF
+
+  run $NES_CLI -t topology-no-capacity.yaml dump
+  [ "$status" -eq 0 ]
+  # Verify it actually parsed and shows the plan
+  echo "$output" | grep -q "Decomposed Plans"
 }

@@ -78,7 +78,7 @@ if (ENABLE_EXPECT_TESTS)
         add_test(
                 NAME "embedded-repl-test-${TEST_NAME}"
                 COMMAND
-                ${TEST_FILE} $<TARGET_FILE:nes-repl-embedded>
+                expect ${TEST_FILE} $<TARGET_FILE:nes-repl-embedded>
         )
     endforeach ()
 endif ()
@@ -122,7 +122,7 @@ if (ENABLE_DOCKER_TESTS)
                     env NES_REPL_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
                     env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
                     env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-                    ${TEST_FILE}
+                    expect ${TEST_FILE}
             )
             set_tests_properties("distributed-repl-test-${TEST_NAME}" PROPERTIES LABELS "DockerCompose")
         endforeach ()

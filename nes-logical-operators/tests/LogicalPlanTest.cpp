@@ -39,7 +39,7 @@ namespace
 /// Test-only factory function to create LogicalPlans without a valid query ID
 LogicalPlan makeTestPlan(std::vector<LogicalOperator> rootOperators)
 {
-    return LogicalPlan(INVALID_LOCAL_QUERY_ID, std::move(rootOperators));
+    return LogicalPlan(QueryId(INVALID_LOCAL_QUERY_ID), std::move(rootOperators));
 }
 }
 

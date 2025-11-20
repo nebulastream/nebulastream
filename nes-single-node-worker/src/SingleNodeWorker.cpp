@@ -99,10 +99,13 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a query ID
-        if (!plan.getQueryId().isValid())
+        /// Check if the plan already has a local query ID, generate one if needed
+        /// but preserve the distributed query ID if present
+        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
         {
-            plan.setQueryId(QueryId(LocalQueryId(UUIDToString(generateUUID()))));
+            auto localId = LocalQueryId(generateUUID());
+            auto globalId = plan.getQueryId().getGlobalQueryId();
+            plan.setQueryId(QueryId(localId, globalId));
         }
 
         const LogContext context("queryId", plan.getQueryId());

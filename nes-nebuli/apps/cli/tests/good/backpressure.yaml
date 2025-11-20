@@ -1,0 +1,68 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+query: |
+  SELECT 
+    *
+  FROM 
+    GENERATOR_SOURCE
+  INTO 
+    PRINT_SINK
+sinks:
+  - name: print_sink
+    host: worker-1:8080
+    schema:
+      - name: GENERATOR_SOURCE$DOUBLE
+        type: FLOAT64
+    type: Print
+    config:
+      ingestion: 5000
+      input_format: CSV
+
+logical:
+  - name: GENERATOR_SOURCE
+    schema:
+      - name: DOUBLE
+        type: FLOAT64
+
+physical:
+  - logical: GENERATOR_SOURCE
+    host: worker-2:8080
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 100000
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_schema: |
+        NORMAL_DISTRIBUTION FLOAT64 0 1
+
+workers:
+  - host: worker-1:9090
+    grpc: worker-1:8080
+    capacity: 10000
+    config:
+      worker:
+        number_of_buffers_in_global_buffer_manager: 128
+        receiver_queue_size: 2
+  - host: worker-2:9090
+    grpc: worker-2:8080
+    downstream: [ worker-1:8080 ]
+    capacity: 10000
+    config:
+      worker:
+        network:
+          sender_queue_size: 2
+          max_pending_acks: 2

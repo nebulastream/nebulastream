@@ -131,6 +131,7 @@ sync_workdir() {
 }
 
 teardown() {
+  sync_workdir || true
   docker compose down -v || true
   docker volume rm $TEST_VOLUME || true
 }
@@ -141,7 +142,7 @@ function setup_distributed() {
 }
 
 DOCKER_NES_REPL() {
-  cat "$1" | docker compose exec -it nes-repl nes-repl -s worker-node:8080 -f JSON ${ADDITIONAL_NEBULI_FLAGS}
+  cat "$1" | docker compose exec -it nes-repl nes-repl -f JSON ${ADDITIONAL_NEBULI_FLAGS}
 }
 
 assert_json_equal() {
@@ -167,33 +168,34 @@ assert_json_contains() {
 }
 
 @test "launch query from topology" {
-  setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/test_large.sql
+  setup_distributed tests/topologies/8-node.yaml
+  run DOCKER_NES_REPL tests/sql-file-tests/good/test_large_distributed.sql
   [ "$status" -eq 0 ]
 
-  assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[0]}"
-  assert_json_equal '[{"parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
-  assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"input_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
-  assert_json_equal '[]' "${lines[3]}"
-  QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].local_query_id')
+  assert_json_equal '[{"worker":"sink-node:8080"}]' "${lines[0]}"
+  assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[1]}"
+  assert_json_equal '[{"host":"sink-node:8080","parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[2]}"
+  assert_json_equal '[{"host":"sink-node:8080","schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"input_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[3]}"
+  assert_json_equal '[]' "${lines[4]}"
+  QUERY_ID=$(echo ${lines[5]} | jq -r '.[0].query_id')
 
   # One global and one local query
-  echo "${lines[5]}" | jq -e '(. | length) == 1'
-  echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
+  echo "${lines[6]}" | jq -e '(. | length) == 2'
+  echo "${lines[6]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
 
-  assert_json_equal "[{\"local_query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
-  assert_json_contains "[]" "${lines[7]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[7]}"
+  assert_json_contains "[]" "${lines[8]}"
 }
 
 @test "launch multiple queries" {
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries.sql
+  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries_distributed.sql
   [ "$status" -eq 0 ]
 }
 
 @test "launch bad query should fail" {
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/bad/integer_literal_in_query_without_type.sql
+  run DOCKER_NES_REPL tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
   [ "$status" -ne 0 ]
 
   sync_workdir
@@ -229,16 +231,16 @@ assert_json_contains() {
 
   # Verify that the implicit STOP QUERY statement was executed and its result matches the query that was created
   # lines[2] is the SELECT query result with query_id
-  QUERY_ID=$(echo ${lines[2]} | jq -r '.[0].local_query_id')
+  QUERY_ID=$(echo ${lines[3]} | jq -r '.[0].query_id')
   # The last line should contain the result of the implicit STOP QUERY command with the same query_id
-  assert_json_equal "[{\"local_query_id\": \"${QUERY_ID}\"}]" "${lines[-1]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[-1]}"
 }
 
 @test "default on-exit behavior should keep queries alive" {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries.sql
+  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries_distributed.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]

@@ -298,7 +298,7 @@ TEST_F(StatementBinderTest, BindDropQuery)
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
-    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getLocalQueryId().getRawValue(), "bc86c8a9-5f6b-4022-a83f-b598acbbe6db");
+    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), "bc86c8a9-5f6b-4022-a83f-b598acbbe6db");
 
     const std::string queryString2 = "DROP QUERY \"bc86c8a9-5f6b-4022-a83f-b598acbbe6db\"";
     const auto statement2 = binder->parseAndBindSingle(queryString2);
@@ -530,6 +530,17 @@ TEST_F(StatementBinderTest, ExplainStatement)
         const auto explainStatementResult = binder->parseAndBindSingle(explain);
         ASSERT_FALSE(explainStatementResult.has_value());
     }
+}
+
+TEST_F(StatementBinderTest, CreateWorkerStatementTest)
+{
+    const std::string statementString = "CREATE WORKER 'localhost:8080' AT 'localhost:9090' SET (32 AS `CAPACITY`, 'localhost2:9090' AS "
+                                        "`DOWNSTREAM`, 'localhost1:9090' AS `DOWNSTREAM`)";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
+    ASSERT_TRUE(std::holds_alternative<CreateWorkerStatement>(*statement));
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).host, "localhost:8080");
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).workerManagementEndpoint, "localhost:9090");
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)
