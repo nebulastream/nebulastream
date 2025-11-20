@@ -36,7 +36,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
@@ -54,15 +53,19 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+#include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -91,7 +94,7 @@ public:
                     config["input_format"] = "CSV";
                 }
 
-                std::string host = "localhost";
+                std::string host = "localhost:9090";
                 if (auto hostIt = config.find("host"); hostIt != config.end())
                 {
                     host = hostIt->second;
@@ -183,12 +186,12 @@ public:
         return std::unexpected{TestException("No bound plan set")};
     }
 
-    void setOptimizedPlan(LogicalPlan optimizedPlan)
+    void setOptimizedPlan(DistributedLogicalPlan optimizedPlan)
     {
         this->optimizedPlan = std::move(optimizedPlan);
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
         std::ranges::for_each(
-            getOperatorByType<SourceDescriptorLogicalOperator>(*this->optimizedPlan),
+            getOperatorByType<SourceDescriptorLogicalOperator>(this->optimizedPlan->getGlobalPlan()),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
                 if (const auto path
@@ -216,7 +219,7 @@ public:
                 }
             });
         this->sourcesToFilePathsAndCounts.emplace(std::move(sourceNamesToFilepathAndCountForQuery));
-        const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
+        const auto sinkOperatorOpt = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
         if (toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
@@ -226,7 +229,7 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->getRootOperators().at(0).getOutputSchema();
+            sinkOutputSchema = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).getOutputSchema();
         }
     }
 
@@ -254,7 +257,7 @@ public:
             try
             {
                 auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
-                setDifferentialQueryPlan(std::move(optimizedDiff));
+                optimizedDifferentialQueryPlan = std::move(optimizedDiff);
             }
             catch (Exception& e)
             {
@@ -310,7 +313,7 @@ public:
                  .expectedResultsOrExpectedError = expectedResultsValue,
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = std::move(configurationOverride),
-                 .differentialQueryPlan = differentialQueryPlan});
+                 .differentialQueryPlan = optimizedDifferentialQueryPlan});
         }
         return queries;
     }
@@ -326,13 +329,14 @@ private:
     std::optional<std::string> queryDefinition;
     std::optional<LogicalPlan> boundPlan;
     std::optional<Exception> exception;
-    std::optional<LogicalPlan> optimizedPlan;
+    std::optional<DistributedLogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
+    std::optional<DistributedLogicalPlan> optimizedDifferentialQueryPlan;
     bool built = false;
 };
 
@@ -341,6 +345,8 @@ struct SystestBinder::Impl
     explicit Impl(std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir)
         : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), configDir(std::move(configDir))
     {
+        this->workerCatalog = std::make_shared<WorkerCatalog>();
+        workerCatalog->addWorker(HostAddr("localhost:9090"), GrpcAddr("localhost:8080"), INFINITE_CAPACITY, {});
     }
 
     static std::vector<ConfigurationOverride>
@@ -427,7 +433,7 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -507,7 +513,7 @@ struct SystestBinder::Impl
         const CreatePhysicalSourceStatement& statement,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
-        std::string host = "localhost";
+        std::string host = "localhost:9090";
         auto sourceConfigCopy = statement.sourceConfig;
         if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
         {
@@ -617,7 +623,7 @@ struct SystestBinder::Impl
                 sourceConfig.emplace("file_path", filePath);
             }
 
-            sourceConfig.try_emplace("host", "localhost");
+            sourceConfig.try_emplace("host", "localhost:9090");
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
@@ -653,7 +659,7 @@ struct SystestBinder::Impl
         auto schema = sinkOperator->getSchema();
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
-        sinkConfig.try_emplace("host", "localhost");
+        sinkConfig.try_emplace("host", "localhost:9090");
 
         if (sinkOperator->getSinkType() == "FILE")
         {
@@ -933,6 +939,8 @@ private:
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
+
+    SharedPtr<WorkerCatalog> workerCatalog;
 };
 
 SystestBinder::SystestBinder(

@@ -97,7 +97,7 @@ SHOW QUERIES;
 
 -- 5. Submit a query
 SELECT TS FROM ENDLESS INTO SOMESINK;
--- Returns: [{"global_query_id":"<query-id>"}]
+-- Returns: [{"query_id":"<query-id>"}]
 
 -- 6. View running queries
 SHOW QUERIES;
@@ -119,7 +119,7 @@ SHOW QUERIES;
 
 ```json
 {
-  "global_query_id": "amazing_stallion",
+  "query_id": "amazing_stallion",
   "query_status": "Running",
   "running": {
     "formatted": "2025-11-18 15:06:57.377000",
@@ -474,7 +474,7 @@ Returns JSON array with query status information:
 ```json
 [
   {
-    "global_query_id": "amazing_stallion",
+    "query_id": "amazing_stallion",
     "query_status": "Running"
   },
   {
