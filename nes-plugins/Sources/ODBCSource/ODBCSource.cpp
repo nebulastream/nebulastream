@@ -142,40 +142,30 @@ std::ostream& ODBCSource::toString(std::ostream& str) const
 
 void ODBCSource::open()
 {
-    try
-    {
-        this->connection = std::make_unique<ODBCConnection>();
+    this->connection = std::make_unique<ODBCConnection>();
 
-        auto connectionString = fmt::format(
-            "DRIVER={{{}}};SERVER={},{};DATABASE={};UID={};PWD={};TrustServerCertificate={};",
-            driver,
-            this->host,
-            this->port,
-            this->database,
-            this->username,
-            this->password,
-            (this->trustServerCertificate) ? "yes" : "no");
+    auto connectionString = fmt::format(
+        "DRIVER={{{}}};SERVER={},{};DATABASE={};UID={};PWD={};TrustServerCertificate={};",
+        driver,
+        this->host,
+        this->port,
+        this->database,
+        this->username,
+        this->password,
+        (this->trustServerCertificate) ? "yes" : "no");
 
-        connection->connect(connectionString, this->query);
-
-        std::cout << "Connection successful!\n";
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error: " << e.what() << '\n';
-    }
+    /// We don't want to catch errors here, but further up in the query engine
+    connection->connect(connectionString, this->query);
+    this->fetchedSizeOfRow = this->connection->getFetchedSizeOfRow();
+    NES_DEBUG("ODBCSource connected successfully.");
 }
 
-size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token&)
 {
     // Todo: handle return of executeQuery
-    if (firstCall)
-    {
-        this->connection->executeQuery(this->queryBuffer, tupleBuffer);
-        firstCall = false;
-        return tupleBuffer.getNumberOfTuples();
-    }
-    return 0;
+    const size_t rowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
+    this->connection->executeQuery(this->queryBuffer, tupleBuffer, bufferProvider, rowsPerBuffer);
+    return tupleBuffer.getNumberOfTuples();
 }
 
 DescriptorConfig::Config ODBCSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
@@ -193,7 +183,6 @@ DescriptorConfig::Config ODBCSource::validateAndFormat(std::unordered_map<std::s
 
 void ODBCSource::close()
 {
-    //this->context.reset();
 }
 
 SourceValidationRegistryReturnType RegisterODBCSourceValidation(SourceValidationRegistryArguments sourceConfig)

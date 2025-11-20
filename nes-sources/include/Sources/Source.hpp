@@ -22,6 +22,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Runtime/BufferManager.hpp>
 
 namespace NES
 {
@@ -63,7 +64,7 @@ public:
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     /// @return the number of bytes read
-    virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+    virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) = 0;

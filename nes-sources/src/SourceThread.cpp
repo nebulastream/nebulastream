@@ -113,7 +113,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
             return {SourceImplementationTermination::StopRequested};
         }
 
-        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
+        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, bufferProvider, stopToken);
 
         if (!fillTupleResult.isEoS())
         {

@@ -55,7 +55,7 @@ public:
     ODBCSource(ODBCSource&&) = delete;
     ODBCSource& operator=(ODBCSource&&) = delete;
 
-    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken) override;
 
     /// Open ODBC connection.
     void open() override;
@@ -78,7 +78,7 @@ private:
     bool trustServerCertificate;
     std::vector<SQLCHAR> queryBuffer;
 
-    bool firstCall = true;
+    size_t fetchedSizeOfRow{0};
     std::unique_ptr<ODBCConnection> connection;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
