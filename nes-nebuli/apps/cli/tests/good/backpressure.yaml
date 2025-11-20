@@ -14,17 +14,19 @@ query: |
   SELECT 
     *
   FROM 
-    GENERATOR_SOURCE 
+    GENERATOR_SOURCE
   INTO 
-    VOID_SINK
+    PRINT_SINK
 sinks:
-  - name: VOID_SINK
-    host: worker-2:9090
+  - name: print_sink
+    host: worker-1:9090
     schema:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
-    type: Void
-    config: { }
+    type: Print
+    config:
+      ingestion: 5000
+      input_format: CSV
 
 logical:
   - name: GENERATOR_SOURCE
@@ -34,14 +36,14 @@ logical:
 
 physical:
   - logical: GENERATOR_SOURCE
-    host: worker-1:9090
+    host: worker-2:9090
     parser_config:
       type: CSV
       fieldDelimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
-      generator_rate_config: emit_rate 1000
+      generator_rate_config: emit_rate 100000
       stop_generator_when_sequence_finishes: NONE
       seed: 1
       generator_schema: |
@@ -51,7 +53,7 @@ workers:
   - host: worker-1:9090
     grpc: worker-1:8080
     capacity: 10000
-    downstream: [ worker-2:9090 ]
   - host: worker-2:9090
     grpc: worker-2:8080
+    downstream: [ worker-1:9090 ]
     capacity: 10000

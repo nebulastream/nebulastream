@@ -1,0 +1,35 @@
+query: |
+  SELECT * FROM stream INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream$ts ]
+    host: "sink-node-host:9090"
+
+logical:
+  - name: stream
+    schema: [ ts ]
+
+physical:
+  - logical: stream
+    host: "source-node-host:9090"
+
+workers:
+  - host: "source-node-host:9090"
+    grpc: "source-node:8080"
+    capacity: 0
+    downstream:
+      - "intermediate-node0-host:9090"
+  - host: "intermediate-node0-host:9090"
+    grpc: "intermediate-node0:8080"
+    capacity: 0
+    downstream:
+      - "intermediate-node1-host:9090"
+  - host: "intermediate-node1-host:9090"
+    grpc: "intermediate-node1:8080"
+    capacity: 0
+    downstream:
+      - "sink-node-host:9090"
+  - host: "sink-node-host:9090"
+    grpc: "sink-node:8080"
+    capacity: 0

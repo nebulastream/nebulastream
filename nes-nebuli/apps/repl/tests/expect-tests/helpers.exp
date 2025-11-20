@@ -276,7 +276,6 @@ COPY nes-repl /usr/bin}
     set env(REPL_IMAGE) [exec docker build -q -f $nes_repl_dockerfile_path $nes_repl_dir]
     puts "Built REPL image: $env(REPL_IMAGE)"
 
-    puts "Using $temp_dir"
     puts "Setting up Docker Compose environment..."
 
     # Create Docker volume and copy data into it
@@ -306,6 +305,7 @@ COPY nes-repl /usr/bin}
 
     # Register cleanup handler to ensure docker compose is always stopped
     proc cleanup {} {
+        sync_workdir
         global temp_dir env
         puts "\nCleaning up Docker Compose environment..."
         cd $temp_dir
@@ -319,6 +319,7 @@ COPY nes-repl /usr/bin}
         if {[info exists env(REPL_IMAGE)]} {
             catch {exec docker rmi $env(REPL_IMAGE) 2>@1} repl_image_error
         }
+        catch {exec rm -rf $temp_dir} cleanup_error
     }
 
     # Register cleanup to run on exit and signals

@@ -86,6 +86,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       start_period: 0s
     command: [
       "--grpc=$HOST_NAME:$GRPC_PORT",
+      "--connection=$HOST",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:
