@@ -19,3 +19,6 @@ endfunction()
 
 add_nes_optimizer_test(DecideJoinTypesTest UnitTests/DecideJoinTypesTest.cpp)
 add_nes_optimizer_test(DecideMemoryLayoutTest UnitTests/DecideMemoryLayoutTest.cpp)
+add_nes_optimizer_test(distributed-query-status-test UnitTests/DistributedQueryTest.cpp)
+add_nes_optimizer_test(network-topology-test UnitTests/NetworkTopologyTest.cpp)
+add_nes_optimizer_test(WorkerCatalogTest UnitTests/WorkerCatalogTest.cpp)

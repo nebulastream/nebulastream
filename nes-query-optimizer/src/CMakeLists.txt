@@ -13,3 +13,4 @@
 add_subdirectory(Traits)
 add_subdirectory(Phases)
 add_subdirectory(Rules)
+add_subdirectory(LegacyOptimizer)

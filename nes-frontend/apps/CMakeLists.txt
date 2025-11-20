@@ -51,6 +51,7 @@ if (ENABLE_BATS_TESTS)
             COMMAND
             env NES_REPL=$<TARGET_FILE:nes-repl-embedded>
             env NES_REPL_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
+            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
             env SYSTEST_TESTDATA=${CMAKE_CURRENT_BINARY_DIR}/../../nes-systests/testdata
             ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/embedded.bats
     )
@@ -60,6 +61,7 @@ if (ENABLE_BATS_TESTS)
             COMMAND
             env NES_CLI=$<TARGET_FILE:nes-cli>
             env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
+            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
             env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
             ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/offline.bats
     )

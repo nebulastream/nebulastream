@@ -41,4 +41,6 @@ public:
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 };
 
+BackendProvider createGRPCBackend();
+
 }
