@@ -133,6 +133,9 @@ std::string formatFloat(std::floating_point auto value);
 /// escape characters such as '\n', e.g., for logging
 std::string escapeSpecialCharacters(std::string_view input);
 
+/// Unescape escaped character sequences (e.g., "\\n" -> '\n', "\\t" -> '\t')
+std::string unescapeSpecialCharacters(std::string_view input);
+
 /// splits a string given a delimiter into multiple substrings stored in a T vector
 /// the delimiter is allowed to be a string rather than a char only.
 template <typename T>

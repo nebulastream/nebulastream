@@ -224,6 +224,63 @@ std::string escapeSpecialCharacters(const std::string_view input)
     return result;
 }
 
+std::string unescapeSpecialCharacters(std::string_view input)
+{
+    std::string result;
+    result.reserve(input.size()); /// Result will be at most as long as input
+
+    for (size_t i = 0; i < input.size(); ++i)
+    {
+        if (input[i] == '\\' && i + 1 < input.size())
+        {
+            switch (input[i + 1])
+            {
+                case 'a':
+                    result.push_back('\a');
+                    ++i;
+                    break;
+                case 'b':
+                    result.push_back('\b');
+                    ++i;
+                    break;
+                case 'f':
+                    result.push_back('\f');
+                    ++i;
+                    break;
+                case 'n':
+                    result.push_back('\n');
+                    ++i;
+                    break;
+                case 'r':
+                    result.push_back('\r');
+                    ++i;
+                    break;
+                case 't':
+                    result.push_back('\t');
+                    ++i;
+                    break;
+                case 'v':
+                    result.push_back('\v');
+                    ++i;
+                    break;
+                case '\\':
+                    result.push_back('\\');
+                    ++i;
+                    break;
+                default:
+                    result.push_back(input[i]);
+                    break;
+            }
+        }
+        else
+        {
+            result.push_back(input[i]);
+        }
+    }
+
+    return result;
+}
+
 std::string toUpperCase(std::string_view input)
 {
     return input | std::views::transform(::toupper) | std::ranges::to<std::string>();
