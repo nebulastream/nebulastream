@@ -29,14 +29,14 @@ struct WorkerStatus
 {
     struct ActiveQuery
     {
-        QueryId queryId = INVALID<QueryId>;
+        LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
         std::chrono::system_clock::time_point started;
     };
 
     /// Terminated Queries contain all queries that have either stopped or failed
     struct TerminatedQuery
     {
-        QueryId queryId = INVALID<QueryId>;
+        LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
         std::chrono::system_clock::time_point started;
         std::chrono::system_clock::time_point terminated;
         std::optional<Exception> error;
