@@ -1,11 +1,27 @@
 #  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
 query: |
-  SELECT mlife_FallNr FROM odbc_source INTO csv_sink
+  SELECT mlife_ANR, mlife_FallNr, Herzfrequenz, BPM, BPSys, ZVD, HZV, ZentTemp, BIS FROM odbc_source INTO File('/home/rudi/dima/nebulastream-public/nes-plugins/Sources/ODBCSource/tests/output.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
 logical:
   - name: odbc_source
     schema:
-      - name: mlife_FallNr
+      - name: mlife_ANR
         type: INT32
+      - name: mlife_FallNr
+        type: INT16
+      - name: Herzfrequenz
+        type: FLOAT32
+      - name: BPM
+        type: VARSIZED
+      - name: BPSys
+        type: CHAR
+      - name: ZVD
+        type: BOOLEAN
+      - name: HZV
+        type: FLOAT64
+      - name: ZentTemp
+        type: INT8
+      - name: BIS
+        type: INT64
 physical:
   - logical: odbc_source
     type: ODBC
@@ -19,15 +35,6 @@ physical:
       password: "samplePassword1!"
       driver: "ODBC Driver 18 for SQL Server"
       # Todo: this can get out of sync with NES query above (which might be intentional, but is error-prone)
-      query: "SELECT mlife_FallNr FROM dbo.v_Vitalwerte_unvalidiert"
+      query: "SELECT mlife_ANR, mlife_FallNr, Herzfrequenz, BPM, BPSys, ZVD, HZV, ZentTemp, BIS FROM dbo.v_Vitalwerte_unvalidiert"
       trust_server_certificate: true
-
-sinks:
-  - name: csv_SiNk
-    schema:
-      - name: odbc_source$mlife_FallNr
-        type: INT32
-    type: File
-    config:
-      file_path: "/home/rudi/dima/nebulastream-public/nes-plugins/Sources/ODBCSource/tests/output.csv"
-      input_format: "CSV"
+sinks: []
