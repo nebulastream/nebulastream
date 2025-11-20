@@ -1,0 +1,49 @@
+query: |
+  SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK
+
+sinks:
+  - name: VOID_SINK
+    host: node1:8080
+    schema:
+      - name: GENERATOR_SOURCE$DOUBLE
+        type: FLOAT64
+    type: Print
+    config:
+      input_format: CSV
+
+logical:
+  - name: GENERATOR_SOURCE
+    schema:
+      - name: DOUBLE
+        type: FLOAT64
+
+physical:
+  - logical: GENERATOR_SOURCE
+    host: node3:8080
+    parser_config:
+      type: CSV
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_schema: |
+        NORMAL_DISTRIBUTION FLOAT64 0 1
+
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
+
+  - host: node2:8080
+    data: node2:9090
+    max_operators: 10000
+    downstream:
+      - node1:8080
+
+  - host: node3:8080
+    data: node3:9090
+    max_operators: 10000
+    downstream:
+      - node2:8080

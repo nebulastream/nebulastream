@@ -33,20 +33,14 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
+#include <DataTypes/Schema.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
-
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <magic_enum/magic_enum.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 
@@ -154,18 +148,19 @@ struct SystestQuery
 
     struct PlanInfo
     {
-        LogicalPlan queryPlan;
+        DistributedLogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
 
-        PlanInfo() = delete;
-
-        PlanInfo(LogicalPlan plan, std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources, Schema sinkSchema)
-            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(std::move(sinkSchema))
+        PlanInfo(
+            DistributedLogicalPlan plan,
+            std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources,
+            const Schema& sinkSchema)
+            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(sinkSchema)
         {
         }
 
-        PlanInfo(LogicalPlan plan, Schema sinkSchema) : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema)) { }
+        PlanInfo(DistributedLogicalPlan plan, const Schema& sinkSchema) : queryPlan(std::move(plan)), sinkOutputSchema(sinkSchema) { }
 
         PlanInfo(const PlanInfo& other) : queryPlan(other.queryPlan), sinkOutputSchema(other.sinkOutputSchema)
         {
@@ -203,19 +198,19 @@ struct SystestQuery
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
     ConfigurationOverride configurationOverride;
-    std::optional<LogicalPlan> differentialQueryPlan;
+    std::optional<DistributedLogicalPlan> differentialQueryPlan;
 };
 
 struct RunningQuery
 {
     SystestQuery systestQuery;
-    QueryId queryId = INVALID_QUERY_ID;
-    std::optional<QueryId> differentialQueryPair;
-    LocalQueryStatus queryStatus{};
+    DistributedQueryId queryId{DistributedQueryId::INVALID};
+    std::optional<DistributedQueryId> differentialQueryPair;
+    DistributedQueryStatus queryStatus;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;
-    std::optional<Exception> exception;
+    std::optional<DistributedException> exception;
 
     std::chrono::duration<double> getElapsedTime() const;
     [[nodiscard]] std::string getThroughput() const;
