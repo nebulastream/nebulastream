@@ -45,6 +45,12 @@ let
 
       src = nautilusSrc;
 
+      patches = [
+        ./patches/0001-disable-ubsan-function-call-check.patch
+        ./patches/0002-fix-ambiguous-val-overload.patch
+        ./patches/0003-ubsan-fix-variadic-expansion.patch
+      ];
+
       nativeBuildInputs = [
         pkgs.cmake
         pkgs.ninja
