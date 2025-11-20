@@ -31,6 +31,9 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
+#include <magic_enum/magic_enum.hpp>
+#include <DistributedQuery.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES
 {
@@ -71,25 +74,30 @@ constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
 using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, std::string>;
 constexpr std::array<std::string_view, 5> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config", "host"};
 
-using QueryIdOutputRowType = std::tuple<QueryId>;
-constexpr std::array<std::string_view, 1> queryIdOutputColumns{"local_query_id"};
+using QueryIdOutputRowType = std::tuple<DistributedQueryId>;
+constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
 using QueryStatusOutputRowType = std::tuple<
-    QueryId,
-    QueryState,
+    DistributedQueryId,
+    std::optional<LocalQueryId>,
+    std::optional<GrpcAddr>,
+    std::string,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 6> queryStatusOutputColumns{
-    "local_query_id", "query_status", "error", "started", "running", "stopped"};
+constexpr std::array<std::string_view, 8> queryStatusOutputColumns{
+    "query_id", "local_query_id", "grpc_addr", "query_status", "error", "started", "running", "stopped"};
+
 using WorkerStatusOutputRowType = std::tuple<
+    GrpcAddr,
     std::string,
     QueryState,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 5> workerStatusOutputColumns{"local_query_id", "query_status", "error", "started", "stopped"};
+constexpr std::array<std::string_view, 6> workerStatusOutputColumns{
+    "grpc_addr", "local_query_id", "query_status", "error", "started", "stopped"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 template <>
@@ -268,17 +276,49 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
     auto convert(const ShowQueriesStatementResult& result)
     {
         std::vector<OutputRowType> output;
-        output.reserve(result.queries.size());
         for (const auto& [id, query] : result.queries)
         {
-            auto globalMetrics = query.metrics;
+            auto globalMetrics = query.coalesceQueryMetrics();
             output.emplace_back(
                 id,
-                query.state,
+                std::nullopt,
+                std::nullopt,
+                magic_enum::enum_name(query.getGlobalQueryState()),
                 globalMetrics.error.transform([](const auto& exception) { return exception.what(); }),
                 globalMetrics.start,
                 globalMetrics.running,
                 globalMetrics.stop);
+            for (const auto& [grpc, statusResults] : query.localStatusSnapshots)
+            {
+                for (const auto& [queryId, statusResult] : statusResults)
+                {
+                    if (statusResult)
+                    {
+                        const auto& [_, state, metrics] = *statusResult;
+                        output.emplace_back(
+                            id,
+                            queryId.getLocalQueryId(),
+                            grpc,
+                            magic_enum::enum_name(state),
+                            metrics.error.transform([](const auto& exception) { return exception.what(); }),
+                            metrics.start,
+                            metrics.running,
+                            metrics.stop);
+                    }
+                    else
+                    {
+                        output.emplace_back(
+                            id,
+                            queryId.getLocalQueryId(),
+                            grpc,
+                            "ConnectionError",
+                            statusResult.error().what(),
+                            std::nullopt,
+                            std::nullopt,
+                            std::nullopt);
+                    }
+                }
+            }
         }
         return std::make_pair(queryStatusOutputColumns, output);
     }
@@ -308,6 +348,28 @@ struct StatementOutputAssembler<ExplainQueryStatementResult>
 };
 
 template <>
+struct StatementOutputAssembler<CreateWorkerStatementResult>
+{
+    using OutputRowType = std::tuple<WorkerId>;
+
+    auto convert(const CreateWorkerStatementResult& result)
+    {
+        return std::make_pair(std::to_array<std::string_view>({"worker"}), std::vector{std::make_tuple(result.workerId)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropWorkerStatementResult>
+{
+    using OutputRowType = std::tuple<WorkerId>;
+
+    auto convert(const DropWorkerStatementResult& result)
+    {
+        return std::make_pair(std::to_array<std::string_view>({"worker"}), std::vector{std::make_tuple(result.workerId)});
+    }
+};
+
+template <>
 struct StatementOutputAssembler<WorkerStatusStatementResult>
 {
     using OutputRowType = WorkerStatusOutputRowType;
@@ -315,21 +377,37 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
     auto convert(const WorkerStatusStatementResult& result)
     {
         std::vector<OutputRowType> output;
-        const auto& status = result.status;
-        output.reserve(status.activeQueries.size() + status.terminatedQueries.size());
-        for (const auto& activeQuery : status.activeQueries)
+        for (const auto& [grpc, workerStatusResult] : result.status.workerStatus)
         {
-            output.emplace_back(
-                activeQuery.queryId.getLocalQueryId().getRawValue(), QueryState::Running, std::nullopt, activeQuery.started, std::nullopt);
-        }
-        for (const auto& terminatedQuery : status.terminatedQueries)
-        {
-            output.emplace_back(
-                terminatedQuery.queryId.getLocalQueryId().getRawValue(),
-                terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
-                terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
-                terminatedQuery.started,
-                terminatedQuery.terminated);
+            if (!workerStatusResult)
+            {
+                output.emplace_back(grpc, "", QueryState::Failed, workerStatusResult.error().what(), std::nullopt, std::nullopt);
+            }
+            else
+            {
+                auto status = workerStatusResult.value();
+                output.reserve(status.activeQueries.size() + status.terminatedQueries.size());
+                for (const auto& activeQuery : status.activeQueries)
+                {
+                    output.emplace_back(
+                        grpc,
+                        activeQuery.queryId.getLocalQueryId().getRawValue(),
+                        QueryState::Running,
+                        std::nullopt,
+                        activeQuery.started,
+                        std::nullopt);
+                }
+                for (const auto& terminatedQuery : status.terminatedQueries)
+                {
+                    output.emplace_back(
+                        grpc,
+                        terminatedQuery.queryId.getLocalQueryId().getRawValue(),
+                        terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
+                        terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
+                        terminatedQuery.started,
+                        terminatedQuery.terminated);
+                }
+            }
         }
         return std::make_pair(workerStatusOutputColumns, output);
     }
