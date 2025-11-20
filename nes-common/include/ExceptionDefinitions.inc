@@ -72,6 +72,12 @@ EXCEPTION(InvalidTopology, 2301, "invalid topology")
 EXCEPTION(UnknownWorker, 2302, "unknown worker")
 EXCEPTION(DistributedFailure, 2303, "distributed failure")
 
+/// 23XX Distributed
+EXCEPTION(PlacementFailure, 2300, "could not place all operators")
+EXCEPTION(InvalidTopology, 2301, "topology is in an invalid state")
+EXCEPTION(UnknownWorker, 2302, "worker does not exist")
+EXCEPTION(DistributedFailure, 2303, "multiple failures")
+
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
 EXCEPTION(QueryNotRegistered, 3001, "query not registered")
