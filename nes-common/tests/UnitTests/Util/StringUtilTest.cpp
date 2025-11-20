@@ -480,6 +480,112 @@ TEST(EscapeSpecialCharactersTest, UnicodeAndSpecialMixed)
     EXPECT_EQ("\\tÆØÅ\\r\\næøå", escapeSpecialCharacters("\tÆØÅ\r\næøå"));
 }
 
+TEST(UnescapeSpecialCharactersTest, EmptyString)
+{
+    EXPECT_EQ("", unescapeSpecialCharacters(""));
+}
+
+TEST(UnescapeSpecialCharactersTest, NoEscapedCharacters)
+{
+    EXPECT_EQ("Hello World", unescapeSpecialCharacters("Hello World"));
+    EXPECT_EQ("abc123!@#", unescapeSpecialCharacters("abc123!@#"));
+}
+
+TEST(UnescapeSpecialCharactersTest, SingleEscapedCharacters)
+{
+    EXPECT_EQ("\a", unescapeSpecialCharacters("\\a")); /// Bell
+    EXPECT_EQ("\b", unescapeSpecialCharacters("\\b")); /// Backspace
+    EXPECT_EQ("\f", unescapeSpecialCharacters("\\f")); /// Form feed
+    EXPECT_EQ("\n", unescapeSpecialCharacters("\\n")); /// Newline
+    EXPECT_EQ("\r", unescapeSpecialCharacters("\\r")); /// Carriage return
+    EXPECT_EQ("\t", unescapeSpecialCharacters("\\t")); /// Tab
+    EXPECT_EQ("\v", unescapeSpecialCharacters("\\v")); /// Vertical tab
+}
+
+TEST(UnescapeSpecialCharactersTest, MultipleEscapedCharacters)
+{
+    EXPECT_EQ("Line1\nLine2", unescapeSpecialCharacters("Line1\\nLine2"));
+    EXPECT_EQ("Text\tTabbed", unescapeSpecialCharacters("Text\\tTabbed"));
+    EXPECT_EQ("\r\n", unescapeSpecialCharacters("\\r\\n")); /// Windows line ending
+}
+
+TEST(UnescapeSpecialCharactersTest, MixedContent)
+{
+    EXPECT_EQ("Hello\nWorld\tTab\r\nNewLine", unescapeSpecialCharacters("Hello\\nWorld\\tTab\\r\\nNewLine"));
+    EXPECT_EQ("\aAlert!\bBackspace", unescapeSpecialCharacters("\\aAlert!\\bBackspace"));
+}
+
+TEST(UnescapeSpecialCharactersTest, BackslashAtEnd)
+{
+    /// Backslash at the end should be preserved
+    EXPECT_EQ("test\\", unescapeSpecialCharacters("test\\"));
+}
+
+TEST(UnescapeSpecialCharactersTest, InvalidEscapeSequence)
+{
+    /// Unknown escape sequences should preserve the backslash
+    EXPECT_EQ("\\x", unescapeSpecialCharacters("\\x"));
+    EXPECT_EQ("\\z", unescapeSpecialCharacters("\\z"));
+    EXPECT_EQ("test\\qmore", unescapeSpecialCharacters("test\\qmore"));
+}
+
+TEST(UnescapeSpecialCharactersTest, UnicodeAndEscapedMixed)
+{
+    EXPECT_EQ("Unicode: 😀\nNext line", unescapeSpecialCharacters("Unicode: 😀\\nNext line"));
+    EXPECT_EQ("\tÆØÅ\r\næøå", unescapeSpecialCharacters("\\tÆØÅ\\r\\næøå"));
+}
+
+TEST(UnescapeSpecialCharactersTest, RoundTripWithEscape)
+{
+    /// Test that escaping and then unescaping returns the original string
+    const std::string original = "Hello\nWorld\tTab\r\nNewLine";
+    const std::string escaped = escapeSpecialCharacters(original);
+    const std::string unescaped = unescapeSpecialCharacters(escaped);
+    EXPECT_EQ(original, unescaped);
+}
+
+TEST(EscapeUnescapeRoundTripTest, EscapeThenUnescape)
+{
+    /// Test that escape -> unescape returns the original string
+    const std::string original1 = "Hello\nWorld";
+    EXPECT_EQ(original1, unescapeSpecialCharacters(escapeSpecialCharacters(original1)));
+
+    const std::string original2 = "Tab\there\nand\rthere\vvertical";
+    EXPECT_EQ(original2, unescapeSpecialCharacters(escapeSpecialCharacters(original2)));
+
+    const std::string original3 = "\a\b\f\n\r\t\v";
+    EXPECT_EQ(original3, unescapeSpecialCharacters(escapeSpecialCharacters(original3)));
+
+    const std::string original4 = "Mixed content\nwith text\tand more";
+    EXPECT_EQ(original4, unescapeSpecialCharacters(escapeSpecialCharacters(original4)));
+}
+
+TEST(EscapeUnescapeRoundTripTest, UnescapeThenEscape)
+{
+    /// Test that unescape -> escape returns the original escaped string
+    const std::string escaped1 = "Hello\\nWorld";
+    EXPECT_EQ(escaped1, escapeSpecialCharacters(unescapeSpecialCharacters(escaped1)));
+
+    const std::string escaped2 = "Tab\\there\\nand\\rthere\\vvertical";
+    EXPECT_EQ(escaped2, escapeSpecialCharacters(unescapeSpecialCharacters(escaped2)));
+
+    const std::string escaped3 = "\\a\\b\\f\\n\\r\\t\\v";
+    EXPECT_EQ(escaped3, escapeSpecialCharacters(unescapeSpecialCharacters(escaped3)));
+
+    const std::string escaped4 = "Mixed content\\nwith text\\tand more";
+    EXPECT_EQ(escaped4, escapeSpecialCharacters(unescapeSpecialCharacters(escaped4)));
+}
+
+TEST(EscapeUnescapeRoundTripTest, DoubleBackslashRoundTrip)
+{
+    /// Test that double backslash is handled correctly in both directions
+    const std::string withBackslash = "path\\to\\file";
+    const std::string escaped = escapeSpecialCharacters(withBackslash);
+    EXPECT_EQ("path\\\\to\\\\file", escaped);
+    const std::string unescaped = unescapeSpecialCharacters(escaped);
+    EXPECT_EQ(withBackslash, unescaped);
+}
+
 TEST(SplitStringViewTest, SingleSplit)
 {
     constexpr std::string_view input("Hello|World!|I'm,a,simple;test|string");
