@@ -55,7 +55,6 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
@@ -64,12 +63,11 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
-#include <QueryId.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -79,10 +77,7 @@ namespace NES::Systest
 class SLTSinkFactory
 {
 public:
-    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog, std::vector<Host> possibleSinkPlacements)
-        : sinkCatalog(std::move(sinkCatalog)), possibleSinkPlacements(std::move(possibleSinkPlacements))
-    {
-    }
+    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
     bool registerSink(
         const std::string& sinkType,
@@ -106,10 +101,7 @@ public:
                     formatConfig["quote_strings"] = "true";
                 }
 
-                PRECONDITION(
-                    not possibleSinkPlacements.empty(),
-                    "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
-                std::string host = possibleSinkPlacements.at(0).getRawValue();
+                std::string host = "localhost:8080";
                 if (auto hostIt = config.find("host"); hostIt != config.end())
                 {
                     host = hostIt->second;
@@ -132,10 +124,6 @@ public:
         std::unordered_map<std::string, std::string> config,
         const std::unordered_map<std::string, std::string>& formatConfig)
     {
-        PRECONDITION(
-            not possibleSinkPlacements.empty(),
-            "Topology must list at least one worker in allow_sink_placement to assign a default inline sink host");
-        config.try_emplace("host", possibleSinkPlacements.at(0).getRawValue());
         return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config), formatConfig);
     }
 
@@ -160,7 +148,6 @@ public:
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
-    std::vector<Host> possibleSinkPlacements;
     std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
         sinkProviders;
 };
@@ -377,19 +364,14 @@ struct SystestBinder::Impl
         std::filesystem::path workingDir,
         std::filesystem::path testDataDir,
         std::filesystem::path configDir,
-        QueryOptimizerConfiguration queryOptimizerConfiguration,
-        SystestClusterConfiguration clusterConfiguration)
+        QueryOptimizerConfiguration queryOptimizerConfiguration)
         : workingDir(std::move(workingDir))
         , testDataDir(std::move(testDataDir))
         , configDir(std::move(configDir))
         , queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
-        , clusterConfiguration(std::move(clusterConfiguration))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
-        for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
-        {
-            workerCatalog->addWorker(host, data, capacity, downstream, config);
-        }
+        workerCatalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity{CapacityKind::Unlimited{}}, {});
     }
 
     static std::vector<ConfigurationOverride>
@@ -472,7 +454,7 @@ struct SystestBinder::Impl
 
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
-        SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
+        SLTSinkFactory sinkProvider{testfile.sinkCatalog};
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
@@ -522,17 +504,7 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] std::filesystem::path generateSourceFilePath() const
-    {
-        auto sourceDir = workingDir / "sources";
-        if (not is_directory(sourceDir))
-        {
-            create_directory(sourceDir);
-            std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
-        }
-
-        return createTemporaryFile(fmt::format("{}/input", sourceDir), ".csv").second;
-    }
+    [[nodiscard]] static std::filesystem::path generateSourceFilePath() { return std::tmpnam(nullptr); }
 
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
 
@@ -568,10 +540,7 @@ struct SystestBinder::Impl
         const CreatePhysicalSourceStatement& statement,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
-        PRECONDITION(
-            not clusterConfiguration.allowSourcePlacement.empty(),
-            "Topology must list at least one worker in allow_source_placement to assign a default source host");
-        std::string host = clusterConfiguration.allowSourcePlacement.at(0).getRawValue();
+        std::string host = "localhost:8080";
         auto sourceConfigCopy = statement.sourceConfig;
         if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
         {
@@ -684,10 +653,7 @@ struct SystestBinder::Impl
                 sourceConfig.emplace("file_path", filePath);
             }
 
-            PRECONDITION(
-                not clusterConfiguration.allowSourcePlacement.empty(),
-                "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
-            sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
+            sourceConfig.try_emplace("host", "localhost:8080");
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
@@ -724,6 +690,7 @@ struct SystestBinder::Impl
         auto schema = sinkOperator->getSchema();
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
+        sinkConfig.try_emplace("host", "localhost:8080");
 
         if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
@@ -820,7 +787,6 @@ struct SystestBinder::Impl
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
             setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
-            plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
             setInlineSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
         }
@@ -878,11 +844,6 @@ struct SystestBinder::Impl
 
             setInlineSources(leftPlan);
             setInlineSources(rightPlan);
-
-            leftPlan.setQueryId(
-                QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
-            rightPlan.setQueryId(
-                QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}-differential", testFileName, currentQueryNumberInTest))));
 
             currentTest.setQueryDefinition(std::move(leftQuery));
             currentTest.setBoundPlan(std::move(leftPlan));
@@ -1021,8 +982,6 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
     QueryOptimizerConfiguration queryOptimizerConfiguration;
-    SystestClusterConfiguration clusterConfiguration;
-
     SharedPtr<WorkerCatalog> workerCatalog;
 };
 
@@ -1030,9 +989,8 @@ SystestBinder::SystestBinder(
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
     const std::filesystem::path& configDir,
-    const QueryOptimizerConfiguration& queryOptimizerConfiguration,
-    SystestClusterConfiguration clusterConfiguration)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, queryOptimizerConfiguration, std::move(clusterConfiguration)))
+    const QueryOptimizerConfiguration& queryOptimizerConfiguration)
+    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, queryOptimizerConfiguration))
 {
 }
 
