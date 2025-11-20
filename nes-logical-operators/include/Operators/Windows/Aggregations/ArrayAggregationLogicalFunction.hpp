@@ -21,14 +21,13 @@ namespace NES
 class ArrayAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField);
-    static std::shared_ptr<WindowAggregationLogicalFunction>
-    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
-    ArrayAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    ArrayAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
     explicit ArrayAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     void inferStamp(const Schema& schema) override;
+
     ~ArrayAggregationLogicalFunction() override = default;
+
     [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
     [[nodiscard]] bool requiresSequentialAggregation() const override { return true; }
