@@ -76,6 +76,7 @@ private:
     std::string driver;
     std::string query;
     bool trustServerCertificate;
+    std::vector<SQLCHAR> queryBuffer;
 
     bool firstCall = true;
     std::unique_ptr<ODBCConnection> connection;

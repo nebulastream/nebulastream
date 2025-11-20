@@ -126,6 +126,9 @@ ODBCSource::ODBCSource(const SourceDescriptor& sourceDescriptor)
     , query(sourceDescriptor.getFromConfig(ConfigParametersODBC::QUERY))
     , trustServerCertificate(sourceDescriptor.getFromConfig(ConfigParametersODBC::TRUST_SERVER_CERTIFICATE))
 {
+    std::vector<SQLCHAR> queryBuffer(query.begin(), query.end());
+    queryBuffer.push_back('\0');
+    this->queryBuffer = std::move(queryBuffer);
 }
 
 std::ostream& ODBCSource::toString(std::ostream& str) const
@@ -152,15 +155,8 @@ void ODBCSource::open()
             this->username,
             this->password,
             (this->trustServerCertificate) ? "yes" : "no");
-        // std::string connectionString =
-        //     "DRIVER={ODBC Driver 18 for SQL Server};"
-        //     "SERVER=localhost,1433;"
-        //     "DATABASE=master;"
-        //     "UID=sa;"
-        //     "PWD=samplePassword1!;"
-        //     "TrustServerCertificate=yes;";
 
-        connection->connect(connectionString);
+        connection->connect(connectionString, this->query);
 
         std::cout << "Connection successful!\n";
     }
@@ -172,51 +168,14 @@ void ODBCSource::open()
 
 size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
-    // this->connection.executeQuery(this->query);
-    // this->connection->executeQuery("SELECT * FROM dbo.v_Vitalwerte_unvalidiert", tupleBuffer);
+    // Todo: handle return of executeQuery
     if (firstCall)
     {
-        this->connection->executeQuery(this->query, tupleBuffer);
+        this->connection->executeQuery(this->queryBuffer, tupleBuffer);
         firstCall = false;
         return tupleBuffer.getNumberOfTuples();
     }
     return 0;
-    // size_t totalBytes = 0;
-    // if (!context->latest.empty())
-    // {
-    //     const auto truncatedNumberOfBytes = std::min(context->latest.size(), tupleBuffer.getBufferSize());
-    //     memcpy(tupleBuffer.getAvailableMemoryArea().data(), context->latest.data(), truncatedNumberOfBytes);
-    //
-    //     if (context->latest.size() > truncatedNumberOfBytes)
-    //     {
-    //         context->latest = context->latest.substr(truncatedNumberOfBytes);
-    //         return truncatedNumberOfBytes;
-    //     }
-    //     context->latest = {};
-    // }
-    //
-    // while (SQLFetch(*context->statement.env) == SQL_SUCCESS)
-    // {
-    //     auto row = SQL::convertRowToCSV(*context->statement.env, static_cast<SQLSMALLINT>(context->numberOfCols));
-    //     size_t bytesLeft = tupleBuffer.getBufferSize() - totalBytes;
-    //     size_t bytesToWrite = std::min(bytesLeft, row.size());
-    //     memcpy(tupleBuffer.getAvailableMemoryArea().data() + totalBytes, row.c_str(), bytesToWrite);
-    //     totalBytes += bytesToWrite;
-    //
-    //     if (bytesLeft < row.size() + 1)
-    //     {
-    //         context->latest = row.substr(bytesToWrite);
-    //         context->latest += "\n";
-    //         break;
-    //     }
-    //     else
-    //     {
-    //         *reinterpret_cast<char*>(tupleBuffer.getAvailableMemoryArea().data() + totalBytes) = '\n';
-    //         totalBytes++;
-    //     }
-    // }
-
-    // return totalBytes;
 }
 
 DescriptorConfig::Config ODBCSource::validateAndFormat(std::unordered_map<std::string, std::string> config)

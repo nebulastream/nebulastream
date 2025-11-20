@@ -10,9 +10,7 @@ physical:
   - logical: odbc_source
     type: ODBC
     parser_config:
-      tuple_delimiter: "\n"
-      field_delimiter: ","
-      type: CSV
+      type: Native
     source_config:
       host: "localhost"
       port: "1433"
@@ -20,7 +18,8 @@ physical:
       username: "sa"
       password: "samplePassword1!"
       driver: "ODBC Driver 18 for SQL Server"
-      query: "SELECT * FROM dbo.v_Vitalwerte_unvalidiert"
+      # Todo: this can get out of sync with NES query above (which might be intentional, but is error-prone)
+      query: "SELECT mlife_FallNr FROM dbo.v_Vitalwerte_unvalidiert"
       trust_server_certificate: true
 
 sinks:
