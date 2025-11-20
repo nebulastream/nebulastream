@@ -18,6 +18,7 @@
 #include <fmt/core.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
+#include <spdlog/mdc.h>
 
 namespace spdlog::details
 {
@@ -97,7 +98,6 @@ private:
     std::shared_ptr<spdlog::logger> impl{nullptr};
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
     std::atomic<bool> isShutdown{false};
-    std::shared_ptr<spdlog::details::thread_pool> loggerThreadPool{nullptr};
     std::unique_ptr<spdlog::details::periodic_worker> flusher{nullptr};
 };
 }
@@ -108,5 +108,19 @@ void setupLogging(const std::string& logFileName, LogLevel level, bool useStdout
 
 std::shared_ptr<detail::Logger> getInstance();
 }
+
+struct LogContext
+{
+    std::string context;
+
+    template <typename Formatable>
+    requires(fmt::is_formattable<Formatable>::value)
+    explicit LogContext(std::string context, Formatable&& f) : context(std::move(context))
+    {
+        spdlog::mdc::put(this->context, fmt::format("{}", std::forward<Formatable>(f)));
+    }
+
+    ~LogContext() { spdlog::mdc::remove(context); }
+};
 
 }
