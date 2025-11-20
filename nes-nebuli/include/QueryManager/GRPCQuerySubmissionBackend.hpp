@@ -34,12 +34,14 @@ class GRPCQuerySubmissionBackend final : public QuerySubmissionBackend
 
 public:
     explicit GRPCQuerySubmissionBackend(WorkerConfig config);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
-    std::expected<void, Exception> start(QueryId) override;
-    std::expected<void, Exception> stop(QueryId) override;
-    std::expected<void, Exception> unregister(QueryId) override;
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId) const override;
+    [[nodiscard]] std::expected<LocalQueryId, Exception> registerQuery(LogicalPlan) override;
+    std::expected<void, Exception> start(LocalQueryId) override;
+    std::expected<void, Exception> stop(LocalQueryId) override;
+    std::expected<void, Exception> unregister(LocalQueryId) override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(LocalQueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 };
+
+BackendProvider createGRPCBackend();
 
 }

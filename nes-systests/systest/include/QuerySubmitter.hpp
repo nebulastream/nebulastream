@@ -18,11 +18,9 @@
 #include <memory>
 #include <unordered_set>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Pointers.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Systest
@@ -33,17 +31,17 @@ class QuerySubmitter
 {
 public:
     explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
-    std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan);
-    void startQuery(QueryId query);
-    void stopQuery(QueryId query);
-    void unregisterQuery(QueryId query);
-    LocalQueryStatus waitForQueryTermination(QueryId query);
+    std::expected<DistributedQueryId, Exception> registerQuery(const DistributedLogicalPlan& plan);
+    void startQuery(DistributedQueryId query);
+    void stopQuery(const DistributedQueryId& query);
+    void unregisterQuery(const DistributedQueryId& query);
+    DistributedQueryStatus waitForQueryTermination(const DistributedQueryId& query);
 
     /// Blocks until atleast one query has finished (or potentially failed)
-    std::vector<LocalQueryStatus> finishedQueries();
+    std::vector<DistributedQueryStatus> finishedQueries();
 
 private:
     UniquePtr<QueryManager> queryManager;
-    std::unordered_set<QueryId> ids;
+    std::unordered_set<DistributedQueryId> ids;
 };
 }

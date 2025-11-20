@@ -47,6 +47,7 @@ services:
     pull_policy: never
     environment:
       NES_WORKER_GRPC_ADDR: worker-node:8080
+      NES_TOPOLOGY_FILE: $WORKERS_FILE
       XDG_STATE_HOME: $(pwd)/.xdg-state
     stop_grace_period: 0s
     command: ["sleep", "infinity"]
@@ -79,6 +80,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       start_period: 0s
     command: [
       "--grpc=$HOST_NAME:$GRPC_PORT",
+      "--connection=$HOST",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:
