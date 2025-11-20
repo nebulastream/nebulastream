@@ -23,6 +23,7 @@
 #include <ranges>
 #include <stop_token>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -34,10 +35,10 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
+#include "Util/Ranges.hpp"
 
 class ODBCConnection
 {
-private:
     struct TypeInfo
     {
         SQLSMALLINT sqlType;
@@ -50,13 +51,8 @@ private:
         size_t numColumns;
         std::vector<TypeInfo> columnTypes;
         std::vector<size_t> columnSizes;
+        size_t sizeOfRow;
     };
-
-    FetchedSchema fetchedSchema;
-
-    SQLHENV henv = SQL_NULL_HENV;
-    SQLHDBC hdbc = SQL_NULL_HDBC;
-    SQLHSTMT hstmt = SQL_NULL_HSTMT;
 
     void checkError(SQLRETURN ret, SQLSMALLINT handleType, SQLHANDLE handle, const std::string& operation)
     {
@@ -98,27 +94,27 @@ private:
         }
     }
 
-    static TypeInfo getTypeInfo(const SQLSMALLINT sqlType)
+    static TypeInfo getTypeInfo(const SQLSMALLINT sqlType, const SQLULEN sqlColLen)
     {
         static std::unordered_map<SQLSMALLINT, NES::DataType::Type> typeMap
             = {{SQL_CHAR, NES::DataType::Type::CHAR},
                {SQL_VARCHAR, NES::DataType::Type::VARSIZED},
                {SQL_LONGVARCHAR, NES::DataType::Type::VARSIZED},
-               {SQL_WCHAR, NES::DataType::Type::UNDEFINED},
-               {SQL_WVARCHAR, NES::DataType::Type::UNDEFINED},
-               {SQL_WLONGVARCHAR, NES::DataType::Type::UNDEFINED},
-               {SQL_DECIMAL, NES::DataType::Type::UNDEFINED},
-               {SQL_NUMERIC, NES::DataType::Type::UNDEFINED},
                {SQL_SMALLINT, NES::DataType::Type::INT16},
                {SQL_INTEGER, NES::DataType::Type::INT32},
-               {SQL_REAL, NES::DataType::Type::UNDEFINED},
                {SQL_FLOAT, NES::DataType::Type::FLOAT32},
                {SQL_DOUBLE, NES::DataType::Type::FLOAT64},
-               {SQL_BIT, NES::DataType::Type::UNDEFINED},
                {SQL_TINYINT, NES::DataType::Type::INT8},
                {SQL_BIGINT, NES::DataType::Type::INT64},
+                {SQL_VARBINARY, NES::DataType::Type::VARSIZED},
+                {SQL_WCHAR, NES::DataType::Type::UNDEFINED},
+                {SQL_WVARCHAR, NES::DataType::Type::UNDEFINED},
+                {SQL_WLONGVARCHAR, NES::DataType::Type::UNDEFINED},
+                {SQL_DECIMAL, NES::DataType::Type::UNDEFINED},
+                {SQL_NUMERIC, NES::DataType::Type::UNDEFINED},
+                {SQL_REAL, NES::DataType::Type::UNDEFINED},
+               {SQL_BIT, NES::DataType::Type::UNDEFINED},
                {SQL_BINARY, NES::DataType::Type::UNDEFINED},
-               {SQL_VARBINARY, NES::DataType::Type::UNDEFINED},
                {SQL_LONGVARBINARY, NES::DataType::Type::UNDEFINED},
                {SQL_TYPE_DATE, NES::DataType::Type::UNDEFINED},
                {SQL_TYPE_TIME, NES::DataType::Type::UNDEFINED},
@@ -139,7 +135,8 @@ private:
                {SQL_GUID, NES::DataType::Type::UNDEFINED}};
         if (const auto type = typeMap.find(sqlType); type != typeMap.end())
         {
-            return TypeInfo{.sqlType = sqlType, .nesType = type->second, .nesTypeSize = NES::DataType{type->second}.getSizeInBytes()};
+            const size_t typeSize = (type->second == NES::DataType::Type::VARSIZED) ? sqlColLen : NES::DataType{type->second}.getSizeInBytes();
+            return TypeInfo{.sqlType = sqlType, .nesType = type->second, .nesTypeSize = typeSize};
         }
         throw NES::CannotOpenSource("Cannot conver SQLType {} to NES type.", sqlType);
     }
@@ -166,6 +163,11 @@ public:
         checkError(ret, SQL_HANDLE_ENV, henv, "Allocate connection handle");
     }
 
+    size_t getFetchedSizeOfRow() const
+    {
+        return fetchedSchema.sizeOfRow;
+    }
+
     void fetchColumns(std::string_view connectionString)
     {
         if (const SQLRETURN ret = SQLPrepare(hstmt, reinterpret_cast<SQLCHAR*>(const_cast<char*>(connectionString.data())), SQL_NTS);
@@ -188,9 +190,10 @@ public:
 
             SQLDescribeCol(hstmt, i, colName, sizeof(colName), &nameLength, &dataType, &columnSize, &decimalDigits, &nullable);
             // fetchedSchema.columnTypes.emplace_back(getColumnType(dataType));
-            fetchedSchema.columnTypes.emplace_back(getTypeInfo(dataType));
+            fetchedSchema.columnTypes.emplace_back(getTypeInfo(dataType, columnSize));
             fetchedSchema.columnSizes.emplace_back(columnSize);
             ++fetchedSchema.numColumns;
+            fetchedSchema.sizeOfRow += fetchedSchema.columnTypes.back().nesTypeSize;
 
             // Todo: validation of types and names (requires schema)
             NES_DEBUG(
@@ -235,22 +238,37 @@ public:
     template <typename T>
     SQLRETURN readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator)
     {
-        PRECONDITION(
-            typeInfo.nesTypeSize >= sizeof(T),
-            "NES type {} is too small to hold value of sql type: {}",
-            magic_enum::enum_name(typeInfo.nesType),
-            typeInfo.sqlType);
         T* val = reinterpret_cast<T*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]);
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
         // Todo: can't simply use 'SQL_CHAR'
-        return SQLGetData(hstmt, colIdx, typeInfo.sqlType, val, sizeof(T), &indicator);
+        return SQLGetData(hstmt, colIdx, typeInfo.sqlType, val, typeInfo.nesTypeSize, &indicator);
     }
 
-    // Todo: create triplet of <SQLType, NESType, Size> <-- maybe size implicit via function
-    SQLRETURN readDataIntoBuffer(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator)
+    SQLRETURN readVarSized(const size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, NES::TupleBuffer& buffer, NES::AbstractBufferProvider& bufferProvider)
+    {
+        if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.nesTypeSize))
+        {
+            const auto ret = SQLGetData(hstmt, colIdx, typeInfo.sqlType, varSizedBuffer.value().getAvailableMemoryArea<char>().data(), typeInfo.nesTypeSize, &indicator);
+            const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
+            *reinterpret_cast<NES::VariableSizedAccess::Index*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = childBufferIdx;
+            buffer.setNumberOfTuples(buffer.getNumberOfTuples() + NES::DataType{NES::DataType::Type::VARSIZED}.getSizeInBytes());
+            return ret;
+        }
+        throw NES::BufferAllocationFailure("Could not get unpooled buffer for VarSized value");
+    }
+
+    // Todo: we could leave all of the 'parsing/formatting' work to 'nes-input-formatters'
+    //       IF: we allowed the source to add metadata (e.g., to the buffer) that tells the input formatter, for a specific buffer,
+    //           where the first tuple starts and the last tuple ends.
+    //       IF: there is some way to access the binary data directly
+    //       IF: there is some way to handle binary column data in the input formatter
+    SQLRETURN readDataIntoBuffer(const size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, NES::TupleBuffer& buffer, NES::AbstractBufferProvider& bufferProvider)
     {
         switch (typeInfo.sqlType)
         {
+            case SQL_BINARY: {
+                return readVal<char>(colIdx, buffer, typeInfo, indicator);
+            }
             case SQL_CHAR: {
                 return readVal<char>(colIdx, buffer, typeInfo, indicator);
             }
@@ -272,23 +290,24 @@ public:
             case SQL_DOUBLE: {
                 return readVal<double>(colIdx, buffer, typeInfo, indicator);
             }
-            // Todo: need buffer manager here
             case SQL_VARCHAR: {
-                throw NES::UnknownDataType("Not supporting {} type in ODBC source", typeInfo.sqlType);
+                return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
             }
-            // Todo: need buffer manager here
             case SQL_LONGVARCHAR: {
-                throw NES::UnknownDataType("Not supporting {} type in ODBC source", typeInfo.sqlType);
+                return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
             }
-            case SQL_REAL:
-            case SQL_BIT:
-            case SQL_BINARY:
-            case SQL_VARBINARY:
-            case SQL_LONGVARBINARY:
+            case SQL_VARBINARY: {
+                return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
+            }
+            case SQL_LONGVARBINARY: {
+                return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
+            }
             /// WCHAR/WVARCHAR/WLONGVARCHAR contain unicode data
             case SQL_WCHAR:
             case SQL_WVARCHAR:
             case SQL_WLONGVARCHAR:
+            case SQL_REAL:
+            case SQL_BIT:
             case SQL_DECIMAL:
             case SQL_NUMERIC:
             case SQL_TYPE_DATE:
@@ -313,18 +332,27 @@ public:
         }
     }
 
-    void executeQuery(std::vector<SQLCHAR> queryBuffer, NES::TupleBuffer& tupleBuffer)
+    void executeQuery(std::vector<SQLCHAR> queryBuffer, NES::TupleBuffer& tupleBuffer, NES::AbstractBufferProvider& bufferProvider, const size_t rowsPerBuffer)
     {
+        if (noMoreData)
+        {
+            /// There is no more data, we can close the connection (unless we implement a streaming mode)
+            return;
+        }
         // Execute the SQL statement
         SQLRETURN ret = SQLExecDirect(hstmt, queryBuffer.data(), static_cast<SQLINTEGER>(queryBuffer.size()));
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
 
-        int rowCount = 0;
-        while (true)
+        // Todo:
+        //  1. [x] keep track of row-buffer-fit
+        //  2. [x] support strings
+        for (size_t bufferLocalRowCount = 0; bufferLocalRowCount < rowsPerBuffer; ++bufferLocalRowCount)
         {
             ret = SQLFetch(hstmt);
             if (ret == SQL_NO_DATA)
             {
+                NES_DEBUG("No more data in table after reading {} rows.", totalRowCount);
+                noMoreData = true;
                 break;
             }
             checkError(ret, SQL_HANDLE_STMT, hstmt, "Fetch row");
@@ -334,7 +362,7 @@ public:
             {
                 SQLLEN indicator{};
                 /// ODBC expects column indexes starting at 1
-                readDataIntoBuffer(columnIdx + 1, tupleBuffer, columnType, indicator);
+                readDataIntoBuffer(columnIdx + 1, columnType, indicator, tupleBuffer, bufferProvider);
                 if (ret != SQL_SUCCESS and ret != SQL_SUCCESS_WITH_INFO)
                 {
                     throw NES::UnknownDataType(
@@ -345,15 +373,14 @@ public:
                     throw NES::UnknownDataType("Not supporting null types in ODBC source");
                 }
             }
-            rowCount++;
+            ++totalRowCount;
         }
-
-        // Close cursor for next query
-        SQLCloseCursor(hstmt);
     }
 
     ~ODBCConnection()
     {
+        SQLCloseCursor(hstmt);
+
         if (hstmt != SQL_NULL_HSTMT)
         {
             SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
@@ -368,4 +395,12 @@ public:
             SQLFreeHandle(SQL_HANDLE_ENV, henv);
         }
     }
+
+private:
+    SQLHENV henv = SQL_NULL_HENV;
+    SQLHDBC hdbc = SQL_NULL_HDBC;
+    SQLHSTMT hstmt = SQL_NULL_HSTMT;
+    FetchedSchema fetchedSchema;
+    size_t totalRowCount{0};
+    bool noMoreData{false};
 };
