@@ -23,6 +23,7 @@ get_source(nes-query-manager-embedded QUERY_MANAGER_EMBEDDED_SOURCE_FILES)
 add_library(nes-nebuli-lib STATIC ${QUERY_MANAGER_GRPC_SOURCE_FILES} ${CATALOG_SOURCE_FILES} ${LEGACYOPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES} ${YAML_BINDER_SOURCE_FILES})
 add_library(nes-nebuli-embedded-lib STATIC ${QUERY_MANAGER_GRPC_SOURCE_FILES} ${CATALOG_SOURCE_FILES} ${LEGACYOPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES} ${YAML_BINDER_SOURCE_FILES} ${QUERY_MANAGER_EMBEDDED_SOURCE_FILES} )
 
+find_package(highs CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
 find_package(replxx CONFIG REQUIRED)
@@ -33,7 +34,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-logical-operators nes-sql-parser nes-single-node-worker-interface
-        PRIVATE yaml-cpp::yaml-cpp
+        PRIVATE yaml-cpp::yaml-cpp highs::highs
 )
 
 target_compile_definitions(nes-nebuli-embedded-lib PUBLIC
@@ -46,7 +47,9 @@ target_include_directories(nes-nebuli-embedded-lib
 
 target_link_libraries(nes-nebuli-embedded-lib
         PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser nes-single-node-worker-interface
-        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp
+        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp highs::highs
 )
+
+add_tests_if_enabled(tests)
 
 add_subdirectory(apps)

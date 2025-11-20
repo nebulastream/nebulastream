@@ -15,6 +15,7 @@
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 
 #include <chrono>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -38,12 +39,12 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
                  SingleNodeWorkerConfiguration mergedConfig = config.config;
                  mergedConfig.applyExplicitlySetFrom(workerConfiguration);
 
-                 /// Set connection/grpc from topology (these always come from cluster config)
-                 mergedConfig.grpcAddressUri.setValue(config.grpc.getRawValue());
-                 mergedConfig.connection.setValue(config.host.getRawValue());
+                 /// Set grpc/connection from topology (these always come from cluster config)
+                 mergedConfig.grpcAddressUri.setValue(config.host.getRawValue());
+                 mergedConfig.connection.setValue(config.connection);
 
-                 const LogContext logContext("create", config.grpc);
-                 return SingleNodeWorker(mergedConfig, WorkerId("embedded"));
+                 const LogContext logContext("create", config.host);
+                 return SingleNodeWorker(mergedConfig, config.host);
              }()}
 {
 }
@@ -76,6 +77,12 @@ std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend:
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
     return worker.getWorkerStatus(after);
+}
+
+BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)
+{
+    return [workerConfiguration](const WorkerConfig& config)
+    { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, workerConfiguration); };
 }
 
 }

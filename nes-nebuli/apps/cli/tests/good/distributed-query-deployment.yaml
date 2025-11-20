@@ -19,6 +19,7 @@ query: |
     VOID_SINK
 sinks:
   - name: VOID_SINK
+    host: worker-2:8080
     schema:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
@@ -33,6 +34,7 @@ logical:
 
 physical:
   - logical: GENERATOR_SOURCE
+    host: worker-1:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -44,3 +46,12 @@ physical:
       seed: 1
       generator_schema: |
         NORMAL_DISTRIBUTION FLOAT64 0 1
+
+workers:
+  - host: worker-1:9090
+    grpc: worker-1:8080
+    capacity: 10000
+    downstream: [ worker-2:8080 ]
+  - host: worker-2:9090
+    grpc: worker-2:8080
+    capacity: 10000

@@ -1,0 +1,51 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream2) ON id1 = id2 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream3) ON id2 = id3 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1stream2stream3$start, stream0stream1stream2stream3$end, stream0stream1stream2$start, stream0stream1stream2$end, stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream2$ts, stream2$id2, stream3$ts, stream3$id3 ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0 ]
+  - name: stream1
+    schema: [ ts, id1 ]
+  - name: stream2
+    schema: [ ts, id2 ]
+  - name: stream3
+    schema: [ ts, id3 ]
+
+physical:
+  - logical: stream0
+    host: "source-node0:8080"
+  - logical: stream1
+    host: "source-node0:8080"
+  - logical: stream2
+    host: "source-node1:8080"
+  - logical: stream3
+    host: "source-node2:8080"
+
+workers:
+  - host: "source-node0:8080"
+    capacity: 3
+    downstream:
+      - "sink-node:8080"
+  - host: "source-node1:8080"
+    capacity: 1
+    downstream:
+      - "intermediate-node0:8080"
+  - host: "source-node2:8080"
+    capacity: 0
+    downstream:
+      - "intermediate-node1:8080"
+  - host: "intermediate-node0:8080"
+    capacity: 0
+    downstream:
+      - "sink-node:8080"
+  - host: "intermediate-node1:8080"
+    capacity: 1
+    downstream:
+      - "sink-node:8080"
+  - host: "sink-node:8080"
+    capacity: 2
