@@ -34,7 +34,7 @@ VarVal LessEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena
 }
 
 LessEqualsPhysicalFunction::LessEqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 

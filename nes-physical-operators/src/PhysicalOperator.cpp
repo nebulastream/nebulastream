@@ -183,10 +183,10 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
     PipelineLocation pipelineLocation)
-    : physicalOperator(std::move(std::move(physicalOperator)))
+    : physicalOperator(std::move(physicalOperator))
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
-    , handler(std::move(std::move(handler)))
+    , handler(std::move(handler))
     , handlerId(handlerId)
     , pipelineLocation(pipelineLocation)
 {
@@ -200,11 +200,11 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     std::optional<std::shared_ptr<OperatorHandler>> handler,
     PipelineLocation pipelineLocation,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children)
-    : physicalOperator(std::move(std::move(physicalOperator)))
+    : physicalOperator(std::move(physicalOperator))
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
     , children(std::move(children))
-    , handler(std::move(std::move(handler)))
+    , handler(std::move(handler))
     , handlerId(handlerId)
     , pipelineLocation(pipelineLocation)
 {

@@ -33,8 +33,8 @@ namespace NES
 {
 
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
+    : left(std::move(left))
+    , right(std::move(right))
     , dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
 }

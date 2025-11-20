@@ -33,7 +33,7 @@ void EventTimeFunction::open(ExecutionContext&, RecordBuffer&) const
 }
 
 EventTimeFunction::EventTimeFunction(PhysicalFunction timestampFunction, const Windowing::TimeUnit& unit)
-    : unit(unit), timestampFunction(std::move(std::move(timestampFunction)))
+    : unit(unit), timestampFunction(std::move(timestampFunction))
 {
 }
 

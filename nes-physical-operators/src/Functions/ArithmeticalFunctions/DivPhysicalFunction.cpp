@@ -30,7 +30,7 @@ VarVal DivPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 }
 
 DivPhysicalFunction::DivPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 

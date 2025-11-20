@@ -33,7 +33,7 @@ namespace NES
 {
 
 DivLogicalFunction::DivLogicalFunction(const LogicalFunction& left, LogicalFunction right)
-    : dataType(left.getDataType()), left(left), right(std::move(std::move(right))) { };
+    : dataType(left.getDataType()), left(left), right(std::move(right)) { };
 
 bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {

@@ -40,8 +40,8 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     : inputStamp(std::move(inputStamp))
     , partialAggregateStamp(std::move(partialAggregateStamp))
     , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(std::move(std::move(onField)))
-    , asField(std::move(std::move(asField)))
+    , onField(std::move(onField))
+    , asField(std::move(asField))
 {
 }
 

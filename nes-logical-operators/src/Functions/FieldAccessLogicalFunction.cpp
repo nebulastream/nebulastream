@@ -36,7 +36,7 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
     : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)) { };
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(DataType dataType, std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(std::move(std::move(dataType))) { };
+    : fieldName(std::move(fieldName)), dataType(std::move(dataType)) { };
 
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
