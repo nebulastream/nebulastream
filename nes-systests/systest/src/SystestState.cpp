@@ -43,11 +43,9 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
 
-#include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestParser.hpp>
 #include <SystestRunner.hpp>
 
 namespace NES::Systest
@@ -281,20 +279,21 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
 
 std::chrono::duration<double> RunningQuery::getElapsedTime() const
 {
-    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
-
-    const auto stop = queryStatus.metrics.stop;
-    const auto running = queryStatus.metrics.running;
+    INVARIANT(queryId != DistributedQueryId(DistributedQueryId::INVALID), "QueryId should not be invalid");
+    const auto metrics = queryStatus.coalesceQueryMetrics();
+    const auto stop = metrics.stop;
+    const auto running = metrics.running;
     INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps attached", queryId);
     return std::chrono::duration_cast<std::chrono::duration<double>>(stop.value() - running.value());
 }
 
 std::string RunningQuery::getThroughput() const
 {
-    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+    INVARIANT(queryId != DistributedQueryId(DistributedQueryId::INVALID), "QueryId should not be invalid");
+    const auto metrics = queryStatus.coalesceQueryMetrics();
 
-    const auto stop = queryStatus.metrics.stop;
-    const auto running = queryStatus.metrics.running;
+    const auto stop = metrics.stop;
+    const auto running = metrics.running;
     INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps timestamps attached", queryId);
     if (not bytesProcessed.has_value() or not tuplesProcessed.has_value())
     {

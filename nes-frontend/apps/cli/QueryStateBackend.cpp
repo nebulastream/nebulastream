@@ -15,17 +15,8 @@
 #include <QueryStateBackend.hpp>
 
 #include <chrono>
-#include <cstdint>
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
@@ -34,15 +25,14 @@
 
 namespace NES::CLI
 {
-
 std::string PersistedQueryId::toString() const
 {
-    return queryId.getLocalQueryId().getRawValue();
+    return queryId.getRawValue();
 }
 
 PersistedQueryId PersistedQueryId::fromString(std::string_view input)
 {
-    return PersistedQueryId{QueryId::createLocal(LocalQueryId(std::string(input)))};
+    return PersistedQueryId{DistributedQueryId(input)};
 }
 
 QueryStateBackend::QueryStateBackend() : stateDirectory(getStateDirectory())
@@ -50,11 +40,9 @@ QueryStateBackend::QueryStateBackend() : stateDirectory(getStateDirectory())
     NES_DEBUG("QueryStateBackend initialized with state directory: {}", stateDirectory.string());
 }
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) This is an implementation detail of QueryStateBackend
 std::filesystem::path QueryStateBackend::getStateDirectory()
 {
     std::filesystem::path stateDir;
-
     ///NOLINTNEXTLINE(concurrency-mt-unsafe) This is only used at startup on a single thread
     if (const char* xdgState = std::getenv("XDG_STATE_HOME"))
     {
@@ -64,78 +52,77 @@ std::filesystem::path QueryStateBackend::getStateDirectory()
             NES_DEBUG("Using XDG_STATE_HOME: {}", stateDir.string());
         }
     }
-
     if (stateDir.empty())
     {
         ///NOLINTNEXTLINE(concurrency-mt-unsafe) This is only used at startup on a single thread
         const char* home = std::getenv("HOME");
-        if ((home == nullptr) || *home == '\0')
+        if (!home || *home == '\0')
         {
             throw InvalidConfigParameter("Cannot determine state directory: Neither XDG_STATE_HOME nor HOME environment variables are set");
         }
         stateDir = std::filesystem::path(home) / ".local" / "state" / "nebucli";
         NES_DEBUG("Using fallback state directory: {}", stateDir.string());
     }
-
-    std::error_code err;
-    std::filesystem::create_directories(stateDir, err);
-
-    if (err)
+    std::error_code ec;
+    std::filesystem::create_directories(stateDir, ec);
+    if (ec)
     {
-        throw InvalidConfigParameter("Failed to create state directory {}: {}", stateDir.string(), err.message());
+        throw InvalidConfigParameter("Failed to create state directory {}: {}", stateDir.string(), ec.message());
     }
-
     return stateDir;
 }
 
-std::filesystem::path QueryStateBackend::getQueryFilePath(QueryId queryId)
+std::filesystem::path QueryStateBackend::getQueryFilePath(const DistributedQueryId& distributedQueryId)
 {
-    return stateDirectory / fmt::format("{}.json", queryId.getLocalQueryId().getRawValue());
+    return stateDirectory / fmt::format("{}.json", distributedQueryId.getRawValue());
 }
 
-PersistedQueryId QueryStateBackend::store(QueryId queryId)
+PersistedQueryId QueryStateBackend::store(const DistributedQueryId& distributedQueryId, const DistributedQuery& distributedQuery)
 {
-    auto filePath = getQueryFilePath(queryId);
-
+    auto filePath = getQueryFilePath(distributedQueryId);
     nlohmann::json jsonObject;
-    jsonObject["query_id"] = queryId.getLocalQueryId().getRawValue();
-
+    jsonObject["query_id"] = distributedQueryId.getRawValue();
+    /// Manually serialize the local queries mapping
+    nlohmann::json localQueriesJson = nlohmann::json::object();
+    for (const auto& [grpcAddr, queryId] : distributedQuery.iterate())
+    {
+        std::string grpcKey = grpcAddr.getRawValue();
+        if (!localQueriesJson.contains(grpcKey))
+        {
+            localQueriesJson[grpcKey] = nlohmann::json::array();
+        }
+        localQueriesJson[grpcKey].push_back(queryId.getLocalQueryId().getRawValue());
+    }
+    jsonObject["local_queries"] = localQueriesJson;
     auto now = std::chrono::system_clock::now();
     jsonObject["created_at"] = fmt::format("{:%Y-%m-%dT%H:%M:%S%z}", now);
-
     std::ofstream file(filePath);
     if (!file)
     {
         throw InvalidConfigParameter("Failed to open state file for writing: {}", filePath.string());
     }
-
     file << jsonObject.dump(4);
     file.close();
-
     if (!file)
     {
         throw InvalidConfigParameter("Failed to write state file: {}", filePath.string());
     }
-
     NES_DEBUG("Stored query state: {}", filePath.string());
-    return PersistedQueryId{queryId};
+    return PersistedQueryId{distributedQueryId};
 }
 
-QueryId QueryStateBackend::load(PersistedQueryId persistedId)
+DistributedQuery QueryStateBackend::load(PersistedQueryId persistedId)
 {
     auto filePath = getQueryFilePath(persistedId.queryId);
-
     if (!std::filesystem::exists(filePath))
     {
         throw InvalidConfigParameter("Could not find query with id {}. Expected file: {}", persistedId.queryId, filePath.string());
     }
-
     std::ifstream file(filePath);
     if (!file)
     {
         throw InvalidConfigParameter("Could not open state file: {}", filePath.string());
     }
-
     nlohmann::json jsonObject;
     try
     {
@@ -145,32 +132,39 @@ QueryId QueryStateBackend::load(PersistedQueryId persistedId)
     {
         throw InvalidConfigParameter("Failed to parse state file {}: {}", filePath.string(), e.what());
     }
-
-    if (!jsonObject.contains("query_id"))
+    if (!jsonObject.contains("local_queries"))
     {
-        throw InvalidConfigParameter("State file {} is missing query_id field", filePath.string());
+        throw InvalidConfigParameter("State file {} is missing local_queries field", filePath.string());
     }
-
-    auto queryId = QueryId::createLocal(LocalQueryId(jsonObject["query_id"].get<std::string>()));
+    /// Manually deserialize the local queries mapping
+    auto distributedId = DistributedQueryId(jsonObject.at("query_id").get<std::string>());
+    std::unordered_map<WorkerId, std::vector<QueryId>> localQueries;
+    for (const auto& [workerKey, localQueryIdsJson] : jsonObject["local_queries"].items())
+    {
+        WorkerId worker(workerKey);
+        std::vector<QueryId> queryIds;
+        for (const auto& localQueryIdStr : localQueryIdsJson)
+        {
+            queryIds.emplace_back(QueryId::create(LocalQueryId(localQueryIdStr.get<std::string>()), distributedId));
+        }
+        localQueries.emplace(worker, std::move(queryIds));
+    }
     NES_DEBUG("Loaded query state from: {}", filePath.string());
-    return queryId;
+    return DistributedQuery(localQueries);
 }
 
 void QueryStateBackend::remove(PersistedQueryId persistedId)
 {
     auto filePath = getQueryFilePath(persistedId.queryId);
-
-    std::error_code err;
-    std::filesystem::remove(filePath, err);
-
-    if (err)
+    std::error_code ec;
+    std::filesystem::remove(filePath, ec);
+    if (ec)
     {
-        NES_WARNING("Failed to remove state file {}: {}", filePath.string(), err.message());
+        NES_WARNING("Failed to remove state file {}: {}", filePath.string(), ec.message());
     }
     else
     {
         NES_DEBUG("Removed query state file: {}", filePath.string());
     }
 }
-
 }

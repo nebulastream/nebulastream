@@ -15,6 +15,8 @@
 #pragma once
 #include <memory>
 #include <utility>
+#include <DistributedQuery.hpp>
+#include <WorkerCatalog.hpp>
 
 #include <Plans/LogicalPlan.hpp>
 
@@ -29,16 +31,20 @@ namespace NES
 class LegacyOptimizer
 {
 public:
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
+    [[nodiscard]] DistributedLogicalPlan optimize(const LogicalPlan& plan) const;
     LegacyOptimizer() = default;
 
-    explicit LegacyOptimizer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    explicit LegacyOptimizer(
+        std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<SinkCatalog> sinkCatalog,
+        std::shared_ptr<WorkerCatalog> workerCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), workerCatalog(std::move(workerCatalog))
     {
     }
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<const WorkerCatalog> workerCatalog;
 };
 }

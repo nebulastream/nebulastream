@@ -55,6 +55,7 @@
 #include <SystestProgressTracker.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
+#include <WorkerCatalog.hpp>
 #include <from_current.hpp>
 
 
@@ -91,8 +92,9 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const std::string& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
-    Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(
-        WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr(grpcURI), .config = {}})));
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    workerCatalog->addWorker(WorkerId(grpcURI), "localhost:9090", INFINITE_CAPACITY, {});
+    Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createGRPCBackend()));
 
     while (true)
     {
@@ -138,10 +140,10 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
 
-            auto queryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
-                WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080"), .config = {}}, configCopy));
-
-            Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+            auto workerCatalog = std::make_shared<WorkerCatalog>();
+            workerCatalog->addWorker(WorkerId("localhost:8080"), "localhost:9090", INFINITE_CAPACITY, {});
+            Systest::QuerySubmitter querySubmitter(
+                std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
 
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);

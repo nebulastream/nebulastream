@@ -20,6 +20,16 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+if [ -z "$WORKER_IMAGE" ]; then
+  echo "ERROR: WORKER_IMAGE is not set"
+  exit 1
+fi
+
+if [ -z "$REPL_IMAGE" ]; then
+  echo "ERROR: REPL_IMAGE is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -86,6 +96,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       start_period: 0s
     command: [
       "--grpc=$HOST_NAME:$GRPC_PORT",
+      "--connection=$HOST",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:

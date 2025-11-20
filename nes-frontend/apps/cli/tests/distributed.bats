@@ -137,12 +137,13 @@ sync_workdir() {
 }
 
 teardown() {
+  sync_workdir || true
   docker compose down -v || true
   docker volume rm $TEST_VOLUME || true
 }
 
 function setup_distributed() {
-  tests/util/create_compose.sh "$1" >docker-compose.yaml
+  tests/util/create_compose.sh "$1" > docker-compose.yaml
   docker compose up -d --wait
 }
 
@@ -176,13 +177,13 @@ assert_json_contains() {
 }
 
 @test "launch query from topology" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
 }
 
 @test "launch multiple query from topology" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/multiple-select-gen-into-void.yaml
 
   run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
@@ -201,24 +202,24 @@ assert_json_contains() {
 }
 
 @test "launch query from commandline" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
 @test "launch bad query from commandline" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 1 ]
 }
 
 @test "launch and stop query" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -228,12 +229,12 @@ assert_json_contains() {
 }
 
 @test "launch and monitor query" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -241,106 +242,153 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
 
 @test "launch and monitor distributed queries" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/distributed-query-deployment.yaml
 
   run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   sleep 1
 
   run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
-  echo "${output}" | jq -e '(. | length) == 1' # 1 local
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  echo "${output}" | jq -e '(. | length) == 3' # 1 global + 2 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
 
 @test "launch and monitor distributed queries crazy join" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI -t tests/good/crazy-join.yaml start
-  echo $output
+  run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
   sleep 1
 
-  run DOCKER_NES_CLI -t tests/good/crazy-join.yaml status "$QUERY_ID"
-  echo "${output}" | jq -e '(. | length) == 1' # 1 local
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  run DOCKER_NES_CLI status "$QUERY_ID"
+  echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 
-  run DOCKER_NES_CLI -t tests/good/crazy-join.yaml stop "$QUERY_ID"
+  run DOCKER_NES_CLI stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "launch and monitor distributed queries crazy join with a fast source" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/chained-joins-one-fast-source.yaml
 
-  run DOCKER_NES_CLI -t tests/good/crazy-join-one-fast-source.yaml start
+  run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+
+  # Output should be a query ID (human-readable name)
+  [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
-  sleep 10
+  # Poll until the fast source has stopped and the query becomes PartiallyStopped
+  for i in $(seq 1 20); do
+    sleep 1
+    run DOCKER_NES_CLI status "$QUERY_ID"
+    [ "$status" -eq 0 ]
+    QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+    if [ "$QUERY_STATUS" = "PartiallyStopped" ]; then
+      break
+    fi
+    # If the query already fully stopped, it won't go back to PartiallyStopped
+    if [ "$QUERY_STATUS" = "Stopped" ]; then
+      break
+    fi
+  done
+  echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
+  [ "$QUERY_STATUS" = "PartiallyStopped" ]
 
-  run DOCKER_NES_CLI -t tests/good/crazy-join-one-fast-source.yaml status "$QUERY_ID"
-  [ "$status" -eq 0 ]
-  echo "${output}" | jq -e '(. | length) == 1' # 1 local
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
-  [ "$QUERY_STATUS" = "Running" ]
-
-  run DOCKER_NES_CLI -t tests/good/crazy-join-one-fast-source.yaml stop "$QUERY_ID"
+  run DOCKER_NES_CLI stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "test worker not available" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/chained-joins.yaml
 
-  docker compose stop worker-node
+  docker compose stop worker-1
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml -d start
+  run DOCKER_NES_CLI -d start
 
   sync_workdir
   grep "(5001) : query registration call failed; Status: UNAVAILABLE" nes-cli.log
   [ "$status" -eq 1 ]
 
-  docker compose up -d --wait worker-node
+  docker compose up -d --wait worker-1
   # now it should work
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
 }
 
 @test "worker goes offline during processing" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
   sleep 1
 
   # This has to be kill not stop. Stop will gracefully shutdown the worker and all queries on that worker.
-  docker compose kill worker-node
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  # This would cause the query to fail as it was unexpectedly stopped. If we kill the worker: upstream and downstream
+  # will wait for the "crashed" worker to return. However this test does not test that as it is currently not possible.
+  docker compose kill worker-1
+  run DOCKER_NES_CLI status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
   {
     "query_id": "$QUERY_ID",
-    "query_status": "Failed"
+    "query_status": "Unreachable"
+  },
+  {
+    "worker": "worker-2:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-3:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-8:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-7:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-4:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-9:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-5:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-6:8080",
+    "query_status": "Running"
+  },
+  {
+    "worker": "worker-1:8080",
+    "query_status": "ConnectionError"
   }
 ]
 EOF
@@ -350,30 +398,38 @@ EOF
 }
 
 @test "worker goes offline and comes back during processing" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
   sleep 1
 
-  # Simulate a crash by killing worker-node.
-  docker compose kill worker-node
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  # Simulate a crash by killing worker-1.
+  docker compose kill worker-1
+  run DOCKER_NES_CLI status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   sleep 1
 
-  docker compose up -d --wait worker-node
+  docker compose up -d --wait worker-1
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+# While this might not be the most intuitive nor the long-term solution this testcase documents the current behavior.
+# The query running on worker-1 is terminated and on restart it is not restarted, this will cause subsequent status
+# request to find that the previous local query id is not registered on worker-1, currently this is falsely reported as a ConnectionError.
+
+  run DOCKER_NES_CLI status "$QUERY_ID"
   [ "$status" -eq 0 ]
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
   {
     "query_id": "$QUERY_ID",
-    "query_status": "Failed"
+    "query_status": "Unreachable"
+  },
+  {
+    "worker": "worker-1:8080",
+    "query_status": "ConnectionError"
   }
 ]
 EOF
@@ -385,42 +441,156 @@ EOF
 }
 
 @test "worker status" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  run DOCKER_NES_CLI start
   [ $status -eq 0 ]
   query_id=$output
 
   sleep 1
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status $query_id
+  run DOCKER_NES_CLI status $query_id
   [ $status -eq 0 ]
   assert_json_contains "[{\"query_id\":\"$query_id\", \"query_status\":\"Running\", \"running\": {}, \"started\": {}}]" "$output"
 
+  local_query_id=$(echo "$output" | jq -r '.[1].local_query_id')
+  run DOCKER_NES_CLI status
+  [ $status -eq 0 ]
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status $query_id
-  assert_json_contains "[{\"query_id\":\"$query_id\", \"query_status\":\"Running\", \"running\": {}, \"started\": {}}]" "$output"
-
-  echo "# Using TEST_DIR: $output" >&3
-  local_query_id=$(echo "$output" | jq -r '.[0].local_query_id')
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status
+  # Expect to find the local query in the worker status
   assert_json_contains "[{\"local_query_id\":\"$local_query_id\", \"query_status\":\"Running\", \"started\": {}}]" "$output"
+}
 
+@test "back pressure" {
+  setup_distributed tests/good/backpressure.yaml
+
+  run DOCKER_NES_CLI start
+  [ $status -eq 0 ]
+  query_id=$output
+
+  # Poll until backpressure is observed in the worker log
+  for i in $(seq 1 30); do
+    sleep 1
+    sync_workdir
+    if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
+      break
+    fi
+  done
+
+  run DOCKER_NES_CLI stop $query_id
+  grep "Backpressure" worker-2/singleNodeWorker.log
+  [ $status -eq 0 ]
+}
+
+@test "order of worker termination when backpressure is applied. terminate sink" {
+  setup_distributed tests/good/backpressure.yaml
+
+  run DOCKER_NES_CLI start
+  [ $status -eq 0 ]
+  query_id=$output
+
+  # Poll until backpressure is observed in the worker log
+  for i in $(seq 1 30); do
+    sleep 1
+    sync_workdir
+    if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
+      break
+    fi
+  done
+
+  docker compose stop worker-1
+
+  # Poll until the sink closure propagates
+  for i in $(seq 1 20); do
+    sleep 1
+    sync_workdir
+    if grep -q "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log 2>/dev/null; then
+      break
+    fi
+  done
+
+  grep "Backpressure" worker-2/singleNodeWorker.log
+  grep "NetworkSink was closed by other side" worker-2/singleNodeWorker.log
+  grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
+
+  run DOCKER_NES_CLI status $query_id
+  [ $status -eq 0 ]
+
+  expected_json=$(cat <<EOF
+  [
+    {
+      "query_status": "Failed"
+    },
+    {
+      "query_status": "ConnectionError",
+      "worker": "worker-1:8080"
+    },
+    {
+      "query_status": "Failed",
+      "worker": "worker-2:8080"
+    }
+  ]
+EOF
+  )
+
+  assert_json_contains "$expected_json" "$output"
+}
+
+@test "order of worker termination when backpressure is applied. terminate source" {
+  setup_distributed tests/good/backpressure.yaml
+
+  run DOCKER_NES_CLI start
+  [ $status -eq 0 ]
+  query_id=$output
+
+  # Poll until backpressure is observed in the worker log
+  for i in $(seq 1 30); do
+    sleep 1
+    sync_workdir
+    if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
+      break
+    fi
+  done
+  grep "Backpressure" worker-2/singleNodeWorker.log
+
+  docker compose stop worker-2
+  sleep 2
+
+  run DOCKER_NES_CLI status $query_id
+  [ $status -eq 0 ]
+
+  expected_json=$(cat <<EOF
+  [
+    {
+      "query_status": "Unreachable"
+    },
+    {
+      "query_status": "Running",
+      "worker": "worker-1:8080"
+    },
+    {
+      "query_status": "ConnectionError",
+      "worker": "worker-2:8080"
+    }
+  ]
+EOF
+  )
+
+  assert_json_contains "$expected_json" "$output"
 }
 
 @test "launch query with topology from stdin" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start'"
   [ "$status" -eq 0 ]
 }
 
 @test "launch and stop query with topology from stdin" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (numeric)
   QUERY_ID=$output
 
   sleep 1
@@ -430,12 +600,11 @@ EOF
 }
 
 @test "query status with topology from stdin" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (UUID)
-  [[ "$output" =~ ^[0-9a-f-]+$ ]]
+  # Output should be a query ID (numeric)
   QUERY_ID=$output
 
   sleep 1
