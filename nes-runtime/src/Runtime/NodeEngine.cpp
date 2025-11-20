@@ -67,7 +67,7 @@ public:
             it->second->transition(
                 [&](Idle&& idle)
                 {
-                    qep = std::move(std::move(idle).qep);
+                    qep = std::move(idle).qep);
                     return Executing{};
                 });
         }

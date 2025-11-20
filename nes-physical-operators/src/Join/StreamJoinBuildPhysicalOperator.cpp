@@ -31,7 +31,7 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction))
     , joinBuildSide(joinBuildSide)
-    , bufferRef(std::move(std::move(bufferRef)))
+    , bufferRef(std::move(bufferRef))
 {
 }
 }

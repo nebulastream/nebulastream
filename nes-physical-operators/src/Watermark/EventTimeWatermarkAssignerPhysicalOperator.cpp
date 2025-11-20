@@ -37,7 +37,7 @@ struct WatermarkState final : OperatorState
 };
 
 EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction)
-    : timeFunction(std::move(std::move(timeFunction))) { };
+    : timeFunction(std::move(timeFunction)) { };
 
 void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

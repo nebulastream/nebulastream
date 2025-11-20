@@ -30,7 +30,7 @@ namespace NES::Nautilus::Interface::BufferRef
 {
 
 ColumnTupleBufferRef::ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr)
-    : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) { };
+    : columnMemoryLayout(std::move(columnMemoryLayoutPtr)) { };
 
 std::shared_ptr<MemoryLayout> ColumnTupleBufferRef::getMemoryLayout() const
 {

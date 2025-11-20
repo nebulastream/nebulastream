@@ -71,7 +71,7 @@ void terminateProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pip
 }
 
 WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerId, WindowMetaData windowMetaData)
-    : operatorHandlerId(operatorHandlerId), windowMetaData(std::move(std::move(windowMetaData)))
+    : operatorHandlerId(operatorHandlerId), windowMetaData(std::move(windowMetaData))
 {
 }
 
