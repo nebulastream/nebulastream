@@ -110,7 +110,7 @@ teardown() {
 }
 
 function setup_distributed() {
-  tests/util/create_compose.sh "$1" >docker-compose.yaml
+  tests/util/create_compose.sh "$1" > docker-compose.yaml
   docker compose up -d --wait
 }
 
@@ -141,13 +141,13 @@ assert_json_contains() {
 }
 
 @test "launch query from topology" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
 }
 
 @test "launch multiple query from topology" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/multiple-select-gen-into-void.yaml
 
   run DOCKER_NEBUCLI -t tests/good/multiple-select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
@@ -166,19 +166,19 @@ assert_json_contains() {
 }
 
 @test "launch query from commandline" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
 @test "launch bad query from commandline" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 1 ]
 }
 
 @test "launch and stop query" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
@@ -192,7 +192,7 @@ assert_json_contains() {
 }
 
 @test "launch and monitor query" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/select-gen-into-void.yaml
   run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
@@ -204,12 +204,12 @@ assert_json_contains() {
   run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
 
 @test "launch and monitor distributed queries" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/distributed-query-deployment.yaml
 
   run DOCKER_NEBUCLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
@@ -220,15 +220,15 @@ assert_json_contains() {
 
   run DOCKER_NEBUCLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
-  echo "${output}" | jq -e '(. | length) == 1' # 1 local
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  echo "${output}" | jq -e '(. | length) == 3' # 1 global + 2 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
 
 @test "launch and monitor distributed queries crazy join" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/crazy-join.yaml
 
-  run DOCKER_NEBUCLI -t tests/good/crazy-join.yaml start
+  run DOCKER_NEBUCLI start
   echo $output
   [ "$status" -eq 0 ]
   [ -f "$output" ]
@@ -236,19 +236,19 @@ assert_json_contains() {
 
   sleep 1
 
-  run DOCKER_NEBUCLI -t tests/good/crazy-join.yaml status "$QUERY_ID"
-  echo "${output}" | jq -e '(. | length) == 1' # 1 local
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  run DOCKER_NEBUCLI status "$QUERY_ID"
+  echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 
-  run DOCKER_NEBUCLI -t tests/good/crazy-join.yaml stop "$QUERY_ID"
+  run DOCKER_NEBUCLI stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "launch and monitor distributed queries crazy join with a fast source" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/crazy-join-one-fast-source.yaml
 
-  run DOCKER_NEBUCLI -t tests/good/crazy-join-one-fast-source.yaml start
+  run DOCKER_NEBUCLI start
   echo $output
   cat nebucli.log
   [ "$status" -eq 0 ]
@@ -257,49 +257,87 @@ assert_json_contains() {
 
   sleep 1
 
-  run DOCKER_NEBUCLI -t tests/good/crazy-join-one-fast-source.yaml status "$QUERY_ID"
-  echo "${output}" | jq -e '(. | length) == 1' # 1 local
-  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
-  [ "$QUERY_STATUS" = "Running" ]
+  run DOCKER_NEBUCLI status "$QUERY_ID"
+  echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.global_query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "PartiallyStopped" ]
 
-  run DOCKER_NEBUCLI -t tests/good/crazy-join-one-fast-source.yaml stop "$QUERY_ID"
+  run DOCKER_NEBUCLI stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "test worker not available" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/crazy-join.yaml
 
-  docker compose stop worker-node
+  docker compose stop worker-1
 
-  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml -d start
+  run DOCKER_NEBUCLI -d start
   grep "(6002) : query registration call failed; Status: UNAVAILABLE" nebucli.log
   [ "$status" -eq 1 ]
 
-  docker compose start worker-node
+  docker compose start worker-1
   # now it should work
-  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start
+  run DOCKER_NEBUCLI start
   [ "$status" -eq 0 ]
 }
 
 @test "worker goes offline during processing" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/crazy-join.yaml
 
-  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start
+  run DOCKER_NEBUCLI start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
   sleep 1
 
   # This has to be kill not stop. Stop will gracefully shutdown the worker and all queries on that worker.
-  docker compose kill worker-node
-  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  # This would cause the query to fail as it was unexpectedly stopped. If we kill the worker: upstream and downstream
+  # will wait for the "crashed" worker to return. However this test does not test that as it is currently not possible.
+  docker compose kill worker-1
+  run DOCKER_NEBUCLI status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
   {
-    "local_query_id": "$QUERY_ID",
-    "query_status": "Failed"
+    "global_query_id": "$QUERY_ID",
+    "query_status": "Unreachable"
+  },
+  {
+    "grpc_addr": "worker-2:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-3:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-8:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-7:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-4:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-9:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-5:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-6:8080",
+    "query_status": "Running"
+  },
+  {
+    "grpc_addr": "worker-1:8080",
+    "query_status": "ConnectionError"
   }
 ]
 EOF
@@ -309,30 +347,38 @@ EOF
 }
 
 @test "worker goes offline and comes back during processing" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed tests/good/crazy-join.yaml
 
-  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml start
+  run DOCKER_NEBUCLI start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
   sleep 1
 
-  # Simulate a crash by killing worker-node.
-  docker compose kill worker-node
-  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  # Simulate a crash by killing worker-1.
+  docker compose kill worker-1
+  run DOCKER_NEBUCLI status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   sleep 1
 
-  docker compose start worker-node
+  docker compose start worker-1
 
-  run DOCKER_NEBUCLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+# While this might not be the most intuitive nor the long-term solution this testcase documents the current behavior.
+# The query running on worker-1 is terminated and on restart it is not restarted, this will cause subsequent status
+# request to find that the previous local query id is not registered on worker-1, currently this is falsely reported as a ConnectionError.
+
+  run DOCKER_NEBUCLI status "$QUERY_ID"
   [ "$status" -eq 0 ]
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
   {
-    "local_query_id": "$QUERY_ID",
-    "query_status": "Failed"
+    "global_query_id": "$QUERY_ID",
+    "query_status": "Unreachable"
+  },
+  {
+    "grpc_addr": "worker-1:8080",
+    "query_status": "ConnectionError"
   }
 ]
 EOF

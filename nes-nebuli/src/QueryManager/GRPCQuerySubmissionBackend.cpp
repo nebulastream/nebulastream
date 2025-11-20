@@ -174,4 +174,10 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(LocalQuery
     return std::unexpected{QueryUnregistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
+
+BackendProvider createGRPCBackend()
+{
+    return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
+}
+
 }

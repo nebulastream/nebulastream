@@ -14,6 +14,7 @@
 
 #include <SQLQueryParser/StatementBinder.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -52,6 +53,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/URI.hpp>
 #include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
 
@@ -134,6 +136,53 @@ public:
             .attachedTo = logicalSourceName, .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
     }
 
+    CreateWorkerStatement bindCreateWorkerStatement(AntlrSQLParser::CreateWorkerDefinitionContext* workerDefAST) const
+    {
+        auto configs = workerDefAST->optionsClause()
+            ? bindConfigOptionsWithDuplicates(workerDefAST->optionsClause()->options->namedConfigExpression())
+            : ConfigMultiMap{};
+
+        auto capacity = [&] -> std::optional<size_t>
+        {
+            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "CAPACITY"; });
+            if (it != configs.end())
+            {
+                Literal* literalOpt = std::get_if<Literal>(&it->second);
+                if (literalOpt && std::holds_alternative<uint64_t>(*literalOpt))
+                {
+                    return static_cast<size_t>(std::get<uint64_t>(*literalOpt));
+                }
+                throw InvalidQuerySyntax("Capacity must be an unsigned integer literal");
+            }
+            return std::nullopt;
+        }();
+
+        auto downStreams = [&] -> std::vector<std::string>
+        {
+            return configs
+                | std::views::filter([](const auto& option) { return option.first.size() == 1 && option.first[0] == "DOWNSTREAM"; })
+                | std::views::values
+                | std::views::transform(
+                       [](const auto& value)
+                       {
+                           const Literal* literalOpt = std::get_if<Literal>(&value);
+                           if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
+                           {
+                               return URI(std::get<std::string>(*literalOpt)).toString();
+                           }
+                           throw InvalidQuerySyntax("Capacity must be an unsigned integer literal");
+                       })
+                | std::ranges::to<std::vector<std::string>>();
+        }();
+
+
+        return CreateWorkerStatement{
+            .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
+            .grpc = URI(bindStringLiteral(workerDefAST->grpcaddr)).toString(),
+            .capacity = capacity,
+            .downstream = downStreams};
+    }
+
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
@@ -174,6 +223,10 @@ public:
         if (auto* const sinkDefAST = createAST->createDefinition()->createSinkDefinition(); sinkDefAST != nullptr)
         {
             return bindCreateSinkStatement(sinkDefAST);
+        }
+        if (auto* const workerDefAST = createAST->createDefinition()->createWorkerDefinition(); workerDefAST != nullptr)
+        {
+            return bindCreateWorkerStatement(workerDefAST);
         }
         throw InvalidStatement("Unrecognized CREATE statement");
     }
@@ -264,7 +317,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
             }
-            return ShowQueriesStatement{.id = LocalQueryId{std::get<std::string>(value)}, .format = format};
+            return ShowQueriesStatement{.id = DistributedQueryId{std::get<std::string>(value)}, .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -345,8 +398,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for DROP QUERY must be a string");
             }
-            const auto id = LocalQueryId{std::get<std::string>(value)};
-            return DropQueryStatement{.id = id};
+            return DropQueryStatement{.id = DistributedQueryId(std::get<std::string>(value))};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
         {
@@ -396,10 +448,9 @@ public:
                         if (auto idIter = optionsIter->second.find("ID"); idIter != optionsIter->second.end())
                         {
                             auto* literal = std::get_if<Literal>(&idIter->second);
-                            if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal)
-                                || !stringToUUID(std::get<std::string>(*literal)).has_value())
+                            if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))
                             {
-                                throw InvalidQuerySyntax("Query id must be a uuid string");
+                                throw InvalidQuerySyntax("Query id must be a string");
                             }
                             queryId = std::get<std::string>(*literal);
                         }
