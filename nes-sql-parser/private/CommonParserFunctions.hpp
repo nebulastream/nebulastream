@@ -18,6 +18,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
@@ -28,10 +29,12 @@ namespace NES
 {
 using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
 using ConfigMap = std::unordered_map<std::string, std::unordered_map<std::string, std::variant<Literal, Schema>>>;
+using ConfigMultiMap = std::vector<std::pair<std::vector<std::string>, std::variant<Literal, Schema>>>;
 
 std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier);
 std::string bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
 
+ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions);
 std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions);

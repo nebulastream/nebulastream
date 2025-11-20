@@ -73,8 +73,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     if (!configuration.connection.getValue().empty())
     {
-        initReceiverService(configuration.connection.getValue(), workerId);
-        initSenderService(configuration.connection.getValue(), workerId);
+        initReceiverService(configuration.connection.getValue().toString(), workerId);
+        initSenderService(configuration.connection.getValue().toString(), workerId);
     }
 }
 

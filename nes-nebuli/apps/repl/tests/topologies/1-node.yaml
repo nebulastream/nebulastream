@@ -1,3 +1,0 @@
-workers:
-  - host: "worker-node:9090"
-    grpc: "worker-node:8080"

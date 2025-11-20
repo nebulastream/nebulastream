@@ -95,6 +95,31 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
     return boundConfigOptions;
 }
 
+ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions)
+{
+    ConfigMultiMap boundConfigOptions;
+    for (auto* const configOption : configOptions)
+    {
+        std::vector<std::string> path;
+        for (const auto& pathSegment : configOption->name->strictIdentifier())
+        {
+            path.push_back(bindIdentifier(pathSegment));
+        }
+
+        std::variant<Literal, Schema> value{};
+        if (configOption->constant() != nullptr)
+        {
+            value = bindLiteral(configOption->constant());
+        }
+        else if (configOption->schema() != nullptr)
+        {
+            value = bindSchema(configOption->schema()->schemaDefinition());
+        }
+        boundConfigOptions.emplace_back(std::move(path), value);
+    }
+    return boundConfigOptions;
+}
+
 std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions)
 {
     auto parserConfig = std::unordered_map<std::string, std::string>{};
