@@ -6,7 +6,7 @@ CREATE LOGICAL SOURCE solarPowerSource(timestamp UINT64, value FLOAT64);
 CREATE PHYSICAL SOURCE FOR solarPowerSource TYPE File;
 ATTACH FILE large/solar_power/solar-power.csv
 
-CREATE SINK solarPowerVarsizedDiscard(powerProdNext8Sec VARSIZED) TYPE Checksum;
+CREATE SINK solarPowerVarsizedDiscard(powerProdNext8Sec VARSIZED) TYPE Discard;
 
 MODEL minMaxScalerSolar TESTDATA/model/solar_power/preprocessor/scaler_solar.onnx
 FLOAT64

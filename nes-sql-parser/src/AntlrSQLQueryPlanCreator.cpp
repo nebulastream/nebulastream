@@ -959,7 +959,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         case AntlrSQLLexer::ARRAY_AGG:
             helpers.top().windowAggs.push_back(
-                ArrayAggregationLogicalFunction::create(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+                std::make_shared<ArrayAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         default:
             /// Check if the function is a constructor for a datatype
