@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <Functions/BooleanFunctions/OrPhysicalFunction.hpp>
+
 #include <utility>
 #include <vector>
-#include <Functions/BooleanFunctions/OrPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
