@@ -160,7 +160,7 @@ std::vector<LocalQueryStatus> QueryLog::getStatus() const
     const auto queryStatusLogLocked = queryStatusLog.rlock();
     std::vector<LocalQueryStatus> summaries;
     summaries.reserve(queryStatusLogLocked->size());
-    for (const auto id : std::views::keys(*queryStatusLogLocked))
+    for (const auto& id : std::views::keys(*queryStatusLogLocked))
     {
         summaries.emplace_back(getQueryStatusImpl(queryStatusLogLocked, id).value());
     }
