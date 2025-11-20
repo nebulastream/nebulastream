@@ -1,22 +1,9 @@
 { lib
 , llvmPackages_19
-, fetchFromGitHub
 , cmake
 , ninja
 , pkg-config
-, boost
-, double-conversion
-, fast-float
-, gflags
-, glog
-, libevent
-, zlib
-, openssl
-, xz
-, lz4
-, zstd
-, libiberty
-, libunwind
+, fetchFromGitHub
 , fmt_11
 }:
 
@@ -29,28 +16,12 @@ let
     if flags == [ ] then ""
     else lib.concatStringsSep " " flags;
 
-  follyPatch = ./patches/0001-Folly-Patch.patch;
-
-  baseBuildInputs = [
-    boost
-    double-conversion
-    fast-float
-    gflags
-    glog
-    libevent
-    zlib
-    openssl
-    xz
-    lz4
-    zstd
-    libiberty
-    libunwind
-  ];
-
   build = { extraBuildInputs ? [ ], useLibcxx ? false, fmtPkg ? null, compilerFlags ? [ ], linkerFlags ? [ ] }:
     let
       stdenv = if useLibcxx then libcxxStdenv else clangStdenv;
-      selectedFmt = if fmtPkg != null then fmtPkg else fmt_11;
+      selectedFmt =
+        if fmtPkg != null then fmtPkg
+        else fmt_11;
       libcxxFlags = lib.optionals useLibcxx [
         "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
         "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
@@ -59,14 +30,14 @@ let
       ];
     in
     stdenv.mkDerivation rec {
-      pname = "folly";
-      version = "unstable-2024-09-04";
+      pname = "spdlog";
+      version = "1.15.3";
 
       src = fetchFromGitHub {
-        owner = "facebook";
-        repo = "folly";
-        rev = "c47d0c778950043cbbc6af7fde616e9aeaf054ca";
-        hash = "sha256-5f7IA/M5oJ/Sg5Z9RMB6PvaHzkXiqn1zZJ+QamZXONs=";
+        owner = "gabime";
+        repo = "spdlog";
+        rev = "v${version}";
+        hash = "sha512-FFV/vkIEEaZ5nCNU4akdcvTDWAI+JC3EIkPhS/DTvvoV1O8MvXXzbz7Y75nYl06IV9g+cJlNE/ueC2gxGwp14g==";
       };
 
       nativeBuildInputs = [
@@ -74,20 +45,15 @@ let
         ninja
         pkg-config
       ];
-      buildInputs = lib.unique (baseBuildInputs ++ [ selectedFmt ] ++ extraBuildInputs);
-      propagatedBuildInputs = [ selectedFmt boost ];
-
-      patches = [ follyPatch ];
+      buildInputs = lib.unique ([ selectedFmt ] ++ extraBuildInputs);
 
       cmakeFlags = [
         "-G"
         "Ninja"
-        "-DCMAKE_BUILD_TYPE=Release"
-        "-DBUILD_SHARED_LIBS=ON"
-        "-DBUILD_TESTS=OFF"
-        ("-DFOLLY_USE_LIBCPP=" + (if useLibcxx then "ON" else "OFF"))
-        "-DCMAKE_INSTALL_INCLUDEDIR=include"
-        "-DCMAKE_INSTALL_LIBDIR=lib"
+        "-DSPDLOG_FMT_EXTERNAL=ON"
+        "-DSPDLOG_BUILD_TESTS=OFF"
+        "-DSPDLOG_BUILD_EXAMPLE=OFF"
+        "-DSPDLOG_BUILD_BENCH=OFF"
       ] ++ libcxxFlags;
 
       env = lib.optionalAttrs (compilerFlags != [ ]) {
@@ -99,9 +65,9 @@ let
       doCheck = false;
 
       meta = with lib; {
-        description = "Facebook open-source C++ library";
-        homepage = "https://github.com/facebook/folly";
-        license = licenses.asl20;
+        description = "Very fast, header-only/compiled, C++ logging library";
+        homepage = "https://github.com/gabime/spdlog";
+        license = licenses.mit;
         platforms = platforms.linux;
       };
     };
