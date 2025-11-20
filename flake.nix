@@ -27,6 +27,8 @@
             envValue = "none";
             extraEnv = { };
             extraPackages = [ ];
+            compilerFlags = [ ];
+            linkerFlags = [ ];
           };
           address = {
             name = "asan";
@@ -36,6 +38,8 @@
               ASAN_OPTIONS = "detect_leaks=1";
             };
             extraPackages = [ llvm.compiler-rt llvm.compiler-rt.dev ];
+            compilerFlags = [ "-fsanitize=address" "-fno-omit-frame-pointer" ];
+            linkerFlags = [ "-fsanitize=address" ];
           };
           thread = {
             name = "tsan";
@@ -45,6 +49,8 @@
               TSAN_OPTIONS = "halt_on_error=1";
             };
             extraPackages = [ llvm.compiler-rt llvm.compiler-rt.dev ];
+            compilerFlags = [ "-fsanitize=thread" ];
+            linkerFlags = [ "-fsanitize=thread" ];
           };
           undefined = {
             name = "ubsan";
@@ -54,6 +60,8 @@
               UBSAN_OPTIONS = "print_stacktrace=1";
             };
             extraPackages = [ llvm.compiler-rt llvm.compiler-rt.dev ];
+            compilerFlags = [ "-fsanitize=undefined" ];
+            linkerFlags = [ "-fsanitize=undefined" ];
           };
         };
 
@@ -81,7 +89,7 @@
 
         antlr4Version = "4.13.2";
 
-        packagesForStdlib = stdlib:
+        packagesForStdlib = { stdlib, extraInputs ? [ ], sanitizer ? sanitizerOptions.none }:
           let
             useLibcxx = stdlib.name == "libcxx";
             overrideStdenv = pkg:
@@ -115,48 +123,36 @@
             glogPkg =
               if useLibcxx then glogBase.overrideAttrs (old: old // { doCheck = false; })
               else glogBase;
-            abseilPkg = overrideStdenv pkgs.abseil-cpp;
-            protobufBase = pkgs.protobuf.override (
-              {
-                abseil-cpp = abseilPkg;
-              }
-              // lib.optionalAttrs useLibcxx { stdenv = libcxxStdenv; }
-            );
-            protobufPkg =
-              if useLibcxx then protobufBase.overrideAttrs (old: old // {
-                doCheck = false;
-                cmakeFlags = (old.cmakeFlags or [ ])
-                  ++ [
-                    "-Dprotobuf_BUILD_TESTS=OFF"
-                  ];
-              })
-              else protobufBase;
+            abseilPkg = abseilPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+              compilerFlags = sanitizer.compilerFlags;
+            };
+            protobufPkg = protobufPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+              abseil = abseilPkg;
+              compilerFlags = sanitizer.compilerFlags;
+              linkerFlags = sanitizer.linkerFlags;
+            };
             gtestPkg = overrideStdenv pkgs.gtest;
-            re2Base = pkgs.re2.override (
-              {
-                abseil-cpp = abseilPkg;
-                gtest = gtestPkg;
-              }
-              // lib.optionalAttrs useLibcxx { stdenv = libcxxStdenv; }
-            );
-            re2Pkg =
-              if useLibcxx then re2Base.overrideAttrs (old: old // {
-                doCheck = false;
-                cmakeFlags = (old.cmakeFlags or [ ])
-                  ++ [
-                    "-DRE2_BUILD_TESTING=OFF"
-                    "-DRE2_BUILD_BENCHMARK=OFF"
-                  ];
-              })
-              else re2Base;
-            grpcPkg = pkgs.grpc.override (
-              {
-                protobuf = protobufPkg;
-                abseil-cpp = abseilPkg;
-                re2 = re2Pkg;
-              }
-              // lib.optionalAttrs useLibcxx { stdenv = libcxxStdenv; }
-            );
+            re2Pkg = re2Packages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+              abseil = abseilPkg;
+              gtest = gtestPkg;
+              compilerFlags = sanitizer.compilerFlags;
+              linkerFlags = sanitizer.linkerFlags;
+            };
+            grpcPkg = grpcPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+              protobuf = protobufPkg;
+              abseil = abseilPkg;
+              re2 = re2Pkg;
+              compilerFlags = sanitizer.compilerFlags;
+              linkerFlags = sanitizer.linkerFlags;
+            };
             yamlPkg = overrideStdenv pkgs.yaml-cpp;
             replxxPkg = overrideStdenv pkgs.replxx;
             magicEnumPkg = pkgs.magic-enum;
@@ -198,6 +194,10 @@
           };
 
         nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
+        abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix { };
+        re2Packages = pkgs.callPackage ./.nix/re2/package.nix { };
+        protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix { };
+        grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix { };
 
         ccacheFlags = [
           "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
@@ -238,14 +238,18 @@
             sanitizer = combo.sanitizer;
             stdlib = combo.stdlib;
             mlirBinary = combo.mlirBinary;
-            packageSet = packagesForStdlib stdlib;
+            extraInputs = sanitizer.extraPackages ++ stdlib.extraPackages;
+            packageSet = packagesForStdlib {
+              inherit stdlib extraInputs sanitizer;
+            };
             baseThirdPartyDeps = packageSet.baseThirdPartyDeps;
             baseWithDev = lib.unique (baseThirdPartyDeps ++ map lib.getDev baseThirdPartyDeps);
-            extraInputs = sanitizer.extraPackages ++ stdlib.extraPackages;
             useLibcxx = stdlib.name == "libcxx";
             sanitizerArgs = {
               extraPackages = extraInputs;
               inherit useLibcxx;
+              compilerFlags = sanitizer.compilerFlags;
+              linkerFlags = sanitizer.linkerFlags;
             };
             sanitizedDeps = map (pkg: pkg.withSanitizer sanitizerArgs) sanitizerPackages;
             nautilusPackages = nautilusPackagesFor mlirBinary;
@@ -298,7 +302,6 @@
               C_INCLUDE_PATH = CPATH;
               LIBRARY_PATH = libraryPath;
               CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES = includePathCMake;
-              NIX_CFLAGS_COMPILE = includeFlags;
             };
             extraEnv = lib.optionalAttrs (linkerFlags != "") {
               LDFLAGS = linkerFlags;
