@@ -191,6 +191,8 @@ public:
 
     operator UnboundSchemaBase<1>() const;
 
+    static Schema bind(LogicalOperator logicalOperator, UnboundSchemaBase<1> unboundSchema);
+
 private:
     /// This vector of fields does not imply an order of fields in the schema, it is just used to maintain stable references for the name aliases
     std::unordered_set<Field> fields;

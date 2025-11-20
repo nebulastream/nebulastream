@@ -304,6 +304,24 @@ public:
         PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
 
+    constexpr explicit IdentifierListBase(std::span<const Identifier, Extent> idSpan)
+    {
+        if constexpr (Extent == std::dynamic_extent)
+        {
+            for (auto& identifier : idSpan)
+            {
+                identifiers.emplace_back(identifier);
+            }
+        }
+        else
+        {
+            for (auto& [idx, identifier] : views::enumerate(idSpan))
+            {
+                identifiers[idx] = identifier;
+            }
+        }
+    }
+
     template <std::ranges::input_range T>
     requires(
         std::same_as<std::remove_cv_t<std::ranges::range_value_t<T>>, Identifier> && !std::same_as<T, ContainerType>
@@ -423,7 +441,6 @@ public:
         return IdentifierListBase<sizeof...(T)>{std::array{Identifier(identifiers)...}};
     }
 
-
     static std::expected<IdentifierListBase, Exception> tryParse(std::string_view name)
     requires(Extent == std::dynamic_extent)
     {
@@ -443,12 +460,13 @@ public:
         return tryCreate(std::move(identifiers));
     }
 
-    template <size_t SpanExtent>
+    template <size_t SpanExtent = std::dynamic_extent>
     struct SpanEquals
     {
         constexpr SpanEquals() = default;
 
-        constexpr bool operator()(std::span<const Identifier, SpanExtent> first, const std::span<const Identifier, SpanExtent>& second) const
+        constexpr bool
+        operator()(std::span<const Identifier, SpanExtent> first, const std::span<const Identifier, SpanExtent>& second) const
         {
             if (std::ranges::size(first) != std::ranges::size(second))
             {

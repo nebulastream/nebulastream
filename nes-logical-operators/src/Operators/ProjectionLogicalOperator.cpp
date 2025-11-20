@@ -91,12 +91,14 @@ Schema inferOutputSchema(
 }
 }
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<UnboundProjection> projections, Asterisk asterisk)
-    : asterisk(asterisk.value), projections(std::move(projections))
+ProjectionLogicalOperator::ProjectionLogicalOperator(
+    WeakLogicalOperator self, std::vector<UnboundProjection> projections, Asterisk asterisk)
+    : asterisk(asterisk.value), projections(std::move(projections)), self(std::move(self))
 {
 }
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(LogicalOperator child, DescriptorConfig::Config config)
+ProjectionLogicalOperator::ProjectionLogicalOperator(WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config config)
+    : self(std::move(self))
 {
     const auto functionVariant = config[ConfigParameters::PROJECTION_FUNCTION_NAME];
     const auto asteriskValue = std::get<bool>(config[ConfigParameters::ASTERISK]);
@@ -182,20 +184,19 @@ const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOpera
 std::unordered_map<Field, std::unordered_set<Field>> ProjectionLogicalOperator::getAccessedFieldsForOutput() const
 {
     auto pairs = getProjections()
-        | std::views::filter([](const Projection& projection) { return !projection.second.tryGet<FieldAccessLogicalFunction>().has_value(); })
+        | std::views::filter([](const Projection& projection)
+                             { return !projection.second.tryGet<FieldAccessLogicalFunction>().has_value(); })
         | std::views::transform(
-               [](const auto& projection)
-               {
-                   auto fields = BFSRange{projection.second}
-                       | std::views::filter([](const LogicalFunction& function)
-                                            { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
-                       | std::views::transform([](const LogicalFunction& function)
-                                               { return function.get<FieldAccessLogicalFunction>().getField(); })
-                       | std::ranges::to<std::vector>();
-                   return std::pair{
-                       projection.first,
-                       std::unordered_set<Field>{fields.begin(), fields.end()}};
-               })
+                     [](const auto& projection)
+                     {
+                         auto fields = BFSRange{projection.second}
+                             | std::views::filter([](const LogicalFunction& function)
+                                                  { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
+                             | std::views::transform([](const LogicalFunction& function)
+                                                     { return function.get<FieldAccessLogicalFunction>().getField(); })
+                             | std::ranges::to<std::vector>();
+                         return std::pair{projection.first, std::unordered_set<Field>{fields.begin(), fields.end()}};
+                     })
         | std::ranges::to<std::vector>();
     return std::unordered_map<Field, std::unordered_set<Field>>{pairs.begin(), pairs.end()};
 }
@@ -304,7 +305,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withChildren(std::vector<Lo
 Schema ProjectionLogicalOperator::getOutputSchema() const
 {
     INVARIANT(outputSchema.has_value(), "Accessed output schema before calling schema inference");
-    return outputSchema.value();
+    return Schema::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
@@ -350,7 +351,7 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOper
     {
         throw CannotDeserialize("Expected one child for ProjectionLogicalOperator, but found {}", arguments.children.size());
     }
-    return ProjectionLogicalOperator{std::move(arguments.children.at(0)), std::move(arguments.config)};
+    return TypedLogicalOperator<ProjectionLogicalOperator>{std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
 
 }

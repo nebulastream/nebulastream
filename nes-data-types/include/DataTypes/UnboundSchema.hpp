@@ -120,7 +120,7 @@ public:
             NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
         }
         this->fieldsByName = fieldsByName
-            | std::views::transform([](const auto& pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+            | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first}, pair.second}; })
             | std::ranges::to<std::unordered_map>();
     }
 
