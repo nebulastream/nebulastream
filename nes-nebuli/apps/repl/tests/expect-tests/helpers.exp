@@ -265,7 +265,6 @@ COPY nebuli /usr/bin}
     catch {exec docker build -t nebuli-image -f $nebuli_dockerfile_path $nebuli_dir 2>@1} build_output
     puts $build_output
 
-    puts "Using $temp_dir"
     puts "Setting up Docker Compose environment..."
 
     # Generate docker-compose.yaml
@@ -281,6 +280,7 @@ COPY nebuli /usr/bin}
         puts "\nCleaning up Docker Compose environment..."
         cd $temp_dir
         catch {exec docker compose down -v 2>@1} cleanup_error
+        catch {exec rm -rf $temp_dir} cleanup_error
     }
 
     # Register cleanup to run on exit and signals
