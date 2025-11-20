@@ -16,9 +16,10 @@
 #include <QueryCompiler.hpp>
 
 #include <memory>
+
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
-#include <Phases/PipeliningPhase.hpp>
+#include <Phases/PipelineBuilder/PipelineBuilder.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -31,8 +32,19 @@ QueryCompiler::QueryCompiler() = default;
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
+    auto pipelineBuilder = std::make_unique<PipelineBuilder>();
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
-    auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
-    return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
+
+    try
+    {
+        /// build the query plan using the new FSM
+        auto pipelinedQueryPlan = pipelineBuilder->build(request->queryPlan);
+        return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
+    }
+    catch (Exception& e)
+    {
+        e.what() += "Failed to build PipelinedQueryPlan";
+        throw;
+    }
 }
 }
