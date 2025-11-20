@@ -39,6 +39,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include "DataTypes/UnboundSchema.hpp"
 #include "Schema/Field.hpp"
 
 namespace NES
@@ -48,7 +49,8 @@ namespace
 {
 Schema inferOutputSchema(const std::vector<LogicalOperator>& children, const UnionLogicalOperator& unionOperator)
 {
-    auto inputSchemas = children | std::views::transform([](const auto& child) { return child.getOutputSchema(); });
+    auto inputSchemas
+        = children | std::views::transform([](const auto& child) { return child.getOutputSchema(); }) | std::ranges::to<std::vector>();
     auto inputSchemaSizes = inputSchemas | std::views::transform([](const auto& schema) { return std::ranges::size(schema); });
 
     if (std::ranges::adjacent_find(inputSchemaSizes, std::ranges::not_equal_to{}) != std::ranges::end(inputSchemaSizes))
@@ -56,52 +58,45 @@ Schema inferOutputSchema(const std::vector<LogicalOperator>& children, const Uni
         throw CannotInferSchema("Union expects all children to have the same number of fields");
     }
 
-    auto schemaSize = *std::ranges::begin(inputSchemaSizes);
-
-    std::unordered_map<uint64_t, std::vector<std::tuple<Identifier, DataType>>> fieldMismatches;
-    for (auto i : std::views::iota(0UL, schemaSize))
+    std::unordered_map<LogicalOperator, std::unordered_set<Field>> fieldMismatches;
+    std::unordered_set<UnboundFieldBase<1>> commonFields
+        = inputSchemas.at(0).getFields() | std::views::transform(Field::unbinder()) | std::ranges::to<std::unordered_set>();
+    /// Check for mismatch and build intersection of all input schemas by unbound fields
+    bool mismatch = false;
+    for (const auto& inputSchema : inputSchemas)
     {
-        auto fieldsAtIndex = inputSchemas
-            | std::views::transform(
-                                 [i](const auto& schema) -> std::tuple<Identifier, DataType>
-                                 {
-                                     Field field = *(std::ranges::begin(schema) + i);
-                                     return std::make_tuple(field.getLastName(), field.getDataType());
-                                 });
-
-        const auto fieldsSame = std::ranges::adjacent_find(fieldsAtIndex, std::ranges::not_equal_to{}) == std::ranges::end(fieldsAtIndex);
-
-        if (!fieldsSame)
+        auto unboundInputSchema = inputSchema | std::views::transform(Field::unbinder()) | std::ranges::to<std::unordered_set>();
+        mismatch |= unboundInputSchema != commonFields;
+        if (mismatch)
         {
-            fieldMismatches.emplace(i, fieldsAtIndex | std::ranges::to<std::vector>());
+            auto newCommonFields = commonFields;
+            for (const auto& commonField : commonFields)
+            {
+                if (!unboundInputSchema.contains(commonField))
+                {
+                    newCommonFields.erase(commonField);
+                }
+            }
+            commonFields = std::move(newCommonFields);
         }
     }
 
-    auto mismatchToString = [&fieldMismatches]
+    if (mismatch)
     {
-        return fmt::format(
-            "{}",
-            fmt::join(
-                fieldMismatches
-                    | std::views::transform(
-                        [](const std::pair<uint64_t, std::vector<std::tuple<Identifier, DataType>>>& mismatch)
-                        {
-                            return fmt::format(
-                                "at {}: ({})",
-                                mismatch.first,
-                                fmt::join(
-                                    mismatch.second
-                                        | std::views::transform(
-                                            [](const auto& field)
-                                            { return fmt::format("({} {})", std::get<Identifier>(field), std::get<DataType>(field)); }),
-                                    ", "));
-                        }),
-                ","));
-    };
-
-    if (!fieldMismatches.empty())
-    {
-        throw CannotInferSchema("Union expects all children to have the same fields, but found {}", mismatchToString());
+        for (const auto& child : children)
+        {
+            for (const auto unboundInputSchema = child->getOutputSchema(); const auto& inputField : unboundInputSchema)
+            {
+                if (!commonFields.contains(inputField.unbound()))
+                {
+                    fieldMismatches[child].emplace(inputField);
+                }
+            }
+        }
+        throw CannotInferSchema(
+            "Union expects all children to have the same fields, but the common schema was {} and found these additional fields in children: {}",
+            commonFields | std::ranges::to<std::vector>(),
+            fmt::join(fieldMismatches | std::views::transform([](const auto& childMismatch) { return fmt::format("{}: {}", childMismatch.first, childMismatch.second); }), ", "));
     }
 
     /// For some reason, c++ doesn't convert *std::ranges::begin(inputSchemas) into a range of fields correctly

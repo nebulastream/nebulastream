@@ -21,6 +21,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include "DataTypes/UnboundSchema.hpp"
 
 
 namespace NES
@@ -42,6 +43,10 @@ struct Field
     [[nodiscard]] const LogicalOperator& getProducedBy() const;
     [[nodiscard]] Identifier getLastName() const { return name; }
     [[nodiscard]] DataType getDataType() const { return dataType; }
+
+    [[nodiscard]] UnboundFieldBase<1> unbound() const;
+    static std::function<UnboundFieldBase<1>(Field)> unbinder();
+    static std::function<Field(UnboundFieldBase<1>)> binder(LogicalOperator logicalOperator);
 
 private:
     /// I believe we currently need this pointer, even though the LogicalOperator already contains a pointer for type erasure, due to how the types reference each other

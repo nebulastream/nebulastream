@@ -171,6 +171,21 @@ const WeakLogicalOperator& WeakField::getProducedBy() const
 {
     return *producedBy;
 }
+
+UnboundFieldBase<1> Field::unbound() const
+{
+    return UnboundField{name, dataType};
+}
+
+std::function<UnboundFieldBase<1>(Field)> Field::unbinder()
+{
+    return [](const Field& field) { return UnboundField{field.name, field.dataType}; };
+}
+
+std::function<Field(UnboundFieldBase<1>)> Field::binder(LogicalOperator logicalOperator)
+{
+    return [logicalOperator](const UnboundFieldBase<1>& unboundField){ return Field{logicalOperator, unboundField.getName(), unboundField.getDataType()}; };
+}
 }
 
 std::size_t std::hash<NES::Field>::operator()(const NES::Field& field) const noexcept
