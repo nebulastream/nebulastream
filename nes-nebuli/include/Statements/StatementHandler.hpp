@@ -17,10 +17,11 @@
 #include <concepts>
 #include <expected>
 #include <memory>
-#include <mutex>
+#include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -29,9 +30,9 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <experimental/propagate_const>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -68,7 +69,8 @@ struct ShowSinksStatementResult
 
 struct DropLogicalSourceStatementResult
 {
-    LogicalSource dropped;
+    LogicalSourceName dropped;
+    Schema schema;
 };
 
 struct DropPhysicalSourceStatementResult
@@ -84,6 +86,16 @@ struct DropSinkStatementResult
 struct QueryStatementResult
 {
     QueryId id;
+};
+
+struct ExplainQueryStatementResult
+{
+    std::string explainString;
+};
+
+struct WorkerStatusStatementResult
+{
+    WorkerStatus status;
 };
 
 struct ShowQueriesStatementResult
@@ -108,7 +120,9 @@ using StatementResult = std::variant<
     DropSinkStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
-    DropQueryStatementResult>;
+    ExplainQueryStatementResult,
+    DropQueryStatementResult,
+    WorkerStatusStatementResult>;
 
 /// A bit of CRTP magic for nicer syntax when the object is in a shared ptr
 template <typename HandlerImpl>
@@ -167,11 +181,72 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
 public:
     explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
+    std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
-
-    [[nodiscard]] std::vector<QueryId> getRunningQueries() const;
 };
+
+class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>
+{
+    SharedPtr<QueryManager> queryManager;
+
+public:
+    explicit TopologyStatementHandler(SharedPtr<QueryManager> queryManager);
+
+    std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
+};
+
+template <typename HandlerT>
+bool tryCall(const Statement& statement, HandlerT& handler)
+{
+    return std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+}
+
+template <typename HandlerT, typename... HandlerTs>
+bool tryCall(const Statement& statement, HandlerT& handler, HandlerTs&... handlers)
+{
+    auto couldHandle = std::visit(
+        [&]<typename StatementType>(const StatementType& typedStatement)
+        {
+            if constexpr (std::is_invocable_v<HandlerT&, const StatementType&>)
+            {
+                if (auto value = handler(typedStatement); !value)
+                {
+                    throw value.error();
+                }
+                return true;
+            }
+            return false;
+        },
+        statement);
+    if (couldHandle)
+    {
+        return true;
+    }
+    return tryCall(statement, handlers...);
+}
+
+template <typename... HandlerT>
+void handleStatements(const std::vector<Statement>& statements, HandlerT&... handler)
+{
+    for (const auto& statement : statements)
+    {
+        tryCall(statement, handler...);
+    }
+}
 
 }
 
@@ -181,3 +256,5 @@ FMT_OSTREAM(NES::DropLogicalSourceStatementResult);
 FMT_OSTREAM(NES::DropPhysicalSourceStatementResult);
 FMT_OSTREAM(NES::DropQueryStatementResult);
 FMT_OSTREAM(NES::QueryStatementResult);
+FMT_OSTREAM(NES::WorkerStatusStatementResult);
+FMT_OSTREAM(NES::ExplainQueryStatementResult);
