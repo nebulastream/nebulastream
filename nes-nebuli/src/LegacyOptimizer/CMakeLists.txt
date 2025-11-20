@@ -21,4 +21,7 @@ add_source_files(nes-legacy-optimizer
         TypeInferencePhase.cpp
         SinkBindingRule.cpp
         LegacyOptimizer.cpp
+        BottomUpPlacement.cpp
+        OperatorPlacement.cpp
+        QueryDecomposition.cpp
 )

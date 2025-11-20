@@ -62,7 +62,7 @@ statement: queryWithOptions | createStatement | dropStatement | showStatement | 
 
 explainStatement: EXPLAIN query;
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -72,6 +72,7 @@ optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
 
+createWorkerDefinition: WORKER hostaddr=STRING AT grpcaddr=STRING optionsClause?;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition;
@@ -81,11 +82,12 @@ typeDefinition: DATA_TYPE;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
 dropPhysicalSourceSubject: PHYSICAL SOURCE;
+dropWorker: WORKER;
 dropSink: SINK;
 
 dropFilter: attr=strictIdentifier EQ value=constant;
@@ -487,7 +489,6 @@ COUNT: 'COUNT' | 'count';
 MEDIAN: 'MEDIAN' | 'median';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
-LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
@@ -589,6 +590,7 @@ CREATE : 'CREATE';
 SOURCE : 'SOURCE';
 LOGICAL: 'LOGICAL';
 PHYSICAL: 'PHYSICAL';
+WORKER: 'WORKER';
 SINK : 'SINK';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
