@@ -33,7 +33,7 @@ RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(L
     auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
     PRECONDITION(logicalOperator.getChildren().size() == 1, "Expected exactly one child for IngestionTimeWatermarkAssigner");
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getChildren().at(0).getOutputSchema(), logicalOperator.getOutputSchema());
+        physicalOperator, logicalOperator.getChildren().at(0).getOutputSchema().unbind<std::dynamic_extent>(), logicalOperator.getOutputSchema().unbind<std::dynamic_extent>());
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);

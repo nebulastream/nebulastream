@@ -72,7 +72,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor.function->getInputFunction());
         const auto resultFieldIdentifier = descriptor.name;
-        auto layout = std::make_shared<ColumnLayout>(configuration.pageSize.getValue(), logicalOperator.getChild().getOutputSchema());
+        auto layout = std::make_shared<ColumnLayout>(configuration.pageSize.getValue(), logicalOperator.getChild().getOutputSchema().unbind<std::dynamic_extent>());
         auto bufferRef = std::make_shared<Interface::BufferRef::ColumnTupleBufferRef>(layout);
 
         auto name = descriptor.function->getName();
@@ -185,12 +185,12 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData);
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        build, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        build, newInputSchema, outputSchema.unbind<std::dynamic_extent>(), handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         probe,
         newInputSchema,
-        outputSchema,
+        outputSchema.unbind<std::dynamic_extent>(),
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN,

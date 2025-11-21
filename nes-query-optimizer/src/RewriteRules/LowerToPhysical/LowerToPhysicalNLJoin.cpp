@@ -96,9 +96,9 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
-    auto leftBufferRef = TupleBufferRef::create(pageSize, leftInputSchema, MemoryLayout::MemoryLayoutType::ROW_LAYOUT);
+    auto leftBufferRef = TupleBufferRef::create(pageSize, leftInputSchema.unbind<std::dynamic_extent>(), MemoryLayout::MemoryLayoutType::ROW_LAYOUT);
     leftBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(leftInputSchema, logicalJoinFunction));
-    auto rightBufferRef = TupleBufferRef::create(pageSize, rightInputSchema, MemoryLayout::MemoryLayoutType::ROW_LAYOUT);
+    auto rightBufferRef = TupleBufferRef::create(pageSize, rightInputSchema.unbind<std::dynamic_extent>(), MemoryLayout::MemoryLayoutType::ROW_LAYOUT);
     rightBufferRef->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
@@ -112,7 +112,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto rightBuildOperator
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightBufferRef);
 
-    auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
+    auto joinSchema = JoinSchema(leftInputSchema.unbind<std::dynamic_extent>(), rightInputSchema.unbind<std::dynamic_extent>(), outputSchema.unbind<std::dynamic_extent>());
     auto probeOperator
         = NLJProbePhysicalOperator(handlerId, joinFunction, WindowMetaData{join->getStartField(), join->getEndField()}, joinSchema, leftBufferRef, rightBufferRef);
 
@@ -121,15 +121,15 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(leftBuildOperator), leftInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        std::move(leftBuildOperator), leftInputSchema.unbind<std::dynamic_extent>(), outputSchema.unbind<std::dynamic_extent>(), handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(rightBuildOperator), rightInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+        std::move(rightBuildOperator), rightInputSchema.unbind<std::dynamic_extent>(), outputSchema.unbind<std::dynamic_extent>(), handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
-        outputSchema,
-        outputSchema,
+        outputSchema.unbind<std::dynamic_extent>(),
+        outputSchema.unbind<std::dynamic_extent>(),
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN,

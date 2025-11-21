@@ -210,7 +210,7 @@ public:
                 {
                     throw InvalidQuerySyntax("The optimized plan should have a sink as its root");
                 }
-                return sink.value()->getChild().getOutputSchema();
+                return sink.value()->getChild().getOutputSchema().unbind<std::dynamic_extent>();
             }();
         }
     }

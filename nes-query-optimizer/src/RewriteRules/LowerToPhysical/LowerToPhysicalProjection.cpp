@@ -52,7 +52,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto outputSchema = projection->getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
-    auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema);
+    auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema.unbind<std::dynamic_extent>());
     auto scanBufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(scanLayout);
     auto accessedFields = projection->getAccessedFields();
     auto scan = ScanPhysicalOperator(
@@ -67,7 +67,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
                 })
             | std::ranges::to<std::vector>());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan, inputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+        scan, inputSchema.unbind<std::dynamic_extent>(), outputSchema.unbind<std::dynamic_extent>(), std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
     auto child = scanWrapper;
     for (const auto& [fieldName, function] : projection->getProjections())
@@ -76,8 +76,8 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         auto physicalOperator = MapPhysicalOperator(fieldName.getLastName(), physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,
-            inputSchema,
-            outputSchema,
+            inputSchema.unbind<std::dynamic_extent>(),
+            outputSchema.unbind<std::dynamic_extent>(),
             std::nullopt,
             std::nullopt,
             PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,

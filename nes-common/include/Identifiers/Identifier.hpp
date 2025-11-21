@@ -287,6 +287,16 @@ struct std::hash<std::span<const NES::IdentifierBase<Extent>, SpanExtent>>
 namespace NES
 {
 
+namespace detail
+{
+template <size_t Extent, size_t... Is>
+requires (Extent >= sizeof...(Is))
+std::array<Identifier, sizeof...(Is)> toArray(std::span<const Identifier, Extent> identifiers, std::index_sequence<Is...>)
+{
+    return {identifiers[Is]...};
+}
+}
+
 template <size_t Extent>
 requires(Extent >= 1)
 class IdentifierListBase
@@ -302,6 +312,33 @@ public:
     constexpr explicit IdentifierListBase(ContainerType identifiers) : identifiers(std::move(identifiers))
     {
         PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
+    }
+
+    constexpr explicit IdentifierListBase(std::span<const Identifier, Extent> idSpan)
+        : identifiers(
+              [&idSpan]()
+              {
+                  if constexpr (Extent == std::dynamic_extent)
+                  {
+                      std::vector<Identifier> identifiers;
+                      for (const auto& identifier : idSpan)
+                      {
+                          identifiers.emplace_back(identifier);
+                      }
+                      return identifiers;
+                  }
+                  else
+                  {
+                      return detail::toArray(idSpan, std::make_index_sequence<Extent>{});
+                      // std::array<Identifier, Extent> identifiers{};
+                      // for (const auto& [idx, identifier] : views::enumerate(idSpan))
+                      // {
+                      //     identifiers[idx] = identifier;
+                      // }
+                      // return identifiers;
+                  }
+              }())
+    {
     }
 
     template <std::ranges::input_range T>
@@ -423,7 +460,6 @@ public:
         return IdentifierListBase<sizeof...(T)>{std::array{Identifier(identifiers)...}};
     }
 
-
     static std::expected<IdentifierListBase, Exception> tryParse(std::string_view name)
     requires(Extent == std::dynamic_extent)
     {
@@ -443,12 +479,13 @@ public:
         return tryCreate(std::move(identifiers));
     }
 
-    template <size_t SpanExtent>
+    template <size_t SpanExtent = std::dynamic_extent>
     struct SpanEquals
     {
         constexpr SpanEquals() = default;
 
-        constexpr bool operator()(std::span<const Identifier, SpanExtent> first, const std::span<const Identifier, SpanExtent>& second) const
+        constexpr bool
+        operator()(std::span<const Identifier, SpanExtent> first, const std::span<const Identifier, SpanExtent>& second) const
         {
             if (std::ranges::size(first) != std::ranges::size(second))
             {

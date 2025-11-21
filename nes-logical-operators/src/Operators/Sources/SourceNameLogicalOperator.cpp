@@ -32,11 +32,13 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Identifiers/Identifier.hpp>
 
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(Identifier logicalSourceName) : logicalSourceName(std::move(logicalSourceName))
+SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, Identifier logicalSourceName) : logicalSourceName(std::move(logicalSourceName)), self(std::move(self))
 {
 }
 

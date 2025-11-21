@@ -53,7 +53,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
     const DescriptorConfig::Config sourceDescriptorConfig{};
-    return LogicalPlan(SourceNameLogicalOperator(std::move(logicalSourceName)));
+    return LogicalPlan(TypedLogicalOperator<SourceNameLogicalOperator>{std::move(logicalSourceName)});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
@@ -61,13 +61,13 @@ LogicalPlan LogicalPlanBuilder::addProjection(
 {
     NES_TRACE("LogicalPlanBuilder: add projection operator to query plan");
     return promoteOperatorToRoot(
-        queryPlan, ProjectionLogicalOperator(std::move(projections), ProjectionLogicalOperator::Asterisk(asterisk)));
+        queryPlan, TypedLogicalOperator<ProjectionLogicalOperator>(std::move(projections), ProjectionLogicalOperator::Asterisk(asterisk)));
 }
 
 LogicalPlan LogicalPlanBuilder::addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add selection operator to query plan");
-    return promoteOperatorToRoot(queryPlan, SelectionLogicalOperator(std::move(selectionFunction)));
+    return promoteOperatorToRoot(queryPlan, TypedLogicalOperator<SelectionLogicalOperator>{std::move(selectionFunction)});
 }
 
 LogicalPlan LogicalPlanBuilder::addWindowAggregation(

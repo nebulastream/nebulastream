@@ -155,7 +155,7 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
 std::pair<UnboundSchema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>>
 addMapOperators(const LogicalOperator& inputOperator, const std::vector<FieldNamesExtension>& fieldNameExtensions)
 {
-    auto currentFields = UnboundSchema{inputOperator.getOutputSchema()} | std::ranges::to<std::vector<UnboundField>>();
+    auto currentFields = inputOperator.getOutputSchema().unbind<std::dynamic_extent>() | std::ranges::to<std::vector<UnboundField>>();
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> mapPhysicalOperators;
     for (const auto& [oldField, newField] : fieldNameExtensions)
     {
@@ -287,7 +287,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightBufferRef, rightHashMapOptions};
 
     /// Creating the hash join probe
-    auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema);
+    auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema.unbind<std::dynamic_extent>());
     auto probeOperator = HJProbePhysicalOperator(
         handlerId,
         physicalJoinFunction,
@@ -310,7 +310,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
         newLeftInputSchema,
-        outputSchema,
+        outputSchema.unbind<std::dynamic_extent>(),
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
@@ -318,15 +318,15 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(rightBuildOperator),
         newRightInputSchema,
-        outputSchema,
+        outputSchema.unbind<std::dynamic_extent>(),
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
-        outputSchema,
-        outputSchema,
+        outputSchema.unbind<std::dynamic_extent>(),
+        outputSchema.unbind<std::dynamic_extent>(),
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN,

@@ -189,7 +189,16 @@ public:
 
     static std::string createCollisionString(const std::unordered_map<IdentifierList, std::vector<Field>>& collisions);
 
-    operator UnboundSchemaBase<1>() const;
+    template <size_t Extent>
+    UnboundSchemaBase<Extent> unbind() const
+    {
+        return UnboundSchemaBase{
+            *this
+            | std::views::transform([](const Field& field) { return UnboundFieldBase<Extent>{field.getLastName(), field.getDataType()}; })
+            | std::ranges::to<std::vector>()};
+    }
+
+    static Schema bind(LogicalOperator logicalOperator, UnboundSchemaBase<1> unboundSchema);
 
 private:
     /// This vector of fields does not imply an order of fields in the schema, it is just used to maintain stable references for the name aliases

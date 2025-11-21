@@ -28,6 +28,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
+#include "LogicalOperatorFwd.hpp"
 
 
 namespace NES
@@ -37,8 +38,8 @@ namespace NES
 class SelectionLogicalOperator
 {
 public:
-    explicit SelectionLogicalOperator(LogicalFunction predicate);
-    SelectionLogicalOperator(LogicalOperator child, DescriptorConfig::Config config);
+    explicit SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate);
+    SelectionLogicalOperator(WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config config);
 
     [[nodiscard]] LogicalFunction getPredicate() const;
 
@@ -76,6 +77,7 @@ private:
     static constexpr std::string_view NAME = "Selection";
     LogicalOperator child;
     LogicalFunction predicate;
+    WeakLogicalOperator self;
 
     /// Set during schema inference
     std::optional<Schema> outputSchema;

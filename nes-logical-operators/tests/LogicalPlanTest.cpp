@@ -50,8 +50,9 @@ protected:
     void SetUp() override
     {
         /// Create some test operators
-        sourceOp = SourceNameLogicalOperator(Identifier::parse("Source"));
-        const auto dummySchema = UnboundSchema{UnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
+        sourceOp = TypedLogicalOperator<SourceNameLogicalOperator>{Identifier::parse("Source")};
+        const auto dummySchema
+            = UnboundSchema{UnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
         auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
         const std::unordered_map<std::string, std::string> dummyParserConfig
             = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
@@ -59,7 +60,7 @@ protected:
                                          .addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig)
                                          .value();
         sourceOp2 = SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor));
-        selectionOp = SelectionLogicalOperator(UnboundFieldAccessLogicalFunction{testFieldIdentifier});
+        selectionOp = TypedLogicalOperator<SelectionLogicalOperator>{UnboundFieldAccessLogicalFunction{testFieldIdentifier}};
     }
 
     Identifier testFieldIdentifier;
@@ -104,28 +105,28 @@ TEST_F(LogicalPlanTest, CopyConstructor)
 
 TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator(Identifier::parse("source"))};
-    const LogicalOperator selectionOp{SelectionLogicalOperator(UnboundFieldAccessLogicalFunction{Identifier::parse("field")})};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SelectionLogicalOperator> selectionOp{UnboundFieldAccessLogicalFunction{Identifier::parse("field")}};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
-    EXPECT_EQ(*promoteResultPlan.getRootOperators()[0], *selectionOp);
-    EXPECT_EQ(*promoteResultPlan.getRootOperators()[0].getChildren()[0], *sourceOp);
+    EXPECT_EQ(promoteResultPlan.getRootOperators()[0], selectionOp);
+    EXPECT_EQ(promoteResultPlan.getRootOperators()[0].getChildren()[0], sourceOp);
 }
 
 TEST_F(LogicalPlanTest, ReplaceOperator)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator(Identifier::parse("source"))};
-    const LogicalOperator sourceOp2{SourceNameLogicalOperator(Identifier::parse("source2"))};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp2{Identifier::parse("source2")};
     const auto plan = LogicalPlan(sourceOp);
     const auto result = replaceOperator(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(*result->getRootOperators()[0], *sourceOp2); ///NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(result->getRootOperators()[0], sourceOp2); ///NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(LogicalPlanTest, replaceSubtree)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator(Identifier::parse("source"))};
-    const LogicalOperator sourceOp2{SourceNameLogicalOperator(Identifier::parse("source2"))};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp2{Identifier::parse("source2")};
     const auto plan = LogicalPlan(sourceOp);
     const auto result = replaceSubtree(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
@@ -134,29 +135,29 @@ TEST_F(LogicalPlanTest, replaceSubtree)
 
 TEST_F(LogicalPlanTest, GetParents)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator(Identifier::parse("source"))};
-    const LogicalOperator selectionOp{SelectionLogicalOperator(UnboundFieldAccessLogicalFunction(Identifier::parse("field")))};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
+    const TypedLogicalOperator<SelectionLogicalOperator> selectionOp{UnboundFieldAccessLogicalFunction(Identifier::parse("field"))};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResult = promoteOperatorToRoot(plan, selectionOp);
     const auto parents = getParents(promoteResult, sourceOp);
     EXPECT_EQ(parents.size(), 1);
-    EXPECT_EQ(*parents[0], *selectionOp);
+    EXPECT_EQ(parents[0], selectionOp);
 }
 
 TEST_F(LogicalPlanTest, GetOperatorByType)
 {
-    const auto sourceOp = LogicalOperator{SourceNameLogicalOperator(Identifier::parse("source"))};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("source")};
     const auto plan = LogicalPlan(sourceOp);
     const auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(plan);
     EXPECT_EQ(sourceOperators.size(), 1);
-    EXPECT_EQ(*LogicalOperator{sourceOperators[0]}, *sourceOp);
+    EXPECT_EQ(LogicalOperator{sourceOperators[0]}, sourceOp);
 }
 
 TEST_F(LogicalPlanTest, GetOperatorsById)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator{Identifier::parse("TestSource")}};
-    const LogicalOperator selectionOp{
-        SelectionLogicalOperator{UnboundFieldAccessLogicalFunction{Identifier::parse("fn")}}.withChildren({sourceOp})};
+    const TypedLogicalOperator<SourceNameLogicalOperator> sourceOp{Identifier::parse("TestSource")};
+    const auto selectionOp
+        = TypedLogicalOperator<SelectionLogicalOperator>{UnboundFieldAccessLogicalFunction{Identifier::parse("fn")}}.withChildren(std::vector<LogicalOperator>{sourceOp});
     const LogicalOperator sinkOp{SinkLogicalOperator{Identifier::parse("TestSink")}.withChildren({selectionOp})};
     const LogicalPlan plan(sinkOp);
     const auto op1 = getOperatorById(plan, sourceOp.getId());

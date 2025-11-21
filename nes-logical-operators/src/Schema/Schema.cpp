@@ -114,11 +114,18 @@ std::string Schema::createCollisionString(const std::unordered_map<IdentifierLis
             ", "));
 }
 
-Schema::operator UnboundSchemaBase<1>() const
+// Schema::operator UnboundSchemaBase<1>() const
+// {
+//     return UnboundSchemaBase{
+//         *this | std::views::transform([](const Field& field) { return UnboundFieldBase<1>{field.getLastName(), field.getDataType()}; })
+//         | std::ranges::to<std::vector>()};
+// }
+
+Schema Schema::bind(LogicalOperator logicalOperator, UnboundSchemaBase<1> unboundSchema)
 {
-    return UnboundSchemaBase{
-        *this | std::views::transform([](const Field& field) { return UnboundFieldBase<1>{field.getLastName(), field.getDataType()}; })
-        | std::ranges::to<std::vector>()};
+    return unboundSchema
+        | std::views::transform([&logicalOperator](const auto& unboundField) { return Field{logicalOperator, unboundField.getName(), unboundField.getDataType()}; })
+        | std::ranges::to<Schema>();
 }
 
 template Schema::Schema(const std::vector<Field>& input) noexcept;

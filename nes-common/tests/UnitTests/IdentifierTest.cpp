@@ -163,7 +163,7 @@ TEST_F(IdentifierTest, IdSpanLookup)
 {
     const auto idList31 = IdentifierList::create(Identifier::parse("Source"), Identifier::parse("Test"), Identifier::parse("Attr"));
     const auto idList32 = IdentifierList::create(Identifier::parse("Source"), Identifier::parse("Test"), Identifier::parse("Attr2"));
-    const std::unordered_set<std::span<const Identifier>, std::hash<std::span<const Identifier>>, IdentifierList::SpanEquals> idMap{
+    const std::unordered_set<std::span<const Identifier>, std::hash<std::span<const Identifier>>, IdentifierList::SpanEquals<>> idMap{
         std::span{idList31.begin() + 1, idList31.end()},
         std::span{idList32.begin() + 1, idList32.end()},
         std::span{idList31.begin(), idList31.end() - 1},

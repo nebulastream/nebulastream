@@ -174,12 +174,12 @@ const WeakLogicalOperator& WeakField::getProducedBy() const
 
 UnboundFieldBase<1> Field::unbound() const
 {
-    return UnboundField{name, dataType};
+    return UnboundFieldBase<1>{name, dataType};
 }
 
 std::function<UnboundFieldBase<1>(Field)> Field::unbinder()
 {
-    return [](const Field& field) { return UnboundField{field.name, field.dataType}; };
+    return [](const Field& field) { return UnboundFieldBase<1>{field.name, field.dataType}; };
 }
 
 std::function<Field(UnboundFieldBase<1>)> Field::binder(LogicalOperator logicalOperator)

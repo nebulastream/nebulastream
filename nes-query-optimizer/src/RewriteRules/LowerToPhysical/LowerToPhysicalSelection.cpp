@@ -36,8 +36,8 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     auto physicalOperator = SelectionPhysicalOperator(func);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        selection->getChild().getOutputSchema(),
-        logicalOperator.getOutputSchema(),
+        selection->getChild().getOutputSchema().unbind<std::dynamic_extent>(),
+        logicalOperator.getOutputSchema().unbind<std::dynamic_extent>(),
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

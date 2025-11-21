@@ -36,7 +36,7 @@ namespace NES
 class SourceNameLogicalOperator
 {
 public:
-    explicit SourceNameLogicalOperator(Identifier logicalSourceName);
+    explicit SourceNameLogicalOperator(WeakLogicalOperator self, Identifier logicalSourceName);
 
     static void inferInputOrigins();
 
@@ -64,6 +64,7 @@ private:
 
     std::vector<LogicalOperator> children;
     Identifier logicalSourceName;
+    WeakLogicalOperator self;
 
     TraitSet traitSet;
     friend struct std::hash<SourceNameLogicalOperator>;

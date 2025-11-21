@@ -44,7 +44,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, std::nullopt, logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator, std::nullopt, logicalOperator.getOutputSchema().unbind<std::dynamic_extent>(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {}};
 }
 

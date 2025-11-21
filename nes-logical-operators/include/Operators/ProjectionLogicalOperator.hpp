@@ -55,8 +55,8 @@ public:
     using UnboundProjection = std::pair<Identifier, LogicalFunction>;
     using ProjectionVariant = NES::Util::VariantContainer<std::vector, Projection, UnboundProjection>;
 
-    ProjectionLogicalOperator(std::vector<UnboundProjection> projections, Asterisk asterisk);
-    ProjectionLogicalOperator(LogicalOperator children, DescriptorConfig::Config config);
+    ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<UnboundProjection> projections, Asterisk asterisk);
+    ProjectionLogicalOperator(WeakLogicalOperator self, LogicalOperator children, DescriptorConfig::Config config);
 
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
     [[nodiscard]] std::unordered_map<Field, std::unordered_set<Field>> getAccessedFieldsForOutput() const override;
@@ -106,7 +106,7 @@ private:
     bool asterisk = false;
     ProjectionVariant projections;
 
-
+    WeakLogicalOperator self;
     /// Set during schema inference
     std::optional<UnboundSchemaBase<1>> outputSchema;
 

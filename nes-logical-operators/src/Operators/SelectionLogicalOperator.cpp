@@ -57,11 +57,11 @@ Schema inferOutputSchema(const Schema& inputSchema, const SelectionLogicalOperat
 }
 }
 
-SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(std::move(std::move(predicate)))
+SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate) : predicate(std::move(std::move(predicate))), self(std::move(self))
 {
 }
 
-SelectionLogicalOperator::SelectionLogicalOperator(LogicalOperator child, DescriptorConfig::Config config)
+SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config config): self(std::move(self))
 {
     if (const auto functionVariant = config[ConfigParameters::SELECTION_FUNCTION_NAME];
         std::holds_alternative<NES::FunctionList>(functionVariant))
@@ -103,7 +103,7 @@ LogicalFunction SelectionLogicalOperator::getPredicate() const
 
 bool SelectionLogicalOperator::operator==(const SelectionLogicalOperator& rhs) const
 {
-    return predicate == rhs.predicate && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
+    return predicate == rhs.predicate && outputSchema == rhs.outputSchema && getTraitSet() == rhs.getTraitSet();
 };
 
 std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
@@ -195,7 +195,7 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
     {
         throw CannotDeserialize("Expected one child for SelectionLogicalOperator, but found {}", arguments.children.size());
     }
-    return SelectionLogicalOperator{std::move(arguments.children.at(0)), std::move(arguments.config)};
+    return TypedLogicalOperator<SelectionLogicalOperator>{std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
 }
 

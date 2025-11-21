@@ -48,16 +48,16 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
                            };
                            return std::make_shared<PhysicalOperatorWrapper>(
                                UnionRenamePhysicalOperator(getFieldNames(childOperator.getOutputSchema()), getFieldNames(outputSchema)),
-                               childOperator.getOutputSchema(),
-                               outputSchema,
+                               childOperator.getOutputSchema().template unbind<std::dynamic_extent>(),
+                               outputSchema.unbind<std::dynamic_extent>(),
                                PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
                        })
         | std::ranges::to<std::vector>();
 
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         UnionPhysicalOperator(),
-        source.getOutputSchema(),
-        logicalOperator.getOutputSchema(),
+        source.getOutputSchema().unbind<std::dynamic_extent>(),
+        logicalOperator.getOutputSchema().unbind<std::dynamic_extent>(),
         std::nullopt,
         std::nullopt,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
