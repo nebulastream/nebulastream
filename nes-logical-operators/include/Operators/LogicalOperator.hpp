@@ -279,12 +279,19 @@ struct TypedLogicalOperator
         std::unreachable();
     }
 
+    template <typename T>
+    requires(std::same_as<NES::detail::ErasedLogicalOperator, T>)
+    TypedLogicalOperator<T> getAs() const
+    {
+        return TypedLogicalOperator<T>{self};
+    }
+
     /// Gets the underlying operator as type T.
     /// @tparam T The type to get the operator as.
     /// @return std::shared_ptr<const Castable<T>> The operator.
     /// @throw InvalidDynamicCast If the operator is not of type T or does not inherit from Castable<T>.
     template <typename T>
-    requires(!LogicalOperatorConcept<T>)
+    requires(!LogicalOperatorConcept<T> && !std::same_as<NES::detail::ErasedLogicalOperator, T>)
     std::shared_ptr<const Castable<T>> getAs() const
     {
         if (auto castable = self->getImpl(); castable.has_value())
@@ -304,11 +311,14 @@ struct TypedLogicalOperator
 
     [[nodiscard]] TypedLogicalOperator withChildren(std::vector<LogicalOperator> children) const
     {
-        return self->withChildren(std::move(children));
+        return self->withChildren(std::move(children)).getAs<Checked>();
     }
 
     /// Static traits defined as member variables will be present in the new operator nonetheless
-    [[nodiscard]] TypedLogicalOperator withTraitSet(TraitSet traitSet) const { return self->withTraitSet(std::move(traitSet)); }
+    [[nodiscard]] TypedLogicalOperator withTraitSet(TraitSet traitSet) const
+    {
+        return self->withTraitSet(std::move(traitSet)).getAs<Checked>();
+    }
 
     [[nodiscard]] OperatorId getId() const { return self->getOperatorId(); }
 
