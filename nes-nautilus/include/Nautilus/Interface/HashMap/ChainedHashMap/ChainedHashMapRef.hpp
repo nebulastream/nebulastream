@@ -100,7 +100,6 @@ public:
         nautilus::val<HashMap*> hashMapRef;
         nautilus::val<ChainedHashMapEntry*> currentEntry;
         nautilus::val<uint64_t> entrySize;
-        /// TODO #1152 create a custom class for these indices
         nautilus::val<uint64_t> tupleIndex;
         nautilus::val<uint64_t> indexOnPage;
         nautilus::val<uint64_t> numberOfTuplesInCurrentPage;
