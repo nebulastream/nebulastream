@@ -36,6 +36,7 @@
 
 namespace NES
 {
+
 using namespace Nautilus;
 struct ExecutionContext;
 

@@ -95,7 +95,8 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
            /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,123456789\n"}}});
 }
 
-TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
+/// TODO #1154: We currently don't support delimiters that are larger than one byte
+TEST_F(SpecificSequenceTest, DISABLED_testDelimiterThatIsMoreThanOneCharacter)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;

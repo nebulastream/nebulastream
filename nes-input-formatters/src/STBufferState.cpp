@@ -15,6 +15,7 @@
 #include <STBufferState.hpp>
 
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <ostream>
 #include <span>
@@ -40,6 +41,8 @@ bool AtomicState::tryClaimSpanningTuple(const ABAItNo abaItNumber)
     while (atomicFirstDelimiter.getABAItNo() == abaItNumber and not atomicFirstDelimiter.hasClaimedSpanningTuple()
            and not claimedSpanningTuple)
     {
+        /// while one thread tries to claim an ST, by claiming the first buffer/entry,
+        /// another thread may use the same buffer as the last buffer of an ST, claiming its 'leading' use
         desiredFirstDelimiter.updateLeading(atomicFirstDelimiter);
         claimedSpanningTuple = this->state.compare_exchange_weak(atomicFirstDelimiter.state, desiredFirstDelimiter.state);
     }
@@ -76,8 +79,8 @@ void STBufferEntry::setBuffersAndOffsets(const StagedBuffer& indexedBuffer)
 {
     this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
     this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-    this->firstDelimiterOffset = indexedBuffer.getOffsetOfFirstTupleDelimiter();
-    this->lastDelimiterOffset = indexedBuffer.getOffsetOfLastTupleDelimiter();
+    this->firstDelimiterOffset = indexedBuffer.getOffsetOfLastTuple();
+    this->lastDelimiterOffset = indexedBuffer.getByteOffsetOfLastTuple();
 }
 
 bool STBufferEntry::trySetWithDelimiter(const ABAItNo abaItNumber, const StagedBuffer& indexedBuffer)
@@ -85,7 +88,14 @@ bool STBufferEntry::trySetWithDelimiter(const ABAItNo abaItNumber, const StagedB
     if (isCurrentEntryUsedUp(abaItNumber))
     {
         setBuffersAndOffsets(indexedBuffer);
-        this->atomicState.setHasTupleDelimiterState(abaItNumber);
+        if (indexedBuffer.getByteOffsetOfLastTuple() != std::numeric_limits<FieldIndex>::max())
+        {
+            this->atomicState.setHasTupleDelimiterAndValidTrailingSTState(abaItNumber);
+        }
+        else
+        {
+            this->atomicState.setHasTupleDelimiterState(abaItNumber);
+        }
         return true;
     }
     return false;
@@ -124,6 +134,15 @@ void STBufferEntry::setStateOfFirstIndex(TupleBuffer dummyBuffer)
     this->lastDelimiterOffset = 0;
 }
 
+void STBufferEntry::setOffsetOfTrailingST(const FieldIndex offsetOfLastTuple)
+{
+    PRECONDITION(offsetOfLastTuple != std::numeric_limits<FieldIndex>::max(), "offsetOfLastTuple is not valid");
+    PRECONDITION(this->lastDelimiterOffset == std::numeric_limits<FieldIndex>::max(), "Must not overwrite an already valid offset");
+    /// @NOTE: the order is important! The 'lastDelimiterOffset' must be valid before calling 'setHasValidLastDelimiterOffset'
+    this->lastDelimiterOffset = offsetOfLastTuple;
+    this->atomicState.setHasValidLastDelimiterOffset();
+}
+
 void STBufferEntry::claimNoDelimiterBuffer(std::span<StagedBuffer> spanningTupleVector, const size_t spanningTupleIdx)
 {
     INVARIANT(this->leadingBufferRef.getReferenceCounter() != 0, "Tried to claim a leading buffer with a nullptr");
@@ -151,7 +170,9 @@ STBufferEntry::EntryState STBufferEntry::getEntryState(const ABAItNo expectedABA
     const auto currentState = this->atomicState.getState();
     const bool isCorrectABA = expectedABAItNo == currentState.getABAItNo();
     const bool hasDelimiter = currentState.hasTupleDelimiter();
-    return EntryState{.hasCorrectABA = isCorrectABA, .hasDelimiter = hasDelimiter};
+    const bool validLastDelimiterOffset = currentState.hasValidLastDelimiterOffset();
+    return EntryState{
+        .hasCorrectABA = isCorrectABA, .hasDelimiter = hasDelimiter, .hasValidTrailingDelimiterOffset = validLastDelimiterOffset};
 }
 
 bool STBufferEntry::validateFinalState(const STBufferIdx bufferIdx, const STBufferEntry& nextEntry, const STBufferIdx lastIdxOfBuffer) const

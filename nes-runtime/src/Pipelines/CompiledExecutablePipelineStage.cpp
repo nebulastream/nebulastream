@@ -13,6 +13,7 @@
 */
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <ostream>
@@ -29,6 +30,7 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
+#include <function.hpp>
 #include <options.hpp>
 
 namespace NES
@@ -61,15 +63,31 @@ CompiledExecutablePipelineStage::compilePipeline() const
         /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
         /// Additionally, we can NOT use const or const references for the parameters of the lambda function
         /// NOLINTBEGIN(performance-unnecessary-value-param)
-        const std::function compiledFunction = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                                   nautilus::val<const TupleBuffer*> recordBufferRef,
-                                                   nautilus::val<const Arena*> arenaRef)
+        const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
+            compiledFunction = [this](
+                                   nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
+                                   nautilus::val<const TupleBuffer*> recordBufferRef,
+                                   nautilus::val<const Arena*> arenaRef)
         {
             auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
             RecordBuffer recordBuffer(recordBufferRef);
 
             pipeline->getRootOperator().open(ctx, recordBuffer);
-            pipeline->getRootOperator().close(ctx, recordBuffer);
+            switch (ctx.getOpenReturnState())
+            {
+                case OpenReturnState::CONTINUE: {
+                    pipeline->getRootOperator().close(ctx, recordBuffer);
+                    break;
+                }
+                case OpenReturnState::REPEAT: {
+                    nautilus::invoke(
+                        +[](PipelineExecutionContext* pec, const TupleBuffer* buffer)
+                        { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
+                        pipelineExecutionContext,
+                        recordBufferRef);
+                    break;
+                }
+            }
         };
         /// NOLINTEND(performance-unnecessary-value-param)
         return engine.registerFunction(compiledFunction);

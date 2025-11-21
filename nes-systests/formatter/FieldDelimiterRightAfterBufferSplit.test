@@ -1,6 +1,6 @@
 # name: formatter/FieldDelimiterRightAfterBufferSplit.test
 # description: formatter tests
-# groups: [Formatter, Tuples]
+# groups: [Formatter, Tuples, CompilationIntensive]
 
 # NOTE: assumes that raw tuple buffers are of page size (4096 bytes)
 GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
