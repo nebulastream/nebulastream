@@ -36,7 +36,8 @@ struct FieldOffsets
     uint64_t fieldOffset;
 };
 
-/// ChainedHashMapEntry uses for reading and writing either the keys or values
+/// ChainedHashMapEntry uses for reading and writing either the keys or values.
+/// Similar to TupleBufferRef, we store the null value as the first byte before the actual value.
 class ChainedEntryMemoryProvider
 {
 public:
