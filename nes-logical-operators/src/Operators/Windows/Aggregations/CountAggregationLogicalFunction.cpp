@@ -33,8 +33,9 @@ namespace NES
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           field)
 {
 }
@@ -42,8 +43,9 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAcce
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           std::move(field),
           std::move(asField))
 {
@@ -58,6 +60,8 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
+        /// We infer the data type from the schema for the on field
+        this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
