@@ -35,6 +35,7 @@ public:
     void inferStamp(const Schema& schema) override;
     ~AvgAggregationLogicalFunction() override = default;
     [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] bool shallIncludeNullValues() const noexcept override;
     [[nodiscard]] Reflected reflect() const override;
 
 private:

@@ -50,6 +50,11 @@ SumAggregationLogicalFunction::SumAggregationLogicalFunction(
 {
 }
 
+bool SumAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
+}
+
 std::string_view SumAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;

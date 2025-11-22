@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ExecutionContext.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -67,6 +68,12 @@ public:
 
     /// Returns the size of the aggregation state in bytes
     [[nodiscard]] virtual size_t getSizeOfStateInBytes() const = 0;
+
+    /// Writes the null value to the first byte of the aggregation state
+    static void storeNull(const nautilus::val<AggregationState*>& aggregationState, const nautilus::val<bool>& isNull);
+
+    /// Reads the null value from the first byte of the aggregation state
+    [[nodiscard]] static nautilus::val<bool> readNull(const nautilus::val<AggregationState*>& aggregationState);
 
     virtual ~AggregationPhysicalFunction();
 

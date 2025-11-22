@@ -50,6 +50,13 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogi
 {
 }
 
+bool CountAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    /// For now, we hardcode it. As soon as TODO #699 is merged, we can specify here a difference
+    /// For example, COUNT(*) includes null whereas COUNT(fieldName) does not
+    return false;
+}
+
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -64,6 +71,8 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
+        /// We infer the data type from the schema for the on field
+        this->setOnField(this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get());
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
