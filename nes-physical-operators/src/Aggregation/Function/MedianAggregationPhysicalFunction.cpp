@@ -26,10 +26,13 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
+#include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -49,8 +52,19 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
 void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    if (inputType.nullable)
+    {
+        /// Reading the current null value and combining it with the one of the record
+        const auto oldContainsNull = readNull(aggregationState);
+        storeNull(aggregationState, value.isNull() or oldContainsNull);
+
+        /// Skipping the first byte (null)
+        memArea += nautilus::val<uint64_t>{1};
+    }
+
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
-    const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
     pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
 }
@@ -61,8 +75,21 @@ void MedianAggregationPhysicalFunction::combine(
     PipelineMemoryProvider&)
 {
     /// Getting the paged vectors from the aggregation states
-    const auto memArea1 = static_cast<nautilus::val<PagedVector*>>(aggregationState1);
-    const auto memArea2 = static_cast<nautilus::val<PagedVector*>>(aggregationState2);
+    auto memArea1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
+    auto memArea2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+
+    if (inputType.nullable)
+    {
+        /// Combining the null values
+        const auto containsNull1 = readNull(aggregationState1);
+        const auto containsNull2 = readNull(aggregationState2);
+        const auto newContainsNull = containsNull1 or containsNull2;
+        storeNull(aggregationState1, newContainsNull);
+
+        /// Skipping the first byte (null)
+        memArea1 += nautilus::val<uint64_t>{1};
+        memArea2 += nautilus::val<uint64_t>{1};
+    }
 
     /// Calling the copyFrom function of the paged vector to combine the two paged vectors by copying the content of the second paged vector to the first paged vector
     nautilus::invoke(+[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); }, memArea1, memArea2);
@@ -71,8 +98,20 @@ void MedianAggregationPhysicalFunction::combine(
 Record MedianAggregationPhysicalFunction::lower(
     const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
+    /// If it contains null values, we simply return a null value
+    const auto containsNull = inputType.nullable ? readNull(aggregationState) : nautilus::val<bool>{false};
+    if (containsNull)
+    {
+        const VarVal zero{nautilus::val<uint64_t>(0), true, true};
+        const VarVal medianValue = zero.castToType(resultType.type);
+        Record resultRecord;
+        resultRecord.write(resultFieldIdentifier, medianValue);
+        return resultRecord;
+    }
+
     /// Getting the paged vector from the aggregation state
-    const auto pagedVectorPtr = static_cast<nautilus::val<PagedVector*>>(aggregationState);
+    const auto pagedVectorPtr
+        = static_cast<nautilus::val<PagedVector*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
     const PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
     const auto allFieldNames = bufferRefPagedVector->getAllFieldNames();
     const auto numberOfEntries = invoke(
@@ -166,7 +205,13 @@ void MedianAggregationPhysicalFunction::reset(const nautilus::val<AggregationSta
             auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
             new (pagedVector) PagedVector();
         },
-        aggregationState);
+        aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
+
+    if (inputType.nullable)
+    {
+        const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+        nautilus::memset(memArea, 0, 1);
+    }
 }
 
 void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
@@ -178,12 +223,13 @@ void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>
             auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             pagedVector->~PagedVector();
         },
-        aggregationState);
+        aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
 }
 
 size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return sizeof(PagedVector);
+    /// ContainsNullValues (1B) + Pagedvector
+    return static_cast<uint64_t>(inputType.nullable) + sizeof(PagedVector);
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(
