@@ -14,6 +14,8 @@
 
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -64,12 +66,12 @@ EqualsLogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataTy
 
 LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return withChildren(newChildren);
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    const bool isNullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().isNullableAsBool(); });
+    auto newDataType = this->getDataType();
+    newDataType.isNullable = isNullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const

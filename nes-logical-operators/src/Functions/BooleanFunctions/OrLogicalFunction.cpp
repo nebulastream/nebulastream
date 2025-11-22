@@ -14,6 +14,8 @@
 
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -87,20 +89,12 @@ std::string_view OrLogicalFunction::getType() const
 
 LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> children;
-    /// delegate dataType inference of children
-    for (auto& node : getChildren())
-    {
-        children.push_back(node.withInferredDataType(schema));
-    }
-    /// check if children dataType is correct
-    INVARIANT(
-        left.getDataType().isType(DataType::Type::BOOLEAN), "the dataType of left child must be boolean, but was: {}", left.getDataType());
-    INVARIANT(
-        right.getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of right child must be boolean, but was: {}",
-        right.getDataType());
-    return this->withChildren(children);
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    const bool isNullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().isNullableAsBool(); });
+    auto newDataType = this->getDataType();
+    newDataType.isNullable = isNullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return withDataType(newDataType).withChildren(newChildren);
 }
 
 SerializableFunction OrLogicalFunction::serialize() const

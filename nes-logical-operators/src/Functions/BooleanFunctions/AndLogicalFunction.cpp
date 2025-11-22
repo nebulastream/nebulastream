@@ -14,6 +14,8 @@
 
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -88,21 +90,23 @@ std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
 
 LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& node : getChildren())
-    {
-        newChildren.push_back(node.withInferredDataType(schema));
-    }
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    const bool isNullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().isNullableAsBool(); });
+
     /// check if children dataType is correct
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren[0].getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", left.getDataType());
     }
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren[1].getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", right.getDataType());
     }
-    return this->withChildren(newChildren);
+
+    auto newDataType = this->getDataType();
+    newDataType.isNullable = isNullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return withDataType(newDataType).withChildren(newChildren);
 }
 
 SerializableFunction AndLogicalFunction::serialize() const

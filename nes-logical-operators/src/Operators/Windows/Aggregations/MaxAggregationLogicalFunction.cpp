@@ -18,6 +18,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
+
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -29,13 +31,22 @@
 namespace NES
 {
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          DataTypeProvider::provideDataType(field.getDataType().type, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(field.getDataType().type, field.getDataType().isNullable),
+          field)
 {
 }
 
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
 {
+}
+
+bool MaxAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
 }
 
 std::string_view MaxAggregationLogicalFunction::getName() const noexcept
