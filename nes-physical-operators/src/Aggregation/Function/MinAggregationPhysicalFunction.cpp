@@ -40,12 +40,18 @@ MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
 void MinAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
+    /// If the value is null and we are taking null values into account
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    if (inputType.isNullable && value.isNull())
+    {
+        return;
+    }
+
     /// Reading the old min value from the aggregation state.
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType, false);
 
     /// Updating the min value with the new value, if the new value is smaller
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (value < min)
     {
         value.writeToMemory(memAreaMin);
@@ -59,11 +65,11 @@ void MinAggregationPhysicalFunction::combine(
 {
     /// Reading the min value from the first aggregation state
     const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto min1 = VarVal::readVarValFromMemory(memAreaMin1, inputType);
+    const auto min1 = VarVal::readVarValFromMemory(memAreaMin1, inputType, false);
 
     /// Reading the min value from the second aggregation state
     const auto memAreaMin2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto min2 = VarVal::readVarValFromMemory(memAreaMin2, inputType);
+    const auto min2 = VarVal::readVarValFromMemory(memAreaMin2, inputType, false);
 
     /// Updating the min value with the new min value, if the new min value is smaller
     if (min2 < min1)
@@ -76,7 +82,7 @@ Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 {
     /// Reading the min value from the aggregation state
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType, false);
 
     /// Creating a record with the min value
     Record record;

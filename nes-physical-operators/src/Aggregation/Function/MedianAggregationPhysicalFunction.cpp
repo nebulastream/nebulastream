@@ -49,6 +49,13 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
 void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
+    /// If the value is null and we are taking null values into account
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    if (inputType.isNullable && value.isNull())
+    {
+        return;
+    }
+
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);

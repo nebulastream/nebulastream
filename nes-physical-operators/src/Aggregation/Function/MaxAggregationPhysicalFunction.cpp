@@ -40,12 +40,18 @@ MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
 void MaxAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
+    /// If the value is null and we are taking null values into account
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    if (inputType.isNullable && value.isNull())
+    {
+        return;
+    }
+
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType);
+    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, false);
 
     /// Updating the max value with the new value, if the new value is larger
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (value > max)
     {
         value.writeToMemory(memAreaMax);
@@ -59,11 +65,11 @@ void MaxAggregationPhysicalFunction::combine(
 {
     /// Reading the max value from the first aggregation state
     const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto max1 = VarVal::readVarValFromMemory(memAreaMax1, inputType);
+    const auto max1 = VarVal::readVarValFromMemory(memAreaMax1, inputType, false);
 
     /// Reading the max value from the second aggregation state
     const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto max2 = VarVal::readVarValFromMemory(memAreaMax2, inputType);
+    const auto max2 = VarVal::readVarValFromMemory(memAreaMax2, inputType, false);
 
     /// Updating the max value with the new value, if the new value is larger
     if (max2 > max1)
@@ -76,7 +82,7 @@ Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 {
     /// Reading the max value from the aggregation state
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType);
+    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, false);
 
     /// Creating a record with the max value
     Record record;
