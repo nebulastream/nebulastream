@@ -55,11 +55,12 @@ Nautilus::VariableSizedData parseVarSizedIntoNautilusRecord(
     const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, QuotationType quotationType);
 
 void parseRawValueIntoRecord(
-    DataType::Type physicalType,
+    DataType dataType,
     Nautilus::Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
+    const std::vector<std::string>& nullValues,
     QuotationType quotationType,
     ArenaRef& arenaRef);
 }

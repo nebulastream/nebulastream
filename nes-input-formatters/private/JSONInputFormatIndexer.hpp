@@ -67,6 +67,8 @@ struct JSONMetaData
 
     static QuotationType getQuotationType() { return QuotationType::DOUBLE_QUOTE; }
 
+    static std::vector<std::string> getNullValues() { return {"null"}; }
+
     const std::unordered_map<std::string, FieldIndex>& getFieldNameToIndexOffset() const { return this->fieldNameToIndexOffset; }
 
 private:

@@ -23,6 +23,8 @@
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <std/cstring.h>
 #include <Arena.hpp>
@@ -32,88 +34,141 @@
 
 namespace NES
 {
-
-void parseRawValueIntoRecord(
-    const DataType::Type physicalType,
-    Nautilus::Record& record,
+namespace
+{
+template <typename T>
+NES::Nautilus::VarVal handleNullOrParse(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
+    const nautilus::val<bool> isNull,
+    const bool isNullable)
+{
+    if (isNullable and isNull)
+    {
+        return Nautilus::VarVal{nautilus::val<T>{0}, NES::Nautilus::VarVal::NULLABLE_ENUM::NULLABLE, isNull};
+    }
+    return Nautilus::VarVal{
+        parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize), NES::Nautilus::VarVal::NULLABLE_ENUM::NOT_NULLABLE, isNull};
+}
+}
+
+void parseRawValueIntoRecord(
+    const DataType dataType,
+    Nautilus::Record& record,
+    nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
+    const std::vector<std::string>& nullValues,
     const QuotationType quotationType,
     ArenaRef& arenaRef)
 {
-    switch (physicalType)
+    nautilus::val<bool> isNull = false;
+    if (dataType.isNullable)
+    {
+        for (const auto& nullValue : nautilus::static_iterable(nullValues))
+        {
+            if (fieldSize == nullValue.length())
+            {
+                for (nautilus::static_val<uint64_t> i = 0; i < nullValue.length(); ++i)
+                {
+                    if (fieldAddress[i] != nautilus::val<int8_t>{static_cast<int8_t>(nullValue[i])})
+                    {
+                        isNull = isNull and false;
+                    }
+                }
+                isNull = true;
+            }
+        }
+    }
+
+    switch (dataType.type)
     {
         case DataType::Type::INT8: {
-            record.write(fieldName, parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<int8_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::INT16: {
-            record.write(fieldName, parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<int16_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::INT32: {
-            record.write(fieldName, parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<int32_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::INT64: {
-            record.write(fieldName, parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<int64_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT8: {
-            record.write(fieldName, parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<uint8_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT16: {
-            record.write(fieldName, parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<uint16_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT32: {
-            record.write(fieldName, parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<uint32_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT64: {
-            record.write(fieldName, parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<uint64_t>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseIntoNautilusRecord<float>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<float>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseIntoNautilusRecord<double>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<double>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::CHAR: {
             switch (quotationType)
             {
                 case QuotationType::NONE: {
-                    record.write(fieldName, parseIntoNautilusRecord<char>(fieldAddress, fieldSize));
+                    record.write(fieldName, handleNullOrParse<char>(fieldAddress, fieldSize, isNull, dataType.isNullable));
                     return;
                 }
                 case QuotationType::DOUBLE_QUOTE: {
                     record.write(
                         fieldName,
-                        parseIntoNautilusRecord<char>(fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2)));
+                        handleNullOrParse<char>(
+                            fieldAddress + nautilus::val<uint32_t>(1),
+                            fieldSize - nautilus::val<uint32_t>(2),
+                            isNull,
+                            dataType.isNullable));
                     return;
                 }
             }
             std::unreachable();
         }
         case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseIntoNautilusRecord<bool>(fieldAddress, fieldSize));
+            record.write(fieldName, handleNullOrParse<bool>(fieldAddress, fieldSize, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::VARSIZED: {
             switch (quotationType)
             {
                 case QuotationType::NONE: {
+                    if (dataType.isNullable and isNull)
+                    {
+                        const auto varSized = arenaRef.allocateVariableSizedData(0);
+                        record.write(fieldName, varSized);
+                        return;
+                    }
                     auto varSized = arenaRef.allocateVariableSizedData(fieldSize);
                     nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
                     record.write(fieldName, varSized);
                     return;
                 }
                 case QuotationType::DOUBLE_QUOTE: {
+                    if (dataType.isNullable and isNull)
+                    {
+                        const auto varSized = arenaRef.allocateVariableSizedData(0);
+                        record.write(fieldName, varSized);
+                        return;
+                    }
                     const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
                     const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
 
@@ -132,5 +187,4 @@ void parseRawValueIntoRecord(
     }
     std::unreachable();
 }
-
 }

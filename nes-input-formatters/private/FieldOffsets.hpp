@@ -108,7 +108,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto sizeOfDelimiter = (i + 1 == metaData.getNumberOfFields()) ? 0 : metaData.getFieldDelimitingBytes().size();
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), arenaRef);
+            parseRawValueIntoRecord(
+                fieldDataType, record, fieldAddress, fieldSize, fieldName, metaData.getNullValues(), metaData.getQuotationType(), arenaRef);
         }
         return record;
     }
@@ -145,7 +146,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), arenaRef);
+            parseRawValueIntoRecord(
+                fieldDataType, record, fieldAddress, fieldSize, fieldName, metaData.getNullValues(), metaData.getQuotationType(), arenaRef);
         }
         return record;
     }
