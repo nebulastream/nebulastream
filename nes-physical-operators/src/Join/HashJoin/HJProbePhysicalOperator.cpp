@@ -56,6 +56,7 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
     , leftHashMapOptions(std::move(leftHashMapBasedOptions))
     , rightHashMapOptions(std::move(rightHashMapBasedOptions))
 {
+
 }
 
 void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

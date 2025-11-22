@@ -75,6 +75,7 @@ Interface::HashMap* getHashJoinHashMapProxy(
 
 static std::atomic_bool serialized = false;
 static std::atomic_bool deserialized = false;
+static std::atomic_uint second = false;
 static std::mutex mtx;
 static std::condition_variable cv;
 
@@ -91,8 +92,7 @@ void serializeHashMapProxy(
     {
         return;
     }
-    bool expected = false;
-    if (serialized.compare_exchange_strong(expected, true))
+    if (serialized.load())
     {
         return;
     }
@@ -103,6 +103,7 @@ void serializeHashMapProxy(
         std::filesystem::remove("/tmp/nebulastream/hashmap.bin");
     }
     hashMap->serialize("/tmp/nebulastream/hashmap.bin");
+    serialized.store(true);
     cv.notify_all();
 }
 
@@ -125,12 +126,17 @@ Interface::HashMap* deserializeHashMapProxy(
     }
 
     bool expected = false;
-    if (!deserialized.compare_exchange_strong(expected, true))
+    if (deserialized.load())
     {
         return hashMap;
     }
-
+    if (!second.load())
+    {
+        second.store(true);
+        return hashMap;
+    }
     hashMap->deserialize("/tmp/nebulastream/hashmap.bin", bufferProvider);
+    deserialized.store(true);
     return hashMap;
 }
 
@@ -237,14 +243,13 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
 
     nautilus::invoke(
-    deserializeHashMapProxy,
-    operatorHandler,
-    timestamp,
-    ctx.workerThreadId,
-    nautilus::val<JoinBuildSideType>(joinBuildSide),
-    ctx.pipelineMemoryProvider.bufferProvider,
-    nautilus::val<const HJBuildPhysicalOperator*>(this));
-
+        deserializeHashMapProxy,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        nautilus::val<JoinBuildSideType>(joinBuildSide),
+        ctx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<const HJBuildPhysicalOperator*>(this));
 
     nautilus::invoke(
           serializeHashMapProxy,
@@ -254,8 +259,6 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
           nautilus::val<JoinBuildSideType>(joinBuildSide),
           ctx.pipelineMemoryProvider.bufferProvider,
           nautilus::val<const HJBuildPhysicalOperator*>(this));
-
-
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(
