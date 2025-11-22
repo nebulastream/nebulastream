@@ -34,20 +34,34 @@ namespace NES
 {
 
 CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType,
+    DataType resultType,
+    PhysicalFunction inputFunction,
+    Record::RecordFieldIdentifier resultFieldIdentifier,
+    const bool includeNullValues)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    , includeNullValues(includeNullValues)
 {
 }
 
 void CountAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider&, const Record&)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record)
 {
+    /// If the value is null and we are taking null values into account
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+
+    /// We use a multiplication factor instead of a branch to reduce the tracing time spent in nautilus
+    const nautilus::val<int8_t> multiplicationFactor = 0 * ((inputType.isNullable && not includeNullValues) & value.isNull())
+        + 1 * not((static_cast<int>(inputType.isNullable) & static_cast<int>(not includeNullValues)) & value.isNull());
+
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, inputType);
+    const auto count = VarVal::readVarValFromMemory(memAreaCount, resultType);
 
     /// Updating the count with the new value
-    const auto newCount = count + nautilus::val<uint64_t>(1);
+    const auto newCount = count + multiplicationFactor;
 
     /// Writing the new count and count back to the aggregation state
     newCount.writeToMemory(memAreaCount);
@@ -60,11 +74,11 @@ void CountAggregationPhysicalFunction::combine(
 {
     /// Reading the count from the first aggregation state
     const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto count1 = VarVal::readVarValFromMemory(memAreaCount1, inputType);
+    const auto count1 = VarVal::readVarValFromMemory(memAreaCount1, resultType);
 
     /// Reading the count from the second aggregation state
     const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto count2 = VarVal::readVarValFromMemory(memAreaCount2, inputType);
+    const auto count2 = VarVal::readVarValFromMemory(memAreaCount2, resultType);
 
     /// Adding the counts together
     const auto newCount = count1 + count2;
@@ -77,7 +91,7 @@ Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, inputType);
+    const auto count = VarVal::readVarValFromMemory(memAreaCount, resultType);
 
     /// Creating a record with the count
     Record record;
@@ -99,14 +113,18 @@ void CountAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t CountAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return inputType.getSizeInBytes();
+    return resultType.getSizeInBytes();
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterCountAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<CountAggregationPhysicalFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        arguments.includeNullValues);
 }
 
 }

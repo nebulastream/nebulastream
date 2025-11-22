@@ -18,6 +18,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
+
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -29,7 +31,12 @@
 namespace NES
 {
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          field)
 {
 }
 
@@ -67,11 +74,11 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    inputStamp = onField.getDataType();
+
     /// The output of an aggregation is never NULL
-    finalAggregateStamp = onField.getDataType();
-    finalAggregateStamp.isNullable = false;
-    asField = asField.withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
+    this->setFinalAggregateStamp(DataType{this->getOnField().getDataType().type, false});
+    this->setInputStamp(this->getOnField().getDataType());
+    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
 }
 
 SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() const

@@ -33,8 +33,9 @@ namespace NES
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           field)
 {
 }
@@ -42,8 +43,9 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAcce
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           std::move(field),
           std::move(asField))
 {
@@ -73,12 +75,12 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
         }
 
         /// a count aggregation is always on an uint 64 and is never NULL
-        this->setOnField(
-            this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
-                            .get<FieldAccessLogicalFunction>());
-        this->setAsField(
-            this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
-                            .get<FieldAccessLogicalFunction>());
+        this->setOnField(this->getOnField()
+                             .withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
+                             .get<FieldAccessLogicalFunction>());
+        this->setAsField(this->getAsField()
+                             .withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
+                             .get<FieldAccessLogicalFunction>());
     }
     else
     {

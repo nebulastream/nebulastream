@@ -145,7 +145,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     copy.inputSchema = firstSchema;
     copy.outputSchema = Schema{};
 
-    if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()) != nullptr)
+    if (dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()) != nullptr)
     {
         const auto& newQualifierForSystemField = firstSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator();
 

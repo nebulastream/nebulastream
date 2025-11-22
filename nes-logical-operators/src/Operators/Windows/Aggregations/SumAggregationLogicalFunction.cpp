@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -28,13 +29,24 @@
 namespace NES
 {
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          field)
 {
 }
 
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          field,
+          asField)
 {
 }
 
@@ -67,11 +79,9 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    inputStamp = onField.getDataType();
-    finalAggregateStamp = onField.getDataType();
-    /// The output of an aggregation is never NULL
-    finalAggregateStamp.isNullable = false;
-    asField = asField.withDataType(finalAggregateStamp).get<FieldAccessLogicalFunction>();
+    this->setInputStamp(this->getOnField().getDataType());
+    this->setFinalAggregateStamp(this->getOnField().getDataType());
+    this->setAsField(this->getAsField().withDataType(this->getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
 }
 
 SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
