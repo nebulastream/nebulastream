@@ -18,6 +18,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -29,12 +30,23 @@
 namespace NES
 {
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          field)
 {
 }
 
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          DataTypeProvider::provideDataType(field.getDataType().type, false),
+          field,
+          std::move(asField))
 {
 }
 
@@ -67,11 +79,11 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    inputStamp = onField.getDataType();
+
     /// The output of an aggregation is never NULL
-    finalAggregateStamp = onField.getDataType();
+    auto finalAggregateStamp = this->getOnField().getDataType();
     finalAggregateStamp.isNullable = false;
-    this->asField = asField.withDataType(finalAggregateStamp).get<FieldAccessLogicalFunction>();
+    this->setFinalAggregateStamp(finalAggregateStamp);
 }
 
 SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const

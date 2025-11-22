@@ -33,7 +33,8 @@ public:
         DataType inputType,
         DataType resultType,
         PhysicalFunction inputFunction,
-        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
+        const bool includeNullValues);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -47,6 +48,9 @@ public:
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~CountAggregationPhysicalFunction() override = default;
+
+private:
+    bool includeNullValues;
 };
 
 }
