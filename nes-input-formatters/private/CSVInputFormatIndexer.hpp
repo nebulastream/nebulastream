@@ -64,7 +64,9 @@ struct CSVMetaData
 
     static QuotationType getQuotationType() { return QuotationType::NONE; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNames[i]; }
+    static std::vector<std::string> getNullValues() { return {""}; }
+
+    const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNames[i]; }
 
     const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
