@@ -32,6 +32,8 @@
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -74,9 +76,18 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
     {
         if (fieldIdentifier == fieldName)
         {
+            /// For now, we store the null byte before the actual VarVal
+            nautilus::val<bool> null = false;
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
-            const auto memoryAddress = castedEntryAddress + fieldOffset;
+            auto memoryAddress = castedEntryAddress + fieldOffset;
+            if (type.isNullableAsBool())
+            {
+                /// Reading the first byte (null) and then incrementing the castedEntryAddress by 1 byte to read the actual value
+                null = readValueFromMemRef<bool>(memoryAddress);
+                memoryAddress += 1;
+            }
+
             if (type.isType(DataType::Type::VARSIZED))
             {
                 const auto varSizedDataPtr
@@ -88,7 +99,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
                 return varSizedData;
             }
 
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type, null);
             return varVal;
         }
     }
@@ -135,6 +146,33 @@ void storeVarSized(
         variableSizedData.getContent(),
         variableSizedData.getSize());
 }
+
+void writeVarVal(
+    const VarVal& value,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const DataType& type,
+    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    /// For now, we store the null byte before the actual VarVal
+    auto memoryAddress = fieldAddress;
+    if (type.isNullableAsBool())
+    {
+        /// Writing the null value to the first byte and then incrementing the castedEntryAddress by 1 byte to store the actual value
+        VarVal{value.isNull()}.writeToMemory(memoryAddress);
+        memoryAddress += 1;
+    }
+
+    if (type.isType(DataType::Type::VARSIZED))
+    {
+        const auto varSizedValue = value.cast<VariableSizedData>();
+        storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
+    }
+    else
+    {
+        value.writeToMemory(memoryAddress);
+    }
+}
 }
 
 void ChainedEntryMemoryProvider::writeRecord(
@@ -146,18 +184,8 @@ void ChainedEntryMemoryProvider::writeRecord(
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
         const auto& value = record.read(fieldIdentifier);
-        const auto& entryRefCopy = entryRef;
-        auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
-        const auto memoryAddress = castedEntryAddress + fieldOffset;
-        if (type.isType(DataType::Type::VARSIZED))
-        {
-            auto varSizedValue = value.cast<VariableSizedData>();
-            storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
-        }
-        else
-        {
-            value.writeToMemory(memoryAddress);
-        }
+        auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRef);
+        writeVarVal(value, castedEntryAddress + fieldOffset, type, hashMapRef, bufferProvider);
     }
 }
 
@@ -170,16 +198,8 @@ void ChainedEntryMemoryProvider::writeEntryRef(
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
         const auto value = readVarVal(otherEntryRef, fieldIdentifier);
-        const auto memoryAddress = static_cast<nautilus::val<int8_t*>>(entryRef) + nautilus::val<uint64_t>(fieldOffset);
-        if (type.isType(DataType::Type::VARSIZED))
-        {
-            auto varSizedValue = value.cast<VariableSizedData>();
-            storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
-        }
-        else
-        {
-            value.writeToMemory(memoryAddress);
-        }
+        auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRef);
+        writeVarVal(value, castedEntryAddress + fieldOffset, type, hashMapRef, bufferProvider);
     }
 }
 
