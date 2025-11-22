@@ -363,9 +363,9 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
     //    throw CannotAccessBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
     //}
     //entrySpace = entryBuffer.value();
-    entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-    std::memset(static_cast<void*>(entries), 0, totalSpace);
-    entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
+    //entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
+    //std::memset(static_cast<void*>(entries), 0, totalSpace);
+    //entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
 
     /// Read Mappings
     std::vector<std::pair<uint64_t, uint64_t>> entryMappings(numberOfChains + 1);
@@ -394,6 +394,7 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
             {
                 throw CannotAllocateBuffer("Could not allocate page during deserialization");
             }
+            NES_INFO("Allocated new page during deserialization");
             in.read(reinterpret_cast<char*>(pageBuffer->getAvailableMemoryArea().data()), storageBufferSize);
             this->storageSpace.emplace_back(pageBuffer.value());
         }
