@@ -55,6 +55,8 @@ struct SIMDJSONMetaData
 
     const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
+    static std::vector<std::string> getNullValues() { return {"null"}; }
+
     uint64_t getNumberOfFields() const
     {
         INVARIANT(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");

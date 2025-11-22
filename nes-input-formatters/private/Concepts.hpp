@@ -38,6 +38,10 @@ concept IndexerMetaDataType = requires(
     /// InputFormatIndexers without tuple delimiters should return an empty string
     { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
     { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
+    { indexerMetaData.getFieldDataTypeAt(nautilus::static_val<uint64_t>{0}) } -> std::same_as<const DataType&>;
+    { indexerMetaData.getFieldNameAt(nautilus::static_val<uint64_t>{0}) } -> std::same_as<const Nautilus::Record::RecordFieldIdentifier&>;
+    { indexerMetaData.getNumberOfFields() } -> std::same_as<uint64_t>;
+    { indexerMetaData.getNullValues() } -> std::same_as<std::vector<std::string>>;
 };
 
 template <typename T>
