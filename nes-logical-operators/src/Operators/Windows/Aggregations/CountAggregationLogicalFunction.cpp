@@ -50,6 +50,13 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogi
 {
 }
 
+bool CountAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    /// For now, we hardcode it. As soon as TODO #699 is merged, we can specify here a difference
+    /// For example, COUNT(*) includes null whereas COUNT(fieldName) does not
+    return false;
+}
+
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -64,6 +71,8 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
+        /// We infer the data type from the schema for the on field
+        auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
@@ -81,13 +90,12 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
 
         /// a count aggregation is always on an uint 64 and never returns a NULL value
         auto newInputStamp = DataTypeProvider::provideDataType(
-            DataType::Type::UINT64,
-            getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+            DataType::Type::UINT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
         auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE);
         auto newAsField = this->getAsField().withFieldName(newAsFieldName);
 
         return this->withInputStamp(newInputStamp)
-            .withOnField(this->getOnField().withDataType(newInputStamp))
+            .withOnField(newOnField.withDataType(newInputStamp))
             .withFinalAggregateStamp(newFinalAggregateStamp)
             .withAsField(newAsField.withDataType(newFinalAggregateStamp));
     }

@@ -57,6 +57,11 @@ std::string_view MedianAggregationLogicalFunction::getName() noexcept
     return NAME;
 }
 
+bool MedianAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    return true;
+}
+
 MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.

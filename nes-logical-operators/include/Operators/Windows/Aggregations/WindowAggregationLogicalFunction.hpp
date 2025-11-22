@@ -71,6 +71,8 @@ concept WindowAggregationFunctionConcept = requires(
 
     { thisFunction.withInferredStamp(schema) } -> std::convertible_to<T>;
 
+    { thisFunction.shallIncludeNullValues() } noexcept -> std::convertible_to<bool>;
+
     { thisFunction.reflect() } -> std::convertible_to<Reflected>;
 
     { thisFunction.getName() } noexcept -> std::convertible_to<std::string_view>;
@@ -95,6 +97,7 @@ struct ErasedWindowAggregationFunction
     [[nodiscard]] virtual FieldAccessLogicalFunction getOnField() const = 0;
     [[nodiscard]] virtual FieldAccessLogicalFunction getAsField() const = 0;
 
+    [[nodiscard]] virtual bool shallIncludeNullValues() const noexcept = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const = 0;
@@ -265,6 +268,8 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] Reflected reflect() const { return self->reflect(); }
 
+    [[nodiscard]] bool shallIncludeNullValues() const noexcept { return self->shallIncludeNullValues(); }
+
     [[nodiscard]] TypedWindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const
     {
         return self->withInferredStamp(schema);
@@ -330,6 +335,8 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
     [[nodiscard]] std::string toString() const override { return impl.toString(); }
 
     [[nodiscard]] Reflected reflect() const override { return impl.reflect(); }
+
+    [[nodiscard]] bool shallIncludeNullValues() const noexcept override { return impl.shallIncludeNullValues(); }
 
     [[nodiscard]] WindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const override
     {

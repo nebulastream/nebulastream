@@ -49,7 +49,7 @@ public:
     [[nodiscard]] MaxAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
     [[nodiscard]] MaxAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] MaxAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-
+    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] bool operator==(const MaxAggregationLogicalFunction& otherMaxAggregationLogicalFunction) const;
 
 
