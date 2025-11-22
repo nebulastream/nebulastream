@@ -50,7 +50,7 @@ public:
     [[nodiscard]] SumAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
     [[nodiscard]] SumAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] SumAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-
+    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] bool operator==(const SumAggregationLogicalFunction& otherSumAggregationLogicalFunction) const;
 
 private:

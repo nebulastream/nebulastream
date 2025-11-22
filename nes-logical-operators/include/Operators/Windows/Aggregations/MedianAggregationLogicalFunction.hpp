@@ -53,7 +53,7 @@ public:
     [[nodiscard]] MedianAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
     [[nodiscard]] MedianAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] MedianAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-
+    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] bool operator==(const MedianAggregationLogicalFunction& otherMedianAggregationLogicalFunction) const;
 
 
