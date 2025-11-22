@@ -31,8 +31,9 @@ namespace NES
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           field)
 {
 }
@@ -41,8 +42,8 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           field,
           asField)
 {
@@ -56,7 +57,8 @@ std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>();
+    this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
+    auto newOnField = this->getOnField();
     if (not newOnField.getDataType().isNumeric())
     {
         throw CannotDeserialize("aggregations on non numeric fields is not supported.");
