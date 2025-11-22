@@ -49,6 +49,11 @@ SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLo
 {
 }
 
+bool SumAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    return true;
+}
+
 std::string_view SumAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
