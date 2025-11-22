@@ -43,12 +43,18 @@ void SumAggregationPhysicalFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
+    /// If the value is null and we are taking null values into account
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    if (inputType.isNullable && value.isNull())
+    {
+        return;
+    }
+
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
 
     /// Writing the new sum and count back to the aggregation state

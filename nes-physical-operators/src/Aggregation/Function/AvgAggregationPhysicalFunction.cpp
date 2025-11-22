@@ -34,8 +34,13 @@ namespace NES
 {
 
 AvgAggregationPhysicalFunction::AvgAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType,
+    DataType resultType,
+    PhysicalFunction inputFunction,
+    Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
+    const bool includeNullValues)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    , includeNullValues(includeNullValues)
 {
 }
 
@@ -44,6 +49,13 @@ void AvgAggregationPhysicalFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
+    /// If the value is null and we are taking null values into account
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    if ((inputType.isNullable && not includeNullValues) && value.isNull())
+    {
+        return;
+    }
+
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
@@ -51,7 +63,6 @@ void AvgAggregationPhysicalFunction::lift(
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, countType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
     const auto newCount = count + nautilus::val<uint64_t>(1);
 
@@ -122,7 +133,11 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<AvgAggregationPhysicalFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        arguments.includeNullValues);
 }
 
 }
