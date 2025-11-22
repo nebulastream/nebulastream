@@ -41,6 +41,7 @@ public:
 
     [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] bool shallIncludeNullValues() const noexcept override;
 
 
 private:

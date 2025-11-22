@@ -55,6 +55,11 @@ std::string_view MedianAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
+bool MedianAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
+}
+
 void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
@@ -79,8 +84,7 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
-    /// The output of an aggregation is never NULL
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE);
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64, getOnField().getDataType().isNullable);
     this->setFinalAggregateStamp(newFinalAggregateStamp);
     this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp));
 }

@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -28,14 +29,28 @@
 namespace NES
 {
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          DataTypeProvider::provideDataType(field.getDataType().type, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(field.getDataType().type, field.getDataType().isNullable),
+          field)
 {
 }
 
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
+    : WindowAggregationLogicalFunction(
+          field.getDataType(),
+          DataTypeProvider::provideDataType(field.getDataType().type, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(field.getDataType().type, field.getDataType().isNullable),
+          field,
+          asField)
 {
+}
+
+bool SumAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
 }
 
 std::string_view SumAggregationLogicalFunction::getName() const noexcept
@@ -68,9 +83,7 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     this->setInputStamp(this->getOnField().getDataType());
-    /// The output of an aggregation is never NULL
     auto newFinalAggregationStamp = this->getOnField().getDataType();
-    newFinalAggregationStamp.isNullable = DataType::NULLABLE::NOT_NULLABLE;
     this->setFinalAggregateStamp(newFinalAggregationStamp);
     this->setAsField(this->getAsField().withDataType(newFinalAggregationStamp));
 }

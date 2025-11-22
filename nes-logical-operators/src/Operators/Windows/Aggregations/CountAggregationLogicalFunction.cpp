@@ -34,7 +34,7 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAcce
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
           DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType),
           field)
 {
 }
@@ -43,10 +43,17 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogi
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
           DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType),
           field,
           std::move(asField))
 {
+}
+
+bool CountAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    /// For now, we hardcode it. As soon as TODO #699 is merged, we can specify here a difference
+    /// For example, COUNT(*) includes null whereas COUNT(fieldName) does not
+    return false;
 }
 
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
@@ -58,6 +65,8 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
+        /// We infer the data type from the schema for the on field
+        this->setOnField(this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get());
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
@@ -72,8 +81,9 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
             this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
         }
 
-        /// a count aggregation is always on an uint 64 and is never NULL
-        this->setOnField(this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
+        /// a count aggregation is always on an uint 64 and never returns a NULL value
+        this->setOnField(this->getOnField().withDataType(
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, getOnField().getDataType().isNullable)));
         this->setAsField(this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
     }
     else

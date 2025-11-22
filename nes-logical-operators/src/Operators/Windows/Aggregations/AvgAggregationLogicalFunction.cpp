@@ -48,6 +48,11 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
 {
 }
 
+bool AvgAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
+}
+
 std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -68,18 +73,18 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
         if (this->getOnField().getDataType().isSignedInteger())
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64, getOnField().getDataType().isNullable));
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64, newOnField.getDataType().isNullable));
         }
         else
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, getOnField().getDataType().isNullable));
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, newOnField.getDataType().isNullable));
         }
     }
     else
     {
         newOnField
-            = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, getOnField().getDataType().isNullable));
+            = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, newOnField.getDataType().isNullable));
     }
 
     ///Set fully qualified name for the as Field
@@ -97,11 +102,11 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
-    /// The output of an aggregation is never NULL
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(finalAggregateStampType, DataType::NULLABLE::NOT_NULLABLE);
+
+    this->setOnField(newOnField.getAs<FieldAccessLogicalFunction>().get());
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(finalAggregateStampType, getOnField().getDataType().isNullable);
     this->setFinalAggregateStamp(newFinalAggregateStamp);
     this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp));
-    this->setOnField(newOnField.getAs<FieldAccessLogicalFunction>().get());
     this->setInputStamp(newOnField.getDataType());
 }
 
