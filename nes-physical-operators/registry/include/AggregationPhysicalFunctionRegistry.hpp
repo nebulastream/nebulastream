@@ -36,6 +36,7 @@ struct AggregationPhysicalFunctionRegistryArguments
     PhysicalFunction inputFunction;
     Record::RecordFieldIdentifier resultFieldIdentifier;
     std::optional<std::shared_ptr<TupleBufferRef>> bufferRefPagedVector;
+    bool includeNullValues;
 };
 
 class AggregationPhysicalFunctionRegistry : public BaseRegistry<
