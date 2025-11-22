@@ -16,15 +16,20 @@
 
 #include <cstdint>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <select.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -36,17 +41,27 @@ ConcatPhysicalFunction::ConcatPhysicalFunction(PhysicalFunction leftPhysicalFunc
 
 VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
-    const auto rightValue = rightPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
+    const auto leftValue = leftPhysicalFunction.execute(record, arena);
+    const auto rightValue = rightPhysicalFunction.execute(record, arena);
+    const auto leftVariableSizedData = leftValue.cast<VariableSizedData>();
+    const auto rightVariableSizedData = rightValue.cast<VariableSizedData>();
 
-    const auto newSize = leftValue.getContentSize() + rightValue.getContentSize();
-    auto newVarSizeData = arena.allocateVariableSizedData(newSize);
+    const auto newIsNullable
+        = (leftValue.isNullable() or rightValue.isNullable()) ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    const auto condition = (leftValue.isNullable() or rightValue.isNullable()) and (leftValue.isNull() or rightValue.isNull());
+    const auto newSize = nautilus::select(
+        condition, nautilus::val<uint32_t>{0}, leftVariableSizedData.getContentSize() + rightVariableSizedData.getContentSize());
+    const auto newIsNull = nautilus::select(condition, nautilus::val<bool>{true}, nautilus::val<bool>{false});
+    const auto newVarSizeData = arena.allocateVariableSizedData(newSize);
 
     /// Writing the left value and then the right value to the new variable sized data
-    nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getContentSize());
-    nautilus::memcpy(newVarSizeData.getContent() + leftValue.getContentSize(), rightValue.getContent(), rightValue.getContentSize());
-    VarVal(nautilus::val<uint32_t>(newSize)).writeToMemory(newVarSizeData.getReference());
-    return newVarSizeData;
+    nautilus::memcpy(newVarSizeData.getContent(), leftVariableSizedData.getContent(), leftVariableSizedData.getContentSize());
+    nautilus::memcpy(
+        newVarSizeData.getContent() + leftVariableSizedData.getContentSize(),
+        rightVariableSizedData.getContent(),
+        rightVariableSizedData.getContentSize());
+    VarVal{newSize}.writeToMemory(newVarSizeData.getReference());
+    return VarVal{newVarSizeData, newIsNullable, newIsNull};
 }
 
 PhysicalFunctionRegistryReturnType

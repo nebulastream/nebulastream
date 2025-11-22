@@ -87,20 +87,16 @@ std::string_view OrLogicalFunction::getType() const
 
 LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> children;
-    /// delegate dataType inference of children
-    for (auto& node : getChildren())
+    std::vector<LogicalFunction> newChildren;
+    bool isNullable = false;
+    for (auto& child : getChildren())
     {
-        children.push_back(node.withInferredDataType(schema));
+        newChildren.push_back(child.withInferredDataType(schema));
+        isNullable = isNullable or newChildren.back().getDataType().isNullableAsBool();
     }
-    /// check if children dataType is correct
-    INVARIANT(
-        left.getDataType().isType(DataType::Type::BOOLEAN), "the dataType of left child must be boolean, but was: {}", left.getDataType());
-    INVARIANT(
-        right.getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of right child must be boolean, but was: {}",
-        right.getDataType());
-    return this->withChildren(children);
+    auto newDataType = this->getDataType();
+    newDataType.isNullable = isNullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return withDataType(newDataType).withChildren(newChildren);
 }
 
 SerializableFunction OrLogicalFunction::serialize() const

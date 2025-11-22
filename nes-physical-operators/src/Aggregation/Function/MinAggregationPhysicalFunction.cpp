@@ -26,6 +26,9 @@
 #include <Nautilus/Util.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
+#include <select.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -40,16 +43,27 @@ MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
 void MinAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
+    /// If the value is null, we need to set the multiplication factor
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto multiplicationFactor
+        = nautilus::select(inputType.isNullableAsBool() and value.isNull(), nautilus::val<int8_t>{0}, nautilus::val<int8_t>{1});
+
+
     /// Reading the old min value from the aggregation state.
-    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto isNull = inputType.isNullableAsBool() ? readNull(aggregationState) : nautilus::val<bool>{false};
+    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(
+        aggregationState + nautilus::val<uint64_t>{static_cast<unsigned long>(inputType.isNullableAsBool())});
+    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType, isNull);
+    const auto newIsNull = inputType.isNullableAsBool() & static_cast<nautilus::val<int>>(static_cast<int>(value.isNull()))
+        | static_cast<nautilus::val<int>>(static_cast<int>(isNull));
+
 
     /// Updating the min value with the new value, if the new value is smaller
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-    if (value < min)
+    if (value < (min * multiplicationFactor))
     {
         value.writeToMemory(memAreaMin);
     }
+    inputType.isNullableAsBool() ? storeNull(aggregationState, static_cast<nautilus::val<bool>>(newIsNull)), void() : void();
 }
 
 void MinAggregationPhysicalFunction::combine(
@@ -58,25 +72,35 @@ void MinAggregationPhysicalFunction::combine(
     PipelineMemoryProvider&)
 {
     /// Reading the min value from the first aggregation state
-    const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto min1 = VarVal::readVarValFromMemory(memAreaMin1, inputType);
+    const auto isNull1 = inputType.isNullableAsBool() ? readNull(aggregationState1) : nautilus::val<bool>{false};
+    const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(
+        aggregationState1 + nautilus::val<uint64_t>{static_cast<unsigned long>(inputType.isNullableAsBool())});
+    const auto min1 = VarVal::readVarValFromMemory(memAreaMin1, inputType, isNull1);
 
     /// Reading the min value from the second aggregation state
-    const auto memAreaMin2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto min2 = VarVal::readVarValFromMemory(memAreaMin2, inputType);
+    const auto isNull2 = inputType.isNullableAsBool() ? readNull(aggregationState2) : nautilus::val<bool>{false};
+    const auto memAreaMin2 = static_cast<nautilus::val<int8_t*>>(
+        aggregationState2 + nautilus::val<uint64_t>{static_cast<unsigned long>(inputType.isNullableAsBool())});
+    const auto min2 = VarVal::readVarValFromMemory(memAreaMin2, inputType, isNull2);
 
     /// Updating the min value with the new min value, if the new min value is smaller
     if (min2 < min1)
     {
         min2.writeToMemory(memAreaMin1);
     }
+
+    /// Creating the new null value and writing it
+    const auto newNull = inputType.isNullableAsBool() ? min1.isNull() or min2.isNull() : nautilus::val<bool>{false};
+    inputType.isNullableAsBool() ? storeNull(aggregationState1, static_cast<nautilus::val<bool>>(newNull)), void() : void();
 }
 
 Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the min value from the aggregation state
-    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto isNull = inputType.isNullableAsBool() ? readNull(aggregationState) : nautilus::val<bool>{false};
+    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(
+        aggregationState + nautilus::val<uint64_t>{static_cast<unsigned long>(inputType.isNullableAsBool())});
+    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType, isNull);
 
     /// Creating a record with the min value
     Record record;
@@ -87,8 +111,12 @@ Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 
 void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
+    /// Resetting the null value
+    inputType.isNullableAsBool() ? storeNull(aggregationState, nautilus::val<bool>{false}), void() : void();
+
     /// Resetting the min value to the maximum value
-    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(
+        aggregationState + nautilus::val<uint64_t>{static_cast<unsigned long>(inputType.isNullableAsBool())});
     const auto min = createNautilusMaxValue(inputType.type);
     min.writeToMemory(memAreaMin);
 }

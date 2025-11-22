@@ -34,6 +34,7 @@ public:
     ~MaxAggregationLogicalFunction() override = default;
     [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] bool shallIncludeNullValues() const noexcept override;
 
 private:
     static constexpr std::string_view NAME = "Max";

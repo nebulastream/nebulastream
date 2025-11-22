@@ -70,11 +70,15 @@ GreaterLogicalFunction GreaterLogicalFunction::withDataType(const DataType& data
 LogicalFunction GreaterLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
+    bool isNullable = false;
     for (auto& child : getChildren())
     {
         newChildren.push_back(child.withInferredDataType(schema));
+        isNullable = isNullable or newChildren.back().getDataType().isNullableAsBool();
     }
-    return this->withChildren(newChildren);
+    auto newDataType = this->getDataType();
+    newDataType.isNullable = isNullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return withDataType(newDataType).withChildren(newChildren);
 }
 
 std::vector<LogicalFunction> GreaterLogicalFunction::getChildren() const

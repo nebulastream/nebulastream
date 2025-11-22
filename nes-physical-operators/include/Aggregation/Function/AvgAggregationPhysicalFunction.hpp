@@ -30,7 +30,11 @@ class AvgAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     AvgAggregationPhysicalFunction(
-        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+        DataType inputType,
+        DataType resultType,
+        PhysicalFunction inputFunction,
+        Record::RecordFieldIdentifier resultFieldIdentifier,
+        bool includeNullValues);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -47,6 +51,7 @@ public:
 
 private:
     static constexpr auto countType = DataType{.type = DataType::Type::UINT64, .isNullable = DataType::NULLABLE::NOT_NULLABLE};
+    bool includeNullValues;
 };
 
 }
