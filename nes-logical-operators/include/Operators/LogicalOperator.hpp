@@ -232,7 +232,7 @@ struct TypedLogicalOperator
         }
     }
 
-    TypedLogicalOperator() = default;
+    TypedLogicalOperator() = delete;
 
     /// Attempts to get the underlying operator as type T.
     /// @tparam T The type to try to get the operator as.
