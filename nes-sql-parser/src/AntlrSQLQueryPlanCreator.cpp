@@ -877,6 +877,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         default:
+            helpers.top().hasUnnamedAggregation = false;
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
