@@ -32,3 +32,24 @@ SELECT * FROM jsonStream INTO allFieldsSink;
 ----
 1,1,john
 1,2,max
+
+
+Configuration worker.default_query_execution.operator_buffer_size: [1048576]
+Configuration worker.number_of_buffers_in_global_buffer_manager: [1024]
+
+SELECT `data` AS V FROM File(
+    'JSON' as `PARSER`.`TYPE`,
+    'small/long-json-tuples-small.jsonl' AS `SOURCE`.`FILE_PATH`,
+    SCHEMA(`data` VARSIZED) AS `SOURCE`.`SCHEMA`
+) INTO Checksum();
+----
+
+Configuration worker.default_query_execution.operator_buffer_size: [1048576]
+Configuration worker.number_of_buffers_in_global_buffer_manager: [1024]
+
+SELECT `data` AS V FROM File(
+    'SIMDJSON' as `PARSER`.`TYPE`,
+    'large/long-json-tuples.jsonl' AS `SOURCE`.`FILE_PATH`,
+    SCHEMA(`data` VARSIZED) AS `SOURCE`.`SCHEMA`
+) INTO Checksum();
+----
