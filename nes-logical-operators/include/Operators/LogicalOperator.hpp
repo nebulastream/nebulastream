@@ -25,17 +25,20 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
+#include <folly/Synchronized.h>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Schema/Schema.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include "Util/Overloaded.hpp"
 
 namespace NES
 {
@@ -228,7 +231,10 @@ struct TypedLogicalOperator
 
     template <typename T>
     requires(std::same_as<detail::ErasedLogicalOperator, T>)
-    TypedLogicalOperator<T> getAs() const { return TypedLogicalOperator<T>{self}; }
+    TypedLogicalOperator<T> getAs() const
+    {
+        return TypedLogicalOperator<T>{self};
+    }
 
     /// Gets the underlying operator as type T.
     /// @tparam T The type to get the operator as.
@@ -300,37 +306,78 @@ private:
     std::shared_ptr<const detail::ErasedLogicalOperator> self;
 };
 
+namespace detail
+{
+template <typename Checked>
+struct SelfRef
+{
+    folly::Synchronized<std::optional<OperatorModel<Checked>*>> self;
+};
+}
+
 template <typename Checked>
 requires(std::is_same_v<Checked, detail::ErasedLogicalOperator> || LogicalOperatorConcept<Checked>)
 struct WeakTypedLogicalOperator
 {
     WeakTypedLogicalOperator(const LogicalOperator& owningOperator) : self(owningOperator.self) { }
 
-    explicit WeakTypedLogicalOperator(std::weak_ptr<const detail::ErasedLogicalOperator> weakPtr) : self(std::move(weakPtr)) { }
+    explicit WeakTypedLogicalOperator(
+        std::variant<std::weak_ptr<const detail::ErasedLogicalOperator>, std::shared_ptr<detail::SelfRef<Checked>>> weakPtr)
+        : self(std::move(weakPtr))
+    {
+    }
 
     std::optional<TypedLogicalOperator<Checked>> tryLock() const
     {
-        if (auto ptr = self.lock())
-        {
-            return TypedLogicalOperator<Checked>{ptr};
-        }
-        return std::nullopt;
+        return std::visit(
+            Overloaded{
+                [](const std::weak_ptr<const detail::ErasedLogicalOperator>& weakPtr) -> std::optional<TypedLogicalOperator<Checked>>
+                {
+                    if (auto ptr = weakPtr.lock())
+                    {
+                        return TypedLogicalOperator<Checked>{ptr};
+                    }
+                    return std::nullopt;
+                },
+                [](const std::shared_ptr<detail::SelfRef<Checked>>& selfRef) -> std::optional<TypedLogicalOperator<Checked>>
+                {
+                    if (const auto ptrOpt = selfRef->self.rlock(); ptrOpt->has_value())
+                    {
+                        return TypedLogicalOperator<Checked>{ptrOpt->value()};
+                    }
+                    return std::nullopt;
+                }},
+            self);
     }
 
     TypedLogicalOperator<Checked> lock() const
     {
-        if (auto ptr = self.lock())
-        {
-            return TypedLogicalOperator<Checked>{ptr};
-        }
-        PRECONDITION(false, "Operator has been destroyed");
-        std::unreachable();
+        return std::visit(
+            Overloaded{
+                [](const std::weak_ptr<const detail::ErasedLogicalOperator>& weakPtr) -> TypedLogicalOperator<Checked>
+                {
+                    if (auto ptr = weakPtr.lock())
+                    {
+                        return TypedLogicalOperator<Checked>{ptr};
+                    }
+                    PRECONDITION(false, "Operator has been destroyed");
+                    std::unreachable();
+                },
+                [](const std::shared_ptr<detail::SelfRef<Checked>>& selfRef) -> TypedLogicalOperator<Checked>
+                {
+                    if (const auto ptrOpt = selfRef->self.rlock(); ptrOpt->has_value())
+                    {
+                        return TypedLogicalOperator<Checked>{ptrOpt->value()};
+                    }
+                    PRECONDITION(false, "Operator has been destroyed");
+                    std::unreachable();
+                }},
+            self);
     }
 
 private:
-    std::weak_ptr<const detail::ErasedLogicalOperator> self;
+    std::variant<std::weak_ptr<const detail::ErasedLogicalOperator>, std::shared_ptr<detail::SelfRef<Checked>>> self;
 };
-
 
 namespace detail
 {
@@ -339,6 +386,7 @@ namespace detail
 template <LogicalOperatorConcept OperatorType>
 struct OperatorModel : ErasedLogicalOperator, std::enable_shared_from_this<OperatorModel<OperatorType>>
 {
+    std::shared_ptr<SelfRef<OperatorType>> selfRef;
     OperatorType impl;
     OperatorId id;
 
@@ -348,9 +396,13 @@ struct OperatorModel : ErasedLogicalOperator, std::enable_shared_from_this<Opera
 
     template <typename... Args>
     explicit OperatorModel(Args&&... args)
-        : impl(WeakLogicalOperator{std::weak_ptr<const detail::ErasedLogicalOperator>(this->weak_from_this())}, std::forward<Args>(args)...), id(getNextLogicalOperatorId())
+        : selfRef(std::make_shared<SelfRef>(this))
+        , impl(WeakLogicalOperator{selfRef}, std::forward<Args>(args)...)
+        , id(getNextLogicalOperatorId())
     {
     }
+
+    ~OperatorModel() override { selfRef->self = std::nullopt; }
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity, id); }
 
@@ -395,6 +447,7 @@ struct OperatorModel : ErasedLogicalOperator, std::enable_shared_from_this<Opera
     [[nodiscard]] const OperatorType& operator*() const { return impl; }
 
     [[nodiscard]] const OperatorType* operator->() const { return &impl; }
+
 
 private:
     template <typename T>
