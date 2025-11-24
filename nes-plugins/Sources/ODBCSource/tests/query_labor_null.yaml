@@ -1,6 +1,6 @@
 #  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
 query: |
-  SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, VarSizedToDouble(Wert) AS doubleWert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM odbc_source INTO File('/home/rudi/dima/nebulastream-public/nes-plugins/Sources/ODBCSource/tests/labor_null_output.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
+  SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, VarSizedToDouble(Wert) AS doubleWert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM odbc_source INTO File('labor_null_output.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
 logical:
   - name: odbc_source
     schema:
