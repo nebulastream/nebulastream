@@ -1,0 +1,48 @@
+#  SELECT user_id, page_id, campaign_id FROM tcp_source INTO csv_sink
+query: |
+  SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM odbc_source INTO File('/home/rudi/dima/nebulastream-public/nes-plugins/Sources/ODBCSource/tests/labor_null_output.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
+logical:
+  - name: odbc_source
+    schema:
+      - name: LabVal_ID
+        type: INT32
+      - name: mlife_FallNr
+        type: INT32
+      - name: Zeitpunkt
+        type: UINT64
+      - name: GruppenNr
+        type: INT32
+      - name: Gruppe
+        type: VARSIZED
+      - name: Bez
+        type: VARSIZED
+      - name: Wert
+        type: VARSIZED
+      - name: Einheit
+        type: VARSIZED
+      - name: Wertebereich
+        type: VARSIZED
+      - name: SampleNr
+        type: VARSIZED
+      - name: TSFail
+        type: UINT64
+      - name: TSLog
+        type: UINT64
+      - name: Lab_ID
+        type: INT32
+physical:
+  - logical: odbc_source
+    type: ODBC
+    parser_config:
+      type: Native
+    source_config:
+      host: "localhost"
+      port: "1433"
+      database: "master"
+      username: "sa"
+      password: "samplePassword1!"
+      driver: "ODBC Driver 18 for SQL Server"
+      # Todo: this can get out of sync with NES query above (which might be intentional, but is error-prone)
+      query: "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null"
+      trust_server_certificate: true
+sinks: []

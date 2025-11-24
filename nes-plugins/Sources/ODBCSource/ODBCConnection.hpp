@@ -109,7 +109,7 @@ class ODBCConnection
                {SQL_REAL, NES::DataType::Type::FLOAT32},
                {SQL_VARBINARY, NES::DataType::Type::VARSIZED},
                {SQL_WCHAR, NES::DataType::Type::UNDEFINED},
-               {SQL_WVARCHAR, NES::DataType::Type::UNDEFINED},
+               {SQL_WVARCHAR, NES::DataType::Type::VARSIZED},
                {SQL_WLONGVARCHAR, NES::DataType::Type::UNDEFINED},
                {SQL_DECIMAL, NES::DataType::Type::UNDEFINED},
                {SQL_NUMERIC, NES::DataType::Type::UNDEFINED},
@@ -118,7 +118,7 @@ class ODBCConnection
                {SQL_LONGVARBINARY, NES::DataType::Type::UNDEFINED},
                {SQL_TYPE_DATE, NES::DataType::Type::UNDEFINED},
                {SQL_TYPE_TIME, NES::DataType::Type::UNDEFINED},
-               {SQL_TYPE_TIMESTAMP, NES::DataType::Type::UNDEFINED},
+               {SQL_TYPE_TIMESTAMP, NES::DataType::Type::UINT64},
                {SQL_INTERVAL_MONTH, NES::DataType::Type::UNDEFINED},
                {SQL_INTERVAL_YEAR, NES::DataType::Type::UNDEFINED},
                {SQL_INTERVAL_YEAR_TO_MONTH, NES::DataType::Type::UNDEFINED},
@@ -287,6 +287,23 @@ public:
         throw NES::BufferAllocationFailure("Could not get unpooled buffer for VarSized value");
     }
 
+    #include <chrono>
+    #include <cstdint>
+
+    uint64_t timestampStructToUnix(const SQL_TIMESTAMP_STRUCT& ts) {
+        using namespace std::chrono;
+
+        // Create a time_point from the timestamp components
+        auto date = sys_days{year{ts.year} / month{ts.month} / day{ts.day}};
+        auto time_of_day = hours{ts.hour} + minutes{ts.minute} + seconds{ts.second};
+        auto tp = date + time_of_day;
+
+        // Convert to Unix timestamp (seconds since epoch)
+        auto unix_seconds = duration_cast<seconds>(tp.time_since_epoch()).count();
+
+        return static_cast<uint64_t>(unix_seconds);
+    }
+
     // Todo: we could leave all of the 'parsing/formatting' work to 'nes-input-formatters'
     //       IF: we allowed the source to add metadata (e.g., to the buffer) that tells the input formatter, for a specific buffer,
     //           where the first tuple starts and the last tuple ends.
@@ -335,6 +352,9 @@ public:
             case SQL_REAL: {
                 return readVal<float>(colIdx, buffer, typeInfo, indicator);
             }
+            case SQL_WVARCHAR: {
+                return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
+            }
             case SQL_VARCHAR: {
                 return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
             }
@@ -347,15 +367,21 @@ public:
             case SQL_LONGVARBINARY: {
                 return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
             }
+            case SQL_TYPE_TIMESTAMP: {
+                SQL_TIMESTAMP_STRUCT timestamp;
+                const auto ret = SQLGetData(hstmt, colIdx, SQL_TYPE_TIMESTAMP, &timestamp, sizeof(SQL_TIMESTAMP_STRUCT), &indicator);
+                const uint64_t timestampAsUint64 = timestampStructToUnix(timestamp);
+                *reinterpret_cast<uint64_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = timestampAsUint64;
+                buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
+                return ret;
+            }
             /// WCHAR/WVARCHAR/WLONGVARCHAR contain unicode data
             case SQL_WCHAR:
-            case SQL_WVARCHAR:
             case SQL_WLONGVARCHAR:
             case SQL_DECIMAL:
             case SQL_NUMERIC:
             case SQL_TYPE_DATE:
             case SQL_TYPE_TIME:
-            case SQL_TYPE_TIMESTAMP:
             case SQL_INTERVAL_MONTH:
             case SQL_INTERVAL_YEAR:
             case SQL_INTERVAL_YEAR_TO_MONTH:
