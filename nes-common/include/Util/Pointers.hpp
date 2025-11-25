@@ -14,8 +14,6 @@
 
 #pragma once
 #include <memory>
-
-
 #include <experimental/propagate_const>
 
 namespace NES
