@@ -117,7 +117,7 @@ public:
     {
         auto schema = Schema{}.addField("A_FIELD", DataType::Type::UINT32);
         auto layout = std::make_shared<RowLayout>(512, schema);
-        EmitPhysicalOperator emit{OperatorHandlerId(0), std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout)};
+        EmitPhysicalOperator emit{OperatorHandlerId(0), std::make_shared<RowTupleBufferRef>(layout)};
         handlers.insert_or_assign(OperatorHandlerId(0), std::make_shared<EmitOperatorHandler>());
         return emit;
     }

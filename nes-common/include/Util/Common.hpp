@@ -46,11 +46,6 @@ inline std::ostream& operator<<(std::ostream& os, const VerbosityLevel& level)
     setVerbosityLevel(os, level);
     return os;
 }
-}
-
-namespace NES::Util
-{
-
 
 /// check if the given object is an instance of the specified type.
 template <typename Out, typename In>

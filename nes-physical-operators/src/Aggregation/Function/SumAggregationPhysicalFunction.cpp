@@ -33,19 +33,17 @@ namespace NES
 {
 
 SumAggregationPhysicalFunction::SumAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }
 
 void SumAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType.type);
+    const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType.type);
 
     /// Updating the sum and count with the new value
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
@@ -62,7 +60,7 @@ void SumAggregationPhysicalFunction::combine(
 {
     /// Reading the sum from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto sum1 = Nautilus::VarVal::readVarValFromMemory(memAreaSum1, inputType.type);
+    const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType.type);
 
     /// Reading the sum from the second aggregation state
     const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
@@ -82,7 +80,7 @@ Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType.type);
 
     /// Creating a record with the sum
-    Nautilus::Record record;
+    Record record;
     record.write(resultFieldIdentifier, sum);
 
     return record;

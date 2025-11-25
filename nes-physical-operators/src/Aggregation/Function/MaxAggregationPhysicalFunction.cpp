@@ -32,19 +32,17 @@ namespace NES
 {
 
 MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
 }
 
 void MaxAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType.type);
+    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType.type);
 
     /// Updating the max value with the new value, if the new value is larger
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
@@ -81,7 +79,7 @@ Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType.type);
 
     /// Creating a record with the max value
-    Nautilus::Record record;
+    Record record;
     record.write(resultFieldIdentifier, max);
     return record;
 }
@@ -90,7 +88,7 @@ void MaxAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*
 {
     /// Resetting the max value to the minimum value
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = Nautilus::Util::createNautilusMinValue(inputType.type);
+    const auto max = createNautilusMinValue(inputType.type);
     max.writeToMemory(memAreaMax);
 }
 

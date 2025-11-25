@@ -150,11 +150,10 @@ public:
         std::unordered_map<std::string, std::string> sinkOptions{};
         if (const auto sinkConfigIter = configOptions.find("SINK"); sinkConfigIter != configOptions.end())
         {
-            sinkOptions = sinkConfigIter->second
-                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            sinkOptions
+                = sinkConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
                 | std::views::transform(
-                              [](auto& pair)
-                              { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());

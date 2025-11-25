@@ -39,7 +39,7 @@ grpc::Status handleError(const std::exception& exception, grpc::ServerContext* c
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
+    context->AddTrailingMetadata("trace", replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
 }
 
@@ -48,7 +48,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
+    context->AddTrailingMetadata("trace", replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
 }
 

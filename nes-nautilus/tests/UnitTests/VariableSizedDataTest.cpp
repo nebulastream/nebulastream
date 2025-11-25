@@ -65,7 +65,6 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
 {
     {
         /// Testing creating a variable sized data object from a pointer
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -79,7 +78,6 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
 
     {
         /// Testing creating a variable sized data object from a pointer and a size
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -94,7 +92,6 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
 
 TEST_F(VariableSizedDataTest, CopyConstruction)
 {
-    using namespace NES::Nautilus;
     constexpr auto sizeInBytes = 1024;
     auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
     const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -120,7 +117,6 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
 TEST_F(VariableSizedDataTest, MoveConstruction)
 {
     {
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -136,7 +132,6 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
     }
 
     {
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -155,7 +150,6 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
 TEST_F(VariableSizedDataTest, AssignmentConstruction)
 {
     {
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -171,7 +165,6 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
     }
 
     {
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -191,7 +184,6 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
 {
     {
         /// Testing if exact same variable sized data objects are equal
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
@@ -204,7 +196,6 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
 
     {
         /// Testing if two variable sized data with different sizes but same content are not equal
-        using namespace NES::Nautilus;
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         auto variableSizedDataDouble = createVariableSizedRandomData(sizeInBytes + sizeInBytes);
@@ -223,7 +214,6 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         NES_INFO("Seed: {}", seed);
         std::srand(seed);
 
-        using namespace NES::Nautilus;
         constexpr auto maxSize = 5; /// We set the size quite small to ensure that we also happen to have the same content
         const auto sizeInBytes = (std::rand() % maxSize) + 1;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
@@ -247,7 +237,6 @@ void compareStringProxy(const char* actual, const char* expected)
 
 TEST_F(VariableSizedDataTest, ostreamTest)
 {
-    using namespace NES::Nautilus;
     constexpr auto sizeInBytes = 1024;
     auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
     const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());

@@ -27,7 +27,6 @@
 
 namespace NES
 {
-using namespace Interface::BufferRef;
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops.
 class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
@@ -45,10 +44,10 @@ public:
 
 protected:
     void performNLJ(
-        const Interface::PagedVectorRef& outerPagedVector,
-        const Interface::PagedVectorRef& innerPagedVector,
-        Interface::BufferRef::TupleBufferRef& outerMemoryProvider,
-        Interface::BufferRef::TupleBufferRef& innerMemoryProvider,
+        const PagedVectorRef& outerPagedVector,
+        const PagedVectorRef& innerPagedVector,
+        TupleBufferRef& outerMemoryProvider,
+        TupleBufferRef& innerMemoryProvider,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;

@@ -48,7 +48,7 @@ class Registry
             !CaseSensitive && std::convertible_to<typename Registrar::KeyType, std::string_view>
             && std::constructible_from<typename Registrar::KeyType, std::string_view>)
         {
-            return InternalKey{typename Registrar::KeyType(NES::Util::toUpperCase(static_cast<std::string_view>(externalKey)))};
+            return InternalKey{typename Registrar::KeyType(toUpperCase(static_cast<std::string_view>(externalKey)))};
         }
         return InternalKey{externalKey};
     }
