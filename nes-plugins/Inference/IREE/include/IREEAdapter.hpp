@@ -60,6 +60,7 @@ public:
     std::unique_ptr<std::byte[]> inputDataCache{};
     std::unique_ptr<std::byte[]> outputData{};
     size_t inputSize;
+    uint64_t misses;
 
 private:
     size_t outputSize;
