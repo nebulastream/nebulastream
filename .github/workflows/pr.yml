@@ -67,11 +67,15 @@ jobs:
   test-nebuli-and-single-node-worker:
     needs: [ get-dev-images, smoke-tests ]
     name: "E2E Test using Nebuli and SingleNodeWorker"
+    strategy:
+      matrix:
+        arch: [ x64, arm64 ]
     uses: ./.github/workflows/execute_query.yml
     with:
       head_sha: ${{ github.event.pull_request.head.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       runtime_seconds: '$((1*60))'
+      arch: ${{ matrix.arch }}
 
   nix-build:
     needs: [ smoke-tests ]
