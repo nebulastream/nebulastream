@@ -15,6 +15,10 @@ on:
         type: string
         description: "Runtime of the query in seconds, after this the query is stopped. This is directly assigned to bash variable, so it can be string that evaluates to a number i.e $((5*60)) for a 5 minute runtime."
         default: "$((23*60*60))"
+      arch:
+        required: true
+        type: string
+        description: "Architecture that this job should run on, either x64 or arm64"
       query_config:
         required: false
         type: string
@@ -48,18 +52,12 @@ jobs:
   execute-query:
     name: "E2E Test"
     timeout-minutes: 1440 # 24 hours
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ inputs.runner }}
     strategy:
       matrix:
-        arch: [ arm64, x64 ]
         stdlib: [ 'libcxx' ]
         build_type: [ 'Debug' ]
         sanitizer: [ 'none' ]
-        include:
-          - arch: arm64
-            runner: [ "ubuntu-24.04-arm" ]
-          - arch: x64
-            runner: [ "ubuntu-24.04" ]
     steps:
       - name: checkout code
         uses: actions/checkout@v4

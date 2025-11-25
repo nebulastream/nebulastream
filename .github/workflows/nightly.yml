@@ -64,12 +64,15 @@ jobs:
       # since there is no merge base to compare against, just check last 10 commits
       number_of_commits: 10
 
-  stress-test-23h:
+  stress-test:
     uses: ./.github/workflows/execute_query.yml
     needs: [ get-dev-images ]
     with:
       head_sha: ${{ github.event.pull_request.head.ref }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      # We need to run them on our self-hosted machines, as otherwise there is a hard limit of 6h per job for GitHub runners
+      # c.f., https://docs.github.com/en/actions/reference/limits
+      arch: X64
 
   build-and-test:
     name: "Run build and test"
