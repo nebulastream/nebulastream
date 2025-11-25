@@ -129,6 +129,7 @@ void IREECacheInferenceOperator::execute(ExecutionContext& executionCtx, NES::Na
                     auto handler = static_cast<IREEInferenceOperatorHandler*>(opHandlerPtr);
                     auto adapter = handler->getIREEAdapter(thread);
                     adapter->infer();
+                    adapter->misses += 1;
 
                     std::memcpy(adapter->inputDataCache.get(), adapter->inputData.get(), adapter->inputSize);
                     predictionCacheEntry->record = adapter->inputDataCache.get();
@@ -227,20 +228,6 @@ void IREECacheInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
 void IREECacheInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
-    auto* predictionCache = dynamic_cast<PredictionCache*>(executionCtx.getLocalState(id));
-    auto inferModelHandler = predictionCache->getOperatorHandler();
-
-    auto hits = predictionCache->getHitsRef();
-    auto misses = predictionCache->getMissesRef();
-
-    nautilus::invoke(
-        +[](OperatorHandler* opHandler,uint64_t* hits, uint64_t* misses, WorkerThreadId thread)
-        {
-            auto handler = static_cast<IREEInferenceOperatorHandler*>(opHandler);
-            std::scoped_lock lock(handler->mutex);
-            handler->incrementHits(*hits, thread);
-            handler->incrementMisses(*misses, thread);
-        }, inferModelHandler, hits, misses, executionCtx.workerThreadId);
 }
 
 void IREECacheInferenceOperator::terminate(ExecutionContext& executionCtx) const

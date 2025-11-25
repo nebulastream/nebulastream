@@ -62,47 +62,9 @@ public:
 
     const int8_t* getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const override;
 
-    uint64_t getHits()
-    {
-        const uint64_t result = std::accumulate
-        (
-            std::begin(hits),
-            std::end(hits),
-            0, // initial value of the sum
-            [](const std::uint64_t previous, const std::pair<const WorkerThreadId, uint32_t>& p)
-            { return previous + p.second; }
-        );
-        return result;
-    }
-    uint64_t getMisses()
-    {
-        const uint64_t result = std::accumulate
-        (
-            std::begin(misses),
-            std::end(misses),
-            0, // initial value of the sum
-            [](const std::uint64_t previous, const std::pair<const WorkerThreadId, uint32_t>& p)
-            { return previous + p.second; }
-        );
-        return result;
-    }
-    void incrementHits(uint64_t currentHits, WorkerThreadId thread) const noexcept
-    {
-        hits[thread] += currentHits;
-    }
-    void incrementMisses(uint64_t currentMisses, WorkerThreadId thread) const noexcept
-    {
-        misses[thread] += currentMisses;
-    }
-    std::mutex mutex;
-
 private:
     Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
-    // mutable std::atomic<uint64_t> hits{0};
-    // mutable std::atomic<uint64_t> misses{0};
-    mutable std::unordered_map<WorkerThreadId, uint64_t> hits;
-    mutable std::unordered_map<WorkerThreadId, uint64_t> misses;
 };
 
 }

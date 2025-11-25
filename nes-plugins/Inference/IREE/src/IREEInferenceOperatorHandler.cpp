@@ -36,10 +36,14 @@ void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecu
 }
 void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext& pipelineExecutionContext)
 {
-    const uint64_t hits = this->getHits();
-    const uint64_t misses = this->getMisses();
+
     if (model.getInputs()[0].isType(DataType::Type::VARSIZED))
-        NES_INFO("{{\"pipeline_id\": {}, \"hits\": {}, \"misses\": {}}}", pipelineExecutionContext.getPipelineId(), hits, misses)
+    {
+        uint64_t misses{0};
+        for (auto adapter : threadLocalAdapters) { misses += adapter->misses; }
+        NES_INFO("{{\"pipeline_id\": {}, \"misses\": {}}}", pipelineExecutionContext.getPipelineId(), misses)
+    }
+
 }
 
 const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
@@ -81,7 +85,8 @@ const int8_t* IREEInferenceOperatorHandler::getStartOfPredictionCacheEntries(con
     INVARIANT(
         not predictionCacheEntriesBufferForWorkerThreads.empty() and pos < predictionCacheEntriesBufferForWorkerThreads.size(),
         "Position should be smaller than the size of the predictionCacheEntriesBufferForWorkerThreads");
-    return predictionCacheEntriesBufferForWorkerThreads.at(pos).getAvailableMemoryArea<int8_t>().data();
+
+    return reinterpret_cast<const int8_t*>(predictionCacheEntriesBufferForWorkerThreads.at(pos).getAvailableMemoryArea().data());
 }
 
 }
