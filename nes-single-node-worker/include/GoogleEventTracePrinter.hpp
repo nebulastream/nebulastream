@@ -103,5 +103,8 @@ private:
     /// Track active queries and pipelines for cleanup
     std::unordered_map<QueryId, std::pair<std::chrono::system_clock::time_point, WorkerThreadId>> activeQueries;
     std::unordered_map<PipelineId, std::tuple<QueryId, std::chrono::system_clock::time_point, WorkerThreadId>> activePipelines;
+
+    std::unordered_map<PipelineId, uint64_t> pipelineDurations;
+    std::unordered_map<PipelineId, size_t> pipelineTuplesProcessed;
 };
 }
