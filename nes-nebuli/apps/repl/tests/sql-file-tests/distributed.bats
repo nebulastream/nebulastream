@@ -115,7 +115,8 @@ function setup_distributed() {
 }
 
 DOCKER_NEBULI() {
-  cat "$1" | docker compose exec -it nebuli nebuli -s worker-node:8080 -f JSON
+  echo "# Additional Flags: ${ADDITIONAL_NEBULI_FLAGS}" >&3
+  cat "$1" | docker compose exec -it nebuli nebuli -s worker-node:8080 -f JSON ${ADDITIONAL_NEBULI_FLAGS}
 }
 
 assert_json_equal() {
@@ -157,4 +158,63 @@ assert_json_contains() {
 
   assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[6]}"
   assert_json_contains "[]" "${lines[7]}"
+}
+
+@test "launch multiple queries" {
+  setup_distributed tests/topologies/1-node.yaml
+  run DOCKER_NEBULI tests/sql-file-tests/good/multiple_queries.sql
+  [ "$status" -eq 0 ]
+}
+
+@test "launch bad query should fail" {
+  setup_distributed tests/topologies/1-node.yaml
+  run DOCKER_NEBULI tests/sql-file-tests/bad/integer_literal_in_query_without_type.sql
+  [ "$status" -ne 0 ]
+  grep "invalid query syntax" nebuli.log
+}
+
+@test "launch query and wait for query termination on exit behavior" {
+  setup_distributed tests/topologies/1-node.yaml
+
+  start_time=$(date +%s)
+  ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run DOCKER_NEBULI tests/sql-file-tests/good/non_infinite_query.sql
+  end_time=$(date +%s)
+
+  [ "$status" -eq 0 ]
+
+  # The query is configured to produce data for 3000ms. We expect nebuli to not terminate while the query is still running due to the WAIT_FOR_QUERY_TERMINATION option
+  duration=$((end_time - start_time))
+  [ "$duration" -ge 3 ]
+}
+
+@test "launch query and terminate query on exit behavior" {
+  setup_distributed tests/topologies/1-node.yaml
+
+  start_time=$(date +%s)
+  ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run DOCKER_NEBULI tests/sql-file-tests/good/non_infinite_query.sql
+  end_time=$(date +%s)
+
+  [ "$status" -eq 0 ]
+
+  # The query is configured to produce data for 3000ms. We expect nebuli to terminate within 1 second as it is configured to terminate all pending queries on exit
+  duration=$((end_time - start_time))
+  [ "$duration" -le 1 ]
+}
+
+@test "default on-exit behavior should keep queries alive" {
+  setup_distributed tests/topologies/1-node.yaml
+
+  start_time=$(date +%s)
+  run DOCKER_NEBULI tests/sql-file-tests/good/multiple_queries.sql
+  end_time=$(date +%s)
+
+  [ "$status" -eq 0 ]
+  # The query is configured to produce data for 3000ms. We expect nebuli to terminate within 1 second as it is configured to terminate regardless of pending queries on exit
+  duration=$((end_time - start_time))
+  [ "$duration" -le 1 ]
+
+  sleep 1
+  # Check the log to ensure that the query has been started but not stopped
+  grep "Starting source with originId" worker-node/singleNodeWorker.log
+  ! grep "attempting to stop source" worker-node/singleNodeWorker.log
 }

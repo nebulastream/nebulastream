@@ -108,3 +108,14 @@ assert_json_contains() {
   assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[6]}"
   assert_json_contains "[]" "${lines[7]}"
 }
+
+@test "launch multiple queries" {
+  run $NEBULI -f JSON <tests/sql-file-tests/good/multiple_queries.sql
+  [ "$status" -eq 0 ]
+}
+
+@test "launch bad query should fail" {
+  run $NEBULI -f JSON <tests/sql-file-tests/bad/integer_literal_in_query_without_type.sql
+  [ "$status" -ne 0 ]
+  grep "invalid query syntax" nebuli.log
+}
