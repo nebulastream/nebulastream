@@ -57,7 +57,7 @@ public:
            DumpMode::NONE,
            fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode>())};
 
-    BoolOption dumpGraph = {"dumpGraph", "false", "If to dump graph of the compilation results"};
+    BoolOption dumpGraph = {"dump_graph", "false", "If to dump graph of the compilation results"};
 
 private:
     std::vector<BaseOption*> getOptions() override
@@ -68,8 +68,7 @@ private:
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIntermediateRepresentations,
-            &dumpGraph
-        };
+            &dumpGraph};
     }
 };
 }
