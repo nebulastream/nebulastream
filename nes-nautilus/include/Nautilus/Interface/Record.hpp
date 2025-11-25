@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 /// A record is the primitive abstraction of a single entry/tuple in a data set.

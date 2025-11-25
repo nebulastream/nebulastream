@@ -91,7 +91,7 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
         {
             invalidFormat("Expected at least one value inside the brackets");
         }
-        values = NES::Util::splitWithStringDelimiter<std::string>(valueList, ",");
+        values = NES::splitWithStringDelimiter<std::string>(valueList, ",");
     }
     else
     {
@@ -109,7 +109,7 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
     std::vector<NES::Systest::ConfigurationOverride> result;
     for (auto& value : values)
     {
-        value = NES::Util::trimWhiteSpaces(value);
+        value = NES::trimWhiteSpaces(value);
         if (value.empty())
         {
             throw NES::SLTUnexpectedToken("Empty {} value found for key '{}'", kindLabel, key);
@@ -334,7 +334,7 @@ void SystestParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (Util::toLowerCase(line).starts_with(Util::toLowerCase(QueryToken)))
+    if (toLowerCase(line).starts_with(toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
     }
@@ -345,7 +345,7 @@ std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 
     /// Lookup in map
     const auto* it = std::ranges::find_if(
-        stringToToken, [&potentialToken](const auto& pair) { return Util::toLowerCase(pair.first) == Util::toLowerCase(potentialToken); });
+        stringToToken, [&potentialToken](const auto& pair) { return toLowerCase(pair.first) == toLowerCase(potentialToken); });
     if (it != stringToToken.end())
     {
         return it->second;
@@ -422,7 +422,7 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
     std::vector<std::string> tuples;
     /// skip the result line `----`
-    if (currentLine < lines.size() && (Util::toLowerCase(lines[currentLine]) == Util::toLowerCase(ResultDelimiter) || ignoreFirst))
+    if (currentLine < lines.size() && (toLowerCase(lines[currentLine]) == toLowerCase(ResultDelimiter) || ignoreFirst))
     {
         currentLine++;
     }
@@ -517,7 +517,7 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
         {
             if (!queryString.empty())
             {
-                const auto trimmedQuerySoFar = Util::trimWhiteSpaces(std::string_view(queryString));
+                const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString));
                 if (!trimmedQuerySoFar.empty() && trimmedQuerySoFar.back() == ';')
                 {
                     break;
@@ -536,7 +536,7 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
             {
                 if (stopTokens.contains(tokenType.value()))
                 {
-                    const auto trimmedQuerySoFar = Util::trimWhiteSpaces(std::string_view(queryString));
+                    const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString));
 
                     if (trimmedQuerySoFar.back() != ';')
                     {
@@ -547,8 +547,8 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
             }
             else
             {
-                const auto trimmedLineView = Util::trimWhiteSpaces(std::string_view(line));
-                if (!trimmedLineView.empty() && Util::toLowerCase(trimmedLineView) == "differential")
+                const auto trimmedLineView = trimWhiteSpaces(std::string_view(line));
+                if (!trimmedLineView.empty() && toLowerCase(trimmedLineView) == "differential")
                 {
                     throw SLTUnexpectedToken(
                         "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
@@ -635,7 +635,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     /// Skip the ERROR token
     std::string token;
     stream >> token;
-    INVARIANT(Util::toLowerCase(token) == Util::toLowerCase(ErrorToken), "Expected ERROR token");
+    INVARIANT(toLowerCase(token) == toLowerCase(ErrorToken), "Expected ERROR token");
 
     /// Read the error code
     std::string errorStr;

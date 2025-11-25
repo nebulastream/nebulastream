@@ -36,7 +36,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef);
+        std::shared_ptr<TupleBufferRef> bufferRef);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 };

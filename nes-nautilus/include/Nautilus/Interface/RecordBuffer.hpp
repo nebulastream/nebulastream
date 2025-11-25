@@ -23,7 +23,7 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 /// @brief The RecordBuffer is a representation of a set of records that are stored together.

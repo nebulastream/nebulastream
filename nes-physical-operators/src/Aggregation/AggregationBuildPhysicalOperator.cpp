@@ -40,7 +40,7 @@
 
 namespace NES
 {
-Interface::HashMap* getAggHashMapProxy(
+HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -92,9 +92,9 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
         operatorHandler->cleanupStateNautilusFunction
             = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
                 [copyOfHashMapOptions = hashMapOptions,
-                 copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                 copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
                 {
-                    const Interface::ChainedHashMapRef hashMapRef(
+                    const ChainedHashMapRef hashMapRef(
                         hashMap,
                         copyOfHashMapOptions.fieldKeys,
                         copyOfHashMapOptions.fieldValues,
@@ -102,7 +102,7 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                         copyOfHashMapOptions.entrySize);
                     for (const auto entry : hashMapRef)
                     {
-                        const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                        const ChainedHashMapRef::ChainedEntryRef entryRefReset(
                             entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
                         auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
                         for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
@@ -128,7 +128,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
         getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
-    Interface::ChainedHashMapRef hashMap(
+    ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
     /// Calling the key functions to add/update the keys to the record
@@ -144,11 +144,10 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     const auto hashMapEntry = hashMap.findOrCreateEntry(
         record,
         *hashMapOptions.hashFunction,
-        [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+        [&](const nautilus::val<AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
-            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+            const ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
@@ -160,8 +159,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
 
     /// Updating the aggregation states
-    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(
-        hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+    const ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {

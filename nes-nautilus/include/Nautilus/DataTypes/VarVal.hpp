@@ -27,7 +27,7 @@
 #include <ErrorHandling.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 #define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
     VarVal operatorName(const VarVal& rhs) const \
@@ -78,11 +78,11 @@ namespace NES::Nautilus
         if constexpr (!requires { func(val); }) \
         { \
             throw UnknownOperation(std::string("VarVal function not implemented: ") + typeid(decltype(val)).name()); \
-            return Nautilus::detail::var_val_t(val); \
+            return detail::var_val_t(val); \
         } \
         else \
         { \
-            Nautilus::detail::var_val_t result = func(val); \
+            detail::var_val_t result = func(val); \
             return result; \
         } \
     }

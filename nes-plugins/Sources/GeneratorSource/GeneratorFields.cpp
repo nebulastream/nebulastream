@@ -44,13 +44,13 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 {
     auto validateParameter = []<typename T>(std::string_view parameter, std::string_view name)
     {
-        const auto opt = Util::from_chars<T>(parameter);
+        const auto opt = from_chars<T>(parameter);
         if (!opt)
         {
             throw InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
         }
     };
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() != NUM_PARAMETERS_SEQUENCE_FIELD)
     {
         throw InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
@@ -150,9 +150,9 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 template <typename T>
 void SequenceField::parse(std::string_view start, std::string_view end, std::string_view step)
 {
-    const auto startOpt = Util::from_chars<T>(start);
-    const auto endOpt = Util::from_chars<T>(end);
-    const auto stepOpt = Util::from_chars<T>(step);
+    const auto startOpt = from_chars<T>(start);
+    const auto endOpt = from_chars<T>(end);
+    const auto stepOpt = from_chars<T>(step);
 
     this->sequenceStart = *startOpt;
     this->sequenceEnd = *endOpt;
@@ -162,7 +162,7 @@ void SequenceField::parse(std::string_view start, std::string_view end, std::str
 
 SequenceField::SequenceField(std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     const auto type = parameters[1];
     const auto start = parameters[2];
     const auto end = parameters[3];
@@ -265,8 +265,8 @@ namespace
 template <typename T, typename U = double>
 NormalDistributionField::DistributionVariant createDistribution(const std::string_view mean, const std::string_view stdDev)
 {
-    const auto parsedMean = Util::from_chars<T>(mean);
-    const auto parsedStdDev = Util::from_chars<U>(stdDev);
+    const auto parsedMean = from_chars<T>(mean);
+    const auto parsedStdDev = from_chars<U>(stdDev);
     INVARIANT(parsedMean.has_value(), "Could not parse mean from {}", mean);
     INVARIANT(parsedStdDev.has_value(), "Could not parse std dev from {}", stdDev);
 
@@ -283,7 +283,7 @@ NormalDistributionField::DistributionVariant createDistribution(const std::strin
 
 NormalDistributionField::NormalDistributionField(const std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     const auto type = parameters[1];
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
@@ -358,7 +358,7 @@ std::ostream& NormalDistributionField::generate(std::ostream& os, std::default_r
 
 void NormalDistributionField::validate(std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() < NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD)
     {
         throw InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
@@ -375,8 +375,8 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
         throw InvalidConfigParameter(
             "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine);
     }
-    const auto parsedMean = Util::from_chars<double>(mean);
-    const auto parsedStdDev = Util::from_chars<double>(stddev);
+    const auto parsedMean = from_chars<double>(mean);
+    const auto parsedStdDev = from_chars<double>(stddev);
     if (!parsedMean || !parsedStdDev)
     {
         throw InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);

@@ -129,7 +129,7 @@ public:
         /// We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
         /// Additionally, we remove double spaces, as we expect a single space between the fields
         std::ranges::for_each(this->results, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
-        std::ranges::for_each(this->results, NES::Util::removeDoubleSpaces);
+        std::ranges::for_each(this->results, NES::removeDoubleSpaces);
 
         sortOnFields(this->results, expectedResultsFieldSortIdxs);
     }
@@ -241,7 +241,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
             std::vector<std::string_view> fieldAndTypeVector;
             for (const auto subrange : std::ranges::split_view(field, ':'))
             {
-                fieldAndTypeVector.emplace_back(NES::Util::trimWhiteSpaces(std::string_view(subrange)));
+                fieldAndTypeVector.emplace_back(NES::trimWhiteSpaces(std::string_view(subrange)));
             }
             INVARIANT(fieldAndTypeVector.size() == 2, "Field and type pairs should always be pairs of a key and a value");
             return std::make_pair(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1));
@@ -251,7 +251,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         {
             dataType = NES::DataTypeProvider::provideDataType(type.value());
         }
-        else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
+        else if (NES::toLowerCase(typeTrimmed) == "varsized")
         {
             dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED);
         }

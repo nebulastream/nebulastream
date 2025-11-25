@@ -24,7 +24,7 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 RecordBuffer::RecordBuffer(const nautilus::val<TupleBuffer*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef)

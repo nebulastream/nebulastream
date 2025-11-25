@@ -29,7 +29,7 @@
 #include <ErrorHandling.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 VarVal::VarVal(const VarVal& other) : value(other.value)
@@ -153,40 +153,40 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
     switch (type)
     {
         case DataType::Type::BOOLEAN: {
-            return {Util::readValueFromMemRef<bool>(memRef)};
+            return {readValueFromMemRef<bool>(memRef)};
         }
         case DataType::Type::INT8: {
-            return {Util::readValueFromMemRef<int8_t>(memRef)};
+            return {readValueFromMemRef<int8_t>(memRef)};
         }
         case DataType::Type::INT16: {
-            return {Util::readValueFromMemRef<int16_t>(memRef)};
+            return {readValueFromMemRef<int16_t>(memRef)};
         }
         case DataType::Type::INT32: {
-            return {Util::readValueFromMemRef<int32_t>(memRef)};
+            return {readValueFromMemRef<int32_t>(memRef)};
         }
         case DataType::Type::INT64: {
-            return {Util::readValueFromMemRef<int64_t>(memRef)};
+            return {readValueFromMemRef<int64_t>(memRef)};
         }
         case DataType::Type::CHAR: {
-            return {Util::readValueFromMemRef<char>(memRef)};
+            return {readValueFromMemRef<char>(memRef)};
         }
         case DataType::Type::UINT8: {
-            return {Util::readValueFromMemRef<uint8_t>(memRef)};
+            return {readValueFromMemRef<uint8_t>(memRef)};
         }
         case DataType::Type::UINT16: {
-            return {Util::readValueFromMemRef<uint16_t>(memRef)};
+            return {readValueFromMemRef<uint16_t>(memRef)};
         }
         case DataType::Type::UINT32: {
-            return {Util::readValueFromMemRef<uint32_t>(memRef)};
+            return {readValueFromMemRef<uint32_t>(memRef)};
         }
         case DataType::Type::UINT64: {
-            return {Util::readValueFromMemRef<uint64_t>(memRef)};
+            return {readValueFromMemRef<uint64_t>(memRef)};
         }
         case DataType::Type::FLOAT32: {
-            return {Util::readValueFromMemRef<float>(memRef)};
+            return {readValueFromMemRef<float>(memRef)};
         }
         case DataType::Type::FLOAT64: {
-            return {Util::readValueFromMemRef<double>(memRef)};
+            return {readValueFromMemRef<double>(memRef)};
         }
         case DataType::Type::VARSIZED:
         case DataType::Type::VARSIZED_POINTER_REP:

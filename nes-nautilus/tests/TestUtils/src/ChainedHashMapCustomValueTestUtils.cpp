@@ -31,10 +31,10 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, Interface::HashMap*>
+nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, HashMap*>
 ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
     const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
 {
@@ -46,31 +46,31 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
             nautilus::val<TupleBuffer*> bufferValue,
             nautilus::val<uint64_t> keyPositionVal,
             nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<Interface::HashMap*> hashMapVal)
+            nautilus::val<HashMap*> hashMapVal)
         {
-            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(bufferKey);
             auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
 
             auto foundEntry = hashMapRef.findOrCreateEntry(
                 recordKey,
                 *getMurMurHashFunction(),
-                [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                 {
-                    const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
+                    const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
                     nautilus::invoke(
                         +[](int8_t* pagedVectorMemArea)
                         {
                             /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-                            auto* pagedVector = reinterpret_cast<Interface::PagedVector*>(pagedVectorMemArea);
-                            new (pagedVector) Interface::PagedVector();
+                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                            new (pagedVector) PagedVector();
                         },
                         ref.getValueMemArea());
                 },
                 bufferManagerVal);
 
-            const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
+            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
             const RecordBuffer recordBufferValue(bufferValue);
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
@@ -80,7 +80,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
         }));
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, Interface::HashMap*>
+nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
 ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
     const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
 {
@@ -93,17 +93,17 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
             nautilus::val<uint64_t> keyPositionVal,
             nautilus::val<TupleBuffer*> outputBufferRef,
             nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<Interface::HashMap*> hashMapVal)
+            nautilus::val<HashMap*> hashMapVal)
         {
-            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
+            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(keyBufferRef);
             RecordBuffer recordBufferOutput(outputBufferRef);
             const auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
             const auto foundEntry
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
-            const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
+            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
             nautilus::val<uint64_t> recordBufferIndex = 0;
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {

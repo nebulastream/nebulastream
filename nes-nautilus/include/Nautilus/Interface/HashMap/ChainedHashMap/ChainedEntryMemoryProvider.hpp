@@ -25,7 +25,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
 {
 
 /// ChainedEntryMemoryProvider uses it to store the offsets for the keys and values of the ChainedHashMapEntry
@@ -44,7 +44,7 @@ public:
 
     /// We need to create the fields for the keys and values here, as we know here how the fields and the values are stored in the ChainedHashMapEntry.
     /// We can use here "normal" C++ values, as only the C++ runtime MUST call this method
-    static std::pair<std::vector<BufferRef::FieldOffsets>, std::vector<BufferRef::FieldOffsets>> createFieldOffsets(
+    static std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> createFieldOffsets(
         const Schema& schema,
         const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
         const std::vector<Record::RecordFieldIdentifier>& fieldNameValues);

@@ -24,7 +24,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
 {
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.

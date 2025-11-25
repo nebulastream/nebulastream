@@ -19,7 +19,7 @@
 #include <nautilus/std/sstream.h>
 #include <nautilus/val.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 /// Forward declaring the class here, so that we can declare the operator==(const VariableSizedData, const nautilus::val<bool>) for it

@@ -42,7 +42,7 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 class ChainedHashMapCustomValueTest
     : public Testing::BaseUnitTest,

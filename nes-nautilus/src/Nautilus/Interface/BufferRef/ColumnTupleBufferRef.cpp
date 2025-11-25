@@ -26,7 +26,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
 {
 
 ColumnTupleBufferRef::ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr)

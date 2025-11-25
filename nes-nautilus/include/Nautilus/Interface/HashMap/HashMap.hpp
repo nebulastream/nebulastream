@@ -17,7 +17,7 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 class AbstractHashMapEntry
