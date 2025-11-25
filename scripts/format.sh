@@ -48,6 +48,17 @@ else
     log_fatal could not find clang-format 19 in PATH, please install.
 fi
 
+if [ -x "$(command -v rustfmt)" ]
+then
+    RUSTFMT="rustfmt"
+    if ! rustfmt --edition 2024 --help > /dev/null 2>&1
+    then
+        log_fatal rustfmt does not support 2024 edition, please update rustfmt.
+    fi
+else
+    log_fatal could not find rustfmt in PATH, please install.
+fi
+
 # calculate distance to base branch
 #
 # Ideally, we would want to use e.g. git diff --merge-base origin/main,
@@ -85,6 +96,9 @@ then
     git ls-files -- '*.cpp' '*.hpp' \
       | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" -i
 
+    git ls-files -- '*.rs' \
+      | xargs --max-args=10 --max-procs="$(nproc)" "$RUSTFMT" --edition 2024
+
     # newline at eof
     #
     # list files in repo
@@ -98,6 +112,10 @@ else
     # clang-format
     git ls-files -- '*.cpp' '*.hpp' \
       | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" --dry-run -Werror \
+      || FAIL=1
+
+    git ls-files -- '*.rs' \
+      | xargs --max-args=10 --max-procs="$(nproc)" "$RUSTFMT" --edition 2024 --check \
       || FAIL=1
 
     # newline at eof
