@@ -32,14 +32,14 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> memoryProvider);
+        std::shared_ptr<TupleBufferRef> memoryProvider);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;
 
 protected:
     const JoinBuildSideType joinBuildSide;
-    const std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef;
+    const std::shared_ptr<TupleBufferRef> bufferRef;
 };
 
 }

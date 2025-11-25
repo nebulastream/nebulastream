@@ -29,7 +29,7 @@
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 /// Forward declaration of EntryIterator so that we can use it in ChainedHashMapRef for making EntryIterator friend.
 class EntryIterator;
@@ -55,14 +55,14 @@ public:
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
             const nautilus::val<ChainedHashMap*>& hashMapRef,
-            std::vector<BufferRef::FieldOffsets> fieldsKey,
-            std::vector<BufferRef::FieldOffsets> fieldsValue);
+            std::vector<FieldOffsets> fieldsKey,
+            std::vector<FieldOffsets> fieldsValue);
 
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
             const nautilus::val<ChainedHashMap*>& hashMapRef,
-            BufferRef::ChainedEntryMemoryProvider memoryProviderKeys,
-            BufferRef::ChainedEntryMemoryProvider memoryProviderValues);
+            ChainedEntryMemoryProvider memoryProviderKeys,
+            ChainedEntryMemoryProvider memoryProviderValues);
 
         ChainedEntryRef(const ChainedEntryRef& other);
         ChainedEntryRef& operator=(const ChainedEntryRef& other);
@@ -72,8 +72,8 @@ public:
 
         nautilus::val<ChainedHashMapEntry*> entryRef;
         nautilus::val<ChainedHashMap*> hashMapRef;
-        BufferRef::ChainedEntryMemoryProvider memoryProviderKeys;
-        BufferRef::ChainedEntryMemoryProvider memoryProviderValues;
+        ChainedEntryMemoryProvider memoryProviderKeys;
+        ChainedEntryMemoryProvider memoryProviderValues;
     };
 
     /// Iterator for iterating over all entries in the hash map.
@@ -110,8 +110,8 @@ public:
 
     ChainedHashMapRef(
         const nautilus::val<HashMap*>& hashMapRef,
-        std::vector<BufferRef::FieldOffsets> fieldsKey,
-        std::vector<BufferRef::FieldOffsets> fieldsValue,
+        std::vector<FieldOffsets> fieldsKey,
+        std::vector<FieldOffsets> fieldsValue,
         const nautilus::val<uint64_t>& entriesPerPage,
         const nautilus::val<uint64_t>& entrySize);
     ChainedHashMapRef(const ChainedHashMapRef& other);
@@ -142,8 +142,8 @@ private:
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findKey(const Record& recordKey, const HashFunction::HashValue& hash) const;
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findEntry(const ChainedEntryRef& otherEntryRef) const;
 
-    std::vector<BufferRef::FieldOffsets> fieldKeys;
-    std::vector<BufferRef::FieldOffsets> fieldValues;
+    std::vector<FieldOffsets> fieldKeys;
+    std::vector<FieldOffsets> fieldValues;
     nautilus::val<uint64_t> entriesPerPage;
     nautilus::val<uint64_t> entrySize;
 };

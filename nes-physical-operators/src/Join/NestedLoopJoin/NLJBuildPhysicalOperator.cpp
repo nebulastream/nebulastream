@@ -50,7 +50,7 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef)
+    std::shared_ptr<TupleBufferRef> bufferRef)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef))
 {
 }
@@ -85,7 +85,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
+    const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

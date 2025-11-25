@@ -38,27 +38,24 @@ namespace NES
 struct EmittedHJWindowTrigger
 {
     EmittedHJWindowTrigger(
-        const WindowInfo windowInfo,
-        const std::vector<Nautilus::Interface::HashMap*>& leftHashMaps,
-        const std::vector<Nautilus::Interface::HashMap*>& rightHashMaps)
+        const WindowInfo windowInfo, const std::vector<HashMap*>& leftHashMaps, const std::vector<HashMap*>& rightHashMaps)
         : windowInfo(windowInfo), leftNumberOfHashMaps(leftHashMaps.size()), rightNumberOfHashMaps(rightHashMaps.size())
     {
         /// Copying the left and right hashmap pointer pointers after this object, hence this + 1
-        const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(Nautilus::Interface::HashMap*);
+        const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(HashMap*);
         auto* addressFirstLeftHashMapPtr = std::bit_cast<int8_t*>(this + 1);
         auto* addressFirstRightHashMapPtr = std::bit_cast<int8_t*>(this + 1) + leftHashMapPtrSizeInByte;
-        this->leftHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr);
-        this->rightHashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr);
-        std::ranges::copy(leftHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstLeftHashMapPtr));
-        std::ranges::copy(rightHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(addressFirstRightHashMapPtr));
+        this->leftHashMaps = std::bit_cast<HashMap**>(addressFirstLeftHashMapPtr);
+        this->rightHashMaps = std::bit_cast<HashMap**>(addressFirstRightHashMapPtr);
+        std::ranges::copy(leftHashMaps, std::bit_cast<HashMap**>(addressFirstLeftHashMapPtr));
+        std::ranges::copy(rightHashMaps, std::bit_cast<HashMap**>(addressFirstRightHashMapPtr));
     }
 
     WindowInfo windowInfo;
     uint64_t leftNumberOfHashMaps;
     uint64_t rightNumberOfHashMaps;
-    Nautilus::Interface::HashMap**
-        leftHashMaps; /// Pointer to the stored pointers of all hash maps of the left input stream that the probe should iterate over
-    Nautilus::Interface::HashMap**
+    HashMap** leftHashMaps; /// Pointer to the stored pointers of all hash maps of the left input stream that the probe should iterate over
+    HashMap**
         rightHashMaps; /// Pointer to the stored pointers of all hash maps of the right input stream that the probe should iterate over
 };
 

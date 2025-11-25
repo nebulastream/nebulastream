@@ -626,7 +626,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         helpers.top().functionBuilder.pop_back();
         const auto fieldAccessNode = accessFunction.get<FieldAccessLogicalFunction>();
         const auto lastAggregation = helpers.top().windowAggs.back();
-        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), Util::toUpperCase(lastAggregation->getName()));
+        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), toUpperCase(lastAggregation->getName()));
         const auto asField = FieldAccessLogicalFunction(newName);
         lastAggregation->setAsField(asField);
         helpers.top().windowAggs.pop_back();
@@ -827,7 +827,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
 
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
-    const auto funcName = Util::toUpperCase(context->children[0]->getText());
+    const auto funcName = toUpperCase(context->children[0]->getText());
     const auto tokenType = context->getStart()->getType();
 
     helpers.top().hasUnnamedAggregation = true;

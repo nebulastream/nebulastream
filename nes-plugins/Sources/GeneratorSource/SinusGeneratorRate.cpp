@@ -38,23 +38,23 @@ std::optional<std::tuple<double, double>> SinusGeneratorRate::parseAndValidateCo
 
     std::vector<std::string_view> params;
 
-    for (const auto& param : Util::splitOnMultipleDelimiters(configString, {'\n', ','}))
+    for (const auto& param : splitOnMultipleDelimiters(configString, {'\n', ','}))
     {
-        params.emplace_back(Util::trimWhiteSpaces(std::string_view(param)));
+        params.emplace_back(trimWhiteSpaces(std::string_view(param)));
     }
 
     if (params.size() == 2)
     {
-        const auto amplitudeParams = Util::splitWithStringDelimiter<std::string_view>(params[0], " ");
-        if (Util::toLowerCase(amplitudeParams[0]) == "amplitude")
+        const auto amplitudeParams = splitWithStringDelimiter<std::string_view>(params[0], " ");
+        if (toLowerCase(amplitudeParams[0]) == "amplitude")
         {
-            amplitude = Util::from_chars<double>(amplitudeParams[1]);
+            amplitude = from_chars<double>(amplitudeParams[1]);
         }
 
-        const auto frequencyParams = Util::splitWithStringDelimiter<std::string_view>(params[1], " ");
-        if (Util::toLowerCase(frequencyParams[0]) == "frequency")
+        const auto frequencyParams = splitWithStringDelimiter<std::string_view>(params[1], " ");
+        if (toLowerCase(frequencyParams[0]) == "frequency")
         {
-            frequency = Util::from_chars<double>(frequencyParams[1]);
+            frequency = from_chars<double>(frequencyParams[1]);
         }
     }
 

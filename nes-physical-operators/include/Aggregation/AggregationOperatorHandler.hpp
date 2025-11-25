@@ -38,24 +38,20 @@ namespace NES
 /// is large enough to store all slices of the window to be triggered.
 struct EmittedAggregationWindow
 {
-    EmittedAggregationWindow(
-        const WindowInfo windowInfo,
-        std::unique_ptr<Nautilus::Interface::HashMap> finalHashMap,
-        const std::vector<Nautilus::Interface::HashMap*>& allHashMaps)
+    EmittedAggregationWindow(const WindowInfo windowInfo, std::unique_ptr<HashMap> finalHashMap, const std::vector<HashMap*>& allHashMaps)
         : windowInfo(windowInfo), finalHashMap(std::move(finalHashMap)), numberOfHashMaps(allHashMaps.size())
     {
         finalHashMapPtr = this->finalHashMap.get();
         /// Copying the hashmap pointers after this object, hence this + 1
-        hashMaps = std::bit_cast<Nautilus::Interface::HashMap**>(this + 1);
-        std::ranges::copy(allHashMaps, std::bit_cast<Nautilus::Interface::HashMap**>(hashMaps));
+        hashMaps = std::bit_cast<HashMap**>(this + 1);
+        std::ranges::copy(allHashMaps, std::bit_cast<HashMap**>(hashMaps));
     }
 
     WindowInfo windowInfo;
-    Nautilus::Interface::HashMap* finalHashMapPtr;
-    std::unique_ptr<Nautilus::Interface::HashMap>
-        finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
+    HashMap* finalHashMapPtr;
+    std::unique_ptr<HashMap> finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
     uint64_t numberOfHashMaps;
-    Nautilus::Interface::HashMap** hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
+    HashMap** hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
 };
 
 class AggregationOperatorHandler final : public WindowBasedOperatorHandler

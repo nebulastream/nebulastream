@@ -36,7 +36,6 @@
 
 namespace NES
 {
-using namespace Nautilus;
 struct ExecutionContext;
 
 /// Unique ID generation for physical operators.

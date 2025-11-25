@@ -51,12 +51,12 @@
 #include <std/sstream.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 
-std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunction()
+std::unique_ptr<HashFunction> NautilusTestUtils::getMurMurHashFunction()
 {
-    return std::make_unique<Interface::MurMur3HashFunction>();
+    return std::make_unique<MurMur3HashFunction>();
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
@@ -86,7 +86,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer = Interface::BufferRef::TupleBufferRef::create(bufferManager.getBufferSize(), schema);
+    const auto memoryProviderInputBuffer = TupleBufferRef::create(bufferManager.getBufferSize(), schema);
 
 
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
@@ -166,7 +166,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     ExecutionMode backend,
     nautilus::engine::Options& options,
     const Schema& schema,
-    const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& memoryProviderInputBuffer)
+    const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -189,7 +189,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 const auto fieldName = field.name;
                 if (not field.dataType.isType(DataType::Type::VARSIZED))
                 {
-                    const auto varValue = Nautilus::Util::createNautilusConstValue(value, physicalType.type);
+                    const auto varValue = createNautilusConstValue(value, physicalType.type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }

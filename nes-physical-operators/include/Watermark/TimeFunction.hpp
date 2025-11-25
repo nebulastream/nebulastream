@@ -29,7 +29,6 @@ struct ExecutionContext;
 
 namespace NES
 {
-using namespace Nautilus;
 
 /// @brief A time function, infers the timestamp of an record.
 /// For ingestion time, this is determined by the creation ts in the buffer.

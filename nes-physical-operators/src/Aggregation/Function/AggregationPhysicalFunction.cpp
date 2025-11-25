@@ -23,7 +23,7 @@ namespace NES
 {
 
 AggregationPhysicalFunction::AggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
     : inputType(std::move(inputType))
     , resultType(std::move(resultType))
     , inputFunction(std::move(inputFunction))

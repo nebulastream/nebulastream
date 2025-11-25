@@ -35,10 +35,10 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
-    const Nautilus::Record& keys, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const Record& keys, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     memoryProviderKeys.writeRecord(entryRef, hashMapRef, bufferProvider, keys);
 }
@@ -50,7 +50,7 @@ void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
 }
 
 void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
-    const Nautilus::Record& values, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const Record& values, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     memoryProviderValues.writeRecord(entryRef, hashMapRef, bufferProvider, values);
 }
@@ -127,22 +127,22 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
 HashFunction::HashValue ChainedHashMapRef::ChainedEntryRef::getHash() const
 {
     /// Assuming that the hash value is stored after the next pointer in the ChainedHashMapEntry
-    const auto hashRef = Util::getMemberRef(entryRef, &ChainedHashMapEntry::hash);
-    return Util::readValueFromMemRef<uint64_t>(hashRef);
+    const auto hashRef = getMemberRef(entryRef, &ChainedHashMapEntry::hash);
+    return readValueFromMemRef<uint64_t>(hashRef);
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext() const
 {
-    const auto nextRef = Util::getMemberRef(entryRef, &ChainedHashMapEntry::next);
-    auto next = Util::readValueFromMemRef<ChainedHashMapEntry**>(nextRef);
+    const auto nextRef = getMemberRef(entryRef, &ChainedHashMapEntry::next);
+    auto next = readValueFromMemRef<ChainedHashMapEntry**>(nextRef);
     return next;
 }
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    std::vector<BufferRef::FieldOffsets> fieldsKey,
-    std::vector<BufferRef::FieldOffsets> fieldsValue)
+    std::vector<FieldOffsets> fieldsKey,
+    std::vector<FieldOffsets> fieldsValue)
     : entryRef(entryRef), hashMapRef(hashMapRef), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
 {
 }
@@ -150,8 +150,8 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
     const nautilus::val<ChainedHashMap*>& hashMapRef,
-    BufferRef::ChainedEntryMemoryProvider memoryProviderKeys,
-    BufferRef::ChainedEntryMemoryProvider memoryProviderValues)
+    ChainedEntryMemoryProvider memoryProviderKeys,
+    ChainedEntryMemoryProvider memoryProviderValues)
     : entryRef(entryRef)
     , hashMapRef(hashMapRef)
     , memoryProviderKeys(std::move(memoryProviderKeys))
@@ -169,7 +169,7 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noe
 {
 }
 
-nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Nautilus::Record& recordKey, const HashFunction::HashValue& hash) const
+nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Record& recordKey, const HashFunction::HashValue& hash) const
 {
     auto entry = findChain(hash);
     while (entry)
@@ -199,7 +199,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus
 }
 
 nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
-    const Nautilus::Record& recordKey,
+    const Record& recordKey,
     const HashFunction& hashFunction,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
@@ -294,25 +294,24 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
-    const auto numberOfTuples
-        = Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
+    const auto numberOfTuples = readValueFromMemRef<uint64_t>(getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
     return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
-    const auto numberOfTuplesRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
-    const auto numberOfTuples = Util::readValueFromMemRef<uint64_t>(numberOfTuplesRef);
+    const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
+    const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
     if (numberOfTuples == 0)
     {
         return nullptr;
     }
 
-    const auto maskRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::mask);
-    auto mask = Util::readValueFromMemRef<uint64_t>(maskRef);
+    const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
+    auto mask = readValueFromMemRef<uint64_t>(maskRef);
     const auto entryStartPos = hash & mask;
-    const auto entriesRef = Util::getMemberRef(hashMapRef, &ChainedHashMap::entries);
-    auto entries = Util::readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
+    const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
+    auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
     const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
     return chainStart;
 }
@@ -343,8 +342,8 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
 
 ChainedHashMapRef::ChainedHashMapRef(
     const nautilus::val<HashMap*>& hashMapRef,
-    std::vector<BufferRef::FieldOffsets> fieldsKey,
-    std::vector<BufferRef::FieldOffsets> fieldsValue,
+    std::vector<FieldOffsets> fieldsKey,
+    std::vector<FieldOffsets> fieldsValue,
     const nautilus::val<uint64_t>& entriesPerPage,
     const nautilus::val<uint64_t>& entrySize)
     : HashMapRef(hashMapRef)

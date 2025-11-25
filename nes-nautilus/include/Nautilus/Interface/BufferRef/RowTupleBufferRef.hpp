@@ -19,7 +19,7 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
 {
 
 /// Implements BufferRef. Provides row-wise memory access.

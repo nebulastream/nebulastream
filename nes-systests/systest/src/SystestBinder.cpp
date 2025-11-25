@@ -207,8 +207,7 @@ public:
         const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
-        if (Util::toUpperCase(
-                sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
+        if (toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
             == "CHECKSUM")
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
@@ -541,13 +540,13 @@ struct SystestBinder::Impl
         const auto parseResult = managedParser->parseSingle();
         if (not parseResult.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", Util::replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", replaceAll(query, "\n", " "));
         }
 
         const auto binding = binder.bind(parseResult.value().get());
         if (not binding.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", Util::replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", replaceAll(query, "\n", " "));
         }
 
         if (const auto& statement = binding.value(); std::holds_alternative<CreateLogicalSourceStatement>(statement))
@@ -653,13 +652,13 @@ struct SystestBinder::Impl
         const std::string sinkName = sinkOperator->getSinkName();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
+        const auto sinkForQuery = toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
 
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
-        auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
+        auto sinkExpected = sltSinkProvider.createActualSink(toUpperCase(sinkName), sinkForQuery, resultFile);
         if (not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());

@@ -160,7 +160,7 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
     delete tb;
 }
 
-void ExecutionContext::emitBuffer(const Nautilus::RecordBuffer& buffer) const
+void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
 {
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }
