@@ -89,17 +89,18 @@ jobs:
             build/nes-nebuli/nes-nebuli -d -s localhost:8080 < query.sql
             
             # wait and monitor
-            SECONDS=0
-            MAX_SECONDS=${{ inputs.runtime_seconds}}
-            echo "Stress test runtime set to $MAX_SECONDS seconds"
-            
-            while [ $SECONDS -lt $MAX_SECONDS ]; do
+            echo "Waiting and monitoring worker..."
+            ELAPSED_SECONDS=0
+            MAX_SECONDS=${{ inputs.runtime_seconds }}
+            echo "Stress test runtime set to $ELAPSED_SECONDS seconds"
+            while [ $ELAPSED_SECONDS -lt $MAX_SECONDS ]; do
               if ! kill -0 $WORKER_PID 2>/dev/null; then
                 echo "Worker has exited unexpectedly!"
                 tail -n 50 worker.log
                 exit 1
               fi
               sleep 60
+              ELAPSED_SECONDS=$((ELAPSED_SECONDS + 60))
             done
             
             # stopping all queries
