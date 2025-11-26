@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "598041b59644088ed431bb27a35e77f48c1e8bad";
-    hash = "sha512-/UXpeKTGNk+fd7ecSPP2RIJ8/hA7E602JnSi4K+s15YKYbKN+LaHSuAXgT3NaJqe3LqYD6NqaFUqMVGmf/6Q3g==";
+    rev = "5fa4c9043d961238d283bf129b82c59e1476974a";
+    hash = "sha512-woWgqYDU5SW2hqMh/VhDD9adUt1XFI2K75YOeIW7Yi/fDEmX59bOXmlk4z1nbPJqVFPip7pPJkCvWEZ+WmM/cg==";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -62,6 +62,9 @@ let
     version = "0.1";
 
     src = nautilusSrc;
+    patches = [
+      ./patches/0002-fix-ambiguous-val-overload.patch
+    ];
 
     nativeBuildInputs = [
       pkgs.cmake
