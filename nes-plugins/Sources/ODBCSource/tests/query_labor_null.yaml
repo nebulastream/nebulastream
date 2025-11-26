@@ -43,6 +43,8 @@ physical:
       password: "samplePassword1!"
       driver: "ODBC Driver 18 for SQL Server"
       # Todo: this can get out of sync with NES query above (which might be intentional, but is error-prone)
+      sync_table: "dbo.v_Labor_null"
+      poll_interval_ms: 1000
       query: "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null"
       trust_server_certificate: true
 sinks: []

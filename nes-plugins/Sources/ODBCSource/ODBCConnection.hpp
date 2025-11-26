@@ -37,6 +37,13 @@
 #include <ErrorHandling.hpp>
 #include "Util/Ranges.hpp"
 
+enum class ODBCPollStatus : uint8_t
+{
+    NO_NEW_ROWS,
+    FEWER_ROWS,
+    NEW_ROWS,
+};
+
 class ODBCConnection
 {
     struct TypeInfo
@@ -222,7 +229,29 @@ public:
         }
     }
 
-    void connect(const std::string& connectionString, const std::string_view query)
+    size_t syncRowCount()
+    {
+        SQLRETURN ret = SQLExecDirect(hstmtCount, reinterpret_cast<SQLCHAR*>(countQuery.data()), static_cast<SQLINTEGER>(countQuery.size()));
+        checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Execute COUNT statement");
+
+        uint64_t rowCount{0};
+        ret = SQLFetch(hstmtCount);
+        if (ret == SQL_NO_DATA)
+        {
+            NES_ERROR("Failed to count rows of table: {}.", countQuery);
+            return rowCount;
+        }
+        checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Fetch row");
+
+        /// Process fetched row
+        SQLLEN indicator{};
+        ret = SQLGetData(hstmtCount, 1, SQL_C_UBIGINT, &rowCount, sizeof(uint64_t), &indicator);
+        checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Get row count data");
+        SQLCloseCursor(hstmtCount);
+        return rowCount;
+    }
+
+    void connect(const std::string& connectionString, const std::string_view syncTable, const std::string_view query)
     {
         SQLCHAR outConnectionString[1024];
         SQLSMALLINT outConnectionStringLength;
@@ -248,6 +277,18 @@ public:
         ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
         checkError(ret, SQL_HANDLE_DBC, hdbc, "Allocate statement handle");
         fetchColumns(query);
+        // Todo: fetch row count
+        this->countQuery = fmt::format("SELECT COUNT(*) FROM {};", syncTable);
+
+        ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmtCount);
+        checkError(ret, SQL_HANDLE_DBC, hdbc, "Allocate count sstatement handle");
+
+        if (const SQLRETURN ret = SQLPrepare(hstmtCount, reinterpret_cast<SQLCHAR*>(countQuery.data()), SQL_NTS);
+            !SQL_SUCCEEDED(ret))
+        {
+            checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Prepare failed");
+        }
+        this->rowCountTracker = syncRowCount();
     }
 
     template <typename T>
@@ -401,38 +442,46 @@ public:
         }
     }
 
-    void executeQuery(
-        std::vector<SQLCHAR> queryBuffer,
+
+    std::vector<SQLCHAR> buildNewRowFetchSting(const std::string_view userQuery, const uint64_t rowsToFetch)
+    {
+        const auto trimmedQuery = NES::Util::trimWhiteSpaces(userQuery);
+        const auto selectSplit = NES::Util::splitWithStringDelimiter<std::string_view>(trimmedQuery, "SELECT");
+        INVARIANT(selectSplit.size() == 1, "Query '{}' did not contain exactly one SELECT statement at the start.", trimmedQuery);
+        std::string selectTopNRows = fmt::format("SELECT TOP {} {}", rowsToFetch, selectSplit.at(0));
+        std::vector<SQLCHAR> queryBuffer(selectTopNRows.begin(), selectTopNRows.end());
+        queryBuffer.push_back('\0');
+        return queryBuffer;
+    }
+
+    ODBCPollStatus executeQuery(
+        std::string_view query,
         NES::TupleBuffer& tupleBuffer,
         NES::AbstractBufferProvider& bufferProvider,
         const size_t rowsPerBuffer)
     {
-        if (noMoreData)
+        const auto newRowCount = syncRowCount();
+        if (newRowCount <= this->rowCountTracker)
         {
-            /// There is no more data, we can close the connection (unless we implement a streaming mode)
-            return;
+            return (newRowCount < this->rowCountTracker) ? ODBCPollStatus::FEWER_ROWS : ODBCPollStatus::NO_NEW_ROWS;
         }
-        // Execute the SQL statement
+
+        /// Create query string that fetches only the last N rows
+        const auto rowsToFetch = std::min(newRowCount - this->rowCountTracker, rowsPerBuffer);
+        auto queryBuffer = buildNewRowFetchSting(query, rowsToFetch);
+
+        // There are new rows, Execute the SQL statement
         SQLRETURN ret = SQLExecDirect(hstmt, queryBuffer.data(), static_cast<SQLINTEGER>(queryBuffer.size()));
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
 
-        // Todo:
-        //  1. [x] keep track of row-buffer-fit
-        //  2. [x] support strings
-        //  3. [ ] test data types:
-        //      [x] int8
-        //      [x] int16
-        //      [x] int64
-        //      [x] float
-        //      [x] double
-        //      [ ] varsized
-        for (size_t bufferLocalRowCount = 0; bufferLocalRowCount < rowsPerBuffer; ++bufferLocalRowCount)
+        this->rowCountTracker += rowsToFetch;
+        for (size_t bufferLocalRowCount = 0; bufferLocalRowCount < rowsToFetch; ++bufferLocalRowCount)
         {
             ret = SQLFetch(hstmt);
             if (ret == SQL_NO_DATA)
             {
                 NES_DEBUG("No more data in table after reading {} rows.", totalRowCount);
-                noMoreData = true;
+                // noMoreData = true;
                 break;
             }
             checkError(ret, SQL_HANDLE_STMT, hstmt, "Fetch row");
@@ -454,6 +503,8 @@ public:
             }
             ++totalRowCount;
         }
+        SQLCloseCursor(hstmt);
+        return ODBCPollStatus::NEW_ROWS;
     }
 
     ~ODBCConnection()
@@ -479,7 +530,9 @@ private:
     SQLHENV henv = SQL_NULL_HENV;
     SQLHDBC hdbc = SQL_NULL_HDBC;
     SQLHSTMT hstmt = SQL_NULL_HSTMT;
+    SQLHSTMT hstmtCount = SQL_NULL_HSTMT;
     FetchedSchema fetchedSchema;
     size_t totalRowCount{0};
-    bool noMoreData{false};
+    uint64_t rowCountTracker{0};
+    std::string countQuery;
 };

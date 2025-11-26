@@ -23,6 +23,7 @@
 #include <ranges>
 #include <stop_token>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -41,6 +42,7 @@
 #include "ODBCConnection.hpp"
 #include "SourceRegistry.hpp"
 #include "SourceValidationRegistry.hpp"
+#include "Util/Strings.hpp"
 
 namespace SQL
 {
@@ -123,12 +125,11 @@ ODBCSource::ODBCSource(const SourceDescriptor& sourceDescriptor)
     , username(sourceDescriptor.getFromConfig(ConfigParametersODBC::USERNAME))
     , password(sourceDescriptor.getFromConfig(ConfigParametersODBC::PASSWORD))
     , driver(sourceDescriptor.getFromConfig(ConfigParametersODBC::DRIVER))
+    , pollIntervalMs(sourceDescriptor.getFromConfig(ConfigParametersODBC::POLL_INTERVAL_MS))
+    , syncTable(sourceDescriptor.getFromConfig(ConfigParametersODBC::SYNC_TABLE))
     , query(sourceDescriptor.getFromConfig(ConfigParametersODBC::QUERY))
     , trustServerCertificate(sourceDescriptor.getFromConfig(ConfigParametersODBC::TRUST_SERVER_CERTIFICATE))
 {
-    std::vector<SQLCHAR> queryBuffer(query.begin(), query.end());
-    queryBuffer.push_back('\0');
-    this->queryBuffer = std::move(queryBuffer);
 }
 
 std::ostream& ODBCSource::toString(std::ostream& str) const
@@ -155,16 +156,23 @@ void ODBCSource::open()
         (this->trustServerCertificate) ? "yes" : "no");
 
     /// We don't want to catch errors here, but further up in the query engine
-    connection->connect(connectionString, this->query);
+    connection->connect(connectionString, this->syncTable, this->query);
     this->fetchedSizeOfRow = this->connection->getFetchedSizeOfRow();
     NES_DEBUG("ODBCSource connected successfully.");
 }
 
 size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token&)
 {
-    // Todo: handle return of executeQuery
-    const size_t rowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
-    this->connection->executeQuery(this->queryBuffer, tupleBuffer, bufferProvider, rowsPerBuffer);
+    /// fetch as many rows as possible until buffer is full
+    const size_t maxRowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
+
+    ODBCPollStatus pollStatus{ODBCPollStatus::NO_NEW_ROWS};
+    while (pollStatus == ODBCPollStatus::NO_NEW_ROWS)
+    {
+        /// wait for data to arrive
+        std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
+        pollStatus = this->connection->executeQuery(this->query, tupleBuffer, bufferProvider, maxRowsPerBuffer);
+    }
     return tupleBuffer.getNumberOfTuples();
 }
 

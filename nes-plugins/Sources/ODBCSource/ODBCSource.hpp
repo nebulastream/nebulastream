@@ -74,9 +74,10 @@ private:
     std::string username;
     std::string password;
     std::string driver;
+    size_t pollIntervalMs;
+    std::string syncTable;
     std::string query;
     bool trustServerCertificate;
-    std::vector<SQLCHAR> queryBuffer;
 
     size_t fetchedSizeOfRow{0};
     std::unique_ptr<ODBCConnection> connection;
@@ -117,6 +118,16 @@ struct ConfigParametersODBC
             return DescriptorConfig::tryGet(DRIVER, config);
         }};
 
+    static inline const DescriptorConfig::ConfigParameter<size_t> POLL_INTERVAL_MS{
+        "poll_interval_ms", 1000, [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t> {
+            return DescriptorConfig::tryGet(POLL_INTERVAL_MS, config);
+        }};
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> SYNC_TABLE{
+        "sync_table", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string> {
+            return DescriptorConfig::tryGet(SYNC_TABLE, config);
+        }};
+
     static inline const DescriptorConfig::ConfigParameter<std::string> QUERY{
         "query", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string> {
             return DescriptorConfig::tryGet(QUERY, config);
@@ -128,7 +139,7 @@ struct ConfigParametersODBC
         }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, HOST, PORT, DRIVER, QUERY, USERNAME, PASSWORD, DATABASE, TRUST_SERVER_CERTIFICATE);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, HOST, PORT, DRIVER, POLL_INTERVAL_MS, SYNC_TABLE, QUERY, USERNAME, PASSWORD, DATABASE, TRUST_SERVER_CERTIFICATE);
 };
 
 }
