@@ -158,6 +158,7 @@ void ODBCSource::open()
     /// We don't want to catch errors here, but further up in the query engine
     connection->connect(connectionString, this->syncTable, this->query);
     this->fetchedSizeOfRow = this->connection->getFetchedSizeOfRow();
+    NES_WARNING("ODBC inferred row size is: {}", this->fetchedSizeOfRow);
     NES_DEBUG("ODBCSource connected successfully.");
 }
 

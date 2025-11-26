@@ -443,12 +443,12 @@ public:
     }
 
 
-    std::vector<SQLCHAR> buildNewRowFetchSting(const std::string_view userQuery, const uint64_t rowsToFetch)
+    std::vector<SQLCHAR> buildNewRowFetchSting(const std::string_view userQuery, const uint64_t numRowsToFetch)
     {
         const auto trimmedQuery = NES::Util::trimWhiteSpaces(userQuery);
         const auto selectSplit = NES::Util::splitWithStringDelimiter<std::string_view>(trimmedQuery, "SELECT");
         INVARIANT(selectSplit.size() == 1, "Query '{}' did not contain exactly one SELECT statement at the start.", trimmedQuery);
-        std::string selectTopNRows = fmt::format("SELECT TOP {} {}", rowsToFetch, selectSplit.at(0));
+        std::string selectTopNRows = fmt::format("SELECT TOP {} {} ORDER BY LabVal_ID DESC", numRowsToFetch, selectSplit.at(0));
         std::vector<SQLCHAR> queryBuffer(selectTopNRows.begin(), selectTopNRows.end());
         queryBuffer.push_back('\0');
         return queryBuffer;
