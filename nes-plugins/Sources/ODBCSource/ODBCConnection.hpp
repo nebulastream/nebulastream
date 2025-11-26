@@ -51,13 +51,13 @@ class ODBCConnection
         SQLSMALLINT sqlType;
         NES::DataType::Type nesType;
         size_t nesTypeSize;
+        size_t sqlColumnSize;
     };
 
     struct FetchedSchema
     {
         size_t numColumns;
         std::vector<TypeInfo> columnTypes;
-        std::vector<size_t> columnSizes;
         size_t sizeOfRow;
     };
 
@@ -144,7 +144,12 @@ class ODBCConnection
         {
             if (type->second == NES::DataType::Type::VARSIZED)
             {
-                return TypeInfo{.sqlType = SQL_VARCHAR, .nesType = type->second, .nesTypeSize = sqlColLen};
+                NES_WARNING("Setting size of VARSIZED in NebulaStream to: {}", sizeof(NES::VariableSizedAccess));
+                return TypeInfo{
+                    .sqlType = SQL_VARCHAR,
+                    .nesType = type->second,
+                    .nesTypeSize = sizeof(NES::VariableSizedAccess),
+                    .sqlColumnSize = sqlColLen};
             }
             constexpr size_t maxDigitsIn32BitFloat = 24;
             if (type->second == NES::DataType::Type::FLOAT32 and sqlColLen > maxDigitsIn32BitFloat)
@@ -152,16 +157,22 @@ class ODBCConnection
                 return TypeInfo{
                     .sqlType = SQL_DOUBLE,
                     .nesType = NES::DataType::Type::FLOAT64,
-                    .nesTypeSize = NES::DataType{NES::DataType::Type::FLOAT64}.getSizeInBytes()};
+                    .nesTypeSize = NES::DataType{NES::DataType::Type::FLOAT64}.getSizeInBytes(),
+                    .sqlColumnSize = sqlColLen};
             }
             if (type->second == NES::DataType::Type::INT64)
             {
                 return TypeInfo{
                     .sqlType = SQL_C_SBIGINT,
                     .nesType = NES::DataType::Type::INT64,
-                    .nesTypeSize = NES::DataType{NES::DataType::Type::INT64}.getSizeInBytes()};
+                    .nesTypeSize = NES::DataType{NES::DataType::Type::INT64}.getSizeInBytes(),
+                    .sqlColumnSize = sqlColLen};
             }
-            return TypeInfo{.sqlType = sqlType, .nesType = type->second, .nesTypeSize = NES::DataType{type->second}.getSizeInBytes()};
+            return TypeInfo{
+                .sqlType = sqlType,
+                .nesType = type->second,
+                .nesTypeSize = NES::DataType{type->second}.getSizeInBytes(),
+                .sqlColumnSize = sqlColLen};
         }
         throw NES::CannotOpenSource("Cannot conver SQLType {} to NES type.", sqlType);
     }
@@ -213,8 +224,13 @@ public:
             SQLDescribeCol(hstmt, i, colName, sizeof(colName), &nameLength, &dataType, &columnSize, &decimalDigits, &nullable);
             // fetchedSchema.columnTypes.emplace_back(getColumnType(dataType));
             fetchedSchema.columnTypes.emplace_back(getTypeInfo(dataType, columnSize));
-            fetchedSchema.columnSizes.emplace_back(columnSize);
             ++fetchedSchema.numColumns;
+            NES_WARNING(
+                "Increasing odbc schema size from {} by {} to {}",
+                fetchedSchema.sizeOfRow,
+                fetchedSchema.columnTypes.back().nesTypeSize,
+                fetchedSchema.sizeOfRow,
+                fetchedSchema.columnTypes.back().nesTypeSize);
             fetchedSchema.sizeOfRow += fetchedSchema.columnTypes.back().nesTypeSize;
 
             // Todo: validation of types and names (requires schema)
@@ -231,7 +247,8 @@ public:
 
     size_t syncRowCount()
     {
-        SQLRETURN ret = SQLExecDirect(hstmtCount, reinterpret_cast<SQLCHAR*>(countQuery.data()), static_cast<SQLINTEGER>(countQuery.size()));
+        SQLRETURN ret
+            = SQLExecDirect(hstmtCount, reinterpret_cast<SQLCHAR*>(countQuery.data()), static_cast<SQLINTEGER>(countQuery.size()));
         checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Execute COUNT statement");
 
         uint64_t rowCount{0};
@@ -283,8 +300,7 @@ public:
         ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmtCount);
         checkError(ret, SQL_HANDLE_DBC, hdbc, "Allocate count sstatement handle");
 
-        if (const SQLRETURN ret = SQLPrepare(hstmtCount, reinterpret_cast<SQLCHAR*>(countQuery.data()), SQL_NTS);
-            !SQL_SUCCEEDED(ret))
+        if (const SQLRETURN ret = SQLPrepare(hstmtCount, reinterpret_cast<SQLCHAR*>(countQuery.data()), SQL_NTS); !SQL_SUCCEEDED(ret))
         {
             checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Prepare failed");
         }
@@ -307,14 +323,14 @@ public:
         NES::AbstractBufferProvider& bufferProvider)
     {
         /// Add 1 byte for the null terminator (required)
-        if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.nesTypeSize + sizeof(uint32_t)))
+        if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.sqlColumnSize + sizeof(uint32_t)))
         {
             const auto ret = SQLGetData(
                 hstmt,
                 colIdx,
                 SQL_C_CHAR,
                 varSizedBuffer.value().getAvailableMemoryArea<char>().data() + sizeof(uint32_t),
-                typeInfo.nesTypeSize,
+                typeInfo.sqlColumnSize,
                 &indicator);
             checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
             INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
@@ -328,10 +344,8 @@ public:
         throw NES::BufferAllocationFailure("Could not get unpooled buffer for VarSized value");
     }
 
-    #include <chrono>
-    #include <cstdint>
-
-    uint64_t timestampStructToUnix(const SQL_TIMESTAMP_STRUCT& ts) {
+    uint64_t timestampStructToUnix(const SQL_TIMESTAMP_STRUCT& ts)
+    {
         using namespace std::chrono;
 
         // Create a time_point from the timestamp components
@@ -442,7 +456,6 @@ public:
         }
     }
 
-
     std::vector<SQLCHAR> buildNewRowFetchSting(const std::string_view userQuery, const uint64_t numRowsToFetch)
     {
         const auto trimmedQuery = NES::Util::trimWhiteSpaces(userQuery);
@@ -455,10 +468,7 @@ public:
     }
 
     ODBCPollStatus executeQuery(
-        std::string_view query,
-        NES::TupleBuffer& tupleBuffer,
-        NES::AbstractBufferProvider& bufferProvider,
-        const size_t rowsPerBuffer)
+        std::string_view query, NES::TupleBuffer& tupleBuffer, NES::AbstractBufferProvider& bufferProvider, const size_t rowsPerBuffer)
     {
         const auto newRowCount = syncRowCount();
         if (newRowCount <= this->rowCountTracker)
