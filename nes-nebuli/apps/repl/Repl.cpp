@@ -468,7 +468,14 @@ struct Repl::Impl
                 else
                 {
                     /// Use Replxx for interactive mode
-                    input = rx->input(getPrompt());
+                    const auto result = rx->input(getPrompt());
+                    if (!result)
+                    {
+                        /// EoF reached
+                        return;
+                    }
+
+                    input = result;
                 }
 
                 if (input.empty())
