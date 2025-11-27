@@ -45,7 +45,5 @@ public:
 
 private:
     static constexpr std::string_view NAME = "Median";
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
-    static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
 }

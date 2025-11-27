@@ -64,10 +64,10 @@ std::string FieldAccessLogicalFunction::getFieldName() const
     return fieldName;
 }
 
-LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
+LogicalFunction FieldAccessLogicalFunction::withFieldName(const std::string_view newFieldName) const
 {
     auto copy = *this;
-    copy.fieldName = std::move(fieldName);
+    copy.fieldName = newFieldName;
     return copy;
 }
 

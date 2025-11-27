@@ -25,45 +25,19 @@
 namespace NES
 {
 
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
-    : WindowAggregationLogicalFunction(
-          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(const FieldAccessLogicalFunction& onField)
+    : WindowAggregationLogicalFunction(onField, onField)
 {
 }
 
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    DataType inputStamp,
-    DataType partialAggregateStamp,
-    DataType finalAggregateStamp,
-    FieldAccessLogicalFunction onField,
-    FieldAccessLogicalFunction asField)
-    : inputStamp(std::move(inputStamp))
-    , partialAggregateStamp(std::move(partialAggregateStamp))
-    , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(std::move(onField))
-    , asField(std::move(asField))
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
+    : onField(std::move(onField)), asField(std::move(asField))
 {
 }
 
 std::string WindowAggregationLogicalFunction::toString() const
 {
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
-}
-
-DataType WindowAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType WindowAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType WindowAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
 }
 
 FieldAccessLogicalFunction WindowAggregationLogicalFunction::getOnField() const
@@ -76,21 +50,6 @@ FieldAccessLogicalFunction WindowAggregationLogicalFunction::getAsField() const
     return asField;
 }
 
-void WindowAggregationLogicalFunction::setInputStamp(DataType inputStamp)
-{
-    this->inputStamp = std::move(inputStamp);
-}
-
-void WindowAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
-{
-    this->partialAggregateStamp = std::move(partialAggregateStamp);
-}
-
-void WindowAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
-{
-    this->finalAggregateStamp = std::move(finalAggregateStamp);
-}
-
 void WindowAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
 {
     this->onField = std::move(onField);
@@ -99,6 +58,26 @@ void WindowAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onF
 void WindowAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
 {
     this->asField = std::move(asField);
+}
+
+void WindowAggregationLogicalFunction::setDataTypeOnField(const DataType newDataType)
+{
+    setOnField(getOnField().withDataType(newDataType).get<FieldAccessLogicalFunction>());
+}
+
+void WindowAggregationLogicalFunction::setFieldNameOnField(const std::string_view newFieldName)
+{
+    setOnField(getOnField().withFieldName(newFieldName).get<FieldAccessLogicalFunction>());
+}
+
+void WindowAggregationLogicalFunction::setDataTypeAsField(const DataType newDataType)
+{
+    setAsField(getAsField().withDataType(newDataType).get<FieldAccessLogicalFunction>());
+}
+
+void WindowAggregationLogicalFunction::setFieldNameAsField(const std::string_view newFieldName)
+{
+    setAsField(getAsField().withFieldName(newFieldName).get<FieldAccessLogicalFunction>());
 }
 
 bool WindowAggregationLogicalFunction::operator==(

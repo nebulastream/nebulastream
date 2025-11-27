@@ -45,9 +45,7 @@ CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
 }
 
 void CountAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// If the value is null and we are taking null values into account
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
