@@ -18,121 +18,119 @@
 #include <cstdint>
 #include <cstring>
 #include <span>
+#include <string>
 #include <string_view>
+#include <utility>
+
 #include <DataTypes/DataType.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <std/cstring.h>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
 
-ParseFunctionSignature getQuotedStringParseFunction()
-{
-    return [](const std::string_view inputString,
-              const size_t writeOffsetInBytes,
-              AbstractBufferProvider& bufferProvider,
-              TupleBuffer& tupleBufferFormatted)
-    {
-        INVARIANT(inputString.length() >= 2, "Input string must be at least 2 characters long.");
-        const auto inputStringWithoutQuotes = inputString.substr(1, inputString.length() - 2);
-        const auto variableSizedAccess = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(
-            tupleBufferFormatted, bufferProvider, std::as_bytes(std::span{inputStringWithoutQuotes}));
-        const auto combinedIdxOffset = variableSizedAccess.getCombinedIdxOffset();
-        const auto parsedValueBytes = std::as_bytes(std::span{&combinedIdxOffset, 1});
-        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
-    };
-}
-
-ParseFunctionSignature getBasicStringParseFunction()
-{
-    return [](const std::string_view inputString,
-              const size_t writeOffsetInBytes,
-              AbstractBufferProvider& bufferProvider,
-              TupleBuffer& tupleBufferFormatted)
-    {
-        const auto variableSizedAccess = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(
-            tupleBufferFormatted, bufferProvider, std::as_bytes(std::span{inputString}));
-        const auto combinedIdxOffset = variableSizedAccess.getCombinedIdxOffset();
-        const auto parsedValueBytes = std::as_bytes(std::span{&combinedIdxOffset, 1});
-        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
-    };
-}
-
-ParseFunctionSignature getStringParseFunction(const QuotationType quotationType)
-{
-    switch (quotationType)
-    {
-        case QuotationType::NONE: {
-            return getBasicStringParseFunction();
-        }
-        case QuotationType::DOUBLE_QUOTE: {
-            return getQuotedStringParseFunction();
-        }
-    }
-    std::unreachable();
-}
-
-ParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalType, const QuotationType quotationType)
+void parseRawValueIntoRecord(
+    const DataType::Type physicalType,
+    Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName,
+    const QuotationType quotationType,
+    ArenaRef& arenaRef)
 {
     switch (physicalType)
     {
         case DataType::Type::INT8: {
-            return parseFieldString<int8_t>();
+            record.write(fieldName, parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::INT16: {
-            return parseFieldString<int16_t>();
+            record.write(fieldName, parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::INT32: {
-            return parseFieldString<int32_t>();
+            record.write(fieldName, parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::INT64: {
-            return parseFieldString<int64_t>();
+            record.write(fieldName, parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::UINT8: {
-            return parseFieldString<uint8_t>();
+            record.write(fieldName, parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::UINT16: {
-            return parseFieldString<uint16_t>();
+            record.write(fieldName, parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::UINT32: {
-            return parseFieldString<uint32_t>();
+            record.write(fieldName, parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::UINT64: {
-            return parseFieldString<uint64_t>();
+            record.write(fieldName, parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::FLOAT32: {
-            return parseFieldString<float>();
+            record.write(fieldName, parseIntoNautilusRecord<float>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::FLOAT64: {
-            return parseFieldString<double>();
+            record.write(fieldName, parseIntoNautilusRecord<double>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::CHAR: {
-            return (quotationType == QuotationType::NONE) ? parseFieldString<char>() : parseQuotedFieldString<char>();
+            switch (quotationType)
+            {
+                case QuotationType::NONE: {
+                    record.write(fieldName, parseIntoNautilusRecord<char>(fieldAddress, fieldSize));
+                    return;
+                }
+                case QuotationType::DOUBLE_QUOTE: {
+                    record.write(
+                        fieldName,
+                        parseIntoNautilusRecord<char>(fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2)));
+                    return;
+                }
+            }
+            std::unreachable();
         }
         case DataType::Type::BOOLEAN: {
-            return parseFieldString<bool>();
+            record.write(fieldName, parseIntoNautilusRecord<bool>(fieldAddress, fieldSize));
+            return;
         }
         case DataType::Type::VARSIZED: {
-            return getBasicStringParseFunction();
+            switch (quotationType)
+            {
+                case QuotationType::NONE: {
+                    auto varSized = arenaRef.allocateVariableSizedData(fieldSize);
+                    nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
+                    record.write(fieldName, varSized);
+                    return;
+                }
+                case QuotationType::DOUBLE_QUOTE: {
+                    const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
+                    const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
+
+                    auto varSized = arenaRef.allocateVariableSizedData(fieldSizeWithoutClosingQuote);
+                    nautilus::memcpy(varSized.getContent(), fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
+                    record.write(fieldName, varSized);
+                    return;
+                }
+            }
+            std::unreachable();
         }
-        case DataType::Type::VARSIZED_POINTER_REP: {
-            throw NotImplemented("Cannot parse VARSIZED_POINTER_REP type.");
-        }
-        case DataType::Type::UNDEFINED: {
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw NotImplemented("Cannot parse varsized pointer rep type.");
+        case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
-        }
     }
-    return nullptr;
+    std::unreachable();
 }
 
-ParseFunctionSignature getParseFunction(const DataType::Type physicalType, const QuotationType quotationType)
-{
-    if (physicalType == DataType::Type::VARSIZED)
-    {
-        return getStringParseFunction(quotationType);
-    }
-    return getBasicTypeParseFunction(physicalType, quotationType);
-}
 }

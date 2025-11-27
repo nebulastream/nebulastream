@@ -33,7 +33,7 @@ public:
     /// @brief Constructor for the scan operator that receives a memory layout and a projection vector.
     /// @param memoryLayout memory layout that describes the tuple buffer.
     /// @param projections projection vector
-    ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
+    explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
@@ -43,6 +43,9 @@ private:
     std::shared_ptr<TupleBufferRef> bufferRef;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::optional<PhysicalOperator> child;
+    bool isRawScan = false;
+
+    void rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 };
 
 }
