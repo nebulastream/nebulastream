@@ -48,6 +48,13 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
+    if (wrappedOp.getInputSchema()->getSizeOfSchemaInBytes() > configuredBufferSize)
+    {
+        throw TuplesTooLargeForPipelineBufferSize(
+            "Got pipeline with an input schema size of {}, which is larger than the configured buffer size of the pipeline, which is {}",
+            wrappedOp.getInputSchema()->getSizeOfSchemaInBytes(),
+            configuredBufferSize);
+    }
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
