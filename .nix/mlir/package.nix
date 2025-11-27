@@ -4,12 +4,23 @@ let
   stdenv = pkgs.stdenvNoCC;
   platform = pkgs.stdenv.hostPlatform;
   arch =
-    if platform.isAarch64 then "arm64"
-    else if platform.isx86_64 then "x64"
-    else builtins.throw "Unsupported system: ${platform.system}";
+    if platform.isAarch64 then
+      "arm64"
+    else if platform.isx86_64 then
+      "x64"
+    else
+      builtins.throw "Unsupported system: ${platform.system}";
 
-  supportedSanitizers = [ "none" "address" "thread" "undefined" ];
-  supportedStdlibs = [ "libcxx" "libstdcxx" ];
+  supportedSanitizers = [
+    "none"
+    "address"
+    "thread"
+    "undefined"
+  ];
+  supportedStdlibs = [
+    "libcxx"
+    "libstdcxx"
+  ];
 
   hashes = {
     x64 = {
@@ -50,10 +61,12 @@ let
     };
   };
 
-  sanitizeSelection = list: value: if lib.elem value list then value else
-    builtins.throw "Unsupported selection '${value}'";
+  sanitizeSelection =
+    list: value:
+    if lib.elem value list then value else builtins.throw "Unsupported selection '${value}'";
 
-  hashFor = { sanitizer, stdlib }:
+  hashFor =
+    { sanitizer, stdlib }:
     let
       san = sanitizeSelection supportedSanitizers sanitizer;
       std = sanitizeSelection supportedStdlibs stdlib;
@@ -61,7 +74,8 @@ let
     in
     archHashes.${san}.${std};
 
-  mkMlirBinary = { sanitizer, stdlib }:
+  mkMlirBinary =
+    { sanitizer, stdlib }:
     let
       hash = hashFor { inherit sanitizer stdlib; };
       url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-${arch}-${sanitizer}-${stdlib}.tar.zstd";
@@ -75,7 +89,10 @@ let
         sha256 = hash;
       };
 
-      nativeBuildInputs = [ pkgs.zstd pkgs.gnutar ];
+      nativeBuildInputs = [
+        pkgs.zstd
+        pkgs.gnutar
+      ];
       dontUnpack = true;
       strictDeps = true;
 
@@ -95,16 +112,27 @@ let
       };
     };
 
-  normalizeArgs = args:
+  normalizeArgs =
+    args:
     let
       sanitizer = args.sanitizer or "none";
       stdlib = args.stdlib or "libstdcxx";
-    in { inherit sanitizer stdlib; };
+    in
+    {
+      inherit sanitizer stdlib;
+    };
 
-in {
-  forOptions = args:
-    let cfg = normalizeArgs args;
-    in mkMlirBinary cfg;
+in
+{
+  forOptions =
+    args:
+    let
+      cfg = normalizeArgs args;
+    in
+    mkMlirBinary cfg;
 
-  mlirBinary = mkMlirBinary { sanitizer = "none"; stdlib = "libstdcxx"; };
+  mlirBinary = mkMlirBinary {
+    sanitizer = "none";
+    stdlib = "libstdcxx";
+  };
 }

@@ -5,7 +5,11 @@ let
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 
-  build = { extraBuildInputs ? [ ], useLibcxx ? false }:
+  build =
+    {
+      extraBuildInputs ? [ ],
+      useLibcxx ? false,
+    }:
     let
       libcxxFlags = lib.optionals useLibcxx [
         "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
@@ -42,7 +46,8 @@ let
         "-DJSON_BuildTests=OFF"
         "-DJSON_FastTests=OFF"
         "-DJSON_MultipleHeaders=ON"
-      ] ++ libcxxFlags;
+      ]
+      ++ libcxxFlags;
 
       strictDeps = true;
 
@@ -55,26 +60,39 @@ let
       };
     });
 
-  parseWithSanitizerArgs = arg:
-    if builtins.isList arg then {
-      extraBuildInputs = arg;
-      useLibcxx = false;
-    } else if builtins.isAttrs arg then {
-      extraBuildInputs =
-        if arg ? extraBuildInputs then arg.extraBuildInputs
-        else if arg ? extraPackages then arg.extraPackages
-        else [ ];
-      useLibcxx = arg.useLibcxx or false;
-    } else {
-      extraBuildInputs = [ ];
-      useLibcxx = false;
-    };
+  parseWithSanitizerArgs =
+    arg:
+    if builtins.isList arg then
+      {
+        extraBuildInputs = arg;
+        useLibcxx = false;
+      }
+    else if builtins.isAttrs arg then
+      {
+        extraBuildInputs =
+          if arg ? extraBuildInputs then
+            arg.extraBuildInputs
+          else if arg ? extraPackages then
+            arg.extraPackages
+          else
+            [ ];
+        useLibcxx = arg.useLibcxx or false;
+      }
+    else
+      {
+        extraBuildInputs = [ ];
+        useLibcxx = false;
+      };
 
-in {
+in
+{
   default = build { };
-  withSanitizer = arg:
-    let cfg = parseWithSanitizerArgs arg;
-    in build {
+  withSanitizer =
+    arg:
+    let
+      cfg = parseWithSanitizerArgs arg;
+    in
+    build {
       inherit (cfg) extraBuildInputs useLibcxx;
     };
 }
