@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -26,6 +27,7 @@
 
 namespace NES
 {
+
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferRef is closely coupled with a memory layout, and we support row and column layouts, currently.
