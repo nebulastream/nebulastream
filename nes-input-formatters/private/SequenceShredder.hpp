@@ -31,15 +31,8 @@ class ConcurrentSynchronizationTest;
 namespace NES
 {
 
-/// Acronyms:
-/// ST <-> Spanning Tuple
-/// SN <-> Sequence Number
-/// ABA <-> ABA Problem (en.wikipedia.org/wiki/ABA_problem)
-/// abaItNo/ABAItNo <-> ABA Iteration Number
-
-
-/// Forward referencing 'STBuffer' to hide implementation details
-class STBuffer;
+/// Forward referencing 'SpanningTupleBuffer' to hide implementation details
+class SpanningTupleBuffer;
 
 /// Contains an empty 'spanningBuffers' vector, if the SequenceShredder could not claim any spanning tuples for the calling thread
 /// Otherwise, 'spanningBuffers' contains the buffers of the 1-2 spanning tuples and 'indexOfInputBuffer' indicates which of the buffers
@@ -68,13 +61,13 @@ struct SequenceShredderResult
     SpanningBuffers spanningBuffers;
 };
 
-/// The SequenceShredder concurrently takes StagedBuffers and uses a (thread-safe) spanning tuple buffer (STBuffer) to determine whether
+/// The SequenceShredder concurrently takes StagedBuffers and uses a (thread-safe) spanning tuple buffer (SpanningTupleBuffer) to determine whether
 /// the provided buffer completes spanning tuples with buffers that (usually) other threads processed
-/// (Planned) The SequenceShredder keeps track of sequence numbers that were not in range of the STBuffer
-/// (Planned) Given enough out-of-range requests, the SequenceShredder doubles the size of the STBuffer
+/// (Planned) The SequenceShredder keeps track of sequence numbers that were not in range of the SpanningTupleBuffer
+/// (Planned) Given enough out-of-range requests, the SequenceShredder doubles the size of the SpanningTupleBuffer
 class SequenceShredder
 {
-    static constexpr size_t INITIAL_SIZE_OF_ST_BUFFER = 1024;
+    static constexpr size_t INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER = 1024;
 
 public:
     explicit SequenceShredder(size_t sizeOfTupleDelimiterInBytes);
@@ -86,27 +79,27 @@ public:
     SequenceShredder(SequenceShredder&&) = default;
     SequenceShredder& operator=(SequenceShredder&&) = default;
 
-    /// Uses the STBuffer to thread-safely determine whether the 'indexedRawBuffer' with the given 'sequenceNumber'
+    /// Uses the SpanningTupleBuffer to thread-safely determine whether the 'indexedRawBuffer' with the given 'sequenceNumber'
     /// completes spanning tuples and whether the calling thread is the first to claim the individual spanning tuples
-    SequenceShredderResult findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer);
-    SequenceShredderResult findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer);
+    SequenceShredderResult findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer);
+    SequenceShredderResult findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer);
 
-    /// Assumes findLeadingSTWithDelimiter was already called and the StagedBuffer for 'sequenceNumber' already set
+    /// Assumes findLeadingSpanningTupleWithDelimiter was already called and the StagedBuffer for 'sequenceNumber' already set
     /// Searches for a reachable buffer that delimits tuples in trailing direction (higher SequenceNumbers)
-    SpanningBuffers findTrailingSTWithDelimiter(SequenceNumber sequenceNumber);
+    SpanningBuffers findTrailingSpanningTupleWithDelimiter(SequenceNumber sequenceNumber);
     /// Overload that allows to lazily set the offset of the last record starting in the StagedBuffer (and the atomic state)
-    /// if the offset was not already known when 'findLeadingSTWithDelimiter' was called
-    SpanningBuffers findTrailingSTWithDelimiter(SequenceNumber sequenceNumber, FieldIndex offsetOfLastTuple);
+    /// if the offset was not already known when 'findLeadingSpanningTupleWithDelimiter' was called
+    SpanningBuffers findTrailingSpanningTupleWithDelimiter(SequenceNumber sequenceNumber, FieldIndex offsetOfLastTuple);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 
 private:
-    std::unique_ptr<STBuffer> spanningTupleBuffer;
+    std::unique_ptr<SpanningTupleBuffer> spanningTupleBuffer;
 
     /// Enable 'ConcurrentSynchronizationTest' to used mocked buffer and provide 'sequenceNumber' as additional argument
     friend ConcurrentSynchronizationTest;
-    SequenceShredderResult findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
-    SequenceShredderResult findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
+    SequenceShredderResult findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
+    SequenceShredderResult findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
 };
 
 }
