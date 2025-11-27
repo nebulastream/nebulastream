@@ -144,7 +144,6 @@ class ODBCConnection
         {
             if (type->second == NES::DataType::Type::VARSIZED)
             {
-                NES_WARNING("Setting size of VARSIZED in NebulaStream to: {}", sizeof(NES::VariableSizedAccess));
                 return TypeInfo{
                     .sqlType = SQL_VARCHAR,
                     .nesType = type->second,
@@ -229,7 +228,7 @@ public:
                 "Increasing odbc schema size from {} by {} to {}",
                 fetchedSchema.sizeOfRow,
                 fetchedSchema.columnTypes.back().nesTypeSize,
-                fetchedSchema.sizeOfRow,
+                fetchedSchema.sizeOfRow +
                 fetchedSchema.columnTypes.back().nesTypeSize);
             fetchedSchema.sizeOfRow += fetchedSchema.columnTypes.back().nesTypeSize;
 
