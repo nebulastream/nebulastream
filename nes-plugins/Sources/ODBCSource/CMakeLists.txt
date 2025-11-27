@@ -10,10 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(ODBC Source nes-sources-registry ODBC_source_plugin_library ODBCSource.cpp)
-add_plugin_as_library(ODBC SourceValidation nes-sources-registry ODBC_source_validation_plugin_library ODBCSource.cpp)
+add_plugin_as_library(ODBC Source nes-sources-registry ODBC_source_plugin_library ODBCSource.cpp ODBCConnection.cpp)
+add_plugin_as_library(ODBC SourceValidation nes-sources-registry ODBC_source_validation_plugin_library ODBCSource.cpp ODBCConnection.cpp)
 
 find_package(unixodbc CONFIG REQUIRED)
 
 target_link_libraries(ODBC_source_plugin_library PRIVATE UNIX::odbc)
 target_link_libraries(ODBC_source_validation_plugin_library PRIVATE UNIX::odbc)
+
+target_include_directories(ODBC_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
