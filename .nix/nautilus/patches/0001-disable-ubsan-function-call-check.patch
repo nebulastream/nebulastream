@@ -1,0 +1,14 @@
+Index: nautilus/include/nautilus/Executable.hpp
+===================================================================
+diff --git a/nautilus/include/nautilus/Executable.hpp b/nautilus/include/nautilus/Executable.hpp
+--- a/nautilus/include/nautilus/Executable.hpp	(revision 8e822c5ace0ebd4fd11a49cd6c0bf29b622d7956)
++++ b/nautilus/include/nautilus/Executable.hpp	(date 1759779006981)
+@@ -68,7 +68,7 @@
+ 		 * @param arguments
+ 		 * @return returns the result of the function if any
+ 		 */
+-		R operator()(Args... arguments) {
++		__attribute__((no_sanitize("function"))) R operator()(Args... arguments) {
+ 			if (std::holds_alternative<FunctionType*>(func)) {
+ 				auto fptr = std::get<FunctionType*>(func);
+ 				if constexpr (!std::is_void_v<R>) {
