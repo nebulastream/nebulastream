@@ -4,10 +4,13 @@ let
   antlr4Version = "4.13.2";
   llvmPackages = pkgs.llvmPackages_19;
 
-  stdenvFor = useLibcxx:
-    if useLibcxx then llvmPackages.libcxxStdenv else llvmPackages.stdenv;
+  stdenvFor = useLibcxx: if useLibcxx then llvmPackages.libcxxStdenv else llvmPackages.stdenv;
 
-  build = { extraBuildInputs ? [], useLibcxx ? false }:
+  build =
+    {
+      extraBuildInputs ? [ ],
+      useLibcxx ? false,
+    }:
     let
       libcxxFlags = lib.optionals useLibcxx [
         "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
@@ -37,7 +40,8 @@ let
       buildInputs = [
         pkgs.libuuid
         pkgs.zlib
-      ] ++ extraBuildInputs;
+      ]
+      ++ extraBuildInputs;
 
       postPatch = ''
         substituteInPlace runtime/CMakeLists.txt \
@@ -53,7 +57,8 @@ let
         "-DANTLR_BUILD_SHARED=ON"
         "-DANTLR4_INSTALL=ON"
         "-DANTLR_BUILD_CPP_TESTS=OFF"
-      ] ++ libcxxFlags;
+      ]
+      ++ libcxxFlags;
 
       enableParallelBuilding = true;
       strictDeps = true;
@@ -66,26 +71,39 @@ let
       };
     };
 
-  parseWithSanitizerArgs = arg:
-    if builtins.isList arg then {
-      extraBuildInputs = arg;
-      useLibcxx = false;
-    } else if builtins.isAttrs arg then {
-      extraBuildInputs =
-        if arg ? extraBuildInputs then arg.extraBuildInputs
-        else if arg ? extraPackages then arg.extraPackages
-        else [ ];
-      useLibcxx = arg.useLibcxx or false;
-    } else {
-      extraBuildInputs = [ ];
-      useLibcxx = false;
-    };
+  parseWithSanitizerArgs =
+    arg:
+    if builtins.isList arg then
+      {
+        extraBuildInputs = arg;
+        useLibcxx = false;
+      }
+    else if builtins.isAttrs arg then
+      {
+        extraBuildInputs =
+          if arg ? extraBuildInputs then
+            arg.extraBuildInputs
+          else if arg ? extraPackages then
+            arg.extraPackages
+          else
+            [ ];
+        useLibcxx = arg.useLibcxx or false;
+      }
+    else
+      {
+        extraBuildInputs = [ ];
+        useLibcxx = false;
+      };
 
-in {
+in
+{
   default = build { };
-  withSanitizer = arg:
-    let cfg = parseWithSanitizerArgs arg;
-    in build {
+  withSanitizer =
+    arg:
+    let
+      cfg = parseWithSanitizerArgs arg;
+    in
+    build {
       inherit (cfg) extraBuildInputs useLibcxx;
     };
 }
