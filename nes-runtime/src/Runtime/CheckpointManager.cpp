@@ -138,16 +138,4 @@ void CheckpointManager::unregisterCallback(const std::string& identifier)
     callbacks.erase(identifier);
 }
 
-void CheckpointManager::restoreHandlers(const std::vector<std::shared_ptr<OperatorHandler>>& handlers)
-{
-    const auto directory = getCheckpointDirectory();
-    for (const auto& handler : handlers)
-    {
-        if (handler)
-        {
-            handler->restoreState(directory);
-        }
-    }
-}
-
 }

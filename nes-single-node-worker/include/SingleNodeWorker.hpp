@@ -47,8 +47,7 @@ class SingleNodeWorker
     SingleNodeWorkerConfiguration configuration;
 
     void recoverLatestCheckpoint();
-    static std::optional<std::string> loadOriginalSqlFromPlanFile(const std::filesystem::path& planFilePath);
-    static std::string buildCheckpointPlanContent(const std::string& originalSql, const std::string& serializedPlan);
+    static std::optional<std::string> loadSerializedPlanFromFile(const std::filesystem::path& planFilePath);
 
 public:
     explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&);

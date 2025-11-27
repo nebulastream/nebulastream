@@ -100,7 +100,6 @@ NodeEngine::NodeEngine(
 QueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
     auto statefulHandlers = compiledQueryPlan->statefulHandlers;
-    CheckpointManager::restoreHandlers(statefulHandlers);
     auto queryId = queryTracker->registerQuery(std::move(compiledQueryPlan));
     if (!statefulHandlers.empty())
     {
