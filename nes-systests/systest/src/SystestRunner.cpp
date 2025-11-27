@@ -49,6 +49,8 @@
 #include <fmt/format.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
+#include "../../k8s/include/K8sQueryBuilder.hpp"
+#include "../../k8s/include/K8sTopologyBuilder.hpp
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -56,6 +58,8 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+
+#include "K8sJSONSubmitter.hpp"
 
 namespace NES::Systest
 {
@@ -160,6 +164,7 @@ std::vector<RunningQuery> runQueries(
     using SystestKey = std::pair<TestName, SystestQueryId>;
     std::unordered_set<SystestKey> completedQueries; /// Track which queries have completed
 
+    K8sJSONSubmitter yamlSubmitter("default");
     std::queue<SystestQuery> pending;
     std::vector<SystestQuery> dependentQueries;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -170,6 +175,7 @@ std::vector<RunningQuery> runQueries(
         }
         else
         {
+            std::cout << K8sTopologyBuilder::toJsonString(*it) << "\n" << std::endl;
             pending.push(*it);
         }
     }
