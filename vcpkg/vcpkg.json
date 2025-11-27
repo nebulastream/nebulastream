@@ -45,7 +45,9 @@
     "nameof",
     "scope-guard",
     "boost-url",
-    "simdjson"
+    "simdjson",
+    "kubernetes",
+    "cjson"
   ],
   "overrides": [
     {
