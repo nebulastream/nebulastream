@@ -39,9 +39,17 @@ message(STATUS "Systest testdata is located at ${EXPANDED_TEST_DATA_PATH}")
 
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
+list(APPEND SLT_SOURCE_FILES ../kubernetes/src/K8sQueryBuilder.cpp
+        ../kubernetes/src/K8sTopologyBuilder.cpp
+        ../kubernetes/src/K8sYAMLSubmitter.cpp
+        )
+
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
 target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib nes-sql-parser PRIVATE nes-input-formatters)
-target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+target_include_directories(nes-systest-lib PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../kubernetes/include>
+)
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"

@@ -33,6 +33,7 @@
     "folly",
     "grpc",
     "gtest",
+    "kubectl",
     "libcuckoo",
     "libuuid",
     "magic-enum",
