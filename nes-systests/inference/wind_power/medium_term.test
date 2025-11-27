@@ -38,14 +38,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_2q TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_2q_16 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE TWO_QUEUES SIZE 16
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_2q, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_2q_16, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -57,14 +57,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_2q TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_2q_32 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE TWO_QUEUES SIZE 32
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_2q, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_2q_32, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -76,14 +76,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_2q TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_2q_64 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE TWO_QUEUES SIZE 64
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_2q, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_2q_64, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -95,14 +95,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_2q TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_2q_128 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE TWO_QUEUES SIZE 128
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_2q, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_2q_128, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -114,14 +114,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_fifo TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_fifo_16 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE FIFO SIZE 16
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_fifo, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_fifo_16, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -133,14 +133,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_fifo TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_fifo_32 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE FIFO SIZE 32
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_fifo, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_fifo_32, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -152,14 +152,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_fifo TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_fifo_64 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE FIFO SIZE 64
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_fifo, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_fifo_64, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -171,14 +171,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_fifo TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_fifo_128 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE FIFO SIZE 128
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_fifo, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_fifo_128, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -190,14 +190,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lfu TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lfu_16 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LFU SIZE 16
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lfu, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lfu_16, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -209,14 +209,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lfu TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lfu_32 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LFU SIZE 32
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lfu, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lfu_32, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -228,14 +228,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lfu TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lfu_64 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LFU SIZE 64
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lfu, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lfu_64, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -247,14 +247,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lfu TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lfu_128 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LFU SIZE 128
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lfu, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lfu_128, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -266,14 +266,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lru TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lru_16 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LRU SIZE 16
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lru, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lru_16, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -285,14 +285,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lru TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lru_32 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LRU SIZE 32
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lru, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lru_32, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -304,14 +304,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lru TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lru_64 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LRU SIZE 64
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lru, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lru_64, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -323,14 +323,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_lru TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_lru_128 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE LRU SIZE 128
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_lru, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_lru_128, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -342,14 +342,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_second_chance TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_second_chance_16 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE SECOND_CHANCE SIZE 16
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_second_chance, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_second_chance_16, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -361,14 +361,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_second_chance TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_second_chance_32 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE SECOND_CHANCE SIZE 32
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_second_chance, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_second_chance_32, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -380,14 +380,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_second_chance TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_second_chance_64 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE SECOND_CHANCE SIZE 64
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_second_chance, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_second_chance_64, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
@@ -399,14 +399,14 @@ SELECT powerProdNext2Min FROM (
 INTO windPowerVarsizedDiscard;
 ----
 
-MODEL dLinear_second_chance TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
+MODEL dLinear_second_chance_128 TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
 VARSIZED
 VARSIZED powerProdNext2Min
 BATCH_SIZE 1
 CACHE SECOND_CHANCE SIZE 128
 
 SELECT powerProdNext2Min FROM (
-    SELECT INFER_MODEL(dLinear_second_chance, (value_60_sec))
+    SELECT INFER_MODEL(dLinear_second_chance_128, (value_60_sec))
     FROM (
         SELECT ARRAY_AGG(value_sc) AS value_60_sec
         FROM (
