@@ -29,28 +29,28 @@
 namespace NES
 {
 
-using STBufferIdx = NESStrongType<uint32_t, struct STBufferIdx_, 0, 1>;
+using SpanningTupleBufferIdx = NESStrongType<uint32_t, struct SpanningTupleBufferIdx_, 0, 1>;
 using ABAItNo = NESStrongType<uint32_t, struct ABAItNo_, 0, 1>;
 
-class STBufferEntry;
+class SpanningTupleBufferEntry;
 
-/// (Implementation detail of the STBufferEntry)
-/// The AtomicState consists a 64-bit-wide atomic bitmap that allows the STBuffer to thread-safely determine whether a specific
-/// STBufferEntry may overwrite a prior entry or whether it connects to a neighbour-entry and whether the connecting entries form an ST
+/// (Implementation detail of the SpanningTupleBufferEntry)
+/// The AtomicState consists a 64-bit-wide atomic bitmap that allows the SpanningTupleBuffer to thread-safely determine whether a specific
+/// SpanningTupleBufferEntry may overwrite a prior entry or whether it connects to a neighbour-entry and whether the connecting entries form an SpanningTuple
 /// Central to the AtomicState are the first 32 bits, which represent the 'ABA iteration number' (abaItNo)
-/// The abaItNo protects against the ABA problem, but more importantly, it allows the STBuffer to determine which iteration an STBufferEntry
-/// belongs to (see header documentation of STBuffer)
+/// The abaItNo protects against the ABA problem, but more importantly, it allows the SpanningTupleBuffer to determine which iteration an SpanningTupleBufferEntry
+/// belongs to (see header documentation of SpanningTupleBuffer)
 /// Furthermore, the bitmap denotes whether an entry (with a specific abaItNo) has a delimiter, whether it was claimed as the first buffer
-/// in a spanning tuple, and whether the leading/trailing buffer of the STBufferEntry were moved out already
+/// in a spanning tuple, and whether the leading/trailing buffer of the SpanningTupleBufferEntry were moved out already
 /// If both the 'usedLeadingBufferBit' and the 'usedTrailingBufferBit' are set, then the buffer has no more uses and it is safe to replace
-/// it with the buffer that has a sequence number that corresponds to the same STBufferEntry and that has the next higher abaItNo
+/// it with the buffer that has a sequence number that corresponds to the same SpanningTupleBufferEntry and that has the next higher abaItNo
 /// (Planned) Some of the (currently) 28 unused bits will be used to model uncertainty. If a delimiter is larger than a byte a thread may
 ///           be uncertain whether the first/last few bytes of its buffer form a valid tuple delimiter. Additionally, it may be impossible
 ///           for a thread to determine if its buffer starts in an escape sequence or not. We can model these additional pieces of
 ///           information as states using the remaning bits and (potentially) perform state transitions as (atomic) bitwise operations.
 class AtomicState
 {
-    friend STBufferEntry;
+    friend SpanningTupleBufferEntry;
 
     /// 33:   000000000000000000000000000000100000000000000000000000000000000
     static constexpr uint64_t hasTupleDelimiterBit = (1ULL << 32ULL); /// NOLINT(readability-magic-numbers)
@@ -65,16 +65,16 @@ class AtomicState
     ///       000000000000000000000000000110000000000000000000000000000000000
     static constexpr uint64_t usedLeadingAndTrailingBufferBits = (usedLeadingBufferBit | usedTrailingBufferBit);
 
-    /// The STBuffer initializes all STBufferEntries, except for the very first entry, with the 'defaultState'
+    /// The SpanningTupleBuffer initializes all SpanningTupleBufferEntries, except for the very first entry, with the 'defaultState'
     /// Tag: 0, HasTupleDelimiter: True, ClaimedSpanningTuple: True, UsedLeading: True, UsedTrailing: True
     static constexpr uint64_t defaultState = (0ULL | claimedSpanningTupleBit | usedLeadingBufferBit | usedTrailingBufferBit);
-    /// The STBuffer initializes the very first entry with a dummy buffer and a matching dummy state to trigger the first leading ST
+    /// The SpanningTupleBuffer initializes the very first entry with a dummy buffer and a matching dummy state to trigger the first leading SpanningTuple
     /// Tag: 1, HasTupleDelimiter: True, ClaimedSpanningTuple: False, UsedLeading: True, UsedTrailing: False, HasValidLastDelimiterOffset: True
     static constexpr uint64_t firstEntryDummy = (1ULL | hasTupleDelimiterBit | usedLeadingBufferBit | hasValidLastDelimiterOffsetBit);
 
-    /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
-    /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end
-    /// [34]   : ClaimedSpanningTuple: signals to threads that the corresponding buffer was already claimed to start an ST by another thread
+    /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during SpanningTuple search
+    /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (SpanningTuple) search, since the buffer represents a possible start/end
+    /// [34]   : ClaimedSpanningTuple: signals to threads that the corresponding buffer was already claimed to start an SpanningTuple by another thread
     /// [35]   : UsedLeadingBuffer:    signals to threads that the leading buffer use was consumed already
     /// [36]   : UsedTrailingBuffer:   signals to threads that the trailing buffer use was consumed already
     class BitmapState
@@ -124,7 +124,7 @@ class AtomicState
 
     void setHasTupleDelimiterState(const ABAItNo abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber.getRawValue()); }
 
-    void setHasTupleDelimiterAndValidTrailingSTState(const ABAItNo abaItNumber)
+    void setHasTupleDelimiterAndValidTrailingSpanningTupleState(const ABAItNo abaItNumber)
     {
         this->state = (hasTupleDelimiterBit | hasValidLastDelimiterOffsetBit | abaItNumber.getRawValue());
     }
@@ -144,13 +144,13 @@ class AtomicState
     std::atomic<uint64_t> state;
 };
 
-/// Entry of spanning tuple buffer (STBuffer). Is cache-line-size-aligned (64B) to avoid false sharing and contains:
-/// - (48B): two buffer references, buffers with delimiters can be used to complete both a leading and a trailing spanning tuple (ST)
-///     - since only one thread can find an ST, threads can safely move their buffer reference out of the STBufferEntry without synchronization
-/// - (8B) : the atomic state of the entry, which allows the STBuffer to determine valid spanning tuples and to synchronize between threads
+/// Entry of spanning tuple buffer (SpanningTupleBuffer). Is cache-line-size-aligned (64B) to avoid false sharing and contains:
+/// - (48B): two buffer references, buffers with delimiters can be used to complete both a leading and a trailing spanning tuple
+///     - since only one thread can find an SpanningTuple, threads can safely move their buffer reference out of the SpanningTupleBufferEntry without synchronization
+/// - (8B) : the atomic state of the entry, which allows the SpanningTupleBuffer to determine valid spanning tuples and to synchronize between threads
 /// - (4B) : the offset of the first delimiter in the buffer, which the InputFormatterTask uses to construct a spanning tuple
 /// - (4B) : the offset of the last delimiter in the buffer, which the InputFormatterTask uses to construct a spanning tuple
-class alignas(std::hardware_destructive_interference_size) STBufferEntry /// NOLINT(readability-magic-numbers)
+class alignas(std::hardware_destructive_interference_size) SpanningTupleBufferEntry /// NOLINT(readability-magic-numbers)
 {
 public:
     struct EntryState
@@ -160,17 +160,17 @@ public:
         bool hasValidTrailingDelimiterOffset = false;
     };
 
-    STBufferEntry() = default;
+    SpanningTupleBufferEntry() = default;
 
     /// Sets the state of the first entry to a value that allows triggering the first leading spanning tuple of a stream
     void setStateOfFirstIndex(TupleBuffer dummyBuffer);
 
-    /// Overwrites an invalid offset to the trailing ST and sets flips the AtomicState-bit that represents a valid trailing offset
-    /// After calling this function, any thread can find an ST starting with this entry
-    void setOffsetOfTrailingST(FieldIndex offsetOfLastTuple);
+    /// Overwrites an invalid offset to the trailing SpanningTuple and sets flips the AtomicState-bit that represents a valid trailing offset
+    /// After calling this function, any thread can find an SpanningTuple starting with this entry
+    void setOffsetOfTrailingSpanningTuple(FieldIndex offsetOfLastTuple);
 
-    /// A thread can claim a spanning tuple by claiming the first buffer of the spanning tuple (ST).
-    /// Multiple threads may concurrently call 'tryClaimSpanningTuple()', but only one thread can successfully claim the ST.
+    /// A thread can claim a spanning tuple by claiming the first buffer of the spanning tuple (SpanningTuple).
+    /// Multiple threads may concurrently call 'tryClaimSpanningTuple()', but only one thread can successfully claim the SpanningTuple.
     /// Only the succeeding thread receives a valid 'StagedBuffer', all other threads receive a 'nullopt'.
     std::optional<StagedBuffer> tryClaimSpanningTuple(ABAItNo abaItNumber);
 
@@ -193,9 +193,10 @@ public:
     /// Atomically loads the state of an entry, checks if its ABA iteration number matches the expected and if it has a tuple delimiter
     [[nodiscard]] EntryState getEntryState(ABAItNo expectedABAItNo) const;
 
-    /// Iterates over all STBufferEntries, checking that they don't hold any buffer references if they should not and that their atomic
+    /// Iterates over all SpanningTupleBufferEntries, checking that they don't hold any buffer references if they should not and that their atomic
     /// bitmap state is correct. Logs errors and returns 'false' if at least one entry is in an invalid state
-    [[nodiscard]] bool validateFinalState(STBufferIdx bufferIdx, const STBufferEntry& nextEntry, STBufferIdx lastIdxOfBuffer) const;
+    [[nodiscard]] bool validateFinalState(
+        SpanningTupleBufferIdx bufferIdx, const SpanningTupleBufferEntry& nextEntry, SpanningTupleBufferIdx lastIdxOfBuffer) const;
 
 private:
     /// 24 Bytes (TupleBuffer)
@@ -210,6 +211,6 @@ private:
     uint32_t lastDelimiterOffset = 0;
 };
 
-static_assert(sizeof(STBufferEntry) % std::hardware_destructive_interference_size == 0);
-static_assert(alignof(STBufferEntry) % std::hardware_destructive_interference_size == 0);
+static_assert(sizeof(SpanningTupleBufferEntry) % std::hardware_destructive_interference_size == 0);
+static_assert(alignof(SpanningTupleBufferEntry) % std::hardware_destructive_interference_size == 0);
 }

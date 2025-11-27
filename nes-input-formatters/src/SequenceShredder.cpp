@@ -33,7 +33,7 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <RawTupleBuffer.hpp>
-#include <STBuffer.hpp>
+#include <SpanningTupleBuffer.hpp>
 #include <from_current.hpp>
 
 namespace NES
@@ -43,7 +43,7 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
 {
     auto dummyBuffer = BufferManager::create(1, 1)->getBufferBlocking();
     dummyBuffer.setNumberOfTuples(sizeOfTupleDelimiterInBytes);
-    this->spanningTupleBuffer = std::make_unique<STBuffer>(INITIAL_SIZE_OF_ST_BUFFER, std::move(dummyBuffer));
+    this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>(INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER, std::move(dummyBuffer));
 }
 
 SequenceShredder::~SequenceShredder()
@@ -65,46 +65,48 @@ SequenceShredder::~SequenceShredder()
     }
 }
 
-SequenceShredderResult SequenceShredder::findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer)
+SequenceShredderResult SequenceShredder::findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findLeadingSTWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+    return findLeadingSpanningTupleWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
 }
 
-SpanningBuffers SequenceShredder::findTrailingSTWithDelimiter(const SequenceNumber sequenceNumber)
+SpanningBuffers SequenceShredder::findTrailingSpanningTupleWithDelimiter(const SequenceNumber sequenceNumber)
 {
-    return spanningTupleBuffer->tryFindTrailingSTForBufferWithDelimiter(sequenceNumber);
+    return spanningTupleBuffer->tryFindTrailingSpanningTupleForBufferWithDelimiter(sequenceNumber);
 }
 
-SpanningBuffers SequenceShredder::findTrailingSTWithDelimiter(const SequenceNumber sequenceNumber, const FieldIndex offsetOfLastTuple)
+SpanningBuffers
+SequenceShredder::findTrailingSpanningTupleWithDelimiter(const SequenceNumber sequenceNumber, const FieldIndex offsetOfLastTuple)
 {
-    return spanningTupleBuffer->tryFindTrailingSTForBufferWithDelimiter(sequenceNumber, offsetOfLastTuple);
+    return spanningTupleBuffer->tryFindTrailingSpanningTupleForBufferWithDelimiter(sequenceNumber, offsetOfLastTuple);
 }
 
-SequenceShredderResult SequenceShredder::findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
+SequenceShredderResult SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findSTWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+    return findSpanningTupleWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
 }
 
 SequenceShredderResult
-SequenceShredder::findLeadingSTWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
+SequenceShredder::findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
 {
     /// (Planned) Atomically count the number of out of range attempts
-    /// (Planned) Thread that increases atomic counter to threshold blocks access to the current STBUffer, allocates new STBuffer
-    /// (Planned) with double the size, copies over the current state, swaps out the pointer to the STBuffer, and then enables other
-    /// (Planned) threads to access the new STBuffer
-    return spanningTupleBuffer->tryFindLeadingSTForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
+    /// (Planned) Thread that increases atomic counter to threshold blocks access to the current SpanningTupleBUffer, allocates new SpanningTupleBuffer
+    /// (Planned) with double the size, copies over the current state, swaps out the pointer to the SpanningTupleBuffer, and then enables other
+    /// (Planned) threads to access the new SpanningTupleBuffer
+    return spanningTupleBuffer->tryFindLeadingSpanningTupleForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
 }
 
-SequenceShredderResult SequenceShredder::findSTWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
+SequenceShredderResult
+SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
 {
-    if (const auto stSearchResult = spanningTupleBuffer->tryFindSTForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
+    if (const auto stSearchResult = spanningTupleBuffer->tryFindSpanningTupleForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
         stSearchResult.isInRange) [[likely]]
     {
         return stSearchResult;
     }
     else
     {
-        NES_WARNING("Sequence number: {} was out of range of STBuffer", sequenceNumber);
+        NES_WARNING("Sequence number: {} was out of range of SpanningTupleBuffer", sequenceNumber);
         return stSearchResult;
     }
 }

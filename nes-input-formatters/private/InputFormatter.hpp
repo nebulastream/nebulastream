@@ -126,7 +126,10 @@ public:
     {
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
         const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
-            indexLeadingSTAndBufferProxy, recordBuffer.getReference(), nautilus::val<const InputFormatter*>(this), arenaRef.getArena()));
+            indexLeadingSpanningTupleAndBufferProxy,
+            recordBuffer.getReference(),
+            nautilus::val<const InputFormatter*>(this),
+            arenaRef.getArena()));
 
         if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
         {
@@ -188,7 +191,7 @@ private:
         bool hasLeadingSpanningTupleBool = false;
         bool hasTupleDelimiter = false;
         bool isRepeat = false;
-        bool hasValidOffsetOfTrailingST = false;
+        bool hasValidOffsetOfTrailingSpanningTuple = false;
         uint64_t numTuplesWithoutTrailing = 0;
 
         typename FormatterType::FieldIndexFunctionType leadingSpanningTupleFIF;
@@ -229,7 +232,7 @@ private:
 
             const auto offsetOfFirstTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfFirstTuple();
             const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
-            tlIndexPhaseResult.hasValidOffsetOfTrailingST = offsetOfLastTupleDelimiter != std::numeric_limits<FieldIndex>::max();
+            tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple = offsetOfLastTupleDelimiter != std::numeric_limits<FieldIndex>::max();
 
             tlIndexPhaseResult.hasTupleDelimiter = offsetOfFirstTupleDelimiter < tupleBuffer.getBufferSize();
             return {
@@ -248,8 +251,8 @@ private:
 
         static void finalizeTrailingIndexPhase() { tlIndexPhaseResult.numTuplesWithoutTrailing += 1; }
 
-        static void
-        constructAndIndexTrailingST(const std::vector<StagedBuffer>& stagedBuffers, const InputFormatter& inputFormatter, Arena& arenaRef)
+        static void constructAndIndexTrailingSpanningTuple(
+            const std::vector<StagedBuffer>& stagedBuffers, const InputFormatter& inputFormatter, Arena& arenaRef)
         {
             const auto sizeOfTrailingSpanningTuple
                 = calculateSizeOfSpanningTuple(stagedBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
@@ -265,15 +268,15 @@ private:
                 inputFormatter.indexerMetaData);
         }
 
-        static void
-        constructAndIndexLeadingST(const std::vector<StagedBuffer>& leadingSTBuffers, InputFormatter& inputFormatter, Arena& arenaRef)
+        static void constructAndIndexLeadingSpanningTuple(
+            const std::vector<StagedBuffer>& leadingSpanningTupleBuffers, InputFormatter& inputFormatter, Arena& arenaRef)
         {
-            const auto sizeOfLeadingSpanningTuple
-                = calculateSizeOfSpanningTuple(leadingSTBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
+            const auto sizeOfLeadingSpanningTuple = calculateSizeOfSpanningTuple(
+                leadingSpanningTupleBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
 
             allocateForLeadingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple);
             processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                leadingSTBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
+                leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
             inputFormatter.inputFormatIndexer.indexRawBuffer(
                 tlIndexPhaseResult.leadingSpanningTupleFIF,
                 RawTupleBuffer{
@@ -313,30 +316,32 @@ private:
 
     static IndexPhaseResult* getIndexPhaseResultProxy() { return &tlIndexPhaseResult; }
 
-    static bool indexTrailingSTProxy(const TupleBuffer* tupleBuffer, const InputFormatter* inputFormatter, Arena* arenaRef)
+    static bool indexTrailingSpanningTupleProxy(const TupleBuffer* tupleBuffer, const InputFormatter* inputFormatter, Arena* arenaRef)
     {
-        /// the buffer does not have a trailing ST, if after iterating over the entire buffer, getByteOffsetOfLastTuple is invalid
+        /// the buffer does not have a trailing SpanningTuple, if after iterating over the entire buffer, getByteOffsetOfLastTuple is invalid
         const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
         if (offsetOfLastTupleDelimiter == std::numeric_limits<uint64_t>::max())
         {
             return false;
         }
 
-        /// if the offset to trailing ST was not known after indexing we need to set it in the SequenceShredder, allowing threads to find it
-        auto stagedBuffers = (not tlIndexPhaseResult.hasValidOffsetOfTrailingST)
-            ? inputFormatter->sequenceShredder->findTrailingSTWithDelimiter(tupleBuffer->getSequenceNumber(), offsetOfLastTupleDelimiter)
-            : inputFormatter->sequenceShredder->findTrailingSTWithDelimiter(tupleBuffer->getSequenceNumber());
+        /// if the offset to trailing SpanningTuple was not known after indexing we need to set it in the SequenceShredder, allowing threads to find it
+        auto stagedBuffers = (not tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple)
+            ? inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(
+                  tupleBuffer->getSequenceNumber(), offsetOfLastTupleDelimiter)
+            : inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(tupleBuffer->getSequenceNumber());
         /// a trailing spanning tuple must span at least 2 buffers
         if (stagedBuffers.getSize() < 2)
         {
             return false;
         }
-        IndexPhaseResultBuilder::constructAndIndexTrailingST(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
+        IndexPhaseResultBuilder::constructAndIndexTrailingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
         IndexPhaseResultBuilder::finalizeTrailingIndexPhase();
         return true;
     }
 
-    static IndexPhaseResult* indexLeadingSTAndBufferProxy(const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
+    static IndexPhaseResult*
+    indexLeadingSpanningTupleAndBufferProxy(const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
     {
         IndexPhaseResultBuilder::startBuildingIndex();
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
@@ -344,7 +349,7 @@ private:
 
         if (hasTupleDelimiter)
         {
-            const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findLeadingSTWithDelimiter(
+            const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findLeadingSpanningTupleWithDelimiter(
                 StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
             if (not isInRange)
             {
@@ -355,11 +360,11 @@ private:
             {
                 return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
             }
-            IndexPhaseResultBuilder::constructAndIndexLeadingST(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
+            IndexPhaseResultBuilder::constructAndIndexLeadingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
         }
         else /* has no tuple delimiter */
         {
-            const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findSTWithoutDelimiter(
+            const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findSpanningTupleWithoutDelimiter(
                 StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
 
             if (not isInRange)
@@ -375,7 +380,7 @@ private:
 
             /// The buffer has no delimiter, but connects two buffers with delimiters, forming one spanning tuple
             /// We arbitrarily treat it as a 'leading' spanning tuple (technically, it is both leading and trailing)
-            IndexPhaseResultBuilder::constructAndIndexLeadingST(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
+            IndexPhaseResultBuilder::constructAndIndexLeadingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
         }
         return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
     }
@@ -436,13 +441,13 @@ private:
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
         const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
     {
-        const nautilus::val<bool> hasTrailingST = invoke(
-            indexTrailingSTProxy,
+        const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
+            indexTrailingSpanningTupleProxy,
             recordBuffer.getReference(),
             nautilus::val<const InputFormatter*>(this),
             executionCtx.pipelineMemoryProvider.arena.getArena());
 
-        if (hasTrailingST)
+        if (hasTrailingSpanningTuple)
         {
             auto trailingFIF = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
                 indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleFIF));
