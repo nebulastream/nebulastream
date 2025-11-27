@@ -30,7 +30,10 @@ class CountAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     CountAggregationPhysicalFunction(
-        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier,
+        DataType inputType,
+        DataType resultType,
+        PhysicalFunction inputFunction,
+        Record::RecordFieldIdentifier resultFieldIdentifier,
         bool includeNullValues);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,

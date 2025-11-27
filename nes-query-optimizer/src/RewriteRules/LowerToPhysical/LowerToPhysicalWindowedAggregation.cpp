@@ -115,8 +115,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
-        auto physicalInputType = descriptor->getInputStamp();
-        auto physicalFinalType = descriptor->getFinalAggregateStamp();
+        auto physicalInputType = descriptor->getOnField().getDataType();
+        auto physicalFinalType = descriptor->getAsField().getDataType();
 
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->getOnField());
         const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();

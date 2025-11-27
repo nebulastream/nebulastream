@@ -31,23 +31,12 @@
 namespace NES
 {
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
-          /// The output of an aggregation is never NULL
-          DataTypeProvider::provideDataType(partialAggregateStampType, false),
-          DataTypeProvider::provideDataType(finalAggregateStampType, false),
-          field)
+    : WindowAggregationLogicalFunction(field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
-          /// The output of an aggregation is never NULL
-          DataTypeProvider::provideDataType(partialAggregateStampType, false),
-          DataTypeProvider::provideDataType(finalAggregateStampType, false),
-          std::move(field),
-          std::move(asField))
+    : WindowAggregationLogicalFunction(std::move(field), std::move(asField))
 {
 }
 
@@ -60,27 +49,25 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
+        /// We infer the data type from the schema for the on field
+        this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
         ///If on and as field name are different then append the attribute name resolver from on field to the as field
         if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
         {
-            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+            setFieldNameAsField(attributeNameResolver + asFieldName);
         }
         else
         {
             const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+            setFieldNameAsField(attributeNameResolver + fieldName);
         }
 
         /// a count aggregation is always on an uint 64 and is never NULL
-        this->setOnField(this->getOnField()
-                             .withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
-                             .get<FieldAccessLogicalFunction>());
-        this->setAsField(this->getAsField()
-                             .withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
-                             .get<FieldAccessLogicalFunction>());
+        setDataTypeOnField(DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
+        setDataTypeAsField(DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
     }
     else
     {

@@ -29,23 +29,13 @@
 namespace NES
 {
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          /// The output of an aggregation is never NULL
-          DataTypeProvider::provideDataType(partialAggregateStampType, false),
-          DataTypeProvider::provideDataType(finalAggregateStampType, false),
-          field)
+    : WindowAggregationLogicalFunction(field)
 {
 }
 
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType, false),
-          DataTypeProvider::provideDataType(finalAggregateStampType, false),
-          field,
-          asField)
+    : WindowAggregationLogicalFunction(field, asField)
 {
 }
 
@@ -57,7 +47,8 @@ std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>();
+    const auto newOnField = this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>();
+    this->setOnField(newOnField);
     if (not newOnField.getDataType().isNumeric())
     {
         throw CannotDeserialize("aggregations on non numeric fields is not supported.");
@@ -68,43 +59,35 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     {
         if (this->getOnField().getDataType().isSignedInteger())
         {
-            newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64, getOnField().getDataType().isNullable))
-                      .get<FieldAccessLogicalFunction>();
+            setDataTypeOnField(DataType{DataTypeProvider::provideDataType(DataType::Type::INT64, getOnField().getDataType().isNullable)});
         }
         else
         {
-            newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, getOnField().getDataType().isNullable))
-                      .get<FieldAccessLogicalFunction>();
+            setDataTypeOnField(DataType{DataTypeProvider::provideDataType(DataType::Type::UINT64, getOnField().getDataType().isNullable)});
         }
     }
     else
     {
-        newOnField
-            = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, getOnField().getDataType().isNullable))
-                  .get<FieldAccessLogicalFunction>();
+        setDataTypeOnField(DataType{DataTypeProvider::provideDataType(DataType::Type::FLOAT64, getOnField().getDataType().isNullable)});
     }
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = newOnField.getFieldName();
     const auto asFieldName = this->getAsField().getFieldName();
-
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+        setFieldNameAsField(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+        setFieldNameAsField(attributeNameResolver + fieldName);
     }
-    auto newAsField = this->getAsField().withDataType(getFinalAggregateStamp());
-    this->setAsField(newAsField.get<FieldAccessLogicalFunction>());
-    this->setOnField(newOnField);
-    this->setInputStamp(newOnField.getDataType());
+
+    /// The output of an aggregation is always FLOAT64 and never NULL
+    setDataTypeAsField(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, false));
 }
 
 SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const

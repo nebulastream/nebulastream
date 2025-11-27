@@ -29,24 +29,13 @@
 namespace NES
 {
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          /// The output of an aggregation is never NULL
-          DataTypeProvider::provideDataType(field.getDataType().type, false),
-          DataTypeProvider::provideDataType(field.getDataType().type, false),
-          field)
+    : WindowAggregationLogicalFunction(field)
 {
 }
 
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(
-    const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          /// The output of an aggregation is never NULL
-          DataTypeProvider::provideDataType(field.getDataType().type, false),
-          DataTypeProvider::provideDataType(field.getDataType().type, false),
-          field,
-          asField)
+    const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
+    : WindowAggregationLogicalFunction(onField, asField)
 {
 }
 
@@ -72,16 +61,16 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+        setFieldNameAsField(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+        setFieldNameAsField(attributeNameResolver + fieldName);
     }
-    this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(this->getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
+
+    /// The output of an aggregation is never NULL
+    setDataTypeAsField(DataTypeProvider::provideDataType(getOnField().getDataType().type, false));
 }
 
 SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const

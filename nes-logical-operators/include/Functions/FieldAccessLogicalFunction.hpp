@@ -42,7 +42,7 @@ public:
     FieldAccessLogicalFunction(DataType dataType, std::string fieldName);
 
     [[nodiscard]] std::string getFieldName() const;
-    [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
+    [[nodiscard]] LogicalFunction withFieldName(std::string_view newFieldName) const;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
