@@ -30,17 +30,15 @@ class WindowAggregationLogicalFunction
 public:
     virtual ~WindowAggregationLogicalFunction() = default;
 
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    void setInputStamp(DataType inputStamp);
-    void setPartialAggregateStamp(DataType partialAggregateStamp);
-    void setFinalAggregateStamp(DataType finalAggregateStamp);
     void setOnField(FieldAccessLogicalFunction onField);
+    void setDataTypeOnField(DataType newDataType);
+    void setFieldNameOnField(std::string_view newFieldName);
     void setAsField(FieldAccessLogicalFunction asField);
+    void setDataTypeAsField(DataType newDataType);
+    void setFieldNameAsField(std::string_view newFieldName);
 
     [[nodiscard]] std::string toString() const;
     bool operator==(const std::shared_ptr<WindowAggregationLogicalFunction>& otherWindowAggregationLogicalFunction) const;
@@ -54,20 +52,10 @@ public:
 
 
 protected:
-    explicit WindowAggregationLogicalFunction(
-        DataType inputStamp,
-        DataType partialAggregateStamp,
-        DataType finalAggregateStamp,
-        FieldAccessLogicalFunction onField,
-        FieldAccessLogicalFunction asField);
-
-    explicit WindowAggregationLogicalFunction(
-        DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField);
+    explicit WindowAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
+    explicit WindowAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
 private:
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
     FieldAccessLogicalFunction onField;
     FieldAccessLogicalFunction asField;
 };
