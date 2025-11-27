@@ -13,8 +13,8 @@
 add_source_files(nes-input-formatters
         InputFormatterTupleBufferRefProvider.cpp
         SequenceShredder.cpp
-        STBuffer.cpp
-        STBufferState.cpp
+        SpanningTupleBuffer.cpp
+        SpanningTupleBufferState.cpp
         RawValueParser.cpp
         InputFormatterTupleBufferRef.cpp
 )
