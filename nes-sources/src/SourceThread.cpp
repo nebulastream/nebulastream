@@ -129,7 +129,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
         if (!fillTupleResult.isEoS())
         {
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
-            /// The InputFormatterTask expects that the source set the number of bytes this way and uses it to determine the number of tuples.
+            /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer.setNumberOfTuples(fillTupleResult.getNumberOfBytes());
             emit(std::move(emptyBuffer), requiresMetadata);
         }

@@ -15,14 +15,19 @@
 #pragma once
 
 #include <algorithm>
-#include <cstddef>
-#include <functional>
+#include <cstdint>
 #include <span>
+#include <string>
 #include <string_view>
+
 #include <DataTypes/DataType.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
+#include <Arena.hpp>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -33,42 +38,28 @@ enum class QuotationType : uint8_t
     DOUBLE_QUOTE
 };
 
-using ParseFunctionSignature = std::function<void(
-    std::string_view inputString, size_t writeOffsetInBytes, AbstractBufferProvider& bufferProvider, TupleBuffer& tupleBufferFormatted)>;
-
-/// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
-/// @Note throws CannotFormatMalformedStringValue if the parsing fails.
-/// @Note given a string like '0751' and an integer value, from_chars creates an integer '751' from it. Also, '0.751' becomes '0'.
 template <typename T>
-auto parseFieldString()
+nautilus::val<T> parseIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
 {
-    return [](const std::string_view fieldValueString,
-              const size_t writeOffsetInBytes,
-              AbstractBufferProvider&,
-              TupleBuffer& tupleBufferFormatted)
-    {
-        const T parsedValue = from_chars_with_exception<T>(fieldValueString);
-        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
-        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
-    };
+    return nautilus::invoke(
+        +[](const char* fieldAddress, const uint64_t fieldSize)
+        {
+            const auto fieldView = std::string_view(fieldAddress, fieldSize);
+            return NES::from_chars_with_exception<T>(fieldView);
+        },
+        fieldAddress,
+        fieldSize);
 }
 
-template <typename T>
-auto parseQuotedFieldString()
-{
-    return [](const std::string_view quotedFieldValueString,
-              const size_t writeOffsetInBytes,
-              AbstractBufferProvider&,
-              TupleBuffer& tupleBufferFormatted)
-    {
-        INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
-        const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
-        const T parsedValue = from_chars_with_exception<T>(fieldValueString);
-        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
-        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
-    };
-}
+VariableSizedData parseVarSizedIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, QuotationType quotationType);
 
-/// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
-ParseFunctionSignature getParseFunction(DataType::Type physicalType, QuotationType quotationType);
+void parseRawValueIntoRecord(
+    DataType::Type physicalType,
+    Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName,
+    QuotationType quotationType,
+    ArenaRef& arenaRef);
 }
