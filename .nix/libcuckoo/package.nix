@@ -1,9 +1,10 @@
-{ lib
-, llvmPackages_19
-, cmake
-, ninja
-, pkg-config
-, fetchFromGitHub
+{
+  lib,
+  llvmPackages_19,
+  cmake,
+  ninja,
+  pkg-config,
+  fetchFromGitHub,
 }:
 
 let
@@ -11,7 +12,11 @@ let
   clangStdenv = llvmPackages.stdenv;
   libcxxStdenv = llvmPackages.libcxxStdenv;
 
-  build = { extraBuildInputs ? [], useLibcxx ? false }:
+  build =
+    {
+      extraBuildInputs ? [ ],
+      useLibcxx ? false,
+    }:
     let
       libcxxFlags = lib.optionals useLibcxx [
         "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
@@ -46,7 +51,8 @@ let
         "-DBUILD_STRESS_TESTS=OFF"
         "-DBUILD_UNIT_TESTS=OFF"
         "-DBUILD_UNIVERSAL_BENCHMARK=OFF"
-      ] ++ libcxxFlags;
+      ]
+      ++ libcxxFlags;
 
       enableParallelBuilding = true;
       strictDeps = true;
@@ -59,26 +65,39 @@ let
       };
     };
 
-  parseWithSanitizerArgs = arg:
-    if builtins.isList arg then {
-      extraBuildInputs = arg;
-      useLibcxx = false;
-    } else if builtins.isAttrs arg then {
-      extraBuildInputs =
-        if arg ? extraBuildInputs then arg.extraBuildInputs
-        else if arg ? extraPackages then arg.extraPackages
-        else [ ];
-      useLibcxx = arg.useLibcxx or false;
-    } else {
-      extraBuildInputs = [ ];
-      useLibcxx = false;
-    };
+  parseWithSanitizerArgs =
+    arg:
+    if builtins.isList arg then
+      {
+        extraBuildInputs = arg;
+        useLibcxx = false;
+      }
+    else if builtins.isAttrs arg then
+      {
+        extraBuildInputs =
+          if arg ? extraBuildInputs then
+            arg.extraBuildInputs
+          else if arg ? extraPackages then
+            arg.extraPackages
+          else
+            [ ];
+        useLibcxx = arg.useLibcxx or false;
+      }
+    else
+      {
+        extraBuildInputs = [ ];
+        useLibcxx = false;
+      };
 
-in {
+in
+{
   default = build { };
-  withSanitizer = arg:
-    let cfg = parseWithSanitizerArgs arg;
-    in build {
+  withSanitizer =
+    arg:
+    let
+      cfg = parseWithSanitizerArgs arg;
+    in
+    build {
       inherit (cfg) extraBuildInputs useLibcxx;
     };
 }
