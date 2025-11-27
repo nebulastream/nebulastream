@@ -17,6 +17,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <filesystem>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -91,7 +92,7 @@ void stopScheduler()
     }
 }
 
-} // namespace
+}
 
 void CheckpointManager::initialize(std::filesystem::path directory, std::chrono::milliseconds interval)
 {
@@ -133,8 +134,20 @@ void CheckpointManager::registerCallback(const std::string& identifier, Callback
 
 void CheckpointManager::unregisterCallback(const std::string& identifier)
 {
-    std::scoped_lock lock(checkpointMutex);
+    std::scoped_lock const lock(checkpointMutex);
     callbacks.erase(identifier);
+}
+
+void CheckpointManager::restoreHandlers(const std::vector<std::shared_ptr<OperatorHandler>>& handlers)
+{
+    const auto directory = getCheckpointDirectory();
+    for (const auto& handler : handlers)
+    {
+        if (handler)
+        {
+            handler->restoreState(directory);
+        }
+    }
 }
 
 }

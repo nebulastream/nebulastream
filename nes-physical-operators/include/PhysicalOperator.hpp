@@ -261,6 +261,9 @@ public:
     [[nodiscard]] const std::optional<OperatorHandlerId>& getHandlerId() const;
     [[nodiscard]] PipelineLocation getPipelineLocation() const;
 
+    void setStateful(bool flag);
+    [[nodiscard]] bool isStateful() const;
+
 private:
     PhysicalOperator physicalOperator;
     std::optional<Schema> inputSchema;
@@ -270,6 +273,7 @@ private:
     std::optional<std::shared_ptr<OperatorHandler>> handler;
     std::optional<OperatorHandlerId> handlerId;
     PipelineLocation pipelineLocation;
+    bool stateful{false};
 };
 }
 

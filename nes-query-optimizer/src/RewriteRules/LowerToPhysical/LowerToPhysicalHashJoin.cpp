@@ -306,6 +306,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
+    leftBuildWrapper->setStateful(true);
 
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(rightBuildOperator),
@@ -314,6 +315,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
+    rightBuildWrapper->setStateful(true);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),

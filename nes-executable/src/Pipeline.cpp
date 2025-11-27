@@ -224,6 +224,19 @@ std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& Pipelin
     return operatorHandlers;
 }
 
+const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& Pipeline::getStatefulHandlers() const
+{
+    return statefulHandlers;
+}
+
+void Pipeline::registerStatefulHandler(OperatorHandlerId handlerId, const std::shared_ptr<OperatorHandler>& handler)
+{
+    if (handler)
+    {
+        statefulHandlers.emplace(handlerId, handler);
+    }
+}
+
 void Pipeline::setExecutionMode(ExecutionMode mode)
 {
     executionMode = mode;

@@ -178,7 +178,12 @@ std::unique_ptr<CompiledQueryPlan> LowerToCompiledQueryPlanPhase::apply(const st
 
     auto pipelines = std::move(pipelineToExecutableMap) | std::views::values | std::ranges::to<std::vector>();
 
-    return CompiledQueryPlan::create(pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(sources));
+    return CompiledQueryPlan::create(
+        pipelineQueryPlan->getQueryId(),
+        std::move(pipelines),
+        std::move(sinks),
+        std::move(sources),
+        pipelineQueryPlan->getStatefulHandlers());
 }
 
 }

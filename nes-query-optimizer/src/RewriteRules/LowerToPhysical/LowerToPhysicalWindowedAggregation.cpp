@@ -218,6 +218,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build, newInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
+    buildWrapper->setStateful(true);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         probe,

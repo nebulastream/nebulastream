@@ -15,6 +15,7 @@
 #pragma once
 
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <Identifiers/Identifiers.hpp>
@@ -44,6 +45,10 @@ class SingleNodeWorker
     UniquePtr<QueryOptimizer> optimizer;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
+
+    void recoverLatestCheckpoint();
+    static std::optional<std::string> loadOriginalSqlFromPlanFile(const std::filesystem::path& planFilePath);
+    static std::string buildCheckpointPlanContent(const std::string& originalSql, const std::string& serializedPlan);
 
 public:
     explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&);

@@ -34,8 +34,14 @@ std::shared_ptr<ExecutablePipeline> ExecutablePipeline::create(
 }
 
 std::unique_ptr<CompiledQueryPlan> CompiledQueryPlan::create(
-    QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources)
+    QueryId queryId,
+    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+    std::vector<Sink> sinks,
+    std::vector<Source> sources,
+    std::vector<std::shared_ptr<OperatorHandler>> statefulHandlers)
 {
-    return std::make_unique<CompiledQueryPlan>(queryId, std::move(pipelines), std::move(sinks), std::move(sources));
+    auto plan = std::make_unique<CompiledQueryPlan>(queryId, std::move(pipelines), std::move(sinks), std::move(sources));
+    plan->statefulHandlers = std::move(statefulHandlers);
+    return plan;
 }
 }

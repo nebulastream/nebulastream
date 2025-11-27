@@ -31,7 +31,6 @@
 #include <Runtime/CheckpointManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
-#include <Runtime/CheckpointManager.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>

@@ -15,6 +15,7 @@
 #pragma once
 #include <atomic>
 #include <cstdint>
+#include <filesystem>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 
@@ -33,9 +34,7 @@ inline OperatorHandlerId getNextOperatorHandlerId()
     return OperatorHandlerId(id++);
 }
 
-/**
- * @brief Interface to handle specific operator state.
- */
+/// @brief Interface to handle specific operator state.
 class OperatorHandler
 {
 public:
@@ -46,6 +45,9 @@ public:
     virtual void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) = 0;
 
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
+
+    virtual void serializeState(const std::filesystem::path&) {}
+    virtual void restoreState(const std::filesystem::path&) {}
 };
 
 }

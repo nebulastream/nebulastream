@@ -16,11 +16,15 @@
 
 #include <atomic>
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <utility>
 #include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -29,6 +33,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
+#include <fmt/format.h>
 #include <cpptrace/from_current.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
@@ -67,6 +72,11 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
+
+    if (configuration.workerConfiguration.checkpointConfiguration.recoverFromCheckpoint.getValue())
+    {
+        recoverLatestCheckpoint();
+    }
 }
 
 /// This is a workaround to get again unique queryId after our initial worker refactoring.
@@ -78,13 +88,29 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     CPPTRACE_TRY
     {
         plan.setQueryId(QueryId(queryIdCounter++));
+        auto serializedPlan = explain(plan, ExplainVerbosity::Debug);
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         request->dumpCompilationResult = configuration.workerConfiguration.dumpQueryCompilationIntermediateRepresentations.getValue();
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successfull query compilation or exception, but got nothing");
-        return nodeEngine->registerCompiledQueryPlan(std::move(result));
+        const auto queryId = nodeEngine->registerCompiledQueryPlan(std::move(result));
+        const auto callbackId = fmt::format("query_plan_{}", queryId.getRawValue());
+        auto persistPlan = [planSnapshot = serializedPlan, queryId]()
+        {
+            const auto planFile = CheckpointManager::getCheckpointPath(fmt::format("query_{}.plan", queryId.getRawValue()));
+            const auto directory = planFile.parent_path();
+            if (!directory.empty())
+            {
+                create_directories(directory);
+            }
+            std::ofstream out(planFile, std::ios::trunc);
+            out << planSnapshot;
+        };
+        persistPlan();
+        CheckpointManager::registerCallback(callbackId, persistPlan);
+        return queryId;
     }
     CPPTRACE_CATCH(...)
     {
@@ -129,6 +155,8 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->unregisterQuery(queryId);
+        CheckpointManager::unregisterCallback(fmt::format("query_plan_{}", queryId.getRawValue()));
+        CheckpointManager::unregisterCallback(fmt::format("query_state_{}", queryId.getRawValue()));
         return {};
     }
     CPPTRACE_CATCH(...)
