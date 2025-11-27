@@ -37,7 +37,6 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Traits/OutputOriginIdsTrait.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -46,7 +45,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
-#include <SystestParser.hpp>
+#include <SystestProgressTracker.hpp>
 #include <SystestState.hpp>
 #include <WorkerStatus.hpp>
 
@@ -142,8 +141,9 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)))
-        .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+        .WillOnce(testing::Return(makeSummary(id, QueryState::Registered, nullptr)))
+        .WillOnce(testing::Return(makeSummary(id, QueryState::Started, nullptr)))
+        .WillRepeatedly(testing::Return(makeSummary(id, QueryState::Failed, runtimeErr)));
     SystestProgressTracker progressTracker;
 
     QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
@@ -172,8 +172,9 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)))
-        .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+        .WillOnce(testing::Return(makeSummary(id, QueryState::Registered, nullptr)))
+        .WillOnce(testing::Return(makeSummary(id, QueryState::Running, nullptr)))
+        .WillRepeatedly(testing::Return(makeSummary(id, QueryState::Stopped, nullptr)));
     SystestProgressTracker progressTracker;
 
     QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
