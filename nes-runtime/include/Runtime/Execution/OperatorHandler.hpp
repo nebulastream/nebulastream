@@ -47,7 +47,6 @@ public:
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 
     virtual void serializeState(const std::filesystem::path&) {}
-    virtual void restoreState(const std::filesystem::path&) {}
 };
 
 }

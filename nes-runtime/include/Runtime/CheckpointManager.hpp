@@ -17,11 +17,8 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
-#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES
 {
@@ -39,8 +36,6 @@ public:
 
     static void registerCallback(const std::string& identifier, Callback callback);
     static void unregisterCallback(const std::string& identifier);
-
-    static void restoreHandlers(const std::vector<std::shared_ptr<OperatorHandler>>& handlers);
 };
 
 }
