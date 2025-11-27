@@ -1,10 +1,11 @@
-{ lib
-, llvmPackages_19
-, cmake
-, ninja
-, pkg-config
-, fetchFromGitHub
-, fmt_11
+{
+  lib,
+  llvmPackages_19,
+  cmake,
+  ninja,
+  pkg-config,
+  fetchFromGitHub,
+  fmt_11,
 }:
 
 let
@@ -12,16 +13,19 @@ let
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 
-  concatFlags = flags:
-    if flags == [ ] then ""
-    else lib.concatStringsSep " " flags;
+  concatFlags = flags: if flags == [ ] then "" else lib.concatStringsSep " " flags;
 
-  build = { extraBuildInputs ? [ ], useLibcxx ? false, fmtPkg ? null, compilerFlags ? [ ], linkerFlags ? [ ] }:
+  build =
+    {
+      extraBuildInputs ? [ ],
+      useLibcxx ? false,
+      fmtPkg ? null,
+      compilerFlags ? [ ],
+      linkerFlags ? [ ],
+    }:
     let
       stdenv = if useLibcxx then libcxxStdenv else clangStdenv;
-      selectedFmt =
-        if fmtPkg != null then fmtPkg
-        else fmt_11;
+      selectedFmt = if fmtPkg != null then fmtPkg else fmt_11;
       libcxxFlags = lib.optionals useLibcxx [
         "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
         "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
@@ -54,7 +58,8 @@ let
         "-DSPDLOG_BUILD_TESTS=OFF"
         "-DSPDLOG_BUILD_EXAMPLE=OFF"
         "-DSPDLOG_BUILD_BENCH=OFF"
-      ] ++ libcxxFlags;
+      ]
+      ++ libcxxFlags;
 
       env = lib.optionalAttrs (compilerFlags != [ ]) {
         NIX_CFLAGS_COMPILE = concatFlags compilerFlags;
@@ -72,33 +77,46 @@ let
       };
     };
 
-  parseWithSanitizerArgs = arg:
-    if builtins.isList arg then {
-      extraBuildInputs = arg;
-      useLibcxx = false;
-      fmtPkg = null;
-      compilerFlags = [ ];
-      linkerFlags = [ ];
-    } else if builtins.isAttrs arg then {
-      extraBuildInputs =
-        if arg ? extraBuildInputs then arg.extraBuildInputs
-        else if arg ? extraPackages then arg.extraPackages
-        else [ ];
-      useLibcxx = arg.useLibcxx or false;
-      fmtPkg = arg.fmtPkg or null;
-      compilerFlags = arg.compilerFlags or [ ];
-      linkerFlags = arg.linkerFlags or [ ];
-    } else {
-      extraBuildInputs = [ ];
-      useLibcxx = false;
-      fmtPkg = null;
-      compilerFlags = [ ];
-      linkerFlags = [ ];
-    };
+  parseWithSanitizerArgs =
+    arg:
+    if builtins.isList arg then
+      {
+        extraBuildInputs = arg;
+        useLibcxx = false;
+        fmtPkg = null;
+        compilerFlags = [ ];
+        linkerFlags = [ ];
+      }
+    else if builtins.isAttrs arg then
+      {
+        extraBuildInputs =
+          if arg ? extraBuildInputs then
+            arg.extraBuildInputs
+          else if arg ? extraPackages then
+            arg.extraPackages
+          else
+            [ ];
+        useLibcxx = arg.useLibcxx or false;
+        fmtPkg = arg.fmtPkg or null;
+        compilerFlags = arg.compilerFlags or [ ];
+        linkerFlags = arg.linkerFlags or [ ];
+      }
+    else
+      {
+        extraBuildInputs = [ ];
+        useLibcxx = false;
+        fmtPkg = null;
+        compilerFlags = [ ];
+        linkerFlags = [ ];
+      };
 
-in {
+in
+{
   default = build { };
-  withSanitizer = arg:
-    let cfg = parseWithSanitizerArgs arg;
-    in build cfg;
+  withSanitizer =
+    arg:
+    let
+      cfg = parseWithSanitizerArgs arg;
+    in
+    build cfg;
 }
