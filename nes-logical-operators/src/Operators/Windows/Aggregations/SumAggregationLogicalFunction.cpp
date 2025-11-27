@@ -31,21 +31,12 @@
 
 namespace NES
 {
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , onField{field}
-    , asField{field}
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field) : onField(field), asField(field)
 {
 }
 
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , onField{field}
-    , asField{std::move(asField)}
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField)
+    : onField(onField), asField(std::move(asField))
 {
 }
 

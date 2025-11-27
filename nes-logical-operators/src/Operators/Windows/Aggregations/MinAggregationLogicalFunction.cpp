@@ -32,21 +32,12 @@
 
 namespace NES
 {
-MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , onField{field}
-    , asField{field}
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& onField) : onField(onField), asField(onField)
 {
 }
 
-MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , onField{field}
-    , asField{std::move(asField)}
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField)
+    : onField(onField), asField(std::move(asField))
 {
 }
 

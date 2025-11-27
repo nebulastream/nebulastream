@@ -32,21 +32,12 @@
 
 namespace NES
 {
-AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , onField{field}
-    , asField{field}
+AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field) : onField(field), asField(field)
 {
 }
 
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , onField{field}
-    , asField{std::move(asField)}
+    : onField(field), asField(std::move(asField))
 {
 }
 
@@ -95,7 +86,6 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
     ///Set fully qualified name for the as Field
     const auto onFieldName = newOnField.getAs<FieldAccessLogicalFunction>()->getFieldName();
     const auto asFieldName = this->getAsField().getFieldName();
-
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
 
     std::string newAsFieldName;
@@ -111,7 +101,7 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
     }
 
     const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
-        finalAggregateStampType, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     return this->withOnField(newOnField.getAs<FieldAccessLogicalFunction>().get())
         .withFinalAggregateStamp(newFinalAggregateStamp)
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp))

@@ -44,7 +44,7 @@ public:
     FieldAccessLogicalFunction(DataType dataType, std::string fieldName);
 
     [[nodiscard]] std::string getFieldName() const;
-    [[nodiscard]] FieldAccessLogicalFunction withFieldName(std::string fieldName) const;
+    [[nodiscard]] FieldAccessLogicalFunction withFieldName(std::string_view newFieldName) const;
 
     [[nodiscard]] bool operator==(const FieldAccessLogicalFunction& rhs) const;
 
