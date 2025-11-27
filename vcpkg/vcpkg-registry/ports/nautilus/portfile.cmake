@@ -18,6 +18,7 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-fix-ambiguous-val-overload.patch
+		0003-ubsan-fix-variadic-expansion.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
