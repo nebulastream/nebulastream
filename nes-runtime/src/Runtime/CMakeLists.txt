@@ -12,6 +12,7 @@
 
 
 add_source_files(nes-runtime
+        CheckpointManager.cpp
         NodeEngine.cpp
         NodeEngineBuilder.cpp
 )

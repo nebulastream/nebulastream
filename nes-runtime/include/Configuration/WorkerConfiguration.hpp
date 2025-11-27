@@ -22,6 +22,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <Configuration/CheckpointConfiguration.hpp>
 #include <Util/DumpMode.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -57,6 +58,8 @@ public:
            DumpMode::NONE,
            fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode>())};
 
+    CheckpointConfiguration checkpointConfiguration = {"checkpoint", "Checkpoint configuration"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -65,7 +68,8 @@ private:
             &defaultQueryExecution,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
-            &dumpQueryCompilationIntermediateRepresentations};
+            &dumpQueryCompilationIntermediateRepresentations,
+            &checkpointConfiguration};
     }
 };
 }

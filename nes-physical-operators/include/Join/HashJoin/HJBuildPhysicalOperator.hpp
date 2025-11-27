@@ -61,6 +61,9 @@ public:
 
 private:
     HashMapOptions hashMapOptions;
+
+public:
+    [[nodiscard]] const HashMapOptions& getHashMapOptions() const { return hashMapOptions; }
 };
 
 }

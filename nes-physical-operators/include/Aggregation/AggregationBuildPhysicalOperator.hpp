@@ -86,6 +86,9 @@ private:
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
+
+public:
+    [[nodiscard]] const HashMapOptions& getHashMapOptions() const { return hashMapOptions; }
 };
 
 }

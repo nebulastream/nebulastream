@@ -354,18 +354,19 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
     this->entrySize = header.entrySize;
     this->numberOfTuples = header.numberOfTuples;
     this->pageSize = header.pageSize;
+    this->mask = numberOfChains - 1;
 
     /// Setup Entryspace
     const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-    //const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
-    //if (not entryBuffer)
-    //{
-    //    throw CannotAccessBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
-    //}
-    //entrySpace = entryBuffer.value();
-    //entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-    //std::memset(static_cast<void*>(entries), 0, totalSpace);
-    //entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
+    auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
+    if (not entryBuffer)
+    {
+        throw CannotAllocateBuffer("Could not allocate entry space for ChainedHashMap of size {}", totalSpace);
+    }
+    entrySpace = entryBuffer.value();
+    entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
+    std::memset(entries, 0, totalSpace);
+    entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
 
     /// Read Mappings
     std::vector<std::pair<uint64_t, uint64_t>> entryMappings(numberOfChains + 1);

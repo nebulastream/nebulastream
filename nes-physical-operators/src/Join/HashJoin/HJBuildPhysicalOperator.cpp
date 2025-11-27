@@ -15,8 +15,11 @@
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
 
 #include <cstdint>
+#include <filesystem>
 #include <functional>
+#include <fstream>
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
@@ -29,6 +32,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
@@ -43,6 +47,170 @@
 
 namespace NES
 {
+namespace
+{
+constexpr std::string_view HashJoinCheckpointFileName = "hash_join_checkpoint.bin";
+
+struct HashJoinCheckpointHeader
+{
+    uint64_t numberOfEntries{0};
+    uint64_t keySize{0};
+    uint64_t valueSize{0};
+};
+
+struct HashJoinPageHeader
+{
+    uint64_t bufferSize{0};
+    uint64_t numberOfTuples{0};
+};
+
+void ensureCheckpointDirectory(const std::filesystem::path& checkpointFile)
+{
+    const auto checkpointDir = checkpointFile.parent_path();
+    if (!checkpointDir.empty() && !exists(checkpointDir))
+    {
+        create_directories(checkpointDir);
+    }
+}
+
+void serializePagedVector(const Interface::PagedVector* pagedVector, std::ofstream& out)
+{
+    const auto numPages = pagedVector->getNumberOfPages();
+    out.write(reinterpret_cast<const char*>(&numPages), sizeof(numPages));
+    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
+    {
+        const auto& page = pagedVector->getPage(pageIdx);
+        HashJoinPageHeader pageHeader{};
+        pageHeader.bufferSize = page.getBufferSize();
+        pageHeader.numberOfTuples = page.getNumberOfTuples();
+        out.write(reinterpret_cast<const char*>(&pageHeader), sizeof(pageHeader));
+        const auto dataSpan = page.getAvailableMemoryArea<char>();
+        out.write(dataSpan.data(), static_cast<std::streamsize>(pageHeader.bufferSize));
+    }
+}
+
+void deserializePagedVector(
+    Interface::PagedVector* pagedVector,
+    std::ifstream& in,
+    AbstractBufferProvider* bufferProvider)
+{
+    uint64_t numPages = 0;
+    in.read(reinterpret_cast<char*>(&numPages), sizeof(numPages));
+    pagedVector->clear();
+    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
+    {
+        HashJoinPageHeader pageHeader{};
+        in.read(reinterpret_cast<char*>(&pageHeader), sizeof(pageHeader));
+        auto pageBuffer = bufferProvider->getUnpooledBuffer(pageHeader.bufferSize);
+        if (!pageBuffer)
+        {
+            throw CannotAllocateBuffer(
+                "Could not allocate buffer of size {} during hash join checkpoint restore",
+                pageHeader.bufferSize);
+        }
+        auto bufferValue = pageBuffer.value();
+        auto dataSpan = bufferValue.getAvailableMemoryArea<char>();
+        in.read(dataSpan.data(), static_cast<std::streamsize>(pageHeader.bufferSize));
+        bufferValue.setNumberOfTuples(pageHeader.numberOfTuples);
+        pagedVector->appendPage(bufferValue);
+    }
+}
+
+std::filesystem::path getHashJoinCheckpointFile()
+{
+    auto baseDir = CheckpointManager::getCheckpointDirectory();
+    baseDir /= HashJoinCheckpointFileName;
+    return baseDir;
+}
+
+void serializeHashJoinState(
+    const Interface::HashMap* hashMap,
+    const HJBuildPhysicalOperator* buildOperator,
+    const std::filesystem::path& path)
+{
+    const auto* chainedHashMap = dynamic_cast<const Interface::ChainedHashMap*>(hashMap);
+    if (!chainedHashMap)
+    {
+        throw CheckpointError("Hash join checkpoint only supports chained hash maps");
+    }
+
+    std::ofstream out(path, std::ios::binary);
+    if (!out.is_open())
+    {
+        throw CheckpointError("Cannot open output file {}", path.string());
+    }
+
+    HashJoinCheckpointHeader header{};
+    header.numberOfEntries = chainedHashMap->getNumberOfTuples();
+    header.keySize = buildOperator->getHashMapOptions().keySize;
+    header.valueSize = buildOperator->getHashMapOptions().valueSize;
+    out.write(reinterpret_cast<const char*>(&header), sizeof(header));
+
+    uint64_t writtenEntries = 0;
+    for (uint64_t chainIdx = 0; chainIdx < chainedHashMap->getNumberOfChains(); ++chainIdx)
+    {
+        auto* entry = chainedHashMap->getStartOfChain(chainIdx);
+        while (entry != nullptr)
+        {
+            out.write(reinterpret_cast<const char*>(&entry->hash), sizeof(entry->hash));
+            const auto* keyPtr = reinterpret_cast<const char*>(entry) + sizeof(Interface::ChainedHashMapEntry);
+            out.write(keyPtr, static_cast<std::streamsize>(header.keySize));
+            const auto* valuePtr = keyPtr + header.keySize;
+            const auto* pagedVector = reinterpret_cast<const Interface::PagedVector*>(valuePtr);
+            serializePagedVector(pagedVector, out);
+            entry = entry->next;
+            ++writtenEntries;
+        }
+    }
+    INVARIANT(
+        writtenEntries == header.numberOfEntries,
+        "Expected to serialize {} entries but serialized {}",
+        header.numberOfEntries,
+        writtenEntries);
+}
+
+void deserializeHashJoinState(
+    Interface::HashMap* hashMap,
+    const HJBuildPhysicalOperator* buildOperator,
+    AbstractBufferProvider* bufferProvider,
+    const std::filesystem::path& path)
+{
+    auto* chainedHashMap = dynamic_cast<Interface::ChainedHashMap*>(hashMap);
+    if (!chainedHashMap)
+    {
+        throw CheckpointError("Hash join checkpoint only supports chained hash maps");
+    }
+
+    std::ifstream in(path, std::ios::binary);
+    if (!in.is_open())
+    {
+        throw CheckpointError("Cannot open input file {}", path.string());
+    }
+
+    HashJoinCheckpointHeader header{};
+    in.read(reinterpret_cast<char*>(&header), sizeof(header));
+    const auto& options = buildOperator->getHashMapOptions();
+    if (header.keySize != options.keySize || header.valueSize != options.valueSize)
+    {
+        throw CheckpointError("Hash join checkpoint format mismatch");
+    }
+
+    chainedHashMap->clear();
+
+    for (uint64_t entryIdx = 0; entryIdx < header.numberOfEntries; ++entryIdx)
+    {
+        Interface::HashFunction::HashValue::raw_type hash{0};
+        in.read(reinterpret_cast<char*>(&hash), sizeof(hash));
+        auto* newEntry = static_cast<Interface::ChainedHashMapEntry*>(chainedHashMap->insertEntry(hash, bufferProvider));
+        auto* keyPtr = reinterpret_cast<char*>(newEntry) + sizeof(Interface::ChainedHashMapEntry);
+        in.read(keyPtr, static_cast<std::streamsize>(header.keySize));
+        auto* valuePtr = keyPtr + header.keySize;
+        auto* pagedVector = new (valuePtr) Interface::PagedVector();
+        deserializePagedVector(pagedVector, in, bufferProvider);
+    }
+}
+}
+
 Interface::HashMap* getHashJoinHashMapProxy(
     const HJOperatorHandler* operatorHandler,
     const Timestamp timestamp,
@@ -98,11 +266,13 @@ void serializeHashMapProxy(
     }
 
     const auto* const hashMap = getHashJoinHashMapProxy(operatorHandler, timestamp, workerThreadId, buildSide, buildOperator);
-    if (std::filesystem::exists("/tmp/nebulastream/hashmap.bin"))
+    const auto checkpointFile = getHashJoinCheckpointFile();
+    if (std::filesystem::exists(checkpointFile))
     {
-        std::filesystem::remove("/tmp/nebulastream/hashmap.bin");
+        std::filesystem::remove(checkpointFile);
     }
-    hashMap->serialize("/tmp/nebulastream/hashmap.bin");
+    ensureCheckpointDirectory(checkpointFile);
+    serializeHashJoinState(hashMap, buildOperator, checkpointFile);
     serialized.store(true);
     cv.notify_all();
 }
@@ -135,7 +305,9 @@ Interface::HashMap* deserializeHashMapProxy(
         second.store(true);
         return hashMap;
     }
-    hashMap->deserialize("/tmp/nebulastream/hashmap.bin", bufferProvider);
+    const auto checkpointFile = getHashJoinCheckpointFile();
+    ensureCheckpointDirectory(checkpointFile);
+    deserializeHashJoinState(hashMap, buildOperator, bufferProvider, checkpointFile);
     deserialized.store(true);
     return hashMap;
 }

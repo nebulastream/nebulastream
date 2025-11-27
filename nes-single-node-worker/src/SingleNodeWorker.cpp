@@ -24,6 +24,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -39,13 +40,21 @@
 namespace NES
 {
 
-SingleNodeWorker::~SingleNodeWorker() = default;
+SingleNodeWorker::~SingleNodeWorker()
+{
+    CheckpointManager::shutdown();
+}
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
+    const auto checkpointDir = configuration.workerConfiguration.checkpointConfiguration.checkpointDirectory.getValue();
+    const auto checkpointInterval = std::chrono::milliseconds(
+        configuration.workerConfiguration.checkpointConfiguration.checkpointIntervalMs.getValue());
+    CheckpointManager::initialize(checkpointDir, checkpointInterval);
+
     if (configuration.enableGoogleEventTrace.getValue())
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(

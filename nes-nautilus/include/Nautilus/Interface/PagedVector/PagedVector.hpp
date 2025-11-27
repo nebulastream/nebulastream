@@ -19,7 +19,6 @@
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -62,6 +61,13 @@ public:
     [[nodiscard]] const TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
 
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
+
+    [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
+
+    /// Clears all stored pages.
+    void clear();
+
+    void appendPage(const TupleBuffer& buffer);
 
 private:
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums

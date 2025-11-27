@@ -188,4 +188,20 @@ uint64_t PagedVector::PagesWrapper::getNumberOfPages() const
 {
     return pages.size();
 }
+
+const TupleBuffer& PagedVector::getPage(const uint64_t pageIndex) const
+{
+    PRECONDITION(pageIndex < pages.getNumberOfPages(), "Page index {} exceeds number of pages {}", pageIndex, pages.getNumberOfPages());
+    return pages[pageIndex].buffer;
+}
+
+void PagedVector::clear()
+{
+    pages.clearPages();
+}
+
+void PagedVector::appendPage(const TupleBuffer& buffer)
+{
+    pages.addPage(buffer);
+}
 }

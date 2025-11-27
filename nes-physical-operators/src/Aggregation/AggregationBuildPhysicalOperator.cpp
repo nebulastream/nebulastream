@@ -14,9 +14,11 @@
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <ranges>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
@@ -26,8 +28,10 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -40,6 +44,27 @@
 
 namespace NES
 {
+namespace
+{
+constexpr std::string_view AggregationCheckpointFileName = "aggregation_hashmap.bin";
+
+std::filesystem::path getAggregationCheckpointFile()
+{
+    auto baseDir = CheckpointManager::getCheckpointDirectory();
+    baseDir /= AggregationCheckpointFileName;
+    return baseDir;
+}
+
+void ensureCheckpointDirectory(const std::filesystem::path& checkpointFile)
+{
+    const auto checkpointDir = checkpointFile.parent_path();
+    if (!checkpointDir.empty() && !std::filesystem::exists(checkpointDir))
+    {
+        std::filesystem::create_directories(checkpointDir);
+    }
+}
+}
+
 Interface::HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
@@ -97,7 +122,9 @@ void serializeHashMapProxy(
         return;
     }
     auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
-    hashMap->serialize("/tmp/nebulastream/hashmap.bin");
+    const auto checkpointFile = getAggregationCheckpointFile();
+    ensureCheckpointDirectory(checkpointFile);
+    hashMap->serialize(checkpointFile);
     serialized = true;
 }
 
@@ -113,11 +140,13 @@ Interface::HashMap* deserializeHashMapProxy(
     {
         return hashMap;
     }
-    if (!std::filesystem::exists("/tmp/nebulastream/hashmap.bin"))
+    const auto checkpointFile = getAggregationCheckpointFile();
+    if (!std::filesystem::exists(checkpointFile))
     {
         return hashMap;
     }
-    hashMap->deserialize("/tmp/nebulastream/hashmap.bin", bufferProvider);
+    ensureCheckpointDirectory(checkpointFile);
+    hashMap->deserialize(checkpointFile, bufferProvider);
     return hashMap;
 }
 
