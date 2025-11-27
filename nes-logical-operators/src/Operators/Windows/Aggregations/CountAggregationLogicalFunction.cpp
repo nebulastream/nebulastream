@@ -32,21 +32,12 @@
 
 namespace NES
 {
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
-    , partialAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
-    , onField(field)
-    , asField(field)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field) : onField(field), asField(field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : inputStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
-    , partialAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
-    , onField(std::move(field))
-    , asField(std::move(asField))
+    : onField(std::move(field)), asField(std::move(asField))
 {
 }
 

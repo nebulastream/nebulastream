@@ -32,21 +32,12 @@
 
 namespace NES
 {
-MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
-    , onField{field}
-    , asField{field}
+MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field) : onField(field), asField(field)
 {
 }
 
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : inputStamp(field.getDataType())
-    , partialAggregateStamp(field.getDataType())
-    , finalAggregateStamp(field.getDataType())
-    , onField(field)
-    , asField(std::move(asField))
+    : onField(field), asField(std::move(asField))
 {
 }
 
@@ -75,9 +66,10 @@ MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(c
     }
 
     ///Set fully qualified name for the as Field
-    auto onFieldName = newOnField.getFieldName();
-    auto asFieldName = this->getAsField().getFieldName();
+    const auto onFieldName = newOnField.getFieldName();
+    const auto asFieldName = this->getAsField().getFieldName();
 
+    ///If on and as field name are different then append the attribute name resolver from on field to the as field
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     std::string newAsFieldName;

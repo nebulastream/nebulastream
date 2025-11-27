@@ -57,10 +57,10 @@ std::string FieldAccessLogicalFunction::getFieldName() const
     return fieldName;
 }
 
-FieldAccessLogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withFieldName(const std::string_view newFieldName) const
 {
     auto copy = *this;
-    copy.fieldName = std::move(fieldName);
+    copy.fieldName = newFieldName;
     return copy;
 }
 
