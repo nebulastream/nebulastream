@@ -1,5 +1,6 @@
-{ pkgs
-, mlirBinary
+{
+  pkgs,
+  mlirBinary,
 }:
 
 let
@@ -35,7 +36,11 @@ let
     pkgs.python3
   ];
 
-  build = { extraBuildInputs ? [ ], useLibcxx ? false }:
+  build =
+    {
+      extraBuildInputs ? [ ],
+      useLibcxx ? false,
+    }:
     let
       selectedStdenv = if useLibcxx then libcxxStdenv else clangStdenv;
     in
@@ -96,14 +101,14 @@ let
       };
     };
 
-in {
+in
+{
   default = build { };
-  withSanitizer = arg:
+  withSanitizer =
+    arg:
     let
-      extraBuildInputs =
-        if builtins.isList arg then arg else (arg.extraBuildInputs or [ ]);
-      useLibcxx =
-        if builtins.isAttrs arg then (arg.useLibcxx or false) else false;
+      extraBuildInputs = if builtins.isList arg then arg else (arg.extraBuildInputs or [ ]);
+      useLibcxx = if builtins.isAttrs arg then (arg.useLibcxx or false) else false;
     in
     build { inherit extraBuildInputs useLibcxx; };
 }
