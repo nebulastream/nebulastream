@@ -119,7 +119,7 @@ dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, Abstra
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
         auto emptyBuffer = bufferProvider.getBufferBlocking();
-        const auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+        const auto numReadBytes = source.fillTupleBuffer(emptyBuffer, bufferProvider, stopToken);
 
         if (numReadBytes != 0)
         {

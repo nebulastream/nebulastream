@@ -41,7 +41,8 @@
     "replxx",
     "spdlog",
     "yaml-cpp",
-    "boost-url"
+    "boost-url",
+    "unixodbc"
   ],
   "overrides": [
     {

@@ -86,7 +86,7 @@ void GeneratorSource::close()
     }
 }
 
-size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+size_t GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken)
 {
     try
     {

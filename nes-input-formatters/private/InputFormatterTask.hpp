@@ -222,6 +222,7 @@ public:
         /// @Note: with a Nautilus implementation, we can skip the proxy function call that triggers formatting/indexing during tracing,
         /// leading to generated code that immediately operates on the data.
         const auto [div, mod] = std::lldiv(static_cast<int64_t>(rawBuffer.getNumberOfTuples()), this->schemaInfo.getSizeOfTupleInBytes());
+        NES_WARNING("Input Formatter expected row size is: {}", this->schemaInfo.getSizeOfTupleInBytes());
         PRECONDITION(
             mod == 0,
             "Raw buffer contained {} bytes, which is not a multiple of the tuple size {} bytes.",

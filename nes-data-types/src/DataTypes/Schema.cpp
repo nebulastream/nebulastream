@@ -22,17 +22,19 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include "Util/Strings.hpp"
 
 namespace NES
 {
 
-Schema::Field::Field(std::string name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType))
+Schema::Field::Field(std::string name, DataType dataType) : name(Util::toUpperCase(std::move(name))), dataType(std::move(dataType))
 {
 }
 

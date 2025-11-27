@@ -27,6 +27,9 @@ RUN apt update -y && apt install \
     ccache \
     ninja-build \
     pkg-config \
+    automake \
+    autoconf \
+    libtool \
     -y
 
 # install llvm based toolchain
