@@ -53,6 +53,7 @@ struct Repl::Impl
     TopologyStatementHandler topologyStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
+    std::stop_token stopToken;
 
     std::unique_ptr<replxx::Replxx> rx;
     std::vector<std::string> history;
@@ -77,12 +78,14 @@ struct Repl::Impl
         StatementBinder binder,
         const ErrorBehaviour errorBehaviour,
         const StatementOutputFormat defaultOutputFormat,
-        const bool interactiveMode)
+        const bool interactiveMode,
+        std::stop_token stopToken)
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
         , topologyStatementHandler(std::move(topologyStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
         , binder(std::move(binder))
+        , stopToken(std::move(stopToken))
         , interactiveMode(interactiveMode)
         , errorBehaviour(errorBehaviour)
         , defaultOutputFormat(defaultOutputFormat)
@@ -450,7 +453,7 @@ struct Repl::Impl
             printWelcome();
         }
 
-        while (true)
+        while (!stopToken.stop_requested())
         {
             try
             {
@@ -459,16 +462,27 @@ struct Repl::Impl
                 if (!interactiveMode)
                 {
                     /// Use std::getline for non-interactive mode to avoid terminal issues
-                    std::getline(std::cin, input);
-                    if (std::cin.eof())
+                    if (!std::getline(std::cin, input))
                     {
-                        break;
+                        if (std::cin.eof())
+                        {
+                            break;
+                        }
+
+                        continue;
                     }
                 }
                 else
                 {
                     /// Use Replxx for interactive mode
-                    input = rx->input(getPrompt());
+                    const auto* const result = rx->input(getPrompt());
+                    if (result == nullptr)
+                    {
+                        /// EoF reached
+                        return;
+                    }
+
+                    input = result;
                 }
 
                 if (input.empty())
@@ -543,7 +557,8 @@ Repl::Repl(
     StatementBinder binder,
     ErrorBehaviour errorBehaviour,
     StatementOutputFormat defaultOutputFormat,
-    bool interactiveMode)
+    bool interactiveMode,
+    std::stop_token stopToken)
     : impl(std::make_unique<Impl>(
           std::move(sourceStatementHandler),
           std::move(sinkStatementHandler),
@@ -552,7 +567,8 @@ Repl::Repl(
           std::move(binder),
           errorBehaviour,
           defaultOutputFormat,
-          interactiveMode))
+          interactiveMode,
+          std::move(stopToken)))
 {
 }
 
