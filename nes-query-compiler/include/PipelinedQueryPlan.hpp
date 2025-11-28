@@ -34,11 +34,11 @@ namespace NES
 /// a @link PhysicalPlan into @link CompiledQueryPlan.
 struct PipelinedQueryPlan final
 {
-    explicit PipelinedQueryPlan(QueryId id, ExecutionMode executionMode);
+    explicit PipelinedQueryPlan(LocalQueryId id, ExecutionMode executionMode);
 
     friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& plan);
 
-    [[nodiscard]] QueryId getQueryId() const;
+    [[nodiscard]] LocalQueryId getQueryId() const;
     [[nodiscard]] ExecutionMode getExecutionMode() const;
 
     [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const;
@@ -47,7 +47,7 @@ struct PipelinedQueryPlan final
     void removePipeline(Pipeline& pipeline);
 
 private:
-    QueryId queryId;
+    LocalQueryId localQueryId;
     ExecutionMode executionMode;
     std::vector<std::shared_ptr<Pipeline>> pipelines;
 };

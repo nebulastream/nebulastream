@@ -31,7 +31,7 @@ class PhysicalPlanBuilder final
     using Roots = std::vector<std::shared_ptr<PhysicalOperatorWrapper>>;
 
 public:
-    explicit PhysicalPlanBuilder(QueryId id);
+    explicit PhysicalPlanBuilder(LocalQueryId id);
     void addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink);
     void setExecutionMode(ExecutionMode mode);
     void setOperatorBufferSize(uint64_t bufferSize);
@@ -40,10 +40,10 @@ public:
     [[nodiscard]] PhysicalPlan finalize() &&;
 
 private:
-    QueryId queryId;
     Roots sinks;
     ExecutionMode executionMode;
     uint64_t operatorBufferSize{};
+    LocalQueryId localQueryId = INVALID_LOCAL_QUERY_ID;
 
     /// Used internally to flip the plan from sink->source tstatic o source->sink
     static Roots flip(const Roots& roots);
