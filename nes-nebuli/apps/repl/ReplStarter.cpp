@@ -13,9 +13,11 @@
 */
 
 #include <chrono>
+#include <csignal>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <stop_token>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -68,6 +70,19 @@ enum class OnExitBehavior : uint8_t
     DO_NOTHING,
 };
 
+class SignalHandler
+{
+    static inline std::stop_source signalSource;
+
+public:
+    static void setup()
+    {
+        std::signal(SIGTERM, [](int) { SignalHandler::signalSource.request_stop(); });
+    }
+
+    static std::stop_token terminationToken() { return signalSource.get_token(); }
+};
+
 std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat format, const auto& statement)
 {
     NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statement)>> assembler{};
@@ -91,6 +106,7 @@ int main(int argc, char** argv)
 
         NES::Thread::initializeThread(NES::WorkerId("nebuli"), "main");
         NES::Logger::setupLogging("nebuli.log", NES::LogLevel::LOG_ERROR, !interactiveMode);
+        SignalHandler::setup();
 
         using argparse::ArgumentParser;
         ArgumentParser program("nebuli");
@@ -217,7 +233,8 @@ int main(int argc, char** argv)
             std::move(binder),
             errorBehaviour,
             defaultOutputFormat,
-            interactiveMode);
+            interactiveMode,
+            SignalHandler::terminationToken());
         replClient.run();
 
         bool hasError = false;
