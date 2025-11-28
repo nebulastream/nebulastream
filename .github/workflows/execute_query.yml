@@ -75,46 +75,29 @@ jobs:
           cat << 'EOF' > query.sql
           ${{ inputs.query_config }}
           EOF
-        
+          
           cat query.sql
       - name: Build and Test
+        shell: bash
         run: |
-            cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
-            cmake --build build -j -- -k 0
-            
-            build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
-            WORKER_PID=$!
-            
-            sleep 5
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 < query.sql
-            
-            # wait and monitor
-            echo "Waiting and monitoring worker..."
-            ELAPSED_SECONDS=0
-            MAX_SECONDS=${{ inputs.runtime_seconds }}
-            echo "Stress test runtime set to $MAX_SECONDS seconds"
-            while [ $ELAPSED_SECONDS -lt $MAX_SECONDS ]; do
-              if ! kill -0 $WORKER_PID 2>/dev/null; then
-                echo "Worker has exited unexpectedly!"
-                tail -n 50 worker.log
-                exit 1
-              fi
-              sleep 60
-              ELAPSED_SECONDS=$((ELAPSED_SECONDS + 60))
-            done
-            
-            # stopping all queries
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 1
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 2
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 3
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 4
-            echo "Worker stayed alive!"
-            
-            # stop worker
-            kill $WORKER_PID
-            wait $WORKER_PID || true
-            tail -n 50 worker.log
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+          cmake --build build -j -- -k 0
+          
+          build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
+          WORKER_PID=$!
+          
+          sleep 5
+          ({ cat query.sql; sleep 20; } | timeout 20 build/nes-nebuli/apps/nebuli --on-exit STOP_QUERIES -s localhost:8080) || EXIT_CODE=$?
+          
+          # verify that the timeout has terminated nebuli.
+          if [ "${EXIT_CODE:-0}" -ne 124 ]; then
+            echo "✗ FAILURE: Unexpected exit code: ${EXIT_CODE}"
+            exit 1
+          fi
 
+          # stop worker
+          kill $WORKER_PID
+          wait $WORKER_PID
       - name: Output Logs on failure
         if: failure()
         run: |
