@@ -15,6 +15,11 @@
 
 # If we are outside the dev shell, re-run this script inside the nix develop environment.
 if [ -z "$IN_NIX_RUN" ]; then
+  # Fast-path CLion's `cmake --version` probe to avoid waiting for nix-builds during toolchain detection.
+  if [ "$#" -eq 1 ] && { [ "$1" = "--version" ] || [ "$1" = "-version" ]; }; then
+    exec cmake "$@"
+  fi
+
   SCRIPT_PATH="$(readlink -f "$0")"
 
   # Logic to enable building with -DUSE_SANITIZER=...
