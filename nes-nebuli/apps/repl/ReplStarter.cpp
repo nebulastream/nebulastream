@@ -13,9 +13,11 @@
 */
 
 #include <chrono>
+#include <csignal>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <stop_token>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -68,6 +70,29 @@ enum class OnExitBehavior : uint8_t
     DO_NOTHING,
 };
 
+class SignalHandler
+{
+    static inline std::stop_source signalSource;
+
+public:
+    static void setup()
+    {
+        const auto previousHandler = std::signal(SIGTERM, [](int) { [[maybe_unused]] auto dontCare = signalSource.request_stop(); });
+        if (previousHandler == SIG_ERR)
+        {
+            NES_WARNING("Could not install signal handler for SIGTERM. Repl might not respond to termination signals.");
+        }
+        else
+        {
+            INVARIANT(
+                previousHandler == nullptr,
+                "The SignalHandler does not restore the pre existing signal handler and thus it expects no handler to exist");
+        }
+    }
+
+    static std::stop_token terminationToken() { return signalSource.get_token(); }
+};
+
 std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat format, const auto& statement)
 {
     NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statement)>> assembler{};
@@ -91,6 +116,7 @@ int main(int argc, char** argv)
 
         NES::Thread::initializeThread(NES::WorkerId("nes-repl"), "main");
         NES::Logger::setupLogging("nes-repl.log", NES::LogLevel::LOG_ERROR, !interactiveMode);
+        SignalHandler::setup();
 
         using argparse::ArgumentParser;
         ArgumentParser program("nes-repl");
@@ -213,7 +239,8 @@ int main(int argc, char** argv)
             std::move(binder),
             errorBehaviour,
             defaultOutputFormat,
-            interactiveMode);
+            interactiveMode,
+            SignalHandler::terminationToken());
         replClient.run();
 
         bool hasError = false;
