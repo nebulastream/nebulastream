@@ -48,11 +48,17 @@ SinkLogicalOperator::SinkLogicalOperator(SinkDescriptor sinkDescriptor)
 
 bool SinkLogicalOperator::operator==(const SinkLogicalOperator& rhs) const
 {
-    const bool descriptorsEqual = (not sinkDescriptor.has_value() && not rhs.sinkDescriptor.has_value())
-        || (sinkDescriptor.has_value() && rhs.sinkDescriptor.has_value() && *sinkDescriptor == *rhs.sinkDescriptor);
+    bool result = true;
+    result &= sinkName == rhs.sinkName;
+    result &= sinkDescriptor == rhs.sinkDescriptor;
+    result &= getTraitSet() == rhs.getTraitSet();
+    if (sinkDescriptor)
+    {
+        result &= getOutputSchema() == rhs.getOutputSchema();
+        result &= getInputSchemas() == rhs.getInputSchemas();
+    }
 
-    return sinkName == rhs.sinkName && descriptorsEqual && getOutputSchema() == rhs.getOutputSchema()
-        && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return result;
 }
 
 std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const

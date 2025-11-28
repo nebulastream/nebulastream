@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <StatementHandler.hpp>
+#include <Statements/StatementHandler.hpp>
 
-#include <algorithm>
+#include <chrono>
 #include <expected>
 #include <memory>
-#include <mutex>
 #include <ranges>
+#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -29,9 +29,11 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -53,8 +55,14 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
 std::expected<CreatePhysicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement)
 {
+    auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
+    if (!logicalSource)
+    {
+        return std::unexpected{UnknownSourceName(statement.attachedTo.getRawValue())};
+    }
+
     if (const auto created
-        = sourceCatalog->addPhysicalSource(statement.attachedTo, statement.sourceType, statement.sourceConfig, statement.parserConfig))
+        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, statement.sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -88,21 +96,27 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
     }
     if (not statement.id and statement.logicalSource)
     {
-        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue()))
         {
-            return ShowPhysicalSourcesStatementResult{*foundSources | std::ranges::to<std::vector>()};
+            if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
+            {
+                return ShowPhysicalSourcesStatementResult{*foundSources | std::ranges::to<std::vector>()};
+            }
         }
         return ShowPhysicalSourcesStatementResult{{}};
     }
     if (statement.logicalSource and statement.id)
     {
-        if (const auto foundSources = sourceCatalog->getPhysicalSources(*statement.logicalSource))
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue()))
         {
-            return ShowPhysicalSourcesStatementResult{
-                foundSources.value()
-                | std::views::filter([statement](const auto& source)
-                                     { return source.getPhysicalSourceId() == PhysicalSourceId{statement.id.value()}; })
-                | std::ranges::to<std::vector>()};
+            if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
+            {
+                return ShowPhysicalSourcesStatementResult{
+                    foundSources.value()
+                    | std::views::filter([statement](const auto& source)
+                                         { return source.getPhysicalSourceId() == PhysicalSourceId{statement.id.value()}; })
+                    | std::ranges::to<std::vector>()};
+            }
         }
         return ShowPhysicalSourcesStatementResult{{}};
     }
@@ -113,11 +127,14 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
 
 std::expected<DropLogicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropLogicalSourceStatement& statement)
 {
-    if (sourceCatalog->removeLogicalSource(statement.source))
+    if (auto logical = sourceCatalog->getLogicalSource(statement.source.getRawValue()))
     {
-        return DropLogicalSourceStatementResult{statement.source};
+        if (sourceCatalog->removeLogicalSource(*logical))
+        {
+            return DropLogicalSourceStatementResult{.dropped = statement.source, .schema = *logical->getSchema()};
+        }
     }
-    return std::unexpected{UnknownSourceName(statement.source.getLogicalSourceName())};
+    return std::unexpected{UnknownSourceName(statement.source.getRawValue())};
 }
 
 std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropPhysicalSourceStatement& statement)
@@ -184,11 +201,32 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
     return stopResult;
 }
 
+std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)
+{
+    CPPTRACE_TRY
+    {
+        std::stringstream explainMessage;
+        fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
+        fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
+
+        const auto optimizedPlan = optimizer->optimize(statement.plan);
+
+        fmt::println(explainMessage, "Optimized Global Plan:\n{}", optimizedPlan);
+
+        return ExplainQueryStatementResult{explainMessage.str()};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
 {
     CPPTRACE_TRY
     {
-        const auto optimizedPlan = optimizer->optimize(statement);
+        const auto optimizedPlan = optimizer->optimize(statement.plan);
         const auto queryResult = queryManager->registerQuery(optimizedPlan);
         return queryResult
             .and_then(
@@ -205,6 +243,16 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
         return std::unexpected{wrapExternalException()};
     }
     std::unreachable();
+}
+
+TopologyStatementHandler::TopologyStatementHandler(SharedPtr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+{
+}
+
+std::expected<WorkerStatusStatementResult, Exception> TopologyStatementHandler::operator()(const WorkerStatusStatement&)
+{
+    return this->queryManager->workerStatus(std::chrono::system_clock::time_point{})
+        .transform([](WorkerStatus status) { return WorkerStatusStatementResult{std::move(status)}; });
 }
 
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
