@@ -39,3 +39,42 @@ RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-proj
     printers.register_libcxx_printer_loader()
     end
 EOF
+
+# Installing the stable and nightly rust toolchain
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH \
+    RUST_VERSION=1.90.0
+
+RUN set -eux; \
+    \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+        'amd64') \
+            rustArch='x86_64-unknown-linux-gnu'; \
+            rustupSha256='20a06e644b0d9bd2fbdbfd52d42540bdde820ea7df86e92e533c073da0cdd43c'; \
+            ;; \
+        'arm64') \
+            rustArch='aarch64-unknown-linux-gnu'; \
+            rustupSha256='e3853c5a252fca15252d07cb23a1bdd9377a8c6f3efa01531109281ae47f841c'; \
+            ;; \
+        *) \
+            echo >&2 "unsupported architecture: $arch"; \
+            exit 1; \
+            ;; \
+    esac; \
+    \
+    url="https://static.rust-lang.org/rustup/archive/1.28.2/${rustArch}/rustup-init"; \
+    wget --progress=dot:giga "$url"; \
+    echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
+    \
+    chmod +x rustup-init; \
+    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain ${RUST_VERSION} --default-host ${rustArch}; \
+    rm rustup-init; \
+    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
+    \
+    rustup install nightly; \
+    rustup component add rust-src --toolchain nightly; \
+    rustup --version; \
+    cargo --version; \
+    rustc --version;
