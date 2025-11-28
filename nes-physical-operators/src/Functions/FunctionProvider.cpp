@@ -78,7 +78,7 @@ T parseConstantValue(std::string_view input)
     {
         return *value;
     }
-    throw QueryCompilerError("Can not parse constant value \"{}\" into {}", input, typeid(T).name());
+    throw QueryCompilerError("Can not parse constant value \"{}\" into {}", input, NAMEOF_TYPE(T));
 }
 }
 
