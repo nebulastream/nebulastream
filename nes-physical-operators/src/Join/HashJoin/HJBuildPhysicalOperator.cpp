@@ -136,13 +136,31 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     Interface::ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
+
+    /// We use a C++ datatype as well to not have any costs, if none of the fields is nullable.
+    /// If this is the case, we can then simply skip the null check.
+    nautilus::val<bool> anyKeyFieldIsNull = false;
+    bool anyKeyFieldIsNullable = false;
+
     /// Calling the key functions to add/update the keys to the record
     for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)
     {
         const auto& [fieldIdentifier, type, fieldOffset] = hashMapOptions.fieldKeys[i];
         const auto& function = hashMapOptions.keyFunctions[i];
         const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
+        if (value.isNullable() and value.isNull())
+        {
+            anyKeyFieldIsNull = true;
+            anyKeyFieldIsNullable = true;
+        }
         record.write(fieldIdentifier, value);
+    }
+
+    /// If any key field is null, we need to skip it from inserting the tuple in the hash table, as the tuple will never be included
+    /// in the result set. This is the case as an inner join requires all join conditions to be TRUE (i.e., no NULL values in the join fields.
+    if (anyKeyFieldIsNullable and anyKeyFieldIsNull)
+    {
+        return;
     }
 
     /// Finding or creating the entry for the provided record
