@@ -38,6 +38,7 @@
 #include <function.hpp>
 #include <options.hpp>
 #include <static.hpp>
+#include <val_bool.hpp>
 #include <val_enum.hpp>
 #include <val_ptr.hpp>
 
@@ -138,40 +139,48 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
     /// Calling the key functions to add/update the keys to the record
+    nautilus::val<bool> containsNullInKey{false};
     for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)
     {
         const auto& [fieldIdentifier, type, fieldOffset] = hashMapOptions.fieldKeys[i];
         const auto& function = hashMapOptions.keyFunctions[i];
         const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
+        containsNullInKey = containsNullInKey or (value.isNullable() and value.isNull());
         record.write(fieldIdentifier, value);
     }
 
-    /// Finding or creating the entry for the provided record
-    const auto hashMapEntry = hashMap.findOrCreateEntry(
-        record,
-        *hashMapOptions.hashFunction,
-        [&](const nautilus::val<AbstractHashMapEntry*>& entry)
-        {
-            /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
-            const ChainedHashMapRef::ChainedEntryRef entryRefReset{entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
-            const auto state = entryRefReset.getValueMemArea();
-            nautilus::invoke(
-                +[](int8_t* pagedVectorMemArea) -> void
-                {
-                    /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-                    /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                    auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                    new (pagedVector) PagedVector();
-                },
-                state);
-        },
-        ctx.pipelineMemoryProvider.bufferProvider);
+    /// If any key field is null, we need to skip it from inserting the tuple in the hash table, as the tuple will never be included
+    /// in the result set. This is the case as an inner join requires all join conditions to be TRUE (i.e., no NULL values in the join fields).
+    if (not containsNullInKey)
+    {
+        /// Finding or creating the entry for the provided record
+        const auto hashMapEntry = hashMap.findOrCreateEntry(
+            record,
+            *hashMapOptions.hashFunction,
+            [&](const nautilus::val<AbstractHashMapEntry*>& entry)
+            {
+                /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
+                const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                    entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+                const auto state = entryRefReset.getValueMemArea();
+                nautilus::invoke(
+                    +[](int8_t* pagedVectorMemArea) -> void
+                    {
+                        /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
+                        /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                        auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                        new (pagedVector) PagedVector();
+                    },
+                    state);
+            },
+            ctx.pipelineMemoryProvider.bufferProvider);
 
-    /// Inserting the tuple into the corresponding hash entry
-    const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
-    auto entryMemArea = entryRef.getValueMemArea();
-    const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
-    pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+        /// Inserting the tuple into the corresponding hash entry
+        const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+        auto entryMemArea = entryRef.getValueMemArea();
+        const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
+        pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+    }
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(
