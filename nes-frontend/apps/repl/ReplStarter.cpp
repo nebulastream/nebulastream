@@ -13,10 +13,19 @@
 */
 
 #include <chrono>
+#include <csignal>
+#include <cstdint>
+#include <exception>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <ostream>
+#include <ranges>
+#include <stop_token>
+#include <string>
 #include <thread>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <unistd.h>
@@ -37,6 +46,7 @@
 #include <Util/Pointers.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
@@ -57,8 +67,7 @@ namespace
 {
 NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(std::string grpcAddr)
 {
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(grpcAddr), .config = {}});
-}
+    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(std::move(grpcAddr)), .config = {}});
 }
 
 enum class OnExitBehavior : uint8_t
@@ -66,6 +75,29 @@ enum class OnExitBehavior : uint8_t
     WAIT_FOR_QUERY_TERMINATION,
     STOP_QUERIES,
     DO_NOTHING,
+};
+
+class SignalHandler
+{
+    static inline std::stop_source signalSource;
+
+public:
+    static void setup()
+    {
+        const auto previousHandler = std::signal(SIGTERM, [](int) { [[maybe_unused]] auto dontCare = signalSource.request_stop(); });
+        if (previousHandler == SIG_ERR)
+        {
+            NES_WARNING("Could not install signal handler for SIGTERM. Repl might not respond to termination signals.");
+        }
+        else
+        {
+            INVARIANT(
+                previousHandler == nullptr,
+                "The SignalHandler does not restore the pre existing signal handler and thus it expects no handler to exist");
+        }
+    }
+
+    static std::stop_token terminationToken() { return signalSource.get_token(); }
 };
 
 std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat format, const auto& statement)
@@ -81,6 +113,7 @@ std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat 
     }
     std::unreachable();
 }
+}
 
 int main(int argc, char** argv)
 {
@@ -91,6 +124,7 @@ int main(int argc, char** argv)
 
         NES::Thread::initializeThread(NES::WorkerId("nes-repl"), "main");
         NES::Logger::setupLogging("nes-repl.log", NES::LogLevel::LOG_ERROR, false);
+        SignalHandler::setup();
 
         using argparse::ArgumentParser;
         ArgumentParser program("nes-repl");
@@ -103,12 +137,12 @@ int main(int argc, char** argv)
                 magic_enum::enum_name(OnExitBehavior::STOP_QUERIES),
                 magic_enum::enum_name(OnExitBehavior::DO_NOTHING))
             .default_value(std::string(magic_enum::enum_name(OnExitBehavior::DO_NOTHING)))
-            .required()
             .help(fmt::format(
                 "on exit behavior: [{}]",
                 fmt::join(
                     std::views::transform(
-                        magic_enum::enum_values<OnExitBehavior>(), [](const auto& e) { return magic_enum::enum_name(e); }),
+                        magic_enum::enum_values<OnExitBehavior>(),
+                        [](const auto& exitBehavior) { return magic_enum::enum_name(exitBehavior); }),
                     ", ")));
 
         program.add_argument("-e", "--error-behaviour")
@@ -178,8 +212,6 @@ int main(int argc, char** argv)
         {
 #ifdef EMBED_ENGINE
             auto confVec = program.get<std::vector<std::string>>("--");
-            PRECONDITION(confVec.size() < INT_MAX - 1, "Too many worker configuration options passed through, maximum is {}", INT_MAX);
-
             const int singleNodeArgC = static_cast<int>(confVec.size() + 1);
             std::vector<const char*> singleNodeArgV;
             singleNodeArgV.reserve(singleNodeArgC + 1);
@@ -213,23 +245,26 @@ int main(int argc, char** argv)
             std::move(binder),
             errorBehaviour,
             defaultOutputFormat,
-            interactiveMode);
+            interactiveMode,
+            SignalHandler::terminationToken());
         replClient.run();
 
         bool hasError = false;
+        /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) validated by argparse .choices()
         switch (magic_enum::enum_cast<OnExitBehavior>(program.get<std::string>("--on-exit")).value())
         {
             case OnExitBehavior::STOP_QUERIES:
                 for (auto& query : queryManager->getRunningQueries())
                 {
                     auto result = queryStatementHandler->operator()(NES::DropQueryStatement{.id = query});
-                    NES::StatementOutputAssembler<NES::DropQueryStatementResult> assembler{};
+                    const NES::StatementOutputAssembler<NES::DropQueryStatementResult> assembler{};
                     if (!result.has_value())
                     {
                         NES_ERROR("Could not stop query: {}", result.error().what());
                         hasError = true;
                         continue;
                     }
+                    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) validated by argparse .choices()
                     printStatementResult(
                         std::cout, magic_enum::enum_cast<NES::StatementOutputFormat>(program.get("-f")).value(), result.value());
                 }
