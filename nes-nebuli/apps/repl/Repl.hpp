@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <stop_token>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Statements/StatementHandler.hpp>
 
@@ -43,7 +44,8 @@ public:
         StatementBinder binder,
         ErrorBehaviour errorBehaviour,
         StatementOutputFormat defaultOutputFormat,
-        bool interactiveMode);
+        bool interactiveMode,
+        std::stop_token stopToken);
     void run();
     ~Repl();
 };
