@@ -142,6 +142,12 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         const auto& [fieldIdentifier, type, fieldOffset] = hashMapOptions.fieldKeys[i];
         const auto& function = hashMapOptions.keyFunctions[i];
         const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
+        if (value.isNullable() and value.isNull())
+        {
+            /// If any key field is null, we need to skip it from inserting the tuple in the hash table, as the tuple will never be included
+            /// in the result set. This is the case as an inner join requires all join conditions to be TRUE (i.e., no NULL values in the join fields).
+            return;
+        }
         record.write(fieldIdentifier, value);
     }
 
