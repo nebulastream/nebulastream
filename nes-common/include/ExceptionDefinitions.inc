@@ -73,6 +73,12 @@ EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
 
+/// 23XX Distributed
+EXCEPTION(PlacementFailure, 2300, "could not place all operators")
+EXCEPTION(InvalidTopology, 2301, "topology is in an invalid state")
+EXCEPTION(UnknownWorker, 2302, "worker does not exist")
+EXCEPTION(DistributedFailure, 2303, "multiple failures")
+
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
 EXCEPTION(QueryDescriptionNotParsable, 2201, "could not parse query description")

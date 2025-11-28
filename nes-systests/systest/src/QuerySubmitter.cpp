@@ -16,17 +16,21 @@
 
 #include <chrono>
 #include <memory>
+#include <ranges>
+#include <string>
 #include <thread>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -35,74 +39,108 @@ QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : que
 {
 }
 
-std::expected<LocalQueryId, Exception> QuerySubmitter::registerQuery(const LogicalPlan& plan)
+std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const DistributedLogicalPlan& plan)
 {
     /// Make sure the queryplan is passed through serialization logic.
-    const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
-    const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
-    if (deserialized == plan)
+    std::unordered_map<GrpcAddr, std::vector<std::string>> serializationErrorsPerWorker;
+    for (const auto& [grpc, localPlans] : plan)
     {
-        return queryManager->registerQuery(deserialized);
+        for (const auto& localPlan : localPlans)
+        {
+            const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(localPlan);
+            const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
+            if (deserialized != localPlan)
+            {
+                serializationErrorsPerWorker[grpc].emplace_back(fmt::format(
+                    "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
+                    "deserialize(serialize(plan)):\n{}",
+                    explain(localPlan, ExplainVerbosity::Debug),
+                    explain(deserialized, ExplainVerbosity::Debug)));
+            }
+        }
     }
-    const auto exception = CannotSerialize(
-        "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and deserialize(serialize(plan)):\n{}",
-        explain(plan, ExplainVerbosity::Debug),
-        explain(deserialized, ExplainVerbosity::Debug));
+
+    if (serializationErrorsPerWorker.empty())
+    {
+        return queryManager->registerQuery(plan);
+    }
+
+    const auto exception = CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker);
     return std::unexpected(exception);
 }
 
-void QuerySubmitter::startQuery(LocalQueryId query)
+void QuerySubmitter::startQuery(DistributedQueryId query)
 {
     if (auto started = queryManager->start(query); !started.has_value())
     {
-        throw std::move(started.error());
+        throw std::move(started.error().at(0));
     }
     ids.emplace(query);
 }
 
-void QuerySubmitter::stopQuery(const LocalQueryId query)
+void QuerySubmitter::stopQuery(const DistributedQueryId& query)
 {
     if (auto stopped = queryManager->stop(query); !stopped.has_value())
     {
-        throw std::move(stopped.error());
+        throw std::move(stopped.error().at(0));
     }
 }
 
-void QuerySubmitter::unregisterQuery(const LocalQueryId query)
+void QuerySubmitter::unregisterQuery(const DistributedQueryId& query)
 {
     if (auto unregistered = queryManager->unregister(query); !unregistered.has_value())
     {
-        throw std::move(unregistered.error());
+        throw std::move(unregistered.error().at(0));
     }
 }
 
-LocalQueryStatus QuerySubmitter::waitForQueryTermination(const LocalQueryId query)
+DistributedQueryStatus QuerySubmitter::waitForQueryTermination(const DistributedQueryId& query)
 {
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         if (const auto queryStatus = queryManager->status(query))
         {
-            if (queryStatus->state == QueryState::Stopped)
+            if (queryStatus.has_value())
             {
-                return *queryStatus;
+                if (queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped)
+                {
+                    return *queryStatus;
+                }
+            }
+            else
+            {
+                throw TestException(
+                    "Could not get query state: {}",
+                    fmt::join(queryStatus.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
             }
         }
     }
 }
 
-std::vector<LocalQueryStatus> QuerySubmitter::finishedQueries()
+std::vector<DistributedQueryStatus> QuerySubmitter::finishedQueries()
 {
     while (true)
     {
-        std::vector<LocalQueryStatus> results;
+        std::vector<std::pair<NES::DistributedQueryId, DistributedQueryStatus>> results;
         for (const auto& id : ids)
         {
             if (auto queryStatus = queryManager->status(id))
             {
-                if (queryStatus->state == QueryState::Failed || queryStatus->state == QueryState::Stopped)
+                if (queryStatus.has_value())
                 {
-                    results.emplace_back(std::move(*queryStatus));
+                    if (queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped
+                        || queryStatus->getGlobalQueryState() == DistributedQueryState::Failed)
+                    {
+                        results.emplace_back(id, std::move(*queryStatus));
+                    }
+                }
+                else
+                {
+                    throw TestException(
+                        "Could not get query state: {}",
+                        fmt::join(
+                            queryStatus.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
                 }
             }
         }
@@ -112,12 +150,12 @@ std::vector<LocalQueryStatus> QuerySubmitter::finishedQueries()
             continue;
         }
 
-        for (auto& result : results)
+        for (auto& id : results | std::views::keys)
         {
-            ids.erase(result.queryId);
+            ids.erase(id);
         }
 
-        return results;
+        return results | std::views::values | std::ranges::to<std::vector>();
     }
 }
 }

@@ -1,0 +1,134 @@
+#!/usr/bin/expect -f
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set timeout 30
+set script_dir [file dirname [info script]]
+
+# Source helper procedures
+source $script_dir/../helpers.exp
+
+# Ensure output is not buffered
+log_user 0
+exp_internal 0
+
+# Setup distributed Docker Compose environment with 8-node topology
+setup "8-node.yaml"
+
+# Spawn nebuli inside the docker container
+spawn docker compose exec -t nebuli nebuli -d -f JSON
+
+wait_for_prompt
+
+send_sql {
+    CREATE WORKER "sink-node:9090" AT "sink-node:8080";
+    CREATE WORKER "source-node-1:9090" AT "source-node-1:8080"
+        SET("intermediate-node-1:9090" AS `DOWNSTREAM`);
+    CREATE WORKER "source-node-2:9090" AT "source-node-2:8080"
+        SET("intermediate-node-1:9090" AS `DOWNSTREAM`);
+    CREATE WORKER "source-node-3:9090" AT "source-node-3:8080"
+        SET("intermediate-node-2:9090" AS `DOWNSTREAM`);
+    CREATE WORKER "source-node-4:9090" AT "source-node-4:8080"
+        SET("intermediate-node-2:9090" AS `DOWNSTREAM`);
+    CREATE WORKER "source-node-5:9090" AT "source-node-5:8080"
+        SET("intermediate-node-2:9090" AS `DOWNSTREAM`);
+    CREATE WORKER "intermediate-node-1:9090" AT "intermediate-node-1:8080"
+        SET("sink-node:9090" AS `DOWNSTREAM`);
+    CREATE WORKER "intermediate-node-2:9090" AT "intermediate-node-2:8080"
+        SET("sink-node:9090" AS `DOWNSTREAM`);
+}
+
+expect_multiple_json_equal "CREATE WORKER" {
+    {[{"worker":"sink-node:9090"}]}
+    {[{"worker":"source-node-1:9090"}]}
+    {[{"worker":"source-node-2:9090"}]}
+    {[{"worker":"source-node-3:9090"}]}
+    {[{"worker":"source-node-4:9090"}]}
+    {[{"worker":"source-node-5:9090"}]}
+    {[{"worker":"intermediate-node-1:9090"}]}
+    {[{"worker":"intermediate-node-2:9090"}]}
+}
+
+send_sql {
+    SELECT ID, VALUE, TIMESTAMP
+    FROM Generator(
+        'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+        'CSV' as PARSER.`TYPE`,
+        'emit_rate 10' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+        10000000 AS `SOURCE`.MAX_RUNTIME_MS,
+        "source-node-1:9090" AS `SOURCE`.`HOST`,
+        1 AS `SOURCE`.SEED,
+        'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA,
+        SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+    INTO Print("sink-node:9090" AS `SINK`.`HOST`, "CSV" AS `SINK`.`INPUT_FORMAT`);
+}
+set json [expect_json "submitting inline source/sink query"]
+set query_id1 [jq $json {.[0].global_query_id}]
+
+send_sql {
+    SHOW QUERIES;
+}
+
+set json [expect_json "Getting list of queries after starting first query"]
+set count [jq $json {. | length}]
+if {$count != "4"} {
+    fail "SHOW QUERIES - expected 4 queries (one global, and 3 local), got $count"
+}
+
+send_sql {
+    SELECT ID, VALUE, TIMESTAMP
+    FROM Generator(
+        'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+        'CSV' as PARSER.`TYPE`,
+        'emit_rate 10' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+        10000000 AS `SOURCE`.MAX_RUNTIME_MS,
+        "source-node-5:9090" AS `SOURCE`.`HOST`,
+        1 AS `SOURCE`.SEED,
+        'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA,
+        SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+    INTO Print("sink-node:9090" AS `SINK`.`HOST`, "CSV" AS `SINK`.`INPUT_FORMAT`);
+}
+set json [expect_json "submitting inline source/sink query"]
+set query_id2 [jq $json {.[0].global_query_id}]
+
+
+send_sql {
+    SHOW QUERIES;
+}
+
+set json [expect_json "Getting list of queries after starting second query"]
+set count [jq $json {. | length}]
+if {$count != "8"} {
+    fail "SHOW QUERIES - expected 8 queries (two global, and 6 local), got $count"
+}
+
+send_sql {
+    DROP QUERY WHERE ID='$query_id1';
+}
+set json [expect_json "Drop first Query"]
+
+send_sql {
+    SHOW QUERIES;
+}
+
+set json [expect_json "Getting final list of queries"]
+set count [jq $json {. | length}]
+if {$count != "4"} {
+    fail "SHOW QUERIES - expected 4 queries (one global, and 3 local), got $count"
+}
+
+# Exit cleanly
+send "exit\r"
+expect eof
+
+exit 0

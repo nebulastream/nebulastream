@@ -28,9 +28,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestConfiguration.hpp>
 #include <SystestProgressTracker.hpp>
 #include <SystestState.hpp>
 
@@ -69,13 +69,17 @@ inline std::string discardPerformanceMessage(RunningQuery&)
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(
-    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const URI& serverURI, SystestProgressTracker& progressTracker);
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
+    SystestProgressTracker& progressTracker);
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
@@ -83,6 +87,7 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const std::vector<SystestQuery>& queries,
     const SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
+    const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
