@@ -16,9 +16,9 @@
 
 #include <string>
 #include <unordered_map>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Util/Registry.hpp>
+#include <DataTypes/Schema.hpp>
 
 namespace NES
 {
@@ -27,6 +27,7 @@ using SourceValidationRegistryReturnType = DescriptorConfig::Config;
 
 struct SourceValidationRegistryArguments
 {
+    Schema schema;
     std::unordered_map<std::string, std::string> config;
 };
 

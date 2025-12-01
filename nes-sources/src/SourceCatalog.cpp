@@ -80,7 +80,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
         return std::nullopt;
     }
     auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType, std::move(descriptorConfig));
+    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType, std::move(descriptorConfig), *logicalSource.getSchema());
     if (not descriptorConfigOpt.has_value())
     {
         return std::nullopt;
@@ -146,7 +146,7 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     std::unordered_map<std::string, std::string> parserConfigMap,
     std::unordered_map<std::string, std::string> sourceConfigMap) const
 {
-    auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
+    auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap), schema);
     if (!descriptorConfig.has_value())
     {
         return std::nullopt;

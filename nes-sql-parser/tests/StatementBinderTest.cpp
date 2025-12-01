@@ -192,7 +192,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
     const ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
     std::unordered_map<std::string, std::string> unvalidatedConfig{{"file_path", "/dev/null"}};
-    const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig)).value();
+    const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig), Schema{}).value();
 
     ASSERT_TRUE(statement2.has_value());
     ASSERT_TRUE(std::holds_alternative<CreatePhysicalSourceStatement>(*statement2));
