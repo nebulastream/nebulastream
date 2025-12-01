@@ -75,7 +75,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
         = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
     const auto rightNumberOfHashMaps
         = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightNumberOfHashMaps));
-    if (leftNumberOfHashMaps == 0 and rightNumberOfHashMaps == 0)
+    if (leftNumberOfHashMaps == 0 or rightNumberOfHashMaps == 0)
     {
         return;
     }
