@@ -1,0 +1,68 @@
+From 9dc8adb78f1e90e0409bde5ac6c26f05b9d66408 Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Sun, 19 Oct 2025 20:59:25 +0200
+Subject: [PATCH] override-cxx-standard
+
+---
+ CMakeLists.txt          | 17 +++++------------
+ cmake/CheckAtomic.cmake |  2 --
+ 2 files changed, 5 insertions(+), 14 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 661aa0781..e0d2b3f91 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -25,9 +25,11 @@ project(HIGHS VERSION ${VERSION} LANGUAGES CXX C)
+ set(PROJECT_NAMESPACE highs)
+ message(STATUS "${PROJECT_NAME} version: ${PROJECT_VERSION}")
+ 
+-# use C++11 standard
+-set(CMAKE_CXX_STANDARD 11)
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
++# use C++11 standard by default
++if(NOT CMAKE_CXX_STANDARD)
++  set(CMAKE_CXX_STANDARD 11)
++  set(CMAKE_CXX_STANDARD_REQUIRED ON)
++endif()
+ set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+ # Require out-of-source builds
+@@ -244,15 +246,6 @@ if (BUILD_CXX)
+     option(STDCALL "Build highs with the __stdcall convention" OFF)
+   endif()
+ 
+-  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR 
+-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR  
+-    CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang") 
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+-  # elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") 
+-  # not recognised by cl
+-  #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++11") 
+-  endif()  
+-
+   # Basic type
+   include(CMakePushCheckState)
+   cmake_push_check_state(RESET)
+diff --git a/cmake/CheckAtomic.cmake b/cmake/CheckAtomic.cmake
+index 38d70b3f0..e20de9c72 100644
+--- a/cmake/CheckAtomic.cmake
++++ b/cmake/CheckAtomic.cmake
+@@ -4,7 +4,6 @@ INCLUDE(CheckLibraryExists)
+ 
+ function(check_working_cxx_atomics varname)
+   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+   CHECK_CXX_SOURCE_COMPILES("
+ #include <atomic>
+ std::atomic<int> x;
+@@ -21,7 +20,6 @@ endfunction(check_working_cxx_atomics)
+ 
+ function(check_working_cxx_atomics64 varname)
+   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+-  set(CMAKE_REQUIRED_FLAGS "-std=c++11 ${CMAKE_REQUIRED_FLAGS}")
+   CHECK_CXX_SOURCE_COMPILES("
+ #include <atomic>
+ #include <cstdint>
+-- 
+2.50.0
+

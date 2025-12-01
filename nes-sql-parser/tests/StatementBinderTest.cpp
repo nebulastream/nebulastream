@@ -75,8 +75,8 @@ public:
             sourceCatalog,
             [](auto&& queryContext)
             { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
-        sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog);
-        sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog);
+        sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog, DefaultHost{"localhost:9090"});
+        sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog, DefaultHost{"localhost:9090"});
     }
 };
 
@@ -530,6 +530,17 @@ TEST_F(StatementBinderTest, ExplainStatement)
         const auto explainStatementResult = binder->parseAndBindSingle(explain);
         ASSERT_FALSE(explainStatementResult.has_value());
     }
+}
+
+TEST_F(StatementBinderTest, CreateWorkerStatementTest)
+{
+    const std::string statementString = "CREATE WORKER 'localhost:8080' AT 'localhost:9090' SET (32 AS `CAPACITY`, 'localhost2:9090' AS "
+                                        "`DOWNSTREAM`, 'localhost1:9090' AS `DOWNSTREAM`)";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
+    ASSERT_TRUE(std::holds_alternative<CreateWorkerStatement>(*statement));
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).host, "localhost:8080");
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).grpc, "localhost:9090");
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)
