@@ -88,7 +88,7 @@ void serializeHashMapProxy(
     [[maybe_unused]] AbstractBufferProvider* bufferProvider,
     const AggregationBuildPhysicalOperator* buildOperator)
 {
-    if (timestamp.getRawValue() != 50000)
+    if (timestamp.getRawValue() != 9)
     {
         return;
     }
@@ -101,7 +101,7 @@ void serializeHashMapProxy(
     serialized = true;
 }
 
-Interface::HashMap* deserializeHashMapProxy(
+HashMap* deserializeHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
@@ -109,7 +109,7 @@ Interface::HashMap* deserializeHashMapProxy(
     const AggregationBuildPhysicalOperator* buildOperator)
 {
     auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
-    if (timestamp.getRawValue() != 50000)
+    if (timestamp.getRawValue() != 8)
     {
         return hashMap;
     }
@@ -203,29 +203,10 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
 
     /// Updating the aggregation states
-    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(
-        hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
-    auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
-    if (timestamp == nautilus::val<Timestamp>(9))
-    {
-        nautilus::invoke(
-            serializeHashMapProxy,
-            operatorHandler,
-            timestamp,
-            ctx.workerThreadId,
-            ctx.pipelineMemoryProvider.bufferProvider,
-            nautilus::val<const AggregationBuildPhysicalOperator*>(this));
-    }
     const ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
-        state = state + aggFunction->getSizeOfStateInBytes();
-    }
-
-    /// Serialize and Deserialize
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
@@ -245,7 +226,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         ctx.workerThreadId,
         ctx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<const AggregationBuildPhysicalOperator*>(this));
-    */
+        */
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(

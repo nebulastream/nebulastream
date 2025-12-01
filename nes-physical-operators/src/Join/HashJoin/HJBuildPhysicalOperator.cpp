@@ -107,13 +107,13 @@ void serializeHashMapProxy(
     cv.notify_all();
 }
 
-Interface::HashMap* deserializeHashMapProxy(
-    const HJOperatorHandler* operatorHandler,
+HashMap* deserializeHashMapProxy(
+    HJOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
-    const JoinBuildSideType buildSide,
+    JoinBuildSideType buildSide,
     AbstractBufferProvider* bufferProvider,
-    const HJBuildPhysicalOperator* buildOperator)
+    HJBuildPhysicalOperator* buildOperator)
 {
     auto* const hashMap = getHashJoinHashMapProxy(operatorHandler, timestamp, workerThreadId, buildSide, buildOperator);
     if (timestamp.getRawValue() != 21000)
@@ -144,7 +144,6 @@ Interface::HashMap* deserializeHashMapProxy(
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     StreamJoinBuildPhysicalOperator::setup(executionCtx, compilationContext);
-
     /// Creating the cleanup function for the slice of current stream
     /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -227,6 +226,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                 {
                     /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
                     /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                    /// Print pointer address
                     auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
                     new (pagedVector) PagedVector();
                 },
@@ -257,6 +257,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
           nautilus::val<JoinBuildSideType>(joinBuildSide),
           ctx.pipelineMemoryProvider.bufferProvider,
           nautilus::val<const HJBuildPhysicalOperator*>(this));
+
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(

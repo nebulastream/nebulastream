@@ -31,6 +31,7 @@
 #include <absl/strings/internal/str_format/extension.h>
 #include <absl/strings/str_format.h>
 #include <google/protobuf/stubs/port.h>
+#include "Nautilus/Interface/PagedVector/PagedVector.hpp"
 
 #include <ErrorHandling.hpp>
 
@@ -340,6 +341,7 @@ void ChainedHashMap::serialize(std::filesystem::path path) const
 
 void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider)
 {
+    this->clear();
     std::ifstream in(path, std::ios::binary);
     if (!in.is_open())
     {
@@ -354,18 +356,19 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
     this->entrySize = header.entrySize;
     this->numberOfTuples = header.numberOfTuples;
     this->pageSize = header.pageSize;
+    this->mask = numberOfChains - 1;
 
     /// Setup Entryspace
     const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-    //const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
-    //if (not entryBuffer)
-    //{
-    //    throw CannotAccessBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
-    //}
-    //entrySpace = entryBuffer.value();
-    //entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-    //std::memset(static_cast<void*>(entries), 0, totalSpace);
-    //entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
+    const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
+    if (not entryBuffer)
+    {
+        throw CannotAccessBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
+    }
+    entrySpace = entryBuffer.value();
+    entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
+    std::memset(static_cast<void*>(entries), 0, totalSpace);
+    entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
 
     /// Read Mappings
     std::vector<std::pair<uint64_t, uint64_t>> entryMappings(numberOfChains + 1);
@@ -410,12 +413,14 @@ void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvi
             auto* entryPtr = reinterpret_cast<ChainedHashMapEntry*>(
                 storageSpace[pageIdx].getAvailableMemoryArea().data() + offset
             );
+            NES_INFO("Reconstructed chain points to {}", static_cast<void*>(entryPtr));
             entries[i] = entryPtr;
         } else
         {
             entries[i] = nullptr;
         }
     }
+    NES_INFO("Deserialized chained hash map from {}", path);
     in.close();
 }
 

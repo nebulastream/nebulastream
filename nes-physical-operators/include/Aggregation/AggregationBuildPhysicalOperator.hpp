@@ -44,7 +44,7 @@ void serializeHashMapProxy(
     AbstractBufferProvider* bufferProvider,
     const AggregationBuildPhysicalOperator* buildOperator);
 
-Interface::HashMap* deserializeHashMapProxy(
+HashMap* deserializeHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
@@ -67,7 +67,7 @@ public:
         AbstractBufferProvider* bufferProvider,
         const AggregationBuildPhysicalOperator* buildOperator);
 
-    friend Interface::HashMap* deserializeHashMapProxy(
+    friend HashMap* deserializeHashMapProxy(
         const AggregationOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
