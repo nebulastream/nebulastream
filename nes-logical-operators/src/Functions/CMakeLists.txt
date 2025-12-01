@@ -25,3 +25,4 @@ add_plugin(FieldAssignment LogicalFunction nes-logical-operators FieldAssignment
 add_plugin(Rename LogicalFunction nes-logical-operators RenameLogicalFunction.cpp)
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
+add_plugin(Trim LogicalFunction nes-logical-operators TrimLogicalFunction.cpp)

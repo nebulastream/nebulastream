@@ -18,6 +18,7 @@ add_source_files(nes-physical-operators
         )
 
 add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction.cpp)
+add_plugin(Trim PhysicalFunction nes-physical-operators TrimPhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
