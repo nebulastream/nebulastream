@@ -18,6 +18,7 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <nautilus/std/sstream.h>
 #include <nautilus/val.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus
 {
@@ -32,6 +33,7 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableS
 class VariableSizedData
 {
 public:
+
     /// @param bufferBacked: If set to true the VariableSizedData object is backed by a tuple buffer.
     explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size);
     explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData);
@@ -52,6 +54,8 @@ public:
 
     /// Returns the pointer to the variable sized data, this means the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getReference() const;
+
+    nautilus::val<uint32_t> shrink(nautilus::val<uint32_t> bytesToShrink);
 
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);
