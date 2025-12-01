@@ -1,0 +1,13 @@
+table {
+  @extend .table;
+
+  margin: 3rem 0;
+}
+
+table.configuration-options {
+  font-size: small;
+}
+
+table.configuration-options code {
+  font-size: small;
+}

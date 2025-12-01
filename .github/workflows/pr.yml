@@ -28,13 +28,19 @@ jobs:
           files: |
             docs/website/**
 
-  build-docs-website:
+  docs-build:
     needs: detect-docs-changes
     if: ${{ needs.detect-docs-changes.outputs.docs_changed == 'true' }}
-    uses: ./.github/workflows/docs_website_sync.yml
-    with:
-      deploy: false
-    secrets: inherit
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - name: Install dependencies
+        working-directory: docs/website
+        run: npm install
+      - name: Build docs site
+        working-directory: docs/website
+        run: npm run build
 
   get-dev-images:
     uses: ./.github/workflows/get_dev_images.yml

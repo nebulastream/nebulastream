@@ -1,0 +1,3 @@
+canonifyURLs = true
+relativeURLs = false
+baseURL = 'https://docs.nebula.stream/'
