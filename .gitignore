@@ -43,6 +43,7 @@ nes-asp/data/*.csv
 *.undo
 
 scripts/__pycache__
+.ccache
 
 # Ignore nix symlinks
 .nix/clang
