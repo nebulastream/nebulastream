@@ -30,18 +30,17 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
-
-#include <Identifiers/Identifiers.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Files.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -58,8 +57,6 @@
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
-#include <StatementHandler.hpp>
 #include <utils.hpp>
 
 #ifdef EMBED_ENGINE
@@ -207,10 +204,12 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
+            NES::TopologyStatementHandler topologyStatementHandler{queryManager};
             auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
+                std::move(topologyStatementHandler),
                 queryStatementHandler,
                 std::move(binder),
                 errorBehaviour,
