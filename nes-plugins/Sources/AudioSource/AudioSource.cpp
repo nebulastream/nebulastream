@@ -46,8 +46,6 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-#include "GeneratorDataRegistry.hpp"
-
 namespace NES
 {
 
@@ -193,7 +191,7 @@ void AudioSource::open()
 
 size_t fillBuffer(int sockfd, TupleBuffer& tupleBuffer, size_t numberOfSamples, size_t sampleWidth)
 {
-    const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getBuffer(), numberOfSamples * sampleWidth);
+    const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getAvailableMemoryArea().data(), numberOfSamples * sampleWidth);
     if (bufferSizeReceived < 0)
     {
         throw CannotOpenSource("Failed to read from socket. Error: {}", strerror(errno));
@@ -218,11 +216,11 @@ size_t AudioSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_to
         size_t numberOfBytesReceived = fillBuffer(sockfd, tupleBuffer, tuplePerBuffer, sampleWidth);
         size_t numberOfTuplesReceived = numberOfBytesReceived / sampleWidth;
         /// Fixup the received data by inserting timestamps.
-        auto tuples = std::span{tupleBuffer.getBuffer<Tuple>(), numberOfTuplesReceived};
+        auto tuples = std::span{tupleBuffer.getAvailableMemoryArea<Tuple>().data(), numberOfTuplesReceived};
 
         auto transformation = [&]<typename SampleType>()
         {
-            auto values = std::span(tupleBuffer.getBuffer<SampleType>(), numberOfBytesReceived / sizeof(SampleType));
+            auto values = std::span(tupleBuffer.getAvailableMemoryArea<SampleType>().data(), numberOfBytesReceived / sizeof(SampleType));
             auto convert = [&, this](const auto& p)
             {
                 auto [index, value] = p;
@@ -310,13 +308,6 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterAudioSource(SourceReg
 {
     validate(sourceRegistryArguments);
     return std::make_unique<AudioSource>(sourceRegistryArguments.sourceDescriptor);
-}
-
-///NOLINTNEXTLINE (performance-unnecessary-value-param)
-GeneratorDataRegistryReturnType
-GeneratorDataGeneratedRegistrar::RegisterAudioGeneratorData(GeneratorDataRegistryArguments systestAdaptorArguments)
-{
-    return systestAdaptorArguments.physicalSourceConfig;
 }
 
 }

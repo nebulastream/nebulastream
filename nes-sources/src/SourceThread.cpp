@@ -43,7 +43,7 @@ namespace NES
 
 SourceThread::SourceThread(
     OriginId originId, std::shared_ptr<AbstractBufferProvider> poolProvider, std::unique_ptr<Source> sourceImplementation)
-    : originId(originId), localBufferManager(std::move(poolProvider)), sourceImplementation(std::move(sourceImplementation))
+    : SourceImpl(), originId(originId), localBufferManager(std::move(poolProvider)), sourceImplementation(std::move(sourceImplementation))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -254,13 +254,18 @@ OriginId SourceThread::getOriginId() const
     return this->originId;
 }
 
-std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)
+std::ostream& SourceThread::toString(std::ostream& out) const
 {
     out << "\nSourceThread(";
-    out << "\n  originId: " << sourceThread.originId;
-    out << "\n  source implementation:" << *sourceThread.sourceImplementation;
+    out << "\n  originId: " << originId;
+    out << "\n  source implementation:" << *sourceImplementation;
     out << ")\n";
     return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)
+{
+    return sourceThread.toString(out);
 }
 
 }

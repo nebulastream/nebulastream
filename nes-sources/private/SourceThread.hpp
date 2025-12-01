@@ -29,6 +29,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <SourceImpl.hpp>
 
 namespace NES
 {
@@ -50,7 +51,7 @@ struct SourceImplementationTermination
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
 /// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
-class SourceThread
+class SourceThread final : public SourceImpl
 {
     static constexpr auto STOP_TIMEOUT_NOT_RUNNING = std::chrono::seconds(60);
     static constexpr auto STOP_TIMEOUT_RUNNING = std::chrono::seconds(300);
@@ -61,27 +62,19 @@ public:
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation);
 
-    SourceThread() = delete;
-    SourceThread(const SourceThread& other) = delete;
-    SourceThread(SourceThread&& other) noexcept = delete;
-    SourceThread& operator=(const SourceThread& other) = delete;
-    SourceThread& operator=(SourceThread&& other) noexcept = delete;
-
-    /// clean up thread-local state for the source.
-    void close();
-
     /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
-    [[nodiscard]] bool start(SourceReturnType::EmitFunction&& emitFunction);
+    [[nodiscard]] bool start(SourceReturnType::EmitFunction&& emitFunction) override;
 
     /// Blocks the current thread until the source is terminated
-    void stop();
-
+    void stop() override;
 
     /// Attempts to terminate the source within the timeout
-    [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout);
+    [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) override;
 
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-    [[nodiscard]] OriginId getOriginId() const;
+    [[nodiscard]] OriginId getOriginId() const override;
+
+    [[nodiscard]] std::ostream& toString(std::ostream&) const override;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 

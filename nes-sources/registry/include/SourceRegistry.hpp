@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include <Sources/AsyncSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
@@ -24,7 +25,7 @@
 namespace NES
 {
 
-using SourceRegistryReturnType = std::unique_ptr<Source>;
+using SourceRegistryReturnType = std::variant<std::unique_ptr<Source>, std::unique_ptr<AsyncSource>>;
 
 struct SourceRegistryArguments
 {

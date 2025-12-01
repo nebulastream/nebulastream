@@ -28,40 +28,37 @@
 namespace NES
 {
 SourceHandle::SourceHandle(
-    OriginId originId,
     SourceRuntimeConfiguration configuration,
-    std::shared_ptr<AbstractBufferProvider> bufferPool,
-    std::unique_ptr<Source> sourceImplementation)
-    : configuration(std::move(configuration))
+    std::unique_ptr<SourceImpl> sourceImplementation)
+    : configuration(std::move(configuration)), sourceImpl(std::move(sourceImplementation))
 {
-    this->sourceThread = std::make_unique<SourceThread>(std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
 }
 
 SourceHandle::~SourceHandle() = default;
 
 bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
 {
-    return this->sourceThread->start(std::move(emitFunction));
+    return this->sourceImpl->start(std::move(emitFunction));
 }
 
 void SourceHandle::stop() const
 {
-    this->sourceThread->stop();
+    this->sourceImpl->stop();
 }
 
 SourceReturnType::TryStopResult SourceHandle::tryStop(const std::chrono::milliseconds timeout) const
 {
-    return this->sourceThread->tryStop(timeout);
+    return this->sourceImpl->tryStop(timeout);
 }
 
 OriginId SourceHandle::getSourceId() const
 {
-    return this->sourceThread->getOriginId();
+    return this->sourceImpl->getOriginId();
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)
 {
-    return out << *sourceHandle.sourceThread;
+    return out << *sourceHandle.sourceImpl;
 }
 
 }

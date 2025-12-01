@@ -38,6 +38,8 @@
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
 #include <MemoryTestUtils.hpp>
+#include <SourceThread.hpp>
+#include <TestSource.hpp>
 
 namespace
 {
@@ -234,7 +236,7 @@ NES::getTestSource(OriginId originId, std::shared_ptr<AbstractBufferProvider> bu
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
     SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
 
-    auto sourceHandle
-        = std::make_unique<SourceHandle>(std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
+    auto sourceHandle = std::make_unique<SourceHandle>(
+        std::move(runtimeConfig), std::make_unique<SourceThread>(std::move(originId), std::move(bufferPool), std::move(testSource)));
     return {std::move(sourceHandle), ctrl};
 }

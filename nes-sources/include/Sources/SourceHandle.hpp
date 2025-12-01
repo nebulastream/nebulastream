@@ -28,7 +28,7 @@ namespace NES
 {
 
 /// Hides SourceThread implementation.
-class SourceThread;
+class SourceImpl;
 
 struct SourceRuntimeConfiguration
 {
@@ -43,11 +43,7 @@ struct SourceRuntimeConfiguration
 class SourceHandle
 {
 public:
-    explicit SourceHandle(
-        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        SourceRuntimeConfiguration configuration,
-        std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<Source> sourceImplementation);
+    explicit SourceHandle(SourceRuntimeConfiguration configuration, std::unique_ptr<SourceImpl> sourceImplementation);
 
     ~SourceHandle();
 
@@ -67,7 +63,7 @@ public:
 private:
     SourceRuntimeConfiguration configuration;
     /// Used to print the data source via the overloaded '<<' operator.
-    std::unique_ptr<SourceThread> sourceThread;
+    std::unique_ptr<SourceImpl> sourceImpl;
 };
 
 }
