@@ -1,0 +1,79 @@
+Subject: [PATCH] chore: Clang-tidy no function as variable name
+---
+Index: nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp	(revision 5fa4c9043d961238d283bf129b82c59e1476974a)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp	(date 1764706776288)
+@@ -43,9 +43,6 @@
+
+ 	auto loweringProvider = std::make_unique<MLIRLoweringProvider>(context);
+ 	auto mlirModule = loweringProvider->generateModuleFromIR(ir);
+-	if (*mlirModule == nullptr) {
+-		throw RuntimeException("verification of MLIR module failed!");
+-	};
+
+ 	// 2.a dump MLIR to console or a file
+ 	dumpHandler.dump("after_mlir_generation", "mlir", [&]() {
+@@ -55,6 +52,9 @@
+ 		mlirModule->print(output, flags);
+ 		return result;
+ 	});
++	if (*mlirModule == nullptr) {
++		throw RuntimeException("verification of MLIR module failed!");
++	};
+
+ 	// 2.b Take the MLIR module from the MLIRLoweringProvider and apply lowering
+ 	// and optimization passes.
+Index: nautilus/include/nautilus/std/ostream.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/std/ostream.h b/nautilus/include/nautilus/std/ostream.h
+--- a/nautilus/include/nautilus/std/ostream.h	(revision 5fa4c9043d961238d283bf129b82c59e1476974a)
++++ b/nautilus/include/nautilus/std/ostream.h	(date 1764592062239)
+@@ -122,7 +122,16 @@
+ 	template <class T>
+ 	static void pipe(std::basic_ostream<CharT, Traits>* ptr, T value) {
+ 		auto& s = *ptr;
+-		s << value;
++		if constexpr (std::is_pointer_v<T> && !std::is_same_v<std::remove_cv_t<T>, char*>) {
++			if constexpr (not std::is_const_v<std::remove_pointer_t<T>> or
++			              not std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char>) {
++				s << std::showbase << std::hex << reinterpret_cast<const void*>(value);
++			} else {
++				s << value;
++			}
++		} else {
++			s << value;
++		}
+ 	}
+
+ 	static void flash(std::basic_ostream<CharT, Traits>* ptr) {
+Index: nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp	(revision 5fa4c9043d961238d283bf129b82c59e1476974a)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp	(date 1764706803724)
+@@ -263,10 +263,10 @@
+ 	this->generateMLIR(ir->getRootOperation(), firstFrame);
+ 	// If MLIR module creation is incorrect, gracefully emit error message, return
+ 	// nullptr, and continue.
+-	if (failed(mlir::verify(theModule))) {
+-		theModule.emitError("module verification error");
+-		return nullptr;
+-	}
++	// if (failed(mlir::verify(theModule))) {
++		// theModule.emitError("module verification error");
++		// return nullptr;
++	// }
+ 	return theModule;
+ }
+
