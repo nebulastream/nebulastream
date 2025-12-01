@@ -18,8 +18,8 @@
 #include <ostream>
 #include <string>
 #include <vector>
-
 #include <experimental/propagate_const>
+#include <nameof.hpp>
 
 #include <ErrorHandling.hpp>
 
@@ -75,7 +75,7 @@ std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
     {
         return ptr;
     }
-    throw InvalidDynamicCast("Invalid dynamic cast: from {} to {}", std::string(typeid(In).name()), std::string(typeid(Out).name()));
+    throw InvalidDynamicCast("Invalid dynamic cast: from {} to {}", NAMEOF_TYPE(In), NAMEOF_TYPE(Out));
 }
 
 /// cast the given object to the specified type.
@@ -103,16 +103,5 @@ std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
     return nullptr;
 }
 
-template <typename T>
-std::shared_ptr<const T> copyPtr(const std::experimental::propagate_const<std::shared_ptr<T>>& ptr)
-{
-    return std::shared_ptr<const T>{std::experimental::get_underlying(ptr)};
-}
-
-template <typename T>
-std::shared_ptr<T> copyPtr(std::experimental::propagate_const<std::shared_ptr<T>>& ptr)
-{
-    return std::shared_ptr<T>{std::experimental::get_underlying(ptr)};
-}
 
 }
