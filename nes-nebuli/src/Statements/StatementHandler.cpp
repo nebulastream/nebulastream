@@ -226,7 +226,12 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        const auto optimizedPlan = optimizer->optimize(statement.plan);
+        auto optimizedPlan = optimizer->optimize(statement.plan);
+
+        if (statement.id)
+        {
+            optimizedPlan.setQueryId(QueryId(*statement.id));
+        }
         const auto queryResult = queryManager->registerQuery(optimizedPlan);
         return queryResult
             .and_then(
