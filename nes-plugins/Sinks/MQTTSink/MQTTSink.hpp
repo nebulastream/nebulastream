@@ -33,7 +33,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::Sinks
+namespace NES
 {
 
 class MQTTSink : public Sink
@@ -49,10 +49,10 @@ public:
     MQTTSink& operator=(MQTTSink&&) = delete;
 
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -68,12 +68,12 @@ private:
     std::unique_ptr<Format> formatter;
 };
 
-namespace detail::uuid
+namespace
 {
-static std::random_device rd;
-static std::mt19937 gen(rd());
-static std::uniform_int_distribution<> dis(0, 15);
-static std::uniform_int_distribution<> dis2(8, 11);
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_int_distribution<> dis(0, 15);
+std::uniform_int_distribution<> dis2(8, 11);
 
 std::string generateUUID()
 {
@@ -110,13 +110,12 @@ std::string generateUUID()
 
 struct ConfigParametersMQTT
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
+    static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
         "serverURI",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(SERVER_URI, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SERVER_URI, config); }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
+    static inline const DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
         "clientId",
         "generated",
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
@@ -125,15 +124,15 @@ struct ConfigParametersMQTT
             {
                 return it->second;
             }
-            return detail::uuid::generateUUID();
+            return generateUUID();
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> TOPIC{
+    static inline const DescriptorConfig::ConfigParameter<std::string> TOPIC{
         "topic",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return Configurations::DescriptorConfig::tryGet(TOPIC, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TOPIC, config); }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<int32_t> QOS{
+    static inline const DescriptorConfig::ConfigParameter<int32_t> QOS{
         "qos",
         1,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint8_t>
@@ -147,15 +146,13 @@ struct ConfigParametersMQTT
             return qos;
         }};
 
-    static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
-        INPUT_FORMAT{
-            "inputFormat",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
+        "inputFormat",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(SERVER_URI, CLIENT_ID, QOS, TOPIC, INPUT_FORMAT);
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(SERVER_URI, CLIENT_ID, QOS, TOPIC, INPUT_FORMAT);
 };
 
 }

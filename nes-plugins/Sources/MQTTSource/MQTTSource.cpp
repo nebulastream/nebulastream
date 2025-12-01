@@ -34,7 +34,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-namespace NES::Sources
+namespace NES
 {
 
 MQTTSource::MQTTSource(const SourceDescriptor& sourceDescriptor)
@@ -81,7 +81,7 @@ void MQTTSource::open()
     }
 }
 
-size_t MQTTSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken)
+size_t MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     size_t tbOffset = 0;
     const auto tbSize = tupleBuffer.getBufferSize();
@@ -124,20 +124,20 @@ size_t MQTTSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, Abstra
 
 /// Write the message payload to the tuple buffer
 /// @return the offset in the TB after writing the payload
-void MQTTSource::writePayloadToBuffer(const std::string_view payload, Memory::TupleBuffer& tb, size_t& tbOffset)
+void MQTTSource::writePayloadToBuffer(const std::string_view payload, TupleBuffer& tb, size_t& tbOffset)
 {
     const auto tbSize = tb.getBufferSize();
     /// If the payload fits into the TB, write it
     if (tbOffset + payload.size() <= tbSize)
     {
-        std::memcpy(tb.getBuffer() + tbOffset, payload.data(), payload.size());
+        std::memcpy(tb.getAvailableMemoryArea().data() + tbOffset, payload.data(), payload.size());
         tbOffset += payload.size();
         return;
     }
 
     /// Otherwise, split. Write the prefix to the TB and stash the remainder
     const auto prefixSize = tbSize - tbOffset;
-    std::memcpy(tb.getBuffer() + tbOffset, payload.data(), prefixSize);
+    std::memcpy(tb.getAvailableMemoryArea().data() + tbOffset, payload.data(), prefixSize);
 
     payloadStash.stash(std::string_view{payload.data() + prefixSize, payload.size() - prefixSize});
     tbOffset = tbSize;
@@ -156,13 +156,12 @@ void MQTTSource::close()
     }
 }
 
-Configurations::DescriptorConfig::Config MQTTSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config MQTTSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersMQTT>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersMQTT>(std::move(config), NAME);
 }
 
-SourceValidationRegistryReturnType
-SourceValidationGeneratedRegistrar::RegisterMQTTSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return MQTTSource::validateAndFormat(std::move(sourceConfig.config));
 }

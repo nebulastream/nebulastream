@@ -18,7 +18,7 @@
 #include <string>
 #include <string_view>
 
-namespace NES::Sources
+namespace NES
 {
 
 static constexpr size_t STASH_TARGET_CAPACITY = 1024;
