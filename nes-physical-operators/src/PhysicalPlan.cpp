@@ -30,11 +30,11 @@
 namespace NES
 {
 PhysicalPlan::PhysicalPlan(
-    QueryId id,
+    LocalQueryId id,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
     ExecutionMode executionMode,
     uint64_t operatorBufferSize)
-    : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
+    : localQueryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
 {
     for (const auto& rootOperator : this->rootOperators)
     {
@@ -53,9 +53,9 @@ std::string PhysicalPlan::toString() const
     return stringstream.str();
 }
 
-QueryId PhysicalPlan::getQueryId() const
+LocalQueryId PhysicalPlan::getQueryId() const
 {
-    return queryId;
+    return localQueryId;
 }
 
 const PhysicalPlan::Roots& PhysicalPlan::getRootOperators() const
