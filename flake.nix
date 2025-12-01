@@ -43,6 +43,10 @@
           replxx
           magic-enum
           libuuid
+          bats
+          jq
+          yq
+          expect
           boost
           openssl.dev
           zstd.dev
