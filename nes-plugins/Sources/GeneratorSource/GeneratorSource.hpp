@@ -26,6 +26,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -176,7 +177,8 @@ struct ConfigParametersGenerator
             for (const auto lines = splitOnMultipleDelimiters(schema, {',', '\n'}); auto line : lines)
             {
                 line = trimWhiteSpaces(line);
-                const auto foundIdentifier = line.substr(0, line.find_first_of(' '));
+                const auto foundIdentifier
+                    = magic_enum::enum_cast<GeneratorFields::FieldIdentifier>(NES::toUpperCase(line.substr(0, line.find_first_of(' '))));
                 bool validatorExists = false;
                 for (const auto& [identifier, validator] : GeneratorFields::Validators)
                 {

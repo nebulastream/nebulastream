@@ -14,3 +14,5 @@ add_plugin_as_library(Generator Source nes-sources-registry generator_source_plu
 add_plugin_as_library(Generator SourceValidation nes-sources-registry generator_validation_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
 
 target_include_directories(generator_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+target_compile_definitions(generator_source_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
+target_compile_definitions(generator_validation_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
