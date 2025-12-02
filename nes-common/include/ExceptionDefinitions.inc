@@ -107,6 +107,7 @@ EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was starte
 EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 EXCEPTION(FormattingError, 4005, "error during formatting")
 EXCEPTION(CannotOpenSink, 4006, "failed to open a sink")
+EXCEPTION(CannotProduceSourceBuffer, 4007, "failed to produce source buffer")
 
 /// 5XXX Network errors
 EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")
