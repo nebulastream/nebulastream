@@ -139,3 +139,34 @@ SELECT * FROM generator_with_timeout
 WHERE BOOLEAN(FALSE)
 INTO generator_sink_timeout;
 ----
+
+CREATE LOGICAL SOURCE generator_text(id UINT64, word VARSIZED, random_word VARSIZED);
+CREATE PHYSICAL SOURCE FOR generator_text TYPE GENERATOR SET(
+    'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Text generator never finishes
+    1 as `SOURCE`.SEED,
+    'SEQUENCE UINT64 0 20 1, WORDLIST /tmp/nebulastream/nes-systests/testdata/small/wordlist.csv, RANDOMSTR 1 6' AS `SOURCE`.GENERATOR_SCHEMA
+);
+CREATE SINK generator_sink_text(generator_text.id UINT64, generator_text.word VARSIZED, generator_text.random_word VARSIZED) TYPE File;
+SELECT * FROM generator_text
+INTO generator_sink_text;
+----
+0,red,gR
+1,red,`Dn
+2,red,_
+3,yellow,GWp(
+4,green,v8
+5,brown,\~7d]
+6,white,9h6
+7,yellow,Nv
+8,purple,Q}9
+9,purple,O:R
+10,purple,hn
+11,red,re~6
+12,yellow,XG9
+13,black,;.l
+14,black,zT[/
+15,brown,( "y
+16,blue,t.D
+17,green,WXT
+18,purple,-7L+
+19,yellow,[7D
