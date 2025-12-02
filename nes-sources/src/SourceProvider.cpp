@@ -44,7 +44,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(OriginId originId, const Sou
     {
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified (0), we take the NodeEngine-wide configuration.
-        const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
+        const auto maxInflightBuffers = (sourceDescriptor.tryGetFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS).value_or(0) > 0)
             ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
             : defaultMaxInflightBuffers;
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
