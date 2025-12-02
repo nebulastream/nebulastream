@@ -108,15 +108,15 @@ std::string generateUUID()
 }
 }
 
-struct ConfigParametersMQTT
+struct ConfigParametersMQTTSink
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
-        "serverURI",
+        "server_uri",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SERVER_URI, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
-        "clientId",
+        "client_id",
         "generated",
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         {
@@ -147,7 +147,7 @@ struct ConfigParametersMQTT
         }};
 
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
-        "inputFormat",
+        "input_format",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
 

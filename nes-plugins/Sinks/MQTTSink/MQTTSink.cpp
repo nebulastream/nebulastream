@@ -40,12 +40,12 @@ namespace NES
 
 MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
     : Sink()
-    , serverUri(sinkDescriptor.getFromConfig(ConfigParametersMQTT::SERVER_URI))
-    , clientId(sinkDescriptor.getFromConfig(ConfigParametersMQTT::CLIENT_ID))
-    , topic(sinkDescriptor.getFromConfig(ConfigParametersMQTT::TOPIC))
-    , qos(sinkDescriptor.getFromConfig(ConfigParametersMQTT::QOS))
+    , serverUri(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::SERVER_URI))
+    , clientId(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::CLIENT_ID))
+    , topic(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::TOPIC))
+    , qos(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::QOS))
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersMQTT::INPUT_FORMAT))
+    switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::INPUT_FORMAT))
     {
         case InputFormat::CSV:
             formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
@@ -115,7 +115,7 @@ void MQTTSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&
 
 DescriptorConfig::Config MQTTSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersMQTT>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersMQTTSink>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType RegisterMQTTSinkValidation(SinkValidationRegistryArguments sinkConfig)
