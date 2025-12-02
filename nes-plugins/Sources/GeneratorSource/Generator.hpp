@@ -40,7 +40,7 @@ class Generator
 {
 public:
     explicit Generator(const uint64_t seed, GeneratorStop sequenceStopsGenerator, const std::string_view rawSchema)
-        : sequenceStopsGenerator(std::move(sequenceStopsGenerator)), randEng(std::default_random_engine(seed))
+        : sequenceStopsGenerator(std::move(sequenceStopsGenerator)), randEng(std::mt19937(seed))
     {
         if (this->sequenceStopsGenerator != GeneratorStop::ALL && this->sequenceStopsGenerator != GeneratorStop::ONE
             && this->sequenceStopsGenerator != GeneratorStop::NONE)
@@ -67,7 +67,7 @@ private:
     static constexpr std::string_view fieldDelimiter = ",";
     GeneratorStop sequenceStopsGenerator;
     std::vector<std::unique_ptr<GeneratorFields::GeneratorFieldType>> fields;
-    std::default_random_engine randEng;
+    std::mt19937 randEng;
 
     size_t numFields{0};
     size_t numStoppedFields{0};
