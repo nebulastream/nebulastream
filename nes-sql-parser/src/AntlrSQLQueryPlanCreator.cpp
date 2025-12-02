@@ -987,6 +987,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             }
             else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, helpers.top().functionBuilder))
             {
+                helpers.top().hasUnnamedAggregation = false;
                 /// Remove exactly the functions used to create the 'logicalFunction' from the back of the function builder
                 helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - logicalFunction.value().getChildren().size());
                 helpers.top().functionBuilder.push_back(*logicalFunction);
