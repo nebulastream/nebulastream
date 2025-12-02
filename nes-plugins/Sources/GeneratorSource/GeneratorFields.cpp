@@ -387,5 +387,148 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     }
 }
 
+WordListField::WordListField(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto path = parameters[1];
+
+    std::ifstream wordListFile(std::string(path), std::ios::in);
+
+    std::string line;
+    while (std::getline(wordListFile, line))
+    {
+        if (not line.empty())
+        {
+            wordList.emplace_back(line);
+        }
+    }
+    wordListFile.close();
+    this->distribution = std::uniform_int_distribution<size_t>(0, wordList.size() - 1);
+}
+
+std::ostream& WordListField::generate(std::ostream& os, std::default_random_engine& randEng)
+{
+    const auto randomWordPos = this->distribution(randEng);
+    const auto word = wordList[randomWordPos];
+    os << word;
+
+    return os;
+}
+
+void WordListField::validate(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    if (parameters.size() != NUM_PARAMETERS_WORDLIST_FIELD)
+    {
+        throw InvalidConfigParameter("Invalid WORDLIST schema line: {}", rawSchemaLine);
+    }
+
+    const auto path = parameters[1];
+    if (not std::filesystem::exists(path))
+    {
+        throw InvalidConfigParameter("Invalid WORDLIST schema! Path {} does not exist! Schema line: {}", path, rawSchemaLine);
+    }
+
+    std::ifstream wordListFile(std::string(path), std::ios::in);
+    if (not wordListFile.is_open() or wordListFile.fail())
+    {
+        NES_ERROR("Failed to open file containing the word list at {}", path);
+    }
+
+    size_t wordCount = 0;
+    std::string line;
+    while (std::getline(wordListFile, line))
+    {
+        if (not line.empty())
+        {
+            wordCount++;
+        }
+    }
+
+    if (wordCount == 0)
+    {
+        throw InvalidConfigParameter("Invalid WORDLIST schema! File at {} contains no words!", path);
+    }
+    wordListFile.close();
+}
+
+RandomStrField::RandomStrField(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    this->minLength = from_chars<size_t>(parameters[1]).value();
+    this->maxLength = from_chars<size_t>(parameters[2]).value();
+
+    this->distributionSize = std::uniform_int_distribution<size_t>(this->minLength, this->maxLength);
+}
+
+void RandomStrField::validate(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    if (parameters.size() != NUM_PARAMETERS_RANDOMSTR_FIELD)
+    {
+        throw InvalidConfigParameter("Invalid RANDOMSTR schema line: {}", rawSchemaLine);
+    }
+    const auto minLength = parameters[1];
+    const auto maxLength = parameters[2];
+
+    const auto parsedMinLength = from_chars<size_t>(minLength);
+    const auto parsedMaxLength = from_chars<size_t>(maxLength);
+
+    if (not parsedMinLength)
+    {
+        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MINLENGTH! Cannot parse MINLENGTH! Schema line: {}", rawSchemaLine);
+    }
+    if (not parsedMaxLength)
+    {
+        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MAXLENGTH! Cannot parse MAXLENGTH! Schema line: {}", rawSchemaLine);
+    }
+
+    if (parsedMinLength <= 0)
+    {
+        throw InvalidConfigParameter(
+            "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema line: {}",
+            parsedMinLength,
+            rawSchemaLine);
+    }
+    if (parsedMaxLength <= 0)
+    {
+        throw InvalidConfigParameter(
+            "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema line: {}",
+            parsedMaxLength,
+            rawSchemaLine);
+    }
+
+    if (parsedMinLength > parsedMaxLength)
+    {
+        throw InvalidConfigParameter(
+            "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema line: "
+            "{}",
+            parsedMinLength,
+            parsedMaxLength,
+            rawSchemaLine);
+    }
+}
+
+std::ostream& RandomStrField::generate(std::ostream& os, std::default_random_engine& randEng)
+{
+    for (size_t i = 0; i < this->distributionSize(randEng); i++)
+    {
+        if (const uint_fast8_t byte = distributionCharacter(randEng);
+            byte == ',') /// CSV InputFormatter can not handle ',' even when within double qoutes
+        {
+            i--; /// Therefore simply generate a new character
+        }
+        else if (std::isprint(byte))
+        {
+            os << static_cast<char>(byte);
+        }
+        else
+        {
+            os << "\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << std::dec;
+        }
+    }
+    return os;
+}
+
 
 }

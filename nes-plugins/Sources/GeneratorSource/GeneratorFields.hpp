@@ -22,13 +22,17 @@
 #include <string_view>
 #include <unordered_map>
 #include <variant>
+
 #include <DataTypes/DataType.hpp>
+#include "DataTypes/DataType.hpp"
 
 namespace NES::GeneratorFields
 {
 
 static constexpr std::string_view SEQUENCE_IDENTIFIER = "SEQUENCE";
 static constexpr std::string_view NORMAL_DISTRIBUTION_IDENTIFIER = "NORMAL_DISTRIBUTION";
+static constexpr std::string_view WORDLIST_IDENTIFIER = "WORDLIST";
+static constexpr std::string_view RANDOMSTR_IDENTIFIER = "RANDOMSTR";
 
 /// @brief Variant containing the types that a field can generate
 using FieldType = std::variant<uint64_t, uint32_t, uint16_t, uint8_t, int64_t, int32_t, int16_t, int8_t, float, double>;
@@ -104,8 +108,40 @@ private:
     DataType outputType;
 };
 
+constexpr auto NUM_PARAMETERS_WORDLIST_FIELD = 2;
+
+/// @brief Generates varsized text fields
+class WordListField final : public BaseGeneratorField
+{
+public:
+    explicit WordListField(std::string_view rawSchemaLine);
+    std::ostream& generate(std::ostream& os, std::default_random_engine& randEng) override;
+    static void validate(std::string_view rawSchemaLine);
+
+private:
+    std::vector<std::string> wordList;
+    std::uniform_int_distribution<size_t> distribution;
+};
+
+constexpr auto NUM_PARAMETERS_RANDOMSTR_FIELD = 3;
+
+class RandomStrField final : public BaseGeneratorField
+{
+public:
+    explicit RandomStrField(std::string_view rawSchemaLine);
+    std::ostream& generate(std::ostream& os, std::default_random_engine& randEng) override;
+    static void validate(std::string_view rawSchemaLine);
+
+private:
+    std::size_t minLength;
+    std::size_t maxLength;
+
+    std::uniform_int_distribution<uint8_t> distributionCharacter{32, 126}; /// printable ASCII
+    std::uniform_int_distribution<size_t> distributionSize;
+};
+
 /// @brief Variant containing the types of base generator fields
-using GeneratorFieldType = std::variant<SequenceField, NormalDistributionField>;
+using GeneratorFieldType = std::variant<SequenceField, NormalDistributionField, WordListField, RandomStrField>;
 
 struct FieldValidator
 {
@@ -114,9 +150,14 @@ struct FieldValidator
 };
 
 /// @brief Array containing functions paired with the fields identifier used to validate the fields syntax
-static const std::array<FieldValidator, 2> Validators
-    = {{{.identifier = SEQUENCE_IDENTIFIER, .validator = SequenceField::validate},
-        {.identifier = NORMAL_DISTRIBUTION_IDENTIFIER, .validator = NormalDistributionField::validate}}};
+/// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration
+static const std::array<FieldValidator, 4> Validators = {
+    {{.identifier = SEQUENCE_IDENTIFIER, .validator = SequenceField::validate},
+     {.identifier = NORMAL_DISTRIBUTION_IDENTIFIER, .validator = NormalDistributionField::validate},
+     {.identifier = WORDLIST_IDENTIFIER, .validator = WordListField::validate},
+     {.identifier = RANDOMSTR_IDENTIFIER, .validator = RandomStrField::validate}},
+};
+/// NOLINTEND(cert-err58-cpp)
 
 /// @brief Multimap containing key-value pairs of the existing generator fields and which types they accept
 /// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration
@@ -132,7 +173,8 @@ static const std::unordered_multimap<std::string_view, DataType::Type> FieldName
        {SEQUENCE_IDENTIFIER, DataType::Type::FLOAT64},
        {SEQUENCE_IDENTIFIER, DataType::Type::FLOAT32},
        {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT64},
-       {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT32}};
-}
-
+       {NORMAL_DISTRIBUTION_IDENTIFIER, DataType::Type::FLOAT32},
+       {WORDLIST_IDENTIFIER, DataType::Type::VARSIZED},
+       {RANDOMSTR_IDENTIFIER, DataType::Type::VARSIZED}};
 /// NOLINTEND(cert-err58-cpp)
+}

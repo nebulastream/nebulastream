@@ -82,6 +82,14 @@ void Generator::parseRawSchemaLine(std::string_view line)
     {
         this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::NormalDistributionField(line)));
     }
+    else if (firstWord == GeneratorFields::WORDLIST_IDENTIFIER)
+    {
+        this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::WordListField(line)));
+    }
+    else if (firstWord == GeneratorFields::RANDOMSTR_IDENTIFIER)
+    {
+        this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::RandomStrField(line)));
+    }
     else
     {
         throw InvalidConfigParameter("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);
