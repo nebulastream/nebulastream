@@ -113,7 +113,7 @@ std::string generateUUID()
 }
 
 /// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT config parameters.
-struct ConfigParametersMQTT
+struct ConfigParametersMQTTSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
         "serverURI",

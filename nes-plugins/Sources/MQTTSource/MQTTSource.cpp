@@ -38,12 +38,12 @@ namespace NES
 {
 
 MQTTSource::MQTTSource(const SourceDescriptor& sourceDescriptor)
-    : serverURI(sourceDescriptor.getFromConfig(ConfigParametersMQTT::SERVER_URI))
-    , clientId(sourceDescriptor.getFromConfig(ConfigParametersMQTT::CLIENT_ID))
-    , topic(sourceDescriptor.getFromConfig(ConfigParametersMQTT::TOPIC))
-    , qos(sourceDescriptor.getFromConfig(ConfigParametersMQTT::QOS))
+    : serverURI(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::SERVER_URI))
+    , clientId(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::CLIENT_ID))
+    , topic(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::TOPIC))
+    , qos(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::QOS))
     , flushingInterval(std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::duration<float, std::milli>(sourceDescriptor.getFromConfig(ConfigParametersMQTT::FLUSH_INTERVAL_MS))))
+          std::chrono::duration<float, std::milli>(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::FLUSH_INTERVAL_MS))))
 {
 }
 
@@ -158,7 +158,7 @@ void MQTTSource::close()
 
 DescriptorConfig::Config MQTTSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersMQTT>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersMQTTSource>(std::move(config), NAME);
 }
 
 SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidationRegistryArguments sourceConfig)
