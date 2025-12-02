@@ -108,7 +108,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
                 DataTypeProvider::provideDataType(DataType::Type::UINT64),
                 DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
-       {"Mono8ToJPG",
+       {"ImageManipMono8ToJPG",
         ImageManipFunction(
             DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
             std::vector{
@@ -117,7 +117,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
             })},
 
-       {"Rectangle",
+       {"ImageManipRectangle",
         ImageManipFunction(
             NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
             std::vector{
@@ -126,7 +126,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
 
-       {"Mono16ToMono8",
+       {"ImageManipMono16ToMono8",
         ImageManipFunction(
             DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
             std::vector{
@@ -135,8 +135,14 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16)})},
-
-       {"Mono16ToPNG16",
+       {"ImageManipMono8ToYUYV",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
+       {"ImageManipMono16ToPNG16",
         ImageManipFunction(
             DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
             std::vector{
@@ -144,7 +150,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
 
-       {"YUYVToJPG",
+       {"ImageManipYUYVToJPG",
         ImageManipFunction(
             DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
             std::vector{
@@ -152,7 +158,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
 
-       {"FaceDetection",
+       {"ImageManipFaceDetection",
         ImageManipFunction(
             NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
             std::vector{
@@ -160,27 +166,27 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
                 NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
 
-       {"Mono16MIN",
+       {"ImageManipMono16MIN",
         ImageManipFunction(
             NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
             std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED)})},
 
-       {"Mono16MAX",
+       {"ImageManipMono16MAX",
         ImageManipFunction(
             NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
             std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED)})},
 
-       {"Mono16AVG",
+       {"ImageManipMono16AVG",
         ImageManipFunction(
             NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
             std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED)})},
 
-       {"Mono16ToCelsius",
+       {"ImageManipMono16ToCelsius",
         ImageManipFunction(
             NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32),
             std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::UINT16)})},
 
-       {"Mono16ROI",
+       {"ImageManipMono16ROI",
         ImageManipFunction(
             DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
             std::vector{
@@ -189,7 +195,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 DataTypeProvider::provideDataType(DataType::Type::UINT64),
                 DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
 
-       {"Deserialize",
+       {"ImageManipDeserialize",
         ImageManipFunction(
             DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
             std::vector{
@@ -198,7 +204,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 DataTypeProvider::provideDataType(DataType::Type::UINT64),
                 DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
 
-       {"Serialize",
+       {"ImageManipSerialize",
         ImageManipFunction(
             DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
             std::vector{
@@ -207,7 +213,7 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
                 DataTypeProvider::provideDataType(DataType::Type::UINT64),
                 DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
 
-       {"DrawRectangle",
+       {"ImageManipDrawRectangle",
         ImageManipFunction(
             DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
             std::vector{
@@ -243,7 +249,7 @@ LogicalFunction ImageManipLogicalFunction::create(std::string_view functionName,
     auto function = Functions.find(functionName);
     if (function == Functions.end())
     {
-        throw FunctionNotImplemented(fmt::format("does not exist", functionName));
+        throw FunctionNotImplemented(fmt::format("'{}' does not exist", functionName));
     }
 
     return LogicalFunction(ImageManipLogicalFunction(function->second.initialStamp(), std::string(functionName), std::move(children)));
@@ -314,6 +320,7 @@ ImageManipFunction(Mono8ToJPG);
 ImageManipFunction(Mono16ToMono8);
 ImageManipFunction(YUYVToJPG);
 ImageManipFunction(Mono16ToPNG16);
+ImageManipFunction(Mono8ToYUYV);
 ImageManipFunction(FaceDetection);
 ImageManipFunction(Serialize);
 ImageManipFunction(Deserialize);

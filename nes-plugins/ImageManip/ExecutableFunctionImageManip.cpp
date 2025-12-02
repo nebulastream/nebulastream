@@ -288,31 +288,22 @@ nautilus::val<float> mono16ToCelsius(nautilus::val<uint16_t> power)
 
 struct Rectangle
 {
+    struct Unpacked
+    {
+        uint16_t x;
+        uint16_t y;
+        uint16_t width;
+        uint16_t height;
+    };
+
     union
     {
         uint64_t packed;
-        std::array<uint16_t, 4> unpacked;
+        Unpacked unpacked;
     };
 
     Rectangle(uint64_t value) : packed(value) { }
 };
-
-nautilus::val<uint16_t> rectangleAt(nautilus::val<uint64_t> rect, size_t index)
-{
-    switch (index)
-    {
-        case 0:
-            return rect & 0xFFFF;
-        case 1:
-            return (rect >> 16) & 0xFFFF;
-        case 2:
-            return (rect >> 32) & 0xFFFF;
-        case 3:
-            return (rect >> 48) & 0xFFFF;
-        default:
-            INVARIANT(false, "Invalid index");
-    }
-}
 
 VariableSizedData mono16ROI(
     const VariableSizedData& input,
@@ -321,14 +312,13 @@ VariableSizedData mono16ROI(
     const nautilus::val<uint64_t>& rectangle,
     ArenaRef& arena)
 {
-    nautilus::val<uint16_t> roiWidth = rectangleAt(rectangle, 2);
-    nautilus::val<uint16_t> roiHeight = rectangleAt(rectangle, 3);
-
+    auto roiWidth = nautilus::invoke(+[](uint64_t rectangle) { return Rectangle(rectangle).unpacked.width; }, rectangle);
+    auto roiHeight = nautilus::invoke(+[](uint64_t rectangle) { return Rectangle(rectangle).unpacked.height; }, rectangle);
     VariableSizedData roi = arena.allocateVariableSizedData(roiWidth * roiHeight * 2);
     nautilus::invoke(
         +[](int8_t* input, uint32_t inputWidth, uint32_t inputHeight, uint64_t rectangle, int8_t* destination)
         {
-            auto& [x, y, width, height] = reinterpret_cast<std::array<std::uint16_t, 4>&>(rectangle);
+            const auto [x, y, width, height] = Rectangle(rectangle).unpacked;
             cv::Mat inputImg(inputHeight, inputWidth, CV_16UC1, input);
             cv::Mat roiImg(height, width, CV_16UC1, destination);
             cv::Rect roiRect(x, y, width, height);
@@ -350,7 +340,7 @@ VariableSizedData drawRectangle(const VariableSizedData& input, const nautilus::
     nautilus::invoke(
         +[](uint32_t input_length, int8_t* data, uint64 rectangle, int8_t* destination)
         {
-            auto& [x, y, width, height] = reinterpret_cast<std::array<std::uint16_t, 4>&>(rectangle);
+            const auto [x, y, width, height] = Rectangle(rectangle).unpacked;
             auto input = std::span{reinterpret_cast<int8_t*>(data), input_length};
             auto image = std::span{destination, input_length};
             std::ranges::copy(input, image.data());
@@ -590,11 +580,10 @@ mono8ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, c
 nautilus::val<uint64>
 faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& width, const nautilus::val<uint64_t>& height, ArenaRef&)
 {
-    nautilus::val<uint64> rectangle = 0;
-    nautilus::invoke(
-        +[](uint8_t* data, USED_IN_DEBUG uint32_t size, uint64_t width, uint64_t height, uint64_t rectangle)
+    return nautilus::invoke(
+        +[](uint8_t* data, USED_IN_DEBUG uint32_t size, uint64_t width, uint64_t height)
         {
-            auto& [face_x, face_y, face_width, face_height] = reinterpret_cast<std::array<std::uint16_t, 4>&>(rectangle);
+            Rectangle r(0);
             INVARIANT(size == width * height * 2, "Image size {}, is not correct", size);
             const cv::Mat input(height, width, CV_8UC2, data);
             cv::Mat gray;
@@ -604,26 +593,59 @@ faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& wid
 
             if (!faces.empty())
             {
-                face_x = faces[0].x;
-                face_y = faces[0].y;
-                face_width = faces[0].width;
-                face_height = faces[0].height;
+                NES_INFO("Face at ({},{}) Width: {} Height: {}", faces[0].x, faces[0].y, faces[0].width, faces[0].height);
+                r.unpacked.x = faces[0].x;
+                r.unpacked.y = faces[0].y;
+                r.unpacked.width = faces[0].width;
+                r.unpacked.height = faces[0].height;
             }
             else
             {
-                face_x = 0;
-                face_y = 0;
-                face_width = 0;
-                face_height = 0;
+                r.unpacked.x = 0;
+                r.unpacked.y = 0;
+                r.unpacked.width = 0;
+                r.unpacked.height = 0;
             }
+            return r.packed;
         },
         input.getContent(),
         input.getContentSize(),
         width,
-        height,
-        rectangle);
+        height);
+}
 
-    return rectangle;
+thread_local std::vector<uint8_t> monoToBGR;
+
+VariableSizedData
+mono8ToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
+{
+    auto yuyvBuffer = arena.allocateVariableSizedData(width * height * 2);
+    nautilus::invoke(
+        +[](USED_IN_DEBUG uint32_t input_length,
+            int8_t* data,
+            uint64_t width,
+            uint64_t height,
+            USED_IN_DEBUG uint32_t output_length,
+            int8_t* output)
+        {
+            INVARIANT(input_length == width * height, "Image size is not correct");
+            INVARIANT(output_length == width * height * 2, "Image size is not correct");
+            cv::Mat gray_input(height, width, CV_8UC1, data);
+            monoToBGR.resize(height * width * 3);
+            cv::Mat img_color(height, width, CV_8UC3, monoToBGR.data());
+            cv::Mat output_mat(height, width, CV_8UC2, output);
+
+            cv::applyColorMap(gray_input, img_color, cv::COLORMAP_INFERNO);
+            cv::cvtColor(img_color, output_mat, cv::COLOR_BGR2YUV_YUYV);
+        },
+        input.getContentSize(),
+        input.getContent(),
+        width,
+        height,
+        yuyvBuffer.getContentSize(),
+        yuyvBuffer.getContent());
+
+    return yuyvBuffer;
 }
 
 VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena) const
@@ -742,6 +764,14 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             return jpgToYUYV(fromBase64(image, arena), width, height, arena);
         }
     }
+    else if (functionName == "Mono8ToYUYV")
+    {
+        return mono8ToYUYV(
+            childFunctions[0].execute(record, arena).cast<VariableSizedData>(),
+            childFunctions[1].execute(record, arena).cast<nautilus::val<uint64>>(),
+            childFunctions[2].execute(record, arena).cast<nautilus::val<uint64>>(),
+            arena);
+    }
     else if (functionName == "FaceDetection")
     {
         return faceDetection(
@@ -818,6 +848,7 @@ ImageManipFunction(YUYVToJPG);
 ImageManipFunction(Mono16ROI);
 ImageManipFunction(Mono16AVG);
 ImageManipFunction(Mono16MAX);
+ImageManipFunction(Mono8ToYUYV);
 ImageManipFunction(Mono16MIN);
 ImageManipFunction(Mono16ToCelsius);
 ImageManipFunction(Rectangle);
