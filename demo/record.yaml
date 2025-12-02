@@ -1,0 +1,32 @@
+query: |
+  SELECT 
+    TIMESTAMP,
+    WIDTH,
+    HEIGHT,
+    PIXEL_FORMAT,
+    ImageManipSerialize(IMAGE, WIDTH, HEIGHT, PIXEL_FORMAT) as IMAGE
+  FROM `video`
+  INTO File("recording.csv" AS `SINK`.`FILE_PATH`, "CSV" AS `SINK`.`INPUT_FORMAT`);
+
+logical:
+  - name: video
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: PIXEL_FORMAT
+        type: UINT64
+      - name: IMAGE
+        type: VARSIZED
+physical:
+  - logical: video
+    type: Video
+    parser_config:
+      type: Native
+    source_config:
+      sourceSelector: 2
+
+sinks: []

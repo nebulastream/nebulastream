@@ -1,0 +1,112 @@
+# Regarding Magic Numbers:
+# PixelFormat is based on aravis `arvenum.h`
+# 0x01100007 (17825799) represents MONO16 (gray)
+# 0x2100032 (34603058) represents YUV_422_YUYV (color)
+
+# The following query aligns the RGB and Thermal stream into a single stream. Using the interleaved mode of the Video
+# stream, we receive around 18FPS of the RGB and 9 FPS of Thermal.
+# Based on the RGB images, we do face detection and use the returned rectangle to calculate an average temperature.
+# The demo query down samples both streams to 4 FPS and joins the last received frame within that window to the other video stream.
+# The result is a tuple which contains both and rgb and a thermal IMAGE.
+# The rgb IMAGE is used for face detection which creates a rectangle which is used to find the maximum temperature value in the thermal IMAGE.
+# Images are send to mqtt, by converting them to JPG (for rgb) or PNG-16 (for thermal) and encoding them into base64 (which is displayed in the webui)
+# The demo also demonstrates how to integrate third party libraries into nebulastream. The ImageManip plugin implements
+# thin wrappers around opencv functions (color space transformations, encoding, facedetection).
+# The query uses a source sharing approach which enables multiple queries to consume from the same source. This is especially
+# important for the video stream received from the camera which would saturate the 1GB network with around 3 clients.
+# Other video related demo queries show partial results:
+# - rgb-facedetect-to-mqtt just renders a bounding box around a single face and emits the IMAGE to mqtt.
+# - thermal-to-mqtt gives thermal images received from the camera
+# - record-video directly writes each frame to mqtt without further processing.
+# All queries have an additional video_playback source which fetches the video stream from mqtt (create via the record-video query).
+# There is currently a workaround nes assumption of millisecond timestamps, which leads to window sizes of 250000000ms (which represents 0.25s)
+query: |
+  SELECT 
+    ts as `ts`,
+    ImageManipToBase64(
+      ImageManipYUYVToJPG(
+        ImageManipDrawRectangle(
+          ImageManipMono8ToYUYV(
+            ImageManipMono16ToMono8(thermal, thermal_width, thermal_height, min_value, max_value), 
+            thermal_width,
+            thermal_height
+          ),
+          face
+        ),
+        thermal_width,
+        thermal_height
+      )
+    ) as `image`,
+    ImageManipMono16ToCelsius(ImageManipMono16MAX(ImageManipMono16ROI(thermal, thermal_width, thermal_height, face))) as `max_temp`
+  FROM (
+    SELECT 
+      ts,
+      thermal,
+      thermal_width,
+      thermal_height,
+      ImageManipMono16MIN(thermal) as min_value,
+      ImageManipMono16Max(thermal) as max_value,
+      ImageManipFaceDetection(rgb, width, height) as face
+    FROM (
+      SELECT 
+        end as ts, 
+        LAST(image) as thermal, 
+        LAST(width) as thermal_width, 
+        LAST(height) as thermal_height, 
+        LAST(timestamp) as original_timestamp
+      FROM (SELECT * FROM video WHERE pixel_format = UINT64(17825799)) WINDOW TUMBLING(TIMESTAMP, size 250000000 ms)
+    ) INNER JOIN (
+      SELECT 
+        end, 
+        LAST(image) as rgb, 
+        LAST(width) as width, 
+        LAST(height) as height, 
+        LAST(timestamp) as original_timestamp
+      FROM (SELECT * FROM video WHERE pixel_format = UINT64(34603058)) WINDOW TUMBLING(TIMESTAMP, size 250000000 ms)
+    )
+    ON ts = end WINDOW TUMBLING (original_timestamp, size 250000000 ms)
+  )
+  INTO MQTT("JSON" AS `SINK`.`INPUT_FORMAT`, "test/thermal-rgb-image" AS `SINK`.`TOPIC`, 1 AS `SINK`.`QOS`, "mqtt://localhost:1883" AS `SINK`.`SERVER_URI`, "rgb-image-producer" AS `SINK`.`CLIENT_ID`)
+sinks: [ ]
+logical:
+  - name: video_playback
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: PIXEL_FORMAT
+        type: UINT64
+      - name: IMAGE
+        type: VARSIZED
+  - name: VIDEO
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: PIXEL_FORMAT
+        type: UINT64
+      - name: IMAGE
+        type: VARSIZED
+physical:
+  - logical: VIDEO
+    type: Video
+    parser_config:
+      type: Native
+    source_config:
+      sourceSelector: 2
+  - logical: video_playback
+    type: MQTTVideoPlayback
+    parser_config:
+      type: Native
+    source_config:
+      serverURI: mqtt://192.168.1.104:1883
+      clientId: playback-read-client
+      topic: test/serializer-IMAGE
+      flushIntervalMS: 50
+      qos: 1
