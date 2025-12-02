@@ -1,0 +1,93 @@
+name: Build (and optionally deploy) documentation website
+
+on:
+  workflow_call:
+    inputs:
+      deploy:
+        description: "If true, run the deploy step"
+        required: true
+        type: boolean
+    secrets:
+      ACCESS_TOKEN_DOCUMENTATION:
+        required: true
+  # Keep manual trigger if you want ad-hoc runs; remove if undesired.
+  workflow_dispatch: {}
+
+jobs:
+  build_website:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+
+    steps:
+      # 0) Checkout source repo (this repo)
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 1) Verify source folder
+      - name: Verify source folder
+        run: |
+          set -e
+          SRC="docs/website"
+          if [ ! -d "$SRC" ]; then
+            echo "Source folder not found: $SRC"
+            exit 1
+          fi
+          echo "Found source: $SRC"
+
+      # 2) Checkout destination (documentation) repo
+      - name: Checkout documentation repo
+        uses: actions/checkout@v4
+        with:
+          repository: nebulastream/documentation
+          ref: master
+          path: docs-repo
+          fetch-depth: 0
+          token: ${{ secrets.ACCESS_TOKEN_DOCUMENTATION }}
+
+      # 3) Sync Markdown/content
+      - name: Sync docs → content/en/docs (excluding resources/)
+        run: |
+          set -euxo pipefail
+          SRC="docs/website/"
+          DST="docs-repo/content/en/docs/"
+          mkdir -p "$DST"
+          rsync -av --delete \
+            --exclude 'resources/' \
+            "$SRC" "$DST"
+          git -C docs-repo status --porcelain || true
+
+      # 3b) Sync static resources
+      - name: Sync static resources → docs-repo/static/nes
+        run: |
+          set -euxo pipefail
+          if [ -d docs/website/resources ]; then
+            mkdir -p docs-repo/static/nes
+            rsync -av --delete docs/website/resources/ docs-repo/static/nes/
+            find docs-repo/static/nes -maxdepth 2 -type f | sed 's#^#  static: #'
+          else
+            echo "No docs/website/resources directory found; skipping."
+          fi
+
+      # 4) Build website
+      - uses: actions/setup-node@v4
+      - name: Install dependencies
+        working-directory: docs-repo
+        run: npm install
+      - name: Build production website
+        working-directory: docs-repo
+        run: npm run build
+
+      # 5) Deploy (placeholder) — only if deploy=true
+      - name: Deploy (placeholder)
+        if: ${{ inputs.deploy }}
+        run: echo "deployed!"
+        # Example:
+        # - name: Deploy to GitHub Pages
+        #   if: ${{ inputs.deploy }}
+        #   uses: peaceiris/actions-gh-pages@v4
+        #   with:
+        #     github_token: ${{ secrets.GITHUB_TOKEN }}
+        #     publish_dir: docs-repo/public

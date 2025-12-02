@@ -1,0 +1,29 @@
+
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        # with:
+        #   node-version: '16'
+        #   cache: 'npm'
+      - name: Install dependencies
+        continue-on-error: true
+        run: npm install
+      - name: Build production website
+        continue-on-error: true
+        run: npm run build
+      - name: Deploy to GitHub Pages
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public

@@ -1,0 +1,72 @@
+<!-- Manual collapsible section menu -->
+<ul class="list-unstyled collapsible-sidebar">
+  {{ $currentPage := . -}}
+  {{ $section := $currentPage.Section -}}
+  {{ range (index .Site.Menus $section) -}}
+    {{- $active := or ($currentPage.IsMenuCurrent $section .) ($currentPage.HasMenuCurrent $section .) -}}
+    {{- $active = or $active (eq $currentPage.Section .Identifier) -}}
+    <li class="mb-1">
+      {{ if .HasChildren -}}
+      <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#section-{{ .Identifier }}" aria-expanded="{{ if $active }}true{{ else }}false{{ end }}">
+        {{ .Name }}
+      </button>
+      {{else}}     
+      <a class="btn btn-notoggle align-items-center rounded collapsed" href="{{ .URL | relURL }}" aria-expanded="{{ if $active }}true{{ else }}false{{ end }}">
+        {{ .Name }}
+      </a>
+     {{end}}
+      {{ if .HasChildren -}}
+        <div class="collapse{{ if $active }} show{{ end }}" id="section-{{ .Identifier }}">
+          <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+            {{ range .Children -}}
+              {{ if .HasChildren -}}
+                <li class="my-1 ms-3">
+                  <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#section-{{ .Identifier }}" aria-expanded="{{ if $active }}true{{ else }}false{{ end }}">
+                    {{ .Name }}
+                  </button>
+                  {{ if .HasChildren -}}
+                    <div class="collapse{{ if $active }} show{{ end }}" id="section-{{ .Identifier }}">
+                      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                        {{ range .Children -}}
+                          {{ if .HasChildren -}}
+                            <li class="my-1 ms-3">
+                              <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#section-{{ .Identifier }}" aria-expanded="{{ if $active }}true{{ else }}false{{ end }}">
+                                {{ .Name }}
+                              </button>
+                              {{ if .HasChildren -}}
+                                <div class="collapse{{ if $active }} show{{ end }}" id="section-{{ .Identifier }}">
+                                  <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                                  {{ range .Children -}}
+                                    {{- $active := or ($currentPage.IsMenuCurrent $section .) ($currentPage.HasMenuCurrent $section .) -}}
+                                    {{- $active = or $active (eq $currentPage.Section .Identifier) -}}
+                                    <li><a class="docs-link rounded{{ if $active }} active{{ end }}" href="{{ .URL | relURL }}">{{ .Name }}</a></li>
+                                  {{ end -}}
+                                  </ul>
+                                </div>
+                              {{ end -}}
+                            </li>
+                          {{ else -}}
+                            {{- $active := or ($currentPage.IsMenuCurrent $section .) ($currentPage.HasMenuCurrent $section .) -}}
+                            {{- $active = or $active (eq $currentPage.Section .Identifier) -}}
+                            <li><a class="docs-link rounded{{ if $active }} active{{ end }}" href="{{ .URL | relURL }}">{{ .Name }}</a></li>
+                          {{ end -}}
+                        {{ end -}}
+                      </ul>
+                    </div>
+                  {{ end -}}
+                </li>
+              {{ else -}}
+                {{- $active := or ($currentPage.IsMenuCurrent $section .) ($currentPage.HasMenuCurrent $section .) -}}
+                {{- $active = or $active (eq $currentPage.Section .Identifier) -}}
+                <li><a class="docs-link rounded{{ if $active }} active{{ end }}" href="{{ .URL | relURL }}">{{ .Name }}</a></li>
+              {{ end -}}
+            {{ end -}}
+          </ul>
+        </div>
+      {{ end -}}
+    </li>
+  {{ end -}}
+  <div class="dropdown-divider"></div>
+  <!-- <li><a class="docs-link rounded" href="https://docs.nebula.stream/cpp/"><i class="fa-solid fa-arrow-up-right-from-square"></i>C++ Docs</a></li> -->
+                              
+</ul>
