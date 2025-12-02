@@ -47,8 +47,11 @@ public:
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
-    virtual void
-    lift(const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& bufferProvider, const Nautilus::Record& record)
+    virtual void lift(
+        const nautilus::val<AggregationState*>& aggregationState,
+        PipelineMemoryProvider& bufferProvider,
+        const Nautilus::Record& record,
+        const nautilus::val<Timestamp>& timestamp)
         = 0;
 
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state

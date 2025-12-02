@@ -23,7 +23,9 @@
 #include <string>
 #include <utility>
 #include <variant>
+
 #include <boost/algorithm/string.hpp>
+#include "Operators/Windows/Aggregations/LastAggregationLogicalFunction.hpp"
 
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>
@@ -948,6 +950,14 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             }
             helpers.top().windowAggs.push_back(
                 std::make_shared<SumAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            break;
+        case AntlrSQLLexer::LAST:
+            if (helpers.top().functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
+            }
+            helpers.top().windowAggs.push_back(
+                std::make_shared<LastAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::MEDIAN:
             if (helpers.top().functionBuilder.empty())

@@ -1,0 +1,192 @@
+# name: window/LastAggregation.test
+# description: Test window aggregations over different data types
+# groups: [Aggregation, WindowOperators]
+
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,2,3,4,5,6,7,8,9,10,10
+1,2,3,4,5,6,7,8,9,10,11
+1,2,3,4,5,6,7,8,9,10,12
+1,2,3,4,5,6,7,8,9,10,13
+1,2,3,4,5,6,7,8,9,10,14
+1,2,3,4,5,6,7,8,9,10,15
+1,2,3,4,5,6,7,8,9,10,16
+1,2,3,4,5,6,7,8,9,10,17
+1,2,3,4,5,6,7,8,9,10,18
+1,2,3,4,5,6,7,8,9,10,19
+1,2,3,4,5,6,7,8,9,10,110
+1,2,3,4,5,6,7,8,9,10,111
+1,2,3,4,5,6,7,8,9,10,112
+1,2,3,4,5,6,7,8,9,10,113
+1,2,3,4,5,6,7,8,9,10,114
+1,2,3,4,5,6,7,8,9,10,115
+1,2,3,4,5,6,7,8,9,10,116
+1,2,3,4,5,6,7,8,9,10,117
+1,2,3,4,5,6,7,8,9,10,118
+1,2,3,4,5,6,7,8,9,10,119
+1,2,3,4,5,6,7,8,9,10,120
+1,2,3,4,5,6,7,8,9,10,121
+1,2,3,4,5,6,7,8,9,10,122
+1,2,3,4,5,6,7,8,9,10,123
+1,2,3,4,5,6,7,8,9,10,124
+1,2,3,4,5,6,7,8,9,10,125
+1,2,3,4,5,6,7,8,9,10,126
+1,2,3,4,5,6,7,8,9,10,127
+1,2,3,4,5,6,7,8,9,10,128
+1,2,3,4,5,6,7,8,9,10,129
+1,2,3,4,5,6,7,8,9,10,130
+1,2,3,4,5,6,7,8,9,10,131
+1,2,3,4,5,6,7,8,9,10,132
+1,2,3,4,5,6,7,8,9,10,133
+1,2,3,4,5,6,7,8,9,10,134
+1,2,3,4,5,6,7,8,9,10,135
+1,2,3,4,5,6,7,8,9,10,136
+1,2,3,4,5,6,7,8,9,10,137
+1,2,3,4,5,6,7,8,9,10,138
+1,2,3,4,5,6,7,8,9,10,139
+1,2,3,4,5,6,7,8,9,10,140
+1,2,3,4,5,6,7,8,9,10,141
+1,2,3,4,5,6,7,8,9,10,142
+2,3,4,5,6,7,8,9,10,11,148
+0,0,0,0,0,0,0,0,0,0,150
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23,200
+1,1,1,1,1,1,1,1,1,1,250
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23,300
+1,2,3,4,5,6,7,8,9,10,325
+2,3,4,5,6,7,8,9,10,11,350
+
+CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i8 INT8, stream.i16 INT16, stream.i32 INT32, stream.i64 INT64, stream.u8 UINT8, stream.u16 UINT16, stream.u32 UINT32, stream.u64 UINT64, stream.f32 FLOAT32, stream.f64 FLOAT64, stream.ts UINT64) TYPE File;
+
+# Create Tumbling windows over 100 ms and emit only the last received tuple
+SELECT start, end, LAST(i8) as i8, LAST(i16) as i16, LAST(i32) as i32, LAST(i64) as i64, LAST(u8) as u8, LAST(u16) as u16, LAST(u32) as u32, LAST(u64) as u64, LAST(f32) as f32, LAST(f64) as f64, LAST(ts) as ts
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStream;
+----
+0,100,1,2,3,4,5,6,7,8,9,10,19
+100,200,0,0,0,0,0,0,0,0,0,0,150
+200,300,1,1,1,1,1,1,1,1,1,1,250
+300,400,2,3,4,5,6,7,8,9,10,11,350
+
+CREATE LOGICAL SOURCE slow_stream(text VARSIZED, ts UINT64);
+CREATE PHYSICAL SOURCE FOR slow_stream TYPE File;
+ATTACH INLINE
+Hello,9
+World,19
+This,29
+Is,39
+Some,49
+Text,59
+
+CREATE LOGICAL SOURCE fast_stream(text VARSIZED, ts UINT64);
+CREATE PHYSICAL SOURCE FOR fast_stream TYPE File;
+ATTACH INLINE
+H,2
+e,4
+l,6
+l,8
+o,10
+W,12
+o,14
+r,16
+l,18
+d,20
+T,22
+h,24
+i,26
+s,29
+I,35
+I,40
+S,42
+o,44
+m,46
+e,48
+T,50
+e,54
+x,56
+t,80
+
+CREATE SINK textStream(slow_stream.start UINT64, slow_stream.end UINT64, slow_stream.text VARSIZED) TYPE File;
+
+SELECT start, end, LAST(text) as text
+FROM slow_stream WINDOW TUMBLING(ts, size 10 ms) INTO textStream;
+----
+0,10,Hello
+10,20,World
+20,30,This
+30,40,Is
+40,50,Some
+50,60,Text
+
+CREATE SINK textStreamFast(fast_stream.start UINT64, fast_stream.end UINT64, fast_stream.text VARSIZED) TYPE File;
+
+SELECT start, end, LAST(text) as text
+FROM fast_stream WINDOW TUMBLING(ts, size 10 ms) INTO textStreamFast;
+----
+0,10,l
+10,20,l
+20,30,s
+30,40,I
+40,50,e
+50,60,x
+80,90,t
+
+#################################### Sliding Windows ####################################
+
+CREATE SINK sinkStreamSliding(stream.start UINT64, stream.end UINT64, stream.i8 INT8, stream.i16 INT16, stream.i32 INT32, stream.i64 INT64, stream.u8 UINT8, stream.u16 UINT16, stream.u32 UINT32, stream.u64 UINT64, stream.f32 FLOAT32, stream.f64 FLOAT64, stream.ts UINT64) TYPE File;
+
+# Test LAST with sliding windows - should return the last value in each sliding window
+SELECT start, end, LAST(i8) as i8, LAST(i16) as i16, LAST(i32) as i32, LAST(i64) as i64, LAST(u8) as u8, LAST(u16) as u16, LAST(u32) as u32, LAST(u64) as u64, LAST(f32) as f32, LAST(f64) as f64, LAST(ts) as ts
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamSliding;
+----
+0,100,1,2,3,4,5,6,7,8,9,10,19
+50,150,2,3,4,5,6,7,8,9,10,11,148
+100,200,0,0,0,0,0,0,0,0,0,0,150
+150,250,-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23,200
+200,300,1,1,1,1,1,1,1,1,1,1,250
+250,350,1,2,3,4,5,6,7,8,9,10,325
+300,400,2,3,4,5,6,7,8,9,10,11,350
+350,450,2,3,4,5,6,7,8,9,10,11,350
+
+CREATE LOGICAL SOURCE single_tuple_stream(id UINT64, value INT32, ts UINT64);
+CREATE PHYSICAL SOURCE FOR single_tuple_stream TYPE File;
+ATTACH INLINE
+1,100,50
+2,200,150
+3,300,250
+4,400,350
+
+CREATE SINK sinkSingleTuple(single_tuple_stream.start UINT64, single_tuple_stream.end UINT64, single_tuple_stream.id UINT64, single_tuple_stream.value INT32, single_tuple_stream.ts UINT64) TYPE File;
+
+# Test LAST with single tuple per window - should just return that tuple
+SELECT start, end, LAST(id) as id, LAST(value) as value, LAST(ts) as ts
+FROM single_tuple_stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkSingleTuple;
+----
+0,100,1,100,50
+100,200,2,200,150
+200,300,3,300,250
+300,400,4,400,350
+
+CREATE LOGICAL SOURCE changing_stream(counter UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR changing_stream TYPE File;
+ATTACH INLINE
+1,10
+2,20
+3,30
+4,40
+5,50
+10,60
+20,70
+30,80
+40,90
+50,100
+
+CREATE SINK sinkChanging(changing_stream.start UINT64, changing_stream.end UINT64, changing_stream.counter UINT64) TYPE File;
+
+# Test LAST with increasing values - should track the progression correctly
+SELECT start, end, LAST(counter) as counter
+FROM changing_stream WINDOW TUMBLING(ts, size 50 ms) INTO sinkChanging;
+----
+0,50,4
+50,100,40
+100,150,50

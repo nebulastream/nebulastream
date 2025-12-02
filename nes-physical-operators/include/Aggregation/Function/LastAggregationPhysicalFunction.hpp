@@ -16,38 +16,40 @@
 
 #include <cstddef>
 #include <memory>
-#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <DataTypes/DataType.hpp>
-#include <Functions/PhysicalFunction.hpp>
+
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
+#include "Nautilus/Interface/BufferRef/TupleBufferRef.hpp"
 
 namespace NES
 {
 
-class MaxAggregationPhysicalFunction : public AggregationPhysicalFunction
+class LastAggregationPhysicalFunction final : public AggregationPhysicalFunction
 {
 public:
-    MaxAggregationPhysicalFunction(
+    LastAggregationPhysicalFunction(
         DataType inputType,
         DataType resultType,
         PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        PipelineMemoryProvider& pipelineMemoryProvider,
-        const Record& record,
+        PipelineMemoryProvider& memoryProvider,
+        const Nautilus::Record& record,
         const nautilus::val<Timestamp>& timestamp) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
-    void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~MaxAggregationPhysicalFunction() override = default;
+    ~LastAggregationPhysicalFunction() override = default;
+
+    void cleanup(nautilus::val<AggregationState*> aggregationState) override;
+
+    std::shared_ptr<Interface::BufferRef::TupleBufferRef> bufferRef;
 };
 
 }

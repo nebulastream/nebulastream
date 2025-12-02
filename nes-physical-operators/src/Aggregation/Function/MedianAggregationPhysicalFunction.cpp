@@ -47,7 +47,10 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
 }
 
 void MedianAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record,
+    const nautilus::val<Timestamp>&)
 {
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);

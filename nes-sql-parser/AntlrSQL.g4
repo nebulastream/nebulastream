@@ -290,7 +290,7 @@ timeUnit: MS
 
 timestampParameter: name=identifier;
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY_AGG;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY_AGG | LAST;
 
 sinkClause: INTO sink (',' sink)*;
 

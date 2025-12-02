@@ -39,7 +39,8 @@ public:
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
-        const Nautilus::Record& record) override;
+        const Nautilus::Record& record,
+        const nautilus::val<Timestamp>& timestamp) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,

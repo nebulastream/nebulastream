@@ -21,3 +21,4 @@ add_plugin(Median AggregationLogicalFunction nes-logical-operators MedianAggrega
 add_plugin(Min AggregationLogicalFunction nes-logical-operators MinAggregationLogicalFunction.cpp)
 add_plugin(Sum AggregationLogicalFunction nes-logical-operators SumAggregationLogicalFunction.cpp)
 add_plugin(Array_Agg AggregationLogicalFunction nes-logical-operators ArrayAggregationLogicalFunction.cpp)
+add_plugin(Last AggregationLogicalFunction nes-logical-operators LastAggregationLogicalFunction.cpp)
