@@ -12,10 +12,7 @@
     limitations under the License.
 */
 
-#include <ExecutionContext.hpp>
-#include <IREEAdapter.hpp>
-#include <IREECacheInferenceOperator.hpp>
-#include <IREEInferenceOperatorHandler.hpp>
+#include <ranges>
 #include <Nautilus/Interface/Record.hpp>
 #include <PredictionCache/PredictionCache2Q.hpp>
 #include <PredictionCache/PredictionCacheFIFO.hpp>
@@ -23,10 +20,13 @@
 #include <PredictionCache/PredictionCacheLRU.hpp>
 #include <PredictionCache/PredictionCacheSecondChance.hpp>
 #include <PredictionCache/PredictionCacheUtil.hpp>
-#include <QueryExecutionConfiguration.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/function.hpp>
-#include <ranges>
+#include <ExecutionContext.hpp>
+#include <IREEAdapter.hpp>
+#include <IREECacheInferenceOperator.hpp>
+#include <IREEInferenceOperatorHandler.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -116,12 +116,13 @@ void IREECacheInferenceOperator::execute(ExecutionContext& executionCtx, NES::Na
             auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
             auto adapter = handler->getIREEAdapter(thread);
             return adapter->inputData.get();
-        }, inferModelHandler, executionCtx.workerThreadId);
+        },
+        inferModelHandler,
+        executionCtx.workerThreadId);
 
     const auto pred = predictionCache->getDataStructureRef(
         inputDataVal,
-        [&](
-            const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>&)
+        [&](const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>&)
         {
             return nautilus::invoke(
                 +[](PredictionCacheEntry* predictionCacheEntry, void* opHandlerPtr, WorkerThreadId thread)
@@ -136,21 +137,30 @@ void IREECacheInferenceOperator::execute(ExecutionContext& executionCtx, NES::Na
 
                     predictionCacheEntry->dataStructure = reinterpret_cast<int8_t*>(adapter->outputData.get());
                     return predictionCacheEntry->dataStructure;
-                }, predictionCacheEntryToReplace, inferModelHandler, executionCtx.workerThreadId);
+                },
+                predictionCacheEntryToReplace,
+                inferModelHandler,
+                executionCtx.workerThreadId);
         });
 
     if (!this->isVarSizedOutput)
     {
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            VarVal result = VarVal(nautilus::invoke(IREECacheInference::getValueFromModel, nautilus::val<int>(i), inferModelHandler, executionCtx.workerThreadId));
+            VarVal result = VarVal(nautilus::invoke(
+                IREECacheInference::getValueFromModel, nautilus::val<int>(i), inferModelHandler, executionCtx.workerThreadId));
             record.write(outputFieldNames.at(i), result);
         }
     }
     else
     {
         auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-        nautilus::invoke(IREECacheInference::copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, executionCtx.workerThreadId);
+        nautilus::invoke(
+            IREECacheInference::copyVarSizedFromModel,
+            output.getContent(),
+            output.getContentSize(),
+            inferModelHandler,
+            executionCtx.workerThreadId);
         record.write(outputFieldNames.at(0), output);
     }
 
@@ -210,7 +220,9 @@ void IREECacheInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
         {
             return opHandler->getStartOfPredictionCacheEntries(
                 IREEInferenceOperatorHandler::StartPredictionCacheEntriesIREEInference{workerThreadId});
-        }, globalOperatorHandler, executionCtx.workerThreadId);
+        },
+        globalOperatorHandler,
+        executionCtx.workerThreadId);
 
     const auto inputSize = nautilus::invoke(
         +[](void* inferModelHandler, WorkerThreadId thread)
@@ -218,10 +230,11 @@ void IREECacheInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
             auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
             auto adapter = handler->getIREEAdapter(thread);
             return adapter->inputSize;
-        }, globalOperatorHandler, executionCtx.workerThreadId);
+        },
+        globalOperatorHandler,
+        executionCtx.workerThreadId);
 
-    auto predictionCache = NES::Util::createPredictionCache(
-        predictionCacheOptions, globalOperatorHandler, startOfEntries, inputSize);
+    auto predictionCache = NES::Util::createPredictionCache(predictionCacheOptions, globalOperatorHandler, startOfEntries, inputSize);
     executionCtx.setLocalOperatorState(id, std::move(predictionCache));
 }
 

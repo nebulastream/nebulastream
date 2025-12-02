@@ -42,8 +42,11 @@ public:
     }
 
     [[nodiscard]] const std::string& getModelName() const { return modelName; }
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const ;
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
+
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return {child}; }
+
     [[nodiscard]] InferModelNameLogicalOperator withChildren(std::vector<LogicalOperator> children) const
     {
         PRECONDITION(children.size() == 1, "Expected exactly one child");
@@ -52,14 +55,16 @@ public:
         return copy;
     }
 
-    [[nodiscard]] bool operator==(const InferModelNameLogicalOperator& rhs) const 
+    [[nodiscard]] bool operator==(const InferModelNameLogicalOperator& rhs) const
     {
         return modelName == rhs.modelName && inputFields == rhs.inputFields && child == rhs.child;
     }
 
     [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const { return inputFields; }
+
     [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
-    void serialize(SerializableOperator& serializableOperator) const 
+
+    void serialize(SerializableOperator& serializableOperator) const
     {
         SerializableLogicalOperator proto;
 
@@ -80,7 +85,7 @@ public:
         }
 
         FunctionList funcList;
-        for (const auto & inputField : inputFields)
+        for (const auto& inputField : inputFields)
         {
             *funcList.add_functions() = inputField.serialize();
         }
@@ -96,23 +101,27 @@ public:
 
         serializableOperator.mutable_operator_()->CopyFrom(proto);
     }
+
     [[nodiscard]] TraitSet getTraitSet() const { return {traitSet}; }
-    [[nodiscard]] InferModelNameLogicalOperator withTraitSet(TraitSet traitSet) const 
+
+    [[nodiscard]] InferModelNameLogicalOperator withTraitSet(TraitSet traitSet) const
     {
         auto copy = *this;
         copy.traitSet = traitSet;
         return copy;
     }
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const 
-    {
-        throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
-    }
-    [[nodiscard]] Schema getOutputSchema() const 
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const
     {
         throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
     }
 
-    [[nodiscard]] InferModelNameLogicalOperator withInferredSchema(std::vector<Schema>) const 
+    [[nodiscard]] Schema getOutputSchema() const
+    {
+        throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
+    }
+
+    [[nodiscard]] InferModelNameLogicalOperator withInferredSchema(std::vector<Schema>) const
     {
         throw CannotInferSchema("Schema is not available on the INFER_MODEL_NAME. The Infere operator has to be resolved first.");
     }
@@ -122,12 +131,12 @@ public:
         static inline const DescriptorConfig::ConfigParameter<std::string> MODEL_NAME{
             "modelName",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(MODEL_NAME, config); }};
+            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MODEL_NAME, config); }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(MODEL_NAME);
     };
+
 private:
     static constexpr std::string_view NAME = "InferModelName";
     TraitSet traitSet;

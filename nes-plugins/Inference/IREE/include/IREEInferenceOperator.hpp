@@ -26,13 +26,16 @@ class IREEInferenceOperator : public PhysicalOperatorConcept
 public:
     IREEInferenceOperator(
         const OperatorHandlerId inferModelHandlerIndex, std::vector<PhysicalFunction> inputs, std::vector<std::string> outputFieldNames)
-        : inferModelHandlerIndex(inferModelHandlerIndex), inputs(std::move(inputs)), outputFieldNames(std::move(outputFieldNames)) { }
+        : inferModelHandlerIndex(inferModelHandlerIndex), inputs(std::move(inputs)), outputFieldNames(std::move(outputFieldNames))
+    {
+    }
 
     void execute(ExecutionContext& ctx, Record& record) const override;
     void setup(ExecutionContext& executionCtx, CompilationContext&) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override { return child; }
+
     void setChild(PhysicalOperator child) override { this->child = std::move(child); }
 
     bool isVarSizedInput = false;

@@ -26,7 +26,8 @@ namespace NES::Runtime::Execution::Operators
 
 std::optional<TupleBuffer*> SequenceOperatorHandler::getNextBuffer(TupleBuffer* tupleBuffer)
 {
-    if (auto optBuffer = sequencer.isNext(SequenceData(tupleBuffer->getSequenceNumber(), tupleBuffer->getChunkNumber(), tupleBuffer->isLastChunk()), *tupleBuffer))
+    if (auto optBuffer = sequencer.isNext(
+            SequenceData(tupleBuffer->getSequenceNumber(), tupleBuffer->getChunkNumber(), tupleBuffer->isLastChunk()), *tupleBuffer))
     {
         currentBuffer = std::move(*optBuffer);
         return std::addressof(currentBuffer);
@@ -37,8 +38,8 @@ std::optional<TupleBuffer*> SequenceOperatorHandler::getNextBuffer(TupleBuffer* 
 std::optional<TupleBuffer*> SequenceOperatorHandler::markBufferAsDone(TupleBuffer* tupleBuffer)
 {
     INVARIANT(tupleBuffer == std::addressof(currentBuffer), "Not sure where this pointer is comming from");
-    auto optNextBuffer
-        = sequencer.advanceAndGetNext(SequenceData(tupleBuffer->getSequenceNumber(), tupleBuffer->getChunkNumber(), tupleBuffer->isLastChunk()));
+    auto optNextBuffer = sequencer.advanceAndGetNext(
+        SequenceData(tupleBuffer->getSequenceNumber(), tupleBuffer->getChunkNumber(), tupleBuffer->isLastChunk()));
     if (optNextBuffer)
     {
         currentBuffer = std::move(*optNextBuffer);

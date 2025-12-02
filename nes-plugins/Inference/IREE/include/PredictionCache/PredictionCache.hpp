@@ -14,26 +14,24 @@
 
 #pragma once
 #include <functional>
-#include <IREEInferenceLocalState.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <IREEInferenceLocalState.hpp>
 
 namespace NES
 {
 /// Represents the C++ struct that is stored in the operator handler vector
 struct PredictionCacheEntry
 {
-    PredictionCacheEntry(std::byte* record)
-        : record(record), dataStructure(nullptr)
-    {
-    }
+    PredictionCacheEntry(std::byte* record) : record(record), dataStructure(nullptr) { }
 
     virtual ~PredictionCacheEntry() = default;
     std::byte* record;
     int8_t* dataStructure;
 };
+
 /// Represents the C++ struct that is stored in the operator handler vector before all PredictionCacheEntry structs
 struct HitsAndMisses
 {
@@ -54,13 +52,16 @@ public:
         const nautilus::val<size_t>& inputSize);
     ~PredictionCache() override = default;
 
-    using PredictionCacheReplacement = std::function<nautilus::val<int8_t*>(const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
+    using PredictionCacheReplacement = std::function<nautilus::val<int8_t*>(
+        const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
     virtual nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) = 0;
+    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
+        = 0;
 
     virtual nautilus::val<std::byte*> getRecord(const nautilus::val<uint64_t>& pos);
     nautilus::val<uint64_t*> getHitsRef();
     nautilus::val<uint64_t*> getMissesRef();
+
 protected:
     virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
     void incrementNumberOfHits();

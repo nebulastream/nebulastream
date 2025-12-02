@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <IREEAdapter.hpp>
 #include <IREEBatchInferenceOperatorHandler.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <PredictionCache.hpp>
 #include <WindowBasedOperatorHandler.hpp>
@@ -23,12 +23,8 @@ namespace NES
 {
 
 IREEBatchInferenceOperatorHandler::IREEBatchInferenceOperatorHandler(
-    const std::vector<OriginId>& inputOrigins,
-    OriginId outputOriginId,
-    Nebuli::Inference::Model model)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, true)
-    , batchSize(model.getInputShape().front())
-    , model(std::move(model))
+    const std::vector<OriginId>& inputOrigins, OriginId outputOriginId, Nebuli::Inference::Model model)
+    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, true), batchSize(model.getInputShape().front()), model(std::move(model))
 {
 }
 
@@ -61,10 +57,7 @@ const std::shared_ptr<IREEAdapter>& IREEBatchInferenceOperatorHandler::getIREEAd
 }
 
 void IREEBatchInferenceOperatorHandler::emitBatchesToProbe(
-    Batch& batch,
-    const SequenceData& sequenceData,
-    PipelineExecutionContext* pipelineCtx,
-    const Timestamp watermarkTs) const
+    Batch& batch, const SequenceData& sequenceData, PipelineExecutionContext* pipelineCtx, const Timestamp watermarkTs) const
 {
     batch.combinePagedVectors();
     const auto numberOfTuples = batch.getNumberOfTuples();
@@ -110,8 +103,8 @@ Batch* IREEBatchInferenceOperatorHandler::getOrCreateNewBatch() const
 {
     auto batchesWriteLock = batches.wlock();
     tuplesSeen++;
-    if (tuplesSeen == batchSize || !batchesWriteLock->contains(batchId) ||
-        (batchesWriteLock->contains(batchId) && batchesWriteLock->at(batchId)->state == BatchState::MARKED_AS_EMITTED))
+    if (tuplesSeen == batchSize || !batchesWriteLock->contains(batchId)
+        || (batchesWriteLock->contains(batchId) && batchesWriteLock->at(batchId)->state == BatchState::MARKED_AS_EMITTED))
     {
         std::shared_ptr<Batch> batch = createNewBatch();
         batchesWriteLock->insert(std::make_pair(batchId, batch));
@@ -128,15 +121,13 @@ void IREEBatchInferenceOperatorHandler::garbageCollectBatches() const
     if (batchesWriteLock->contains(batchId) && batchesWriteLock->at(batchId)->state == BatchState::MARKED_AS_PROCESSED)
     {
         auto processedBatches = *batchesWriteLock
-            | std::views::filter([](const auto& pair)
+            | std::views::filter(
+                [](const auto& pair)
                 {
                     const auto& batch = pair.second;
                     return batch && batch->state == BatchState::MARKED_AS_PROCESSED;
                 })
-            | std::views::transform([](const auto& pair)
-                {
-                    return pair.first;
-                });
+            | std::views::transform([](const auto& pair) { return pair.first; });
         auto batchesCount = static_cast<size_t>(std::ranges::distance(processedBatches));
 
         std::vector batchesToErase(processedBatches.begin(), processedBatches.end());
@@ -168,10 +159,12 @@ void IREEBatchInferenceOperatorHandler::allocatePredictionCacheEntries(
     }
 }
 
-const int8_t* IREEBatchInferenceOperatorHandler::getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const
+const int8_t* IREEBatchInferenceOperatorHandler::getStartOfPredictionCacheEntries(
+    const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const
 {
     PRECONDITION(threadLocalAdapters.size() > 0, "Number of worker threads should be set before calling this method");
-    const auto startPredictionCacheEntriesIREE = dynamic_cast<const StartPredictionCacheEntriesIREEInference&>(startPredictionCacheEntriesArgs);
+    const auto startPredictionCacheEntriesIREE
+        = dynamic_cast<const StartPredictionCacheEntriesIREEInference&>(startPredictionCacheEntriesArgs);
     const auto pos = startPredictionCacheEntriesIREE.workerThreadId % predictionCacheEntriesBufferForWorkerThreads.size();
     INVARIANT(
         not predictionCacheEntriesBufferForWorkerThreads.empty() and pos < predictionCacheEntriesBufferForWorkerThreads.size(),
@@ -182,10 +175,7 @@ const int8_t* IREEBatchInferenceOperatorHandler::getStartOfPredictionCacheEntrie
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
 IREEBatchInferenceOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const
 {
-    return [](SliceStart, SliceEnd)
-    {
-        return std::vector<std::shared_ptr<Slice>>{};
-    };
+    return [](SliceStart, SliceEnd) { return std::vector<std::shared_ptr<Slice>>{}; };
 }
 
 }

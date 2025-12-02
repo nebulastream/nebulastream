@@ -45,6 +45,7 @@ struct ArgMaxPhysicalFunction : PhysicalFunctionConcept
     }
 
     ArgMaxPhysicalFunction(PhysicalFunction child) : child(std::move(child)) { }
+
     PhysicalFunction child;
 };
 

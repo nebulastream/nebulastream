@@ -37,8 +37,8 @@ nautilus::val<uint64_t*> PredictionCacheLRU::getAgeBit(const nautilus::val<uint6
     return ageBitRef;
 }
 
-nautilus::val<int8_t*>
-PredictionCacheLRU::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
+nautilus::val<int8_t*> PredictionCacheLRU::getDataStructureRef(
+    const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we have to increment all age bits by one.
     nautilus::val<uint64_t> maxAge = 0;

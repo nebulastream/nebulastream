@@ -26,10 +26,7 @@ namespace NES
 {
 
 void emitBatchesProxy(
-    OperatorHandler* ptrOpHandler,
-    PipelineExecutionContext* pipelineCtx,
-    const Timestamp watermarkTs,
-    const SequenceNumber sequenceNumber)
+    OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx, const Timestamp watermarkTs, const SequenceNumber sequenceNumber)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
@@ -41,15 +38,13 @@ void emitBatchesProxy(
     {
         auto batchesReadLock = opHandler->batches.rlock();
         auto batchesToBeEmittedView = *batchesReadLock
-            | std::views::filter([](const auto& pair)
+            | std::views::filter(
+                [](const auto& pair)
                 {
                     const auto& batch = pair.second;
                     return batch && batch->state == BatchState::MARKED_AS_CREATED;
                 })
-            | std::views::transform([](const auto& pair)
-                {
-                    return pair.second;
-                });
+            | std::views::transform([](const auto& pair) { return pair.second; });
         batchesToBeEmitted = {batchesToBeEmittedView.begin(), batchesToBeEmittedView.end()};
     }
 
@@ -64,8 +59,7 @@ void emitBatchesProxy(
 }
 
 BatchingPhysicalOperator::BatchingPhysicalOperator(
-    const OperatorHandlerId operatorHandlerId,
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef)
+    const OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef)
     : WindowBuildPhysicalOperator(operatorHandlerId), tupleBufferRef(std::move(std::move(tupleBufferRef)))
 {
 }
@@ -81,14 +75,16 @@ void BatchingPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
             const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
             return opHandler->getOrCreateNewBatch();
-        }, operatorHandler);
+        },
+        operatorHandler);
 
     const auto batchPagedVectorMemRef = nautilus::invoke(
         +[](Batch* batch)
         {
             PRECONDITION(batch != nullptr, "batch context should not be null!");
             return batch->getPagedVectorRef();
-        }, batchMemRef);
+        },
+        batchMemRef);
 
     const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
     batchPagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
@@ -104,11 +100,7 @@ void BatchingPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffe
 {
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     nautilus::invoke(
-        emitBatchesProxy,
-        operatorHandlerMemRef,
-        executionCtx.pipelineContext,
-        executionCtx.watermarkTs,
-        executionCtx.sequenceNumber);
+        emitBatchesProxy, operatorHandlerMemRef, executionCtx.pipelineContext, executionCtx.watermarkTs, executionCtx.sequenceNumber);
 }
 
 }

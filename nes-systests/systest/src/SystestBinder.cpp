@@ -880,11 +880,7 @@ struct SystestBinder::Impl
             [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
             { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
 
-        parser.registerOnModelCallback(
-            [&](Nebuli::Inference::ModelDescriptor&& model)
-        {
-            modelCatalog.registerModel(std::move(model));
-        });
+        parser.registerOnModelCallback([&](Nebuli::Inference::ModelDescriptor&& model) { modelCatalog.registerModel(std::move(model)); });
 
         try
         {

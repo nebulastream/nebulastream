@@ -75,8 +75,7 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 {
 }
 
-WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerId)
-    : operatorHandlerId(operatorHandlerId)
+WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerId) : operatorHandlerId(operatorHandlerId)
 {
 }
 

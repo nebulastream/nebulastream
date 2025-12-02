@@ -54,13 +54,13 @@ public:
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
 };
 
-
 struct ImageManipFunction
 {
     explicit ImageManipFunction(DataType returnValue, std::vector<DataType> argumentTypes)
         : returnValue(std::move(returnValue)), argumentTypes(std::move(argumentTypes))
     {
     }
+
     DataType returnValue;
     std::vector<DataType> argumentTypes;
 
@@ -101,19 +101,19 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
             DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
             std::vector{DataTypeProvider::provideDataType(DataType::Type::VARSIZED)})},
 
-        {"ImageManipFromBase64ToTensor",
+       {"ImageManipFromBase64ToTensor",
         ImageManipFunction(
             DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
             std::vector{
-            DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
-            DataTypeProvider::provideDataType(DataType::Type::UINT64),
-            DataTypeProvider::provideDataType(DataType::Type::UINT64)})}};
-
+                DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64)})}};
 
 ImageManipLogicalFunction::ImageManipLogicalFunction(DataType stamp, std::string type, std::vector<LogicalFunction> children)
     : functionName(std::move(type)), children(std::move(children)), dataType(std::move(stamp))
 {
 }
+
 std::string ImageManipLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     return fmt::format(
@@ -121,16 +121,19 @@ std::string ImageManipLogicalFunction::explain(ExplainVerbosity verbosity) const
         this->functionName,
         fmt::join(this->children | std::views::transform([&](const auto& child) { return child.explain(verbosity); }), ", "));
 }
+
 DataType ImageManipLogicalFunction::getDataType() const
 {
     return dataType;
 }
+
 LogicalFunction ImageManipLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 }
+
 LogicalFunction ImageManipLogicalFunction::create(std::string_view functionName, std::vector<LogicalFunction> children)
 {
     auto function = Functions.find(functionName);
@@ -151,20 +154,24 @@ LogicalFunction ImageManipLogicalFunction::withInferredDataType(const Schema& sc
     Functions.at(functionName).check(functionName, copy.children);
     return copy;
 }
+
 std::vector<LogicalFunction> ImageManipLogicalFunction::getChildren() const
 {
     return children;
 }
+
 LogicalFunction ImageManipLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.children = children;
     return copy;
 }
+
 std::string_view ImageManipLogicalFunction::getType() const
 {
     return functionName;
 }
+
 SerializableFunction ImageManipLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
@@ -176,6 +183,7 @@ SerializableFunction ImageManipLogicalFunction::serialize() const
     DataTypeSerializationUtil::serializeDataType(getDataType(), serializedFunction.mutable_data_type());
     return serializedFunction;
 }
+
 bool ImageManipLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (auto castedRhs = dynamic_cast<const ImageManipLogicalFunction*>(&rhs))

@@ -51,6 +51,7 @@ namespace
 struct Tool
 {
     Tool(const std::string_view& name, bool hasVersion) : name(name), hasVersion(hasVersion) { }
+
     std::string_view name;
     bool hasVersion = false;
     bool available = false;

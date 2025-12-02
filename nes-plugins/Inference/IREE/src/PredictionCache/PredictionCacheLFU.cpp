@@ -28,8 +28,8 @@ PredictionCacheLFU::PredictionCacheLFU(
 {
 }
 
-nautilus::val<int8_t*>
-PredictionCacheLFU::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
+nautilus::val<int8_t*> PredictionCacheLFU::getDataStructureRef(
+    const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.
     if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
@@ -60,7 +60,6 @@ PredictionCacheLFU::getDataStructureRef(const nautilus::val<std::byte*>& record,
     const auto dataStructure = replacementFunction(PredictionCacheEntryToReplace, minFrequency);
     *getFrequency(minFrequencyIndex) = 1;
     return dataStructure;
-
 }
 
 nautilus::val<uint64_t*> PredictionCacheLFU::getFrequency(const nautilus::val<uint64_t>& pos)

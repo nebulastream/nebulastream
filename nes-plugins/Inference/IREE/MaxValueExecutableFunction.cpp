@@ -43,6 +43,7 @@ struct MaxValueExecutableFunction : PhysicalFunctionConcept
     }
 
     MaxValueExecutableFunction(PhysicalFunction child) : child(std::move(child)) { }
+
     PhysicalFunction child;
 };
 

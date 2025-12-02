@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <PredictionCache/PredictionCache.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <IREEAdapter.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <PredictionCache/PredictionCache.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -34,16 +34,18 @@ void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecu
         threadLocalAdapters.back()->initializeModel(model);
     }
 }
+
 void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext& pipelineExecutionContext)
 {
-
     if (model.getInputs()[0].isType(DataType::Type::VARSIZED))
     {
         uint64_t misses{0};
-        for (auto adapter : threadLocalAdapters) { misses += adapter->misses; }
+        for (auto adapter : threadLocalAdapters)
+        {
+            misses += adapter->misses;
+        }
         NES_INFO("{{\"pipeline_id\": {}, \"misses\": {}}}", pipelineExecutionContext.getPipelineId(), misses)
     }
-
 }
 
 const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
@@ -77,10 +79,12 @@ void IREEInferenceOperatorHandler::allocatePredictionCacheEntries(
     }
 }
 
-const int8_t* IREEInferenceOperatorHandler::getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const
+const int8_t*
+IREEInferenceOperatorHandler::getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const
 {
     PRECONDITION(threadLocalAdapters.size() > 0, "Number of worker threads should be set before calling this method");
-    const auto startPredictionCacheEntriesIREE = dynamic_cast<const StartPredictionCacheEntriesIREEInference&>(startPredictionCacheEntriesArgs);
+    const auto startPredictionCacheEntriesIREE
+        = dynamic_cast<const StartPredictionCacheEntriesIREEInference&>(startPredictionCacheEntriesArgs);
     const auto pos = startPredictionCacheEntriesIREE.workerThreadId % predictionCacheEntriesBufferForWorkerThreads.size();
     INVARIANT(
         not predictionCacheEntriesBufferForWorkerThreads.empty() and pos < predictionCacheEntriesBufferForWorkerThreads.size(),

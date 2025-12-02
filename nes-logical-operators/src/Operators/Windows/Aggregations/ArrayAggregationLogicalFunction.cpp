@@ -72,6 +72,7 @@ std::string_view ArrayAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
 }
+
 void ArrayAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.

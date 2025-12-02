@@ -54,13 +54,16 @@ public:
     }
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override { return {child}; }
+
     [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override
     {
         auto copy = *this;
         copy.child = children.at(0);
         return copy;
     }
+
     [[nodiscard]] std::string_view getType() const override { return "ArgMax"; }
+
     [[nodiscard]] SerializableFunction serialize() const override
     {
         SerializableFunction serializedFunction;

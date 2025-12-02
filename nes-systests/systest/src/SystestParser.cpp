@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <array>
-#include <boost/algorithm/string.hpp>
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
@@ -32,6 +31,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <boost/algorithm/string.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>

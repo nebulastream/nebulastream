@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <ranges>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <nautilus/function.hpp>
 #include <ExecutionContext.hpp>
 #include <IREEAdapter.hpp>
 #include <IREEBatchInferenceOperator.hpp>
 #include <IREEBatchInferenceOperatorHandler.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <QueryExecutionConfiguration.hpp>
-#include <nautilus/function.hpp>
-#include <ranges>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -144,7 +144,8 @@ void IREEBatchInferenceOperator::performInference(
         {
             for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
             {
-                VarVal result = VarVal(nautilus::invoke(IREEBatchInference::getValueFromModelProxy, rowIdx, operatorHandler, executionCtx.workerThreadId));
+                VarVal result = VarVal(
+                    nautilus::invoke(IREEBatchInference::getValueFromModelProxy, rowIdx, operatorHandler, executionCtx.workerThreadId));
                 record.write(outputFieldNames.at(i), result);
                 ++rowIdx;
             }
@@ -152,7 +153,12 @@ void IREEBatchInferenceOperator::performInference(
         else
         {
             auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-            nautilus::invoke(IREEBatchInference::copyVarSizedFromModelProxy, output.getContent(), output.getContentSize(), operatorHandler, executionCtx.workerThreadId);
+            nautilus::invoke(
+                IREEBatchInference::copyVarSizedFromModelProxy,
+                output.getContent(),
+                output.getContentSize(),
+                operatorHandler,
+                executionCtx.workerThreadId);
             record.write(outputFieldNames.at(0), output);
             ++rowIdx;
         }
@@ -180,14 +186,17 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
             const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
             std::shared_ptr<Batch> batch = opHandler->getBatch(currentBatch->batchId);
             return batch.get();
-        }, operatorHandlerMemRef, emittedBatch);
+        },
+        operatorHandlerMemRef,
+        emittedBatch);
 
     const auto batchPagedVectorMemRef = nautilus::invoke(
         +[](const Batch* batch)
         {
             PRECONDITION(batch != nullptr, "batch context should not be null!");
             return batch->getPagedVectorRef();
-        }, batchMemRef);
+        },
+        batchMemRef);
 
     const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
     performInference(batchPagedVectorRef, *tupleBufferRef, executionCtx);
@@ -199,7 +208,9 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
             const auto* opHandler = dynamic_cast<IREEBatchInferenceOperatorHandler*>(ptrOpHandler);
             std::shared_ptr<Batch> batch = opHandler->getBatch(currentBatch->batchId);
             batch->setState(BatchState::MARKED_AS_PROCESSED);
-        }, operatorHandlerMemRef, emittedBatch);
+        },
+        operatorHandlerMemRef,
+        emittedBatch);
 }
 
 void IREEBatchInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

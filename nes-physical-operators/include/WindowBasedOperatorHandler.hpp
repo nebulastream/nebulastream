@@ -63,10 +63,7 @@ public:
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         bool sequentialProcessing);
 
-    WindowBasedOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
-        OriginId outputOriginId,
-        bool sequentialProcessing);
+    WindowBasedOperatorHandler(const std::vector<OriginId>& inputOrigins, OriginId outputOriginId, bool sequentialProcessing);
 
     ~WindowBasedOperatorHandler() override = default;
 

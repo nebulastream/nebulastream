@@ -191,7 +191,6 @@ void AudioSource::open()
     NES_INFO("AudioSource::open: Connected to server.");
 }
 
-
 size_t fillBuffer(int sockfd, TupleBuffer& tupleBuffer, size_t numberOfSamples, size_t sampleWidth)
 {
     const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getBuffer(), numberOfSamples * sampleWidth);
@@ -277,8 +276,7 @@ DescriptorConfig::Config AudioSource::validateAndFormat(std::unordered_map<std::
     return DescriptorConfig::validateAndFormat<ConfigParametersAudio>(std::move(config), name());
 }
 
-SourceValidationRegistryReturnType
-RegisterAudioSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType RegisterAudioSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return AudioSource::validateAndFormat(std::move(sourceConfig.config));
 }
@@ -313,7 +311,6 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterAudioSource(SourceReg
     validate(sourceRegistryArguments);
     return std::make_unique<AudioSource>(sourceRegistryArguments.sourceDescriptor);
 }
-
 
 ///NOLINTNEXTLINE (performance-unnecessary-value-param)
 GeneratorDataRegistryReturnType

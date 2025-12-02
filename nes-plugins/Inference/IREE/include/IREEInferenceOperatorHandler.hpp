@@ -15,14 +15,15 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-#include <PredictionCacheOperatorHandler.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Model.hpp>
+#include <PredictionCacheOperatorHandler.hpp>
 
 namespace NES
 {
 class IREEAdapter;
+
 class IREEInferenceOperatorHandler : public OperatorHandler, public PredictionCacheOperatorHandler
 {
 public:

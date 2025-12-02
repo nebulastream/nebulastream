@@ -37,7 +37,6 @@ nautilus::val<bool*> PredictionCacheSecondChance::getSecondChanceBit(const nauti
     return secondChanceBitRef;
 }
 
-
 nautilus::val<int8_t*> PredictionCacheSecondChance::getDataStructureRef(
     const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {

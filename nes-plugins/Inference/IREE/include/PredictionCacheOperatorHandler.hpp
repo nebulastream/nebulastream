@@ -41,7 +41,8 @@ public:
         virtual ~StartPredictionCacheEntriesArgs() = default;
     };
 
-    virtual const int8_t* getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const = 0;
+    virtual const int8_t* getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const
+        = 0;
 
 protected:
     std::vector<TupleBuffer> predictionCacheEntriesBufferForWorkerThreads;

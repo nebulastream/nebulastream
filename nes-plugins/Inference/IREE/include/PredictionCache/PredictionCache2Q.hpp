@@ -24,7 +24,6 @@ struct PredictionCacheEntry2Q : PredictionCacheEntry
     ~PredictionCacheEntry2Q() override = default;
 };
 
-
 /// This slice cache uses the replacement algorithm of "2Q: A Low Overhead High Performance Buffer Management Replacement Algorithm" by Johnson et al.
 /// Simplified it contains an LRU and a FIFO queue. In the memory area of the slice cache, we first store the LRU queue and then the FIFO queue.
 class PredictionCache2Q final : public PredictionCache
@@ -43,8 +42,8 @@ public:
         const uint64_t lruQueueSize,
         const nautilus::val<size_t>& inputSize);
     ~PredictionCache2Q() override = default;
-    nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
+    nautilus::val<int8_t*> getDataStructureRef(
+        const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
 
 private:
     /// Moves the entry from fifoPos to lruPos and sets the age bit to 0

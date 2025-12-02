@@ -15,11 +15,11 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-#include <Model.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Model.hpp>
 #include <PredictionCache.hpp>
 #include <PredictionCacheOperatorHandler.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -31,10 +31,7 @@ class Batch;
 class IREEBatchInferenceOperatorHandler final : public WindowBasedOperatorHandler, public PredictionCacheOperatorHandler
 {
 public:
-    IREEBatchInferenceOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
-        OriginId outputOriginId,
-        Nebuli::Inference::Model model);
+    IREEBatchInferenceOperatorHandler(const std::vector<OriginId>& inputOrigins, OriginId outputOriginId, Nebuli::Inference::Model model);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
@@ -45,18 +42,16 @@ public:
     [[nodiscard]] std::shared_ptr<Batch> getBatch(uint64_t batchId) const;
     [[nodiscard]] std::shared_ptr<Batch> createNewBatch() const;
     void garbageCollectBatches() const;
-    void emitBatchesToProbe(Batch& batch,
-        const SequenceData& sequenceData,
-        PipelineExecutionContext* pipelineCtx,
-        const Timestamp watermarkTs) const;
+    void emitBatchesToProbe(
+        Batch& batch, const SequenceData& sequenceData, PipelineExecutionContext* pipelineCtx, const Timestamp watermarkTs) const;
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const override;
     void triggerSlices(
-        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& ,
-        PipelineExecutionContext*) override { /*noop*/ };
+        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>&, PipelineExecutionContext*) override { /*noop*/ };
 
-    void allocatePredictionCacheEntries(const uint64_t sizeOfEntry, const uint64_t numberOfEntries, AbstractBufferProvider* bufferProvider) override;
+    void allocatePredictionCacheEntries(
+        const uint64_t sizeOfEntry, const uint64_t numberOfEntries, AbstractBufferProvider* bufferProvider) override;
 
     struct StartPredictionCacheEntriesIREEInference final : StartPredictionCacheEntriesArgs
     {
@@ -88,6 +83,7 @@ public:
     mutable uint64_t batchId = 0;
     mutable uint64_t tuplesSeen = 0;
     mutable folly::Synchronized<std::map<uint64_t, std::shared_ptr<Batch>>> batches;
+
 private:
     Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
@@ -111,10 +107,7 @@ public:
         }
     }
 
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef() const
-    {
-        return pagedVectors[0].get();
-    }
+    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef() const { return pagedVectors[0].get(); }
 
     void combinePagedVectors()
     {
@@ -132,24 +125,19 @@ public:
     uint64_t getNumberOfTuples() const
     {
         return std::accumulate(
-                pagedVectors.begin(),
-                pagedVectors.end(),
-                0,
-                [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
+            pagedVectors.begin(),
+            pagedVectors.end(),
+            0,
+            [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
     }
 
-    size_t getNumberOfPagedVectors() const
-    {
-        return pagedVectors.size();
-    }
+    size_t getNumberOfPagedVectors() const { return pagedVectors.size(); }
 
-    void setState(BatchState state)
-    {
-        this->state = state;
-    }
+    void setState(BatchState state) { this->state = state; }
 
     uint64_t batchId;
     mutable BatchState state;
+
 private:
     std::mutex batchMutex;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> pagedVectors;

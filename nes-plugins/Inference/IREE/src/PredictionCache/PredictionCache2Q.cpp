@@ -52,8 +52,8 @@ void PredictionCache2Q::movePredictionCacheEntryToLRUQueue(const nautilus::val<u
     *ageBit = nautilus::val<uint64_t>(0);
 }
 
-nautilus::val<int8_t*>
-PredictionCache2Q::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
+nautilus::val<int8_t*> PredictionCache2Q::getDataStructureRef(
+    const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we have to increment all age bits by one.
     nautilus::val<uint64_t> maxAge = 0;

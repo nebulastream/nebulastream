@@ -15,9 +15,9 @@
 #pragma once
 #include "ModelLoader.hpp"
 
-#include <DataTypes/Schema.hpp>
 #include <ranges>
 #include <unordered_map>
+#include <DataTypes/Schema.hpp>
 
 namespace NES::Nebuli::Inference
 {
@@ -70,24 +70,30 @@ inline Model ModelCatalog::load(const std::string modelName) const
             {
                 result->inputShape[0] = it->second.batchSize;
                 result->outputShape[0] = it->second.batchSize;
-                
+
                 result->inputDims = result->inputShape.size();
-                result->inputSizeInBytes = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
+                result->inputSizeInBytes
+                    = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
 
                 result->outputDims = result->outputShape.size();
-                result->outputSizeInBytes = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
+                result->outputSizeInBytes
+                    = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
             }
             else
             {
-                NES_WARNING("The model has a fixed batch size of {}. The provided batch size of {} will be ignored. "
+                NES_WARNING(
+                    "The model has a fixed batch size of {}. The provided batch size of {} will be ignored. "
                     "Save the model with the variable first dimension of the input tensor to use the provided batch size.",
-                    result->inputShape[0], it->second.batchSize);
+                    result->inputShape[0],
+                    it->second.batchSize);
 
                 result->inputDims = result->inputShape.size();
-                result->inputSizeInBytes = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
+                result->inputSizeInBytes
+                    = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
 
                 result->outputDims = result->outputShape.size();
-                result->outputSizeInBytes = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
+                result->outputSizeInBytes
+                    = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
             }
 
             result->predictionCacheType = it->second.predictionCacheType;

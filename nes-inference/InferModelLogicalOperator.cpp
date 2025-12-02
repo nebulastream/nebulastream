@@ -115,6 +115,7 @@ std::vector<Schema> InferModelLogicalOperator::getInputSchemas() const
 {
     return {inputSchema};
 }
+
 Schema InferModelLogicalOperator::getOutputSchema() const
 {
     return outputSchema;

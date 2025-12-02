@@ -13,10 +13,10 @@
 */
 
 #include "IREERuntimeWrapper.hpp"
+#include <iostream>
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
 #include <ErrorHandling.hpp>
-#include <iostream>
 
 namespace NES
 {
@@ -28,7 +28,8 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_instance_options_use_all_available_drivers(&instanceOptions);
     iree_runtime_instance_t* instance = nullptr;
     iree_status_t status = iree_runtime_instance_create(&instanceOptions, iree_allocator_system(), &instance);
-    std::unique_ptr<iree_runtime_instance_t, decltype(&iree_runtime_instance_release)> runtimeInstance(instance, &iree_runtime_instance_release);
+    std::unique_ptr<iree_runtime_instance_t, decltype(&iree_runtime_instance_release)> runtimeInstance(
+        instance, &iree_runtime_instance_release);
 
     iree_hal_device_t* device = nullptr;
     status = iree_runtime_instance_try_create_default_device(instance, iree_make_cstring_view("local-sync"), &device);

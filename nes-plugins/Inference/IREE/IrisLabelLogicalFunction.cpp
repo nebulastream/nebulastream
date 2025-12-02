@@ -14,8 +14,8 @@
 
 #include <memory>
 
-#include <LogicalFunctionRegistry.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include "DataTypes/DataTypeProvider.hpp"
 #include "Functions/LogicalFunction.hpp"
 #include "Serialization/DataTypeSerializationUtil.hpp"
@@ -34,9 +34,13 @@ public:
         : setosa(std::move(setosa)), versicolor(std::move(versicolor)), virginica(std::move(virginica))
     {
     }
+
     [[nodiscard]] std::string explain(ExplainVerbosity) const override { return "IRIS_LABEL"; }
+
     [[nodiscard]] DataType getDataType() const override { return DataTypeProvider::provideDataType(DataType::Type::VARSIZED); }
+
     [[nodiscard]] LogicalFunction withDataType(const DataType&) const override { return *this; }
+
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override
     {
         auto copy = IrisLabelLogicalFunction(
@@ -50,7 +54,9 @@ public:
 
         return copy;
     }
+
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override { return {setosa, versicolor, virginica}; }
+
     [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override
     {
         PRECONDITION(children.size() == 3, "IrisLabel expects 3 children");
@@ -58,6 +64,7 @@ public:
     }
 
     [[nodiscard]] std::string_view getType() const override { return "iris_label"; }
+
     [[nodiscard]] SerializableFunction serialize() const override
     {
         SerializableFunction serializedFunction;

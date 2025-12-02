@@ -72,8 +72,7 @@ WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId opera
 {
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId)
-    : operatorHandlerId(operatorHandlerId)
+WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId) : operatorHandlerId(operatorHandlerId)
 {
 }
 

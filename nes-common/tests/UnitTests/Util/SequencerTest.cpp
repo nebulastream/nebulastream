@@ -34,6 +34,7 @@
 #include <gtest/gtest.h>
 
 using namespace ::testing;
+
 namespace NES
 {
 
@@ -144,7 +145,6 @@ TEST_F(SequencerTest, OutOfOrderProcessing)
     EXPECT_FALSE(result3.has_value());
 }
 
-
 class ConcurrentSequencerTest : public ::testing::TestWithParam<std::tuple<size_t, int, size_t>>
 {
     void SetUp() override
@@ -189,6 +189,7 @@ public:
         /// Store the value in the result vector at the index equal to the value
         result[value] = value;
     }
+
     Sequencer<std::pair<int, SequenceData>> sequencer;
     int maxNumberOfChunks = 1000;
     size_t numSequences = 1000;
@@ -198,7 +199,6 @@ public:
     /// Random generator for delays
     std::random_device rd;
 };
-
 
 TEST_P(ConcurrentSequencerTest, MultiThreaded)
 {

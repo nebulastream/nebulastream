@@ -24,11 +24,11 @@ class IREERuntimeWrapper
 {
 public:
     IREERuntimeWrapper()
-    : nDim(0)
-    , instance(nullptr, &iree_runtime_instance_release)
-    , device(nullptr, &iree_hal_device_release)
-    , session(nullptr, &iree_runtime_session_release)
-    , function{} {};
+        : nDim(0)
+        , instance(nullptr, &iree_runtime_instance_release)
+        , device(nullptr, &iree_hal_device_release)
+        , session(nullptr, &iree_runtime_session_release)
+        , function{} { };
     void setup(iree_const_byte_span_t compiledModel);
     void execute(std::string functionName, void* inputData, size_t inputSize, void* outputData);
     void setInputShape(std::vector<size_t> inputShape);

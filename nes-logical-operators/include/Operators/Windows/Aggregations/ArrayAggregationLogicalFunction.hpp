@@ -30,6 +30,7 @@ public:
 
     [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
     [[nodiscard]] bool requiresSequentialAggregation() const override { return true; }
 
 private:

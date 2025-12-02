@@ -155,7 +155,7 @@ TestFile::TestFile(
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
-    , modelCatalog(std::move(modelCatalog)){ };
+    , modelCatalog(std::move(modelCatalog)) { };
 
 TestFile::TestFile(
     const std::filesystem::path& file,
@@ -168,7 +168,7 @@ TestFile::TestFile(
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
-    , modelCatalog(std::move(modelCatalog)){ };
+    , modelCatalog(std::move(modelCatalog)) { };
 
 struct TestGroupFiles
 {
@@ -217,13 +217,12 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
             scalarTestNumbers | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
 
-        const auto testfile
-            = TestFile(
-                directlySpecifiedTestFiles,
-                testNumbers,
-                std::make_shared<SourceCatalog>(),
-                std::make_shared<SinkCatalog>(),
-                std::make_shared<Nebuli::Inference::ModelCatalog>());
+        const auto testfile = TestFile(
+            directlySpecifiedTestFiles,
+            testNumbers,
+            std::make_shared<SourceCatalog>(),
+            std::make_shared<SinkCatalog>(),
+            std::make_shared<Nebuli::Inference::ModelCatalog>());
         return TestFileMap{{testfile.file, testfile}};
     }
 

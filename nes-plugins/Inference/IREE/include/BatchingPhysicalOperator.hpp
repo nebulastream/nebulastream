@@ -27,8 +27,7 @@ class BatchingPhysicalOperator final : public WindowBuildPhysicalOperator
 {
 public:
     explicit BatchingPhysicalOperator(
-        OperatorHandlerId operatorHandlerId,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef);
+        OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef);
 
     BatchingPhysicalOperator(const BatchingPhysicalOperator& other) = default;
 

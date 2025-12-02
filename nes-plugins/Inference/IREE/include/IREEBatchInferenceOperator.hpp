@@ -16,11 +16,11 @@
 
 #include <cstddef>
 #include <Functions/PhysicalFunction.hpp>
-#include <PhysicalOperator.hpp>
-#include <Windowing/WindowMetaData.hpp>
-#include <WindowProbePhysicalOperator.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Windowing/WindowMetaData.hpp>
+#include <PhysicalOperator.hpp>
+#include <WindowProbePhysicalOperator.hpp>
 
 namespace NES
 {
@@ -40,6 +40,7 @@ public:
     [[nodiscard]] Record createRecord(const Record& featureRecord, const std::vector<Record::RecordFieldIdentifier>& projections) const;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override { return child; }
+
     void setChild(PhysicalOperator child) override { this->child = std::move(child); }
 
     bool isVarSizedInput = false;

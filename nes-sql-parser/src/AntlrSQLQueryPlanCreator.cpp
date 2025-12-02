@@ -14,7 +14,6 @@
 
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 
-#include <boost/algorithm/string.hpp>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
@@ -24,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <boost/algorithm/string.hpp>
 
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>

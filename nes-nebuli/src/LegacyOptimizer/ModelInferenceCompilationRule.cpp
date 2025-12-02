@@ -15,10 +15,10 @@
 #include <memory>
 #include <utility>
 #include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
+#include <Operators/SequenceLogicalOperator.hpp>
 #include <InferModelLogicalOperator.hpp>
 #include <InferModelNameLogicalOperator.hpp>
 #include <ModelCatalog.hpp>
-#include <Operators/SequenceLogicalOperator.hpp>
 
 namespace NES
 {
@@ -41,7 +41,7 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
         if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
         {
             USED_IN_DEBUG auto shouldReplace = replaceOperator(
-            queryPlan, modelNameOperator.getId(), InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields()));
+                queryPlan, modelNameOperator.getId(), InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields()));
             queryPlan = std::move(shouldReplace.value());
         }
         else

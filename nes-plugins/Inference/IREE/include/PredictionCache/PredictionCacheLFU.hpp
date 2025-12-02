@@ -36,8 +36,8 @@ public:
         const nautilus::val<size_t>& inputSize);
 
     ~PredictionCacheLFU() override = default;
-    nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
+    nautilus::val<int8_t*> getDataStructureRef(
+        const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
 
 private:
     nautilus::val<uint64_t*> getFrequency(const nautilus::val<uint64_t>& pos);

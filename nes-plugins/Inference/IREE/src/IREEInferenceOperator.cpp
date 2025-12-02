@@ -12,20 +12,19 @@
     limitations under the License.
 */
 
+#include <ranges>
+#include <Nautilus/Interface/Record.hpp>
+#include <nautilus/function.hpp>
 #include <ExecutionContext.hpp>
 #include <IREEAdapter.hpp>
 #include <IREEInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <QueryExecutionConfiguration.hpp>
-#include <nautilus/function.hpp>
-#include <ranges>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 class PhysicalInferModelOperator;
 }
-
 
 namespace NES::IREEInference
 {
@@ -109,14 +108,16 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
     {
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            VarVal result = VarVal(nautilus::invoke(IREEInference::getValueFromModel, nautilus::val<int>(i), inferModelHandler, ctx.workerThreadId));
+            VarVal result
+                = VarVal(nautilus::invoke(IREEInference::getValueFromModel, nautilus::val<int>(i), inferModelHandler, ctx.workerThreadId));
             record.write(outputFieldNames.at(i), result);
         }
     }
     else
     {
         auto output = ctx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-        nautilus::invoke(IREEInference::copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, ctx.workerThreadId);
+        nautilus::invoke(
+            IREEInference::copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, ctx.workerThreadId);
         record.write(outputFieldNames.at(0), output);
     }
 

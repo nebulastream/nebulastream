@@ -33,6 +33,7 @@ public:
     std::optional<TupleBuffer*> markBufferAsDone(TupleBuffer* tupleBuffer);
 
     void start(PipelineExecutionContext&, uint32_t) override { sequencer = {}; }
+
     void stop(QueryTerminationType, PipelineExecutionContext&) override { /*noop*/ }
 
     Sequencer<TupleBuffer> sequencer;

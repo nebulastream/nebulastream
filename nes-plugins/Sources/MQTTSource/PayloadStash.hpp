@@ -44,6 +44,7 @@ class PayloadStash
 {
 public:
     PayloadStash() { buf.reserve(STASH_TARGET_CAPACITY); }
+
     ~PayloadStash() = default;
 
     /// No copying or moving necessary.

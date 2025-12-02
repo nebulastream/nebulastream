@@ -32,9 +32,7 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
 {
     auto buffer = nautilus::invoke(
         +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
-        {
-            return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(tupleBuffer).value_or(nullptr);
-        },
+        { return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(tupleBuffer).value_or(nullptr); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         recordBuffer.getReference());
 
@@ -47,13 +45,12 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
 
         buffer = nautilus::invoke(
             +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
-            {
-                return dynamic_cast<SequenceOperatorHandler*>(handler)->markBufferAsDone(tupleBuffer).value_or(nullptr);
-            },
+            { return dynamic_cast<SequenceOperatorHandler*>(handler)->markBufferAsDone(tupleBuffer).value_or(nullptr); },
             executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
             buffer);
     }
 }
+
 void SequencePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationCtx) const
 {
     nautilus::invoke(
@@ -62,6 +59,7 @@ void SequencePhysicalOperator::setup(ExecutionContext& executionCtx, Compilation
         executionCtx.pipelineContext);
     scan.setup(executionCtx, compilationCtx);
 }
+
 void SequencePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     scan.terminate(executionCtx);
@@ -70,10 +68,12 @@ void SequencePhysicalOperator::terminate(ExecutionContext& executionCtx) const
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         executionCtx.pipelineContext);
 }
+
 void SequencePhysicalOperator::setChild(PhysicalOperator child)
 {
     scan.setChild(child);
 }
+
 std::optional<struct PhysicalOperator> SequencePhysicalOperator::getChild() const
 {
     return scan.getChild();

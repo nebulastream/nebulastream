@@ -15,9 +15,9 @@
 #pragma once
 
 #include <utility>
-#include <QueryExecutionConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
@@ -25,6 +25,7 @@ namespace NES
 struct LowerToPhysicalSequence : AbstractRewriteRule
 {
     explicit LowerToPhysicalSequence(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

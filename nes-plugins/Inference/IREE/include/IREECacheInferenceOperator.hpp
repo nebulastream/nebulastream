@@ -33,7 +33,9 @@ public:
         : inferModelHandlerIndex(inferModelHandlerIndex)
         , inputs(std::move(inputs))
         , outputFieldNames(std::move(outputFieldNames))
-        , predictionCacheOptions(predictionCacheOptions) { }
+        , predictionCacheOptions(predictionCacheOptions)
+    {
+    }
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     void setup(ExecutionContext& executionCtx, CompilationContext&) const override;
@@ -42,6 +44,7 @@ public:
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override { return child; }
+
     void setChild(PhysicalOperator child) override { this->child = std::move(child); }
 
     bool isVarSizedInput = false;

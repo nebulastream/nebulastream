@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <IREEInferenceLocalState.hpp>
-#include <PredictionCache/PredictionCache.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <PredictionCache/PredictionCache.hpp>
+#include <IREEInferenceLocalState.hpp>
 
 namespace NES
 {
@@ -69,14 +69,18 @@ nautilus::val<int8_t*> PredictionCache::getDataStructure(const nautilus::val<uin
 nautilus::val<bool> PredictionCache::foundRecord(const nautilus::val<uint64_t>& pos, const nautilus::val<std::byte*>& candidateRecord)
 {
     const auto cacheRecord = getRecord(pos);
-    auto isEqual = nautilus::invoke(+[](std::byte* candidate, std::byte* cache, size_t size)
-    {
-        if (cache != nullptr)
+    auto isEqual = nautilus::invoke(
+        +[](std::byte* candidate, std::byte* cache, size_t size)
         {
-            return std::memcmp(candidate, cache, size) == 0;
-        }
-        return false;
-    }, candidateRecord, cacheRecord, nautilus::val(inputSize));
+            if (cache != nullptr)
+            {
+                return std::memcmp(candidate, cache, size) == 0;
+            }
+            return false;
+        },
+        candidateRecord,
+        cacheRecord,
+        nautilus::val(inputSize));
     if (isEqual)
     {
         return true;
@@ -96,6 +100,13 @@ nautilus::val<uint64_t> PredictionCache::searchInCache(const nautilus::val<std::
     return nautilus::val<uint64_t>(NOT_FOUND);
 }
 
-nautilus::val<uint64_t*> PredictionCache::getHitsRef(){ return this->numberOfHits; }
-nautilus::val<uint64_t*> PredictionCache::getMissesRef(){ return this->numberOfMisses; }
+nautilus::val<uint64_t*> PredictionCache::getHitsRef()
+{
+    return this->numberOfHits;
+}
+
+nautilus::val<uint64_t*> PredictionCache::getMissesRef()
+{
+    return this->numberOfMisses;
+}
 }

@@ -34,8 +34,8 @@ PredictionCacheFIFO::PredictionCacheFIFO(
 {
 }
 
-nautilus::val<int8_t*>
-PredictionCacheFIFO::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
+nautilus::val<int8_t*> PredictionCacheFIFO::getDataStructureRef(
+    const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.
     if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)

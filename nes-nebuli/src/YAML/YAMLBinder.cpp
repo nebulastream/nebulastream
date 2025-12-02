@@ -103,7 +103,6 @@ struct convert<NES::CLI::PhysicalSource>
     }
 };
 
-
 template <>
 struct convert<NES::CLI::Model>
 {
@@ -219,19 +218,19 @@ std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector
 
 std::vector<Nebuli::Inference::ModelDescriptor> CLI::YAMLBinder::bindRegisterModels(const std::vector<Model>& unboundModels)
 {
-    auto boundModels = unboundModels
+    auto boundModels
+        = unboundModels
         | std::views::transform(
-                           [](const auto& model)
-                           {
-                               Schema schema{};
-                               for (auto [name, type] : model.outputs)
-                               {
-                                   schema.addField(name, type);
-                               }
-                               return Nebuli::Inference::ModelDescriptor{
-                               model.name, model.path, model.inputs, schema, model.batchSize,
-                               model.predictionCacheType, model.predictionCacheSize};
-                           })
+              [](const auto& model)
+              {
+                  Schema schema{};
+                  for (auto [name, type] : model.outputs)
+                  {
+                      schema.addField(name, type);
+                  }
+                  return Nebuli::Inference::ModelDescriptor{
+                      model.name, model.path, model.inputs, schema, model.batchSize, model.predictionCacheType, model.predictionCacheSize};
+              })
         | std::ranges::to<std::vector>();
     std::ranges::for_each(boundModels, [&](const auto& model) { modelCatalog->registerModel(model); });
     return boundModels;
@@ -241,7 +240,8 @@ LogicalPlan CLI::YAMLBinder::parseAndBind(std::istream& inputStream)
 {
     try
     {
-        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources, unboundModels] = YAML::Load(inputStream).as<QueryConfig>();
+        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources, unboundModels]
+            = YAML::Load(inputStream).as<QueryConfig>();
         bindRegisterLogicalSources(unboundLogicalSources);
         bindRegisterPhysicalSources(unboundPhysicalSources);
         bindRegisterSinks(unboundSinks);

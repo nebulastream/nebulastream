@@ -22,7 +22,6 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
 
-
 namespace NES
 {
 

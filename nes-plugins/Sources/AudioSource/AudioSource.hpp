@@ -45,9 +45,8 @@ struct ConfigParametersAudio
     static inline const DescriptorConfig::ConfigParameter<bool> REAL_TIMESTAMP{
         "realTimestamp",
         true,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
-        
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
+
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
         "socketHost",
         std::nullopt,
@@ -55,8 +54,7 @@ struct ConfigParametersAudio
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_RATE{
         "sampleRate",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(SAMPLE_RATE, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SAMPLE_RATE, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_WIDTH{
         "sampleWidth",
@@ -125,8 +123,7 @@ public:
     AudioSource(AudioSource&&) = delete;
     AudioSource& operator=(AudioSource&&) = delete;
 
-    size_t
-    fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open Audio connection.
     void open() override;

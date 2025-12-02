@@ -15,12 +15,12 @@
 #include <cstdint>
 #include <numeric>
 #include <ranges>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/imgcodecs/imgcodecs.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <openssl/evp.h>
 #include <PhysicalFunctionRegistry.hpp>
 

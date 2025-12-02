@@ -12,25 +12,26 @@
     limitations under the License.
 */
 
-#include <QueryExecutionConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Traits/OutputOriginIdsTrait.hpp>
-#include <InferModelLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRuleRegistry.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
 #include <BatchingPhysicalOperator.hpp>
-#include <IREEBatchInferenceOperator.hpp>
 #include <IREEBatchCacheInferenceOperator.hpp>
+#include <IREEBatchInferenceOperator.hpp>
 #include <IREEBatchInferenceOperatorHandler.hpp>
-#include <IREEInferenceOperator.hpp>
 #include <IREECacheInferenceOperator.hpp>
+#include <IREEInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
+#include <InferModelLogicalOperator.hpp>
+#include <QueryExecutionConfiguration.hpp>
+#include <RewriteRuleRegistry.hpp>
 
 struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 {
     explicit LowerToPhysicalIREEInferenceOperator(NES::QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     NES::RewriteRuleResultSubgraph apply(NES::LogicalOperator logicalOperator) override
     {
         auto inferModelOperator = logicalOperator.getAs<NES::InferModel::InferModelLogicalOperator>();
@@ -90,9 +91,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 case NES::Configurations::PredictionCacheType::LRU:
                 case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
                     NES_DEBUG("Lower InferModel operator to IREECacheInferenceOperator");
-                    NES::Configurations::PredictionCacheOptions predictionCacheOptions{
-                        predictionCacheType.value(),
-                        predictionCacheSize};
+                    NES::Configurations::PredictionCacheOptions predictionCacheOptions{predictionCacheType.value(), predictionCacheSize};
                     auto ireeOperator = NES::IREECacheInferenceOperator(handlerId, inputFunctions, outputNames, predictionCacheOptions);
 
                     if (inferModelOperator->getInputFields().size() == 1
@@ -176,10 +175,9 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 case NES::Configurations::PredictionCacheType::LRU:
                 case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
                     NES_DEBUG("Lower InferModel operator to IREEBatchCacheInferenceOperator");
-                    NES::Configurations::PredictionCacheOptions predictionCacheOptions{
-                        predictionCacheType.value(),
-                        predictionCacheSize};
-                    auto ireeOperator = NES::IREEBatchCacheInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions);
+                    NES::Configurations::PredictionCacheOptions predictionCacheOptions{predictionCacheType.value(), predictionCacheSize};
+                    auto ireeOperator = NES::IREEBatchCacheInferenceOperator(
+                        handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions);
 
                     if (inferModelOperator->getInputFields().size() == 1
                         && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
@@ -207,6 +205,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             }
         }
     }
+
 private:
     NES::QueryExecutionConfiguration conf;
 };

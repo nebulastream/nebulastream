@@ -35,8 +35,8 @@ public:
         const nautilus::val<uint64_t*>& missesRef,
         const nautilus::val<size_t>& inputSize);
     ~PredictionCacheFIFO() override = default;
-    nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
+    nautilus::val<int8_t*> getDataStructureRef(
+        const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
 
 protected:
     /// Stores the index of the entry that should be replaced next
