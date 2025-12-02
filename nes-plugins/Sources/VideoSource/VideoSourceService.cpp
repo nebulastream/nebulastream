@@ -220,7 +220,7 @@ void sourceThread(
         size_t width;
         size_t height;
         uint64_t pixelFormat;
-        uint32_t index;
+        VariableSizedAccess::CombinedIndex index;
     } __attribute__((packed));
 
     try
@@ -262,10 +262,10 @@ void sourceThread(
                 auto& tuple = *tupleBuffer.getAvailableMemoryArea<Tuple>().data();
                 tuple.height = height;
                 tuple.width = width;
-                tuple.index = std::bit_cast<uint32_t>(tupleBuffer.storeChildBuffer(imageBufferPerSource));
+                tuple.index = VariableSizedAccess(tupleBuffer.storeChildBuffer(imageBufferPerSource)).getCombinedIdxOffset();
                 tuple.timestamp = timestamp;
                 tuple.pixelFormat = pixelFormat;
-                tupleBuffer.setNumberOfTuples(1);
+                tupleBuffer.setNumberOfTuples(sizeof(Tuple));
                 emit(SourceReturnType::Data{tupleBuffer});
             }
         }

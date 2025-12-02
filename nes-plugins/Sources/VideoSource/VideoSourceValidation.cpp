@@ -24,11 +24,11 @@ namespace
 {
 
 const std::array requiredFields = std::to_array<std::pair<std::string, DataType::Type>>({
-    {"timestamp", NES::DataType::Type::INT64},
-    {"width", NES::DataType::Type::INT64},
-    {"height", NES::DataType::Type::INT64},
-    {"pixelFormat", NES::DataType::Type::INT64},
-    {"image", NES::DataType::Type::VARSIZED},
+    {"TIMESTAMP", NES::DataType::Type::UINT64},
+    {"WIDTH", NES::DataType::Type::UINT64},
+    {"HEIGHT", NES::DataType::Type::UINT64},
+    {"PIXEL_FORMAT", NES::DataType::Type::UINT64},
+    {"IMAGE", NES::DataType::Type::VARSIZED},
 });
 
 void validateSchema(const Schema& schema)
