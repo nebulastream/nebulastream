@@ -57,13 +57,14 @@ public:
 
     void infer();
     std::unique_ptr<std::byte[]> inputData{};
-    std::unique_ptr<std::byte[]> inputDataCache{};
     std::unique_ptr<std::byte[]> outputData{};
+
     size_t inputSize;
+    size_t outputSize;
+
     uint64_t misses;
 
 private:
-    size_t outputSize;
     std::string functionName;
     IREERuntimeWrapper runtimeWrapper;
 };

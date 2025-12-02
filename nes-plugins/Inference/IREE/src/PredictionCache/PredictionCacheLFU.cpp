@@ -28,7 +28,57 @@ PredictionCacheLFU::PredictionCacheLFU(
 {
 }
 
-nautilus::val<int8_t*>
+void PredictionCacheLFU::updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+    nautilus::val<uint64_t> minFrequency = UINT64_MAX;
+    nautilus::val<uint64_t> minFrequencyIndex = 0;
+    for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; ++i)
+    {
+        nautilus::val<uint64_t> frequency{*getFrequency(i)};
+        if (frequency < minFrequency)
+        {
+            minFrequency = frequency;
+            minFrequencyIndex = i;
+        }
+    }
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfEntries + minFrequencyIndex * sizeOfEntry;
+    updateFunction(PredictionCacheEntryToReplace, minFrequency);
+}
+
+nautilus::val<uint64_t> PredictionCacheLFU::updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+    /// First, we check if the timestamp is already in the cache.
+    if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
+    {
+        incrementNumberOfHits();
+        auto frequency = getFrequency(dataStructurePos);
+        const auto newFrequency = nautilus::val<uint64_t>(*frequency) + nautilus::val<uint64_t>(1);
+        *frequency = newFrequency;
+        return dataStructurePos;
+    }
+
+    /// Second, if this is not the case, we need to find the item with the lowest frequency.
+    incrementNumberOfMisses();
+    nautilus::val<uint64_t> minFrequency = UINT64_MAX;
+    nautilus::val<uint64_t> minFrequencyIndex = 0;
+    for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; ++i)
+    {
+        nautilus::val<uint64_t> frequency{*getFrequency(i)};
+        if (frequency < minFrequency)
+        {
+            minFrequency = frequency;
+            minFrequencyIndex = i;
+        }
+    }
+
+    /// Third, we have to replace the entry at the minFrequencyIndex
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfEntries + minFrequencyIndex * sizeOfEntry;
+    updateFunction(PredictionCacheEntryToReplace, minFrequency);
+    *getFrequency(minFrequencyIndex) = 1;
+    return nautilus::val<uint64_t>(NOT_FOUND);
+}
+
+nautilus::val<std::vector<std::byte>*>
 PredictionCacheLFU::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.

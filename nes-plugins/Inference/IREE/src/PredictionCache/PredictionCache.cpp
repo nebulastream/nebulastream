@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <IREEInferenceLocalState.hpp>
-#include <PredictionCache/PredictionCache.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <PredictionCache/PredictionCache.hpp>
+#include <IREEInferenceLocalState.hpp>
 
 namespace NES
 {
@@ -50,38 +50,31 @@ void PredictionCache::incrementNumberOfMisses()
     *numberOfMisses = currentNumberOfMisses;
 }
 
-nautilus::val<std::byte*> PredictionCache::getRecord(const nautilus::val<uint64_t>& pos)
+nautilus::val<std::vector<std::byte>*> PredictionCache::getRecord(const nautilus::val<uint64_t>& pos)
 {
     const auto predictionCacheEntry = startOfEntries + pos * sizeOfEntry;
     const auto recordRef = Nautilus::Util::getMemberRef(predictionCacheEntry, &PredictionCacheEntry::record);
-    auto record = Nautilus::Util::readValueFromMemRef<int8_t*>(recordRef);
-    return nautilus::val<std::byte*>(record);
+    return nautilus::invoke(+[](int8_t* entry){ return reinterpret_cast<std::vector<std::byte>*>(entry); }, recordRef);
 }
 
-nautilus::val<int8_t*> PredictionCache::getDataStructure(const nautilus::val<uint64_t>& pos)
+nautilus::val<std::vector<std::byte>*> PredictionCache::getDataStructure(const nautilus::val<uint64_t>& pos)
 {
     const auto predictionCacheEntry = startOfEntries + pos * sizeOfEntry;
     const auto dataStructureRef = Nautilus::Util::getMemberRef(predictionCacheEntry, &PredictionCacheEntry::dataStructure);
-    auto dataStructure = Nautilus::Util::readValueFromMemRef<int8_t*>(dataStructureRef);
-    return dataStructure;
+    return nautilus::invoke(+[](int8_t* dataStructure){ return reinterpret_cast<std::vector<std::byte>*>(dataStructure); }, dataStructureRef);
 }
 
 nautilus::val<bool> PredictionCache::foundRecord(const nautilus::val<uint64_t>& pos, const nautilus::val<std::byte*>& candidateRecord)
 {
     const auto cacheRecord = getRecord(pos);
-    auto isEqual = nautilus::invoke(+[](std::byte* candidate, std::byte* cache, size_t size)
+    return nautilus::invoke(+[](std::byte* candidate, std::vector<std::byte>* cache, size_t size)
     {
-        if (cache != nullptr)
+        if (cache != nullptr && cache->data() != nullptr)
         {
-            return std::memcmp(candidate, cache, size) == 0;
+            return std::memcmp(candidate, cache->data(), size) == 0;
         }
         return false;
     }, candidateRecord, cacheRecord, nautilus::val(inputSize));
-    if (isEqual)
-    {
-        return true;
-    }
-    return false;
 }
 
 nautilus::val<uint64_t> PredictionCache::searchInCache(const nautilus::val<std::byte*>& record)
