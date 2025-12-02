@@ -22,7 +22,6 @@
 
 namespace spdlog::details
 {
-class thread_pool;
 class periodic_worker;
 }
 
