@@ -11,12 +11,32 @@
 # limitations under the License.
 
 # Picks a standard c++ library. By default we opt into libc++ for its hardening mode. However if libc++ is not available
-# we fallback to libstdc++. The user can manually opt out of libc++ by disabling the USE_LIBCXX_IF_AVAILABLE option.
+# we fallback to libstdc++. The user can manually opt out of libc++ by disabling the USE_LIBCXX option.
 # Currently NebulaStream requires Libc++-19 or Libstdc++-14 or above.
 
 include(CheckCXXSourceCompiles)
 
-option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
+set(_nes_use_libcxx_default ON)
+if (DEFINED ENV{NES_STDLIB} AND NOT "$ENV{NES_STDLIB}" STREQUAL "")
+    string(STRIP "$ENV{NES_STDLIB}" _nes_stdlib_choice)
+    string(TOLOWER "${_nes_stdlib_choice}" _nes_stdlib_lower)
+    string(REPLACE "++" "xx" _nes_stdlib_lower "${_nes_stdlib_lower}")
+    if (_nes_stdlib_lower STREQUAL "libstdcxx" OR _nes_stdlib_lower STREQUAL "local")
+        set(_nes_use_libcxx_default OFF)
+    elseif (_nes_stdlib_lower STREQUAL "libcxx")
+        set(_nes_use_libcxx_default ON)
+    endif ()
+elseif (DEFINED ENV{USE_LIBCXX_IF_AVAILABLE} AND NOT "$ENV{USE_LIBCXX_IF_AVAILABLE}" STREQUAL "")
+    string(STRIP "$ENV{USE_LIBCXX_IF_AVAILABLE}" _nes_use_libcxx_choice)
+    string(TOLOWER "${_nes_use_libcxx_choice}" _nes_use_libcxx_lower)
+    if (_nes_use_libcxx_lower MATCHES "^(off|false|0|no)")
+        set(_nes_use_libcxx_default OFF)
+    else ()
+        set(_nes_use_libcxx_default ON)
+    endif ()
+endif ()
+
+option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ${_nes_use_libcxx_default})
 SET(USING_LIBCXX OFF)
 SET(USING_LIBSTDCXX OFF)
 
