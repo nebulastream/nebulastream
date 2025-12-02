@@ -47,7 +47,6 @@ void IREEAdapter::initializeModel(Nebuli::Inference::Model& model)
     this->functionName = model.getFunctionName();
 
     this->inputData = std::make_unique<std::byte[]>(model.inputSize());
-    this->inputDataCache = std::make_unique<std::byte[]>(model.inputSize());
     this->inputSize = model.inputSize();
 
     this->outputData = std::make_unique<std::byte[]>(model.outputSize());

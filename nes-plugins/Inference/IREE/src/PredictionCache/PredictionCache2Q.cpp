@@ -52,7 +52,71 @@ void PredictionCache2Q::movePredictionCacheEntryToLRUQueue(const nautilus::val<u
     *ageBit = nautilus::val<uint64_t>(0);
 }
 
-nautilus::val<int8_t*>
+void PredictionCache2Q::updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+    const nautilus::val<uint64_t> fifoReplacementOffset = fifoReplacementIndex * sizeOfEntry;
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfFifoEntries + fifoReplacementOffset;
+    updateFunction(PredictionCacheEntryToReplace, lruQueueSize + fifoReplacementIndex);
+}
+
+nautilus::val<uint64_t> PredictionCache2Q::updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+/// First, we have to increment all age bits by one.
+    nautilus::val<uint64_t> maxAge = 0;
+    nautilus::val<uint64_t> maxAgeIndex = 0;
+    for (nautilus::val<uint64_t> i = 0; i < lruQueueSize; ++i)
+    {
+        auto ageBit = getAgeBit(i);
+        const auto newAgeBit = nautilus::val<uint64_t>(*ageBit) + nautilus::val<uint64_t>(1);
+        *ageBit = newAgeBit;
+        if (newAgeBit > maxAge)
+        {
+            maxAge = newAgeBit;
+            maxAgeIndex = i;
+        }
+    }
+
+
+    /// Second, we check if the timestamp is already in the lru queue. If this is the case, we reset its age bit
+    for (nautilus::val<uint64_t> i = 0; i < lruQueueSize; i = i + 1)
+    {
+        /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
+        if (foundRecord(i, record))
+        {
+            incrementNumberOfHits();
+            auto ageBit = getAgeBit(i);
+            const auto newAgeBit = nautilus::val<uint64_t>(0);
+            *ageBit = newAgeBit;
+            return i;
+        }
+    }
+
+    /// Third, we check if the timestamp is already in the fifo queue. We start our search after the last position belonging to the LRU queue.
+    /// If we find it in the fifo queue, we move it into the LRU queue
+    for (nautilus::val<uint64_t> i = lruQueueSize; i < lruQueueSize + fifoQueueSize; i = i + 1)
+    {
+        /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
+        if (foundRecord(i, record))
+        {
+            incrementNumberOfHits();
+            movePredictionCacheEntryToLRUQueue(i, maxAgeIndex);
+            return i;
+        }
+    }
+
+    /// Fourth, the timestamp is in neither cache. Thus, we need to insert it into the FIFO queue.
+    /// If the timestamp is not in the cache, we have a cache miss.
+    incrementNumberOfMisses();
+    const nautilus::val<uint64_t> fifoReplacementOffset = fifoReplacementIndex * sizeOfEntry;
+    const nautilus::val<PredictionCacheEntry*> predictionCacheEntryToReplace = startOfFifoEntries + fifoReplacementOffset;
+    updateFunction(predictionCacheEntryToReplace, lruQueueSize + fifoReplacementIndex);
+
+    /// Before returning the data structure, we need to update the replacement index.
+    fifoReplacementIndex = (fifoReplacementIndex + 1) % fifoQueueSize;
+    return nautilus::val<uint64_t>(NOT_FOUND);
+}
+
+nautilus::val<std::vector<std::byte>*>
 PredictionCache2Q::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we have to increment all age bits by one.

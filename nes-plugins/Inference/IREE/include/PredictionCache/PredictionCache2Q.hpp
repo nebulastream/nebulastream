@@ -43,8 +43,10 @@ public:
         const uint64_t lruQueueSize,
         const nautilus::val<size_t>& inputSize);
     ~PredictionCache2Q() override = default;
-    nautilus::val<int8_t*>
+    nautilus::val<std::vector<std::byte>*>
     getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
+    nautilus::val<uint64_t> updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction) override;
+    void updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction) override;
 
 private:
     /// Moves the entry from fifoPos to lruPos and sets the age bit to 0

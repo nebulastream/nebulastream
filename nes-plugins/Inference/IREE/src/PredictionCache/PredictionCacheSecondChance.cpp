@@ -37,8 +37,44 @@ nautilus::val<bool*> PredictionCacheSecondChance::getSecondChanceBit(const nauti
     return secondChanceBitRef;
 }
 
+void PredictionCacheSecondChance::updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    updateFunction(PredictionCacheEntryToReplace, replacementIndex);
+}
 
-nautilus::val<int8_t*> PredictionCacheSecondChance::getDataStructureRef(
+nautilus::val<uint64_t> PredictionCacheSecondChance::updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+    /// First, we check if the timestamp is already in the cache.
+    if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
+    {
+        incrementNumberOfHits();
+        auto secondChanceBit = getSecondChanceBit(dataStructurePos);
+        *secondChanceBit = true;
+        return dataStructurePos;
+    }
+
+    /// If this is not the case, we iterate through the cache until we have find a slice that has the second chance bit set to false.
+    /// If we find such a slice, we set the second chance bit to true, replace the slice and return the data structure.
+    /// We must start at the current replacement index, as we have to replace the oldest entry.
+    incrementNumberOfMisses();
+    auto secondChanceBit = getSecondChanceBit(replacementIndex);
+    while (*secondChanceBit == true)
+    {
+        *secondChanceBit = false;
+        replacementIndex = (replacementIndex + 1) % numberOfEntries;
+        secondChanceBit = getSecondChanceBit(replacementIndex);
+    }
+
+    /// Replacing the slice and returning the data structure.
+    const nautilus::val<PredictionCacheEntry*> PredictionCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    updateFunction(PredictionCacheEntryToReplace, replacementIndex);
+    *secondChanceBit = true;
+    return nautilus::val<uint64_t>(NOT_FOUND);
+}
+
+nautilus::val<std::vector<std::byte>*>
+PredictionCacheSecondChance::getDataStructureRef(
     const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.

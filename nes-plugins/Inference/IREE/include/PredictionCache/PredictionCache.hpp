@@ -19,20 +19,21 @@
 #include <Nautilus/Util.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <utility>
 
 namespace NES
 {
 /// Represents the C++ struct that is stored in the operator handler vector
 struct PredictionCacheEntry
 {
-    PredictionCacheEntry(std::byte* record)
-        : record(record), dataStructure(nullptr)
+    PredictionCacheEntry(std::vector<std::byte> record)
+        : record(std::move(record)), dataStructure(std::vector<std::byte>{})
     {
     }
-
     virtual ~PredictionCacheEntry() = default;
-    std::byte* record;
-    int8_t* dataStructure;
+
+    std::vector<std::byte> record;
+    std::vector<std::byte> dataStructure;
 };
 /// Represents the C++ struct that is stored in the operator handler vector before all PredictionCacheEntry structs
 struct HitsAndMisses
@@ -54,20 +55,30 @@ public:
         const nautilus::val<size_t>& inputSize);
     ~PredictionCache() override = default;
 
-    using PredictionCacheReplacement = std::function<nautilus::val<int8_t*>(const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
-    virtual nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) = 0;
+    using PredictionCacheReplacement = std::function<nautilus::val<std::vector<std::byte>*>(
+        const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
+    using PredictionCacheUpdate = std::function<void(
+        const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
 
-    virtual nautilus::val<std::byte*> getRecord(const nautilus::val<uint64_t>& pos);
+    virtual nautilus::val<std::vector<std::byte>*>
+    getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) = 0;
+    virtual nautilus::val<uint64_t>
+    updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction) = 0;
+    virtual void updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction) = 0;
+
+    virtual nautilus::val<std::vector<std::byte>*> getRecord(const nautilus::val<uint64_t>& pos);
+
     nautilus::val<uint64_t*> getHitsRef();
     nautilus::val<uint64_t*> getMissesRef();
+
+    static constexpr uint64_t NOT_FOUND = UINT64_MAX;
+
 protected:
-    virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
+    virtual nautilus::val<std::vector<std::byte>*> getDataStructure(const nautilus::val<uint64_t>& pos);
     void incrementNumberOfHits();
     void incrementNumberOfMisses();
 
     /// Helper function to search for a timestamp in the cache. If the timestamp is found, the position is returned, otherwise, we return UINT64_MAX
-    static constexpr uint64_t NOT_FOUND = UINT64_MAX;
     nautilus::val<uint64_t> searchInCache(const nautilus::val<std::byte*>& record);
 
     /// Helper function to check if a timestamp is in the cache. We assume a timestamp is in the cache if it is in the range [sliceStart, sliceEnd).

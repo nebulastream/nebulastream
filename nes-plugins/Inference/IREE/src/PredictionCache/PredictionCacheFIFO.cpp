@@ -34,7 +34,34 @@ PredictionCacheFIFO::PredictionCacheFIFO(
 {
 }
 
-nautilus::val<int8_t*>
+void PredictionCacheFIFO::updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+    const nautilus::val<PredictionCacheEntry*> predictionCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    updateFunction(predictionCacheEntryToReplace, replacementIndex);
+}
+
+nautilus::val<uint64_t> PredictionCacheFIFO::updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction)
+{
+    /// First, we check if the timestamp is already in the cache.
+    if (const auto dataStructurePos = PredictionCache::searchInCache(record); dataStructurePos != PredictionCache::NOT_FOUND)
+    {
+        incrementNumberOfHits();
+        return dataStructurePos;
+    }
+
+    /// If the timestamp is not in the cache, we have a cache miss.
+    incrementNumberOfMisses();
+
+    /// As we are in the FIFO cache, we need to replace the oldest entry with the new one.
+    const nautilus::val<PredictionCacheEntry*> predictionCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    updateFunction(predictionCacheEntryToReplace, replacementIndex);
+
+    /// Before returning the data structure, we need to update the replacement index.
+    replacementIndex = (replacementIndex + 1) % numberOfEntries;
+    return nautilus::val<uint64_t>(NOT_FOUND);
+}
+
+nautilus::val<std::vector<std::byte>*>
 PredictionCacheFIFO::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.
