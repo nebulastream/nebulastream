@@ -3,7 +3,7 @@
   "version-string": "latest",
   "homepage": "https://nebula.stream",
   "description": "Data Management for the Internet of Things.",
-  "builtin-baseline": "16e7a3eb109cde6115b1b5126449dfdf72341dfb",
+  "builtin-baseline": "e84eee10d6ddf9d20120594c9f3a63f05e9f9954",
   "$comment": [
     "BEWARE: changing the baseline might change the expected ANTLR_VERSION",
     "        supplied to cmake by the antlr4 dependency.",
@@ -71,6 +71,11 @@
     "boost-url"
   ],
   "overrides": [
+    {
+      "name": "fmt",
+      "version": "11.2.0",
+      "port-version": 0
+    },
     {
       "name": "cpptrace",
       "version": "0.8.3",
