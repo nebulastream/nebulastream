@@ -101,10 +101,10 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             // {
             //     std::cout << "required field: " << field << std::endl;
             // }
-            if (not includesField(requiredFields, field.name))
+            if (!requiredFields.empty() and not includesField(requiredFields, field.name))
             {
                 VarVal const stub = VarVal(nautilus::val<int>(42));
-                record.write(field.name, stub);
+                record.write(fieldName, stub);
                 continue;
             }
 

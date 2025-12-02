@@ -133,39 +133,63 @@ void parseLazyValueIntoRecord(
     Nautilus::Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::string& fieldName)
+    const std::string& fieldName,
+    const QuotationType quotationType,
+    ArenaRef& arenaRef)
 {
     // Register a lazy materializer that performs the same logic as parseRawValueIntoRecord on first access
-    record.writeLazy(fieldName, [physicalType, fieldAddress, fieldSize]() -> Nautilus::VarVal {
+    record.writeLazy(fieldName, [physicalType, fieldAddress, fieldSize, quotationType, &arenaRef]() -> Nautilus::VarVal {
         switch (physicalType)
         {
             case DataType::Type::INT8:
-                return RawValueParser::parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize);
             case DataType::Type::INT16:
-                return RawValueParser::parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize);
             case DataType::Type::INT32:
-                return RawValueParser::parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize);
             case DataType::Type::INT64:
-                return RawValueParser::parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize);
             case DataType::Type::UINT8:
-                return RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize);
             case DataType::Type::UINT16:
-                return RawValueParser::parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize);
             case DataType::Type::UINT32:
-                return RawValueParser::parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize);
             case DataType::Type::UINT64:
-                return RawValueParser::parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize);
             case DataType::Type::FLOAT32:
-                return RawValueParser::parseIntoNautilusRecord<float>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<float>(fieldAddress, fieldSize);
             case DataType::Type::FLOAT64:
-                return RawValueParser::parseIntoNautilusRecord<double>(fieldAddress, fieldSize);
+                return parseIntoNautilusRecord<double>(fieldAddress, fieldSize);
             case DataType::Type::CHAR:
-                return RawValueParser::parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize);
-            case DataType::Type::BOOLEAN:
-                return RawValueParser::parseIntoNautilusRecord<bool>(fieldAddress, fieldSize);
+                switch (quotationType)
+                {
+                    case QuotationType::NONE: {
+                        return parseIntoNautilusRecord<char>(fieldAddress, fieldSize);
+                    }
+                    case QuotationType::DOUBLE_QUOTE: {
+                        return parseIntoNautilusRecord<char>(fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2));
+                    }
+                }            case DataType::Type::BOOLEAN:
+                return parseIntoNautilusRecord<bool>(fieldAddress, fieldSize);
             case DataType::Type::VARSIZED:
-                return parseVarSizedIntoNautilusRecord(fieldAddress, fieldSize);
-            case DataType::Type::VARSIZED_POINTER_REP:
+                switch (quotationType)
+                {
+                    case QuotationType::NONE: {
+                        auto varSized = arenaRef.allocateVariableSizedData(fieldSize);
+                        nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
+                        return varSized;
+                    }
+                    case QuotationType::DOUBLE_QUOTE: {
+                        const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
+                        const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
+
+                        auto varSized = arenaRef.allocateVariableSizedData(fieldSizeWithoutClosingQuote);
+                        nautilus::memcpy(varSized.getContent(), fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
+                        return varSized;
+                    }
+                }
+                std::unreachable();            case DataType::Type::VARSIZED_POINTER_REP:
                 throw NotImplemented("Cannot parse varsized pointer rep type.");
             case DataType::Type::UNDEFINED:
                 throw NotImplemented("Cannot parse undefined type.");
@@ -174,12 +198,4 @@ void parseLazyValueIntoRecord(
     });
 }
 
-ParseFunctionSignature getParseFunction(const DataType::Type physicalType)
-{
-    if (physicalType == DataType::Type::VARSIZED)
-    {
-        return getStringParseFunction();
-    }
-    return getBasicTypeParseFunction(physicalType);
-}
 }

@@ -40,7 +40,6 @@
 #include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include "InputFormatters/InputFormatterProvider.hpp"
 #include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
 #include "Util/Strings.hpp"
 #include "SelectionPhysicalOperator.hpp"
@@ -80,7 +79,7 @@ PhysicalOperator createScanOperator(
     const Pipeline& prevPipeline,
     const std::optional<Schema>& inputSchema,
     const std::optional<MemoryLayoutType>& memoryLayout,
-    const uint64_t configuredBufferSize)
+    const uint64_t configuredBufferSize, const std::vector<std::string> requiredFields)
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
@@ -100,10 +99,10 @@ PhysicalOperator createScanOperator(
         const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
-            return ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
+            return ScanPhysicalOperator(provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), requiredFields);
         }
     }
+    return ScanPhysicalOperator(memoryProvider, requiredFields);
     //return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
     //OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
 //}();
@@ -123,8 +122,9 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
     const PhysicalOperatorWrapper& wrappedOpAfterScan,
     const uint64_t configuredBufferSize)
 {
+    const std::vector<std::string> requiredFields = computeRequiredScanProjections(wrappedOpAfterScan);
     const auto newPipeline = std::make_shared<Pipeline>(createScanOperator(
-        *prevPipeline, wrappedOpAfterScan.getInputSchema(), wrappedOpAfterScan.getInputMemoryLayoutType(), configuredBufferSize));
+        *prevPipeline, wrappedOpAfterScan.getInputSchema(), wrappedOpAfterScan.getInputMemoryLayoutType(), configuredBufferSize, requiredFields));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
@@ -250,8 +250,9 @@ void buildPipelineRecursively(
             /// The sink would output these buffers (out of order if the engine uses multiple threads), producing malformed data
             if (not(sourceFormat == "NATIVE" and sinkFormat == "NATIVE"))
             {
+                std::vector<std::string> requiredFields = computeRequiredScanProjections(*opWrapper);
                 const auto sourcePipeline = std::make_shared<Pipeline>(createScanOperator(
-                    *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
+                    *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize, requiredFields));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
                 addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
@@ -299,8 +300,9 @@ void buildPipelineRecursively(
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
         PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
+        std::vector<std::string> requiredFields = computeRequiredScanProjections(*opWrapper);
         newPipelinePtr->prependOperator(
-            createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
+            createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize, requiredFields));
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);

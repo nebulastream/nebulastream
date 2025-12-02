@@ -37,7 +37,8 @@ ScanPhysicalOperator::ScanPhysicalOperator(
     std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
-    , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr)
+    , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr),
+    requiredFields(projections)
 {
 }
 
