@@ -27,6 +27,7 @@ RUN apt update -y && apt install \
     ccache \
     ninja-build \
     bison \
+    autoconf autoconf-archive automake libtool \
     pkg-config \
     libglib2.0-dev-bin \
     pipx \
