@@ -26,11 +26,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <SerializableTrait.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 #include <TraitRegisty.hpp>
 
@@ -45,20 +45,6 @@ const std::type_info& OutputOriginIdsTrait::getType() const
 std::string_view OutputOriginIdsTrait::getName() const
 {
     return NAME;
-}
-
-SerializableTrait OutputOriginIdsTrait::serialize() const
-{
-    SerializableTrait trait;
-    auto* serializedDescriptorConfig = trait.mutable_config();
-    SerializableVariantDescriptor serializedVariant{};
-    UInt64List* serializedOriginIds = serializedVariant.mutable_ulongs();
-    for (const auto& originId : originIds)
-    {
-        serializedOriginIds->add_values(originId.getRawValue());
-    }
-    (*serializedDescriptorConfig)["outputOriginIds"] = serializedVariant;
-    return trait;
 }
 
 bool OutputOriginIdsTrait::operator==(const OutputOriginIdsTrait& other) const
@@ -115,19 +101,30 @@ size_t OutputOriginIdsTrait::size() const
 
 TraitRegistryReturnType TraitGeneratedRegistrar::RegisterOutputOriginIdsTrait(TraitRegistryArguments arguments)
 {
-    const auto configIter = arguments.config.find("outputOriginIds");
-    if (configIter == arguments.config.end())
+    return unreflect<OutputOriginIdsTrait>(arguments.reflected);
+}
+
+Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait& trait) const
+{
+    detail::ReflectedOutputOriginIdsTrait reflected;
+    for (const auto& originId : trait.originIds)
     {
-        throw CannotDeserialize("OutputOriginIdsTrait is missing in configuration");
-    }
-    if (!std::holds_alternative<UInt64List>(configIter->second))
-    {
-        throw CannotDeserialize("OutputOriginIdsTrait is not of type OriginIdList");
+        reflected.originIds.emplace_back(originId.getRawValue());
     }
 
-    const auto& serializedOriginIdList = std::get<UInt64List>(configIter->second);
-    const auto originIdList = serializedOriginIdList.values()
-        | std::views::transform([](const auto& originId) { return OriginId{originId}; }) | std::ranges::to<std::vector>();
-    return OutputOriginIdsTrait{originIdList};
+    return reflect(reflected);
+}
+
+OutputOriginIdsTrait Unreflector<OutputOriginIdsTrait>::operator()(const Reflected& reflected) const
+{
+    auto [reflectedOriginIds] = unreflect<detail::ReflectedOutputOriginIdsTrait>(reflected);
+
+    std::vector<OriginId> originIds;
+    originIds.reserve(reflectedOriginIds.size());
+    for (auto id : reflectedOriginIds)
+    {
+        originIds.emplace_back(id);
+    }
+    return OutputOriginIdsTrait{originIds};
 }
 }

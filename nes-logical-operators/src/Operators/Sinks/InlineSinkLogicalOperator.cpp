@@ -27,8 +27,8 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -112,9 +112,16 @@ InlineSinkLogicalOperator::InlineSinkLogicalOperator(
 {
 }
 
-void InlineSinkLogicalOperator::serialize(SerializableOperator&)
+Reflected Reflector<InlineSinkLogicalOperator>::operator()(const InlineSinkLogicalOperator&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
+    throw CannotSerialize("no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
+}
+
+InlineSinkLogicalOperator Unreflector<InlineSinkLogicalOperator>::operator()(const Reflected&) const
+{
+    PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
+    throw CannotDeserialize("no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
 }
 
 }

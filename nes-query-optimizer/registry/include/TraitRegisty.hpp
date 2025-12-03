@@ -18,6 +18,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
@@ -27,7 +28,7 @@ using TraitRegistryReturnType = Trait;
 
 struct TraitRegistryArguments
 {
-    DescriptorConfig::Config config;
+    Reflected reflected;
 };
 
 class TraitRegistry : public BaseRegistry<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>

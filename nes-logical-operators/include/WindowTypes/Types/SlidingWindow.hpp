@@ -14,6 +14,7 @@
 
 #pragma once
 #include <memory>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -28,17 +29,42 @@ class SlidingWindow : public TimeBasedWindowType
 public:
     static std::shared_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
-    TimeMeasure getSize() override;
-    TimeMeasure getSlide() override;
+    [[nodiscard]] TimeMeasure getSize() const override;
+    [[nodiscard]] TimeMeasure getSlide() const override;
 
     std::string toString() const override;
 
     bool operator==(const WindowType& otherWindowType) const override;
+    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
 private:
-    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };
 
+}
+
+namespace NES
+{
+template <>
+struct Reflector<Windowing::SlidingWindow>
+{
+    Reflected operator()(const Windowing::SlidingWindow& slidingWindow) const;
+};
+
+template <>
+struct Unreflector<Windowing::SlidingWindow>
+{
+    Windowing::SlidingWindow operator()(const Reflected& reflected) const;
+};
+}
+
+namespace NES::detail
+{
+struct ReflectedSlidingWindow
+{
+    Windowing::TimeMeasure size;
+    Windowing::TimeMeasure slide;
+    Windowing::TimeCharacteristic timeCharacteristic;
+};
 }

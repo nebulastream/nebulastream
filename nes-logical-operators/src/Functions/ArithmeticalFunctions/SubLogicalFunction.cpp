@@ -22,7 +22,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -94,18 +96,28 @@ std::string_view SubLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction SubLogicalFunction::serialize() const
+Reflected Reflector<SubLogicalFunction>::operator()(const SubLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedSubLogicalFunction{.left = function.left, .right = function.right});
+}
+
+SubLogicalFunction Unreflector<SubLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedSubLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("SubLogicalFunction is missing a child");
+    }
+    return SubLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<SubLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());

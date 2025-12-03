@@ -25,7 +25,9 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -93,17 +95,28 @@ std::string ExpLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("EXP({})", child.explain(verbosity));
 }
 
-SerializableFunction ExpLogicalFunction::serialize() const
+Reflected Reflector<ExpLogicalFunction>::operator()(const ExpLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedExpLogicalFunction{.child = function.child});
+}
+
+ExpLogicalFunction Unreflector<ExpLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedExpLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return ExpLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<ExpLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

@@ -11,13 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <WindowTypes/Types/TumblingWindow.hpp>
 
 #include <string>
 #include <utility>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
-#include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <fmt/format.h>
 
@@ -29,12 +30,12 @@ TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasur
 {
 }
 
-TimeMeasure TumblingWindow::getSize()
+TimeMeasure TumblingWindow::getSize() const
 {
     return size;
 }
 
-TimeMeasure TumblingWindow::getSlide()
+TimeMeasure TumblingWindow::getSlide() const
 {
     return getSize();
 }
@@ -51,5 +52,22 @@ bool TumblingWindow::operator==(const WindowType& otherWindowType) const
         return (this->size == other->size) && (this->timeCharacteristic == (other->timeCharacteristic));
     }
     return false;
+}
+
+}
+
+namespace NES
+{
+
+Reflected Reflector<Windowing::TumblingWindow>::operator()(const Windowing::TumblingWindow& tumblingWindow) const
+{
+    return reflect(
+        detail::ReflectedTumblingWindow{.size = tumblingWindow.getSize(), .timeCharacteristic = tumblingWindow.getTimeCharacteristic()});
+}
+
+Windowing::TumblingWindow Unreflector<Windowing::TumblingWindow>::operator()(const Reflected& reflected) const
+{
+    auto [size, timeCharacteristics] = unreflect<detail::ReflectedTumblingWindow>(reflected);
+    return {timeCharacteristics, size};
 }
 }

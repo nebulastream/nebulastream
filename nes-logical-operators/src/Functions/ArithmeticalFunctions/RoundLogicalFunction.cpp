@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -89,18 +91,28 @@ std::string_view RoundLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction RoundLogicalFunction::serialize() const
+Reflected Reflector<RoundLogicalFunction>::operator()(const RoundLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedRoundLogicalFunction{.child = function.child});
+}
+
+RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedRoundLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return RoundLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<RoundLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

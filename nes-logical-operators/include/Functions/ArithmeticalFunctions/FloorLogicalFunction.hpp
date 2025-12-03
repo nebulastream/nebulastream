@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -32,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "Floor";
 
     explicit FloorLogicalFunction(const LogicalFunction& child);
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const FloorLogicalFunction& rhs) const;
 
@@ -50,11 +50,33 @@ public:
 private:
     DataType dataType;
     LogicalFunction child;
+
+    friend Reflector<FloorLogicalFunction>;
+};
+
+template <>
+struct Reflector<FloorLogicalFunction>
+{
+    Reflected operator()(const FloorLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<FloorLogicalFunction>
+{
+    FloorLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<FloorLogicalFunction>);
 
 
+}
+
+namespace NES::detail
+{
+struct ReflectedFlootLogicalFunction
+{
+    std::optional<LogicalFunction> child;
+};
 }
 
 FMT_OSTREAM(NES::FloorLogicalFunction);

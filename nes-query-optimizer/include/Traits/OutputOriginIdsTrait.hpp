@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <typeinfo>
@@ -23,7 +24,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableTrait.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -36,7 +37,6 @@ public:
 
     [[nodiscard]] const std::type_info& getType() const;
     [[nodiscard]] std::string_view getName() const;
-    [[nodiscard]] SerializableTrait serialize() const;
     bool operator==(const OutputOriginIdsTrait& other) const;
     [[nodiscard]] size_t hash() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
@@ -50,8 +50,30 @@ public:
 
 private:
     std::vector<OriginId> originIds;
+
+    friend Reflector<OutputOriginIdsTrait>;
+};
+
+template <>
+struct Reflector<OutputOriginIdsTrait>
+{
+    Reflected operator()(const OutputOriginIdsTrait& trait) const;
+};
+
+template <>
+struct Unreflector<OutputOriginIdsTrait>
+{
+    OutputOriginIdsTrait operator()(const Reflected& reflected) const;
 };
 
 static_assert(TraitConcept<OutputOriginIdsTrait>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedOutputOriginIdsTrait
+{
+    std::vector<uint64_t> originIds;
+};
 }

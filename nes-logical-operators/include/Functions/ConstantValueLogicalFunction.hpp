@@ -25,6 +25,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -42,8 +43,6 @@ public:
     [[nodiscard]] std::string getConstantValue() const;
 
     [[nodiscard]] bool operator==(const ConstantValueLogicalFunction& rhs) const;
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ConstantValueLogicalFunction withDataType(const DataType& dataType) const;
@@ -72,8 +71,28 @@ private:
     DataType dataType;
 };
 
-static_assert(LogicalFunctionConcept<ConstantValueLogicalFunction>);
+template <>
+struct Reflector<ConstantValueLogicalFunction>
+{
+    Reflected operator()(const ConstantValueLogicalFunction& function) const;
+};
 
+template <>
+struct Unreflector<ConstantValueLogicalFunction>
+{
+    ConstantValueLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalFunctionConcept<ConstantValueLogicalFunction>);
+}
+
+namespace NES::detail
+{
+struct ReflectedConstantValueLogicalFunction
+{
+    std::string value;
+    DataType::Type type;
+};
 }
 
 FMT_OSTREAM(NES::ConstantValueLogicalFunction);

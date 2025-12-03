@@ -21,8 +21,7 @@
 #include <typeinfo>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableTrait.pb.h>
-#include <SerializableVariantDescriptor.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -43,8 +42,6 @@ struct JoinImplementationTypeTrait final
 
     [[nodiscard]] const std::type_info& getType() const;
 
-    [[nodiscard]] SerializableTrait serialize() const;
-
     bool operator==(const JoinImplementationTypeTrait& other) const;
 
     [[nodiscard]] size_t hash() const;
@@ -52,8 +49,29 @@ struct JoinImplementationTypeTrait final
     [[nodiscard]] std::string explain(ExplainVerbosity) const;
 
     [[nodiscard]] std::string_view getName() const;
+
+    friend Reflector<JoinImplementationTypeTrait>;
+};
+
+template <>
+struct Reflector<JoinImplementationTypeTrait>
+{
+    Reflected operator()(const JoinImplementationTypeTrait& trait) const;
+};
+
+template <>
+struct Unreflector<JoinImplementationTypeTrait>
+{
+    JoinImplementationTypeTrait operator()(const Reflected& reflected) const;
 };
 
 static_assert(TraitConcept<JoinImplementationTypeTrait>);
+}
 
+namespace NES::detail
+{
+struct ReflectedImplementationTypeTrait
+{
+    JoinImplementation joinImplementationType;
+};
 }

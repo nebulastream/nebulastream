@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -94,19 +96,29 @@ std::string_view LessEqualsLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction LessEqualsLogicalFunction::serialize() const
+Reflected Reflector<LessEqualsLogicalFunction>::operator()(const LessEqualsLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedLessEqualsLogicalFunction{.left = function.left, .right = function.right});
+}
+
+LessEqualsLogicalFunction Unreflector<LessEqualsLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedLessEqualsLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("LessEqualsLogicalFunction is missing a child");
+    }
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<LessEqualsLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("LessEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());

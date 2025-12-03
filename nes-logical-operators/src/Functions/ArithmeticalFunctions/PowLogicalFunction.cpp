@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -88,18 +90,27 @@ std::string_view PowLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction PowLogicalFunction::serialize() const
+Reflected Reflector<PowLogicalFunction>::operator()(const PowLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedPowLogicalFunction{.left = function.left, .right = function.right});
+}
+
+PowLogicalFunction Unreflector<PowLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedPowLogicalFunction>(reflected);
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return PowLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterPowLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<PowLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());

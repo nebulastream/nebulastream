@@ -17,11 +17,13 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,9 +35,6 @@ public:
     static constexpr std::string_view NAME = "Equals";
 
     EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
-
-    [[nodiscard]] SerializableFunction serialize() const;
-
     [[nodiscard]] bool operator==(const EqualsLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
@@ -51,10 +50,33 @@ public:
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend struct Reflector<EqualsLogicalFunction>;
+};
+
+template <>
+struct Reflector<EqualsLogicalFunction>
+{
+    Reflected operator()(const EqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<EqualsLogicalFunction>
+{
+    EqualsLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<EqualsLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedEqualsLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::EqualsLogicalFunction);

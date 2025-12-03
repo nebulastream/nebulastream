@@ -21,6 +21,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
@@ -83,4 +84,29 @@ std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharact
 {
     return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), timeCharacteristic.field);
 }
+}
+
+namespace NES
+{
+
+struct ReflectedTimeCharacteristic
+{
+    Schema::Field field;
+    Windowing::TimeCharacteristic::Type type;
+    Windowing::TimeUnit timeUnit;
+};
+
+Reflected Reflector<Windowing::TimeCharacteristic>::operator()(const Windowing::TimeCharacteristic& characteristic) const
+{
+    return reflect(ReflectedTimeCharacteristic{
+        .field = characteristic.field, .type = characteristic.getType(), .timeUnit = characteristic.getTimeUnit()});
+}
+
+Windowing::TimeCharacteristic Unreflector<Windowing::TimeCharacteristic>::operator()(const Reflected& reflected) const
+{
+    auto [field, type, timeUnit] = unreflect<ReflectedTimeCharacteristic>(reflected);
+
+    return Windowing::TimeCharacteristic{type, field, timeUnit};
+}
+
 }

@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -89,17 +91,27 @@ std::string_view SqrtLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction SqrtLogicalFunction::serialize() const
+Reflected Reflector<SqrtLogicalFunction>::operator()(const SqrtLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedSqrtLogicalFunction{.child = function.child});
+}
+
+SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedSqrtLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return SqrtLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<SqrtLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

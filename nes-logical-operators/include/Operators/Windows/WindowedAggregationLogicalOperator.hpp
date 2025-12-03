@@ -20,6 +20,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
@@ -31,9 +32,9 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
-#include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -65,7 +66,6 @@ public:
 
 
     [[nodiscard]] bool operator==(const WindowedAggregationLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] WindowedAggregationLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -115,6 +115,28 @@ private:
     Schema inputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<WindowedAggregationLogicalOperator>
+{
+    Reflected operator()(const WindowedAggregationLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<WindowedAggregationLogicalOperator>
+{
+    WindowedAggregationLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedWindowAggregationLogicalOperator
+{
+    std::vector<std::pair<std::string, Reflected>> aggregations;
+    std::vector<FieldAccessLogicalFunction> keys;
+    Reflected windowType;
+};
 }

@@ -36,6 +36,7 @@ LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunc
 std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments)
 {
     return LogicalFunctionRegistry::instance().create(
-        functionName, LogicalFunctionRegistryArguments{.config = {}, .children = std::move(arguments), .dataType = {}});
+        functionName,
+        LogicalFunctionRegistryArguments{.config = {}, .children = std::move(arguments), .dataType = {}, .reflected = Reflected{}});
 }
 }

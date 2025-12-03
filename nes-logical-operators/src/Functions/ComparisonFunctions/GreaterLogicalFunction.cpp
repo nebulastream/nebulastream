@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -94,19 +96,29 @@ std::string_view GreaterLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction GreaterLogicalFunction::serialize() const
+Reflected Reflector<GreaterLogicalFunction>::operator()(const GreaterLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedGreaterLogicalFunction{.left = function.left, .right = function.right});
+}
+
+GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedGreaterLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("GreaterLogicalFunction is missing a child");
+    }
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<GreaterLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());

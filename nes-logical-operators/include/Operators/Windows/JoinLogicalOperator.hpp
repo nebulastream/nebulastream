@@ -30,6 +30,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -59,7 +60,6 @@ public:
 
 
     [[nodiscard]] bool operator==(const JoinLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] JoinLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -119,7 +119,31 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema leftInputSchema, rightInputSchema, outputSchema;
+
+    friend Reflector<JoinLogicalOperator>;
+};
+
+template <>
+struct Reflector<JoinLogicalOperator>
+{
+    Reflected operator()(const JoinLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<JoinLogicalOperator>
+{
+    JoinLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
+}
+
+namespace NES::detail
+{
+struct ReflectedJoinLogicalOperator
+{
+    std::optional<LogicalFunction> joinFunction;
+    Reflected windowType;
+    JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
+};
 }

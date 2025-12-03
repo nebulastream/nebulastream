@@ -29,8 +29,9 @@
 #include <utility>
 #include <Util/DynamicBase.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
+#include <rfl/Result.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableTrait.pb.h>
 #include <nameof.hpp>
 
 namespace NES
@@ -55,9 +56,8 @@ concept TraitConcept = requires(const T& thisTrait, ExplainVerbosity verbosity, 
     { thisTrait.getType() } -> std::convertible_to<const std::type_info&>;
     { thisTrait.getName() } -> std::convertible_to<std::string_view>;
 
-    /// Serializes this trait to a protobuf message.
-    /// @return SerializableTrait The serialized trait.
-    { thisTrait.serialize() } -> std::convertible_to<SerializableTrait>;
+    /// Serialize the function to a Reflected object
+    { NES::reflect(thisTrait) } -> std::same_as<Reflected>;
 
     /// Returns a string representation of the function
     { thisTrait.explain(verbosity) } -> std::convertible_to<std::string>;
@@ -81,7 +81,7 @@ struct ErasedTrait
 
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
     [[nodiscard]] virtual std::string_view getName() const = 0;
-    [[nodiscard]] virtual SerializableTrait serialize() const = 0;
+    [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual size_t hash() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedTrait& other) const = 0;
@@ -110,8 +110,6 @@ struct DefaultTrait
 
     [[nodiscard]] const std::type_info& getType() const { return typeid(Derived); }
 
-    [[nodiscard]] SerializableTrait serialize() const { return SerializableTrait{}; }
-
     [[nodiscard]] std::string explain(ExplainVerbosity) const { return "DefaultTrait"; }
 
     [[nodiscard]] virtual std::string_view getName() const = 0;
@@ -139,6 +137,7 @@ struct TypedTrait
     /// @tparam T The type of the trait. Must satisfy TraitConcept concept.
     /// @param op The trait to wrap.
     template <typename T>
+    requires(!std::same_as<T, rfl::Error>)
     TypedTrait(const T& op) : self(std::make_shared<NES::detail::TraitModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
@@ -255,8 +254,6 @@ struct TypedTrait
         std::unreachable();
     }
 
-    [[nodiscard]] SerializableTrait serialize() const { return self->serialize(); };
-
     [[nodiscard]] const std::type_info& getTypeInfo() const { return self->getType(); };
 
     [[nodiscard]] std::string_view getName() const { return self->getName(); };
@@ -310,7 +307,7 @@ struct TraitModel : ErasedTrait
 
     [[nodiscard]] std::string_view getName() const override { return impl.getName(); }
 
-    [[nodiscard]] SerializableTrait serialize() const override { return impl.serialize(); }
+    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
 
 private:
     template <typename T>

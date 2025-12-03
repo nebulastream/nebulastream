@@ -24,9 +24,6 @@
 #include <variant>
 #include <vector>
 
-#include <fmt/format.h>
-#include <fmt/ranges.h>
-
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -35,16 +32,20 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
+#include <Serialization/WindowTypeReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -257,75 +258,50 @@ const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() co
     return windowMetaData;
 }
 
-void WindowedAggregationLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+Reflected Reflector<WindowedAggregationLogicalOperator>::operator()(const WindowedAggregationLogicalOperator& op) const
 {
-    SerializableLogicalOperator proto;
+    std::vector<std::pair<std::string, Reflected>> windowAggregations;
 
-    proto.set_operator_type(NAME);
-
-    for (auto& input : getInputSchemas())
+    for (const auto& agg : op.getWindowAggregation())
     {
-        auto* inSch = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(input, inSch);
+        windowAggregations.emplace_back(agg->getName(), agg->reflect());
     }
 
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+    return reflect(detail::ReflectedWindowAggregationLogicalOperator{
+        .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(op.getWindowType())});
+}
 
-    for (const auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
+WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& reflected) const
+{
+    auto [aggregations, keys, windowTypeReflected] = unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
 
-    /// Serialize window aggregations
-    AggregationFunctionList aggList;
-    for (const auto& agg : getWindowAggregation())
-    {
-        *aggList.add_functions() = agg->serialize();
-    }
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] = descriptorConfigTypeToProto(aggList);
+    auto windowType = unreflectWindowType(windowTypeReflected);
 
-    /// Serialize keys if present
-    if (isKeyed())
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
+
+    for (const auto& [name, reflectedAggregation] : aggregations)
     {
-        FunctionList keyList;
-        for (const auto& key : getGroupingKeys())
+        auto functionOpt = AggregationLogicalFunctionRegistry::instance().create(
+            name, AggregationLogicalFunctionRegistryArguments{.fields = {}, .reflected = reflectedAggregation});
+        if (!functionOpt.has_value())
         {
-            *keyList.add_functions() = key.serialize();
+            throw CannotDeserialize("Invalid Aggregation Function of type {}", name);
         }
-        (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_KEYS] = descriptorConfigTypeToProto(keyList);
+        aggregationFunctions.emplace_back(functionOpt.value());
     }
 
-    /// Serialize window info
-    WindowInfos windowInfo;
-    if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType))
-    {
-        auto timeChar = timeBasedWindow->getTimeCharacteristic();
-        auto timeCharProto = WindowInfos_TimeCharacteristic();
-        timeCharProto.set_type(WindowInfos_TimeCharacteristic_Type_Event_time);
-        timeCharProto.set_field(timeChar.field.name);
-        timeCharProto.set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
-        windowInfo.mutable_time_characteristic()->CopyFrom(timeCharProto);
-        if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType))
-        {
-            auto* tumbling = windowInfo.mutable_tumbling_window();
-            tumbling->set_size(tumblingWindow->getSize().getTime());
-        }
-        else if (auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType))
-        {
-            auto* sliding = windowInfo.mutable_sliding_window();
-            sliding->set_size(slidingWindow->getSize().getTime());
-            sliding->set_slide(slidingWindow->getSlide().getTime());
-        }
-    }
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = descriptorConfigTypeToProto(windowInfo);
 
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return {keys, aggregationFunctions, windowType};
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<WindowedAggregationLogicalOperator>(arguments.reflected);
+    }
+
     auto aggregationsVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_AGGREGATIONS];
     auto keysVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_KEYS];
     auto windowInfoVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_INFOS];

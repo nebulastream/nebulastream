@@ -19,8 +19,11 @@
 #include <string>
 #include <typeindex>
 #include <utility>
+#include <vector>
+#include <Serialization/TraitReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
@@ -46,6 +49,24 @@ std::string TraitSet::explain(ExplainVerbosity verbosity) const
                 | std::views::transform([verbosity](const std::pair<const std::type_index, Trait>& pair)
                                         { return fmt::format("{}: {}", pair.first.name(), pair.second.explain(verbosity)); }),
             ", "));
+}
+
+Reflected Reflector<TraitSet>::operator()(const TraitSet& traitSet) const
+{
+    detail::ReflectedTraitSet reflectedTraitSet;
+
+    for (const auto& trait : traitSet | std::views::values)
+    {
+        reflectedTraitSet.traits.emplace_back(trait);
+    }
+
+    return reflect(reflectedTraitSet);
+}
+
+TraitSet Unreflector<TraitSet>::operator()(const Reflected& reflected) const
+{
+    auto [traits] = unreflect<detail::ReflectedTraitSet>(reflected);
+    return TraitSet{traits};
 }
 
 }

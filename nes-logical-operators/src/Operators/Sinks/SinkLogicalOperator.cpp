@@ -32,9 +32,9 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -191,22 +191,18 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(SinkDescriptor sinkD
     return newOperator;
 }
 
-void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+Reflected Reflector<SinkLogicalOperator>::operator()(const SinkLogicalOperator& op) const
 {
-    SerializableSinkLogicalOperator proto;
-    if (sinkDescriptor)
+    return reflect(detail::ReflectedSinkLogicalOperator{.sinkDescriptor = op.getSinkDescriptor(), .sinkName = op.getSinkName()});
+}
+
+SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& reflected) const
+{
+    auto [descriptor, name] = unreflect<detail::ReflectedSinkLogicalOperator>(reflected);
+    if (descriptor.has_value())
     {
-        proto.mutable_sinkdescriptor()->CopyFrom(sinkDescriptor->serialize());
+        return SinkLogicalOperator{descriptor.value()};
     }
-
-    const DescriptorConfig::ConfigType timeVariant = sinkName;
-    (*serializableOperator.mutable_config())[ConfigParameters::SINK_NAME] = descriptorConfigTypeToProto(timeVariant);
-
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    serializableOperator.mutable_sink()->CopyFrom(proto);
+    return SinkLogicalOperator{name};
 }
 }

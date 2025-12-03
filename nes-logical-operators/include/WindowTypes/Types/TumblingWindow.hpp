@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -34,8 +35,8 @@ public:
     /// @param size
     /// @return std::shared_ptr<WindowType>
     TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
-    TimeMeasure getSize() override;
-    TimeMeasure getSlide() override;
+    [[nodiscard]] TimeMeasure getSize() const override;
+    [[nodiscard]] TimeMeasure getSlide() const override;
     [[nodiscard]] std::string toString() const override;
     bool operator==(const WindowType& otherWindowType) const override;
 
@@ -43,4 +44,28 @@ private:
     const TimeMeasure size;
 };
 
+}
+
+namespace NES
+{
+template <>
+struct Reflector<Windowing::TumblingWindow>
+{
+    Reflected operator()(const Windowing::TumblingWindow& tumblingWindow) const;
+};
+
+template <>
+struct Unreflector<Windowing::TumblingWindow>
+{
+    Windowing::TumblingWindow operator()(const Reflected& reflected) const;
+};
+}
+
+namespace NES::detail
+{
+struct ReflectedTumblingWindow
+{
+    Windowing::TimeMeasure size;
+    Windowing::TimeCharacteristic timeCharacteristic;
+};
 }
