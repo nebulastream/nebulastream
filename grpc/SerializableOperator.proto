@@ -73,4 +73,5 @@ message SerializableOperator
     SerializableSinkLogicalOperator sink = 6;
     SerializableLogicalOperator operator = 7;
   }
+  string reflect = 8; // Change to bytes later
 }

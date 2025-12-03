@@ -17,9 +17,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -35,6 +37,7 @@ public:
     EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
 
     [[nodiscard]] SerializableFunction serialize() const;
+    [[nodiscard]] SerializedFunction serialized() const;
 
     [[nodiscard]] bool operator==(const EqualsLogicalFunction& rhs) const;
 

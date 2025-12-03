@@ -27,11 +27,13 @@ namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
+class SerializedUtils;
 
 class LogicalSource
 {
     friend SourceCatalog;
     friend OperatorSerializationUtil;
+    friend SerializedUtils;
     explicit LogicalSource(std::string logicalSourceName, const Schema& schema);
 
 public:

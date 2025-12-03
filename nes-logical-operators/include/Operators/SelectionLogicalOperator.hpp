@@ -19,11 +19,13 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -42,6 +44,7 @@ public:
 
     [[nodiscard]] bool operator==(const SelectionLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
+    void serialized(SerializedOperator& serialized) const;
 
     [[nodiscard]] SelectionLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;

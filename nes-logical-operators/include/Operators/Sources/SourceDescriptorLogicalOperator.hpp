@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -45,6 +46,7 @@ public:
 
     [[nodiscard]] bool operator==(const SourceDescriptorLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
+    void serialized(SerializedOperator& serialized) const;
 
     [[nodiscard]] SourceDescriptorLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
