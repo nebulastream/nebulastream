@@ -23,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -34,14 +35,6 @@ namespace NES
 CastToTypeLogicalFunction::CastToTypeLogicalFunction(const DataType dataType, LogicalFunction child)
     : castToType(dataType), child(std::move(child))
 {
-}
-
-SerializableFunction CastToTypeLogicalFunction::serialize() const
-{
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    DataTypeSerializationUtil::serializeDataType(castToType, serializedFunction.mutable_data_type());
-    return serializedFunction;
 }
 
 bool CastToTypeLogicalFunction::operator==(const CastToTypeLogicalFunction& rhs) const
@@ -96,7 +89,20 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
     {
         throw CannotDeserialize("CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return CastToTypeLogicalFunction(arguments.dataType, arguments.children[0]);
+    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
+}
+
+Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction&) const
+{
+    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be reflected");
+    std::unreachable();
+}
+
+CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected&) const
+{
+    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be unreflected");
+    std::unreachable();
 }
 
 }

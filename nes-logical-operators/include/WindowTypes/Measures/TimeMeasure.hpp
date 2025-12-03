@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Util/Reflection.hpp>
 
 namespace NES::Windowing
 {
@@ -38,4 +39,19 @@ private:
     const uint64_t milliSeconds;
 };
 
+}
+
+namespace NES
+{
+template <>
+struct Reflector<Windowing::TimeMeasure>
+{
+    Reflected operator()(const Windowing::TimeMeasure& measure) const;
+};
+
+template <>
+struct Unreflector<Windowing::TimeMeasure>
+{
+    Windowing::TimeMeasure operator()(const Reflected& reflected) const;
+};
 }

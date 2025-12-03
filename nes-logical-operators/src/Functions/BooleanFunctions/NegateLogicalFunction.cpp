@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -87,18 +89,35 @@ std::string_view NegateLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction NegateLogicalFunction::serialize() const
+Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedNegateLogicalFunction{.child = function.child});
+}
+
+NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [function] = unreflect<detail::ReflectedNegateLogicalFunction>(reflected);
+
+    if (!function.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize child of NegateLogicalFunction");
+    }
+    if (function->getDataType().type != DataType::Type::BOOLEAN)
+    {
+        throw CannotDeserialize("requires child of type bool, but got {}", function->getDataType());
+    }
+
+    return NegateLogicalFunction(std::move(function.value()));
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<NegateLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());

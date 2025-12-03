@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -36,7 +36,6 @@ public:
     explicit InlineSinkLogicalOperator(std::string sinkType, const Schema& schema, std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
-    static void serialize(SerializableOperator&);
 
     [[nodiscard]] InlineSinkLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -65,6 +64,18 @@ private:
     Schema schema;
     std::string sinkType;
     std::unordered_map<std::string, std::string> sinkConfig;
+};
+
+template <>
+struct Reflector<InlineSinkLogicalOperator>
+{
+    Reflected operator()(const InlineSinkLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<InlineSinkLogicalOperator>
+{
+    InlineSinkLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);

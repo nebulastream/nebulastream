@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,8 +35,6 @@ public:
     static constexpr std::string_view NAME = "Concat";
 
     ConcatLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const ConcatLogicalFunction& rhs) const;
 
@@ -52,10 +52,32 @@ private:
     DataType dataType;
     LogicalFunction left;
     LogicalFunction right;
+
+    friend Reflector<ConcatLogicalFunction>;
 };
 
 static_assert(LogicalFunctionConcept<ConcatLogicalFunction>);
 
+template <>
+struct Reflector<ConcatLogicalFunction>
+{
+    Reflected operator()(const ConcatLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<ConcatLogicalFunction>
+{
+    ConcatLogicalFunction operator()(const Reflected& reflected) const;
+};
+}
+
+namespace NES::detail
+{
+struct ReflectedConcatLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::ConcatLogicalFunction);

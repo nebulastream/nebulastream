@@ -35,6 +35,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Util/Reflection.hpp>
 
 using namespace NES;
 
@@ -169,6 +170,18 @@ struct TestTrait final : DefaultTrait<TestTrait>
     [[nodiscard]] std::string_view getName() const override { return NAME; }
 };
 }
+
+template <>
+struct Reflector<TestTrait>
+{
+    Reflected operator()(const TestTrait&) const { return Reflected{}; };
+};
+
+template <>
+struct Unreflector<TestTrait>
+{
+    TestTrait operator()(const Reflected&) const { return TestTrait{}; };
+};
 
 TEST_F(LogicalPlanTest, AddTraits)
 {

@@ -17,6 +17,7 @@
 #include <string>
 
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/std.h>
 #include <magic_enum/magic_enum.hpp>
 
@@ -51,6 +52,18 @@ public:
 
 private:
     std::string value;
+};
+
+template <>
+struct Reflector<EnumWrapper>
+{
+    Reflected operator()(const EnumWrapper& wrapper) const { return reflect(wrapper.getValue()); }
+};
+
+template <>
+struct Unreflector<EnumWrapper>
+{
+    EnumWrapper operator()(const Reflected& rfl) const { return EnumWrapper{unreflect<std::string>(rfl)}; }
 };
 }
 

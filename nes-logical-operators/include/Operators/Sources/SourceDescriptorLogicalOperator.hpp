@@ -26,7 +26,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -44,7 +44,6 @@ public:
     [[nodiscard]] SourceDescriptor getSourceDescriptor() const;
 
     [[nodiscard]] bool operator==(const SourceDescriptorLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] SourceDescriptorLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -70,4 +69,18 @@ private:
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
+
+template <>
+struct Reflector<SourceDescriptorLogicalOperator>
+{
+    Reflected operator()(const SourceDescriptorLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SourceDescriptorLogicalOperator>
+{
+    SourceDescriptorLogicalOperator operator()(const Reflected& rfl) const;
+};
+
+
 }

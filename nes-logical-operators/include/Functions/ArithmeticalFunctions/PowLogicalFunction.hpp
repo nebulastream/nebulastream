@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,7 +35,6 @@ public:
 
     PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
 
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const PowLogicalFunction& rhs) const;
 
@@ -50,10 +51,32 @@ public:
 private:
     DataType dataType;
     LogicalFunction left, right;
+    friend Reflector<PowLogicalFunction>;
+};
+
+template <>
+struct Reflector<PowLogicalFunction>
+{
+    Reflected operator()(const PowLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<PowLogicalFunction>
+{
+    PowLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<PowLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedPowLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::PowLogicalFunction);

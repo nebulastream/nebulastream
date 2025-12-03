@@ -21,6 +21,7 @@
 
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -339,6 +340,17 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     }
     NES_WARNING("Cannot join {} and {}", *this, otherDataType);
     return std::nullopt;
+}
+
+Reflected Reflector<DataType>::operator()(const DataType& field) const
+{
+    return reflect(field.type);
+}
+
+DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
+{
+    const auto type = unreflect<DataType::Type>(rfl);
+    return DataTypeProvider::provideDataType(type);
 }
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)

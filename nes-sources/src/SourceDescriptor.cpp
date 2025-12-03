@@ -20,17 +20,17 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -141,28 +141,27 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
 }
 
-SerializableSourceDescriptor SourceDescriptor::serialize() const
+Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
 {
-    SerializableSourceDescriptor serializableSourceDescriptor;
-    SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
-    serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
-    serializableSourceDescriptor.set_sourcetype(sourceType);
+    const detail::ReflectedSourceDescriptor descriptor{
+        .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
+        .logicalSource = sourceDescriptor.logicalSource,
+        .type = sourceDescriptor.sourceType,
+        .parserConfig = sourceDescriptor.parserConfig,
+        .config = sourceDescriptor.getReflectedConfig()};
 
-    serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
+    return reflect(descriptor);
+}
 
-    /// Serialize parser config.
-    auto* const serializedParserConfig = SerializableParserConfig().New();
-    serializedParserConfig->set_type(parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
-    serializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
+SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
+{
+    auto reflectedSourceDescriptor = unreflect<detail::ReflectedSourceDescriptor>(rfl);
 
-    /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : getConfig())
-    {
-        auto* kv = serializableSourceDescriptor.mutable_config();
-        kv->emplace(key, descriptorConfigTypeToProto(value));
-    }
-    return serializableSourceDescriptor;
+    return SourceDescriptor{
+        PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
+        LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
+        reflectedSourceDescriptor.type,
+        Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
+        std::move(reflectedSourceDescriptor.parserConfig)};
 }
 }

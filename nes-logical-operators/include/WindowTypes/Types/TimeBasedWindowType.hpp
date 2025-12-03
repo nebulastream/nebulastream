@@ -35,11 +35,11 @@ public:
 
     /// @brief method to get the window size
     /// @return size of window
-    virtual TimeMeasure getSize() = 0;
+    [[nodiscard]] virtual TimeMeasure getSize() const = 0;
 
     /// @brief method to get the window slide
     /// @return slide of the window
-    virtual TimeMeasure getSlide() = 0;
+    [[nodiscard]] virtual TimeMeasure getSlide() const = 0;
 
     /// @brief Infer dataType of time based window type
     /// @param schema : the schema of the window

@@ -47,6 +47,8 @@
               };
             });
 
+        reflect_cppPkg = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
+
         baseThirdPartyDeps = (with pkgs; [
           fmtPkg
           spdlogPkg
@@ -74,6 +76,7 @@
           tbb
           python3
           openjdk21
+          reflect_cppPkg
         ]);
 
         antlr4Jar = pkgs.fetchurl {

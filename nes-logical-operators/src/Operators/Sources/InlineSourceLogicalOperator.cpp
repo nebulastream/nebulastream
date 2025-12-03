@@ -27,8 +27,8 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -123,9 +123,16 @@ InlineSourceLogicalOperator::InlineSourceLogicalOperator(
 {
 }
 
-void InlineSourceLogicalOperator::serialize(SerializableOperator&)
+Reflected Reflector<InlineSourceLogicalOperator>::operator()(const InlineSourceLogicalOperator&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
+    std::unreachable();
+}
+
+InlineSourceLogicalOperator Unreflector<InlineSourceLogicalOperator>::operator()(const Reflected&) const
+{
+    PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
+    std::unreachable();
 }
 
 }

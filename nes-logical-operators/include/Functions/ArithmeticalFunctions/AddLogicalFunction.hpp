@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -32,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "Add";
 
     AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const AddLogicalFunction& rhs) const;
 
@@ -50,9 +50,32 @@ public:
 private:
     DataType dataType;
     LogicalFunction left, right;
+
+    friend Reflector<AddLogicalFunction>;
+};
+
+template <>
+struct Reflector<AddLogicalFunction>
+{
+    Reflected operator()(const AddLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<AddLogicalFunction>
+{
+    AddLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<AddLogicalFunction>);
+}
+
+namespace NES::detail
+{
+struct ReflectedAddLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::AddLogicalFunction);

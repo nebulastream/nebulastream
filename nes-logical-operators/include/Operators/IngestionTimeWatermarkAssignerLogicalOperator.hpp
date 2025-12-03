@@ -21,10 +21,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -35,7 +34,6 @@ public:
     IngestionTimeWatermarkAssignerLogicalOperator();
 
     [[nodiscard]] bool operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -59,6 +57,18 @@ protected:
     TraitSet traitSet;
     Schema inputSchema;
     Schema outputSchema;
+};
+
+template <>
+struct Reflector<IngestionTimeWatermarkAssignerLogicalOperator>
+{
+    Reflected operator()(const IngestionTimeWatermarkAssignerLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>
+{
+    IngestionTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);

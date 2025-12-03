@@ -14,28 +14,38 @@
 
 #pragma once
 
-#include <memory>
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <SerializableOperator.pb.h>
-#include <SerializableVariantDescriptor.pb.h>
+#include <Traits/TraitSet.hpp>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
 
+struct ReflectedOperator
+{
+    std::string type;
+    uint64_t operatorId = 0;
+    std::vector<uint64_t> childrenIds;
+    Reflected config;
+    TraitSet traitSet;
+    std::vector<Schema> inputSchemas;
+    std::optional<Schema> outputSchema;
+};
 
-/// The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a corresponding protobuffer object.
+/// The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a corresponding ReflectedOperator object.
 class OperatorSerializationUtil
 {
 public:
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
-    static LogicalOperator deserializeOperator(const SerializableOperator& serializedOperator);
-    static SourceDescriptor deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
-    static SinkDescriptor deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor);
-    static std::shared_ptr<WindowAggregationLogicalFunction>
-    deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction);
+    static LogicalOperator deserializeOperator(const ReflectedOperator& serializedOperator);
+    static ReflectedOperator serializeOperator(const TypedLogicalOperator<>& op);
 };
 }

@@ -18,12 +18,14 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -89,29 +91,28 @@ LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema&
     return *this;
 }
 
-SerializableFunction ConstantValueLogicalFunction::serialize() const
+Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
+    return reflect(
+        detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .type = function.getDataType().type});
+}
 
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-
-    const DescriptorConfig::ConfigType configVariant = getConstantValue();
-    const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
-    (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
-
-    return serializedFunction;
+ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [value, type] = unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
+    return ConstantValueLogicalFunction{DataType{type}, value};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (not arguments.config.contains("constantValueAsString"))
+    if (!arguments.reflected.isEmpty())
     {
-        throw CannotDeserialize("ConstantValueLogicalFunction requires a constantValueAsString in its config");
+        return unreflect<ConstantValueLogicalFunction>(arguments.reflected);
     }
-    auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
-    return ConstantValueLogicalFunction(std::move(arguments.dataType), constantValueAsString);
+
+    PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
 }
 
 }

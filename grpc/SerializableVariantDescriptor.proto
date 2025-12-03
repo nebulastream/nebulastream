@@ -13,71 +13,10 @@
 */
 
 syntax = "proto3";
-import "SerializableDataType.proto";
 package NES;
-
-message WindowInfos {
-    message TimeCharacteristic {
-        enum Type {
-            Event_time = 0;
-            Ingestion_time = 1;
-        }
-        Type type = 1;
-        optional string field = 2;
-        uint64 multiplier = 3;
-    }
-
-    message TumblingWindow {
-        uint64 size = 1;
-    }
-
-    message SlidingWindow {
-        uint64 size = 1;
-        uint64 slide = 2;
-    }
-
-    TimeCharacteristic time_characteristic = 1;
-    oneof window_type {
-        TumblingWindow tumbling_window = 2;
-        SlidingWindow sliding_window = 3;
-    }
-}
-
-message SerializableFunction {
-    repeated SerializableFunction children = 1;
-    string function_type = 2;
-    SerializableDataType data_type = 3;
-    map<string, SerializableVariantDescriptor> config = 4;
-}
-
-message FunctionList {
-  repeated SerializableFunction functions = 1;
-}
-
-message ProjectionList {
-  message Projection {
-    optional string identifier = 1;
-    SerializableFunction function = 2;
-  }
-  repeated Projection projections = 1;
-}
-
-message SerializableAggregationFunction {
-    string type = 1;
-    SerializableFunction on_field = 2;
-    SerializableFunction as_field = 3;
-}
-
-message AggregationFunctionList {
-  repeated SerializableAggregationFunction functions = 1;
-}
 
 message SerializableEnumWrapper {
     string value = 1;
-}
-
-message UInt64List {
-  repeated uint64 values = 1;
 }
 
 message SerializableVariantDescriptor {
@@ -92,10 +31,5 @@ message SerializableVariantDescriptor {
     double double_value = 8;
     string string_value = 9;
     SerializableEnumWrapper enum_value = 10;
-    FunctionList function_list = 11;
-    AggregationFunctionList aggregation_function_list = 12;
-    WindowInfos window_infos = 13;
-    ProjectionList projections = 14;
-    UInt64List ulongs = 15;
   }
 }

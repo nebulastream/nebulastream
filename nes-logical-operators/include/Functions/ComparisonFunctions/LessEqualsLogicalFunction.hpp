@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,8 +35,6 @@ public:
     static constexpr std::string_view NAME = "LessEquals";
 
     LessEqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const LessEqualsLogicalFunction& rhs) const;
 
@@ -51,10 +51,33 @@ public:
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend Reflector<LessEqualsLogicalFunction>;
+};
+
+template <>
+struct Reflector<LessEqualsLogicalFunction>
+{
+    Reflected operator()(const LessEqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<LessEqualsLogicalFunction>
+{
+    LessEqualsLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<LessEqualsLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedLessEqualsLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::LessEqualsLogicalFunction);

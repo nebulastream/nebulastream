@@ -19,6 +19,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -27,7 +28,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -41,7 +42,6 @@ public:
     [[nodiscard]] LogicalFunction getPredicate() const;
 
     [[nodiscard]] bool operator==(const SelectionLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] SelectionLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -78,5 +78,25 @@ private:
     Schema inputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<SelectionLogicalOperator>
+{
+    Reflected operator()(const SelectionLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SelectionLogicalOperator>
+{
+    SelectionLogicalOperator operator()(const Reflected& rfl) const;
+};
+
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
+}
+
+namespace NES::detail
+{
+struct ReflectedSelectionLogicalOperator
+{
+    std::optional<LogicalFunction> predicate;
+};
 }
