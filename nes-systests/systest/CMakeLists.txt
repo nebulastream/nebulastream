@@ -12,6 +12,7 @@
 
 add_subdirectory(src)
 add_subdirectory(checksum)
+add_subdirectory(setsum)
 
 # Include necessary modules
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
