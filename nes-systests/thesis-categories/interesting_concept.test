@@ -1,0 +1,30 @@
+# Query 3 - redundant (incorrect result for now)
+
+
+# Query 4 - no parsing
+
+
+# Query 3 - conditional + redundant
+SELECT AVG(consumedPower) as count
+FROM consumers
+GROUP BY sectorId
+HAVING consumedPower >= FLOAT64(400)
+INTO consumersChecksum;
+----
+14236360, 36138915427
+
+# Query 6 - Union Queries
+SELECT
+    producerId,
+FROM windTurbines
+UNION
+SELECT
+    producerId,
+    groupId,
+    producedPower,
+    timestamp as ts
+FROM solarPanels
+INTO q5Checksum;
+----
+42900001,75003740240
+

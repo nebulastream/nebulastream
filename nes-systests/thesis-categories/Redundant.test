@@ -1,0 +1,38 @@
+# name: milestone/InterestingQueries.test
+# description: Queries from our DEBS tutorial
+# groups: [milestone, benchmark, large]
+
+# Source definitions
+Source solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp FILE
+TESTDATA/large/debs/SOLAR_PANELS_TOPIC_1G.csv
+
+Source windTurbines INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp FILE
+TESTDATA/large/debs/WIND_TURBINES_TOPIC_5M.csv
+
+Source consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZED consumerType UINT64 timestamp FILE
+TESTDATA/large/debs/CONSUMERS_TOPIC_1G.csv
+
+SINK consumersChecksum TYPE Checksum INT32 consumers$consumerId INT32 consumers$sectorId FLOAT64 consumers$consumedPower VARSIZED consumers$consumerType UINT64 consumers$timestamp
+SINK solarPanelsChecksum TYPE Checksum INT32 solarPanels$producerId INT32 solarPanels$groupId FLOAT64 solarPanels$producedPower UINT64 solarPanels$timestamp
+SINK q4Checksum TYPE Checksum FLOAT64 consumedPower
+SINK q5Checksum TYPE Checksum INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 ts
+SINK q6Checksum TYPE Checksum UINT64 source INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 ts
+SINK winPowerProductionChecksum TYPE Checksum UINT64 solarPanels$start UINT64 solarPanels$end INT32 solarPanels$groupId FLOAT64 solarPanels$producedPower
+
+SINK redundantChecksum TYPE Checksum FLOAT64 consumedPower1 FLOAT64 consumedPower2
+SINK selfJoinChecksum TYPE Checksum INT32 consumerA INT32 consumerB
+
+# Redundant queries:
+
+SELECT consumedPower / FLOAT64(1000) as consumedPower1, consumedPower / FLOAT64(1000) as consumedPower2 FROM consumers INTO redundantChecksum;
+----
+42700000, 32124734514
+
+SELECT a.consumerId AS consumerA,
+       b.consumerId AS consumerB
+FROM consumers AS a
+INNER JOIN consumers AS b
+  ON a.consumerId = b.consumerId
+INTO selfJoinChecksum;
+----
+14236360, 36138915427
