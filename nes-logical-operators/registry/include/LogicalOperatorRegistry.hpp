@@ -33,6 +33,7 @@ struct LogicalOperatorRegistryArguments
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     DescriptorConfig::Config config;
+    std::string reflec; // CHANGE ME
 };
 
 class LogicalOperatorRegistry
