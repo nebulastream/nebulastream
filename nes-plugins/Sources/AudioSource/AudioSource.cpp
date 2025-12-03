@@ -191,12 +191,19 @@ void AudioSource::open()
 
 size_t fillBuffer(int sockfd, TupleBuffer& tupleBuffer, size_t numberOfSamples, size_t sampleWidth)
 {
-    const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getAvailableMemoryArea().data(), numberOfSamples * sampleWidth);
-    if (bufferSizeReceived < 0)
+    while (true)
     {
-        throw CannotOpenSource("Failed to read from socket. Error: {}", strerror(errno));
+        const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getAvailableMemoryArea().data(), numberOfSamples * sampleWidth);
+        if (bufferSizeReceived < 0)
+        {
+            if (errno == EAGAIN)
+            {
+                continue;
+            }
+            throw CannotOpenSource("Failed to read from socket. Error: {}", strerror(errno));
+        }
+        return static_cast<size_t>(bufferSizeReceived);
     }
-    return static_cast<size_t>(bufferSizeReceived);
 }
 
 size_t AudioSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
@@ -228,7 +235,7 @@ size_t AudioSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_to
             };
 
             std::ranges::copy_backward(views::enumerate(values) | std::views::transform(convert), tuples.end());
-            tupleBuffer.setNumberOfTuples(numberOfTuplesReceived);
+            tupleBuffer.setNumberOfTuples(numberOfTuplesReceived * 12);
             current += numberOfTuplesReceived * timePerSample;
         };
 
@@ -250,7 +257,7 @@ size_t AudioSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_to
                 throw CannotOpenSource("Unsupported sample width: {}", sampleWidth);
         }
 
-        return numberOfTuplesReceived;
+        return numberOfTuplesReceived * 12;
     }
     catch (const std::exception& e)
     {

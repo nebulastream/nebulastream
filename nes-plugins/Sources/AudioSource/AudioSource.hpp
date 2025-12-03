@@ -43,21 +43,21 @@ namespace NES
 struct ConfigParametersAudio
 {
     static inline const DescriptorConfig::ConfigParameter<bool> REAL_TIMESTAMP{
-        "realTimestamp",
+        "real_timestamp",
         true,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "socketHost",
+        "socket_host",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_RATE{
-        "sampleRate",
+        "sample_rate",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SAMPLE_RATE, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SAMPLE_WIDTH{
-        "sampleWidth",
+        "sample_width",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
         {
@@ -76,7 +76,7 @@ struct ConfigParametersAudio
         }};
 
     static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
-        "socketPort",
+        "socket_port",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
