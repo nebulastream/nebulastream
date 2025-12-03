@@ -1,0 +1,40 @@
+query: |
+  SELECT 
+    UINT32(9) AS alertType, 
+    start as `timestamp`,
+    SpeechRecognitionLabel(ArgMax(output)) as `label`, 
+    MaxValue(output) as `probability`
+  FROM (
+    SELECT start, end, output, INFER_MODEL(speech_recognition, (chunked))
+    FROM (
+        SELECT start, end, COUNT(value) as samples, ARRAY_AGG(value) as chunked
+        FROM audio_stream WINDOW SLIDING(timestamp, size 1000000 ms, advance by 10000 ms)
+    )
+  )
+  INTO MQTT("JSON" as `SINK`.`INPUT_FORMAT`, "sink/live/alert" as `SINK`.`TOPIC`, 1 as `SINK`.`QOS`, "mqtt://localhost:1883" as `SINK`.`SERVER_URI`)
+sinks: [ ]
+logical:
+  - name: AUDIO_STREAM
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: VALUE
+        type: FLOAT32
+physical:
+  - logical: AUDIO_STREAM
+    type: Audio
+    parser_config:
+      type: Native
+    source_config:
+      socket_port: 1234
+      socket_host: localhost
+      sample_rate: 16000
+      sample_width: 2
+models:
+  - path: demo/audio_model.onnx
+    name: speech_recognition
+    inputs:
+      - VARSIZED
+    outputs:
+      - name: OUTPUT
+        type: VARSIZED
