@@ -28,12 +28,11 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -129,30 +128,6 @@ std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const
     return children;
 }
 
-void UnionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
-{
-    SerializableLogicalOperator proto;
-
-    proto.set_operator_type(NAME);
-
-    for (const auto& inputSchema : getInputSchemas())
-    {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
-
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
-}
-
 UnionLogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
 {
     if (inputSchemas.empty())
@@ -171,9 +146,23 @@ UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputS
     return copy;
 }
 
+Reflected Reflector<UnionLogicalOperator>::operator()(const UnionLogicalOperator&) const
+{
+    return reflect(true);
+}
+
+UnionLogicalOperator Unreflector<UnionLogicalOperator>::operator()(const Reflected&) const
+{
+    return UnionLogicalOperator();
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<UnionLogicalOperator>(arguments.reflected);
+    }
     auto logicalOperator = UnionLogicalOperator();
     if (arguments.inputSchemas.empty())
     {

@@ -13,14 +13,13 @@
 */
 
 syntax = "proto3";
-import "SerializableOperator.proto";
 package NES;
 
 /*
 The serializable wrapper definition for query plan
  */
 message SerializableQueryPlan{
-  repeated SerializableOperator operators = 1;
+  repeated string reflectedOperators = 1;
   repeated uint64 rootOperatorIds = 2;
   optional uint64 queryId = 3;
 }

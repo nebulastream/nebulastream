@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -25,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -112,35 +114,29 @@ std::string_view FieldAccessLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction FieldAccessLogicalFunction::serialize() const
+Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
+    return reflect(
+        detail::ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType().type});
+}
 
-    const DescriptorConfig::ConfigType configVariant = getFieldName();
-    const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
-    (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
+FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [name, type] = unreflect<detail::ReflectedFieldAccessLogicalFunction>(reflected);
 
-    DataTypeSerializationUtil::serializeDataType(dataType, serializedFunction.mutable_data_type());
-
-    return serializedFunction;
+    return FieldAccessLogicalFunction{DataType{type}, name};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (not arguments.config.contains("FieldName"))
+    if (!arguments.reflected.isEmpty())
     {
-        throw CannotDeserialize(
+        return unreflect<FieldAccessLogicalFunction>(arguments.reflected);
+    }
 
-            "FieldAccessLogicalFunction requires a FieldName in its config");
-    }
-    auto fieldName = get<std::string>(arguments.config["FieldName"]);
-    if (fieldName.empty())
-    {
-        throw CannotDeserialize("FieldName cannot be empty");
-    }
-    return FieldAccessLogicalFunction(arguments.dataType, fieldName);
+    PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
 }
 
 }

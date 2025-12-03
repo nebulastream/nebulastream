@@ -12,15 +12,27 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+#pragma once
 
-import "SerializableVariantDescriptor.proto";
+#include <WindowTypes/Types/WindowType.hpp>
 
-message SerializableTrait {
-  map<string, SerializableVariantDescriptor> config = 1;
+#include <memory>
+#include <string>
+#include <Util/Reflection.hpp>
+
+namespace NES
+{
+
+Reflected reflectWindowType(const Windowing::WindowType& windowType);
+std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected);
+
 }
 
-message SerializableTraitSet {
-  map<string, SerializableTrait> traits = 1;
+namespace NES::detail
+{
+struct ReflectedWindowTypeReflection
+{
+    std::string type;
+    Reflected config;
+};
 }

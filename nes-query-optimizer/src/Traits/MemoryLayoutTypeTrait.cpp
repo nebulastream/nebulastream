@@ -24,10 +24,10 @@
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableTrait.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 #include <TraitRegisty.hpp>
 
@@ -41,17 +41,6 @@ MemoryLayoutTypeTrait::MemoryLayoutTypeTrait(const MemoryLayoutType memoryLayout
 const std::type_info& MemoryLayoutTypeTrait::getType() const
 {
     return typeid(MemoryLayoutTypeTrait);
-}
-
-SerializableTrait MemoryLayoutTypeTrait::serialize() const
-{
-    SerializableTrait trait;
-    SerializableEnumWrapper wrappedImplType;
-    wrappedImplType.set_value(magic_enum::enum_name(memoryLayout));
-    SerializableVariantDescriptor variant{};
-    variant.set_allocated_enum_value(&wrappedImplType);
-    (*trait.mutable_config())["memoryLayoutType"] = variant;
-    return trait;
 }
 
 bool MemoryLayoutTypeTrait::operator==(const MemoryLayoutTypeTrait& other) const
@@ -77,16 +66,17 @@ std::string_view MemoryLayoutTypeTrait::getName() const
 /// Required for plugin registration, no implementation necessary
 TraitRegistryReturnType TraitGeneratedRegistrar::RegisterMemoryLayoutTypeTrait(TraitRegistryArguments arguments)
 {
-    if (const auto typeIter = arguments.config.find("memoryLayoutType"); typeIter != arguments.config.end())
-    {
-        if (std::holds_alternative<EnumWrapper>(typeIter->second))
-        {
-            if (const auto implementation = std::get<EnumWrapper>(typeIter->second).asEnum<MemoryLayoutType>(); implementation.has_value())
-            {
-                return MemoryLayoutTypeTrait{implementation.value()};
-            }
-        }
-    }
-    throw CannotDeserialize("Failed to deserialize ImplementationTypeTrait");
+    return unreflect<MemoryLayoutTypeTrait>(arguments.reflected);
+}
+
+Reflected Reflector<MemoryLayoutTypeTrait>::operator()(const MemoryLayoutTypeTrait& trait) const
+{
+    return reflect(detail::ReflectedMemoryLayoutTypeTrait{trait.memoryLayout});
+}
+
+MemoryLayoutTypeTrait Unreflector<MemoryLayoutTypeTrait>::operator()(const Reflected& reflected) const
+{
+    auto [memoryLayout] = unreflect<detail::ReflectedMemoryLayoutTypeTrait>(reflected);
+    return MemoryLayoutTypeTrait{memoryLayout};
 }
 }

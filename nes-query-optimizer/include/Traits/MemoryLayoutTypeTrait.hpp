@@ -21,7 +21,7 @@
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableTrait.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -36,8 +36,6 @@ struct MemoryLayoutTypeTrait final
 
     [[nodiscard]] const std::type_info& getType() const;
 
-    [[nodiscard]] SerializableTrait serialize() const;
-
     bool operator==(const MemoryLayoutTypeTrait& other) const;
 
     [[nodiscard]] size_t hash() const;
@@ -45,8 +43,30 @@ struct MemoryLayoutTypeTrait final
     [[nodiscard]] std::string explain(ExplainVerbosity) const;
 
     [[nodiscard]] std::string_view getName() const;
+
+    friend Reflector<MemoryLayoutTypeTrait>;
+};
+
+template <>
+struct Reflector<MemoryLayoutTypeTrait>
+{
+    Reflected operator()(const MemoryLayoutTypeTrait& trait) const;
+};
+
+template <>
+struct Unreflector<MemoryLayoutTypeTrait>
+{
+    MemoryLayoutTypeTrait operator()(const Reflected& reflected) const;
 };
 
 static_assert(TraitConcept<MemoryLayoutTypeTrait>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedMemoryLayoutTypeTrait
+{
+    MemoryLayoutType memoryLayout;
+};
 }

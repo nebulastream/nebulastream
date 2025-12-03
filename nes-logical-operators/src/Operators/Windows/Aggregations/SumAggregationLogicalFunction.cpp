@@ -21,6 +21,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -72,25 +73,29 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->setAsField(this->getAsField().withDataType(this->getFinalAggregateStamp()));
 }
 
-SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
+Reflected SumAggregationLogicalFunction::reflect() const
 {
-    SerializableAggregationFunction serializedAggregationFunction;
-    serializedAggregationFunction.set_type(NAME);
+    return NES::reflect(this);
+}
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(this->getOnField().serialize());
+Reflected Reflector<SumAggregationLogicalFunction>::operator()(const SumAggregationLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedSumAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+}
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(this->getAsField().serialize());
-
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
-    return serializedAggregationFunction;
+SumAggregationLogicalFunction Unreflector<SumAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [onField, asField] = unreflect<detail::ReflectedSumAggregationLogicalFunction>(reflected);
+    return SumAggregationLogicalFunction{onField, asField};
 }
 
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return std::make_shared<SumAggregationLogicalFunction>(unreflect<SumAggregationLogicalFunction>(arguments.reflected));
+    }
     if (arguments.fields.size() != 2)
     {
         throw CannotDeserialize("SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());

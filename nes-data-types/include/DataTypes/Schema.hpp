@@ -27,6 +27,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 
@@ -117,6 +118,45 @@ private:
 
 /// Returns a copy of the input schema without any source qualifier on the schema fields
 Schema withoutSourceQualifier(const Schema& input);
+
+namespace detail
+{
+struct ReflectedField
+{
+    std::string name;
+    DataType type;
+};
+
+struct ReflectedSchema
+{
+    std::vector<Schema::Field> fields;
+};
+
+}
+
+template <>
+struct Reflector<Schema::Field>
+{
+    Reflected operator()(const Schema::Field& field) const;
+};
+
+template <>
+struct Unreflector<Schema::Field>
+{
+    Schema::Field operator()(const Reflected& rfl) const;
+};
+
+template <>
+struct Reflector<Schema>
+{
+    Reflected operator()(const Schema& schema) const;
+};
+
+template <>
+struct Unreflector<Schema>
+{
+    Schema operator()(const Reflected& rfl) const;
+};
 
 }
 

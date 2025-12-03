@@ -22,11 +22,10 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableTrait.pb.h>
-#include <SerializableVariantDescriptor.pb.h>
 #include <TraitRegisty.hpp>
 
 namespace NES
@@ -34,18 +33,7 @@ namespace NES
 /// Required for plugin registration, no implementation necessary
 TraitRegistryReturnType TraitGeneratedRegistrar::RegisterJoinImplementationTypeTrait(TraitRegistryArguments arguments)
 {
-    if (const auto typeIter = arguments.config.find("implementationJoinType"); typeIter != arguments.config.end())
-    {
-        if (std::holds_alternative<EnumWrapper>(typeIter->second))
-        {
-            if (const auto implementation = std::get<EnumWrapper>(typeIter->second).asEnum<JoinImplementation>();
-                implementation.has_value())
-            {
-                return JoinImplementationTypeTrait{implementation.value()};
-            }
-        }
-    }
-    throw CannotDeserialize("Failed to deserialize ImplementationTypeTrait");
+    return unreflect<JoinImplementationTypeTrait>(arguments.reflected);
 }
 
 JoinImplementationTypeTrait::JoinImplementationTypeTrait(const JoinImplementation implementationType)
@@ -56,17 +44,6 @@ JoinImplementationTypeTrait::JoinImplementationTypeTrait(const JoinImplementatio
 const std::type_info& JoinImplementationTypeTrait::getType() const
 {
     return typeid(JoinImplementationTypeTrait);
-}
-
-SerializableTrait JoinImplementationTypeTrait::serialize() const
-{
-    SerializableTrait trait;
-    SerializableEnumWrapper wrappedImplType;
-    wrappedImplType.set_value(magic_enum::enum_name(implementationType));
-    SerializableVariantDescriptor variant{};
-    variant.set_allocated_enum_value(&wrappedImplType);
-    (*trait.mutable_config())["implementationJoinType"] = variant;
-    return trait;
 }
 
 bool JoinImplementationTypeTrait::operator==(const JoinImplementationTypeTrait& other) const
@@ -87,6 +64,17 @@ std::string JoinImplementationTypeTrait::explain(ExplainVerbosity) const
 std::string_view JoinImplementationTypeTrait::getName() const
 {
     return NAME;
+}
+
+Reflected Reflector<JoinImplementationTypeTrait>::operator()(const JoinImplementationTypeTrait& trait) const
+{
+    return reflect(detail::ReflectedImplementationTypeTrait{trait.implementationType});
+}
+
+JoinImplementationTypeTrait Unreflector<JoinImplementationTypeTrait>::operator()(const Reflected& reflected) const
+{
+    auto [joinImplementationType] = unreflect<detail::ReflectedImplementationTypeTrait>(reflected);
+    return JoinImplementationTypeTrait{joinImplementationType};
 }
 
 }

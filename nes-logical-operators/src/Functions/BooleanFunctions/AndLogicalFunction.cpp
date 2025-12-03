@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -99,18 +101,29 @@ LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) c
     return this->withChildren(newChildren);
 }
 
-SerializableFunction AndLogicalFunction::serialize() const
+Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedAndLogicalFunction{.left = function.left, .right = function.right});
+}
+
+AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& rfl) const
+{
+    auto [left, right] = unreflect<detail::ReflectedAndLogicalFunction>(rfl);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("AndLogicalFunction is missing a child");
+    }
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<AndLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());

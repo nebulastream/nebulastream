@@ -22,6 +22,7 @@
 #include <string>
 #include <type_traits>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -117,6 +118,18 @@ struct DataType final
     [[nodiscard]] bool isNumeric() const;
 
     Type type{Type::UNDEFINED};
+};
+
+template <>
+struct Reflector<DataType>
+{
+    Reflected operator()(const DataType& field) const;
+};
+
+template <>
+struct Unreflector<DataType>
+{
+    DataType operator()(const Reflected& rfl) const;
 };
 
 }

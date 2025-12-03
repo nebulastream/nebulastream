@@ -20,8 +20,11 @@
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
+#include <vector>
+
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
 
@@ -92,6 +95,8 @@ public:
 
 private:
     std::unordered_map<std::type_index, Trait> traitMap;
+
+    friend Reflector<TraitSet>;
 };
 
 static_assert(std::ranges::input_range<TraitSet>);
@@ -119,5 +124,26 @@ bool tryInsert(TraitSet& traitset, TraitType trait)
 {
     return traitset.tryInsert(std::move(trait));
 }
+
+template <>
+struct Reflector<TraitSet>
+{
+    Reflected operator()(const TraitSet& traitSet) const;
+};
+
+template <>
+struct Unreflector<TraitSet>
+{
+    TraitSet operator()(const Reflected& reflected) const;
+};
+
+}
+
+namespace NES::detail
+{
+struct ReflectedTraitSet
+{
+    std::vector<Trait> traits;
+};
 
 }

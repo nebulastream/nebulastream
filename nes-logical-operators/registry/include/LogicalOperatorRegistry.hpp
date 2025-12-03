@@ -21,6 +21,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
@@ -32,7 +33,7 @@ struct LogicalOperatorRegistryArguments
 {
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
-    DescriptorConfig::Config config;
+    Reflected reflected;
 };
 
 class LogicalOperatorRegistry

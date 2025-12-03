@@ -33,8 +33,8 @@
 #include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableOperator.pb.h>
 #include <nameof.hpp>
 
 namespace NES
@@ -67,7 +67,6 @@ concept LogicalOperatorConcept = requires(
     std::vector<LogicalOperator> children,
     TraitSet traitSet,
     const T& rhs,
-    SerializableOperator& serializableOperator,
     std::vector<Schema> inputSchemas) {
     /// Returns a string representation of the operator
     { thisOperator.explain(verbosity, operatorId) } -> std::convertible_to<std::string>;
@@ -87,8 +86,8 @@ concept LogicalOperatorConcept = requires(
     /// Returns the name of the operator, used during planning and optimization
     { thisOperator.getName() } noexcept -> std::convertible_to<std::string_view>;
 
-    /// Serializes the operator to a protobuf message
-    thisOperator.serialize(serializableOperator);
+    /// Serialize the operator to a Reflected object
+    { NES::reflect(thisOperator) } -> std::same_as<Reflected>;
 
     /// Returns the trait set of the operator
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
@@ -115,7 +114,7 @@ struct ErasedLogicalOperator
     [[nodiscard]] virtual LogicalOperator withChildren(std::vector<LogicalOperator> children) const = 0;
     [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet traitSet) const = 0;
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
-    virtual void serialize(SerializableOperator& sOp) const = 0;
+    [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
     [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
     [[nodiscard]] virtual Schema getOutputSchema() const = 0;
@@ -291,8 +290,6 @@ struct TypedLogicalOperator
 
     [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
-    void serialize(SerializableOperator& serializableOperator) const { self->serialize(serializableOperator); }
-
     [[nodiscard]] TraitSet getTraitSet() const { return self->getTraitSet(); }
 
     [[nodiscard]] std::vector<Schema> getInputSchemas() const { return self->getInputSchemas(); }
@@ -340,12 +337,7 @@ struct OperatorModel : ErasedLogicalOperator
 
     [[nodiscard]] std::string_view getName() const noexcept override { return impl.getName(); }
 
-    void serialize(SerializableOperator& sOp) const override
-    {
-        impl.serialize(sOp);
-        PRECONDITION(sOp.operator_id() == OperatorId::INVALID, "Operator id should not be serialized in operator implementation");
-        sOp.set_operator_id(id.getRawValue());
-    }
+    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
 

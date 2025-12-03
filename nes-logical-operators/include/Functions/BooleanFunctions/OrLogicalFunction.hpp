@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,7 +35,6 @@ public:
 
     OrLogicalFunction(LogicalFunction left, LogicalFunction right);
 
-    [[nodiscard]] SerializableFunction serialize() const;
     [[nodiscard]] bool operator==(const OrLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
@@ -50,10 +51,33 @@ private:
     DataType dataType;
     LogicalFunction left;
     LogicalFunction right;
+
+    friend Reflector<OrLogicalFunction>;
+};
+
+template <>
+struct Reflector<OrLogicalFunction>
+{
+    Reflected operator()(const OrLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<OrLogicalFunction>
+{
+    OrLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<OrLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedOrLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::OrLogicalFunction);

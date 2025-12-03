@@ -19,9 +19,13 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <variant>
+
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Overloaded.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
@@ -83,26 +87,6 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig
             {
                 protoVar.mutable_enum_value()->set_value(arg.getValue());
             }
-            else if constexpr (std::is_same_v<U, FunctionList>)
-            {
-                protoVar.mutable_function_list()->CopyFrom(arg);
-            }
-            else if constexpr (std::is_same_v<U, ProjectionList>)
-            {
-                protoVar.mutable_projections()->CopyFrom(arg);
-            }
-            else if constexpr (std::is_same_v<U, AggregationFunctionList>)
-            {
-                protoVar.mutable_aggregation_function_list()->CopyFrom(arg);
-            }
-            else if constexpr (std::is_same_v<U, WindowInfos>)
-            {
-                protoVar.mutable_window_infos()->CopyFrom(arg);
-            }
-            else if constexpr (std::is_same_v<U, UInt64List>)
-            {
-                protoVar.mutable_ulongs()->CopyFrom(arg);
-            }
             else
             {
                 static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
@@ -136,17 +120,8 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
             return protoVar.string_value();
         case SerializableVariantDescriptor::kEnumValue:
             return EnumWrapper(protoVar.enum_value().value());
-        case SerializableVariantDescriptor::kFunctionList:
-            return protoVar.function_list();
-        case SerializableVariantDescriptor::kAggregationFunctionList:
-            return protoVar.aggregation_function_list();
-        case SerializableVariantDescriptor::kProjections:
-            return protoVar.projections();
-        case SerializableVariantDescriptor::kWindowInfos:
-            return protoVar.window_infos();
-        case SerializableVariantDescriptor::kUlongs:
-            return protoVar.ulongs();
         case NES::SerializableVariantDescriptor::VALUE_NOT_SET:
+        default:
             throw CannotSerialize("Protobuf oneOf has no value");
     }
 }
@@ -196,6 +171,98 @@ std::string Descriptor::toStringConfig() const
     std::stringstream ss;
     ss << this->config;
     return ss.str();
+}
+
+struct ReflectedDescriptorConfig
+{
+    std::unordered_map<std::string, std::pair<std::string, Reflected>> config;
+};
+
+Reflected Descriptor::getReflectedConfig() const
+{
+    ReflectedDescriptorConfig reflectedConfig;
+
+    /// Following linter exception added because clang cannot properly handle structured bindings with captures in lamda. Fixed in clang-21.
+    /// See https://github.com/llvm/llvm-project/issues/142267
+    ///NOLINTBEGIN(clang-analyzer-core.CallAndMessage)
+    for (const auto& [key, value] : this->config)
+    {
+        std::visit(
+            Overloaded{
+                [&](const int32_t val) { reflectedConfig.config[key] = std::make_pair("int32_t", reflect(val)); },
+                [&](const uint32_t val) { reflectedConfig.config[key] = std::make_pair("uint32_t", reflect(val)); },
+                [&](const int64_t val) { reflectedConfig.config[key] = std::make_pair("int64_t", reflect(val)); },
+                [&](const uint64_t val) { reflectedConfig.config[key] = std::make_pair("uint64_t", reflect(val)); },
+                [&](const bool val) { reflectedConfig.config[key] = std::make_pair("bool", reflect(val)); },
+                [&](const char val) { reflectedConfig.config[key] = std::make_pair("char", reflect(val)); },
+                [&](const float val) { reflectedConfig.config[key] = std::make_pair("float", reflect(val)); },
+                [&](const double val) { reflectedConfig.config[key] = std::make_pair("double", reflect(val)); },
+                [&](const std::string& val) { reflectedConfig.config[key] = std::make_pair("string", reflect(val)); },
+                [&](const EnumWrapper& val) { reflectedConfig.config[key] = std::make_pair("EnumWrapper", reflect(val)); }},
+            value);
+    }
+    ///NOLINTEND(clang-analyzer-core.CallAndMessage)
+
+    return reflect(reflectedConfig);
+}
+
+DescriptorConfig::Config Descriptor::unreflectConfig(const Reflected& rfl)
+{
+    auto reflectedConfig = unreflect<ReflectedDescriptorConfig>(rfl);
+    DescriptorConfig::Config config;
+
+    for (const auto& [key, pair] : reflectedConfig.config)
+    {
+        const auto& [type, value] = pair;
+
+        if (type == "int32_t")
+        {
+            config[key] = unreflect<int32_t>(value);
+        }
+        else if (type == "uint32_t")
+        {
+            config[key] = unreflect<uint32_t>(value);
+        }
+        else if (type == "int64_t")
+        {
+            config[key] = unreflect<int64_t>(value);
+        }
+        else if (type == "uint64_t")
+        {
+            config[key] = unreflect<uint64_t>(value);
+        }
+        else if (type == "bool")
+        {
+            config[key] = unreflect<bool>(value);
+        }
+        else if (type == "char")
+        {
+            config[key] = unreflect<char>(value);
+        }
+        else if (type == "float")
+        {
+            config[key] = unreflect<float>(value);
+        }
+        else if (type == "double")
+        {
+            config[key] = unreflect<double>(value);
+        }
+        else if (type == "string")
+        {
+            config[key] = unreflect<std::string>(value);
+        }
+        else if (type == "EnumWrapper")
+        {
+            config[key] = unreflect<EnumWrapper>(value);
+        }
+        else
+        {
+            throw CannotDeserialize("Unknown descriptor config type {}", type);
+        }
+    }
+
+
+    return config;
 }
 
 }

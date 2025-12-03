@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -32,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "Mul";
 
     MulLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const MulLogicalFunction& rhs) const;
 
@@ -50,10 +50,33 @@ public:
 private:
     DataType dataType;
     LogicalFunction left, right;
+
+    friend Reflector<MulLogicalFunction>;
+};
+
+template <>
+struct Reflector<MulLogicalFunction>
+{
+    Reflected operator()(const MulLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<MulLogicalFunction>
+{
+    MulLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<MulLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedMulLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::MulLogicalFunction);

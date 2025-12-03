@@ -14,16 +14,20 @@
 
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -31,7 +35,6 @@
 
 namespace NES
 {
-
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
@@ -90,21 +93,31 @@ std::string EqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} = {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-SerializableFunction EqualsLogicalFunction::serialize() const
+Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
+    return reflect(detail::ReflectedEqualsLogicalFunction{
+        .left = std::make_optional<LogicalFunction>(function.left), .right = std::make_optional<LogicalFunction>(function.right)});
+}
 
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
+EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedEqualsLogicalFunction>(reflected);
 
-    return serializedFunction;
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("EqualsLogicalFunction doesn't have a child operator");
+    }
+
+    return EqualsLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<EqualsLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());

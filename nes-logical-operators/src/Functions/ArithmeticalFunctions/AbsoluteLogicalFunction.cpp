@@ -22,7 +22,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -85,17 +87,27 @@ std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("ABS({})", child.explain(verbosity));
 }
 
-SerializableFunction AbsoluteLogicalFunction::serialize() const
+Reflected Reflector<AbsoluteLogicalFunction>::operator()(const AbsoluteLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedAbsoluteLogicalFunction{.child = function.child});
+}
+
+AbsoluteLogicalFunction Unreflector<AbsoluteLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedAbsoluteLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("AbsoluteLogicalFunction is missing its child");
+    }
+    return AbsoluteLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAbsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<AbsoluteLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());

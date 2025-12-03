@@ -23,7 +23,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {

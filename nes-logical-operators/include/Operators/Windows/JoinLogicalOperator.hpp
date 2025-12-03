@@ -30,6 +30,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -59,7 +60,6 @@ public:
 
 
     [[nodiscard]] bool operator==(const JoinLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] JoinLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -75,40 +75,6 @@ public:
 
     [[nodiscard]] JoinLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<EnumWrapper, JoinType> JOIN_TYPE{
-            "joinType",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<EnumWrapper, FunctionList> JOIN_FUNCTION{
-            "joinFunctionName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(JOIN_TYPE, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
-            "windowStartFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
-            "windowEndFieldName",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config); }};
-
-        static inline const DescriptorConfig::ConfigParameter<WindowInfos> WINDOW_INFOS{
-            "windowInfo",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(WINDOW_INFOS, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(
-                JOIN_TYPE, JOIN_FUNCTION, WINDOW_INFOS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
-    };
-
 private:
     static constexpr std::string_view NAME = "Join";
     LogicalFunction joinFunction;
@@ -119,7 +85,31 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema leftInputSchema, rightInputSchema, outputSchema;
+
+    friend Reflector<JoinLogicalOperator>;
+};
+
+template <>
+struct Reflector<JoinLogicalOperator>
+{
+    Reflected operator()(const JoinLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<JoinLogicalOperator>
+{
+    JoinLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
+}
+
+namespace NES::detail
+{
+struct ReflectedJoinLogicalOperator
+{
+    std::optional<LogicalFunction> joinFunction;
+    Reflected windowType;
+    JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
+};
 }

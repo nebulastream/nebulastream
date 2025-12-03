@@ -30,8 +30,8 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -128,9 +128,16 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-void SourceNameLogicalOperator::serialize(SerializableOperator&) const
+Reflected Reflector<SourceNameLogicalOperator>::operator()(const SourceNameLogicalOperator&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
+    std::unreachable();
+}
+
+SourceNameLogicalOperator Unreflector<SourceNameLogicalOperator>::operator()(const Reflected&) const
+{
+    PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
+    std::unreachable();
 }
 
 }

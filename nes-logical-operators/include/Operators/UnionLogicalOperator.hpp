@@ -21,10 +21,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -35,7 +34,6 @@ public:
     explicit UnionLogicalOperator();
 
     [[nodiscard]] bool operator==(const UnionLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] UnionLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -62,6 +60,18 @@ private:
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     TraitSet traitSet;
+};
+
+template <>
+struct Reflector<UnionLogicalOperator>
+{
+    Reflected operator()(const UnionLogicalOperator&) const;
+};
+
+template <>
+struct Unreflector<UnionLogicalOperator>
+{
+    UnionLogicalOperator operator()(const Reflected&) const;
 };
 
 static_assert(LogicalOperatorConcept<UnionLogicalOperator>);

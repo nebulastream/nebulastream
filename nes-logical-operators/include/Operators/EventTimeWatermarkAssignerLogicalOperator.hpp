@@ -29,7 +29,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -44,7 +44,6 @@ public:
     Windowing::TimeUnit unit;
 
     [[nodiscard]] bool operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -60,21 +59,6 @@ public:
 
     [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
-            "TimeMs",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIME_MS, config); }};
-        static inline const DescriptorConfig::ConfigParameter<FunctionList> FUNCTION{
-            "Function",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FUNCTION, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(TIME_MS, FUNCTION);
-    };
-
 private:
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
 
@@ -83,6 +67,26 @@ private:
     Schema inputSchema, outputSchema;
 };
 
-static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
+template <>
+struct Reflector<EventTimeWatermarkAssignerLogicalOperator>
+{
+    Reflected operator()(const EventTimeWatermarkAssignerLogicalOperator& op) const;
+};
 
+template <>
+struct Unreflector<EventTimeWatermarkAssignerLogicalOperator>
+{
+    EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
+}
+
+namespace NES::detail
+{
+struct ReflectedEventTimeWatermarkAssignerLogicalOperator
+{
+    std::optional<LogicalFunction> onField;
+    Windowing::TimeUnit timeUnit;
+};
 }
