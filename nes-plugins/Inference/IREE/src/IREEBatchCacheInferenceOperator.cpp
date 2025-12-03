@@ -142,7 +142,7 @@ void IREEBatchCacheInferenceOperator::performInference(
         }
     }
 
-    nautilus::val<std::byte*> inputDataVal = nautilus::invoke(
+    auto inputDataVal = nautilus::invoke(
         +[](void* inferModelHandler, WorkerThreadId thread)
         {
             auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
@@ -150,7 +150,7 @@ void IREEBatchCacheInferenceOperator::performInference(
             return adapter->inputData.get();
         }, operatorHandler, executionCtx.workerThreadId);
 
-    const auto pred = predictionCache->getDataStructureRef(
+    const auto prediction = predictionCache->getDataStructureRef(
         inputDataVal,
         [&](
             const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>&)
@@ -161,12 +161,14 @@ void IREEBatchCacheInferenceOperator::performInference(
                     auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(opHandlerPtr);
                     auto adapter = handler->getIREEAdapter(thread);
                     adapter->infer();
+                    adapter->misses += 1;
 
-                    std::memcpy(adapter->inputDataCache.get(), adapter->inputData.get(), adapter->inputSize);
-                    predictionCacheEntry->record = adapter->inputDataCache.get();
+                    auto inputVec = std::vector(adapter->inputData.get(), adapter->inputData.get() + adapter->inputSize);
+                    predictionCacheEntry->record = std::move(inputVec);
 
-                    predictionCacheEntry->dataStructure = reinterpret_cast<int8_t*>(adapter->outputData.get());
-                    return predictionCacheEntry->dataStructure;
+                    auto outputVec = std::vector(adapter->outputData.get(), adapter->outputData.get() + adapter->outputSize);
+                    predictionCacheEntry->dataStructure = std::move(outputVec);
+                    return &predictionCacheEntry->dataStructure;
                 }, predictionCacheEntryToReplace, operatorHandler, executionCtx.workerThreadId);
         });
 
