@@ -48,6 +48,7 @@ void IREEBatchInferenceOperatorHandler::start(PipelineExecutionContext& pipeline
 
 void IREEBatchInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
+    threadLocalAdapters.clear();
 }
 
 const Nebuli::Inference::Model& IREEBatchInferenceOperatorHandler::getModel() const

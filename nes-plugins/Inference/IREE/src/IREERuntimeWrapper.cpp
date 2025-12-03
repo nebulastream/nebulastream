@@ -54,8 +54,8 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
 
     NES_DEBUG("Read the model from the bytecode buffer and set an IREE session up");
     this->instance = std::move(runtimeInstance);
-    this->session = std::move(ireeSession);
     this->device = std::move(ireeDevice);
+    this->session = std::move(ireeSession);
 }
 
 void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size_t inputSize, void* outputData)
