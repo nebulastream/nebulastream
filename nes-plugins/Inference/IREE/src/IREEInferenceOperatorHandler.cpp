@@ -36,14 +36,13 @@ void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecu
 }
 void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext& pipelineExecutionContext)
 {
-
     if (model.getInputs()[0].isType(DataType::Type::VARSIZED))
     {
         uint64_t misses{0};
         for (auto adapter : threadLocalAdapters) { misses += adapter->misses; }
         NES_INFO("{{\"pipeline_id\": {}, \"misses\": {}}}", pipelineExecutionContext.getPipelineId(), misses)
     }
-
+    threadLocalAdapters.clear();
 }
 
 const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
