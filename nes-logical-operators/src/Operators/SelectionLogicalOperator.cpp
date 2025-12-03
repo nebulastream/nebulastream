@@ -23,6 +23,8 @@
 #include <vector>
 
 #include <fmt/format.h>
+#include "Serialization/SerializedData.hpp"
+#include <Serialization/SerializedUtils.hpp>
 
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -135,86 +137,13 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
 }
 
 
-enum class DataTypeSerializer: int8_t
-{
-    UINT8, UINT16, UINT32, UINT64, INT8, INT16, INT32, INT64, FLOAT32, FLOAT64, BOOLEAN, CHAR, UNDEFINED, VARSIZED
-};
-
-struct FieldSerializer
-{
-    std::string name;
-    rfl::Box<DataTypeSerializer> type;
-};
-
-enum class MemoryLayoutSerializer: int8_t
-{
-    ROW_LAYOUT, COL_LAYOUT
-};
-
-struct SchemaSerializer
-{
-    MemoryLayoutSerializer memoryLayout;
-    std::vector<FieldSerializer> fields;
-};
-
-// std::variant<bool, int, double, std::string, rfl::Object, rfl::Array, std::nullopt_t>;
-
-struct FunctionSerializer
-{
-    std::vector<FunctionSerializer> children;
-    std::string functionType;
-    DataTypeSerializer dataType;
-    std::map<std::string, rfl::Generic> config;
-};
-
 struct SelectionLogicalOperatorSerializer
 {
-    std::vector<SchemaSerializer> inputSchemas;
-    rfl::Box<SchemaSerializer> outputSchema;
+    std::vector<SerializedSchema> inputSchemas;
+    rfl::Box<SerializedSchema> outputSchema;
     std::vector<uint64_t> childrenIds;
-    rfl::Box<FunctionSerializer> predicate;
+    rfl::Box<SerializedFunction> predicate;
 };
-
-
-DataTypeSerializer serialize(DataType dataType)
-{
-    switch (dataType.type)
-    {
-        case DataType::Type::UINT8: return DataTypeSerializer::UINT8;
-        case DataType::Type::UINT16: return DataTypeSerializer::UINT16;
-        case DataType::Type::UINT32: return DataTypeSerializer::UINT32;
-        case DataType::Type::UINT64: return DataTypeSerializer::UINT64;
-        case DataType::Type::BOOLEAN: return DataTypeSerializer::BOOLEAN;
-        case DataType::Type::INT8: return DataTypeSerializer::INT8;
-        case DataType::Type::INT16: return DataTypeSerializer::INT16;
-        case DataType::Type::INT32: return DataTypeSerializer::INT32;
-        case DataType::Type::INT64: return DataTypeSerializer::INT64;
-        case DataType::Type::FLOAT32: return DataTypeSerializer::FLOAT32;
-        case DataType::Type::FLOAT64: return DataTypeSerializer::FLOAT64;
-        case DataType::Type::CHAR: return DataTypeSerializer::CHAR;
-        case DataType::Type::UNDEFINED: return DataTypeSerializer::UNDEFINED;
-        case DataType::Type::VARSIZED: return DataTypeSerializer::VARSIZED;
-        default: throw Exception{"Oh No", 9999}; // TODO Improve
-    }
-}
-
-
-SchemaSerializer serialize_schema(Schema schema)
-{
-    SchemaSerializer serializer;
-
-    serializer.memoryLayout =
-        schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT ?
-            MemoryLayoutSerializer::ROW_LAYOUT:
-            MemoryLayoutSerializer::COL_LAYOUT;
-    for (const Schema::Field& field : schema.getFields())
-    {
-        serializer.fields.emplace_back(field.name, rfl::make_box<DataTypeSerializer>(serialize(field.dataType)));
-    }
-    return serializer;
-}
-
-
 
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
@@ -222,10 +151,10 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
 
     for (const auto& inputSchema: getInputSchemas())
     {
-        data.inputSchemas.emplace_back(serialize_schema(inputSchema));
+        data.inputSchemas.emplace_back(serializeSchema(inputSchema));
     }
 
-    data.outputSchema = rfl::make_box<SchemaSerializer>(serialize_schema(outputSchema));
+    data.outputSchema = rfl::make_box<SerializedSchema>(serializeSchema(outputSchema));
 
     for (const auto& child: children)
     {
@@ -234,12 +163,12 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
 
 
     // TEMP
-    FunctionSerializer function;
-    auto value = rfl::to_generic(FieldSerializer{.name="main", .type=rfl::make_box<DataTypeSerializer>(DataTypeSerializer::VARSIZED)});
+    SerializedFunction function;
+    auto value = rfl::to_generic(SerializedField{.name="main", .type=rfl::make_box<SerializedDataType>(SerializedDataType::VARSIZED)});
     function.config.emplace("test", value);
 
 
-    data.predicate = rfl::make_box<FunctionSerializer>(function);
+    data.predicate = rfl::make_box<SerializedFunction>(function);
 
 
     const auto serializedString = rfl::json::write(data);
