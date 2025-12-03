@@ -147,34 +147,36 @@ struct SelectionLogicalOperatorSerializer
 
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
-    auto data = SelectionLogicalOperatorSerializer{};
+    auto serializedLogicalOperator = SerializedLogicalOperator{};
+    auto childrenIds = std::vector<uint64_t>{};
+    auto config = std::map<std::string, rfl::Generic>();
+    auto serializedTraitSet = SerializedTraitSet{};
+
+
 
     for (const auto& inputSchema: getInputSchemas())
     {
-        data.inputSchemas.emplace_back(serializeSchema(inputSchema));
+        serializedLogicalOperator.inputSchemas.emplace_back(serializeSchema(inputSchema));
     }
 
-    data.outputSchema = rfl::make_box<SerializedSchema>(serializeSchema(outputSchema));
+    serializedLogicalOperator.outputSchema = rfl::make_box<SerializedSchema>(serializeSchema(outputSchema));
 
     for (const auto& child: children)
     {
-        data.childrenIds.emplace_back(child.getId().getRawValue());
+        childrenIds.emplace_back(child.getId().getRawValue());
     }
 
 
-    // TEMP
+    // TODO Serialize actual function
     SerializedFunction function;
     auto value = rfl::to_generic(SerializedField{.name="main", .type=rfl::make_box<SerializedDataType>(SerializedDataType::VARSIZED)});
     function.config.emplace("test", value);
 
-
-    data.predicate = rfl::make_box<SerializedFunction>(function);
-
-
-    const auto serializedString = rfl::json::write(data);
+    config.emplace("predicate", rfl::to_generic(function));
 
 
-    serializableOperator.set_reflect(serializedString);
+
+
 
     SerializableLogicalOperator proto;
 
@@ -199,6 +201,17 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializedFunction->CopyFrom(getPredicate().serialize());
     (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
 
+
+
+    auto data = SerializedOperator{
+        .operatorId = 0,
+        .childrenIds = childrenIds,
+        .config = config,
+        .traitSet = rfl::make_box<SerializedTraitSet>(serializedTraitSet),
+        .operatorData = std::move(serializedLogicalOperator)
+    };
+    const auto serializedString = rfl::json::write(data);
+    serializableOperator.set_reflect(serializedString);
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
@@ -206,9 +219,8 @@ LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
 
-    auto data = rfl::json::read<SelectionLogicalOperatorSerializer>(arguments.reflec).value();
-
-
+    auto data = rfl::json::read<SerializedOperator>(arguments.reflec).value();
+    // Access data.operatorData using visitor pattern
     auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
     if (std::holds_alternative<FunctionList>(functionVariant))
     {

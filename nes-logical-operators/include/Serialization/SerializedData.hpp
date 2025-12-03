@@ -15,6 +15,10 @@
 #pragma once
 
 #include <string>
+
+#include <grpcpp/support/config.h>
+#include "Identifiers/NESStrongTypeJson.hpp"
+
 #include <rfl.hpp>
 
 namespace NES
@@ -47,5 +51,43 @@ struct SerializedFunction
     std::string functionType;
     SerializedDataType dataType;
     std::map<std::string, rfl::Generic> config;
+};
+
+struct SerializedTrait
+{
+    std::map<std::string, rfl::Generic> config;
+};
+
+struct SerializedTraitSet
+{
+    std::map<std::string, SerializedTrait> traits;
+};
+
+struct SerializedSourceDescriptorLogicalOperator
+{
+    uint64_t i;
+    // TODO
+};
+struct SerializedSinkLogicalOperator
+{
+    std::string name;
+    // TODO
+};
+struct SerializedLogicalOperator
+{
+    std::string operatorType;
+    rfl::Box<SerializedSchema> outputSchema;
+    std::vector<SerializedSchema> inputSchemas;
+};
+
+using Operator = rfl::TaggedUnion<"operator", SerializedSourceDescriptorLogicalOperator, SerializedSinkLogicalOperator, SerializedLogicalOperator>;
+
+struct SerializedOperator
+{
+    uint64_t operatorId;
+    std::vector<uint64_t> childrenIds;
+    std::map<std::string, rfl::Generic> config;
+    rfl::Box<SerializedTraitSet> traitSet;
+    Operator operatorData;
 };
 }
