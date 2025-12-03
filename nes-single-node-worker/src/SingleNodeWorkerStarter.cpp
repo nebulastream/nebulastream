@@ -75,7 +75,7 @@ int main(const int argc, const char* argv[])
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
-            builder.AddListeningPort(configuration->grpcAddressUri.getValue().toString(), grpc::InsecureServerCredentials());
+            builder.AddListeningPort(configuration->grpcAddressUri.getValue(), grpc::InsecureServerCredentials());
             builder.RegisterService(&workerService);
 
             const auto server = builder.BuildAndStart();
