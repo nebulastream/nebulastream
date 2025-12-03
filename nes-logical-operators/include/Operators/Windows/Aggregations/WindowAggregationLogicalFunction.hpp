@@ -20,6 +20,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -48,7 +49,7 @@ public:
     /// @brief Infers the dataType of the function given the current schema and the typeInferencePhaseContext.
     virtual void inferStamp(const Schema& schema) = 0;
 
-    [[nodiscard]] virtual SerializableAggregationFunction serialize() const = 0;
+    [[nodiscard]] virtual Reflected reflect() const = 0;
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 

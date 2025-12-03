@@ -21,6 +21,7 @@
 #include <utility>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
@@ -46,6 +47,18 @@ std::string TraitSet::explain(ExplainVerbosity verbosity) const
                 | std::views::transform([verbosity](const std::pair<const std::type_index, Trait>& pair)
                                         { return fmt::format("{}: {}", pair.first.name(), pair.second.explain(verbosity)); }),
             ", "));
+}
+
+Reflected Reflector<TraitSet>::operator()(const TraitSet& /*_*/) const
+{
+    // TODO(unknown): Proper Implementation
+    return reflect(0);
+}
+
+TraitSet Unreflector<TraitSet>::operator()(const Reflected& /*_*/) const
+{
+    // TODO(unknown): Proper Implementation
+    return TraitSet{};
 }
 
 }

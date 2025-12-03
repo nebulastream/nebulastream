@@ -22,6 +22,7 @@
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Reflection.hpp>
 
 namespace NES::Windowing
 {
@@ -68,6 +69,21 @@ public:
 private:
     Type type;
     TimeUnit unit;
+};
+}
+
+namespace NES
+{
+template <>
+struct Reflector<Windowing::TimeCharacteristic>
+{
+    Reflected operator()(const Windowing::TimeCharacteristic& characteristic) const;
+};
+
+template <>
+struct Unreflector<Windowing::TimeCharacteristic>
+{
+    Windowing::TimeCharacteristic operator()(const Reflected& reflected) const;
 };
 }
 

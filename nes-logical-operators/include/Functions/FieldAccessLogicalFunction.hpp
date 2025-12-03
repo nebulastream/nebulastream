@@ -20,12 +20,14 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -43,8 +45,6 @@ public:
 
     [[nodiscard]] std::string getFieldName() const;
     [[nodiscard]] FieldAccessLogicalFunction withFieldName(std::string fieldName) const;
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const FieldAccessLogicalFunction& rhs) const;
 
@@ -72,6 +72,18 @@ public:
 private:
     std::string fieldName;
     DataType dataType;
+};
+
+template <>
+struct Reflector<FieldAccessLogicalFunction>
+{
+    Reflected operator()(const FieldAccessLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<FieldAccessLogicalFunction>
+{
+    FieldAccessLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<FieldAccessLogicalFunction>);

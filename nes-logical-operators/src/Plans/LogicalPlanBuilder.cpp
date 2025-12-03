@@ -28,7 +28,6 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/RenameLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -79,10 +78,6 @@ LogicalPlan LogicalPlanBuilder::addProjection(
 LogicalPlan LogicalPlanBuilder::addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add selection operator to query plan");
-    if (selectionFunction.tryGetAs<RenameLogicalFunction>())
-    {
-        throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
-    }
     return promoteOperatorToRoot(queryPlan, SelectionLogicalOperator(std::move(selectionFunction)));
 }
 

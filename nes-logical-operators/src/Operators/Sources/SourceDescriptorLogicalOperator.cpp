@@ -29,6 +29,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -105,12 +106,14 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
     return sourceDescriptor;
 }
 
-void SourceDescriptorLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+Reflected Reflector<SourceDescriptorLogicalOperator>::operator()(const SourceDescriptorLogicalOperator& op) const
 {
-    SerializableSourceDescriptorLogicalOperator proto;
-    proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor.serialize());
-
-    serializableOperator.mutable_source()->CopyFrom(proto);
+    return reflect(op.getSourceDescriptor());
 }
 
+SourceDescriptorLogicalOperator Unreflector<SourceDescriptorLogicalOperator>::operator()(const Reflected& rfl) const
+{
+    auto sourceDescriptor = unreflect<SourceDescriptor>(rfl);
+    return SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
+}
 }

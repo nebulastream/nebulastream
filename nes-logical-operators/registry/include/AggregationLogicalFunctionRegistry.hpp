@@ -19,6 +19,7 @@
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
@@ -29,6 +30,7 @@ using AggregationLogicalFunctionRegistryReturnType = std::shared_ptr<WindowAggre
 struct AggregationLogicalFunctionRegistryArguments
 {
     std::vector<FieldAccessLogicalFunction> fields;
+    Reflected reflected;
 };
 
 class AggregationLogicalFunctionRegistry : public BaseRegistry<

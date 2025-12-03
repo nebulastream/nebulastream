@@ -24,6 +24,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -54,6 +55,11 @@ std::string_view CountAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
+Reflected CountAggregationLogicalFunction::reflect() const
+{
+    return NES::reflect(this);
+}
+
 void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
@@ -82,25 +88,31 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
     }
 }
 
-SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const
+Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggregationLogicalFunction& function) const
 {
-    SerializableAggregationFunction serializedAggregationFunction;
-    serializedAggregationFunction.set_type(NAME);
+    return reflect(detail::ReflectedCountAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+}
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(this->getOnField().serialize());
+CountAggregationLogicalFunction Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [onField, asField] = unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(this->getAsField().serialize());
+    if (!onField.has_value() || !asField.has_value())
+    {
+        throw CannotDeserialize("CountAggregationLogicalFunction is missing onField/asField function");
+    }
 
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
-    return serializedAggregationFunction;
+    return {onField.value(), asField.value()};
 }
 
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return std::make_shared<CountAggregationLogicalFunction>(unreflect<CountAggregationLogicalFunction>(arguments.reflected));
+    }
+
     if (arguments.fields.size() != 2)
     {
         throw CannotDeserialize("CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());

@@ -17,6 +17,7 @@
 #include <memory>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <SerializableOperator.pb.h>
@@ -32,10 +33,6 @@ class OperatorSerializationUtil
 public:
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
-    static LogicalOperator deserializeOperator(const SerializableOperator& serializedOperator);
-    static SourceDescriptor deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
-    static SinkDescriptor deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor);
-    static std::shared_ptr<WindowAggregationLogicalFunction>
-    deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction);
+    static LogicalOperator deserializeOperator(const ReflectedOperator& serializedOperator);
 };
 }

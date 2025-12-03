@@ -30,6 +30,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -51,12 +52,11 @@ class SinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
     friend OperatorSerializationUtil;
+    friend Unreflector<SinkDescriptor>;
 
 public:
     ~SinkDescriptor() = default;
 
-
-    [[nodiscard]] SerializableSinkDescriptor serialize() const;
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
@@ -74,6 +74,8 @@ private:
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
+
+    friend Reflector<SinkDescriptor>;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -105,6 +107,20 @@ public:
 
     friend struct SinkLogicalOperator;
 };
+
+template <>
+struct Reflector<SinkDescriptor>
+{
+    Reflected operator()(const SinkDescriptor& descriptor) const;
+};
+
+template <>
+struct Unreflector<SinkDescriptor>
+{
+    SinkDescriptor operator()(const Reflected& reflected) const;
+};
+
+
 }
 
 template <>
@@ -115,5 +131,16 @@ struct std::hash<NES::SinkDescriptor>
         return std::hash<std::string>{}(sinkDescriptor.getSinkName());
     }
 };
+
+namespace NES::detail
+{
+struct ReflectedSinkDescriptor
+{
+    std::variant<std::string, uint64_t> sinkName;
+    Schema schema;
+    std::string sinkType;
+    Reflected config;
+};
+}
 
 FMT_OSTREAM(NES::SinkDescriptor);
