@@ -43,12 +43,8 @@ VarVal handleNullOrParse(
     const nautilus::val<bool>& isNull,
     const bool isNullable)
 {
-    if (isNullable and isNull)
-    {
-        return VarVal{nautilus::val<T>{0}, VarVal::NULLABLE_ENUM::NULLABLE, true};
-    }
     return VarVal{
-        parseIntoNautilusRecord<T>(fieldAddress, fieldSize),
+        parseIntoNautilusRecord<T>(fieldAddress, fieldSize, isNull),
         isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE,
         isNull};
 }
@@ -64,25 +60,25 @@ void parseRawValueIntoRecord(
     const QuotationType quotationType,
     ArenaRef& arenaRef)
 {
-    nautilus::val<bool> isNull = false;
+    /// We use an val<int> to use bitwise operators to reduce the number of branches created in the nautilus trace.
+    nautilus::val<int> isNullInt = 0;
     if (dataType.isNullable)
     {
         for (const auto& nullValue : nautilus::static_iterable(nullValues))
         {
-            if (fieldSize == nullValue.length())
+            auto minLength = (fieldSize < nullValue.length()) * fieldSize + (fieldSize >= nullValue.length()) * nullValue.length();
+            nautilus::val<int8_t*> fieldIterator = fieldAddress;
+            nautilus::val<int> equalValue = static_cast<nautilus::val<int>>(fieldSize == nullValue.length());
+            for (nautilus::static_val<uint64_t> i = 0; i < minLength; ++i)
             {
-                nautilus::val<int8_t*> fieldIterator = fieldAddress;
-                for (nautilus::static_val<uint64_t> i = 0; i < nullValue.length(); ++i)
-                {
-                    if (fieldIterator[i] != nautilus::val<int8_t>{static_cast<int8_t>(nullValue[i])})
-                    {
-                        isNull = isNull and false;
-                    }
-                }
-                isNull = true;
+                equalValue = equalValue
+                    & static_cast<nautilus::val<int>>(
+                                 nautilus::val<int8_t>{fieldIterator[i]} == nautilus::val<int8_t>{static_cast<int8_t>(nullValue[i])});
             }
+            isNullInt = isNullInt | equalValue;
         }
     }
+    const nautilus::val<bool> isNull = (isNullInt == 1);
 
     switch (dataType.type)
     {

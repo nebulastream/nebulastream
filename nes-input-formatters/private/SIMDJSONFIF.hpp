@@ -27,7 +27,6 @@
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Arena.hpp>
@@ -148,14 +147,15 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<bool>& isNull,
         const bool isNullable) const
     {
-        if (isNullable and isNull)
-        {
-            return VarVal{nautilus::val<T>{0}, VarVal::NULLABLE_ENUM::NULLABLE, true};
-        }
-
         auto nautilusValue = nautilus::invoke(
-            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
+            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData, const bool isNull)
             {
+                /// We handle null in the nautilus::invoke to reduce the amount of branches in nautilus code and reducing the tracing time.
+                if (isNull)
+                {
+                    return T{0};
+                }
+
                 const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
                 auto currentDoc = *fieldIndexFunction->docStreamIterator;
                 auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
@@ -195,9 +195,10 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             },
             fieldIdx,
             fieldIndexFunction,
-            metaData);
+            metaData,
+            isNull);
 
-        return VarVal{nautilusValue, isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE, false};
+        return VarVal{nautilusValue, isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE, isNull};
     }
 
     static VarVal parseStringIntoNautilusRecord(

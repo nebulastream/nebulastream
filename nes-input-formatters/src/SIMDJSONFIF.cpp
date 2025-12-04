@@ -57,14 +57,17 @@ VarVal SIMDJSONFIF::parseStringIntoNautilusRecord(
     const nautilus::val<bool>& isNull,
     const bool isNullable)
 {
-    if (isNullable and isNull)
-    {
-        const auto varSized = arenaRef.allocateVariableSizedData(0);
-        return VarVal{VariableSizedData{varSized}, VarVal::NULLABLE_ENUM::NULLABLE, true};
-    }
     const nautilus::val<int8_t*> varSizedPointer = nautilus::invoke(
-        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena)
+        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena, const bool isNull)
         {
+            /// We handle null in the nautilus::invoke to reduce the amount of branches in nautilus code and reducing the tracing time.
+            if (isNull)
+            {
+                constexpr auto sizeOfValue = 0;
+                auto arenaPointer = arena->allocateMemory(sizeOfValue + sizeof(uint32_t));
+                return arenaPointer.data();
+            }
+
             INVARIANT(
                 fieldIndex < metaData->getNumberOfFields(),
                 "fieldIndex {} is out or bounds for schema keys of size: {}",
@@ -87,8 +90,10 @@ VarVal SIMDJSONFIF::parseStringIntoNautilusRecord(
         fieldIdx,
         fieldIndexFunction,
         metaData,
-        arenaRef.getArena());
-    return VarVal{VariableSizedData{varSizedPointer}, isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE, false};
+        arenaRef.getArena(),
+        isNull);
+    return VarVal{
+        VariableSizedData{varSizedPointer}, isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE, isNull};
 }
 
 void SIMDJSONFIF::writeValueToRecord(
@@ -202,7 +207,8 @@ void SIMDJSONFIF::writeValueToRecord(
             return;
         }
         case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData, arenaRef, isNull, dataType.isNullable));
+            record.write(
+                fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData, arenaRef, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::VARSIZED_POINTER_REP:

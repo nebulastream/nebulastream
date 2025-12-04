@@ -14,9 +14,7 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cstdint>
-#include <span>
+
 #include <string>
 #include <string_view>
 
@@ -39,16 +37,24 @@ enum class QuotationType : uint8_t
 };
 
 template <typename T>
-nautilus::val<T> parseIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
+nautilus::val<T> parseIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, const nautilus::val<bool>& isNull)
 {
     return nautilus::invoke(
-        +[](const char* fieldAddress, const uint64_t fieldSize)
+        +[](const char* fieldAddress, const uint64_t fieldSize, const bool isNull)
         {
+            /// We handle null in the nautilus::invoke to reduce the amount of branches in nautilus code and reducing the tracing time.
+            if (isNull)
+            {
+                return T{0};
+            }
+
             const auto fieldView = std::string_view(fieldAddress, fieldSize);
             return NES::from_chars_with_exception<T>(fieldView);
         },
         fieldAddress,
-        fieldSize);
+        fieldSize,
+        isNull);
 }
 
 VariableSizedData parseVarSizedIntoNautilusRecord(

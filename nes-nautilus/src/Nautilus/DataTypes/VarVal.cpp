@@ -93,19 +93,16 @@ bool VarVal::isNullable() const
 
 VarVal::operator bool() const
 {
-    if (isNullable() and isNull())
-    {
-        return false;
-    }
-    return std::visit(
-        []<typename T>(T& val) -> nautilus::val<bool>
+    /// We use an val<int> to use bitwise operators to reduce the number of branches created in the nautilus trace.
+    const nautilus::val<int> valueInt = std::visit(
+        []<typename T>(T& val) -> nautilus::val<int>
         {
             if constexpr (requires(T t) { t == nautilus::val<bool>(true); })
             {
                 /// We have to do it like this. The reason is that during the comparison of the two values, @val is NOT converted to a bool
                 /// but rather the val<bool>(false) is converted to std::common_type<T, bool>. This is a problem for any val that is not set to 1.
                 /// As we will then compare val == 1, which will always be false.
-                return !(val == nautilus::val<bool>(false));
+                return nautilus::val<int>{!(val == nautilus::val<bool>(false))};
             }
             else
             {
@@ -113,6 +110,7 @@ VarVal::operator bool() const
             }
         },
         value);
+    return (static_cast<nautilus::val<int>>(not(isNullable() & isNull())) & valueInt) == 1;
 }
 
 VarVal VarVal::castToType(const DataType::Type type) const
