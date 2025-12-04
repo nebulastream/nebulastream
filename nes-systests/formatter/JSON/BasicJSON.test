@@ -8,10 +8,25 @@ ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME":"max"}
 
+CREATE LOGICAL SOURCE jsonStreamWrongDataTypes(key UINT64, value UINT64, name VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStreamWrongDataTypes TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"KEY":1.0, "VALUE":1, "NAME":"john"}
+{"KEY":1, "VALUE":2, "NAME":"max"}
+
+CREATE LOGICAL SOURCE jsonStreamWrongFieldName(key UINT64, value UINT64, name VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStreamWrongFieldName TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"WRONG_NAME":1, "VALUE":1, "NAME":"john"}
+{"WRONG_NAME":1, "VALUE":2, "NAME":"max"}
+
+
 CREATE SINK keySink(jsonStream.key UINT64) TYPE File;
 CREATE SINK valueSink(jsonStream.value UINT64) TYPE File;
 CREATE SINK nameSink(jsonStream.name VARSIZED) TYPE File;
 CREATE SINK allFieldsSink(jsonStream.key UINT64, jsonStream.value UINT64, jsonStream.name VARSIZED) TYPE File;
+CREATE SINK allFieldsWrongFieldNameSink(jsonStreamWrongFieldName.key UINT64, jsonStreamWrongFieldName.value UINT64, jsonStreamWrongFieldName.name VARSIZED) TYPE File;
+CREATE SINK allFieldsWrongDataTypeSink(jsonStreamWrongDataTypes.key UINT64, jsonStreamWrongDataTypes.value UINT64, jsonStreamWrongDataTypes.name VARSIZED) TYPE File;
 
 SELECT KEY FROM jsonStream INTO keySink;
 ----
@@ -32,3 +47,11 @@ SELECT * FROM jsonStream INTO allFieldsSink;
 ----
 1,1,john
 1,2,max
+
+SELECT * FROM jsonStreamWrongDataTypes INTO allFieldsWrongDataTypeSink;
+----
+ERROR 4005
+
+SELECT * FROM jsonStreamWrongFieldName INTO allFieldsWrongFieldNameSink;
+----
+ERROR 2004
