@@ -218,6 +218,10 @@ DescriptorConfig::Config MQTTSink::validateAndFormat(std::unordered_map<std::str
 
 SinkValidationRegistryReturnType RegisterMQTTSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
+    if (!sinkConfig.config.contains("client_id"))
+    {
+        sinkConfig.config.emplace("client_id", generateUUID());
+    }
     return MQTTSink::validateAndFormat(std::move(sinkConfig.config));
 }
 

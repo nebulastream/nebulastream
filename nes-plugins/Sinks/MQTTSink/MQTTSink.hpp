@@ -169,7 +169,7 @@ struct ConfigParametersMQTTSink
 
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, OutOfOrderPolicy>
         OUT_OF_ORDER_POLICY{
-            "outOfOrderPolicy",
+            "out_of_order_policy",
             EnumWrapper(OutOfOrderPolicy::ALLOW),
             [](const std::unordered_map<std::string, std::string>& config)
             { return DescriptorConfig::tryGet(OUT_OF_ORDER_POLICY, config); }};

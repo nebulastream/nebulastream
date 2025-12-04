@@ -72,46 +72,6 @@ private:
     void writePayloadToBuffer(std::string_view payload, TupleBuffer& tb, size_t& tbOffset);
 };
 
-namespace detail::uuid
-{
-static std::random_device rd;
-static std::mt19937 gen(rd());
-static std::uniform_int_distribution<> dis(0, 15);
-static std::uniform_int_distribution<> dis2(8, 11);
-
-std::string generateUUID()
-{
-    std::stringstream ss;
-    ss << std::hex;
-    for (int i = 0; i < 8; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-";
-    for (int i = 0; i < 4; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-4";
-    for (int i = 0; i < 3; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-";
-    ss << dis2(gen);
-    for (int i = 0; i < 3; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-";
-    for (int i = 0; i < 12; i++)
-    {
-        ss << dis(gen);
-    }
-    return ss.str();
-}
-}
-
 /// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT config parameters.
 struct ConfigParametersMQTTSource
 {
@@ -122,15 +82,8 @@ struct ConfigParametersMQTTSource
 
     static inline const DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
         "client_id",
-        "generated",
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        {
-            if (auto it = config.find(CLIENT_ID); it != config.end())
-            {
-                return it->second;
-            }
-            return detail::uuid::generateUUID();
-        }};
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>{return DescriptorConfig::tryGet(CLIENT_ID, config);}};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TOPIC{
         "topic",

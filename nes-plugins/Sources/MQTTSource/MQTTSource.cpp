@@ -37,6 +37,46 @@
 namespace NES
 {
 
+namespace
+{
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_int_distribution<> dis(0, 15);
+std::uniform_int_distribution<> dis2(8, 11);
+
+std::string generateUUID()
+{
+    std::stringstream ss;
+    ss << std::hex;
+    for (int i = 0; i < 8; i++)
+    {
+        ss << dis(gen);
+    }
+    ss << "-";
+    for (int i = 0; i < 4; i++)
+    {
+        ss << dis(gen);
+    }
+    ss << "-4";
+    for (int i = 0; i < 3; i++)
+    {
+        ss << dis(gen);
+    }
+    ss << "-";
+    ss << dis2(gen);
+    for (int i = 0; i < 3; i++)
+    {
+        ss << dis(gen);
+    }
+    ss << "-";
+    for (int i = 0; i < 12; i++)
+    {
+        ss << dis(gen);
+    }
+    return ss.str();
+}
+}
+
 MQTTSource::MQTTSource(const SourceDescriptor& sourceDescriptor)
     : serverURI(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::SERVER_URI))
     , clientId(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::CLIENT_ID))
@@ -64,8 +104,9 @@ void MQTTSource::open()
 
     try
     {
-        NES_DEBUG("Connecting to mqtt source: {}", serverURI);
-        const auto connectOptions = mqtt::connect_options_builder().automatic_reconnect(true).clean_session(false).finalize();
+        NES_DEBUG("Connecting to mqtt source: {} as client: '{}'", serverURI, clientId);
+        const auto connectOptions
+            = mqtt::connect_options_builder().automatic_reconnect(true).clean_session(true).clean_start(true).finalize();
         client->start_consuming();
 
         const auto token = client->connect(connectOptions);
@@ -162,6 +203,10 @@ DescriptorConfig::Config MQTTSource::validateAndFormat(std::unordered_map<std::s
 
 SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
+    if (!sourceConfig.config.contains("client_id"))
+    {
+        sourceConfig.config.emplace("client_id", generateUUID());
+    }
     return MQTTSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
