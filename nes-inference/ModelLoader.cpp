@@ -278,17 +278,27 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
 
     /// Pipe output of import to compiler
     compileArgs.emplace_back("-");
+
+    /// target hardware info
     compileArgs.emplace_back("--iree-hal-target-device=local");
     compileArgs.emplace_back("--iree-hal-local-target-device-backends=llvm-cpu");
-    compileArgs.emplace_back("--iree-llvmcpu-debug-symbols=false");
-    compileArgs.emplace_back("--iree-stream-partitioning-favor=min-peak-memory");
-
     ///TODO: (#???) This only works if nebuli and the worker are running on the same arch
     compileArgs.emplace_back("--iree-llvmcpu-target-cpu=host");
 
+    /// reducing the artifact size
+    compileArgs.emplace_back("--iree-llvmcpu-debug-symbols=false");
+    compileArgs.emplace_back("--iree-llvmcpu-keep-linker-artifacts=false");
+
+    /// optimizations
+    /// we want to optimize for lower binary size and instruction latency
+    compileArgs.emplace_back("--cost-kind=size-latency");
+    compileArgs.emplace_back("--iree-opt-level=O2");
+    compileArgs.emplace_back("--iree-opt-data-tiling");
+    /// we run IREE single-threaded so we can optimize for minimum peak memory usage with no sacrifices
+    compileArgs.emplace_back("--iree-stream-partitioning-favor=min-peak-memory");
+
     /// iree-compile allows to dump a .dot graph containing dispatch operations
     /// while this is not exactly metadata, we can still extract the necessary information from it
-
     auto tempPath = Util::createTempDir("/tmp/nebuli-model-loader");
     Util::TempDirectoryCleanup removeTempPath{tempPath};
 
