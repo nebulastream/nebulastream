@@ -40,7 +40,7 @@ public:
     /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
     UIntOption numberOfBuffersInGlobalBufferManager
         = {"number_of_buffers_in_global_buffer_manager",
-           "32768",
+           "3276800",
            "Number buffers in global buffer pool.",
            {std::make_shared<NumberValidation>()}};
 
