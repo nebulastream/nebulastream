@@ -22,15 +22,18 @@
 
 namespace
 {
-// MurmurHash3 constants
-constexpr uint32_t MURMUR_C1 = 0xcc9e2d51;
-constexpr uint32_t MURMUR_C2 = 0x1b873593;
-constexpr uint32_t MURMUR_MULTIPLIER = 5;
-constexpr uint32_t MURMUR_OFFSET = 0xe6546b64;
-constexpr uint32_t COLUMN_DELTA = 0x85ebca6b;
+// MurmurHash3 constants - carefully chosen magic numbers by Austin Appleby
+// https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp
+// These values are optimized through mathematical analysis to minimize collisions
+// and ensure uniform hash distribution across the output space
+constexpr uint32_t MURMUR_C1 = 0xcc9e2d51;           // Primary mixing constant
+constexpr uint32_t MURMUR_C2 = 0x1b873593;           // Secondary mixing constant
+constexpr uint32_t MURMUR_MULTIPLIER = 5;            // Main loop multiplier
+constexpr uint32_t MURMUR_OFFSET = 0xe6546b64;       // Main loop offset
+constexpr uint32_t COLUMN_DELTA = 0x85ebca6b;        // Per-column differentiation for 8 independent hashes
 
-constexpr uint32_t FINALIZE_MIX1 = 0x85ebca6b;
-constexpr uint32_t FINALIZE_MIX2 = 0xc2b2ae35;
+constexpr uint32_t FINALIZE_MIX1 = 0x85ebca6b;       // Finalization avalanche mixer
+constexpr uint32_t FINALIZE_MIX2 = 0xc2b2ae35;       // Finalization avalanche mixer
 
 constexpr size_t BLOCK_SIZE = 4;
 constexpr size_t NUM_COLUMNS = 8;
