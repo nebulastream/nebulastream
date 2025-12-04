@@ -28,9 +28,6 @@ struct ModelDescriptor
     std::filesystem::path path;
     std::vector<DataType> inputs;
     Schema outputs;
-    size_t batchSize;
-    std::string predictionCacheType;
-    size_t predictionCacheSize;
 };
 
 class ModelCatalog
@@ -66,32 +63,11 @@ inline Model ModelCatalog::load(const std::string modelName) const
                                         { return std::pair<std::string, DataType>{schemaField.name, schemaField.dataType}; })
                 | std::ranges::to<std::vector>();
 
-            if (result->inputShape[0] == 0 && result->outputShape[0] == 0)
-            {
-                result->inputShape[0] = it->second.batchSize;
-                result->outputShape[0] = it->second.batchSize;
-                
-                result->inputDims = result->inputShape.size();
-                result->inputSizeInBytes = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
+            result->inputDims = result->inputShape.size();
+            result->inputSizeInBytes = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
 
-                result->outputDims = result->outputShape.size();
-                result->outputSizeInBytes = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
-            }
-            else
-            {
-                NES_WARNING("The model has a fixed batch size of {}. The provided batch size of {} will be ignored. "
-                    "Save the model with the variable first dimension of the input tensor to use the provided batch size.",
-                    result->inputShape[0], it->second.batchSize);
-
-                result->inputDims = result->inputShape.size();
-                result->inputSizeInBytes = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
-
-                result->outputDims = result->outputShape.size();
-                result->outputSizeInBytes = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
-            }
-
-            result->predictionCacheType = it->second.predictionCacheType;
-            result->predictionCacheSize = it->second.predictionCacheSize;
+            result->outputDims = result->outputShape.size();
+            result->outputSizeInBytes = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
 
             catalogImpl.emplace(modelName, *result);
             return *result;

@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -39,12 +39,14 @@ struct PredictionCacheOptions
     uint64_t numberOfEntries;
 };
 
-class PredictionCacheConfiguration final : public BaseConfiguration
+class InferenceConfiguration final : public BaseConfiguration
 {
 public:
-    PredictionCacheConfiguration() = default;
-    PredictionCacheConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    InferenceConfiguration() = default;
+    InferenceConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
+    UIntOption batchSize
+        = {"batch_size", "1", "Batch size", {std::make_shared<NonZeroValidation>()}};
     EnumOption<PredictionCacheType> predictionCacheType
         = {"prediction_cache_type",
            PredictionCacheType::NONE,
@@ -53,6 +55,7 @@ public:
         = {"number_of_entries_prediction_cache", "1", "Size of the prediction cache", {std::make_shared<NonZeroValidation>()}};
 
 private:
-    std::vector<BaseOption*> getOptions() override { return {&predictionCacheType, &numberOfEntriesPredictionCache}; }
+    std::vector<BaseOption*> getOptions() override { return {&batchSize, &predictionCacheType, &numberOfEntriesPredictionCache}; }
 };
+
 }

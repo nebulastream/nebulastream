@@ -46,17 +46,18 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             | std::ranges::to<std::vector>();
         auto outputNames = model.getOutputs() | std::views::keys | std::ranges::to<std::vector>();
 
-        auto predictionCacheType = magic_enum::enum_cast<NES::Configurations::PredictionCacheType>(model.getPredictionCacheType());
-        auto predictionCacheSize = model.getPredictionCacheSize();
+        const auto batchSize = conf.inferenceConfiguration.batchSize;
+        const auto predictionCacheType = conf.inferenceConfiguration.predictionCacheType;
+        const auto predictionCacheSize = conf.inferenceConfiguration.numberOfEntriesPredictionCache;
 
         /// if the batch size is 1, then we simply use the inference operator with PipelineLocation::INTERMEDIATE
         /// else, add the batching operator (custom emit) and batch inference operator (custom scan)
-        if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
+        if (batchSize.getValue() == 1)
         {
             std::shared_ptr<NES::PhysicalOperatorWrapper> wrapper = nullptr;
             auto handler = std::make_shared<NES::IREEInferenceOperatorHandler>(model);
 
-            switch (predictionCacheType.value_or(NES::Configurations::PredictionCacheType::NONE))
+            switch (predictionCacheType.getValue())
             {
                 case NES::Configurations::PredictionCacheType::NONE: {
                     NES_DEBUG("Lower InferModel operator to IREEInferenceOperator");
@@ -91,8 +92,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
                     NES_DEBUG("Lower InferModel operator to IREECacheInferenceOperator");
                     NES::Configurations::PredictionCacheOptions predictionCacheOptions{
-                        predictionCacheType.value(),
-                        predictionCacheSize};
+                        predictionCacheType.getValue(),
+                        predictionCacheSize.getValue()};
                     auto ireeOperator = NES::IREECacheInferenceOperator(handlerId, inputFunctions, outputNames, predictionCacheOptions);
 
                     if (inferModelOperator->getInputFields().size() == 1
@@ -134,14 +135,14 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 
             auto memoryProvider = NES::Interface::BufferRef::TupleBufferRef::create(pageSize, inputSchema);
             auto handler = std::make_shared<NES::IREEBatchInferenceOperatorHandler>(
-                inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, model);
+                inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, model, batchSize.getValue());
 
             auto batchingOperator = NES::BatchingPhysicalOperator(handlerId, memoryProvider);
             auto batchingWrapper = std::make_shared<NES::PhysicalOperatorWrapper>(
                 batchingOperator, inputSchema, inputSchema, handlerId, handler, NES::PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
             std::shared_ptr<NES::PhysicalOperatorWrapper> ireeWrapper = nullptr;
-            switch (predictionCacheType.value_or(NES::Configurations::PredictionCacheType::NONE))
+            switch (predictionCacheType.getValue())
             {
                 case NES::Configurations::PredictionCacheType::NONE: {
                     NES_DEBUG("Lower InferModel operator to IREEBatchInferenceOperator");
@@ -177,8 +178,8 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                 case NES::Configurations::PredictionCacheType::SECOND_CHANCE: {
                     NES_DEBUG("Lower InferModel operator to IREEBatchCacheInferenceOperator");
                     NES::Configurations::PredictionCacheOptions predictionCacheOptions{
-                        predictionCacheType.value(),
-                        predictionCacheSize};
+                        predictionCacheType.getValue(),
+                        predictionCacheSize.getValue()};
                     auto ireeOperator = NES::IREEBatchCacheInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions);
 
                     if (inferModelOperator->getInputFields().size() == 1

@@ -96,8 +96,6 @@ message SerializableModel {
   string functionName = 8;
   repeated SerializableDataType inputs = 9;
   repeated ModelOutputParameter outputs = 10;
-  string predictionCacheType = 11;
-  int32 predictionCacheSize = 12;
 }
 
 message SerializableVariantDescriptor {

@@ -99,7 +99,7 @@ struct ModelMetadataGraph
             {
                 if (dim == "?")
                 {
-                    result.push_back(0);
+                    result.push_back(1);
                 }
                 else
                 {
