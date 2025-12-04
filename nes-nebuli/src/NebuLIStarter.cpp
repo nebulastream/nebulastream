@@ -107,6 +107,9 @@ int main(int argc, char** argv)
         ArgumentParser stopQuery("stop");
         stopQuery.add_argument("queryId").scan<'i', size_t>();
 
+        ArgumentParser statusQuery("status");
+        statusQuery.add_argument("queryId").scan<'i', size_t>();
+
         ArgumentParser unregisterQuery("unregister");
         unregisterQuery.add_argument("queryId").scan<'i', size_t>();
 
@@ -117,10 +120,12 @@ int main(int argc, char** argv)
         program.add_subparser(registerQuery);
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
+        program.add_subparser(statusQuery);
         program.add_subparser(unregisterQuery);
         program.add_subparser(dump);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{registerQuery, startQuery, stopQuery, unregisterQuery, dump};
+        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{
+            registerQuery, startQuery, statusQuery, stopQuery, unregisterQuery, dump};
 
         program.parse_args(argc, argv);
 
@@ -236,6 +241,23 @@ int main(int argc, char** argv)
 
 
         bool handled = false;
+
+        if (program.is_subcommand_used("status"))
+        {
+            auto& parser = program.at<ArgumentParser>("status");
+            auto queryId = NES::QueryId{parser.get<size_t>("queryId")};
+            auto result = queryManager->status(queryId);
+            if (result.has_value())
+            {
+                fmt::println("{}", magic_enum::enum_name(result->state));
+                handled = true;
+            }
+            else
+            {
+                throw std::move(result.error());
+            }
+        }
+
         for (const auto& [name, fn] :
              std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::QueryId)>>{
                  {"start", &NES::QueryManager::start}, {"unregister", &NES::QueryManager::unregister}, {"stop", &NES::QueryManager::stop}})
