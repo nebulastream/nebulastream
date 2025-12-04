@@ -49,6 +49,7 @@ public:
     StringOption testFileExtension = {"test_file_extension", ".test", "File extension to find test files for. Default: .test"};
     StringOption workingDir = {"working_dir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
     BoolOption randomQueryOrder = {"random_query_order", "false", "run queries in random order"};
+    BoolOption sequentialQueryOrder = {"sequential_query_order", "false", "execute queries sequentially based on queryIdInFile"};
     UIntOption numberConcurrentQueries = {"number_concurrent_queries", "6", "number of maximal concurrently running queries"};
     BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};
     SequenceOption<StringOption> testGroups = {"test_groups", "test groups to run"};

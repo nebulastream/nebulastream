@@ -264,6 +264,12 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
     if (program.is_used("--shuffle"))
     {
+        if (program.is_used("--sequential"))
+        {
+            NES_ERROR("Flags --shuffle and --sequential are mutually exclusive!")
+            std::cout << "Flags --shuffle and --sequential are mutually exclusive!";
+            std::exit(-1); ///NOLINT(concurrency-mt-unsafe)
+        }
         config.randomQueryOrder = true;
     }
 
@@ -280,6 +286,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     if (program.is_used("--sequential"))
     {
         config.numberConcurrentQueries = 1;
+        config.sequentialQueryOrder = true;
     }
 
     if (program.is_used("-w"))

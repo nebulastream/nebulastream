@@ -303,6 +303,12 @@ SystestExecutorResult SystestExecutor::executeSystests()
             std::mt19937 rng(std::random_device{}());
             std::ranges::shuffle(queries, rng);
         }
+
+        if (config.sequentialQueryOrder)
+        {
+            std::ranges::sort(queries, {}, &Systest::SystestQuery::queryIdInFile);
+        }
+
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
@@ -335,6 +341,28 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 std::ofstream outputFile(outputPath);
                 outputFile << benchmarkResults.dump(4);
                 outputFile.close();
+            }
+            else if (config.sequentialQueryOrder)
+            {
+                std::map<Systest::SystestQueryId, Systest::ConfigurationOverride> queriesByOverride;
+                for (const auto& query : queries)
+                {
+                    queriesByOverride[query.queryIdInFile] = query.configurationOverride;
+                }
+
+                progressTracker.reset();
+                progressTracker.setTotalQueries(queries.size());
+                for (const auto& [queryId, overrideConfig] : queriesByOverride)
+                {
+                    auto configCopy = singleNodeWorkerConfiguration;
+                    for (const auto& [key, value] : overrideConfig.overrideParameters)
+                    {
+                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
+                    }
+
+                    auto failed = runQueriesAtLocalWorker({queries.at(queryId.getRawValue()-1)}, numberConcurrentQueries, configCopy, progressTracker);
+                    failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+                }
             }
             else
             {
