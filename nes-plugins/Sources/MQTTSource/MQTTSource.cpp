@@ -64,16 +64,15 @@ void MQTTSource::open()
 
     try
     {
+        NES_DEBUG("Connecting to mqtt source: {}", serverURI);
         const auto connectOptions = mqtt::connect_options_builder().automatic_reconnect(true).clean_session(false).finalize();
-
         client->start_consuming();
 
         const auto token = client->connect(connectOptions);
-
-        if (const auto response = token->get_connect_response(); !response.is_session_present())
-        {
-            client->subscribe(topic, qos)->wait();
-        }
+        const auto response = token->get_connect_response();
+        NES_DEBUG("Connection established to {} running Version: {}.", response.get_server_uri(), response.get_mqtt_version());
+        client->subscribe(topic, qos)->wait();
+        NES_DEBUG("Subscribed to topic: {}", topic);
     }
     catch (const mqtt::exception& e)
     {
