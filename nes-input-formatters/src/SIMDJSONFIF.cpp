@@ -67,7 +67,7 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
             const auto& fieldName = metaData->getIndexToFieldName()[fieldIndex];
 
             /// Get the value from the document and convert it to a span of bytes
-            const std::string_view value = currentDoc[fieldName];
+            const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
             const auto sizeOfValue = static_cast<uint32_t>(value.size());
             auto valueBytes = std::as_bytes(std::span(value));
 
