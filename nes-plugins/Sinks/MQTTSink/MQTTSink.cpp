@@ -143,8 +143,10 @@ void MQTTSink::start(PipelineExecutionContext&)
             auto& writer = writerRef.get();
             try
             {
+                NES_INFO("Starting MQTT writer thread. Connecting to {} as client {}", writer.serverUri, writer.clientId);
                 auto client = std::make_unique<mqtt::async_client>(writer.serverUri, writer.clientId);
                 client->connect()->wait();
+                NES_INFO("MQTT Connection was sucessfull");
                 std::pair<SequenceData, std::string> data;
                 while (!token.stop_requested())
                 {
