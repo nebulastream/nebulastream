@@ -63,31 +63,15 @@ struct SerializedTraitSet
     std::map<std::string, SerializedTrait> traits;
 };
 
-struct SerializedSourceDescriptorLogicalOperator
-{
-    uint64_t i;
-    // TODO
-};
-struct SerializedSinkLogicalOperator
-{
-    std::string name;
-    // TODO
-};
-struct SerializedLogicalOperator
-{
-    std::string operatorType;
-    rfl::Box<SerializedSchema> outputSchema;
-    std::vector<SerializedSchema> inputSchemas;
-};
-
-using Operator = rfl::TaggedUnion<"operator", SerializedSourceDescriptorLogicalOperator, SerializedSinkLogicalOperator, SerializedLogicalOperator>;
 
 struct SerializedOperator
 {
+    std::string type;
     uint64_t operatorId;
     std::vector<uint64_t> childrenIds;
     std::map<std::string, rfl::Generic> config;
     rfl::Box<SerializedTraitSet> traitSet;
-    Operator operatorData;
+    std::vector<SerializedSchema> inputSchemas;
+    std::optional<SerializedSchema> outputSchema;
 };
 }

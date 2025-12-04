@@ -14,14 +14,21 @@
 
 #pragma once
 
-#include <Serialization/SerializedData.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-
+#include <Serialization/SerializedData.hpp>
+#include "Functions/LogicalFunction.hpp"
 
 
 namespace NES
 {
 SerializedDataType serializeDataType(const DataType& dataType);
 SerializedSchema serializeSchema(const Schema& schema);
+
+DataType deserializeDataType(const SerializedDataType& dataType);
+Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout);
+Schema deserializeSchema(const SerializedSchema& schema);
+std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& schemas);
+LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction);
+
 }

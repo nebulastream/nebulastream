@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
@@ -28,9 +29,13 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Serialization/SerializedUtils.hpp>
 
 namespace NES
 {
+class FieldAccessLogicalFunction;
 
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
@@ -103,6 +108,25 @@ SerializableFunction EqualsLogicalFunction::serialize() const
 
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
 
+    return serializedFunction;
+}
+
+SerializedFunction EqualsLogicalFunction::serialized() const
+{
+    SerializedFunction serializedFunction;
+    serializedFunction.functionType = NAME;
+    serializedFunction.dataType = serializeDataType(this->getDataType());
+    for (const auto& child : getChildren())
+    {
+        // TODO: Will be generalized when `serialized` function is added to concept
+        if (child.getType() == "FieldAccess")
+        {
+            serializedFunction.children.emplace_back(child.tryGet<FieldAccessLogicalFunction>()->serialized());
+        } else if (child.getType() == "ConstantValue")
+        {
+            serializedFunction.children.emplace_back(child.tryGet<ConstantValueLogicalFunction>()->serialized());
+        }
+    }
     return serializedFunction;
 }
 

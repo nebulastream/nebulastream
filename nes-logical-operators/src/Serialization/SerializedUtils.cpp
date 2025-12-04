@@ -12,12 +12,16 @@
     limitations under the License.
 */
 #include <Serialization/SerializedUtils.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 
-#include <Serialization/SerializedData.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <ErrorHandling.hpp>
 
+#include "LogicalFunctionRegistry.hpp"
 
 namespace NES
 {
@@ -71,5 +75,106 @@ SerializedSchema serializeSchema(const Schema& schema)
         serializer.fields.emplace_back(field.name, rfl::make_box<SerializedDataType>(serializeDataType(field.dataType)));
     }
     return serializer;
+}
+
+
+DataType deserializeDataType(const SerializedDataType& serializedDataType)
+{
+    switch (serializedDataType)
+    {
+        case SerializedDataType::UINT8:
+            return DataType{DataType::Type::UINT8};
+        case SerializedDataType::UINT16:
+            return DataType{DataType::Type::UINT16};
+        case SerializedDataType::UINT32:
+            return DataType{DataType::Type::UINT32};
+        case SerializedDataType::UINT64:
+            return DataType{DataType::Type::UINT64};
+        case SerializedDataType::BOOLEAN:
+            return DataType{DataType::Type::BOOLEAN};
+        case SerializedDataType::INT8:
+            return DataType{DataType::Type::INT8};
+        case SerializedDataType::INT16:
+            return DataType{DataType::Type::INT16};
+        case SerializedDataType::INT32:
+            return DataType{DataType::Type::INT32};
+        case SerializedDataType::INT64:
+            return DataType{DataType::Type::INT64};
+        case SerializedDataType::FLOAT32:
+            return DataType{DataType::Type::FLOAT32};
+        case SerializedDataType::FLOAT64:
+            return DataType{DataType::Type::FLOAT64};
+        case SerializedDataType::CHAR:
+            return DataType{DataType::Type::CHAR};
+        case SerializedDataType::UNDEFINED:
+            return DataType{DataType::Type::UNDEFINED};
+        case SerializedDataType::VARSIZED:
+            return DataType{DataType::Type::VARSIZED};
+        default:
+            throw Exception{"Oh No", 9999}; // TODO Improve
+    }
+}
+
+Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout)
+{
+    switch (serializedMemoryLayout)
+    {
+        case SerializedMemoryLayout::ROW_LAYOUT:
+            return Schema::MemoryLayoutType::ROW_LAYOUT;
+        case SerializedMemoryLayout::COL_LAYOUT:
+            return Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
+        default:
+            throw Exception{"Oh No", 9999}; // TODO improve
+    }
+}
+
+Schema deserializeSchema(const SerializedSchema& serialized)
+{
+
+    auto schema = Schema{deserializeMemoryLayout(serialized.memoryLayout)};
+    for (auto &field: serialized.fields)
+    {
+        schema.addField(field.name, deserializeDataType(*field.type));
+    }
+    return schema;
+}
+
+std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& serializedSchemas)
+{
+    std::vector<Schema> schemas;
+    for (const auto& schema : serializedSchemas)
+    {
+        schemas.emplace_back(deserializeSchema(schema));
+    }
+    return schemas;
+}
+
+LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction)
+{
+
+    const auto& functionType = serializedFunction.functionType;
+
+    std::vector<LogicalFunction> children;
+    for (const auto& child : serializedFunction.children)
+    {
+        children.emplace_back(deserializeFunction(child));
+    }
+
+    auto dataType =  deserializeDataType(serializedFunction.dataType);
+
+
+    // TODO this will be generalized. Just implemented this as a quick hack.
+    if (functionType == "Equals")
+    {
+        return EqualsLogicalFunction{children[0], children[1]};
+    } else if (functionType == "ConstantValue")
+    {
+        return ConstantValueLogicalFunction{dataType, serializedFunction.config.at("constantValueAsString").to_string().value()};
+
+    } else if (functionType == "FieldAccess")
+    {
+        return FieldAccessLogicalFunction{dataType, serializedFunction.config.at("FieldName").to_string().value()};
+    }
+    throw Exception{"Oh No", 9999};
 }
 }

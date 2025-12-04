@@ -17,12 +17,14 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "Serialization/SerializedData.hpp"
 
 namespace NES
 {
@@ -35,7 +37,7 @@ public:
     EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
 
     [[nodiscard]] SerializableFunction serialize() const override;
-
+    [[nodiscard]] SerializedFunction serialized() const;
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
 
     [[nodiscard]] DataType getDataType() const override;

@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -29,6 +30,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/SerializedUtils.hpp>
 
 namespace NES
 {
@@ -132,6 +134,15 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
 
     DataTypeSerializationUtil::serializeDataType(dataType, serializedFunction.mutable_data_type());
 
+    return serializedFunction;
+}
+
+SerializedFunction FieldAccessLogicalFunction::serialized() const
+{
+    SerializedFunction serializedFunction;
+    serializedFunction.functionType = NAME;
+    serializedFunction.config.emplace("FieldName", getFieldName());
+    serializedFunction.dataType = serializeDataType(dataType);
     return serializedFunction;
 }
 
