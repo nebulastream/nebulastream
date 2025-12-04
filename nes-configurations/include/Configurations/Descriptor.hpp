@@ -310,6 +310,12 @@ struct Descriptor
     template <typename ConfigParameter>
     auto getFromConfig(const ConfigParameter& configParameter) const
     {
+        if (!config.contains(configParameter))
+        {
+            NES_ERROR("Descriptor did not contain key: {}", static_cast<std::string>(configParameter));
+            throw InvalidConfigParameter("Descriptor did not contain key: {}", static_cast<std::string>(configParameter));
+        }
+
         const auto& value = config.at(configParameter);
         if constexpr (ConfigParameter::isEnumWrapper())
         {
