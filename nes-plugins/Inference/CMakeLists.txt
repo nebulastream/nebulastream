@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_plugin(KeywordSpottingLabel LogicalFunction nes-logical-operators KeywordSpottingLabelLogicalFunction.cpp)
-add_plugin(KeywordSpottingLabel ExecutableFunction nes-execution KeywordSpottingLabelExecutableFunction.cpp)
+add_plugin(KeywordSpottingLabel PhysicalFunction nes-physical-operators KeywordSpottingLabelExecutableFunction.cpp)
 
 add_plugin(MelSpectrogram LogicalFunction nes-logical-operators MelSpectrogramLogicalFunction.cpp)
-add_plugin(MelSpectrogram ExecutableFunction nes-execution MelSpectrogramExecutableFunction.cpp)
+add_plugin(MelSpectrogram PhysicalFunction nes-physical-operators MelSpectrogramExecutableFunction.cpp)

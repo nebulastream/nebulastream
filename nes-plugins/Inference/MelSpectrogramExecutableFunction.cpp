@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
-#include <Execution/Functions/Function.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <std/cstring.h>
-#include <ExecutableFunctionRegistry.hpp>
-#include <Common/DataTypes/Float.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 #include <Util/Logger/Logger.hpp>
 
@@ -29,7 +28,8 @@
 #include <sstream>
 #include <iomanip>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES
+{
 
 struct MelSpecParams {
     int sample_rate   = 16000;
@@ -256,14 +256,13 @@ static void ComputeLogMelFromPCM(std::byte* inContent, uint32_t inBytes,
     }
 }
 
-struct MelSpectrogramExecutableFunction : Function {
-    explicit MelSpectrogramExecutableFunction(std::unique_ptr<Function> input)
-        : inputFn(std::move(input)) {}
+struct MelSpectrogramPhysicalFunction : PhysicalFunctionConcept
+{
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override
+    {
+        //NES_DEBUG("MelSpectrogramPhysicalFunction::execute (live, torchaudio-compatible)");
 
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override {
-        //NES_DEBUG("MelSpectrogramExecutableFunction::execute (live, torchaudio-compatible)");
-
-        auto inAny = inputFn->execute(record, arena);
+        auto inAny = inputFn.execute(record, arena);
         auto inVar = inAny.cast<VariableSizedData>();
 
         // allocate output buffer: 40 x 101 floats
@@ -284,25 +283,29 @@ struct MelSpectrogramExecutableFunction : Function {
             +[](std::byte* content) {
                 const float* p = reinterpret_cast<const float*>(content);
                 //NES_DEBUG("Mel out[0..3] = {:.5f} {:.5f} {:.5f} {:.5f}", p[0], p[1], p[2], p[3]);
-        },
-    outVar.getContent()
-);
+            },
+            outVar.getContent()
+        );
 
         return VarVal(outVar);
     }
 
-    std::unique_ptr<Function> inputFn;
+    MelSpectrogramPhysicalFunction(PhysicalFunction input) : inputFn(std::move(input)) { }
 
+    PhysicalFunction inputFn;
 };
 
-} // namespace NES::Runtime::Execution::Functions
+}
 
-namespace NES::Runtime::Execution::Functions::ExecutableFunctionGeneratedRegistrar {
-ExecutableFunctionRegistryReturnType RegisterMelSpectrogramExecutableFunction(ExecutableFunctionRegistryArguments args) {
-    if (args.childFunctions.size() != 1) {
+namespace NES::PhysicalFunctionGeneratedRegistrar
+{
+PhysicalFunctionRegistryReturnType RegisterMelSpectrogramPhysicalFunction(PhysicalFunctionRegistryArguments arguments)
+{
+    if (arguments.childFunctions.size() != 1)
+    {
         throw TypeInferenceException("MelSpectrogram expects 1 argument");
     }
-    return std::make_unique<NES::Runtime::Execution::Functions::MelSpectrogramExecutableFunction>(
-        std::move(args.childFunctions[0]));
+
+    return PhysicalFunction(MelSpectrogramPhysicalFunction(std::move(arguments.childFunctions[0])));
 }
-} // namespace NES::Runtime::Execution::Functions::ExecutableFunctionGeneratedRegistrar
+}

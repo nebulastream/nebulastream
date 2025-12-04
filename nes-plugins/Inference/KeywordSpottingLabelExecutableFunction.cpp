@@ -1,61 +1,91 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #include <memory>
-#include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <ExecutableFunctionRegistry.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <ranges>
 
-namespace NES::Runtime::Execution::Functions {
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 
-static constexpr auto Labels = std::to_array<std::string_view>({
+#include "PhysicalFunctionRegistry.hpp"
+
+namespace NES
+{
+namespace
+{
+
+constexpr auto Labels = std::to_array<std::string_view>({
     "one", "two", "three", "_unknown_"
 });
 
 template <uint64_t index>
-const ExecutableFunctionConstantValueVariableSize& switchStatement(
+const ConstantValueVariableSizePhysicalFunction& switchStatementKwsLabel(
     nautilus::val<uint64_t>& argmax,
-    const std::vector<ExecutableFunctionConstantValueVariableSize>& labels,
-    const ExecutableFunctionConstantValueVariableSize& invalid)
+    const std::vector<ConstantValueVariableSizePhysicalFunction>& labels,
+    const ConstantValueVariableSizePhysicalFunction& invalid)
 {
-    if (argmax == nautilus::val<uint64_t>(index - 1)) {
+    if (argmax == nautilus::val<uint64_t>(index - 1))
+    {
         return labels[index - 1];
     }
-    [[clang::musttail]] return switchStatement<index - 1>(argmax, labels, invalid);
+    [[clang::musttail]] return switchStatementKwsLabel<index - 1>(argmax, labels, invalid);
 }
 
 template <>
-inline const ExecutableFunctionConstantValueVariableSize& switchStatement<0>(
+const ConstantValueVariableSizePhysicalFunction& switchStatementKwsLabel<0>(
     nautilus::val<uint64_t>&,
-    const std::vector<ExecutableFunctionConstantValueVariableSize>&,
-    const ExecutableFunctionConstantValueVariableSize& invalid)
+    const std::vector<ConstantValueVariableSizePhysicalFunction>&,
+    const ConstantValueVariableSizePhysicalFunction& invalid)
 {
     return invalid;
 }
 
-struct KeywordSpottingLabelExecutableFunction : Function {
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override {
-        auto index = argmax->execute(record, arena).cast<nautilus::val<uint64_t>>();
-        return switchStatement<Labels.size()>(index, labels, invalid).execute(record, arena);
+}  // anonymous namespace
+
+struct KeywordSpottingLabelPhysicalFunction final : PhysicalFunctionConcept
+{
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override
+    {
+        auto index = argmax.execute(record, arena).cast<nautilus::val<uint64_t>>();
+        return switchStatementKwsLabel<Labels.size()>(index, labels, invalid).execute(record, arena);
     }
 
-    explicit KeywordSpottingLabelExecutableFunction(std::unique_ptr<Function> argmax)
+    KeywordSpottingLabelPhysicalFunction(PhysicalFunction argmax)
         : argmax(std::move(argmax))
-        , labels(std::views::transform(Labels, [](auto&& l){
-            return ExecutableFunctionConstantValueVariableSize{l};
-          }) | std::ranges::to<std::vector>())
-    {}
+        , labels(
+              std::views::transform(Labels, [](auto&& label) { return ConstantValueVariableSizePhysicalFunction{label}; })
+              | std::ranges::to<std::vector>())
+    {
+    }
 
-    std::unique_ptr<Function> argmax;
-    std::vector<ExecutableFunctionConstantValueVariableSize> labels;
-    ExecutableFunctionConstantValueVariableSize invalid{"INVALID"};
+    PhysicalFunction argmax;
+    std::vector<ConstantValueVariableSizePhysicalFunction> labels;
+
+    ConstantValueVariableSizePhysicalFunction invalid{"INVALID"};
 };
 
-} // namespace NES::Runtime::Execution::Functions
+}
 
-namespace NES::Runtime::Execution::Functions::ExecutableFunctionGeneratedRegistrar {
-ExecutableFunctionRegistryReturnType RegisterKeywordSpottingLabelExecutableFunction(ExecutableFunctionRegistryArguments args) {
-    if (args.childFunctions.size() != 1)
-        throw TypeInferenceException("Function expects 1 argument");
-    return std::make_unique<NES::Runtime::Execution::Functions::KeywordSpottingLabelExecutableFunction>(
-        std::move(args.childFunctions[0]));
+namespace NES::PhysicalFunctionGeneratedRegistrar
+{
+PhysicalFunctionRegistryReturnType RegisterKeywordSpottingLabelPhysicalFunction(PhysicalFunctionRegistryArguments arguments)
+{
+    if (arguments.childFunctions.size() != 1)
+    {
+        throw TypeInferenceException("KeywordSpottingLabel expects 1 argument");
+    }
+
+    return PhysicalFunction(KeywordSpottingLabelPhysicalFunction(std::move(arguments.childFunctions[0])));
 }
 }
