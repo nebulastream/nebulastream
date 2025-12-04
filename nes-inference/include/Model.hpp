@@ -51,8 +51,6 @@ class Model
     size_t outputSizeInBytes = 0;
     std::vector<DataType> inputs;
     std::vector<std::pair<std::string, DataType>> outputs;
-    std::string predictionCacheType;
-    size_t predictionCacheSize;
 
 public:
     Model(std::shared_ptr<std::byte[]> modelByteCode, size_t modelSize) : byteCode(std::move(modelByteCode), modelSize) { }
@@ -73,9 +71,6 @@ public:
     size_t outputSize() const { return outputSizeInBytes; }
 
     const std::string& getFunctionName() { return functionName; }
-
-    std::string getPredictionCacheType() const { return predictionCacheType; }
-    size_t getPredictionCacheSize() const { return predictionCacheSize; }
 
     friend class ModelCatalog;
     friend std::expected<Model, ModelLoadError> load(const std::filesystem::path& path, const ModelOptions& options);

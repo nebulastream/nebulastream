@@ -34,7 +34,8 @@ public:
     IREEBatchInferenceOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        Nebuli::Inference::Model model);
+        Nebuli::Inference::Model model,
+        uint64_t batchSize);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
@@ -84,12 +85,12 @@ public:
 
     const int8_t* getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const override;
 
-    uint64_t batchSize;
     mutable uint64_t batchId = 0;
     mutable uint64_t tuplesSeen = 0;
     mutable folly::Synchronized<std::map<uint64_t, std::shared_ptr<Batch>>> batches;
 private:
     Nebuli::Inference::Model model;
+    uint64_t batchSize;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
 };
 

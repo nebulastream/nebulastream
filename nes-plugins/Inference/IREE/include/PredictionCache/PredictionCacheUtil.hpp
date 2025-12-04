@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <PredictionCache/PredictionCache.hpp>
-#include <PredictionCacheConfiguration.hpp>
+#include <InferenceConfiguration.hpp>
 #include <val.hpp>
 
 namespace NES::Util

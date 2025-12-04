@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <Functions/PhysicalFunction.hpp>
 #include <PhysicalOperator.hpp>
-#include <PredictionCacheConfiguration.hpp>
+#include <InferenceConfiguration.hpp>
 
 namespace NES
 {

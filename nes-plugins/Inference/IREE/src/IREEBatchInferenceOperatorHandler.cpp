@@ -25,10 +25,11 @@ namespace NES
 IREEBatchInferenceOperatorHandler::IREEBatchInferenceOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     OriginId outputOriginId,
-    Nebuli::Inference::Model model)
+    Nebuli::Inference::Model model,
+    uint64_t batchSize)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, true)
-    , batchSize(model.getInputShape().front())
     , model(std::move(model))
+    , batchSize(batchSize)
 {
 }
 

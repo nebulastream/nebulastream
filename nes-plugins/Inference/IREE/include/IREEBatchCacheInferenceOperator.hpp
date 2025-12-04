@@ -21,7 +21,7 @@
 #include <WindowProbePhysicalOperator.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <PredictionCacheConfiguration.hpp>
+#include <InferenceConfiguration.hpp>
 
 namespace NES
 {
