@@ -1,16 +1,13 @@
-From 26fb7d7bbc9ea23fb8ee2dd3a47fffc633f94ce6 Mon Sep 17 00:00:00 2001
-From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
-Date: Sat, 12 Apr 2025 15:06:43 +0200
-Subject: [PATCH 2/3] fixup-install-destination
-
+Subject: [PATCH] 0002-fixup-install-destination
 ---
- build_tools/cmake/iree_install_support.cmake | 13 +++++++------
- 1 file changed, 7 insertions(+), 6 deletions(-)
-
+Index: build_tools/cmake/iree_install_support.cmake
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
 diff --git a/build_tools/cmake/iree_install_support.cmake b/build_tools/cmake/iree_install_support.cmake
-index 2037452466..100b0213f7 100644
---- a/build_tools/cmake/iree_install_support.cmake
-+++ b/build_tools/cmake/iree_install_support.cmake
+--- a/build_tools/cmake/iree_install_support.cmake	(revision 1a6681936a78138f7ae2b0fd9309d28dfe01ac5b)
++++ b/build_tools/cmake/iree_install_support.cmake	(date 1764841474082)
 @@ -4,6 +4,7 @@
  # See https://llvm.org/LICENSE.txt for license information.
  # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -19,15 +16,7 @@ index 2037452466..100b0213f7 100644
  function(iree_add_alias_library to_target from_target)
    add_library(${to_target} ALIAS ${from_target})
    # Yes: Leading-lowercase property names are load bearing and the recommended
-@@ -57,17 +58,17 @@ function(iree_install_targets)
- 
-   # Add it to the global property that will be processed at the end of the build.
-   set_property(GLOBAL APPEND PROPERTY "IREE_EXPORT_TARGETS_${_EXPORT_SET}" ${_RULE_TARGETS})
--
-+  
-   # The export name is set at a directory level to control export.
-   install(
-     TARGETS ${_RULE_TARGETS}
+@@ -64,10 +65,10 @@
      EXPORT IREEExported-${_EXPORT_SET}
      COMPONENT "${_INSTALL_COMPONENT}"
      EXCLUDE_FROM_ALL
@@ -42,7 +31,7 @@ index 2037452466..100b0213f7 100644
    )
  
    # Install headers if the rule declares them and the directory level
-@@ -140,7 +141,7 @@ function(iree_generate_export_targets)
+@@ -140,7 +141,7 @@
      EXPORT "IREEExported-${_RULE_EXPORT_SET}"
      COMPONENT "${_component}"
      FILE "IREETargets-${_RULE_EXPORT_SET}.cmake"
@@ -51,6 +40,3 @@ index 2037452466..100b0213f7 100644
    )
  
    # Clear the export targets so that innocent aggregating projects don't
--- 
-2.45.2
-
