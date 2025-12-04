@@ -176,7 +176,14 @@ grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const 
                 errorProto->set_message(error->what());
                 errorProto->set_stacktrace(error->trace().to_string());
                 errorProto->set_code(error->code());
-                errorProto->set_location(std::string{error->where()->filename} + ":" + std::to_string(error->where()->line.value_or(0)));
+                if (auto where = error->where())
+                {
+                    errorProto->set_location(where->filename + ":" + std::to_string(where->line.value_or(-1)));
+                }
+                else
+                {
+                    errorProto->set_location("Unknown location");
+                }
             }
             return grpc::Status::OK;
         }
