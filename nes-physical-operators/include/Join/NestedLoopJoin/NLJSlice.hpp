@@ -50,4 +50,7 @@ private:
     std::vector<std::unique_ptr<PagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;
 };
+
+[[nodiscard]] PagedVector* getPagedVectorRefProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide);
+
 }

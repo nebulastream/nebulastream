@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "5fa4c9043d961238d283bf129b82c59e1476974a";
-    hash = "sha512-woWgqYDU5SW2hqMh/VhDD9adUt1XFI2K75YOeIW7Yi/fDEmX59bOXmlk4z1nbPJqVFPip7pPJkCvWEZ+WmM/cg==";
+    rev = "48ec95391c9f984dfcc24a63aefe43d38e9d7b1d";
+    hash = "sha512-r+BOalsNn3qUum4GWEb+RD8dOtBgx7LlJx8yTLLq7W/A2SRvZP1u3uJ/bgFFaqCeXp+weXLkdgz6EG5D5sAL4Q==";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -64,7 +64,6 @@ let
     src = nautilusSrc;
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
-      ./patches/0002-fix-ambiguous-val-overload.patch
       ./patches/0003-ubsan-fix-variadic-expansion.patch
     ];
 
@@ -113,6 +112,7 @@ let
       "-DENABLE_C_BACKEND=ON"
       "-DENABLE_BC_BACKEND=OFF"
       "-DENABLE_TESTS=OFF"
+      "-DENABLE_INLINING_PASS=OFF"
       "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
       "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"
     ];
