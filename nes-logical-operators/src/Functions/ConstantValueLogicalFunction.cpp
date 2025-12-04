@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -28,6 +29,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/SerializedUtils.hpp>
 
 namespace NES
 {
@@ -105,6 +107,15 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
     (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
 
     return serializedFunction;
+}
+
+SerializedFunction ConstantValueLogicalFunction::serialized() const
+{
+    SerializedFunction serialized;
+    serialized.functionType = NAME;
+    serialized.dataType = serializeDataType(getDataType());
+    serialized.config.emplace("constantValueAsString", getConstantValue());
+    return serialized;
 }
 
 LogicalFunctionRegistryReturnType

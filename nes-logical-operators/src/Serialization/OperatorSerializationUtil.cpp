@@ -90,7 +90,13 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             auto registryArgument = LogicalOperatorRegistryArguments{
                 .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
                 .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
-                .config = config};
+                .config = config,
+                .reflec = ""};
+
+            if (!serializedOperator.reflect().empty())
+            {
+                registryArgument.reflec = serializedOperator.reflect();
+            }
 
 
             for (const auto& schema : serializedOperator.operator_().input_schemas())

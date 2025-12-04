@@ -38,6 +38,7 @@
     "magic-enum",
     "nlohmann-json",
     "nautilus",
+    "reflectcpp",
     "replxx",
     "spdlog",
     "yaml-cpp",
