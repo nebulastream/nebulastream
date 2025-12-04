@@ -94,6 +94,37 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction);
 
     template <typename T>
+    static T parseSIMDJsonValueOrThrow(
+        simdjson::simdjson_result<T> simdJsonValue,
+        simdjson::simdjson_result<simdjson::ondemand::value>& rawVal,
+        const std::string_view expectedType,
+        const std::string_view expectedField)
+    {
+        if (not simdJsonValue.has_value())
+        {
+            throw FormattingError(
+                "SimdJson could not parse field value {} of type '{}' belonging to field '{}' with error: {}",
+                rawVal.raw_json().value(),
+                expectedType,
+                expectedField,
+                magic_enum::enum_name(simdJsonValue.error()));
+        }
+        return simdJsonValue.value();
+    }
+
+    static simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
+        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+    {
+        const auto simdJsonResult = simdJsonReference[fieldName];
+        if (not simdJsonResult.has_value())
+        {
+            throw FieldNotFound(
+                "SimdJson has not found the fieldName {} with error: {}", fieldName, magic_enum::enum_name(simdJsonResult.error()));
+        }
+        return simdJsonResult;
+    }
+
+    template <typename T>
     nautilus::val<T> parseNonStringValueIntoNautilusRecord(
         nautilus::val<FieldIndex> fieldIdx,
         nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
@@ -109,37 +140,42 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                     metaData->getIndexToFieldName().size());
                 const auto& fieldName = metaData->getIndexToFieldName()[fieldIndex];
                 auto currentDoc = *fieldIndexFunction->docStreamIterator;
+                auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
                 /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
                 if constexpr (std::same_as<T, bool>)
                 {
-                    const T value = currentDoc[fieldName].get_bool();
+                    const T value = parseSIMDJsonValueOrThrow(simdJsonResult.get_bool(), simdJsonResult, "bool", fieldName);
                     return value;
                 }
                 else if constexpr (std::same_as<T, char>)
                 {
                     const std::string_view valueSV = currentDoc[fieldName];
                     PRECONDITION(valueSV.size() == 1, "Cannot take {} as character, because size is not 1", valueSV);
-                    const T value = currentDoc[fieldName].get_string()->front();
+                    const T value = parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName)[0];
                     return value;
                 }
                 else if constexpr (std::signed_integral<T>)
                 {
-                    const auto value = static_cast<T>(currentDoc[fieldName].get_int64());
+                    const auto value
+                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_int64(), simdJsonResult, "integer", fieldName));
                     return value;
                 }
                 else if constexpr (std::unsigned_integral<T>)
                 {
-                    const auto value = static_cast<T>(currentDoc[fieldName].get_uint64());
+                    const auto value
+                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_uint64(), simdJsonResult, "unsigned", fieldName));
                     return value;
                 }
                 else if constexpr (std::is_same_v<T, double>)
                 {
-                    const auto value = static_cast<T>(currentDoc[fieldName].get_double());
+                    const auto value
+                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_double(), simdJsonResult, "double", fieldName));
                     return value;
                 }
                 else if constexpr (std::is_same_v<T, float>)
                 {
-                    const auto value = static_cast<T>(currentDoc[fieldName].get_double());
+                    const auto value
+                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_double(), simdJsonResult, "float", fieldName));
                     return value;
                 }
             },
