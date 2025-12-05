@@ -30,14 +30,21 @@ CREATE SINK producerChecksum(producerId INT32)  TYPE Checksum;
 GlobalConfiguration worker.default_query_execution.execution_mode: [COMPILER]
 GlobalConfiguration worker.default_query_execution.dump_compilation_result: [FILE]
 
-
-SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) INTO consumersChecksum;
-----
-14236360, 36138915427
-
 SELECT consumerType, AVG(consumedPower) as avgPower
 FROM consumers
 GROUP BY consumerType
-HAVING avgPower >= FLOAT64(1) INTO q4Checksum;
+WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+HAVING avgPower >= FLOAT64(1) INTO Checksum();
+----
+84998149 110044377847
+
+
+
+# varsized
+SELECT * FROM consumers WHERE consumerType == VARSIZED("streetLight") INTO consumersChecksum;
+----
+14236360, 361389154298
+
+SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) INTO consumersChecksum;
 ----
 14236360, 36138915427
