@@ -61,24 +61,22 @@ void parseRawValueIntoRecord(
     ArenaRef& arenaRef)
 {
     /// We use an val<int> to use bitwise operators to reduce the number of branches created in the nautilus trace.
-    nautilus::val<int> isNullInt = 0;
+    nautilus::val<bool> isNull = false;
     if (dataType.isNullable)
     {
         for (const auto& nullValue : nautilus::static_iterable(nullValues))
         {
             auto minLength = (fieldSize < nullValue.length()) * fieldSize + (fieldSize >= nullValue.length()) * nullValue.length();
             nautilus::val<int8_t*> fieldIterator = fieldAddress;
-            nautilus::val<int> equalValue = static_cast<nautilus::val<int>>(fieldSize == nullValue.length());
+            nautilus::val<bool> equalValue = fieldSize == nullValue.length();
             for (nautilus::static_val<uint64_t> i = 0; i < minLength; ++i)
             {
-                equalValue = equalValue
-                    & static_cast<nautilus::val<int>>(
+                equalValue = equalValue and (
                                  nautilus::val<int8_t>{fieldIterator[i]} == nautilus::val<int8_t>{static_cast<int8_t>(nullValue[i])});
             }
-            isNullInt = isNullInt | equalValue;
+            isNull = isNull or equalValue;
         }
     }
-    const nautilus::val<bool> isNull = (isNullInt == 1);
 
     switch (dataType.type)
     {

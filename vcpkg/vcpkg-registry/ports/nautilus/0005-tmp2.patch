@@ -1,0 +1,56 @@
+Index: nautilus/src/nautilus/tracing/TraceContext.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.cpp b/nautilus/src/nautilus/tracing/TraceContext.cpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
++++ b/nautilus/src/nautilus/tracing/TraceContext.cpp	(date 1764938369548)
+@@ -201,8 +201,8 @@
+ }
+
+ void TraceContext::allocateValRef(ValueRef ref) {
+-	while (dynamicVars.size() <= ref) {
+-		dynamicVars.emplace_back(0);
++	if (dynamicVars.size() <= ref) {
++		dynamicVars.resize(ref + 1, 0);
+ 	}
+ 	dynamicVars.at(ref)++;
+ }
+@@ -211,6 +211,10 @@
+ 	// the ref counter should always be greater than zero.
+ 	assert(refCounter > 0);
+ 	refCounter--;
++
++	// const auto it = std::find_if(dynamicVars.rbegin(), dynamicVars.rend(), [](uint8_t val) { return val != 0; });
++	// dynamicVars.erase(it.base(), dynamicVars.end());
++
+ 	while (!dynamicVars.empty() && dynamicVars.back() == 0) {
+ 		dynamicVars.pop_back();
+ 	}
+@@ -228,11 +232,22 @@
+ 	return hash;
+ }
+
+-uint64_t hashDynamicVector(const DynamicValueMap& data) {
++uint64_t hashDynamicVector(DynamicValueMap& data) {
+ 	size_t hash = offset_basis;
+-	for (auto value : data) {
+-		hash ^= value;
++
++	auto* valueU64Ptr = reinterpret_cast<uint64_t*>(data.data());
++	size_t i = 0;
++	for (; i < data.size() / sizeof(uint64_t); i++) {
++		hash ^= *valueU64Ptr;
+ 		hash *= fnv_prime;
++		++valueU64Ptr;
++	}
++
++	if (data.size() % sizeof(uint64_t) != 0) {
++		for (size_t j = i * sizeof(uint64_t); j < data.size(); ++j) {
++			hash ^= data[j];
++			hash *= fnv_prime;
++		}
+ 	}
+ 	return hash;
+ }

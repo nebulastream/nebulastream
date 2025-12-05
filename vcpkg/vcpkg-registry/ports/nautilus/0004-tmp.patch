@@ -1,0 +1,456 @@
+Subject: [PATCH] another another cool commit message
+---
+Index: nautilus/include/nautilus/std/sstream.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/std/sstream.h b/nautilus/include/nautilus/std/sstream.h
+--- a/nautilus/include/nautilus/std/sstream.h	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/include/nautilus/std/sstream.h	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -52,7 +52,7 @@
+
+ 	~val() {
+ 		invoke(
+-		    +[](std::basic_ostream<CharT, Traits>* ptr) -> void { delete ptr; }, this->stream);
++		    +[](const std::basic_ostream<CharT, Traits>* ptr) -> void { delete ptr; }, this->stream);
+ 	}
+ };
+
+Index: nautilus/include/nautilus/val.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+--- a/nautilus/include/nautilus/val.hpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/include/nautilus/val.hpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -57,7 +57,7 @@
+ 	}
+ 	val(val<ValueType>&& other) noexcept : state(other.state), value(std::move(other.value)) {
+ 	}
+-	val(tracing::TypedValueRef& tc) : state(tc), value() {
++	val(const tracing::TypedValueRef& tc) : state(tc), value() {
+ 	}
+ #else
+ 	val() : value(0) {
+@@ -165,7 +165,7 @@
+ 	// move constructor
+ 	val(const val<bool>&& other) : state(other.state), value(other.value) {
+ 	}
+-	val(tracing::TypedValueRef& tc) : state(tc), value() {
++	val(const tracing::TypedValueRef& tc) : state(tc), value() {
+ 	}
+
+ #else
+@@ -195,7 +195,7 @@
+ 	operator bool() const {
+ 		if SHOULD_TRACE () {
+ #ifdef ENABLE_TRACING
+-			auto ref = state;
++			const auto ref = state;
+ 			return tracing::traceBool(ref);
+ #endif
+ 		}
+@@ -461,30 +461,30 @@
+ }
+
+ namespace details {
+-val<bool> inline lOr(val<bool>& left, val<bool>& right) {
++val<bool> inline lOr(const val<bool>& left, const val<bool>& right) {
+ #ifdef ENABLE_TRACING
+ 	if SHOULD_TRACE () {
+-		auto tc = tracing::traceBinaryOp(tracing::OR, Type::b, left.state, right.state);
++		const auto tc = tracing::traceBinaryOp(tracing::OR, Type::b, left.state, right.state);
+ 		return val<bool> {tc};
+ 	}
+ #endif
+ 	return RawValueResolver<bool>::getRawValue(left) || RawValueResolver<bool>::getRawValue(right);
+ }
+
+-val<bool> inline lAnd(val<bool>& left, val<bool>& right) {
++val<bool> inline lAnd(const val<bool>& left, const val<bool>& right) {
+ #ifdef ENABLE_TRACING
+ 	if SHOULD_TRACE () {
+-		auto tc = tracing::traceBinaryOp(tracing::AND, Type::b, left.state, right.state);
++		const auto tc = tracing::traceBinaryOp(tracing::AND, Type::b, left.state, right.state);
+ 		return val<bool> {tc};
+ 	}
+ #endif
+ 	return RawValueResolver<bool>::getRawValue(left) && RawValueResolver<bool>::getRawValue(right);
+ }
+
+-val<bool> inline lNot(val<bool>& arg) {
++val<bool> inline lNot(const val<bool>& arg) {
+ #ifdef ENABLE_TRACING
+ 	if SHOULD_TRACE () {
+-		auto tc = tracing::traceUnaryOp(tracing::NOT, Type::b, arg.state);
++		const auto tc = tracing::traceUnaryOp(tracing::NOT, Type::b, arg.state);
+ 		return val<bool> {tc};
+ 	}
+ #endif
+@@ -492,31 +492,31 @@
+ }
+ } // namespace details
+
+-auto inline operator||(bool left, val<bool> right) {
+-	auto leftVal = make_value(left);
++auto inline operator||(const bool left, const val<bool>& right) {
++	const auto leftVal = make_value(left);
+ 	return details::lOr(leftVal, right);
+ }
+-auto inline operator||(val<bool> left, bool right) {
+-	auto rightVal = make_value(right);
++auto inline operator||(const val<bool>& left, const bool right) {
++	const auto rightVal = make_value(right);
+ 	return details::lOr(left, rightVal);
+ }
+-auto inline operator||(val<bool> left, val<bool> right) {
++auto inline operator||(const val<bool>& left, const val<bool>& right) {
+ 	return details::lOr(left, right);
+ }
+
+-auto inline operator&&(bool left, val<bool> right) {
+-	auto leftVal = make_value(left);
++auto inline operator&&(bool left, const val<bool>& right) {
++	const auto leftVal = make_value(left);
+ 	return details::lAnd(leftVal, right);
+ }
+-auto inline operator&&(val<bool> left, bool right) {
+-	auto rightVal = make_value(right);
++auto inline operator&&(const val<bool>& left, bool right) {
++	const auto rightVal = make_value(right);
+ 	return details::lAnd(left, rightVal);
+ }
+-auto inline operator&&(val<bool> left, val<bool> right) {
++auto inline operator&&(const val<bool>& left, const val<bool>& right) {
+ 	return details::lAnd(left, right);
+ }
+
+-auto inline operator!(val<bool> left) {
++auto inline operator!(const val<bool>& left) {
+ 	return details::lNot(left);
+ }
+
+Index: nautilus/include/nautilus/val_enum.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val_enum.hpp b/nautilus/include/nautilus/val_enum.hpp
+--- a/nautilus/include/nautilus/val_enum.hpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/include/nautilus/val_enum.hpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -38,7 +38,7 @@
+ 	val(val<underlying_type_t> t)
+ 	    : state(t.state), value((T) details::RawValueResolver<underlying_type_t>::getRawValue(t)) {
+ 	}
+-	val(val<T>& t) : state(tracing::traceCopy(t.state)), value(t.value) {
++	val(const val<T>& t) : state(tracing::traceCopy(t.state)), value(t.value) {
+ 	}
+ 	val(val<T>&& t) : state(t.state), value(t.value) {
+ 	}
+@@ -63,7 +63,7 @@
+ 	}
+ #endif
+
+-	val<bool> operator==(val<T>& other) const {
++	val<bool> operator==(const val<T>& other) const {
+ #ifdef ENABLE_TRACING
+ 		if (tracing::inTracer()) {
+ 			auto tc = tracing::traceBinaryOp(tracing::EQ, Type::b, state, other.state);
+@@ -78,7 +78,7 @@
+ 		return *this == res;
+ 	}
+
+-	val<bool> operator!=(val<T>& other) const {
++	val<bool> operator!=(const val<T>& other) const {
+ #ifdef ENABLE_TRACING
+ 		if (tracing::inTracer()) {
+ 			auto tc = tracing::traceBinaryOp(tracing::NEQ, Type::b, state, other.state);
+Index: nautilus/include/nautilus/val_ptr.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val_ptr.hpp b/nautilus/include/nautilus/val_ptr.hpp
+--- a/nautilus/include/nautilus/val_ptr.hpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/include/nautilus/val_ptr.hpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -456,7 +456,7 @@
+ 	template <class T>
+ 	    requires std::is_convertible_v<T, baseType>
+ 	void operator=(T other) noexcept {
+-		val<baseType> value {other};
++		const val<baseType> value {other};
+ 		*this = value;
+ 	}
+
+@@ -472,7 +472,7 @@
+ 			return;
+ 		}
+ #endif
+-		auto rawPtr = details::RawValueResolver<bool*>::getRawValue(ptr);
++		const auto rawPtr = details::RawValueResolver<bool*>::getRawValue(ptr);
+ 		*rawPtr =
+ 		    details::RawValueResolver<typename std::remove_cvref_t<decltype((value))>::raw_type>::getRawValue(value);
+ 	}
+@@ -481,11 +481,11 @@
+ 		// load
+ #ifdef ENABLE_TRACING
+ 		if (tracing::inTracer()) {
+-			auto& ref = tracing::traceUnaryOp(tracing::LOAD, tracing::TypeResolver<baseType>::to_type(), ptr.state);
++			const auto& ref = tracing::traceUnaryOp(tracing::LOAD, tracing::TypeResolver<baseType>::to_type(), ptr.state);
+ 			return val<baseType>(ref);
+ 		}
+ #endif
+-		auto rawPtr = details::RawValueResolver<bool*>::getRawValue(ptr);
++		const auto rawPtr = details::RawValueResolver<bool*>::getRawValue(ptr);
+ 		return val<baseType>(*rawPtr);
+ 	}
+
+Index: nautilus/src/nautilus/tracing/Block.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/Block.cpp b/nautilus/src/nautilus/tracing/Block.cpp
+--- a/nautilus/src/nautilus/tracing/Block.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/Block.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -5,7 +5,7 @@
+
+ namespace nautilus::tracing {
+
+-Block::Block(uint16_t blockId) : blockId(blockId), type(Type::Default) {
++Block::Block(const uint16_t blockId) : blockId(blockId), type(Type::Default) {
+ }
+
+ operation_identifier Block::addOperation(nautilus::tracing::TraceOperation&& operation) {
+Index: nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+--- a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -12,7 +12,7 @@
+ 	createBlock();
+ }
+
+-Block& ExecutionTrace::getBlock(uint16_t blockIndex) {
++Block& ExecutionTrace::getBlock(const uint16_t blockIndex) {
+ 	return blocks[blockIndex];
+ }
+
+@@ -24,7 +24,7 @@
+ 	return blocks[currentBlockIndex];
+ }
+
+-void ExecutionTrace::setCurrentBlock(uint16_t index) {
++void ExecutionTrace::setCurrentBlock(const uint16_t index) {
+ 	currentOperationIndex = 0;
+ 	currentBlockIndex = index;
+ }
+@@ -209,7 +209,7 @@
+ 	return mergeBlock;
+ }
+
+-TypedValueRef& ExecutionTrace::setArgument(Type type, size_t index) {
++TypedValueRef& ExecutionTrace::setArgument(const Type type, const size_t index) {
+ 	++lastValueRef;
+ 	uint16_t argRef = index + 1;
+ 	auto& arguments = blocks[0].arguments;
+Index: nautilus/src/nautilus/tracing/Snapshot.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/Snapshot.cpp b/nautilus/src/nautilus/tracing/Snapshot.cpp
+--- a/nautilus/src/nautilus/tracing/Snapshot.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/Snapshot.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -2,7 +2,7 @@
+
+ namespace nautilus::tracing {
+
+-Snapshot::Snapshot(Tag* tag, uint64_t staticValueHash) : staticValueHash(staticValueHash), tag(tag) {
++Snapshot::Snapshot(Tag* tag, const uint64_t staticValueHash) : staticValueHash(staticValueHash), tag(tag) {
+ }
+
+ Snapshot::Snapshot() : staticValueHash(), tag() {
+Index: nautilus/src/nautilus/tracing/TraceOperation.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceOperation.cpp b/nautilus/src/nautilus/tracing/TraceOperation.cpp
+--- a/nautilus/src/nautilus/tracing/TraceOperation.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/TraceOperation.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -2,15 +2,15 @@
+
+ namespace nautilus::tracing {
+
+-BlockRef::BlockRef(uint16_t block) : block(block) {
++BlockRef::BlockRef(const uint16_t block) : block(block) {
+ }
+
+-TraceOperation::TraceOperation(Snapshot& tag, Op op, Type resultType, TypedValueRef ref,
++TraceOperation::TraceOperation(Snapshot& tag, const Op op, const Type resultType, const TypedValueRef ref,
+                                std::vector<InputVariant>&& input)
+     : tag(tag), op(op), resultType(resultType), resultRef(ref), input(input) {
+ }
+
+-TraceOperation::TraceOperation(Op op, std::vector<InputVariant>&& input)
++TraceOperation::TraceOperation(const Op op, std::vector<InputVariant>&& input)
+     : tag(), op(op), resultType(Type::v), resultRef(), input(input) {
+ }
+
+Index: nautilus/src/nautilus/tracing/TracingUtil.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -31,7 +31,7 @@
+ 	return mangledName;
+ }
+
+-void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) {
++void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, const Type resultType) {
+ 	TraceContext::get()->traceAssignment(target, source, resultType);
+ }
+
+@@ -39,15 +39,15 @@
+ 	TraceContext::get()->traceValueDestruction(target);
+ }
+
+-void traceReturnOperation(Type type, const TypedValueRef& ref) {
++void traceReturnOperation(const Type type, const TypedValueRef& ref) {
+ 	TraceContext::get()->traceReturnOperation(type, ref);
+ }
+
+-TypedValueRef& registerFunctionArgument(Type type, size_t index) {
++TypedValueRef& registerFunctionArgument(const Type type, const size_t index) {
+ 	return TraceContext::get()->registerFunctionArgument(type, index);
+ }
+
+-TypedValueRef& traceConstant(Type type, const ConstantLiteral& value) {
++TypedValueRef& traceConstant(const Type type, const ConstantLiteral& value) {
+ 	return TraceContext::get()->traceConstValue(type, value);
+ }
+
+@@ -55,10 +55,10 @@
+ 	return TraceContext::get()->traceCmp(state);
+ }
+
+-void allocateValRef(ValueRef ref) {
++void allocateValRef(const ValueRef ref) {
+ 	TraceContext::get()->allocateValRef(ref);
+ }
+-void freeValRef(ValueRef ref) {
++void freeValRef(const ValueRef ref) {
+ 	TraceContext::get()->freeValRef(ref);
+ }
+
+@@ -73,18 +73,18 @@
+ 	return TraceContext::get() != nullptr;
+ }
+
+-TypedValueRef& traceBinaryOp(Op operation, Type resultType, const TypedValueRef& left, const TypedValueRef& right) {
++TypedValueRef& traceBinaryOp(const Op operation, const Type resultType, const TypedValueRef& left, const TypedValueRef& right) {
+ 	return TraceContext::get()->traceOperation(operation, resultType, {left, right});
+ }
+
+-TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
++TypedValueRef& traceCall(void* fptn, const Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+                          const FunctionAttributes fnAttrs) {
+ 	auto mangledName = getMangledName(fptn);
+ 	auto functionName = getFunctionName(mangledName);
+ 	return TraceContext::get()->traceCall(functionName, mangledName, fptn, resultType, arguments, fnAttrs);
+ }
+
+-TypedValueRef& traceUnaryOp(Op operation, Type resultType, const TypedValueRef& input) {
++TypedValueRef& traceUnaryOp(const Op operation, const Type resultType, const TypedValueRef& input) {
+ 	return TraceContext::get()->traceOperation(operation, resultType, {input});
+ }
+
+Index: nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+--- a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -76,7 +76,7 @@
+ }
+
+ bool SSACreationPhase::SSACreationPhaseContext::isLocalValueRef(Block& block, TypedValueRef& ref, Type,
+-                                                                uint32_t operationIndex) {
++                                                                const uint32_t operationIndex) {
+ 	// A value ref is defined in the local scope, if it is the result of an
+ 	// operation before the operationIndex
+ 	for (uint32_t i = 0; i < operationIndex; i++) {
+@@ -121,8 +121,8 @@
+ 	}
+ }
+
+-void SSACreationPhase::SSACreationPhaseContext::processValueRef(Block& block, TypedValueRef& ref, Type ref_type,
+-                                                                uint32_t operationIndex) {
++void SSACreationPhase::SSACreationPhaseContext::processValueRef(Block& block, TypedValueRef& ref, const Type ref_type,
++                                                                const uint32_t operationIndex) {
+ 	if (isLocalValueRef(block, ref, ref_type, operationIndex)) {
+ 		// variable is a local ref -> don't do anything as the value is defined in
+ 		// the current block
+@@ -158,7 +158,7 @@
+ }
+
+ void SSACreationPhase::SSACreationPhaseContext::processBlockRef(Block& block, BlockRef& blockRef,
+-                                                                uint32_t operationIndex) {
++                                                                const uint32_t operationIndex) {
+ 	// a block ref has a set of arguments, which are handled the same as all other
+ 	// value references.
+ 	for (auto& input : blockRef.arguments) {
+Index: nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp
+--- a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -6,7 +6,7 @@
+ 	path.emplace_back(outcome);
+ }
+
+-std::tuple<bool> SymbolicExecutionPath::operator[](uint64_t size) {
++std::tuple<bool> SymbolicExecutionPath::operator[](const uint64_t size) {
+ 	return path[size];
+ }
+
+Index: nautilus/src/nautilus/tracing/tag/TagRecorder.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp b/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp
+--- a/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp	(revision 19496e5238a04824b389cd2445abafdbb529d280)
+@@ -11,7 +11,7 @@
+
+ static void* getReturnAddress(uint32_t offset);
+
+-TagRecorder::TagRecorder(TagAddress startAddress) : startAddress(startAddress) {
++TagRecorder::TagRecorder(const TagAddress startAddress) : startAddress(startAddress) {
+ 	useBuiltinTagCreation = getReturnAddress(1) != nullptr;
+ }
+
+@@ -116,7 +116,7 @@
+ 	(std::make_index_sequence<StackSize> {});
+ }
+
+-static void* getReturnAddress(uint32_t offset) {
++static void* getReturnAddress(const uint32_t offset) {
+ 	return get_addr<TagRecorder::MAX_TAG_SIZE>(offset);
+ }
+

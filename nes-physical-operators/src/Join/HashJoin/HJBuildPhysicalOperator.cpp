@@ -89,31 +89,32 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     }
 
     const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
-            {
-                const ChainedHashMapRef hashMapRef{
-                    hashMap,
-                    copyOfHashMapOptions.fieldKeys,
-                    copyOfHashMapOptions.fieldValues,
-                    copyOfHashMapOptions.entriesPerPage,
-                    copyOfHashMapOptions.entrySize};
-                for (const auto entry : hashMapRef)
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
+            std::function(
+                [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
                 {
-                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                    const auto state = entryRefReset.getValueMemArea();
-                    nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea) -> void
-                        {
-                            /// Calls the destructor of the PagedVector
-                            /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                            pagedVector->~PagedVector();
-                        },
-                        state);
-                }
-            })));
+                    const ChainedHashMapRef hashMapRef{
+                        hashMap,
+                        copyOfHashMapOptions.fieldKeys,
+                        copyOfHashMapOptions.fieldValues,
+                        copyOfHashMapOptions.entriesPerPage,
+                        copyOfHashMapOptions.entrySize};
+                    for (const auto entry : hashMapRef)
+                    {
+                        const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                        const auto state = entryRefReset.getValueMemArea();
+                        nautilus::invoke(
+                            +[](int8_t* pagedVectorMemArea) -> void
+                            {
+                                /// Calls the destructor of the PagedVector
+                                /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                                auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                                pagedVector->~PagedVector();
+                            },
+                            state);
+                    }
+                })));
     /// NOLINTEND(performance-unnecessary-value-param)
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 }
@@ -137,19 +138,23 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
     /// Calling the key functions to add/update the keys to the record
+    nautilus::val<bool> shallIncludeTuple{true};
     for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)
     {
         const auto& [fieldIdentifier, type, fieldOffset] = hashMapOptions.fieldKeys[i];
         const auto& function = hashMapOptions.keyFunctions[i];
         const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
-        if (value.isNullable() and value.isNull())
-        {
-            /// If any key field is null, we need to skip it from inserting the tuple in the hash table, as the tuple will never be included
-            /// in the result set. This is the case as an inner join requires all join conditions to be TRUE (i.e., no NULL values in the join fields).
-            return;
-        }
+        shallIncludeTuple = value.isNullable() and shallIncludeTuple and value.isNull();
         record.write(fieldIdentifier, value);
     }
+
+    /// If any key field is null, we need to skip it from inserting the tuple in the hash table, as the tuple will never be included
+    /// in the result set. This is the case as an inner join requires all join conditions to be TRUE (i.e., no NULL values in the join fields).
+    if (not shallIncludeTuple)
+    {
+        return;
+    }
+
 
     /// Finding or creating the entry for the provided record
     const auto hashMapEntry = hashMap.findOrCreateEntry(
