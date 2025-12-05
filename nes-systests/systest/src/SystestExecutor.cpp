@@ -42,6 +42,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
@@ -55,7 +56,6 @@
 #include <SystestConfiguration.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
-#include <from_current.hpp>
 
 
 using namespace std::literals;
