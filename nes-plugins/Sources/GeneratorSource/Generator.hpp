@@ -39,8 +39,9 @@ enum class GeneratorStop : uint8_t
 class Generator
 {
 public:
-    explicit Generator(const uint64_t seed, GeneratorStop sequenceStopsGenerator, const std::string_view rawSchema)
-        : sequenceStopsGenerator(std::move(sequenceStopsGenerator)), randEng(std::mt19937(seed))
+    explicit Generator(
+        const uint64_t seed, GeneratorStop sequenceStopsGenerator, const std::string_view rawSchema, const std::string_view fromFile)
+        : sequenceStopsGenerator(std::move(sequenceStopsGenerator)), randEng(std::mt19937(seed)), fromFile(fromFile)
     {
         if (this->sequenceStopsGenerator != GeneratorStop::ALL && this->sequenceStopsGenerator != GeneratorStop::ONE
             && this->sequenceStopsGenerator != GeneratorStop::NONE)
@@ -68,11 +69,16 @@ private:
     GeneratorStop sequenceStopsGenerator;
     std::vector<std::unique_ptr<GeneratorFields::GeneratorFieldType>> fields;
     std::mt19937 randEng;
+    std::string fromFile;
 
     size_t numFields{0};
     size_t numStoppedFields{0};
     size_t numStoppableFields{0};
 
+    /// Irrelevant if fromFile is "".
+    std::ifstream fileStream;
+
+    /// TODO #355: Parse from YAML Nodes instead of a string
     void parseRawSchemaLine(std::string_view line);
 };
 }

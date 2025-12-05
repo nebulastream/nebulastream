@@ -213,6 +213,11 @@ struct ConfigParametersGenerator
         "max_runtime_ms",
         -1,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
+    /// Ignores generator settings irrelevant for file source and reads in a file (csv).
+    static inline const DescriptorConfig::ConfigParameter<std::string> FROM_FILE{
+        "from_file",
+        "",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FROM_FILE, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
@@ -223,6 +228,7 @@ struct ConfigParametersGenerator
             SEQUENCE_STOPS_GENERATOR,
             GENERATOR_RATE_TYPE,
             GENERATOR_RATE_CONFIG,
-            FLUSH_INTERVAL_MS);
+            FLUSH_INTERVAL_MS,
+            FROM_FILE);
 };
 }

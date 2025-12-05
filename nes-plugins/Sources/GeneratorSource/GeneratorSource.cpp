@@ -48,7 +48,8 @@ GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
     , generator(
           seed,
           sourceDescriptor.getFromConfig(ConfigParametersGenerator::SEQUENCE_STOPS_GENERATOR),
-          sourceDescriptor.getFromConfig(ConfigParametersGenerator::GENERATOR_SCHEMA))
+          sourceDescriptor.getFromConfig(ConfigParametersGenerator::GENERATOR_SCHEMA),
+          sourceDescriptor.getFromConfig(ConfigParametersGenerator::FROM_FILE))
     , flushInterval(std::chrono::milliseconds{sourceDescriptor.getFromConfig(ConfigParametersGenerator::FLUSH_INTERVAL_MS)})
 {
     NES_TRACE("Init GeneratorSource.")
