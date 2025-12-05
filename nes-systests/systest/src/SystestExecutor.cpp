@@ -360,7 +360,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
 
-                    auto failed = runQueriesAtLocalWorker({queries.at(queryId.getRawValue()-1)}, numberConcurrentQueries, configCopy, progressTracker);
+                    auto failed = runQueriesAtLocalWorker(
+                        {queries.at(queryId.getRawValue() - 1)}, numberConcurrentQueries, configCopy, progressTracker);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }
