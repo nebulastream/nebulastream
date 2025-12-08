@@ -8,13 +8,11 @@ query: |
         FROM (
             SELECT start, end, COUNT(value) as samples, ARRAY_AGG(value) AS chunked
             FROM audio_stream
-            WINDOW SLIDING(timestamp, size 1000000 ms, advance by 200000 ms)
+            WINDOW SLIDING(timestamp, size 1000000 sec, advance by 200000 ms)
         )
       )
     )
   )
-  WHERE max_logit != UINT64(3) -- filter out _unknown class by index
-  AND confidence > FLOAT32(0.3)
   INTO MQTT("JSON" as `SINK`.`INPUT_FORMAT`, "sink/live/alert" as `SINK`.`TOPIC`, 1 as `SINK`.`QOS`, "mqtt://localhost:1883" as `SINK`.`SERVER_URI`)
 sinks: [ ]
 logical:
@@ -35,7 +33,7 @@ physical:
       sample_rate: 16000
       sample_width: 2
 models:
-  - path: demo/audio_model.onnx
+  - path: demo/kws_smallcnn_v2.onnx
     name: speech_recognition
     inputs:
       - VARSIZED

@@ -1,0 +1,34 @@
+query: |
+  SELECT end - start as window_size, samples 
+  FROM (
+    SELECT *, COUNT(value) as samples, ARRAY_AGG(value) as tensor
+    FROM audio_stream
+    WINDOW SLIDING(timestamp, size 1000000 sec, advance by 200000 ms)
+  )
+  INTO MQTT("JSON" as `SINK`.`INPUT_FORMAT`, "sink/live/alert" as `SINK`.`TOPIC`, 1 as `SINK`.`QOS`, "mqtt://localhost:1883" as `SINK`.`SERVER_URI`, "kill-me" as `SINK`.`CLIENT_ID`)
+sinks: [ ]
+logical:
+  - name: AUDIO_STREAM
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: VALUE
+        type: FLOAT32
+physical:
+  - logical: AUDIO_STREAM
+    type: Audio
+    parser_config:
+      type: Native
+    source_config:
+      socket_port: 1234
+      socket_host: localhost
+      sample_rate: 16000
+      sample_width: 2
+models:
+  - path: demo/kws_smallcnn_v2.onnx
+    name: speech_recognition
+    inputs:
+      - VARSIZED
+    outputs:
+      - name: OUTPUT
+        type: VARSIZED
