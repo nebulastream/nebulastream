@@ -14,29 +14,28 @@
 
 #include "VarSizedToDoublePhysicalFunction.hpp"
 
+#include <algorithm>
 #include <cstdint>
-#include <utility>
 #include <string>
 #include <string_view>
-#include <algorithm>
+#include <utility>
 
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/Strings.hpp>
 #include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <Util/Strings.hpp>
 #include <function.hpp>
 #include <val.hpp>
 
 namespace NES
 {
 
-VarSizedToDoublePhysicalFunction::VarSizedToDoublePhysicalFunction(PhysicalFunction child)
-    : child(std::move(child))
+VarSizedToDoublePhysicalFunction::VarSizedToDoublePhysicalFunction(PhysicalFunction child) : child(std::move(child))
 {
 }
 
@@ -48,11 +47,16 @@ double convertVarSizedToDouble(const char* varSizedPtr, const uint32_t varSizedL
     inputCopy.erase(std::ranges::remove(inputCopy, '?').begin(), inputCopy.end());
     inputCopy.erase(std::ranges::remove(inputCopy, ' ').begin(), inputCopy.end());
     const auto splitSV = NES::Util::splitWithStringDelimiter<std::string_view>(varSizedSV, "?");
-    if (const auto doubleVal = NES::Util::from_chars<double>(inputCopy))
+    try
     {
-        return doubleVal.value();
+        const auto doubleVal = NES::Util::from_chars_with_exception<double>(inputCopy);
+        return doubleVal;
     }
-    throw CannotFormatMalformedStringValue("Cannot convert string {} to double", varSizedSV);
+    catch (Exception)
+    {
+        NES_WARNING("Cannot convert string {} to double, returning NaN", varSizedSV);
+        return std::numeric_limits<double>::quiet_NaN();
+    }
 }
 
 VarVal VarSizedToDoublePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -62,10 +66,11 @@ VarVal VarSizedToDoublePhysicalFunction::execute(const Record& record, ArenaRef&
     return doubleVal;
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterVarSizedToDoublePhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterVarSizedToDoublePhysicalFunction(
+    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "VarSizedToDouble function must have exactly one child function");
+    PRECONDITION(
+        physicalFunctionRegistryArguments.childFunctions.size() == 1, "VarSizedToDouble function must have exactly one child function");
     return VarSizedToDoublePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 }
