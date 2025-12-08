@@ -1,0 +1,43 @@
+# name: Concat
+# description: Checks that concat in projections works as expected
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE doubleStringStream(doubleString VARSIZED);
+CREATE PHYSICAL SOURCE FOR doubleStringStream TYPE File;
+ATTACH INLINE
+12.5
+42.0
+53.7
+
+CREATE LOGICAL SOURCE doubleStringStreamWithProblems(doubleString VARSIZED);
+CREATE PHYSICAL SOURCE FOR doubleStringStreamWithProblems TYPE File;
+ATTACH INLINE
+12.5
+?.5
+K
+
+CREATE SINK doubleSink(doubleValue FLOAT64) TYPE File;
+
+SELECT VarSizedToDouble(doubleString) AS doubleValue FROM doubleStringStream INTO doubleSink;
+----
+12.5
+42.0
+53.7
+
+
+SELECT VarSizedToDouble(doubleString) * FLOAT64(2) AS doubleValue FROM doubleStringStream INTO doubleSink;
+----
+25
+84.0
+107.4
+
+SELECT VarSizedToDouble(doubleString) AS doubleValue FROM doubleStringStreamWithProblems INTO doubleSink;
+----
+12.5
+0.5
+nan
+
+SELECT doubleValue FROM (SELECT VarSizedToDouble(doubleString) AS doubleValue FROM doubleStringStreamWithProblems) WHERE NOT(IsNaN(doubleValue)) INTO doubleSink;
+----
+12.5
+0.5

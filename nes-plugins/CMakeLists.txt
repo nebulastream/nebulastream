@@ -21,6 +21,7 @@ activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("Sources/ODBCSource" ON)
 activate_optional_plugin("Functions/VarSizedToDouble" ON)
+activate_optional_plugin("Functions/IsNan" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 
 if (NES_ENABLES_TESTS)
