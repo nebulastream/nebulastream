@@ -46,6 +46,9 @@ function(is_inlining_supported result_var verbose)
     set(${result_var} TRUE PARENT_SCOPE)
 endfunction()
 
+find_package(fmt REQUIRED CONFIG)
+find_package(spdlog REQUIRED CONFIG)
+find_package(nautilus REQUIRED CONFIG)
 is_inlining_supported(NAUTILUS_INLINE_SUPPORTED TRUE)
 
 function(nautilus_inline target)

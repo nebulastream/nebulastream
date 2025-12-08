@@ -49,7 +49,8 @@ public:
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
 
 private:
-    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> bufferRefPagedVector;
+    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> inputBufferRef;
+    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> pagedVectorBufferRef;
 };
 
 }

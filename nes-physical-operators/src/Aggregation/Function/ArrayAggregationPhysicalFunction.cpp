@@ -28,6 +28,7 @@
 
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include <inline.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -40,10 +41,16 @@ ArrayAggregationPhysicalFunction::ArrayAggregationPhysicalFunction(
     DataType resultType,
     PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> bufferRefPagedVector)
+    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> inputBufferRef)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
-    , bufferRefPagedVector(std::move(bufferRefPagedVector))
+    , inputBufferRef(std::move(inputBufferRef))
 {
+    pagedVectorBufferRef = Interface::BufferRef::TupleBufferRef::create(4096, Schema{}.addField("value", inputType));
+}
+
+NAUTILUS_INLINE void mergeVectorProxy(Nautilus::Interface::PagedVector* vector1, const Nautilus::Interface::PagedVector* vector2)
+{
+    vector1->copyFrom(*vector2);
 }
 
 void ArrayAggregationPhysicalFunction::lift(
@@ -54,8 +61,10 @@ void ArrayAggregationPhysicalFunction::lift(
 {
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const Interface::PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
-    pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(memArea, pagedVectorBufferRef);
+    Record vectorTuple{};
+    vectorTuple.write("value", inputFunction.execute(record, pipelineMemoryProvider.arena));
+    pagedVectorRef.writeRecord(vectorTuple, pipelineMemoryProvider.bufferProvider);
 }
 
 void ArrayAggregationPhysicalFunction::combine(
@@ -68,11 +77,7 @@ void ArrayAggregationPhysicalFunction::combine(
     const auto memArea2 = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState2);
 
     /// Calling the copyFrom function of the paged vector to combine the two paged vectors by copying the content of the second paged vector to the first paged vector
-    nautilus::invoke(
-        +[](Nautilus::Interface::PagedVector* vector1, const Nautilus::Interface::PagedVector* vector2) -> void
-        { vector1->copyFrom(*vector2); },
-        memArea1,
-        memArea2);
+    nautilus::invoke(mergeVectorProxy, memArea1, memArea2);
 }
 
 Nautilus::Record ArrayAggregationPhysicalFunction::lower(
@@ -80,8 +85,8 @@ Nautilus::Record ArrayAggregationPhysicalFunction::lower(
 {
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
-    const auto allFieldNames = bufferRefPagedVector->getMemoryLayout()->getSchema().getFieldNames();
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, pagedVectorBufferRef);
+    const auto allFieldNames = pagedVectorBufferRef->getMemoryLayout()->getSchema().getFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
         {
@@ -91,7 +96,7 @@ Nautilus::Record ArrayAggregationPhysicalFunction::lower(
         },
         pagedVectorPtr);
 
-    auto entrySize = bufferRefPagedVector->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
+    auto entrySize = pagedVectorBufferRef->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
 
     auto variableSized = pipelineMemoryProvider.arena.allocateVariableSizedData(numberOfEntries * entrySize);
 
@@ -101,8 +106,7 @@ Nautilus::Record ArrayAggregationPhysicalFunction::lower(
     for (auto candidateIt = pagedVectorRef.begin(allFieldNames); candidateIt != endIt; ++candidateIt)
     {
         const auto itemRecord = *candidateIt;
-        const auto itemValue = inputFunction.execute(itemRecord, pipelineMemoryProvider.arena);
-        auto _ = itemValue.customVisit(
+        auto _ = itemRecord.read("value").customVisit(
             [&]<typename T>(const T& type) -> VarVal
             {
                 if constexpr (std::is_same_v<T, VariableSizedData>)

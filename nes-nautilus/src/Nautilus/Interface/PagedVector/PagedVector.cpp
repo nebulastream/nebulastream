@@ -62,7 +62,7 @@ void PagedVector::PagesWrapper::updateCumulativeSumLastItem()
     lastItem.cumulativeSum = lastItem.buffer.getNumberOfTuples() + penultimateCumulativeSum;
 }
 
-void PagedVector::PagesWrapper::updateCumulativeSumAllPages()
+NAUTILUS_INLINE void PagedVector::PagesWrapper::updateCumulativeSumAllPages()
 {
     size_t curCumulativeSum = 0;
     for (auto& page : pages)
@@ -78,7 +78,7 @@ void PagedVector::moveAllPages(PagedVector& other)
     other.pages.clearPages();
 }
 
-void PagedVector::copyFrom(const PagedVector& other)
+NAUTILUS_INLINE void PagedVector::copyFrom(const PagedVector& other)
 {
     pages.addPages(other.pages);
 }
@@ -123,7 +123,7 @@ void PagedVector::PagesWrapper::addPage(const TupleBuffer& newPage)
     pages.emplace_back(newPage);
 }
 
-void PagedVector::PagesWrapper::addPages(const PagesWrapper& other)
+NAUTILUS_INLINE void PagedVector::PagesWrapper::addPages(const PagesWrapper& other)
 {
     pages.insert(pages.end(), other.pages.begin(), other.pages.end());
     updateCumulativeSumAllPages();
