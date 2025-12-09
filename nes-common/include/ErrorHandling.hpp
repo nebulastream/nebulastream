@@ -28,6 +28,7 @@
 #include <cpptrace/basic.hpp>
 #include <cpptrace/cpptrace.hpp>
 #include <cpptrace/exceptions.hpp>
+#include <cpptrace/formatting.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
 
@@ -44,6 +45,8 @@ enum ErrorCode : uint16_t
 
 #define EXCEPTION(name, code, msg) name = (code),
 #include <ExceptionDefinitions.inc>
+
+
 #undef EXCEPTION
 };
 }
@@ -71,6 +74,17 @@ private:
     std::string message;
     ErrorCode errorCode;
 };
+
+/// helper function for formatting stacktraces
+/// currently only filters cpptrace's internal stackframes; can be extended later
+inline std::string formatStacktrace(const cpptrace::stacktrace& stacktrace, const bool color)
+{
+    static const cpptrace::formatter Formatter
+        = cpptrace::formatter{}
+              .filter([](const cpptrace::stacktrace_frame& frame) { return !frame.symbol.contains("try_catch_impl"); })
+              .filtered_frame_placeholders(false);
+    return Formatter.format(stacktrace, color);
+}
 
 /// This macro is used to define exceptions in <ExceptionDefinitions.hpp>
 /// @param name The name of the exception
@@ -115,7 +129,7 @@ private:
         { \
             if (!(condition)) \
             { \
-                auto trace = cpptrace::generate_trace().to_string(true); \
+                auto trace = NES::formatStacktrace(cpptrace::generate_trace(), true); \
                 NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
@@ -137,7 +151,7 @@ private:
         { \
             if (!(condition)) \
             { \
-                auto trace = cpptrace::generate_trace().to_string(true); \
+                auto trace = NES::formatStacktrace(cpptrace::generate_trace(), true); \
                 NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
