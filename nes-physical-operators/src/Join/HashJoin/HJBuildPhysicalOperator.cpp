@@ -51,19 +51,6 @@ namespace
 {
 constexpr std::string_view HashJoinCheckpointFileName = "hash_join_checkpoint.bin";
 
-struct HashJoinCheckpointHeader
-{
-    uint64_t numberOfEntries{0};
-    uint64_t keySize{0};
-    uint64_t valueSize{0};
-};
-
-struct HashJoinPageHeader
-{
-    uint64_t bufferSize{0};
-    uint64_t numberOfTuples{0};
-};
-
 void ensureCheckpointDirectory(const std::filesystem::path& checkpointFile)
 {
     const auto checkpointDir = checkpointFile.parent_path();
