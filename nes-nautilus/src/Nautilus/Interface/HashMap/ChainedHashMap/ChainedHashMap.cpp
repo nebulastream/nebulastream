@@ -265,7 +265,7 @@ void ChainedHashMap::clear() noexcept
     storageSpace.clear();
 }
 
-void ChainedHashMap::serialize(std::filesystem::path path) const
+void ChainedHashMap::serialize(std::filesystem::path path, [[maybe_unused]] const HashMapOptions& hashMapOptions) const
 {
     NES_INFO("Serializing chained hash map {}", path);
     std::ofstream out(path, std::ios::binary);

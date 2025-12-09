@@ -17,6 +17,11 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 
+namespace NES
+{
+struct HashMapOptions;
+}
+
 namespace NES::Nautilus::Interface
 {
 
@@ -33,7 +38,7 @@ public:
     virtual AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) = 0;
     [[nodiscard]] virtual uint64_t getNumberOfTuples() const = 0;
 
-    virtual void serialize(std::filesystem::path) const = 0;
+    virtual void serialize(std::filesystem::path, const HashMapOptions&) const = 0;
     virtual void deserialize(std::filesystem::path, AbstractBufferProvider* bufferProvider) = 0;
 };
 }

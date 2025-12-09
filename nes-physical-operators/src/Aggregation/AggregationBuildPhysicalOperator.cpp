@@ -123,7 +123,7 @@ void serializeHashMapProxy(
     auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
     const auto checkpointFile = getAggregationCheckpointFile();
     ensureCheckpointDirectory(checkpointFile);
-    hashMap->serialize(checkpointFile);
+    hashMap->serialize(checkpointFile, buildOperator->getHashMapOptions());
     serialized = true;
 }
 
