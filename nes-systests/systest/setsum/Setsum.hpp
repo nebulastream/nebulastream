@@ -43,7 +43,15 @@ struct Setsum
     void remove(std::string_view data);
 
     /// Equality comparison
-    bool operator==(const Setsum&) const = default;
+    /// Explicitly implemented to perform atomic loads for safe comparison
+    bool operator==(const Setsum& other) const;
+
+    /// Delete copy/move operations since atomic members are not copyable
+    Setsum(const Setsum&) = delete;
+    Setsum& operator=(const Setsum&) = delete;
+    Setsum(Setsum&&) = delete;
+    Setsum& operator=(Setsum&&) = delete;
+    Setsum() = default;
 
     /// Output stream operator for debugging
     friend std::ostream& operator<<(std::ostream& os, const Setsum& obj);

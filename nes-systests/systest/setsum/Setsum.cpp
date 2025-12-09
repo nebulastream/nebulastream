@@ -193,6 +193,19 @@ void Setsum::remove(std::string_view data)
     }
 }
 
+bool Setsum::operator==(const Setsum& other) const
+{
+    for (size_t i = 0; i < NUM_COLUMNS; i++)
+    {
+        if (columns.at(i).load(std::memory_order::relaxed) != 
+            other.columns.at(i).load(std::memory_order::relaxed))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 std::ostream& operator<<(std::ostream& os, const Setsum& obj)
 {
     os << "setsum: [";
