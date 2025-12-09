@@ -89,33 +89,6 @@ void serializePagedVector(const Interface::PagedVector* pagedVector, std::ofstre
     }
 }
 
-void deserializePagedVector(
-    Interface::PagedVector* pagedVector,
-    std::ifstream& in,
-    AbstractBufferProvider* bufferProvider)
-{
-    uint64_t numPages = 0;
-    in.read(reinterpret_cast<char*>(&numPages), sizeof(numPages));
-    pagedVector->clear();
-    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
-    {
-        HashJoinPageHeader pageHeader{};
-        in.read(reinterpret_cast<char*>(&pageHeader), sizeof(pageHeader));
-        auto pageBuffer = bufferProvider->getUnpooledBuffer(pageHeader.bufferSize);
-        if (!pageBuffer)
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate buffer of size {} during hash join checkpoint restore",
-                pageHeader.bufferSize);
-        }
-        auto bufferValue = pageBuffer.value();
-        auto dataSpan = bufferValue.getAvailableMemoryArea<char>();
-        in.read(dataSpan.data(), static_cast<std::streamsize>(pageHeader.bufferSize));
-        bufferValue.setNumberOfTuples(pageHeader.numberOfTuples);
-        pagedVector->appendPage(bufferValue);
-    }
-}
-
 std::filesystem::path getHashJoinCheckpointFile()
 {
     auto baseDir = CheckpointManager::getCheckpointDirectory();
