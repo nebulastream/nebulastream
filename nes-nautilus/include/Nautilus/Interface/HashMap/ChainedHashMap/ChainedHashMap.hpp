@@ -104,7 +104,7 @@ public:
     void serialize(std::ostream& out, const HashMapOptions& hashMapOptions) const override;
 
     /// Overwrites the buffers of this current instance with the serialized data
-    void deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider) override;
+    void deserialize(std::istream& in, const HashMapOptions& hashMapOptions, AbstractBufferProvider* bufferProvider) override;
 
 private:
     friend class ChainedHashMapRef;

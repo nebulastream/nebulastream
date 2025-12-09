@@ -299,7 +299,7 @@ void ChainedHashMap::serialize(std::ostream& out, [[maybe_unused]] const HashMap
     );
 }
 
-void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider)
+void ChainedHashMap::deserialize(std::istream& in, const HashMapOptions& hashMapOptions, AbstractBufferProvider* bufferProvider)
 {
     std::ifstream in(path, std::ios::binary);
     if (!in.is_open())

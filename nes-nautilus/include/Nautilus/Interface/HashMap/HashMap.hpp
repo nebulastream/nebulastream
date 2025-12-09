@@ -39,6 +39,6 @@ public:
     [[nodiscard]] virtual uint64_t getNumberOfTuples() const = 0;
 
     virtual void serialize(std::ostream&, const HashMapOptions&) const = 0;
-    virtual void deserialize(std::filesystem::path, AbstractBufferProvider* bufferProvider) = 0;
+    virtual void deserialize(std::istream&, const HashMapOptions&, AbstractBufferProvider* bufferProvider) = 0;
 };
 }
