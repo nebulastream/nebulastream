@@ -212,6 +212,32 @@ void PagedVector::serialize(std::ostream& os) const
     }
 }
 
+void PagedVector::deserialize(std::istream& in, AbstractBufferProvider* bufferProvider)
+{
+    uint64_t numPages = 0;
+    in.read(reinterpret_cast<char*>(&numPages), sizeof(numPages));
+    this->clear();
+    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
+    {
+        PagedVectorHeader pageHeader{};
+        in.read(reinterpret_cast<char*>(&pageHeader), sizeof(pageHeader));
+        auto pageBuffer = bufferProvider->getUnpooledBuffer(pageHeader.bufferSize);
+        if (!pageBuffer)
+        {
+            throw CannotAllocateBuffer(
+                "Could not allocate buffer of size {} during checkpoint restore",
+                pageHeader.bufferSize
+            );
+        }
+        auto bufferValue = pageBuffer.value();
+        auto dataSpan = bufferValue.getAvailableMemoryArea<char>();
+        in.read(dataSpan.data(), static_cast<std::streamsize>(dataSpan.size()));
+        bufferValue.setNumberOfTuples(pageHeader.numberOfTuples);
+        this->appendPage(bufferValue);
+    }
+}
+
+
 void PagedVector::clear()
 {
     pages.clearPages();

@@ -67,6 +67,8 @@ public:
     /// serializes the PagedVector into the ostream
     void serialize(std::ostream& os) const;
 
+    void deserialize(std::istream& is, AbstractBufferProvider* abstractBufferProvider);
+
     /// Clears all stored pages.
     void clear();
 
