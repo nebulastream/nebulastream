@@ -139,34 +139,7 @@ void serializeHashJoinState(
     {
         throw CheckpointError("Cannot open output file {}", path.string());
     }
-
-    HashJoinCheckpointHeader header{};
-    header.numberOfEntries = chainedHashMap->getNumberOfTuples();
-    header.keySize = buildOperator->getHashMapOptions().keySize;
-    header.valueSize = buildOperator->getHashMapOptions().valueSize;
-    out.write(reinterpret_cast<const char*>(&header), sizeof(header));
-
-    uint64_t writtenEntries = 0;
-    for (uint64_t chainIdx = 0; chainIdx < chainedHashMap->getNumberOfChains(); ++chainIdx)
-    {
-        auto* entry = chainedHashMap->getStartOfChain(chainIdx);
-        while (entry != nullptr)
-        {
-            out.write(reinterpret_cast<const char*>(&entry->hash), sizeof(entry->hash));
-            const auto* keyPtr = reinterpret_cast<const char*>(entry) + sizeof(Interface::ChainedHashMapEntry);
-            out.write(keyPtr, static_cast<std::streamsize>(header.keySize));
-            const auto* valuePtr = keyPtr + header.keySize;
-            const auto* pagedVector = reinterpret_cast<const Interface::PagedVector*>(valuePtr);
-            serializePagedVector(pagedVector, out);
-            entry = entry->next;
-            ++writtenEntries;
-        }
-    }
-    INVARIANT(
-        writtenEntries == header.numberOfEntries,
-        "Expected to serialize {} entries but serialized {}",
-        header.numberOfEntries,
-        writtenEntries);
+    hashMap->serialize(out, buildOperator->getHashMapOptions());
 }
 
 void deserializeHashJoinState(
@@ -186,28 +159,7 @@ void deserializeHashJoinState(
     {
         throw CheckpointError("Cannot open input file {}", path.string());
     }
-
-    HashJoinCheckpointHeader header{};
-    in.read(reinterpret_cast<char*>(&header), sizeof(header));
-    const auto& options = buildOperator->getHashMapOptions();
-    if (header.keySize != options.keySize || header.valueSize != options.valueSize)
-    {
-        throw CheckpointError("Hash join checkpoint format mismatch");
-    }
-
-    chainedHashMap->clear();
-
-    for (uint64_t entryIdx = 0; entryIdx < header.numberOfEntries; ++entryIdx)
-    {
-        Interface::HashFunction::HashValue::raw_type hash{0};
-        in.read(reinterpret_cast<char*>(&hash), sizeof(hash));
-        auto* newEntry = static_cast<Interface::ChainedHashMapEntry*>(chainedHashMap->insertEntry(hash, bufferProvider));
-        auto* keyPtr = reinterpret_cast<char*>(newEntry) + sizeof(Interface::ChainedHashMapEntry);
-        in.read(keyPtr, static_cast<std::streamsize>(header.keySize));
-        auto* valuePtr = keyPtr + header.keySize;
-        auto* pagedVector = new (valuePtr) Interface::PagedVector();
-        deserializePagedVector(pagedVector, in, bufferProvider);
-    }
+    hashMap->deserialize(in, buildOperator->getHashMapOptions(), bufferProvider);
 }
 }
 
