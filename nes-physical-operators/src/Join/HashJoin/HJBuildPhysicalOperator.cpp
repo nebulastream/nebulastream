@@ -73,22 +73,6 @@ void ensureCheckpointDirectory(const std::filesystem::path& checkpointFile)
     }
 }
 
-void serializePagedVector(const Interface::PagedVector* pagedVector, std::ofstream& out)
-{
-    const auto numPages = pagedVector->getNumberOfPages();
-    out.write(reinterpret_cast<const char*>(&numPages), sizeof(numPages));
-    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
-    {
-        const auto& page = pagedVector->getPage(pageIdx);
-        HashJoinPageHeader pageHeader{};
-        pageHeader.bufferSize = page.getBufferSize();
-        pageHeader.numberOfTuples = page.getNumberOfTuples();
-        out.write(reinterpret_cast<const char*>(&pageHeader), sizeof(pageHeader));
-        const auto dataSpan = page.getAvailableMemoryArea<char>();
-        out.write(dataSpan.data(), static_cast<std::streamsize>(pageHeader.bufferSize));
-    }
-}
-
 std::filesystem::path getHashJoinCheckpointFile()
 {
     auto baseDir = CheckpointManager::getCheckpointDirectory();
