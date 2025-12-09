@@ -64,12 +64,21 @@ public:
 
     [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
 
+    /// serializes the PagedVector into the ostream
+    void serialize(std::ostream& os);
+
     /// Clears all stored pages.
     void clear();
 
     void appendPage(const TupleBuffer& buffer);
 
 private:
+    struct PagedVectorHeader
+    {
+        uint64_t bufferSize{0};
+        uint64_t numberOfTuples{0};
+    };
+
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
     struct PagesWrapper
     {
