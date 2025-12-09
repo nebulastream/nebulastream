@@ -265,16 +265,8 @@ void ChainedHashMap::clear() noexcept
     storageSpace.clear();
 }
 
-void ChainedHashMap::serialize(std::filesystem::path path, [[maybe_unused]] const HashMapOptions& hashMapOptions) const
+void ChainedHashMap::serialize(std::ostream& out, [[maybe_unused]] const HashMapOptions& hashMapOptions) const
 {
-    NES_INFO("Serializing chained hash map {}", path);
-    std::ofstream out(path, std::ios::binary);
-    if (!out.is_open())
-    {
-        NES_ERROR("Cannot open output file {}", path);
-        throw CheckpointError("Cannot open output file {}", path);
-    }
-
     ChainedHashMapHeader header{numberOfTuples, pageSize, entrySize, entriesPerPage, numberOfChains};
     out.write(reinterpret_cast<const char*>(&header), sizeof(ChainedHashMapHeader));
     static constexpr uint64_t INVALID = UINT64_MAX;

@@ -101,7 +101,7 @@ public:
     /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
     static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
 
-    void serialize(std::filesystem::path path, const HashMapOptions& hashMapOptions) const override;
+    void serialize(std::ostream& out, const HashMapOptions& hashMapOptions) const override;
 
     /// Overwrites the buffers of this current instance with the serialized data
     void deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider) override;
