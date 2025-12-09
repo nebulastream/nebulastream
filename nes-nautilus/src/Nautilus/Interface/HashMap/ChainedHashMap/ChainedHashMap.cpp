@@ -267,7 +267,7 @@ void ChainedHashMap::clear() noexcept
     storageSpace.clear();
 }
 
-void ChainedHashMap::serialize(std::ostream& out, [[maybe_unused]] const HashMapOptions& hashMapOptions) const
+void ChainedHashMap::serialize(std::ostream& out, const HashMapOptions& hashMapOptions) const
 {
     const ChainedHashMapHeader header{
         .numberOfEntries = this->getNumberOfTuples(),
