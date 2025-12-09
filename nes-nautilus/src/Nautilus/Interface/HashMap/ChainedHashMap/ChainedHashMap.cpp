@@ -304,75 +304,23 @@ void ChainedHashMap::deserialize(std::istream& in, const HashMapOptions& hashMap
 
     ChainedHashMapHeader header;
     in.read(reinterpret_cast<char*>(&header), sizeof(ChainedHashMapHeader));
-    this->numberOfChains = header.numberOfChains;
-    this->entriesPerPage = header.entriesPerPage;
-    this->entrySize = header.entrySize;
-    this->numberOfTuples = header.numberOfTuples;
-    this->pageSize = header.pageSize;
-    this->mask = numberOfChains - 1;
-
-    /// Setup Entryspace
-    const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-    auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
-    if (not entryBuffer)
+    if (header.keySize != hashMapOptions.keySize || header.valueSize != hashMapOptions.valueSize)
     {
-        throw CannotAllocateBuffer("Could not allocate entry space for ChainedHashMap of size {}", totalSpace);
+        throw CheckpointError("Header from deserialized hash map do not match the current ones!");
     }
-    entrySpace = entryBuffer.value();
-    entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-    std::memset(entries, 0, totalSpace);
-    entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
-
-    /// Read Mappings
-    std::vector<std::pair<uint64_t, uint64_t>> entryMappings(numberOfChains + 1);
-    for (uint64_t i = 0; i < numberOfChains + 1; ++i)
+    this->clear();
+    for (uint64_t entryIdx = 0; entryIdx < header.numberOfEntries; ++entryIdx)
     {
-        uint64_t pageIdx, offset;
-        in.read(reinterpret_cast<char*>(&pageIdx), sizeof(pageIdx));
-        in.read(reinterpret_cast<char*>(&offset), sizeof(offset));
-        entryMappings[i] = {pageIdx, offset};
+        Interface::HashFunction::HashValue::raw_type hash{0};
+        in.read(reinterpret_cast<char*>(&hash), sizeof(hash));
+        auto* const newEntry = static_cast<Interface::ChainedHashMapEntry*>(this->insertEntry(hash, bufferProvider));
+        auto* const keyPtr  = reinterpret_cast<char*>(newEntry) + sizeof(Interface::ChainedHashMapEntry);
+        in.read(keyPtr, static_cast<std::streamsize>(header.keySize));
+        auto* valuePtr = keyPtr + header.keySize;
+        auto* pagedVector = new (valuePtr) Interface::PagedVector();
+        pagedVector->deserialize(in, bufferProvider);
     }
 
-    uint64_t numPages;
-    in.read(reinterpret_cast<char*>(&numPages), sizeof(numPages));
-    uint64_t storageBufferSize;
-    for (uint64_t i = 0; i < numPages; ++i)
-    {
-
-        in.read(reinterpret_cast<char*>(&storageBufferSize), sizeof(storageBufferSize));
-        if ( i < this->storageSpace.size())
-        {
-            in.read(reinterpret_cast<char*>(this->storageSpace[i].getAvailableMemoryArea().data()), storageBufferSize);
-        } else
-        {
-            auto pageBuffer = bufferProvider->getUnpooledBuffer(pageSize);
-            if (not pageBuffer)
-            {
-                throw CannotAllocateBuffer("Could not allocate page during deserialization");
-            }
-            NES_INFO("Allocated new page during deserialization");
-            in.read(reinterpret_cast<char*>(pageBuffer->getAvailableMemoryArea().data()), storageBufferSize);
-            this->storageSpace.emplace_back(pageBuffer.value());
-        }
-    }
-
-    /// Rebuild Chains
-    for (uint64_t i = 0; i < numberOfChains + 1; ++i)
-    {
-        auto [pageIdx, offset] = entryMappings[i];
-        if (pageIdx != UINT64_MAX)
-        {
-            INVARIANT(pageIdx < storageSpace.size(), "Cannot rebuild a chain that has a pageIdx outside of storageSpace.size()!");
-            auto* entryPtr = reinterpret_cast<ChainedHashMapEntry*>(
-                storageSpace[pageIdx].getAvailableMemoryArea().data() + offset
-            );
-            entries[i] = entryPtr;
-        } else
-        {
-            entries[i] = nullptr;
-        }
-    }
-    in.close();
 }
 
 }
