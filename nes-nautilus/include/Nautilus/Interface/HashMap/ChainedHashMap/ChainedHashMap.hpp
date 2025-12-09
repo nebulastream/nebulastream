@@ -110,16 +110,12 @@ private:
     friend class ChainedHashMapRef;
 
 #pragma pack(push, 1)
-
     struct ChainedHashMapHeader
     {
-        uint64_t numberOfTuples;
-        uint64_t pageSize;
-        uint64_t entrySize;
-        uint64_t entriesPerPage;
-        uint64_t numberOfChains;
+        uint64_t numberOfEntries{0};
+        uint64_t keySize{0};
+        uint64_t valueSize{0};
     };
-
 #pragma pack(pop)
 
 
