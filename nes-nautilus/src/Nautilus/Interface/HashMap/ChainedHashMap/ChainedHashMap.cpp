@@ -32,6 +32,7 @@
 #include <absl/strings/str_format.h>
 #include <google/protobuf/stubs/port.h>
 #include "../../../../../../nes-physical-operators/include/HashMapOptions.hpp"
+#include "Nautilus/Interface/PagedVector/PagedVector.hpp"
 
 #include <ErrorHandling.hpp>
 
@@ -273,66 +274,29 @@ void ChainedHashMap::serialize(std::ostream& out, [[maybe_unused]] const HashMap
         .keySize = hashMapOptions.keySize,
         .valueSize = hashMapOptions.valueSize
     };
-    out.write(reinterpret_cast<const char*>(&header), sizeof(ChainedHashMapHeader));
-    static constexpr uint64_t INVALID = UINT64_MAX;
-    /// Serialize entrySpace
-    if (entries != nullptr)
+    out.write(reinterpret_cast<const char*>(&header), sizeof(header));
+    uint64_t writtenEntries = 0;
+    for (uint64_t chainIdx = 0; chainIdx < this->getNumberOfChains(); ++chainIdx)
     {
-        std::unordered_map<const ChainedHashMapEntry*, std::pair<uint64_t, uint64_t>> entryMapping; /// mapping from pointer to (storageIndex, offset)
-        for (uint64_t pageIdx = 0; pageIdx < storageSpace.size(); ++pageIdx)
+        const auto* entry = this->getStartOfChain(chainIdx);
+        while (entry != nullptr)
         {
-            const auto& page = storageSpace[pageIdx];
-            auto pageData = page.getAvailableMemoryArea().data();
-
-            for (uint64_t entryIdx = 0; entryIdx < entriesPerPage; ++entryIdx)
-            {
-                auto* entry = reinterpret_cast<const ChainedHashMapEntry*>(
-                    pageData + (entryIdx * entrySize));
-                if (entry->hash != 0)
-                {
-                    entryMapping[entry] = {pageIdx, entryIdx*entrySize};
-                }
-                if (entry->next != nullptr)
-                {
-                    NES_INFO("Found chained entry");
-                }
-            }
-        }
-
-        for (uint64_t i = 0; i < numberOfChains + 1; ++i)
-        {
-            const ChainedHashMapEntry* entry = entries[i];
-            if (auto it = entryMapping.find(entry); it != entryMapping.end())
-            {
-                auto [pageIdx, offset ] = it->second;
-                out.write(reinterpret_cast<const char*>(&pageIdx), sizeof(pageIdx));
-                out.write(reinterpret_cast<const char*>(&offset), sizeof(offset));
-            } else
-            {
-
-                out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
-                out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
-            }
-        }
-    } else
-    {
-        for (uint64_t i = 0; i < numberOfChains + 1; ++i)
-        {
-            out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
-            out.write(reinterpret_cast<const char*>(&INVALID), sizeof(INVALID));
+            out.write(reinterpret_cast<const char*>(&entry->hash), sizeof(entry->hash));
+            const auto* keyPtr = reinterpret_cast<const char*>(entry) + sizeof(Interface::ChainedHashMapEntry);
+            out.write(keyPtr, static_cast<std::streamsize>(header.keySize));
+            const auto* valuePtr = keyPtr + header.keySize;
+            auto* pagedVector = reinterpret_cast<const Interface::PagedVector*>(valuePtr);
+            pagedVector->serialize(out);
+            entry = entry->next;
+            ++writtenEntries;
         }
     }
-
-    /// Serialize storageSpace
-    const auto numPages = storageSpace.size();
-    out.write(reinterpret_cast<const char*>(&numPages), sizeof(numPages));
-    for (const auto& storageBuffer : storageSpace)
-    {
-        const uint64_t storageBufferSize = storageBuffer.getBufferSize();
-        out.write(reinterpret_cast<const char*>(&storageBufferSize), sizeof(uint64_t));
-        out.write(storageBuffer.getAvailableMemoryArea<char>().data(), storageBuffer.getBufferSize());
-    }
-    out.close();
+    INVARIANT(
+        writtenEntries == header.numberOfEntries,
+        "Expected to serialize {} entries but serialized {}",
+        header.numberOfEntries,
+        writtenEntries
+    );
 }
 
 void ChainedHashMap::deserialize(std::filesystem::path path, AbstractBufferProvider* bufferProvider)
