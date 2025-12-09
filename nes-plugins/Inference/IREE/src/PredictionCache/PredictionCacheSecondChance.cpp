@@ -73,7 +73,7 @@ nautilus::val<uint64_t> PredictionCacheSecondChance::updateKeys(const nautilus::
     return nautilus::val<uint64_t>(NOT_FOUND);
 }
 
-nautilus::val<std::vector<std::byte>*>
+nautilus::val<std::byte*>
 PredictionCacheSecondChance::getDataStructureRef(
     const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {

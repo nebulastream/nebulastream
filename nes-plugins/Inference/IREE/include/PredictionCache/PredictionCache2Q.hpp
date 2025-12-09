@@ -19,8 +19,41 @@ namespace NES
 {
 struct PredictionCacheEntry2Q : PredictionCacheEntry
 {
-    /// Stores the age of each entry in the cache. With 32-bits, we can store 4 billion entries.
-    uint64_t ageBit;
+    uint64_t ageBit = 0;
+
+    PredictionCacheEntry2Q() = default;
+
+    PredictionCacheEntry2Q(const PredictionCacheEntry2Q& other)
+        : PredictionCacheEntry(other), ageBit(other.ageBit) {}
+
+    PredictionCacheEntry2Q&
+    operator=(const PredictionCacheEntry2Q& other)
+    {
+        if (this == &other) return *this;
+
+        PredictionCacheEntry::operator=(other);
+        ageBit = other.ageBit;
+        return *this;
+    }
+
+    PredictionCacheEntry2Q(PredictionCacheEntry2Q&& other) noexcept
+        : PredictionCacheEntry(std::move(other)),
+          ageBit(other.ageBit)
+    {
+        other.ageBit = 0;
+    }
+
+    PredictionCacheEntry2Q&
+    operator=(PredictionCacheEntry2Q&& other) noexcept
+    {
+        if (this == &other) return *this;
+
+        PredictionCacheEntry::operator=(std::move(other));
+        ageBit = other.ageBit;
+        other.ageBit = 0;
+        return *this;
+    }
+
     ~PredictionCacheEntry2Q() override = default;
 };
 
@@ -43,7 +76,7 @@ public:
         const uint64_t lruQueueSize,
         const nautilus::val<size_t>& inputSize);
     ~PredictionCache2Q() override = default;
-    nautilus::val<std::vector<std::byte>*>
+    nautilus::val<std::byte*>
     getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
     nautilus::val<uint64_t> updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction) override;
     void updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction) override;

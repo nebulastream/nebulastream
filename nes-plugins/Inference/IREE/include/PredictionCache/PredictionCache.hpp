@@ -15,6 +15,7 @@
 #pragma once
 #include <functional>
 #include <IREEInferenceLocalState.hpp>
+#include <PredictionCache/PredictionCacheEntry.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
 #include <nautilus/val.hpp>
@@ -23,18 +24,7 @@
 
 namespace NES
 {
-/// Represents the C++ struct that is stored in the operator handler vector
-struct PredictionCacheEntry
-{
-    PredictionCacheEntry(std::vector<std::byte> record)
-        : record(std::move(record)), dataStructure(std::vector<std::byte>{})
-    {
-    }
-    virtual ~PredictionCacheEntry() = default;
 
-    std::vector<std::byte> record;
-    std::vector<std::byte> dataStructure;
-};
 /// Represents the C++ struct that is stored in the operator handler vector before all PredictionCacheEntry structs
 struct HitsAndMisses
 {
@@ -55,18 +45,18 @@ public:
         const nautilus::val<size_t>& inputSize);
     ~PredictionCache() override = default;
 
-    using PredictionCacheReplacement = std::function<nautilus::val<std::vector<std::byte>*>(
+    using PredictionCacheReplacement = std::function<nautilus::val<std::byte*>(
         const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
     using PredictionCacheUpdate = std::function<void(
         const nautilus::val<PredictionCacheEntry*>& predictionCacheEntryToReplace, const nautilus::val<uint64_t>& replacementIndex)>;
 
-    virtual nautilus::val<std::vector<std::byte>*>
+    virtual nautilus::val<std::byte*>
     getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) = 0;
     virtual nautilus::val<uint64_t>
     updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction) = 0;
     virtual void updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction) = 0;
 
-    virtual nautilus::val<std::vector<std::byte>*> getRecord(const nautilus::val<uint64_t>& pos);
+    virtual nautilus::val<std::byte*> getRecord(const nautilus::val<uint64_t>& pos);
 
     nautilus::val<uint64_t*> getHitsRef();
     nautilus::val<uint64_t*> getMissesRef();
@@ -74,7 +64,7 @@ public:
     static constexpr uint64_t NOT_FOUND = UINT64_MAX;
 
 protected:
-    virtual nautilus::val<std::vector<std::byte>*> getDataStructure(const nautilus::val<uint64_t>& pos);
+    virtual nautilus::val<std::byte*> getDataStructure(const nautilus::val<uint64_t>& pos);
     void incrementNumberOfHits();
     void incrementNumberOfMisses();
 

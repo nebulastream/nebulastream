@@ -19,8 +19,22 @@ namespace NES
 {
 struct PredictionCacheEntrySecondChance : PredictionCacheEntryFIFO
 {
-    /// Stores the second chance bit for each entry in the cache.
-    bool secondChanceBit;
+    bool secondChanceBit = false;
+
+    PredictionCacheEntrySecondChance() = default;
+
+    PredictionCacheEntrySecondChance(
+        const PredictionCacheEntrySecondChance&) = default;
+
+    PredictionCacheEntrySecondChance&
+    operator=(const PredictionCacheEntrySecondChance&) = default;
+
+    PredictionCacheEntrySecondChance(
+        PredictionCacheEntrySecondChance&&) noexcept = default;
+
+    PredictionCacheEntrySecondChance&
+    operator=(PredictionCacheEntrySecondChance&&) noexcept = default;
+
     ~PredictionCacheEntrySecondChance() override = default;
 };
 
@@ -36,7 +50,7 @@ public:
         const nautilus::val<uint64_t*>& missesRef,
         const nautilus::val<size_t>& inputSize);
     ~PredictionCacheSecondChance() override = default;
-    nautilus::val<std::vector<std::byte>*>
+    nautilus::val<std::byte*>
     getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
     nautilus::val<uint64_t> updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction) override;
     void updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction) override;
