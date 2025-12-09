@@ -31,6 +31,7 @@
 #include <absl/strings/internal/str_format/extension.h>
 #include <absl/strings/str_format.h>
 #include <google/protobuf/stubs/port.h>
+#include "../../../../../../nes-physical-operators/include/HashMapOptions.hpp"
 
 #include <ErrorHandling.hpp>
 
@@ -267,7 +268,11 @@ void ChainedHashMap::clear() noexcept
 
 void ChainedHashMap::serialize(std::ostream& out, [[maybe_unused]] const HashMapOptions& hashMapOptions) const
 {
-    ChainedHashMapHeader header{numberOfTuples, pageSize, entrySize, entriesPerPage, numberOfChains};
+    const ChainedHashMapHeader header{
+        .numberOfEntries = this->getNumberOfTuples(),
+        .keySize = hashMapOptions.keySize,
+        .valueSize = hashMapOptions.valueSize
+    };
     out.write(reinterpret_cast<const char*>(&header), sizeof(ChainedHashMapHeader));
     static constexpr uint64_t INVALID = UINT64_MAX;
     /// Serialize entrySpace
