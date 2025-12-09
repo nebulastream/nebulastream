@@ -301,12 +301,6 @@ void ChainedHashMap::serialize(std::ostream& out, [[maybe_unused]] const HashMap
 
 void ChainedHashMap::deserialize(std::istream& in, const HashMapOptions& hashMapOptions, AbstractBufferProvider* bufferProvider)
 {
-    std::ifstream in(path, std::ios::binary);
-    if (!in.is_open())
-    {
-        NES_ERROR("Cannot open input file {}", path);
-        throw CheckpointError("Cannot open input file {}", path);
-    }
 
     ChainedHashMapHeader header;
     in.read(reinterpret_cast<char*>(&header), sizeof(ChainedHashMapHeader));
