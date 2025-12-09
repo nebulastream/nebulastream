@@ -195,6 +195,23 @@ const TupleBuffer& PagedVector::getPage(const uint64_t pageIndex) const
     return pages[pageIndex].buffer;
 }
 
+void PagedVector::serialize(std::ostream& os)
+{
+    const auto numPages = this->getNumberOfPages();
+    os.write(reinterpret_cast<const char*>(&numPages), sizeof(numPages));
+    for (uint64_t pageIdx = 0; pageIdx < numPages; ++pageIdx)
+    {
+        const auto& page = this->getPage(pageIdx);
+        PagedVectorHeader pageHeader{
+            .bufferSize = page.getBufferSize(),
+            .numberOfTuples = page.getNumberOfTuples(),
+        };
+        os.write(reinterpret_cast<const char*>(&pageHeader), sizeof(pageHeader));
+        const auto dataSpan = page.getAvailableMemoryArea<char>();
+        os.write(dataSpan.data(), dataSpan.size());
+    }
+}
+
 void PagedVector::clear()
 {
     pages.clearPages();
