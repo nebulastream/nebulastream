@@ -19,8 +19,42 @@ namespace NES
 {
 struct PredictionCacheEntryLFU : PredictionCacheEntry
 {
-    /// Stores the frequency of each cache item
-    uint64_t frequency;
+    uint64_t frequency = 0;
+
+    PredictionCacheEntryLFU() = default;
+
+    PredictionCacheEntryLFU(const PredictionCacheEntryLFU& other)
+        : PredictionCacheEntry(other), frequency(other.frequency) {}
+
+    PredictionCacheEntryLFU&
+    operator=(const PredictionCacheEntryLFU& other)
+    {
+        if (this == &other) return *this;
+
+        PredictionCacheEntry::operator=(other);
+        frequency = other.frequency;
+        return *this;
+    }
+
+    PredictionCacheEntryLFU(PredictionCacheEntryLFU&& other) noexcept
+        : PredictionCacheEntry(std::move(other)),
+          frequency(other.frequency)
+    {
+        other.frequency = 0;
+    }
+
+    PredictionCacheEntryLFU&
+    operator=(PredictionCacheEntryLFU&& other) noexcept
+    {
+        if (this == &other) return *this;
+
+        PredictionCacheEntry::operator=(std::move(other));
+        frequency = other.frequency;
+        other.frequency = 0;
+        return *this;
+    }
+
+    ~PredictionCacheEntryLFU() override = default;
 };
 
 class PredictionCacheLFU : public PredictionCache
@@ -36,7 +70,7 @@ public:
         const nautilus::val<size_t>& inputSize);
 
     ~PredictionCacheLFU() override = default;
-    nautilus::val<std::vector<std::byte>*>
+    nautilus::val<std::byte*>
     getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
     nautilus::val<uint64_t> updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction) override;
     void updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction) override;

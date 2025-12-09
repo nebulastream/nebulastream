@@ -61,7 +61,7 @@ nautilus::val<uint64_t> PredictionCacheFIFO::updateKeys(const nautilus::val<std:
     return nautilus::val<uint64_t>(NOT_FOUND);
 }
 
-nautilus::val<std::vector<std::byte>*>
+nautilus::val<std::byte*>
 PredictionCacheFIFO::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we check if the timestamp is already in the cache.

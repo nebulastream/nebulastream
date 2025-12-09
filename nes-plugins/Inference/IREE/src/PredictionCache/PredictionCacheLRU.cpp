@@ -94,7 +94,7 @@ nautilus::val<uint64_t> PredictionCacheLRU::updateKeys(const nautilus::val<std::
     return nautilus::val<uint64_t>(NOT_FOUND);
 }
 
-nautilus::val<std::vector<std::byte>*>
+nautilus::val<std::byte*>
 PredictionCacheLRU::getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction)
 {
     /// First, we have to increment all age bits by one.

@@ -20,6 +20,32 @@ namespace NES
 {
 struct PredictionCacheEntryFIFO : PredictionCacheEntry
 {
+    PredictionCacheEntryFIFO() = default;
+
+    PredictionCacheEntryFIFO(const PredictionCacheEntryFIFO& other)
+        : PredictionCacheEntry(other) {}
+
+    PredictionCacheEntryFIFO&
+    operator=(const PredictionCacheEntryFIFO& other)
+    {
+        if (this == &other) return *this;
+
+        PredictionCacheEntry::operator=(other);
+        return *this;
+    }
+
+    PredictionCacheEntryFIFO(PredictionCacheEntryFIFO&& other) noexcept
+        : PredictionCacheEntry(std::move(other)) {}
+
+    PredictionCacheEntryFIFO&
+    operator=(PredictionCacheEntryFIFO&& other) noexcept
+    {
+        if (this == &other) return *this;
+
+        PredictionCacheEntry::operator=(std::move(other));
+        return *this;
+    }
+
     ~PredictionCacheEntryFIFO() override = default;
 };
 
@@ -35,7 +61,7 @@ public:
         const nautilus::val<uint64_t*>& missesRef,
         const nautilus::val<size_t>& inputSize);
     ~PredictionCacheFIFO() override = default;
-    nautilus::val<std::vector<std::byte>*>
+    nautilus::val<std::byte*>
     getDataStructureRef(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheReplacement& replacementFunction) override;
     nautilus::val<uint64_t> updateKeys(const nautilus::val<std::byte*>& record, const PredictionCache::PredictionCacheUpdate& updateFunction) override;
     void updateValues(const PredictionCache::PredictionCacheUpdate& updateFunction) override;

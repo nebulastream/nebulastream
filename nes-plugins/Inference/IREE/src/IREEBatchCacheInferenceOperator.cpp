@@ -43,11 +43,16 @@ void addValueToModelProxy(int index, float value, void* inferModelHandler, Worke
     adapter->addModelInput(index, value);
 }
 
-void copyVarSizedFromModelProxy(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
+void copyVarSizedFromModelProxy(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread, std::byte* outputData)
 {
+    PRECONDITION(outputData != nullptr, "Should have received a valid pointer to the model output");
+
     auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
-    adapter->copyResultTo(std::span{content, size});
+    const auto span = std::span{content, size};
+
+    PRECONDITION(adapter->outputSize == span.size(), "Output size does not match");
+    std::ranges::copy_n(outputData, std::min(span.size(), adapter->outputSize), span.data());
 }
 
 void copyVarSizedToModelProxy(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
@@ -64,11 +69,15 @@ void applyModelProxy(void* inferModelHandler, WorkerThreadId thread)
     adapter->infer();
 }
 
-float getValueFromModelProxy(int index, void* inferModelHandler, WorkerThreadId thread)
+float getValueFromModelProxy(int index, void* inferModelHandler, WorkerThreadId thread, std::byte* outputData)
 {
+    PRECONDITION(outputData != nullptr, "Should have received a valid pointer to the model output");
+
     auto handler = static_cast<IREEBatchInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
-    return adapter->getResultAt(index);
+
+    PRECONDITION(static_cast<size_t>(index) < adapter->outputSize / 4, "Index is too large");
+    return std::bit_cast<float*>(outputData)[index];
 }
 
 template <typename T>
@@ -163,12 +172,15 @@ void IREEBatchCacheInferenceOperator::performInference(
                     adapter->infer();
                     adapter->misses += 1;
 
-                    auto inputVec = std::vector(adapter->inputData.get(), adapter->inputData.get() + adapter->inputSize);
-                    predictionCacheEntry->record = std::move(inputVec);
+                    predictionCacheEntry->recordSize = adapter->inputSize;
+                    predictionCacheEntry->record = new std::byte[adapter->inputSize];
+                    std::memcpy(predictionCacheEntry->record, adapter->inputData.get(), adapter->inputSize);
 
-                    auto outputVec = std::vector(adapter->outputData.get(), adapter->outputData.get() + adapter->outputSize);
-                    predictionCacheEntry->dataStructure = std::move(outputVec);
-                    return &predictionCacheEntry->dataStructure;
+                    predictionCacheEntry->dataSize = adapter->outputSize;
+                    predictionCacheEntry->dataStructure = new std::byte[adapter->outputSize];
+                    std::memcpy(predictionCacheEntry->dataStructure, adapter->outputData.get(), adapter->outputSize);
+
+                    return predictionCacheEntry->dataStructure;
                 }, predictionCacheEntryToReplace, operatorHandler, executionCtx.workerThreadId);
         });
 
@@ -181,7 +193,9 @@ void IREEBatchCacheInferenceOperator::performInference(
         {
             for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
             {
-                VarVal result = VarVal(nautilus::invoke(IREEBatchCacheInference::getValueFromModelProxy, rowIdx, operatorHandler, executionCtx.workerThreadId));
+                const VarVal result = VarVal(nautilus::invoke(
+                    IREEBatchCacheInference::getValueFromModelProxy,
+                    nautilus::val<int>(i), operatorHandler, executionCtx.workerThreadId, prediction));
                 record.write(outputFieldNames.at(i), result);
                 ++rowIdx;
             }
@@ -189,7 +203,9 @@ void IREEBatchCacheInferenceOperator::performInference(
         else
         {
             auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-            nautilus::invoke(IREEBatchCacheInference::copyVarSizedFromModelProxy, output.getContent(), output.getContentSize(), operatorHandler, executionCtx.workerThreadId);
+            nautilus::invoke(
+                IREEBatchCacheInference::copyVarSizedFromModelProxy,
+                output.getContent(), output.getContentSize(), operatorHandler, executionCtx.workerThreadId, prediction);
             record.write(outputFieldNames.at(0), output);
             ++rowIdx;
         }

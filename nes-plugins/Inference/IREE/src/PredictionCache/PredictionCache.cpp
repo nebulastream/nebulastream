@@ -50,28 +50,36 @@ void PredictionCache::incrementNumberOfMisses()
     *numberOfMisses = currentNumberOfMisses;
 }
 
-nautilus::val<std::vector<std::byte>*> PredictionCache::getRecord(const nautilus::val<uint64_t>& pos)
+nautilus::val<std::byte*> PredictionCache::getRecord(const nautilus::val<uint64_t>& pos)
 {
     const auto predictionCacheEntry = startOfEntries + pos * sizeOfEntry;
     const auto recordRef = Nautilus::Util::getMemberRef(predictionCacheEntry, &PredictionCacheEntry::record);
-    return nautilus::invoke(+[](int8_t* entry){ return reinterpret_cast<std::vector<std::byte>*>(entry); }, recordRef);
+    auto record = *Nautilus::Util::getMemberWithOffset<std::byte*>(recordRef, 0);
+    return record;
 }
 
-nautilus::val<std::vector<std::byte>*> PredictionCache::getDataStructure(const nautilus::val<uint64_t>& pos)
+nautilus::val<std::byte*> PredictionCache::getDataStructure(const nautilus::val<uint64_t>& pos)
 {
     const auto predictionCacheEntry = startOfEntries + pos * sizeOfEntry;
     const auto dataStructureRef = Nautilus::Util::getMemberRef(predictionCacheEntry, &PredictionCacheEntry::dataStructure);
-    return nautilus::invoke(+[](int8_t* dataStructure){ return reinterpret_cast<std::vector<std::byte>*>(dataStructure); }, dataStructureRef);
+    auto dataStructure = *Nautilus::Util::getMemberWithOffset<std::byte*>(dataStructureRef, 0);
+    return dataStructure;
 }
 
 nautilus::val<bool> PredictionCache::foundRecord(const nautilus::val<uint64_t>& pos, const nautilus::val<std::byte*>& candidateRecord)
 {
     const auto cacheRecord = getRecord(pos);
-    return nautilus::invoke(+[](std::byte* candidate, std::vector<std::byte>* cache, size_t size)
+    return nautilus::invoke(+[](std::byte* candidate, std::byte* cache, size_t size)
     {
-        if (cache != nullptr && cache->data() != nullptr)
+        if (cache != nullptr)
         {
-            return std::memcmp(candidate, cache->data(), size) == 0;
+            // std::cout << "Cache:\n";
+            // for (int i = 0; i < 4; ++i)
+            // {
+            //     std::cout << std::bit_cast<float*>(cache)[i] << ',';
+            // }
+            // std::cout << '\n';
+            return std::memcmp(candidate, cache, size) == 0;
         }
         return false;
     }, candidateRecord, cacheRecord, nautilus::val(inputSize));
@@ -79,13 +87,24 @@ nautilus::val<bool> PredictionCache::foundRecord(const nautilus::val<uint64_t>& 
 
 nautilus::val<uint64_t> PredictionCache::searchInCache(const nautilus::val<std::byte*>& record)
 {
+    // nautilus::invoke(+[](std::byte* candidate)
+    // {
+    //     std::cout << "Candidate:\n";
+    //     for (int i = 0; i < 4; ++i)
+    //     {
+    //         std::cout << std::bit_cast<float*>(candidate)[i] << ',';
+    //     }
+    //     std::cout << '\n';
+    // }, record);
     for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; i = i + 1)
     {
         if (foundRecord(i, record))
         {
-            return i;
+        //     nautilus::invoke(+[](){ std::cout << '\n'; });
+        return i;
         }
     }
+    // nautilus::invoke(+[](){ std::cout << '\n'; });
     return nautilus::val<uint64_t>(NOT_FOUND);
 }
 

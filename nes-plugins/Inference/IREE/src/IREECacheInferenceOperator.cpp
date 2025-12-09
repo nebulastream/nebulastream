@@ -43,7 +43,7 @@ void addValueToModel(int index, float value, void* inferModelHandler, WorkerThre
     adapter->addModelInput(index, value);
 }
 
-void copyVarSizedFromModel(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread, std::vector<std::byte>* outputData)
+void copyVarSizedFromModel(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread, std::byte* outputData)
 {
     PRECONDITION(outputData != nullptr, "Should have received a valid pointer to the model output");
 
@@ -52,7 +52,7 @@ void copyVarSizedFromModel(std::byte* content, uint32_t size, void* inferModelHa
     const auto span = std::span{content, size};
 
     PRECONDITION(adapter->outputSize == span.size(), "Output size does not match");
-    std::ranges::copy_n(outputData->data(), std::min(span.size(), adapter->outputSize), span.data());
+    std::ranges::copy_n(outputData, std::min(span.size(), adapter->outputSize), span.data());
 }
 
 void copyVarSizedToModel(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
@@ -69,7 +69,7 @@ void applyModel(void* inferModelHandler, WorkerThreadId thread)
     adapter->infer();
 }
 
-float getValueFromModel(int index, void* inferModelHandler, WorkerThreadId thread, std::vector<std::byte>* outputData)
+float getValueFromModel(int index, void* inferModelHandler, WorkerThreadId thread, std::byte* outputData)
 {
     PRECONDITION(outputData != nullptr, "Should have received a valid pointer to the model output");
 
@@ -77,7 +77,7 @@ float getValueFromModel(int index, void* inferModelHandler, WorkerThreadId threa
     auto adapter = handler->getIREEAdapter(thread);
 
     PRECONDITION(static_cast<size_t>(index) < adapter->outputSize / 4, "Index is too large");
-    return std::bit_cast<float*>(outputData->data())[index];
+    return std::bit_cast<float*>(outputData)[index];
 }
 
 template <typename T>
@@ -140,12 +140,15 @@ void IREECacheInferenceOperator::execute(ExecutionContext& executionCtx, NES::Na
                     adapter->infer();
                     adapter->misses += 1;
 
-                    auto inputVec = std::vector(adapter->inputData.get(), adapter->inputData.get() + adapter->inputSize);
-                    predictionCacheEntry->record = std::move(inputVec);
+                    predictionCacheEntry->recordSize = adapter->inputSize;
+                    predictionCacheEntry->record = new std::byte[adapter->inputSize];
+                    std::memcpy(predictionCacheEntry->record, adapter->inputData.get(), adapter->inputSize);
 
-                    auto outputVec = std::vector(adapter->outputData.get(), adapter->outputData.get() + adapter->outputSize);
-                    predictionCacheEntry->dataStructure = std::move(outputVec);
-                    return &predictionCacheEntry->dataStructure;
+                    predictionCacheEntry->dataSize = adapter->outputSize;
+                    predictionCacheEntry->dataStructure = new std::byte[adapter->outputSize];
+                    std::memcpy(predictionCacheEntry->dataStructure, adapter->outputData.get(), adapter->outputSize);
+
+                    return predictionCacheEntry->dataStructure;
                 }, predictionCacheEntryToReplace, inferModelHandler, executionCtx.workerThreadId);
         });
 
@@ -153,7 +156,7 @@ void IREECacheInferenceOperator::execute(ExecutionContext& executionCtx, NES::Na
     {
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            VarVal result = VarVal(nautilus::invoke(
+            const VarVal result = VarVal(nautilus::invoke(
                 IREECacheInference::getValueFromModel,
                 nautilus::val<int>(i), inferModelHandler, executionCtx.workerThreadId, prediction));
             record.write(outputFieldNames.at(i), result);
