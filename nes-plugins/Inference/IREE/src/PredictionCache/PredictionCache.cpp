@@ -73,12 +73,6 @@ nautilus::val<bool> PredictionCache::foundRecord(const nautilus::val<uint64_t>& 
     {
         if (cache != nullptr)
         {
-            // std::cout << "Cache:\n";
-            // for (int i = 0; i < 4; ++i)
-            // {
-            //     std::cout << std::bit_cast<float*>(cache)[i] << ',';
-            // }
-            // std::cout << '\n';
             return std::memcmp(candidate, cache, size) == 0;
         }
         return false;
@@ -87,24 +81,13 @@ nautilus::val<bool> PredictionCache::foundRecord(const nautilus::val<uint64_t>& 
 
 nautilus::val<uint64_t> PredictionCache::searchInCache(const nautilus::val<std::byte*>& record)
 {
-    // nautilus::invoke(+[](std::byte* candidate)
-    // {
-    //     std::cout << "Candidate:\n";
-    //     for (int i = 0; i < 4; ++i)
-    //     {
-    //         std::cout << std::bit_cast<float*>(candidate)[i] << ',';
-    //     }
-    //     std::cout << '\n';
-    // }, record);
     for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; i = i + 1)
     {
         if (foundRecord(i, record))
         {
-        //     nautilus::invoke(+[](){ std::cout << '\n'; });
         return i;
         }
     }
-    // nautilus::invoke(+[](){ std::cout << '\n'; });
     return nautilus::val<uint64_t>(NOT_FOUND);
 }
 
