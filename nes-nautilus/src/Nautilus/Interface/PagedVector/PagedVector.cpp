@@ -195,7 +195,7 @@ const TupleBuffer& PagedVector::getPage(const uint64_t pageIndex) const
     return pages[pageIndex].buffer;
 }
 
-void PagedVector::serialize(std::ostream& os)
+void PagedVector::serialize(std::ostream& os) const
 {
     const auto numPages = this->getNumberOfPages();
     os.write(reinterpret_cast<const char*>(&numPages), sizeof(numPages));

@@ -65,7 +65,7 @@ public:
     [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
 
     /// serializes the PagedVector into the ostream
-    void serialize(std::ostream& os);
+    void serialize(std::ostream& os) const;
 
     /// Clears all stored pages.
     void clear();
