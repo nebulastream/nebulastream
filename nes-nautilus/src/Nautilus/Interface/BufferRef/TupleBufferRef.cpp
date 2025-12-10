@@ -46,6 +46,12 @@
 namespace NES
 {
 
+struct CombinedIndexTest
+{
+    uint64_t index;
+    uint64_t size;
+};
+
 VarVal
 TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
@@ -53,12 +59,13 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     {
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
-    nautilus::val<VariableSizedAccess> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
+    auto combinedIdxOffset = readValueFromMemRef<VariableSizedAccess::CombinedIndex*>(fieldReference);
+
     const auto varSizedPtr = invoke(
-        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess variableSizedAccess)
+        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccess)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            return MemoryLayout::loadAssociatedVarSizedValue(*tupleBuffer, variableSizedAccess).data();
+            return MemoryLayout::loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccess).data();
         },
         recordBuffer.getReference(),
         combinedIdxOffset);

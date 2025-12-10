@@ -45,7 +45,6 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     /// Writing the left value and then the right value to the new variable sized data
     nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getContentSize());
     nautilus::memcpy(newVarSizeData.getContent() + leftValue.getContentSize(), rightValue.getContent(), rightValue.getContentSize());
-    VarVal(nautilus::val<uint32_t>(newSize)).writeToMemory(newVarSizeData.getReference());
     return newVarSizeData;
 }
 
