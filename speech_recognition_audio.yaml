@@ -8,7 +8,7 @@ query: |
     SELECT start, end, output, INFER_MODEL(speech_recognition, (chunked))
     FROM (
         SELECT start, end, COUNT(value) as samples, ARRAY_AGG(value) as chunked
-        FROM audio_stream WINDOW SLIDING(timestamp, size 1000000 ms, advance by 10000 ms)
+        FROM audio_stream WINDOW SLIDING(timestamp, size 1000000 sec, advance by 100000 ms)
     )
   )
   INTO MQTT("JSON" as `SINK`.`INPUT_FORMAT`, "sink/live/alert" as `SINK`.`TOPIC`, 1 as `SINK`.`QOS`, "mqtt://localhost:1883" as `SINK`.`SERVER_URI`)

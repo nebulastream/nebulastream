@@ -50,6 +50,9 @@ public:
     /// Copies all pages from other to this
     void copyFrom(const PagedVector& other);
 
+    void copyFromUnsafe(const PagedVector& other);
+    void fixupPageNumbers();
+
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
     [[nodiscard]] const TupleBuffer* getTupleBufferForEntry(uint64_t entryPos) const;
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
@@ -78,6 +81,8 @@ private:
         [[nodiscard]] std::optional<size_t> findIdx(uint64_t entryPos) const;
         void addPage(const TupleBuffer& newPage);
         void addPages(const PagesWrapper& other);
+        void addPagesUnsafe(const PagesWrapper& other);
+        void fixupPageNumbers();
         void clearPages();
 
     private:

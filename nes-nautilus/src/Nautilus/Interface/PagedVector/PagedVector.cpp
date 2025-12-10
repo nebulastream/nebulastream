@@ -83,6 +83,16 @@ NAUTILUS_INLINE void PagedVector::copyFrom(const PagedVector& other)
     pages.addPages(other.pages);
 }
 
+NAUTILUS_INLINE void PagedVector::copyFromUnsafe(const PagedVector& other)
+{
+    pages.addPagesUnsafe(other.pages);
+}
+
+NAUTILUS_INLINE void PagedVector::fixupPageNumbers()
+{
+    pages.fixupPageNumbers();
+}
+
 NAUTILUS_INLINE const TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
 {
     /// We need to find the index / page that the entryPos belongs to.
@@ -126,6 +136,16 @@ void PagedVector::PagesWrapper::addPage(const TupleBuffer& newPage)
 NAUTILUS_INLINE void PagedVector::PagesWrapper::addPages(const PagesWrapper& other)
 {
     pages.insert(pages.end(), other.pages.begin(), other.pages.end());
+    updateCumulativeSumAllPages();
+}
+
+NAUTILUS_INLINE void PagedVector::PagesWrapper::addPagesUnsafe(const PagesWrapper& other)
+{
+    pages.insert(pages.end(), other.pages.begin(), other.pages.end());
+}
+
+NAUTILUS_INLINE void PagedVector::PagesWrapper::fixupPageNumbers()
+{
     updateCumulativeSumAllPages();
 }
 

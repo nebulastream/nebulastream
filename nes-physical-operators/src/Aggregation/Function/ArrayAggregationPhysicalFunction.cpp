@@ -48,9 +48,14 @@ ArrayAggregationPhysicalFunction::ArrayAggregationPhysicalFunction(
     pagedVectorBufferRef = Interface::BufferRef::TupleBufferRef::create(4096, Schema{}.addField("value", inputType));
 }
 
+NAUTILUS_INLINE void fixupVectorProxy(Nautilus::Interface::PagedVector* vector1)
+{
+    vector1->fixupPageNumbers();
+}
+
 NAUTILUS_INLINE void mergeVectorProxy(Nautilus::Interface::PagedVector* vector1, const Nautilus::Interface::PagedVector* vector2)
 {
-    vector1->copyFrom(*vector2);
+    vector1->copyFromUnsafe(*vector2);
 }
 
 void ArrayAggregationPhysicalFunction::lift(
@@ -85,6 +90,7 @@ Nautilus::Record ArrayAggregationPhysicalFunction::lower(
 {
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
+    nautilus::invoke(fixupVectorProxy, pagedVectorPtr);
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, pagedVectorBufferRef);
     const auto allFieldNames = pagedVectorBufferRef->getMemoryLayout()->getSchema().getFieldNames();
     const auto numberOfEntries = invoke(

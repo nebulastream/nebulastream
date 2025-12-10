@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Video Stream Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .video-container {
+            text-align: center;
+            background: #000;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #333;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>MQTT Video Stream Viewer</h1>
+
+    <div class="controls">
+        <input type="text" id="brokerUrl" placeholder="ws://130.149.225.82:9001" value="ws://130.149.225.82:9001">
+        <input type="text" id="topic" placeholder="test/thermal-rgb-image" value="test/thermal-rgb-image">
+        <button id="connectBtn">Connect</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+    </div>
+
+    <div id="status" class="status disconnected">Disconnected</div>
+
+    <div class="video-container">
+        <canvas id="videoCanvas" width="640" height="480"></canvas>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="framesReceived">0</div>
+            <div>Frames Received</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="fps">0</div>
+            <div>FPS</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="lastFrameSize">0</div>
+            <div>Last Frame (KB)</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="maxTemperature">N/A</div>
+            <div>Max Temperature</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="lag">N/A</div>
+            <div>Lag (ms)</div>
+        </div>
+    </div>
+</div>
+
+<!-- MQTT.js library from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+
+<script>
+    class MQTTVideoViewer {
+        constructor() {
+            this.client = null;
+            this.canvas = document.getElementById('videoCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.framesReceived = 0;
+            this.lastFrameTime = 0;
+            this.fpsCounter = 0;
+            this.lastFpsUpdate = Date.now();
+
+            this.setupEventListeners();
+            this.startFpsCounter();
+        }
+
+        setupEventListeners() {
+            document.getElementById('connectBtn').addEventListener('click', () => this.connect());
+            document.getElementById('disconnectBtn').addEventListener('click', () => this.disconnect());
+        }
+
+        connect() {
+            const brokerUrl = document.getElementById('brokerUrl').value;
+            const topic = document.getElementById('topic').value;
+
+            if (!brokerUrl || !topic) {
+                alert('Please enter broker URL and topic');
+                return;
+            }
+
+            this.updateStatus('Connecting...', 'disconnected');
+
+            try {
+                this.client = mqtt.connect(brokerUrl);
+
+                this.client.on('connect', () => {
+                    this.updateStatus('Connected', 'connected');
+                    this.client.subscribe(topic);
+                    this.toggleButtons(true);
+                    console.log(`Connected to ${brokerUrl}, subscribed to ${topic}`);
+                });
+
+                this.client.on('message', (receivedTopic, message) => {
+                    if (receivedTopic === topic) {
+                        this.handleFrame(message);
+                    }
+                });
+
+                this.client.on('error', (error) => {
+                    console.error('MQTT Error:', error);
+                    this.updateStatus('Connection Error', 'disconnected');
+                    this.toggleButtons(false);
+                });
+
+                this.client.on('close', () => {
+                    this.updateStatus('Disconnected', 'disconnected');
+                    this.toggleButtons(false);
+                });
+
+            } catch (error) {
+                console.error('Connection failed:', error);
+                this.updateStatus('Connection Failed', 'disconnected');
+            }
+        }
+
+        disconnect() {
+            if (this.client) {
+                this.client.end();
+                this.client = null;
+            }
+            this.updateStatus('Disconnected', 'disconnected');
+            this.toggleButtons(false);
+        }
+
+        handleFrame(message) {
+            try {
+                // Update stats
+                this.framesReceived++;
+                this.fpsCounter++;
+                document.getElementById('framesReceived').textContent = this.framesReceived;
+                document.getElementById('lastFrameSize').textContent = Math.round(message.length / 1024);
+
+                // Try to parse as JSON first (structured frame data)
+                let frameData;
+                try {
+                    frameData = JSON.parse(message.toString());
+                    if (frameData["image"]) {
+                        this.renderBase64Image(frameData["image"], frameData.format || 'jpeg');
+                    }
+                    document.getElementById('maxTemperature').textContent = frameData["max_temp"].toFixed(2) + ' °C';
+                    if (frameData["timestamp"]) {
+                        // Assuming timestamp is in nanoseconds, convert to milliseconds
+                        const mqttTimestampMs = frameData["timestamp"] / 1000000;
+                        const currentTimestampMs = Date.now();
+                        const lagMs = currentTimestampMs - mqttTimestampMs;
+                        document.getElementById('lag').textContent = lagMs.toFixed(0);
+                    }
+                } catch (e) {
+                    // If not JSON, treat as raw base64 data
+                    this.renderBase64Image(message.toString(), 'jpeg');
+                }
+
+            } catch (error) {
+                console.error('Error handling frame:', error);
+            }
+        }
+
+        renderBase64Image(base64Data, format = 'jpeg') {
+            const img = new Image();
+            img.onload = () => {
+                // Clear canvas and draw new frame
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+            };
+            img.onerror = (error) => {
+                console.error('Error loading image:', error);
+            };
+
+            // Support both with and without data URL prefix
+            if (base64Data.startsWith('data:')) {
+                img.src = base64Data;
+            } else {
+                img.src = `data:image/${format};base64,${base64Data}`;
+            }
+        }
+
+        updateStatus(message, className) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${className}`;
+        }
+
+        toggleButtons(connected) {
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+        }
+
+        startFpsCounter() {
+            setInterval(() => {
+                const now = Date.now();
+                const elapsed = now - this.lastFpsUpdate;
+
+                if (elapsed >= 1000) {
+                    const fps = Math.round((this.fpsCounter * 1000) / elapsed);
+                    document.getElementById('fps').textContent = fps;
+                    this.fpsCounter = 0;
+                    this.lastFpsUpdate = now;
+                }
+            }, 1000);
+        }
+    }
+
+    // Initialize the viewer when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        new MQTTVideoViewer();
+    });
+
+    // Test function for demo purposes
+    function sendTestFrame() {
+        if (window.viewer && window.viewer.client && window.viewer.client.connected) {
+            // Create a simple test pattern
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+
+            // Draw a test pattern
+            ctx.fillStyle = '#' + Math.floor(Math.random()*16777215).toString(16);
+            ctx.fillRect(0, 0, 640, 480);
+            ctx.fillStyle = '#fff';
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(new Date().toLocaleTimeString(), 320, 240);
+
+            // Convert to base64 and send
+            const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            const frameData = {
+                timestamp: Date.now(),
+                width: 640,
+                height: 480,
+                format: 'jpeg',
+                data: base64
+            };
+
+            const topic = document.getElementById('topic').value;
+            window.viewer.client.publish(topic, JSON.stringify(frameData));
+        }
+    }
+
+    // Expose viewer for testing
+    document.addEventListener('DOMContentLoaded', () => {
+        window.viewer = new MQTTVideoViewer();
+    });
+</script>
+</body>
+</html>
