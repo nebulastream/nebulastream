@@ -25,10 +25,13 @@ class IREEInferenceOperator : public PhysicalOperatorConcept
 {
 public:
     IREEInferenceOperator(
-        const OperatorHandlerId inferModelHandlerIndex, std::vector<PhysicalFunction> inputs, std::vector<std::string> outputFieldNames)
-        : inferModelHandlerIndex(inferModelHandlerIndex), inputs(std::move(inputs)), outputFieldNames(std::move(outputFieldNames)) { }
+        const OperatorHandlerId inferModelHandlerIndex,
+        std::vector<PhysicalFunction> inputs,
+        std::vector<std::string> outputFieldNames,
+        DataType inputDtype,
+        DataType outputDtype);
 
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void execute(ExecutionContext& executionCtx, Record& record) const override;
     void setup(ExecutionContext& executionCtx, CompilationContext&) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
@@ -40,10 +43,19 @@ public:
     size_t outputSize = 0;
     size_t inputSize = 0;
 
+protected:
+    template <class T>
+    void performInference(ExecutionContext& executionCtx, NES::Nautilus::Record& record) const;
+
+    template <class T>
+    void writeOutputRecord(ExecutionContext& executionCtx, NES::Nautilus::Record& record) const;
+
 private:
     const OperatorHandlerId inferModelHandlerIndex;
     const std::vector<PhysicalFunction> inputs;
     const std::vector<std::string> outputFieldNames;
+    DataType inputDtype;
+    DataType outputDtype;
     std::optional<PhysicalOperator> child;
 };
 

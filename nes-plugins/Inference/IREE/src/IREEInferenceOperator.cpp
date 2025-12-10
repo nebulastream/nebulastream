@@ -30,39 +30,41 @@ class PhysicalInferModelOperator;
 namespace NES::IREEInference
 {
 template <class T>
-void addValueToModel(int index, float value, void* inferModelHandler, WorkerThreadId thread)
+void addValueToModelProxy(int index, T value, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
     adapter->addModelInput(index, value);
 }
 
-void copyVarSizedFromModel(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
+template <class T>
+float getValueFromModelProxy(int index, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
-    adapter->copyResultTo(std::span{content, size});
+    return adapter->getResultAt<T>(index);
 }
 
-void copyVarSizedToModel(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
+void copyVarSizedToModelProxy(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
     adapter->addModelInput(std::span{content, size});
 }
 
-void applyModel(void* inferModelHandler, WorkerThreadId thread)
+void copyVarSizedFromModelProxy(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
-    adapter->infer();
+    adapter->copyResultTo(std::span{content, size});
 }
 
-float getValueFromModel(int index, void* inferModelHandler, WorkerThreadId thread)
+template <class T>
+void applyModelProxy(void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
-    return adapter->getResultAt(index);
+    adapter->infer<T>();
 }
 
 template <typename T>
@@ -75,52 +77,118 @@ nautilus::val<T> min(const nautilus::val<T>& lhs, const nautilus::val<T>& rhs)
 namespace NES
 {
 
-void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const
+IREEInferenceOperator::IREEInferenceOperator(
+    const OperatorHandlerId inferModelHandlerIndex,
+    std::vector<PhysicalFunction> inputs,
+    std::vector<std::string> outputFieldNames,
+    DataType inputDtype,
+    DataType outputDtype)
+    : inferModelHandlerIndex(inferModelHandlerIndex)
+    , inputs(std::move(inputs))
+    , outputFieldNames(std::move(outputFieldNames))
+    , inputDtype(inputDtype)
+    , outputDtype(outputDtype)
 {
-    auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
+}
+
+template <typename T>
+void IREEInferenceOperator::performInference(ExecutionContext& executionCtx, NES::Nautilus::Record& record) const
+{
+    auto inferModelHandler = executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex);
 
     if (!this->isVarSizedInput)
     {
         for (nautilus::static_val<size_t> i = 0; i < inputs.size(); ++i)
         {
             nautilus::invoke(
-                IREEInference::addValueToModel<float>,
+                IREEInference::addValueToModelProxy<T>,
                 nautilus::val<int>(i),
-                inputs.at(i).execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<float>>(),
+                inputs.at(i).execute(record, executionCtx.pipelineMemoryProvider.arena).cast<nautilus::val<T>>(),
                 inferModelHandler,
-                ctx.workerThreadId);
+                executionCtx.workerThreadId);
         }
     }
     else
     {
-        VarVal value = inputs.at(0).execute(record, ctx.pipelineMemoryProvider.arena);
+        VarVal value = inputs.at(0).execute(record, executionCtx.pipelineMemoryProvider.arena);
         auto varSizedValue = value.cast<VariableSizedData>();
         nautilus::invoke(
-            IREEInference::copyVarSizedToModel,
+            IREEInference::copyVarSizedToModelProxy,
             varSizedValue.getContent(),
             IREEInference::min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
             inferModelHandler,
-            ctx.workerThreadId);
+            executionCtx.workerThreadId);
     }
 
-    nautilus::invoke(IREEInference::applyModel, inferModelHandler, ctx.workerThreadId);
+    nautilus::invoke(IREEInference::applyModelProxy<T>, inferModelHandler, executionCtx.workerThreadId);
+}
+
+template <typename T>
+void IREEInferenceOperator::writeOutputRecord(ExecutionContext& executionCtx, NES::Nautilus::Record& record) const
+{
+    auto inferModelHandler = executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex);
 
     if (!this->isVarSizedOutput)
     {
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            VarVal result = VarVal(nautilus::invoke(IREEInference::getValueFromModel, nautilus::val<int>(i), inferModelHandler, ctx.workerThreadId));
+            VarVal result = VarVal(nautilus::invoke(IREEInference::getValueFromModelProxy<T>, nautilus::val<int>(i), inferModelHandler, executionCtx.workerThreadId));
             record.write(outputFieldNames.at(i), result);
         }
     }
     else
     {
-        auto output = ctx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-        nautilus::invoke(IREEInference::copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, ctx.workerThreadId);
+        auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
+        nautilus::invoke(IREEInference::copyVarSizedFromModelProxy, output.getContent(), output.getContentSize(), inferModelHandler, executionCtx.workerThreadId);
         record.write(outputFieldNames.at(0), output);
     }
 
-    child->execute(ctx, record);
+    child->execute(executionCtx, record);
+}
+
+void IREEInferenceOperator::execute(ExecutionContext& executionCtx, NES::Nautilus::Record& record) const
+{
+    switch (inputDtype.type)
+    {
+        case DataType::Type::UINT8: performInference<uint8_t>(executionCtx, record); break;
+        case DataType::Type::UINT16: performInference<uint16_t>(executionCtx, record); break;
+        case DataType::Type::UINT32: performInference<uint32_t>(executionCtx, record); break;
+        case DataType::Type::UINT64: performInference<uint64_t>(executionCtx, record); break;
+        case DataType::Type::INT8: performInference<int8_t>(executionCtx, record); break;
+        case DataType::Type::INT16: performInference<int16_t>(executionCtx, record); break;
+        case DataType::Type::INT32: performInference<int32_t>(executionCtx, record); break;
+        case DataType::Type::INT64: performInference<int64_t>(executionCtx, record); break;
+        case DataType::Type::FLOAT32: performInference<float>(executionCtx, record); break;
+        case DataType::Type::FLOAT64: performInference<double>(executionCtx, record); break;
+
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw std::runtime_error("ModelCatalog: Unsupported data type");
+    }
+
+    switch (outputDtype.type)
+    {
+        case DataType::Type::UINT8: writeOutputRecord<uint8_t>(executionCtx, record); break;
+        case DataType::Type::UINT16: writeOutputRecord<uint16_t>(executionCtx, record); break;
+        case DataType::Type::UINT32: writeOutputRecord<uint32_t>(executionCtx, record); break;
+        case DataType::Type::UINT64: writeOutputRecord<uint64_t>(executionCtx, record); break;
+        case DataType::Type::INT8: writeOutputRecord<int8_t>(executionCtx, record); break;
+        case DataType::Type::INT16: writeOutputRecord<int16_t>(executionCtx, record); break;
+        case DataType::Type::INT32: writeOutputRecord<int32_t>(executionCtx, record); break;
+        case DataType::Type::INT64: writeOutputRecord<int64_t>(executionCtx, record); break;
+        case DataType::Type::FLOAT32: writeOutputRecord<float>(executionCtx, record); break;
+        case DataType::Type::FLOAT64: writeOutputRecord<double>(executionCtx, record); break;
+
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw std::runtime_error("ModelCatalog: Unsupported data type");
+    }
 }
 
 void IREEInferenceOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const

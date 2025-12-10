@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <Functions/PhysicalFunction.hpp>
 #include <PhysicalOperator.hpp>
+#include <PredictionCache.hpp>
 #include <InferenceConfiguration.hpp>
 
 namespace NES
@@ -29,11 +30,9 @@ public:
         const OperatorHandlerId inferModelHandlerIndex,
         std::vector<PhysicalFunction> inputs,
         std::vector<std::string> outputFieldNames,
-        Configurations::PredictionCacheOptions predictionCacheOptions)
-        : inferModelHandlerIndex(inferModelHandlerIndex)
-        , inputs(std::move(inputs))
-        , outputFieldNames(std::move(outputFieldNames))
-        , predictionCacheOptions(predictionCacheOptions) { }
+        Configurations::PredictionCacheOptions predictionCacheOptions,
+        DataType inputDtype,
+        DataType outputDtype);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     void setup(ExecutionContext& executionCtx, CompilationContext&) const override;
@@ -49,12 +48,26 @@ public:
     size_t outputSize = 0;
     size_t inputSize = 0;
 
+protected:
+    template <class T>
+    nautilus::val<std::byte*> performInference(
+        ExecutionContext& executionCtx, NES::Nautilus::Record& record, PredictionCache* predictionCache) const;
+
+    template <class T>
+    void writeOutputRecord(
+        ExecutionContext& executionCtx,
+        NES::Nautilus::Record& record,
+        const nautilus::val<std::byte*>& prediction,
+        PredictionCache* predictionCache) const;
+
 private:
     const OperatorHandlerId inferModelHandlerIndex;
     const std::vector<PhysicalFunction> inputs;
     const std::vector<std::string> outputFieldNames;
     std::optional<PhysicalOperator> child;
     Configurations::PredictionCacheOptions predictionCacheOptions;
+    DataType inputDtype;
+    DataType outputDtype;
 };
 
 }

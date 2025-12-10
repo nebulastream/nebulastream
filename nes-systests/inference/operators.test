@@ -1,0 +1,148 @@
+# name: inference/operators.test
+# description: A basic test for each of the 4 inference operator types
+# groups: [Inference]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [230]
+
+CREATE LOGICAL SOURCE streamFloat(p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32);
+CREATE PHYSICAL SOURCE FOR streamFloat TYPE File;
+ATTACH INLINE
+1.0,10.0,100.0,1000.0
+2.0,20.0,200.0,2000.0
+1.0,10.0,100.0,1000.0
+3.0,30.0,300.0,3000.0
+2.0,20.0,200.0,2000.0
+4.0,40.0,400.0,4000.0
+5.0,50.0,500.0,5000.0
+4.0,40.0,400.0,4000.0
+6.0,60.0,600.0,6000.0
+5.0,50.0,500.0,5000.0
+7.0,70.0,700.0,7000.0
+8.0,80.0,800.0,8000.0
+7.0,70.0,700.0,7000.0
+9.0,90.0,900.0,9000.0
+8.0,80.0,800.0,8000.0
+10.0,100.0,1000.0,10000.0
+11.0,110.0,1100.0,11000.0
+10.0,100.0,1000.0,10000.0
+12.0,120.0,1200.0,12000.0
+11.0,110.0,1100.0,11000.0
+
+CREATE SINK classificationThreeSeparate(setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32) TYPE File;
+
+MODEL iris TESTDATA/model/model.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+
+# IREEInferenceOperator
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris, (p1,p2,p3,p4)) FROM streamFloat)
+INTO classificationThreeSeparate;
+----
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+
+# IREECacheInferenceOperator
+Configuration worker.default_query_execution.inference.prediction_cache_type: [FIFO]
+Configuration worker.default_query_execution.inference.number_of_entries_prediction_cache: [4]
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris, (p1,p2,p3,p4)) FROM streamFloat)
+INTO classificationThreeSeparate;
+----
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+
+# IREEBatchInferenceOperator
+Configuration worker.default_query_execution.inference.batch_size: [5]
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris, (p1,p2,p3,p4)) FROM streamFloat)
+INTO classificationThreeSeparate;
+----
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+
+# IREEBatchCacheInferenceOperator
+Configuration worker.default_query_execution.inference.batch_size: [5]
+Configuration worker.default_query_execution.inference.prediction_cache_type: [FIFO]
+Configuration worker.default_query_execution.inference.number_of_entries_prediction_cache: [4]
+
+SELECT setosa, versicolor, virginica
+FROM (SELECT INFER_MODEL(iris, (p1,p2,p3,p4)) FROM streamFloat)
+INTO classificationThreeSeparate;
+----
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0
+0.0,0.0,1.0

@@ -16,6 +16,7 @@
 #include "ModelLoader.hpp"
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <ranges>
 #include <unordered_map>
 
@@ -38,6 +39,31 @@ class ModelCatalog
 public:
     void registerModel(const ModelDescriptor& model);
     Model load(const std::string Model) const;
+    size_t getTypeSizeC(DataType::Type dtype) const
+    {
+        size_t size = 0;
+        switch (dtype)
+        {
+            case DataType::Type::UINT8: size = sizeof(uint8_t); break;
+            case DataType::Type::UINT16: size = sizeof(uint16_t); break;
+            case DataType::Type::UINT32: size = sizeof(uint32_t); break;
+            case DataType::Type::UINT64: size = sizeof(uint64_t); break;
+            case DataType::Type::INT8: size = sizeof(int8_t); break;
+            case DataType::Type::INT16: size = sizeof(int16_t); break;
+            case DataType::Type::INT32: size = sizeof(int32_t); break;
+            case DataType::Type::INT64: size = sizeof(int64_t); break;
+            case DataType::Type::FLOAT32: size = sizeof(float); break;
+            case DataType::Type::FLOAT64: size = sizeof(double); break;
+
+            case DataType::Type::BOOLEAN:
+            case DataType::Type::CHAR:
+            case DataType::Type::UNDEFINED:
+            case DataType::Type::VARSIZED:
+            case DataType::Type::VARSIZED_POINTER_REP:
+                throw std::runtime_error("ModelCatalog: Unsupported data type");
+        }
+        return size;
+    }
 };
 
 inline void ModelCatalog::registerModel(const ModelDescriptor& model)
@@ -57,17 +83,30 @@ inline Model ModelCatalog::load(const std::string modelName) const
         auto result = Inference::load(it->second.path, {});
         if (result)
         {
+            auto second = it->second;
             result->inputs = it->second.inputs;
             result->outputs = it->second.outputs
                 | std::views::transform([](const auto& schemaField)
                                         { return std::pair<std::string, DataType>{schemaField.name, schemaField.dataType}; })
                 | std::ranges::to<std::vector>();
 
+            if (result->inputDtype.type == DataType::Type::UNDEFINED)
+            {
+                result->inputDtype = DataTypeProvider::provideDataType(result->inputs.at(0).type);
+            }
+
+            if (result->outputDtype.type == DataType::Type::UNDEFINED)
+            {
+                result->outputDtype = DataTypeProvider::provideDataType(result->outputs.at(0).second.type);
+            }
+
             result->inputDims = result->inputShape.size();
-            result->inputSizeInBytes = 4 * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
+            result->inputSizeInBytes = getTypeSizeC(result->inputDtype.type) *
+                std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
 
             result->outputDims = result->outputShape.size();
-            result->outputSizeInBytes = 4 * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
+            result->outputSizeInBytes = getTypeSizeC(result->outputDtype.type) *
+                std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
 
             catalogImpl.emplace(modelName, *result);
             return *result;

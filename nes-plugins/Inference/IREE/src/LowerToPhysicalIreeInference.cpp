@@ -50,6 +50,9 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
         const auto predictionCacheType = conf.inferenceConfiguration.predictionCacheType;
         const auto predictionCacheSize = conf.inferenceConfiguration.numberOfEntriesPredictionCache;
 
+        const auto inputDtype = model.getInputDtype();
+        const auto outputDtype = model.getOutputDtype();
+
         /// if the batch size is 1, then we simply use the inference operator with PipelineLocation::INTERMEDIATE
         /// else, add the batching operator (custom emit) and batch inference operator (custom scan)
         if (batchSize.getValue() == 1)
@@ -61,7 +64,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             {
                 case NES::Configurations::PredictionCacheType::NONE: {
                     NES_DEBUG("Lower InferModel operator to IREEInferenceOperator");
-                    auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames);
+                    auto ireeOperator = NES::IREEInferenceOperator(handlerId, inputFunctions, outputNames, inputDtype, outputDtype);
                     if (inferModelOperator->getInputFields().size() == 1
                         && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
                     {
@@ -94,7 +97,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                     NES::Configurations::PredictionCacheOptions predictionCacheOptions{
                         predictionCacheType.getValue(),
                         predictionCacheSize.getValue()};
-                    auto ireeOperator = NES::IREECacheInferenceOperator(handlerId, inputFunctions, outputNames, predictionCacheOptions);
+                    auto ireeOperator = NES::IREECacheInferenceOperator(handlerId, inputFunctions, outputNames, predictionCacheOptions, inputDtype, outputDtype);
 
                     if (inferModelOperator->getInputFields().size() == 1
                         && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
@@ -146,7 +149,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
             {
                 case NES::Configurations::PredictionCacheType::NONE: {
                     NES_DEBUG("Lower InferModel operator to IREEBatchInferenceOperator");
-                    auto ireeOperator = NES::IREEBatchInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider);
+                    auto ireeOperator = NES::IREEBatchInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, inputDtype, outputDtype);
 
                     if (inferModelOperator->getInputFields().size() == 1
                         && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)
@@ -180,7 +183,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
                     NES::Configurations::PredictionCacheOptions predictionCacheOptions{
                         predictionCacheType.getValue(),
                         predictionCacheSize.getValue()};
-                    auto ireeOperator = NES::IREEBatchCacheInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions);
+                    auto ireeOperator = NES::IREEBatchCacheInferenceOperator(handlerId, inputFunctions, outputNames, memoryProvider, predictionCacheOptions, inputDtype, outputDtype);
 
                     if (inferModelOperator->getInputFields().size() == 1
                         && inferModelOperator->getInputFields().at(0).getDataType().type == NES::DataType::Type::VARSIZED)

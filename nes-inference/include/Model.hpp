@@ -51,6 +51,8 @@ class Model
     size_t outputSizeInBytes = 0;
     std::vector<DataType> inputs;
     std::vector<std::pair<std::string, DataType>> outputs;
+    DataType inputDtype;
+    DataType outputDtype;
 
 public:
     Model(std::shared_ptr<std::byte[]> modelByteCode, size_t modelSize) : byteCode(std::move(modelByteCode), modelSize) { }
@@ -71,6 +73,9 @@ public:
     size_t outputSize() const { return outputSizeInBytes; }
 
     const std::string& getFunctionName() { return functionName; }
+
+    DataType getInputDtype() const { return inputDtype; }
+    DataType getOutputDtype() const { return outputDtype; }
 
     friend class ModelCatalog;
     friend std::expected<Model, ModelLoadError> load(const std::filesystem::path& path, const ModelOptions& options);
