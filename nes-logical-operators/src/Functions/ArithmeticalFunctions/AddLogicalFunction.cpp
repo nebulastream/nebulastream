@@ -41,7 +41,7 @@ DataType AddLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) const
+AddLogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -63,7 +63,7 @@ std::vector<LogicalFunction> AddLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+AddLogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "AddLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -78,7 +78,7 @@ std::string_view AddLogicalFunction::getType() const
     return NAME;
 }
 
-bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool AddLogicalFunction::operator==(const AddLogicalFunction& rhs) const
 {
     const auto* other = dynamic_cast<const AddLogicalFunction*>(&rhs);
     if (other != nullptr)

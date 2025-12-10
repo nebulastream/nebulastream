@@ -34,7 +34,7 @@ namespace NES
 
 SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool SqrtLogicalFunction::operator==(const SqrtLogicalFunction& rhs) const
 {
     const auto* other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);
     if (other != nullptr)
@@ -58,7 +58,7 @@ DataType SqrtLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
+SqrtLogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -76,7 +76,7 @@ std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction SqrtLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+SqrtLogicalFunction SqrtLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "SqrtLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;

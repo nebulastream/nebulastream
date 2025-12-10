@@ -107,15 +107,17 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
             /// This should be true, as the join operator receives an input schema from its parent operator without any additional functions
             /// over the join fields.
             PRECONDITION(parent.getChildren().size() == 2, "Expect the parent to have exact two children, left and right join fields");
-            const auto& firstChild = parent.getChildren().at(0).tryGet<FieldAccessLogicalFunction>();
-            const auto& secondChild = parent.getChildren().at(1).tryGet<FieldAccessLogicalFunction>();
+            const auto& firstChild = parent.getChildren().at(0).tryGetAs<FieldAccessLogicalFunction>();
+            const auto& secondChild = parent.getChildren().at(1).tryGetAs<FieldAccessLogicalFunction>();
             if (not(firstChild.has_value() && secondChild.has_value()))
             {
                 throw UnknownJoinStrategy(
                     "Could not handle join strategy that has chained logical functions operating over the join fields!");
             }
-            const auto leftField = leftInputSchema.getFieldByName(firstChild->getFieldName()).has_value() ? *firstChild : *secondChild;
-            const auto rightField = rightInputSchema.getFieldByName(firstChild->getFieldName()).has_value() ? *firstChild : *secondChild;
+            const auto leftField
+                = leftInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
+            const auto rightField
+                = rightInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
 
             /// If they do not have the same data types, we need to cast both to a common one
             if (firstChild->getDataType() != secondChild->getDataType())
@@ -124,15 +126,15 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                 const auto joinedDataType = leftField.getDataType().join(rightField.getDataType());
                 if (joinedDataType.has_value())
                 {
-                    const auto leftFieldNewName = leftField.getFieldName() + "_" + std::to_string(counter++);
-                    const auto rightFieldNewName = rightField.getFieldName() + "_" + std::to_string(counter++);
+                    const auto leftFieldNewName = leftField.get().getFieldName() + "_" + std::to_string(counter++);
+                    const auto rightFieldNewName = rightField.get().getFieldName() + "_" + std::to_string(counter++);
                     leftJoinNames.emplace_back(FieldNamesExtension{
-                        .oldName = leftField.getFieldName(),
+                        .oldName = leftField.get().getFieldName(),
                         .newName = leftFieldNewName,
                         .oldDataType = leftField.getDataType(),
                         .newDataType = *joinedDataType});
                     rightJoinNames.emplace_back(FieldNamesExtension{
-                        .oldName = rightField.getFieldName(),
+                        .oldName = rightField.get().getFieldName(),
                         .newName = rightFieldNewName,
                         .oldDataType = rightField.getDataType(),
                         .newDataType = *joinedDataType});
@@ -141,13 +143,13 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
             else
             {
                 leftJoinNames.emplace_back(FieldNamesExtension{
-                    .oldName = leftField.getFieldName(),
-                    .newName = leftField.getFieldName(),
+                    .oldName = leftField.get().getFieldName(),
+                    .newName = leftField.get().getFieldName(),
                     .oldDataType = leftField.getDataType(),
                     .newDataType = leftField.getDataType()});
                 rightJoinNames.emplace_back(FieldNamesExtension{
-                    .oldName = rightField.getFieldName(),
-                    .newName = rightField.getFieldName(),
+                    .oldName = rightField.get().getFieldName(),
+                    .newName = rightField.get().getFieldName(),
                     .oldDataType = rightField.getDataType(),
                     .newDataType = rightField.getDataType()});
             }

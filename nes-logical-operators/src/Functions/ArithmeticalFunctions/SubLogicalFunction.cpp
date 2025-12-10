@@ -34,7 +34,7 @@ namespace NES
 SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
 
-bool SubLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool SubLogicalFunction::operator==(const SubLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const SubLogicalFunction*>(&rhs))
     {
@@ -57,7 +57,7 @@ DataType SubLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction SubLogicalFunction::withDataType(const DataType& dataType) const
+SubLogicalFunction SubLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -79,7 +79,7 @@ std::vector<LogicalFunction> SubLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction SubLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+SubLogicalFunction SubLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "SubLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;

@@ -41,7 +41,7 @@ DataType ConstantValueLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ConstantValueLogicalFunction::withDataType(const DataType& dataType) const
+ConstantValueLogicalFunction ConstantValueLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -53,7 +53,7 @@ std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const
     return {};
 };
 
-LogicalFunction ConstantValueLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
+ConstantValueLogicalFunction ConstantValueLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
 };
@@ -63,7 +63,7 @@ std::string_view ConstantValueLogicalFunction::getType() const
     return NAME;
 }
 
-bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool ConstantValueLogicalFunction::operator==(const ConstantValueLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs))
     {

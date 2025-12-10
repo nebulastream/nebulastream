@@ -36,7 +36,7 @@ OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right
 {
 }
 
-bool OrLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool OrLogicalFunction::operator==(const OrLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const OrLogicalFunction*>(&rhs))
     {
@@ -57,7 +57,7 @@ DataType OrLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
+OrLogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -69,7 +69,7 @@ std::vector<LogicalFunction> OrLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction OrLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+OrLogicalFunction OrLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "OrLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
