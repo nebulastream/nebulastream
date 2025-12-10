@@ -33,10 +33,14 @@ public:
     void execute(std::string functionName, void* inputData, size_t inputSize, void* outputData);
     void setInputShape(std::vector<size_t> inputShape);
     void setNDim(size_t nDim);
+    void setInputDtype(iree_hal_element_types_t dtype);
+    void setOutputDtype(iree_hal_element_types_t dtype);
 
 private:
     std::vector<size_t> inputShape;
     size_t nDim;
+    iree_hal_element_types_t inputDtype;
+    iree_hal_element_types_t outputDtype;
     std::unique_ptr<iree_runtime_instance_t, decltype(&iree_runtime_instance_release)> instance;
     std::unique_ptr<iree_hal_device_t, decltype(&iree_hal_device_release)> device;
     std::unique_ptr<iree_runtime_session_t, decltype(&iree_runtime_session_release)> session;

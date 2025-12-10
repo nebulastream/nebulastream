@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <DataTypes/DataTypeProvider.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
@@ -27,6 +28,7 @@
 #include <IREEInferenceOperator.hpp>
 #include <IREECacheInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
+#include <iree/runtime/api.h>
 
 struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 {

@@ -40,7 +40,7 @@ void addValueToModelProxy(int index, T value, void* inferModelHandler, WorkerThr
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
     auto adapter = handler->getIREEAdapter(thread);
-    adapter->addModelInput(index, value);
+    adapter->addModelInput<T>(index, value);
 }
 
 template <class T>

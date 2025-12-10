@@ -90,12 +90,16 @@ inline Model ModelCatalog::load(const std::string modelName) const
                                         { return std::pair<std::string, DataType>{schemaField.name, schemaField.dataType}; })
                 | std::ranges::to<std::vector>();
 
-            if (result->inputDtype.type == DataType::Type::UNDEFINED)
+            if (result->inputDtype.type == DataType::Type::UNDEFINED
+                || (result->inputs.at(0).type != DataType::Type::VARSIZED
+                    && result->inputDtype.type != result->inputs.at(0).type))
             {
                 result->inputDtype = DataTypeProvider::provideDataType(result->inputs.at(0).type);
             }
 
-            if (result->outputDtype.type == DataType::Type::UNDEFINED)
+            if (result->outputDtype.type == DataType::Type::UNDEFINED
+                || (result->outputs.at(0).second.type != DataType::Type::VARSIZED
+                    && result->outputDtype.type != result->outputs.at(0).second.type))
             {
                 result->outputDtype = DataTypeProvider::provideDataType(result->outputs.at(0).second.type);
             }
