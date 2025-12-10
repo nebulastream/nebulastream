@@ -52,10 +52,12 @@ void IREEAdapter::initializeModel(Nebuli::Inference::Model& model, uint64_t batc
     auto inputSize = model.inputSize() * batch_size;
     this->inputData = std::make_unique<std::byte[]>(inputSize);
     this->inputSize = inputSize;
+    runtimeWrapper.setInputDtype(dtypeMap.at(model.getInputDtype()));
 
     auto outputSize = model.outputSize() * batch_size;
     this->outputData = std::make_unique<std::byte[]>(outputSize);
     this->outputSize = outputSize;
+    runtimeWrapper.setOutputDtype(dtypeMap.at(model.getOutputDtype()));
 }
 
 }

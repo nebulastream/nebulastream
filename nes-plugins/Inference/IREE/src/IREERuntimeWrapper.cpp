@@ -87,7 +87,7 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
         this->nDim,
         this->inputShape.data(),
         // Element type:
-        IREE_HAL_ELEMENT_TYPE_FLOAT_32,
+        this->inputDtype,
         // Encoding type:
         IREE_HAL_ENCODING_TYPE_DENSE_ROW_MAJOR,
         iree_hal_buffer_params_t{// Intended usage of the buffer (transfers, dispatches, etc):
@@ -118,6 +118,7 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
     status = iree_runtime_call_invoke(&call, 0);
     if (!iree_status_is_ok(status))
     {
+        iree_status_fprint(stderr, status);
         throw InferenceRuntime("Model Execution failed. Could not invoke model");
     }
 
@@ -156,6 +157,16 @@ void IREERuntimeWrapper::setInputShape(std::vector<size_t> inputShape)
 void IREERuntimeWrapper::setNDim(size_t nDim)
 {
     this->nDim = nDim;
+}
+
+void IREERuntimeWrapper::setInputDtype(iree_hal_element_types_t dtype)
+{
+    this->inputDtype = dtype;
+}
+
+void IREERuntimeWrapper::setOutputDtype(iree_hal_element_types_t dtype)
+{
+    this->outputDtype = dtype;
 }
 
 }
