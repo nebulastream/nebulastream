@@ -102,6 +102,8 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
         iree_make_const_byte_span(inputData, inputSize),
         // Buffer view + storage are returned and owned by the caller:
         &view);
+    // iree_hal_buffer_view_fprint(stdout, view, 4096, iree_allocator_system());
+    // std::cout << '\n';
     std::unique_ptr<iree_hal_buffer_view_t, decltype(&iree_hal_buffer_view_release)> inputBuffer(view, &iree_hal_buffer_view_release);
 
     if (!iree_status_is_ok(status))
@@ -118,7 +120,6 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
     status = iree_runtime_call_invoke(&call, 0);
     if (!iree_status_is_ok(status))
     {
-        iree_status_fprint(stderr, status);
         throw InferenceRuntime("Model Execution failed. Could not invoke model");
     }
 
@@ -128,6 +129,8 @@ void IREERuntimeWrapper::execute(std::string functionName, void* inputData, size
     {
         throw InferenceRuntime("Model Execution failed. Could not add output buffer");
     }
+    // iree_hal_buffer_view_fprint(stdout, outputView, 4096, iree_allocator_system());
+    // std::cout << '\n';
     std::unique_ptr<iree_hal_buffer_view_t, decltype(&iree_hal_buffer_view_release)> outputBuffer(
         outputView, &iree_hal_buffer_view_release);
 

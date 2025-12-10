@@ -1,0 +1,45 @@
+# name: inference/quantization.test
+# description: Using ONNX-implemented quantizers in NES
+# groups: [Inference]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [230]
+
+CREATE LOGICAL SOURCE streamFloat(p4 FLOAT32);
+CREATE PHYSICAL SOURCE FOR streamFloat TYPE File;
+ATTACH INLINE
+100.573985743
+
+
+CREATE SINK quantizedSink(value_q FLOAT32) TYPE File;
+
+MODEL quantizerF16 TESTDATA/model/wind_power/preprocessor/quantizer_f16.onnx
+FLOAT32
+FLOAT32 value_q
+
+MODEL quantizerBf16 TESTDATA/model/wind_power/preprocessor/quantizer_bf16.onnx
+FLOAT32
+FLOAT32 value_q
+
+MODEL quantizerUint8 TESTDATA/model/wind_power/preprocessor/quantizer_uint8.onnx
+FLOAT32
+FLOAT32 value_q
+
+
+SELECT value_q
+FROM (SELECT INFER_MODEL(quantizerF16, (p4)) FROM streamFloat)
+INTO quantizedSink;
+----
+100.562401
+
+SELECT value_q
+FROM (SELECT INFER_MODEL(quantizerBf16, (p4)) FROM streamFloat)
+INTO quantizedSink;
+----
+100.499901
+
+SELECT value_q
+FROM (SELECT INFER_MODEL(quantizerUint8, (p4)) FROM streamFloat)
+INTO quantizedSink;
+----
+2.539998
