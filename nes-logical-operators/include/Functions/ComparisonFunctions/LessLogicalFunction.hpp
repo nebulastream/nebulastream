@@ -27,30 +27,33 @@
 namespace NES
 {
 
-class LessLogicalFunction final : public LogicalFunctionConcept
+class LessLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Less";
 
     LessLogicalFunction(LogicalFunction left, LogicalFunction right);
 
-    [[nodiscard]] SerializableFunction serialize() const override;
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] SerializableFunction serialize() const;
+    [[nodiscard]] bool operator==(const LessLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] LessLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] LessLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     LogicalFunction left, right;
     DataType dataType;
 };
+
+static_assert(LogicalFunctionConcept<LessLogicalFunction>);
+
 }
 
 FMT_OSTREAM(NES::LessLogicalFunction);

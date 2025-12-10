@@ -59,8 +59,9 @@ namespace NES
 static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
 {
     return BFSRange(joinFunction)
-        | std::views::filter([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>().has_value(); })
-        | std::views::transform([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>()->getFieldName(); })
+        | std::views::filter([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().has_value(); })
+        | std::views::transform([](const auto& child)
+                                { return child.template tryGetAs<FieldAccessLogicalFunction>()->get().getFieldName(); })
         | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
         | std::ranges::to<std::vector<std::string>>();
 };

@@ -35,7 +35,7 @@ namespace NES
 PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
 
-bool PowLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const PowLogicalFunction*>(&rhs))
     {
@@ -56,7 +56,7 @@ DataType PowLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) const
+PowLogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -75,7 +75,7 @@ std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+PowLogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.left = children[0];

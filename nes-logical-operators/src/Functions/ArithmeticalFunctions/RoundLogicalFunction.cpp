@@ -34,7 +34,7 @@ namespace NES
 
 RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool RoundLogicalFunction::operator==(const RoundLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const RoundLogicalFunction*>(&rhs))
     {
@@ -57,7 +57,7 @@ DataType RoundLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) const
+RoundLogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -76,7 +76,7 @@ std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction RoundLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+RoundLogicalFunction RoundLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "RoundLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;

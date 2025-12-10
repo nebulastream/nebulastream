@@ -40,20 +40,10 @@ FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(
 {
 }
 
-bool FieldAssignmentLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool FieldAssignmentLogicalFunction::operator==(const FieldAssignmentLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const FieldAssignmentLogicalFunction*>(&rhs))
-    {
-        return *this == *other;
-    }
-    return false;
-}
-
-bool operator==(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs)
-{
-    /// a field assignment function has always two children.
-    const bool fieldsMatch = lhs.fieldAccess == rhs.fieldAccess;
-    const bool assignmentsMatch = lhs.logicalFunction == rhs.logicalFunction;
+    const bool fieldsMatch = this->fieldAccess == rhs.fieldAccess;
+    const bool assignmentsMatch = this->logicalFunction == rhs.logicalFunction;
     return fieldsMatch and assignmentsMatch;
 }
 
@@ -86,7 +76,7 @@ DataType FieldAssignmentLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction FieldAssignmentLogicalFunction::withDataType(const DataType& dataType) const
+FieldAssignmentLogicalFunction FieldAssignmentLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -98,7 +88,7 @@ std::vector<LogicalFunction> FieldAssignmentLogicalFunction::getChildren() const
     return {};
 };
 
-LogicalFunction FieldAssignmentLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
+FieldAssignmentLogicalFunction FieldAssignmentLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
 };
@@ -121,8 +111,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
     {
         if (const auto dataType = copy.logicalFunction.getDataType().join(copy.fieldAccess.getDataType()))
         {
-            copy.fieldAccess
-                = fieldAccess.withFieldName(existingField.value().name).withDataType(dataType.value()).get<FieldAccessLogicalFunction>();
+            copy.fieldAccess = fieldAccess.withFieldName(existingField.value().name).withDataType(dataType.value());
         }
         else
         {
@@ -135,18 +124,17 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
         ///Check if field name is already fully qualified
         if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
         {
-            copy.fieldAccess = copy.fieldAccess.withFieldName(fieldName).get<FieldAccessLogicalFunction>();
+            copy.fieldAccess = copy.fieldAccess.withFieldName(fieldName);
         }
         else
         {
-            copy.fieldAccess = copy.fieldAccess.withFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName)
-                                   .get<FieldAccessLogicalFunction>();
+            copy.fieldAccess = copy.fieldAccess.withFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
         }
     }
 
     if (copy.fieldAccess.getDataType().isType(DataType::Type::UNDEFINED))
     {
-        copy.fieldAccess = copy.fieldAccess.withDataType(copy.logicalFunction.getDataType()).get<FieldAccessLogicalFunction>();
+        copy.fieldAccess = copy.fieldAccess.withDataType(copy.logicalFunction.getDataType());
     }
     else
     {
@@ -156,7 +144,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
             NES_WARNING(
                 "Field {} dataType is incompatible with assignment dataType. Overwriting field dataType with assignment dataType.",
                 getField().getFieldName())
-            copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
+            copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType());
         }
     }
     copy.dataType = copy.fieldAccess.getDataType();
@@ -180,11 +168,11 @@ LogicalFunctionGeneratedRegistrar::RegisterFieldAssignmentLogicalFunction(Logica
     {
         throw CannotDeserialize("FieldAssignmentLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
-    if (!arguments.children[0].tryGet<FieldAccessLogicalFunction>())
+    if (!arguments.children[0].tryGetAs<FieldAccessLogicalFunction>())
     {
         throw CannotDeserialize("First child must be a FieldAccessLogicalFunction");
     }
-    return FieldAssignmentLogicalFunction(arguments.children[0].get<FieldAccessLogicalFunction>(), arguments.children[1]);
+    return FieldAssignmentLogicalFunction(arguments.children[0].getAs<FieldAccessLogicalFunction>().get(), arguments.children[1]);
 }
 
 }

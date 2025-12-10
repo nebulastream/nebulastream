@@ -27,32 +27,33 @@ namespace NES
 {
 
 /// Casts the input to the provided data type
-class CastToTypeLogicalFunction final : public LogicalFunctionConcept
+class CastToTypeLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Cast";
 
     CastToTypeLogicalFunction(DataType dataType, LogicalFunction child);
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] SerializableFunction serialize() const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
-    friend bool operator==(const CastToTypeLogicalFunction& lhs, const CastToTypeLogicalFunction& rhs);
+    [[nodiscard]] bool operator==(const CastToTypeLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] CastToTypeLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] CastToTypeLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     DataType castToType;
     LogicalFunction child;
 };
+
+static_assert(LogicalFunctionConcept<CastToTypeLogicalFunction>);
 
 }
 

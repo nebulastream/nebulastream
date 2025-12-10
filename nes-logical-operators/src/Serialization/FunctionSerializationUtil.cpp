@@ -64,12 +64,12 @@ deserializeWindowAggregationFunction(const SerializableAggregationFunction& seri
     auto onField = deserializeFunction(serializedFunction.on_field());
     auto asField = deserializeFunction(serializedFunction.as_field());
 
-    if (auto fieldAccess = onField.tryGet<FieldAccessLogicalFunction>())
+    if (auto fieldAccess = onField.tryGetAs<FieldAccessLogicalFunction>())
     {
-        if (auto asFieldAccess = asField.tryGet<FieldAccessLogicalFunction>())
+        if (auto asFieldAccess = asField.tryGetAs<FieldAccessLogicalFunction>())
         {
             AggregationLogicalFunctionRegistryArguments args;
-            args.fields = {fieldAccess.value(), asFieldAccess.value()};
+            args.fields = {fieldAccess.value().get(), asFieldAccess.value().get()};
 
             if (auto function = AggregationLogicalFunctionRegistry::instance().create(type, args))
             {

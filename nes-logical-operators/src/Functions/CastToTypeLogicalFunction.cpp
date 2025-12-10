@@ -44,18 +44,9 @@ SerializableFunction CastToTypeLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-bool CastToTypeLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool CastToTypeLogicalFunction::operator==(const CastToTypeLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const CastToTypeLogicalFunction*>(&rhs))
-    {
-        return *this == *other;
-    }
-    return false;
-}
-
-bool operator==(const CastToTypeLogicalFunction& lhs, const CastToTypeLogicalFunction& rhs)
-{
-    return rhs.castToType == lhs.castToType;
+    return this->castToType == rhs.castToType;
 }
 
 DataType CastToTypeLogicalFunction::getDataType() const
@@ -63,7 +54,7 @@ DataType CastToTypeLogicalFunction::getDataType() const
     return castToType;
 }
 
-LogicalFunction CastToTypeLogicalFunction::withDataType(const DataType& dataType) const
+CastToTypeLogicalFunction CastToTypeLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.castToType = dataType;
@@ -80,7 +71,7 @@ std::vector<LogicalFunction> CastToTypeLogicalFunction::getChildren() const
     return {child};
 }
 
-LogicalFunction CastToTypeLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+CastToTypeLogicalFunction CastToTypeLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "CastToTypeLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;

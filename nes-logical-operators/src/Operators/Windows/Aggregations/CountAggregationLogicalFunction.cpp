@@ -64,19 +64,17 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
         ///If on and as field name are different then append the attribute name resolver from on field to the as field
         if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
         {
-            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName));
         }
         else
         {
             const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+            this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
         }
 
         /// a count aggregation is always on an uint 64
-        this->setOnField(
-            this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>());
-        this->setAsField(
-            this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>());
+        this->setOnField(this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
+        this->setAsField(this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
     }
     else
     {

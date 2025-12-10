@@ -36,7 +36,7 @@ ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const 
 {
 }
 
-bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool ConcatLogicalFunction::operator==(const ConcatLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const ConcatLogicalFunction*>(&rhs))
     {
@@ -57,7 +57,7 @@ DataType ConcatLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
+ConcatLogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -79,7 +79,7 @@ std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction ConcatLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+ConcatLogicalFunction ConcatLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.left = children[0];

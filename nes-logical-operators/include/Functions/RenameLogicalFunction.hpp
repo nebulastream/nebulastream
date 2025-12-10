@@ -31,29 +31,29 @@
 namespace NES
 {
 /// @brief A RenameLogicalFunction allows us to rename an attribute value via `as` in the query
-class RenameLogicalFunction final : public LogicalFunctionConcept
+class RenameLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Rename";
 
     RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName);
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] std::string getNewFieldName() const;
     [[nodiscard]] const FieldAccessLogicalFunction& getOriginalField() const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] bool operator==(const RenameLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] RenameLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] RenameLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     struct ConfigParameters
     {
@@ -71,6 +71,9 @@ private:
     FieldAccessLogicalFunction child;
     std::string newFieldName;
 };
+
+static_assert(LogicalFunctionConcept<RenameLogicalFunction>);
+
 }
 
 FMT_OSTREAM(NES::RenameLogicalFunction);

@@ -37,7 +37,7 @@ NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
 {
 }
 
-bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool NegateLogicalFunction::operator==(const NegateLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const NegateLogicalFunction*>(&rhs))
     {
@@ -66,7 +66,7 @@ DataType NegateLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
+NegateLogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -78,7 +78,7 @@ std::vector<LogicalFunction> NegateLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction NegateLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+NegateLogicalFunction NegateLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "NegateLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;

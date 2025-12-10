@@ -35,7 +35,7 @@ namespace NES
 DivLogicalFunction::DivLogicalFunction(const LogicalFunction& left, LogicalFunction right)
     : dataType(left.getDataType()), left(left), right(std::move(right)) { };
 
-bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool DivLogicalFunction::operator==(const DivLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const DivLogicalFunction*>(&rhs))
     {
@@ -49,7 +49,7 @@ DataType DivLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction DivLogicalFunction::withDataType(const DataType& dataType) const
+DivLogicalFunction DivLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -71,7 +71,7 @@ std::vector<LogicalFunction> DivLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction DivLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+DivLogicalFunction DivLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "DivLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
