@@ -49,6 +49,10 @@ NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const Ser
                                 typeWithName.name(), DataTypeSerializationUtil::deserializeDataType(typeWithName.type())};
                         })
         | std::ranges::to<std::vector>();
+
+    model.inputDtype = DataTypeSerializationUtil::deserializeDataType(grpcModel.inputdtype());
+    model.outputDtype = DataTypeSerializationUtil::deserializeDataType(grpcModel.outputdtype());
+
     return model;
 }
 
@@ -82,4 +86,7 @@ void NES::Nebuli::Inference::serializeModel(const Model& model, SerializableMode
         output->set_name(name);
         DataTypeSerializationUtil::serializeDataType(type, output->mutable_type());
     }
+
+    DataTypeSerializationUtil::serializeDataType(model.inputDtype, target.mutable_inputdtype());
+    DataTypeSerializationUtil::serializeDataType(model.outputDtype, target.mutable_outputdtype());
 }

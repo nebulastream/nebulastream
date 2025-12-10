@@ -32,7 +32,9 @@ public:
         const OperatorHandlerId operatorHandlerId,
         std::vector<PhysicalFunction> inputs,
         std::vector<std::string> outputFieldNames,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef);
+        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef,
+        DataType inputDtype,
+        DataType outputDtype);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -52,9 +54,18 @@ private:
     const std::vector<std::string> outputFieldNames;
     std::optional<PhysicalOperator> child;
     std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef;
+    DataType inputDtype;
+    DataType outputDtype;
 
 protected:
+    template <class T>
     void performInference(
+        const Interface::PagedVectorRef& pagedVectorRef,
+        Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+        ExecutionContext& executionCtx) const;
+
+    template <class T>
+    void writeOutputRecord(
         const Interface::PagedVectorRef& pagedVectorRef,
         Interface::BufferRef::TupleBufferRef& tupleBufferRef,
         ExecutionContext& executionCtx) const;

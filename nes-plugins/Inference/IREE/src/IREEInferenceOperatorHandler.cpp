@@ -31,7 +31,7 @@ void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecu
     for (size_t threadId = 0; threadId < pipelineExecutionContext.getNumberOfWorkerThreads(); ++threadId)
     {
         threadLocalAdapters.emplace_back(IREEAdapter::create());
-        threadLocalAdapters.back()->initializeModel(model);
+        threadLocalAdapters.back()->initializeModel(model, 1);
     }
 }
 void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext& pipelineExecutionContext)

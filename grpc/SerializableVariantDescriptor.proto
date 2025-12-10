@@ -96,6 +96,8 @@ message SerializableModel {
   string functionName = 8;
   repeated SerializableDataType inputs = 9;
   repeated ModelOutputParameter outputs = 10;
+  SerializableDataType inputDtype = 11;
+  SerializableDataType outputDtype = 12;
 }
 
 message SerializableVariantDescriptor {

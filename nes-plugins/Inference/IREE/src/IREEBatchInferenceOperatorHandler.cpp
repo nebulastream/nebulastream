@@ -43,7 +43,7 @@ void IREEBatchInferenceOperatorHandler::start(PipelineExecutionContext& pipeline
     for (size_t threadId = 0; threadId < numberOfWorkerThreads; ++threadId)
     {
         threadLocalAdapters.emplace_back(IREEAdapter::create());
-        threadLocalAdapters.back()->initializeModel(model);
+        threadLocalAdapters.back()->initializeModel(model, batchSize);
     }
 }
 

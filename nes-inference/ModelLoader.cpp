@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Model.hpp>
 #include <ModelLoader.hpp>
 
@@ -68,8 +69,18 @@ struct ModelMetadataGraph
     struct ModelMetadata
     {
         std::vector<size_t> inputShape;
+        std::string inputDtype;
         std::vector<size_t> outputShape;
+        std::string outputDtype;
         std::string functionName;
+
+        const std::unordered_map<std::string, DataType> dtypeMap = {
+            {"ui8",  DataTypeProvider::provideDataType(DataType::Type::UINT8)},   {"ui16", DataTypeProvider::provideDataType(DataType::Type::UINT16)},
+            {"ui32", DataTypeProvider::provideDataType(DataType::Type::UINT32)},  {"ui64", DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            {"i8",   DataTypeProvider::provideDataType(DataType::Type::INT8)},    {"i16",  DataTypeProvider::provideDataType(DataType::Type::INT16)},
+            {"i32",  DataTypeProvider::provideDataType(DataType::Type::INT32)},   {"i64",  DataTypeProvider::provideDataType(DataType::Type::INT64)},
+            {"f32",  DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},   {"f64",  DataTypeProvider::provideDataType(DataType::Type::FLOAT64)}
+        };
     };
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProps> Graph;
@@ -87,7 +98,7 @@ struct ModelMetadataGraph
 
     std::vector<size_t> parseTensorShape(const std::string& label)
     {
-        std::regex tensor_regex(R"(tensor<([?0-9x]+)f(16|32)>)");
+        std::regex tensor_regex(R"(tensor<([?0-9x]+)(?:ui8|ui16|ui32|ui64|i8|i16|i32|i64|f32|f64)>)"); // NES-supported numeric types
         std::smatch match;
         std::vector<size_t> result;
         if (std::regex_search(label, match, tensor_regex))
@@ -108,6 +119,18 @@ struct ModelMetadataGraph
             }
         }
         return result;
+    }
+
+    std::string parseTensorDtype(const std::string& label)
+    {
+        std::regex tensor_regex(R"(tensor<([?0-9x]+)x(ui8|ui16|ui32|ui64|i8|i16|i32|i64|f32|f64)>)"); // NES-supported numeric types
+        std::smatch match;
+        std::string dtype;
+        if (std::regex_search(label, match, tensor_regex))
+        {
+            dtype = match[2];
+        }
+        return dtype;
     }
 
     std::string parseFunctionName(const std::string& label)
@@ -155,6 +178,7 @@ struct ModelMetadataGraph
                 if (label.find("hal.tensor.import") != std::string::npos)
                 {
                     metadata.inputShape = parseTensorShape(label);
+                    metadata.inputDtype = parseTensorDtype(label);
                 }
                 else if (label.find("flow.dispatch") != std::string::npos)
                 {
@@ -165,6 +189,7 @@ struct ModelMetadataGraph
                              .value_or(false))
                 {
                     metadata.outputShape = parseTensorShape(label);
+                    metadata.outputDtype = parseTensorDtype(label);
                 }
             }
         }
@@ -352,6 +377,24 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             model.functionName = "module." + metadata.functionName;
             model.inputShape = metadata.inputShape;
             model.outputShape = metadata.outputShape;
+
+            if (metadata.dtypeMap.contains(metadata.inputDtype))
+            {
+                model.inputDtype = metadata.dtypeMap.at(metadata.inputDtype);
+            }
+            else
+            {
+                model.inputDtype = DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
+            }
+
+            if (metadata.dtypeMap.contains(metadata.outputDtype))
+            {
+                model.outputDtype = metadata.dtypeMap.at(metadata.outputDtype);
+            }
+            else
+            {
+                model.outputDtype = DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
+            }
 
             return model;
         }

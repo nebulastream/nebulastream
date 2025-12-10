@@ -29,7 +29,7 @@ public:
 
     IREEAdapter() = default;
 
-    void initializeModel(Nebuli::Inference::Model& model);
+    void initializeModel(Nebuli::Inference::Model& model, uint64_t batch_size);
 
     template <class T>
     void addModelInput(size_t index, T value)
@@ -38,10 +38,11 @@ public:
         std::bit_cast<T*>(inputData.get())[index] = value;
     }
 
-    float getResultAt(size_t idx)
+    template <class T>
+    T getResultAt(size_t idx)
     {
         PRECONDITION(idx < outputSize / 4, "Index is too large");
-        return std::bit_cast<float*>(outputData.get())[idx];
+        return std::bit_cast<T*>(outputData.get())[idx];
     }
 
     void copyResultTo(std::span<std::byte> content)
@@ -55,7 +56,12 @@ public:
         std::ranges::copy_n(content.data(), std::min(content.size(), inputSize), inputData.get());
     }
 
-    void infer();
+    template <class T>
+    void infer()
+    {
+        runtimeWrapper.execute(functionName, inputData.get(), inputSize, reinterpret_cast<T*>(outputData.get()));
+    }
+
     std::unique_ptr<std::byte[]> inputData{};
     std::unique_ptr<std::byte[]> outputData{};
 
