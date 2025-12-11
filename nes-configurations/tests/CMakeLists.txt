@@ -13,5 +13,5 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 ### Config Tests ###
-add_nes_unit_test(configuration-help-message-tests "UnitTests/Configurations/ConfigurationHelpMessageTests.cpp")
+add_nes_unit_test(configuration-help-message-tests "UnitTests/Configurations/ConfigurationHelpMessageTests.cpp" "UnitTests/Validation/EndpointValidationTest.cpp")
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
