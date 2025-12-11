@@ -1,6 +1,6 @@
 # name: join/JoinWithDifferentDataTypes.test
 # description: Test join operator and the join function performs the join operation with different data types
-# groups: [WindowOperators, Join, CompilationIntensive]
+# groups: [WindowOperators, Join, CompilationIntensive] TODO #1272
 
 CREATE LOGICAL SOURCE stream1(i8_s1 INT8 NOT NULL, i16_s1 INT16 NOT NULL, i32_s1 INT32 NOT NULL, i64_s1 INT64 NOT NULL, u8_s1 UINT8 NOT NULL, u16_s1 UINT16 NOT NULL, u32_s1 UINT32 NOT NULL, u64_s1 UINT64 NOT NULL, f32_s1 FLOAT32 NOT NULL, f64_s1 FLOAT64 NOT NULL, ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream1 TYPE File;
