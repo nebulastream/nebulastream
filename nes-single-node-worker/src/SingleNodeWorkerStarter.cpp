@@ -81,6 +81,12 @@ int main(const int argc, const char* argv[])
             grpc::EnableDefaultHealthCheckService(true);
 
             const auto server = builder.BuildAndStart();
+            if (!server)
+            {
+                NES_ERROR("Failed to start GRPC Server. Stopping worker...");
+                return 1;
+            }
+
             const auto hook = shutdownHook(*server);
             NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
             server->Wait();
