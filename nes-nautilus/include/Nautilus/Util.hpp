@@ -35,7 +35,7 @@ void logProxy(const char* message, const LogLevel logLevel);
     do \
     { \
         nautilus::stringstream ss; \
-        ss << TEXT; \
+        ss << (TEXT); \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_TRACE); \
         nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
@@ -44,7 +44,7 @@ void logProxy(const char* message, const LogLevel logLevel);
     do \
     { \
         nautilus::stringstream ss; \
-        ss << TEXT; \
+        ss << (TEXT); \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_DEBUG); \
         nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
@@ -53,7 +53,7 @@ void logProxy(const char* message, const LogLevel logLevel);
     do \
     { \
         nautilus::stringstream ss; \
-        ss << TEXT; \
+        ss << (TEXT); \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_INFO); \
         nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
@@ -62,7 +62,7 @@ void logProxy(const char* message, const LogLevel logLevel);
     do \
     { \
         nautilus::stringstream ss; \
-        ss << TEXT; \
+        ss << (TEXT); \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_WARNING); \
         nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)
@@ -71,7 +71,7 @@ void logProxy(const char* message, const LogLevel logLevel);
     do \
     { \
         nautilus::stringstream ss; \
-        ss << TEXT; \
+        ss << (TEXT); \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_ERROR); \
         nautilus::invoke(logProxy, ss.str().c_str(), logLevel); \
     } while (0)

@@ -115,7 +115,7 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
         NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
             const auto wlocked = outputFileStream.wlock();
-            wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
+            wlocked->write(fBuffer.c_str(), static_cast<int64_t>(fBuffer.size()));
             wlocked->flush();
         }
     }

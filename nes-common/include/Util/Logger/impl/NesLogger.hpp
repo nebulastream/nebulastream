@@ -16,14 +16,10 @@
 
 #include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
+#include <spdlog/details/periodic_worker.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
 #include <spdlog/mdc.h>
-
-namespace spdlog::details
-{
-class periodic_worker;
-}
 
 namespace NES
 {

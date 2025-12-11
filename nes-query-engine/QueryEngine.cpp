@@ -158,7 +158,7 @@ struct Stopping
 
 struct Terminated
 {
-    enum TerminationReason
+    enum TerminationReason : std::uint8_t
     {
         Failed,
         Stopped

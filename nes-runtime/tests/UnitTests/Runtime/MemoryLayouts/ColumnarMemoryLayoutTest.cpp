@@ -92,8 +92,8 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
     const auto capacity = tupleBuffer.getBufferSize() / schema.getSizeOfSchemaInBytes();
     ASSERT_EQ(testBuffer->getCapacity(), capacity);
     ASSERT_EQ(testBuffer->getNumberOfTuples(), 0U);
-    ASSERT_EQ(columnLayout->getFieldOffset(1, 2), (capacity * 1) + (capacity * 2 + 1 * 4));
-    ASSERT_EQ(columnLayout->getFieldOffset(5, 1), (capacity * 1) + (5 * 2));
+    ASSERT_EQ(columnLayout->getFieldOffset(1, 2), (capacity * 1) + (capacity * 2 + static_cast<unsigned long>(1 * 4)));
+    ASSERT_EQ(columnLayout->getFieldOffset(5, 1), (capacity * 1) + (static_cast<unsigned long>(5 * 2)));
     ASSERT_EQ(columnLayout->getFieldOffset(4, 0), (capacity * 0) + 4);
 }
 
