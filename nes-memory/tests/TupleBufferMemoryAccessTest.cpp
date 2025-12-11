@@ -34,7 +34,7 @@ class TupleBufferMemoryAccessTest : public ::testing::Test
 {
 protected:
     static constexpr size_t minBufferSize = 100;
-    static constexpr size_t maxBufferSize = 1024 * 1024;
+    static constexpr size_t maxBufferSize = static_cast<const size_t>(1024 * 1024);
     static size_t bufferSize;
 
     static void SetUpTestSuite()

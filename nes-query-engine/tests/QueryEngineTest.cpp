@@ -1076,7 +1076,7 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessors)
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectEoS();
 
-        ASSERT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffersOrMore(4 * 3));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffersOrMore(static_cast<size_t>(4 * 3)));
         ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         ASSERT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
         EXPECT_TRUE(test.pipelineControls[pipeline1]->wasStopped());

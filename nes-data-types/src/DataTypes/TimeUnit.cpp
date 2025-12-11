@@ -14,6 +14,7 @@
 
 #include <DataTypes/TimeUnit.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <ostream>
 #include <string>
@@ -53,17 +54,17 @@ TimeUnit TimeUnit::Seconds()
 
 TimeUnit TimeUnit::Minutes()
 {
-    return TimeUnit(1000 * 60);
+    return TimeUnit(static_cast<uint64_t>(1000 * 60));
 }
 
 TimeUnit TimeUnit::Hours()
 {
-    return TimeUnit(1000 * 60 * 60);
+    return TimeUnit(static_cast<uint64_t>(1000 * 60 * 60));
 }
 
 TimeUnit TimeUnit::Days()
 {
-    return TimeUnit(1000 * 60 * 60 * 24);
+    return TimeUnit(static_cast<uint64_t>(1000 * 60 * 60 * 24));
 }
 
 }

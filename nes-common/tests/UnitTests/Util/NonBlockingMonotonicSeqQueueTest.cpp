@@ -196,7 +196,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentLockFreeWatermarkUpdaterTest)
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t, 10000>();
 
     /// preallocate watermarks for each transaction
-    for (auto i = SequenceNumber::INITIAL; i <= updates * threadsCount; i++)
+    for (auto i = SequenceNumber::INITIAL; i <= static_cast<size_t>(updates * threadsCount); i++)
     {
         watermarkBarriers.emplace_back(
             std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), INITIAL<ChunkNumber>, true}, /*ts*/ i));
@@ -240,7 +240,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithLostUpdateThreadTe
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t, 1000>();
 
     /// preallocate watermarks for each transaction
-    for (auto i = SequenceNumber::INITIAL; i <= updates * threadsCount; i++)
+    for (auto i = SequenceNumber::INITIAL; i <= static_cast<size_t>(updates * threadsCount); i++)
     {
         watermarkBarriers.emplace_back(
             std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), INITIAL<ChunkNumber>, true}, /*ts*/ i));

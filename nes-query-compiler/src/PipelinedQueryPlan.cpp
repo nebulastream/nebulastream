@@ -31,7 +31,7 @@ PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, ExecutionMode executionMode) 
 
 static void printPipeline(const Pipeline* pipeline, std::ostream& os, int indentLevel)
 {
-    const std::string indent(indentLevel * 2, ' ');
+    const std::string indent(static_cast<size_t>(indentLevel * 2), ' ');
     os << indent << *pipeline << "\n";
 }
 
