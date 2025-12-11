@@ -1,6 +1,6 @@
 # name: formatter/TupleLargerThanBuffer.test
 # description: tuples tests
-# groups: [Formatter, Tuples, CompilationIntensive]
+# groups: [Formatter, Tuples, CompilationIntensive] TODO #1272
 
 # The input schema contains 196 UINT64s
 # 196 * 8 bytes = 1568 bytes
