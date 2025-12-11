@@ -149,13 +149,14 @@ void TypedBaseOption<T>::isValid(std::string pValue)
     {
         return;
     }
-    for (auto validator : this->validators)
+    for (auto& validator : this->validators)
     {
         if (!(validator->isValid(pValue)))
         {
             std::string validatorName;
             std::string message;
             validatorName = typeid(validator).name();
+            /// NOLINTNEXTLINE (performance-inefficient-string-concatenation)
             message = "Validator (" + validatorName + ") failed for " + this->name + " with value: " + pValue;
             failureMessages[validatorName] = message;
         }
@@ -163,7 +164,7 @@ void TypedBaseOption<T>::isValid(std::string pValue)
     if (!failureMessages.empty())
     {
         std::string exceptionMessage;
-        for (auto pair : failureMessages)
+        for (auto& pair : failureMessages)
         {
             exceptionMessage += pair.second + "\n";
         }

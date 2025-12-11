@@ -403,7 +403,7 @@ template <typename TupleSchemaTemplate, bool PrintDebug>
 std::vector<std::vector<TupleBuffer>> createExpectedResults(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     std::vector<std::vector<TupleBuffer>> expectedTupleBuffers(1);
-    for (const auto workerThreadResultVector : testHandle.testConfig.expectedResults)
+    for (const auto& workerThreadResultVector : testHandle.testConfig.expectedResults)
     {
         /// expectedBuffersVector: vector<TupleSchemaTemplate>
         for (const auto& expectedBuffersVector : workerThreadResultVector.expectedResultsForThread)

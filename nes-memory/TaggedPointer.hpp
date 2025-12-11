@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <bit>
 #include <cstdint>
 #if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__powerpc64__)) && !(defined(__aarch64__))
     #error "TaggedPointer is x64, arm64 and ppc64 specific code."
@@ -100,7 +101,7 @@ public:
      * @brief returns the de-tagged pointer casted to void*
      * @return
      */
-    inline void* pointer() const { return reinterpret_cast<void*>(data & ((1ULL << 48) - 1)); }
+    inline void* pointer() const { return std::bit_cast<void*>(data & ((1ULL << 48) - 1)); }
 
     /**
      * @brief reset by mutating the internal pointer and the tag

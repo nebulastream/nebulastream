@@ -38,7 +38,7 @@ namespace NES
 /// We use a trick to keep the shorthand version of error code (e.g., `return ErrorCode::UnknownException;`) via the following using.
 namespace ErrorCodeDetail
 {
-enum ErrorCode
+enum ErrorCode : std::uint16_t
 {
 
 #define EXCEPTION(name, code, msg) name = (code),

@@ -85,7 +85,7 @@ TEST_F(VarValTest, SimpleMove)
     auto testVarValMove = []<typename T>(const T value)
     {
         const VarVal varVal = nautilus::val<T>(value);
-        const VarVal varValCopy = varVal;
+        const VarVal varValCopy = varVal; /// NOLINT (performance-unnecessary-copy-initialization)
         const VarVal varValMove = std::move(varVal);
         EXPECT_EQ(varValMove.cast<nautilus::val<T>>(), value);
         EXPECT_EQ(varValCopy.cast<nautilus::val<T>>(), value);

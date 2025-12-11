@@ -98,7 +98,7 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
     const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
     /// Test, if we can copy the variable sized data object by copy operator=
-    const VarVal copiedVarSizedData = varSizedData;
+    const VarVal copiedVarSizedData = varSizedData; /// NOLINT (performance-unnecessary-copy-initialization)
     EXPECT_EQ(copiedVarSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
     EXPECT_TRUE(
         std::memcmp(
@@ -106,7 +106,7 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
         == 0);
 
     /// Test, if we can copy the variable sized data object by copy constructor
-    const VarVal copiedVarSizedData2(varSizedData);
+    const VarVal copiedVarSizedData2(varSizedData); /// NOLINT (performance-unnecessary-copy-initialization)
     EXPECT_EQ(copiedVarSizedData2.cast<VariableSizedData>().getContentSize(), sizeInBytes);
     EXPECT_TRUE(
         std::memcmp(
@@ -189,7 +189,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
 
-        const VarVal copiedVarSizedData = varSizedData;
+        const VarVal copiedVarSizedData = varSizedData; /// NOLINT (performance-unnecessary-copy-initialization)
         EXPECT_TRUE(copiedVarSizedData.cast<VariableSizedData>() == varSizedData.cast<VariableSizedData>());
         EXPECT_FALSE(copiedVarSizedData.cast<VariableSizedData>() != varSizedData.cast<VariableSizedData>());
     }

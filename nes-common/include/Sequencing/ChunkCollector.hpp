@@ -101,9 +101,7 @@ private:
 
         size_t start;
         std::atomic<size_t> missing = NodeSize;
-        std::array<
-            Padded<Chunk<Timestamp::Underlying, std::greater<Timestamp::Underlying>, std::numeric_limits<Timestamp::Underlying>::min()>>,
-            NodeSize>
+        std::array<Padded<Chunk<Timestamp::Underlying, std::greater<>, std::numeric_limits<Timestamp::Underlying>::min()>>, NodeSize>
             data{};
     };
 
