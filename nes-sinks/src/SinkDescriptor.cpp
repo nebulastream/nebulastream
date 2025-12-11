@@ -18,7 +18,6 @@
 #include <memory>
 #include <optional>
 #include <ostream>
-#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -83,13 +82,13 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));
 }
 
-std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
+std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sd)
 {
     out << fmt::format(
         "SinkDescriptor: (name: {}, type: {}, Config: {})",
-        sinkDescriptor.sinkName,
-        sinkDescriptor.sinkType,
-        sinkDescriptor.toStringConfig());
+        sd.sinkName,
+        sd.sinkType,
+        sd.toStringConfig());
     return out;
 }
 
