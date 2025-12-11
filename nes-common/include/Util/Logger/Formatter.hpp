@@ -19,6 +19,6 @@
 /// Macro to derive a fmt formatter if the underlying class implements the ostream operator
 #define FMT_OSTREAM(TypeName) \
     template <> \
-    struct fmt::formatter<typename TypeName> : fmt::ostream_formatter \
+    struct fmt::formatter<typename TypeName> : fmt::ostream_formatter /* NOLINT (bugprone-macro-parentheses) */ \
     { \
     }

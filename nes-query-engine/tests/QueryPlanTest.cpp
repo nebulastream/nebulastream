@@ -391,6 +391,7 @@ void leak(std::unique_ptr<RunningQueryPlan> runningQueryPlan, std::shared_ptr<Te
 {
     ::testing::Mock::VerifyAndClearExpectations(listener.get());
     ::testing::Mock::AllowLeak(listener.get());
+    /// NOLINTNEXTLINE (bugprone-unused-return-value)
     runningQueryPlan.release();
 }
 

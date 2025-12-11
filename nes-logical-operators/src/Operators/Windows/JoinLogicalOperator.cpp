@@ -270,8 +270,6 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
     {
         auto functions = std::get<FunctionList>(functionVariant).functions();
         auto joinType = std::get<EnumWrapper>(joinTypeVariant);
-        auto windowStartFieldName = std::get<std::string>(windowStartVariant);
-        auto windowEndFieldName = std::get<std::string>(windowEndVariant);
 
         if (functions.size() != 1)
         {
