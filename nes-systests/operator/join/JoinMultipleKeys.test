@@ -1,5 +1,5 @@
 # name: join/JoinMultipleKeys.test
-# description: Test join operator with multiple join keys
+# description: Test join operator with multiple join keys TODO #1272
 # groups: [WindowOperators, Join, CompilationIntensive]
 
 # Source definitions
