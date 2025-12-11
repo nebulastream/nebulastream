@@ -1,5 +1,5 @@
 # name: window/WindowAggregationDifferentDataTypesKeyed.test
-# description: Test window aggregations over different data types for keyed windows with the key being a varsized
+# description: Test window aggregations over different data types for keyed windows with the key being a varsized TODO #1272
 # groups: [Aggregation, WindowOperators, CompilationIntensive]
 
 
