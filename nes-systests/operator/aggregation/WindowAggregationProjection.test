@@ -1,5 +1,5 @@
 # name: window/WindowAggregationProjection.test
-# description: Test projection over window operators
+# description: Test projection over window operators TODO #1272
 # groups: [Aggregation, WindowOperators, Projection, CompilationIntensive]
 
 # Source definitions

@@ -1,5 +1,5 @@
 # name: union/Union.test
-# description: Test large unions caused by source expansion
+# description: Test large unions caused by source expansion TODO #1272
 # groups: [Union, CompilationIntensive]
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);

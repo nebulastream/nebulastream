@@ -1,5 +1,5 @@
 # name: windows/SlidingWindowsWithGap.test
-# description: Tests windowed operators with sliding windows that have a gap, i.e., size >= slide
+# description: Tests windowed operators with sliding windows that have a gap, i.e., size >= slide TODO #1272
 # groups: [WindowOperators, Join, Aggregation, CompilationIntensive]
 
 # Source definitions
