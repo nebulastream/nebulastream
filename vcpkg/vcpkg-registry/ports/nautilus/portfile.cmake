@@ -21,6 +21,7 @@ vcpkg_from_github(
 		0003-ubsan-fix-variadic-expansion.patch
 		0004-printing_pointers_as_hex.patch
 		0005-caching_mangled_names.patch
+		0006-optimize_trace_context_hashing.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
