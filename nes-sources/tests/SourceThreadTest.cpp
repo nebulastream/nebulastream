@@ -161,8 +161,8 @@ void verify_number_of_emits(
             sequenceNumbers.push_back(data->buffer.getSequenceNumber());
         }
     }
-    auto expected_view
-        = std::views::iota(size_t(0), sequenceNumbers.size()) | std::views::transform([](auto s) { return SequenceNumber(s + 1); });
+    auto expected_view = std::views::iota(static_cast<size_t>(0), sequenceNumbers.size())
+        | std::views::transform([](auto s) { return SequenceNumber(s + 1); });
     std::vector<SequenceNumber> expected;
     std::ranges::copy(expected_view, std::back_inserter(expected));
     EXPECT_THAT(sequenceNumbers, ::testing::ContainerEq(expected));

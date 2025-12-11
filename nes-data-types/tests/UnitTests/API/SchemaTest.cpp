@@ -41,10 +41,10 @@ public:
 
     auto getRandomFields(const auto numberOfFields)
     {
-        auto getRandomBasicType = [](const unsigned long rndPos)
+        auto getRandomBasicType = [](const uint64_t rndPos)
         {
             const auto& values = magic_enum::enum_values<DataType::Type>();
-            std::uniform_int_distribution<unsigned long>(0, values.size() - 1);
+            std::uniform_int_distribution<uint64_t>(0, values.size() - 1);
             return values[rndPos % values.size()];
         };
         constexpr auto RND_SEED = 42;

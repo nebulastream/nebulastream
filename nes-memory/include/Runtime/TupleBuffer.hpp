@@ -104,7 +104,7 @@ public:
     TupleBuffer& operator=(TupleBuffer&& other) noexcept;
 
     /// @brief Delete address-of operator to make it harder to circumvent reference counting mechanism with an l-value.
-    TupleBuffer* operator&() = delete;
+    TupleBuffer* operator&() = delete; /// NOLINT (google-runtime-operator)
 
     /// @brief Return if this is not valid.
     [[nodiscard]] auto operator!() const noexcept -> bool { return ptr == nullptr; }

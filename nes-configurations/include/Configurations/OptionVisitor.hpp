@@ -27,7 +27,7 @@ public:
 
     OptionVisitor() { }
 
-    virtual void visitConcrete(std::string name, std::string description, std::string_view defaultValue = "") = 0;
+    virtual void visitConcrete(std::string name, std::string description, std::string_view defaultValue) = 0;
     virtual void push() = 0;
     virtual void pop() = 0;
 };

@@ -178,7 +178,9 @@ void AntlrSQLQueryPlanCreator::enterFromClause(AntlrSQLParser::FromClauseContext
 void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext* context)
 {
     if (context->sink().empty())
+    {
         throw InvalidQuerySyntax("INTO must be followed by at least one sink-identifier.");
+    }
     /// Store all specified sinks.
     for (const auto& sink : context->sink())
     {

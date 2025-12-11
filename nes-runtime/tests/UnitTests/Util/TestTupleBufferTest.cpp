@@ -137,7 +137,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTest)
     /// Reading and writing a full tuple
     for (int i = 0; i < 10; ++i)
     {
-        auto testTuple = std::make_tuple((uint16_t)i, true, i * 2.0);
+        auto testTuple = std::make_tuple(static_cast<uint16_t>(i), true, i * 2.0);
         testBuffer->pushRecordToBuffer(testTuple);
         ASSERT_EQ((testBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(i)), testTuple);
     }
@@ -159,7 +159,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestVarSizeData)
 {
     for (int i = 0; i < 10; ++i)
     {
-        auto testTuple = std::make_tuple((uint16_t)i, "" + std::to_string(i) + std::to_string(i), i * 2.0, std::to_string(i));
+        auto testTuple = std::make_tuple(static_cast<uint16_t>(i), "" + std::to_string(i) + std::to_string(i), i * 2.0, std::to_string(i));
         testBufferVarSize->pushRecordToBuffer(testTuple, bufferManager.get());
         ASSERT_EQ((testBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(i)), testTuple);
     }
@@ -183,7 +183,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBuffer)
 {
     for (auto i = 0_u64; i < testBuffer->getCapacity(); ++i)
     {
-        auto testTuple = std::make_tuple((uint16_t)i, true, i * 2.0);
+        auto testTuple = std::make_tuple(static_cast<uint16_t>(i), true, i * 2.0);
         testBuffer->pushRecordToBuffer(testTuple);
         ASSERT_EQ((testBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(i)), testTuple);
     }
@@ -205,7 +205,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBufferVarSizeData)
 {
     for (auto i = 0_u64; i < testBufferVarSize->getCapacity(); ++i)
     {
-        auto testTuple = std::make_tuple((uint16_t)i, "" + std::to_string(i) + std::to_string(i), i * 2.0, std::to_string(i));
+        auto testTuple = std::make_tuple(static_cast<uint16_t>(i), "" + std::to_string(i) + std::to_string(i), i * 2.0, std::to_string(i));
         testBufferVarSize->pushRecordToBuffer(testTuple, bufferManager.get());
         ASSERT_EQ((testBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(i)), testTuple);
     }
