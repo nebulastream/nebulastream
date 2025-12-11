@@ -1,5 +1,5 @@
 # name: formatter/SingleTupleThatSpansThreeTBRaws.test
-# description: formatter tests
+# description: formatter tests TODO #1272
 # groups: [Formatter, Tuples, CompilationIntensive]
 
 # BUG: fails only in compiled mode
