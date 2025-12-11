@@ -30,7 +30,7 @@
     #include <mutex>
     #include <thread>
     #include <unordered_map>
-    #include <cpptrace.hpp>
+    #include <cpptrace/cpptrace.hpp>
 #endif
 
 namespace NES
