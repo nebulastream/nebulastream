@@ -274,7 +274,7 @@ private:
                 /// Only change the child's position if it is not the last one in the queue. If it is the last one, we can just leave it there.
                 if (std::next(queueIt) != layerCalcQueue.end())
                 {
-                    const auto temp = *queueIt;
+                    const auto& temp = *queueIt;
                     layerCalcQueue.erase(queueIt);
                     /// TODO #685 Test all of these cases: To reduce crossings of branches, try to insert the child at a good place in the
                     /// queue. If the next layer has a similar number of nodes, `childIndex` could be a good place to insert it.
