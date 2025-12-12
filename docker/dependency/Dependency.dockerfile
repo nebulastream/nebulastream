@@ -11,9 +11,9 @@ FROM alpine:latest AS llvm-download
 ARG ARCH
 ARG SANITIZER="none"
 ARG STDLIB=libcxx
-ARG LLVM_VERSION=20
+ARG LLVM_VERSION=21
 RUN apk update && apk add zstd
-ADD https://github.com/nebulastream/clang-binaries/releases/download/vmlir-${LLVM_VERSION}/nes-llvm-${LLVM_VERSION}-${ARCH}-${SANITIZER}-${STDLIB}.tar.zstd llvm.tar.zstd
+ADD https://github.com/nebulastream/clang-binaries/releases/download/vmlir-${LLVM_VERSION}-v2/nes-llvm-${LLVM_VERSION}-${ARCH}-${SANITIZER}-${STDLIB}.tar.zstd llvm.tar.zstd
 RUN zstd --decompress llvm.tar.zstd --stdout | tar -x
 
 FROM nebulastream/nes-development-base:${TAG}

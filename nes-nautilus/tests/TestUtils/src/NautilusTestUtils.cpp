@@ -49,6 +49,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <std/sstream.h>
+#include <std/string.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::TestUtils
@@ -264,7 +265,9 @@ std::string NautilusTestUtils::compareRecords(
         }
         ss << valueRight << ") ";
     }
-    return printErrorMessage ? ss.str().c_str().value : "";
+    const auto strPtr = nautilus::details::RawValueResolver<const char*>::getRawValue(ss.str().c_str());
+    const auto strSize = nautilus::details::RawValueResolver<uint64_t>::getRawValue(ss.str().size());
+    return printErrorMessage ? std::string{strPtr, strSize} : "";
 }
 
 }
