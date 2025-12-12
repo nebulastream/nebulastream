@@ -31,14 +31,17 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <RawTupleBuffer.hpp>
 #include <function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+#include <common/FunctionAttributes.hpp>
 
 namespace NES
 {
@@ -49,106 +52,110 @@ SIMDJSONFIF::applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SI
     return not isAtLastTuple;
 }
 
-struct VarSizedResult
-{
-    const char* varSizedPointer;
-    uint64_t size{};
-};
-
-VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
-    const nautilus::val<FieldIndex>& fieldIdx,
+VarVal SIMDJSONFIF::parseJsonVarSized(
+    const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-    const nautilus::val<SIMDJSONMetaData*>& metaData)
+    const nautilus::val<SIMDJSONMetaData*>& metaData,
+    const bool nullable)
 {
-    const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
-        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData)
-        {
-            thread_local auto result = VarSizedResult{};
-            INVARIANT(
-                fieldIndex < metaData->getNumberOfFields(),
-                "fieldIndex {} is out or bounds for schema keys of size: {}",
-                fieldIndex,
-                metaData->getNumberOfFields());
-            auto currentDoc = *fieldIndexFunction->docStreamIterator;
-            const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
+    if (nullable)
+    {
+        const auto varSizedResult = nautilus::invoke(
+            {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<true>, fieldIndex, fieldIndexFunction, metaData);
+        const VariableSizedData varSizedString{
+            *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
+            *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
+        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(varSizedResult, offsetof(ParsedResultVariableSized, isNull));
+        return VarVal{VariableSizedData{varSizedString}, nullable, isNull};
+    }
 
-            /// Get the value from the document and convert it to a span of bytes
-            const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
+    const auto varSizedResult = nautilus::invoke(
+        {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<false>, fieldIndex, fieldIndexFunction, metaData);
+    const VariableSizedData varSizedString{
+        *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
+        *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
+    return VarVal{VariableSizedData{varSizedString}, nullable, false};
+}
 
-            /// Get memory from arena that holds length of the string and the bytes of the string
-            result = VarSizedResult{.varSizedPointer = value.data(), .size = value.size()};
-            return &result;
-        },
-        fieldIdx,
-        fieldIndexFunction,
-        metaData);
+bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData) noexcept
+{
+    const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
+    auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
 
-    VariableSizedData varSizedString{
-        *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(VarSizedResult, varSizedPointer)),
-        *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(VarSizedResult, size))};
-    return varSizedString;
+    /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
+    if (not currentDoc[fieldName].has_value())
+    {
+        return true;
+    }
+
+    /// Second, we need to check if the key is equal to one of the null values
+    if (SIMDJSONFIF::accessSIMDJsonFieldOrThrow(currentDoc, fieldName).is_null())
+    {
+        return true;
+    }
+    return false;
 }
 
 void SIMDJSONFIF::writeValueToRecord(
-    const DataType::Type physicalType,
+    const DataType dataType,
     Record& record,
     const std::string& fieldName,
-    const nautilus::val<FieldIndex>& fieldIdx,
+    const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
     const nautilus::val<const SIMDJSONMetaData*>& metaData) const
 {
-    switch (physicalType)
+    switch (dataType.type)
     {
         case DataType::Type::INT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int8_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::INT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int16_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::INT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int32_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::INT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int64_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::UINT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint8_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::UINT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint16_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::UINT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint32_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::UINT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint64_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<float>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<float>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<double>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<double>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::CHAR: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<char>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<char>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<bool>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonFixedSizeIntoVarVal<bool>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
             return;
         }
         case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseJsonVarSized(fieldIndex, fieldIndexFunction, metaData, dataType.nullable));
             return;
         }
         case DataType::Type::UNDEFINED:
