@@ -528,9 +528,27 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
         catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
     }
 
+    /// Running the Systest against a remote worker setup cannot use configuration overrides as the worker configuration is not handled
+    /// by the systest tool. Currently we will skip any query which has a configuration override.
+    const auto queriesWithoutConfigurationOverrides
+        = queries
+        | std::views::filter(
+              [](const auto& query)
+              {
+                  if (!query.configurationOverride.overrideParameters.empty())
+                  {
+                      fmt::println("Skipping test {} because it has a configuration override", query.testName);
+                      return false;
+                  }
+                  return true;
+              })
+        | std::ranges::to<std::vector>();
+
+    progressTracker.setTotalQueries(queriesWithoutConfigurationOverrides.size());
+
     auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
     QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
+    return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
 
 }
