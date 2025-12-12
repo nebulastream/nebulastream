@@ -233,11 +233,14 @@ endif ()
 
 add_custom_target(build_all_plugins)
 
-# Add target for common lib, which contains a minimal set
-# of shared functionality used by all components of nes
-file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
-foreach (NES_DIR ${NES_DIRECTORIES})
-    add_subdirectory(${NES_DIR})
+# Adds sub-directories
+file(GLOB NES_DIRECTORIES_ALL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
+set(NES_DIRECTORIES)
+foreach (NES_DIR ${NES_DIRECTORIES_ALL})
+    if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR} AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR}/CMakeLists.txt)
+        list(APPEND NES_DIRECTORIES ${NES_DIR})
+        add_subdirectory(${NES_DIR})
+    endif ()
 endforeach ()
 
 # Other configurations
@@ -245,14 +248,14 @@ project_enable_format()
 
 # Adding targets for code coverage if it is enabled
 if (CODE_COVERAGE)
-    file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
-    list(REMOVE_ITEM NES_DIRECTORIES "nes-systests")
-    list(REMOVE_ITEM NES_DIRECTORIES "nes-nebuli")
-    list(REMOVE_ITEM NES_DIRECTORIES "nes-single-node-worker")
+    set(NES_COVERAGE_DIRECTORIES ${NES_DIRECTORIES})
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-systests")
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-nebuli")
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-single-node-worker")
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
-    list(REMOVE_ITEM NES_DIRECTORIES "nes-plugins")
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-plugins")
 
-    foreach (NES_DIR ${NES_DIRECTORIES})
+    foreach (NES_DIR ${NES_COVERAGE_DIRECTORIES})
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
     endforeach ()
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
