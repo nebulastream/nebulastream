@@ -38,54 +38,56 @@ Queries can be submitted as YAML specifications or SQL statements. Below is a co
 ```yaml
 query: |
   SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
-  FROM (SELECT creationTS, highway, direction, position / INT32(5280) AS positionDiv5280, speed FROM LRB)
+  FROM (SELECT creationTS, highway, direction, position / INT32(5280) AS positionDiv5280, speed FROM lrb)
   GROUP BY (highway, direction, positionDiv5280)
   WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
   HAVING avgSpeed < FLOAT32(40)
-  INTO CSV_SINK;
+  INTO csv_sink;
 
 sinks:
-  - name: CSV_SINK
-    type: File
+  - name: csv_sink
+    host: localhost:8080
     schema:
-      - name: LRB$START
+      - name: lrb$start
         type: UINT64
-      - name: LRB$END
+      - name: lrb$end
         type: UINT64
-      - name: LRB$HIGHWAY
+      - name: lrb$highway
         type: INT16
-      - name: LRB$DIRECTION
+      - name: lrb$direction
         type: INT16
-      - name: POSITIONDIV5280
+      - name: positionDiv5280
         type: INT32
-      - name: LRB$AVGSPEED
+      - name: lrb$avgSpeed
         type: FLOAT64
+    type: File
     config:
       input_format: CSV
       file_path: "<path>"
       append: false
 
 logical:
-  - name: LRB
+  - name: lrb
     schema:
-      - name: CREATIONTS
+      - name: creationTS
         type: UINT64
-      - name: VEHICLE
+      - name: vehicle
         type: INT16
-      - name: SPEED
+      - name: speed
         type: FLOAT32
-      - name: HIGHWAY
+      - name: highway
         type: INT16
-      - name: LANE
+      - name: lane
         type: INT16
-      - name: DIRECTION
+      - name: direction
         type: INT16
-      - name: POSITION
+      - name: position
         type: INT32
 
 physical:
-  - logical: LRB
+  - logical: lrb
     type: TCP
+    host: localhost:8080
     parser_config:
       type: CSV
       tuple_delimiter: "\n"
@@ -96,20 +98,23 @@ physical:
       socket_buffer_size: 65536
       flush_interval_ms: 100
       connect_timeout_seconds: 60
-  - logical: LRB
+  - logical: lrb
+    host: localhost:8080
     type: File
     parser_config:
       type: JSON
     source_config:
       file_path: lrb.json
+workers:
+  - connection: localhost:9090
+    host: localhost:8080
 ```
-This YAML can be sent to `nebuli` to register or run the query.
-
-For the YAML specifications, the field, source and sink names in the schema definition have to be written in all caps.
+This YAML can be sent to `nes-cli` to register or run the query.
 
 Here's the equivalent SQL syntax:
 
 ```sql
+CREATE WORKER 'localhost:9090' AT 'localhost:8080';
 CREATE LOGICAL SOURCE lrb(
   creationTS UINT64,
   vehicle INT16,
@@ -121,6 +126,7 @@ CREATE LOGICAL SOURCE lrb(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
+  'localhost:9090' AS `SOURCE`.`HOST`, 
   'localhost' as `SOURCE`.SOCKET_HOST,
   50501 as `SOURCE`.SOCKET_PORT,
   65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
@@ -132,21 +138,23 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
+  'localhost:9090' AS `SOURCE`.`HOST`,
   'lrb.json' as `SOURCE`.FILE_PATH,
   'JSON' as PARSER.`TYPE`
 );
 
 CREATE SINK csv_sink(
-  LRB.start UINT64,
-  LRB.end UINT64,
-  LRB.HIGHWAY INT16,
-  LRB.DIRECTION INT16,
-  POSITIONDIV5280 INT32,
-  LRB.AVGSPEED FLOAT64
+  lrb.start UINT64,
+  lrb.end UINT64,
+  lrb.highway INT16,
+  lrb.direction INT16,
+  positionDiv5280 INT32,
+  lrb.avgSpeed FLOAT64
 ) TYPE File SET(
+  'localhost:9090' AS `SINK`.`HOST`, 
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
-   FALSE as `SINK`.APPEND
+  FALSE as `SINK`.APPEND
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -204,6 +212,7 @@ Supported physical source types:
 In our example, we define two physical sources that both feed the `lrb` logical source:
 ```sql
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
+  'localhost:9090' AS `SOURCE`.`HOST`, 
   'localhost' as `SOURCE`.SOCKET_HOST,
   50501 as `SOURCE`.SOCKET_PORT,
   65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
@@ -215,6 +224,7 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
+  'localhost:9090' AS `SOURCE`.`HOST`,
   'lrb.json' as `SOURCE`.FILE_PATH,
   'JSON' as PARSER.`TYPE`
 );
@@ -247,16 +257,17 @@ Currently, a query must have exactly one sink.
 
 ```sql
 CREATE SINK csv_sink(
-  LRB.start UINT64,
-  LRB.end UINT64,
-  LRB.HIGHWAY INT16,
-  LRB.DIRECTION INT16,
-  POSITIONDIV5280 INT32,
-  LRB.AVGSPEED FLOAT64
+  lrb.start UINT64,
+  lrb.end UINT64,
+  lrb.highway INT16,
+  lrb.direction INT16,
+  positionDiv5280 INT32,
+  lrb.avgSpeed FLOAT64
 ) TYPE File SET(
+  'localhost:9090' AS `SINK`.`HOST`, 
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
-   FALSE as `SINK`.APPEND
+  FALSE as `SINK`.APPEND
 );
 ```
 The sink name (`csv_sink`) must match the name used in the query's `INTO` clause.
@@ -267,6 +278,8 @@ Available sink types include:
 
 The `SET` clause specifies the output details.
 For a `File` sink, this includes the file path and the data format for the output.
+
+The `HOST` configuration parameter specifies the worker node which hosts the physical source/sink.
 
 ---
 ## Input Formatters
