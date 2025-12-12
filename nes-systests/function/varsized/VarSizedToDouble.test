@@ -37,7 +37,8 @@ SELECT VarSizedToDouble(doubleString) AS doubleValue FROM doubleStringStreamWith
 0.5
 nan
 
-SELECT doubleValue FROM (SELECT VarSizedToDouble(doubleString) AS doubleValue FROM doubleStringStreamWithProblems) WHERE NOT(IsNaN(doubleValue)) INTO doubleSink;
+# We can filter out NaNs using the fact that NaN == NaN is false
+SELECT doubleValue FROM (SELECT VarSizedToDouble(doubleString) AS doubleValue FROM doubleStringStreamWithProblems) WHERE (doubleValue == doubleValue) INTO doubleSink;
 ----
 12.5
 0.5
