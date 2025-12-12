@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -54,12 +55,15 @@ public:
 
     ~InputFormatterTupleBufferRef() override = default;
 
-    std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override
+    [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override
     {
         INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
     }
 
-    std::vector<DataType> getAllDataTypes() const override { INVARIANT(false, "unsupported operation on InputFormatterBufferRef"); }
+    [[nodiscard]] std::vector<DataType> getAllDataTypes() const override
+    {
+        INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
+    }
 
     Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const override
     {

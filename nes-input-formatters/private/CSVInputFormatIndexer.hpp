@@ -15,16 +15,22 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string_view>
+#include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatterTupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
 #include <RawValueParser.hpp>
+#include <static.hpp>
 
 namespace NES
 {
@@ -64,11 +70,22 @@ struct CSVMetaData
 
     static QuotationType getQuotationType() { return QuotationType::NONE; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNames[i]; }
+    static std::vector<std::string> getNullValues() { return {""}; }
 
-    const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
+    {
+        PRECONDITION(i < fieldNames.size(), "Trying to access position, larger than the size of fieldNames {}", fieldNames.size());
+        return fieldNames[i];
+    }
 
-    uint64_t getNumberOfFields() const
+    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const
+    {
+        PRECONDITION(
+            i < fieldDataTypes.size(), "Trying to access position, larger than the size of fieldDataTypes {}", fieldDataTypes.size());
+        return fieldDataTypes[i];
+    }
+
+    [[nodiscard]] uint64_t getNumberOfFields() const
     {
         INVARIANT(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
         return fieldNames.size();

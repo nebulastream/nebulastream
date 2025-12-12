@@ -62,23 +62,31 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
-        auto fields
-            = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
+        auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                  [&formattingContext, &tuple, &tbuffer](const auto& index)
-                  {
-                      auto type = formattingContext.physicalTypes[index];
-                      auto offset = formattingContext.offsets[index];
-                      if (type.type == DataType::Type::VARSIZED)
-                      {
-                          const VariableSizedAccess variableSizedAccess{
-                              *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                          const auto varSizedData
-                              = Nautilus::Interface::BufferRef::TupleBufferRef::readVarSizedDataAsString(tbuffer, variableSizedAccess);
-                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedData);
-                      }
-                      return fmt::format("\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(&tuple[offset]));
-                  });
+                          [&formattingContext, &tuple, &tbuffer](const auto& index) -> std::string
+                          {
+                              auto type = formattingContext.physicalTypes[index];
+                              auto fieldValueStart = tuple.subspan(formattingContext.offsets[index]);
+                              if (type.isNullable)
+                              {
+                                  const bool isNull = static_cast<bool>(fieldValueStart[0]);
+                                  fieldValueStart = fieldValueStart.subspan(1);
+                                  if (isNull)
+                                  {
+                                      /// We need to write null, as otherwise, we can not detect a single null in our output
+                                      return "NULL";
+                                  }
+                              }
+                              if (type.type == DataType::Type::VARSIZED)
+                              {
+                                  const VariableSizedAccess variableSizedAccess{*std::bit_cast<const uint64_t*>(fieldValueStart.data())};
+                                  const auto varSizedData = TupleBufferRef::readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                                  return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedData);
+                              }
+                              return fmt::format(
+                                  "\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(fieldValueStart.data()));
+                          });
 
         ss << fmt::format("{{{}}}\n", fmt::join(fields, ","));
     }

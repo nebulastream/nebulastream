@@ -15,30 +15,37 @@
 #pragma once
 
 #include <concepts>
+#include <cstdint>
 #include <ostream>
+#include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <RawValueParser.hpp>
+#include <static.hpp>
 
 namespace NES
 {
 
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatter
 template <typename T>
-concept IndexerMetaDataType = requires(
-    ParserConfig config,
-    const Nautilus::Interface::BufferRef::TupleBufferRef& tupleBufferRef,
-    T indexerMetaData,
-    std::ostream& spanningTuple) {
-    T(config, tupleBufferRef);
-    /// Assumes a fixed set of symbols that separate tuples
-    /// InputFormatIndexers without tuple delimiters should return an empty string
-    { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
-    { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
-};
+concept IndexerMetaDataType
+    = requires(ParserConfig config, const TupleBufferRef& tupleBufferRef, T indexerMetaData, std::ostream& spanningTuple) {
+          T(config, tupleBufferRef);
+          /// Assumes a fixed set of symbols that separate tuples
+          /// InputFormatIndexers without tuple delimiters should return an empty string
+          { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
+          { indexerMetaData.getQuotationType() } -> std::same_as<QuotationType>;
+          { indexerMetaData.getFieldDataTypeAt(nautilus::static_val<uint64_t>{0}) } -> std::same_as<const DataType&>;
+          { indexerMetaData.getFieldNameAt(nautilus::static_val<uint64_t>{0}) } -> std::same_as<const Record::RecordFieldIdentifier&>;
+          { indexerMetaData.getNumberOfFields() } -> std::same_as<uint64_t>;
+          { indexerMetaData.getNullValues() } -> std::same_as<std::vector<std::string>>;
+      };
 
 template <typename T>
 concept FieldIndexFunctionType = requires(const T& indexFunction) {

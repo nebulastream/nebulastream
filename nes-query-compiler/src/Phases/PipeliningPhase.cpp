@@ -104,7 +104,7 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
 void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
-    const auto schema = wrappedOp.getOutputSchema();
+    const auto& schema = wrappedOp.getOutputSchema();
     const auto memoryLayoutType = wrappedOp.getOutputMemoryLayoutType();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
     INVARIANT(memoryLayoutType.has_value(), "Wrapped operator has no output memory layout type");

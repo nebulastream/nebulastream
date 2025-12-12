@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <set>
 #include <string>
 #include <string_view>
@@ -42,8 +43,6 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/std/cstring.h>
 #include <nautilus/std/sstream.h>
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
@@ -223,14 +222,14 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
 class TupleIterator
 {
 public:
-    TupleIterator(std::vector<TupleBuffer> buffers, Schema schema, const MemoryLayoutType layoutType)
+    TupleIterator(std::vector<TupleBuffer> buffers, const Schema& schema, const MemoryLayoutType layoutType)
         : schema(std::move(schema))
         , buffers(std::move(buffers))
         , bufferRef(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), schema, layoutType))
     {
     }
 
-    std::optional<Nautilus::Record> getNextTuple()
+    std::optional<Record> getNextTuple()
     {
         if (currentTupleIdx >= buffers.at(currentBufferIdx).getNumberOfTuples())
         {
@@ -242,7 +241,7 @@ public:
             }
             currentTupleIdx = 0;
         }
-        const Nautilus::RecordBuffer recordBuffer{buffers.data() + currentBufferIdx};
+        const RecordBuffer recordBuffer{buffers.data() + currentBufferIdx};
         auto record = bufferRef->readRecord(schema.getFieldNames(), recordBuffer, currentTupleIdx);
         ++currentTupleIdx;
         return record;
@@ -253,7 +252,7 @@ private:
     nautilus::val<uint64_t> currentTupleIdx = 0;
     Schema schema;
     std::vector<TupleBuffer> buffers;
-    std::shared_ptr<Nautilus::Interface::BufferRef::TupleBufferRef> bufferRef;
+    std::shared_ptr<TupleBufferRef> bufferRef;
 };
 
 /// Expects tuple buffers with matching sequence numbers contain the same tuples in the same order
@@ -340,19 +339,18 @@ void writeFieldToBuffer(
     const T& fieldValue,
     const size_t fieldIndex,
     NES::TupleBuffer& tupleBuffer,
-    Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+    TupleBufferRef& tupleBufferRef,
     AbstractBufferProvider& bufferProvider)
 {
-    Nautilus::Record record;
-    NES::Nautilus::RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    Record record;
+    NES::RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
     const auto fieldName = tupleBufferRef.getAllFieldNames().at(fieldIndex);
 
-    /// Creating a Nautilus::Record containing the current field
+    /// Creating a Record containing the current field
     if constexpr (std::is_same_v<T, std::string>)
     {
         const auto varSizedAccess
-            = NES::Interface::BufferRef::TupleBufferRef::writeVarSized<Interface::BufferRef::TupleBufferRef::PREPEND_LENGTH_AS_UINT32>(
-                tupleBufferRef, bufferProvider, fieldValue);
+            = NES::TupleBufferRef::writeVarSized<TupleBufferRef::PREPEND_LENGTH_AS_UINT32>(tupleBufferRef, bufferProvider, fieldValue);
         const nautilus::val<NES::VariableSizedAccess> access{varSizedAccess};
         record.write(fieldName, access.convertToValue());
     }
@@ -367,13 +365,12 @@ void writeFieldToBuffer(
     tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal);
 }
 
-inline void
-printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const Interface::BufferRef::TupleBufferRef& tupleBufferRef)
+inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const TupleBufferRef& tupleBufferRef)
 {
     const nautilus::val<const char*> messageVal{message.data()};
     nautilus::stringstream ss;
     ss << messageVal;
-    const NES::Nautilus::RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    const NES::RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
     for (nautilus::val<uint64_t> recordIndex = 0; recordIndex < recordBuffer.getNumRecords(); ++recordIndex)
     {
         const auto record = tupleBufferRef.readRecord(tupleBufferRef.getAllFieldNames(), recordBuffer, recordIndex);
