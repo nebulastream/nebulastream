@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 #include <nautilus/function.hpp>
 #include <nautilus/std/sstream.h>
+#include <std/cstring.h>
 #include <BaseUnitTest.hpp>
 #include <val_ptr.hpp>
 
@@ -71,8 +72,8 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
         EXPECT_EQ(varSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
-            std::memcmp(
-                varSizedData.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+            nautilus::memcmp(
+                varSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
             == 0);
     }
 
@@ -84,8 +85,8 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
         EXPECT_EQ(varSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
-            std::memcmp(
-                varSizedData.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+            nautilus::memcmp(
+                varSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
             == 0);
     }
 }
@@ -101,16 +102,16 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
     const VarVal copiedVarSizedData = varSizedData;
     EXPECT_EQ(copiedVarSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
     EXPECT_TRUE(
-        std::memcmp(
-            copiedVarSizedData.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+        nautilus::memcmp(
+            copiedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
         == 0);
 
     /// Test, if we can copy the variable sized data object by copy constructor
     const VarVal copiedVarSizedData2(varSizedData);
     EXPECT_EQ(copiedVarSizedData2.cast<VariableSizedData>().getContentSize(), sizeInBytes);
     EXPECT_TRUE(
-        std::memcmp(
-            copiedVarSizedData2.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+        nautilus::memcmp(
+            copiedVarSizedData2.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
         == 0);
 }
 
@@ -126,8 +127,8 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
         const VarVal movedVarSizedData = std::move(varSizedData);
         EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
-            std::memcmp(
-                movedVarSizedData.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+            nautilus::memcmp(
+                movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
             == 0);
     }
 
@@ -141,8 +142,8 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
         const VarVal movedVarSizedData(std::move(varSizedData));
         EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
-            std::memcmp(
-                movedVarSizedData.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+            nautilus::memcmp(
+                movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
             == 0);
     }
 }
@@ -159,8 +160,8 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
         const VarVal movedVarSizedData = std::move(varSizedData);
         EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
-            std::memcmp(
-                movedVarSizedData.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+            nautilus::memcmp(
+                movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
             == 0);
     }
 
@@ -174,8 +175,8 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
         const VarVal movedVarSizedData(std::move(varSizedData));
         EXPECT_EQ(movedVarSizedData.cast<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
-            std::memcmp(
-                movedVarSizedData.cast<VariableSizedData>().getContent().value, variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
+            nautilus::memcmp(
+                movedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data() + sizeOfLengthInBytes, sizeInBytes)
             == 0);
     }
 }

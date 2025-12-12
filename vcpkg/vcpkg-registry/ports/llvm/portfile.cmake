@@ -25,7 +25,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO llvm/llvm-project
     REF "llvmorg-${VERSION}"
-    SHA512 3670f05f51637426c612d4d603a5bb896fbd56ead9e2fbabf974541db2b50ac885dc84648d3f45f291a8986efe5b504cb68cb4cec6f90d84d4291e95319bcce8
+    SHA512 86366a476d29db48460bd75ac58e6b8af97f670dcd1a1f188bb900fb4b3d2cf66e56712ae0f66e4bd8399f1eba837a26f838b4e46bb2e95357a9c0d768668379
     HEAD_REF main
     PATCHES
         0001-fix-install-package-dir.patch

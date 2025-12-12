@@ -1,6 +1,6 @@
 {
   "name": "llvm",
-  "version": "20.1.1",
+  "version": "21.1.8",
   "port-version": 1,
   "description": "The LLVM Compiler Infrastructure.",
   "homepage": "https://llvm.org",

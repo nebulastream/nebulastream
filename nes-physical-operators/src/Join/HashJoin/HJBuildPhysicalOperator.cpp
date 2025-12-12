@@ -82,7 +82,8 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    auto* operatorHandler = dynamic_cast<HJOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
+    auto* const operatorHandler = dynamic_cast<HJOperatorHandler*>(
+        nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
     if (operatorHandler->wasSetupCalled(joinBuildSide))
     {
         return;

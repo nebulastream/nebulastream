@@ -86,7 +86,8 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    auto* const operatorHandler = dynamic_cast<AggregationOperatorHandler*>(executionCtx.getGlobalOperatorHandler(operatorHandlerId).value);
+    auto* const operatorHandler = dynamic_cast<AggregationOperatorHandler*>(
+        nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
     if (bool expectedValue = false; operatorHandler->setupAlreadyCalled.compare_exchange_strong(expectedValue, true))
     {
         operatorHandler->cleanupStateNautilusFunction
