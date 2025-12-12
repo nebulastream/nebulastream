@@ -1,0 +1,148 @@
+Subject: [PATCH] a cool commit message
+---
+Index: nautilus/src/nautilus/tracing/TraceContext.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.cpp b/nautilus/src/nautilus/tracing/TraceContext.cpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/TraceContext.cpp	(revision 13df6b16ca1fd7d7bdbe26a219f41df57f8ca66f)
+@@ -5,6 +5,8 @@
+ #include "symbolic_execution/SymbolicExecutionContext.hpp"
+ #include "symbolic_execution/TraceTerminationException.hpp"
+ #include <cassert>
++#include <cxxabi.h>
++#include <dlfcn.h>
+ #include <fmt/format.h>
+
+ namespace fmt {
+@@ -201,8 +203,8 @@
+ }
+
+ void TraceContext::allocateValRef(ValueRef ref) {
+-	while (dynamicVars.size() <= ref) {
+-		dynamicVars.emplace_back(0);
++	if (dynamicVars.size() <= ref) {
++		dynamicVars.resize(ref + 1, 0);
+ 	}
+ 	dynamicVars.at(ref)++;
+ }
+@@ -216,6 +218,27 @@
+ 	}
+ }
+
++std::string TraceContext::getMangledName(void* fnptr) {
++	if (const auto it = mangledNameCache.find(fnptr); it != mangledNameCache.end()) {
++		return it->second;
++	}
++
++	Dl_info info;
++	dladdr(reinterpret_cast<void*>(fnptr), &info);
++	if (info.dli_sname != nullptr) {
++		mangledNameCache.insert({fnptr, info.dli_sname});
++		return info.dli_sname;
++	}
++	std::stringstream ss;
++	ss << fnptr;
++	mangledNameCache.insert({fnptr, ss.str()});
++	return ss.str();
++}
++
++std::string TraceContext::getFunctionName(const std::string& mangledNamed) {
++	return mangledNamed;
++}
++
+ constexpr size_t fnv_prime = 0x100000001b3;
+ constexpr size_t offset_basis = 0xcbf29ce484222325;
+
+@@ -228,9 +251,9 @@
+ 	return hash;
+ }
+
+-uint64_t hashDynamicVector(const DynamicValueMap& data) {
++uint64_t hashDynamicVector(DynamicValueMap& data) {
+ 	size_t hash = offset_basis;
+-	for (auto value : data) {
++	for (const auto value : data) {
+ 		hash ^= value;
+ 		hash *= fnv_prime;
+ 	}
+Index: nautilus/src/nautilus/tracing/TraceContext.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.hpp b/nautilus/src/nautilus/tracing/TraceContext.hpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.hpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/TraceContext.hpp	(revision 13df6b16ca1fd7d7bdbe26a219f41df57f8ca66f)
+@@ -93,6 +93,10 @@
+ 	void allocateValRef(ValueRef ref);
+ 	void freeValRef(ValueRef ref);
+
++	std::string getMangledName(void* fnptr);
++	static std::string getFunctionName(const std::string& mangledNamed);
++
++
+ private:
+ 	explicit TraceContext(TagRecorder& tagRecorder);
+
+@@ -109,6 +113,7 @@
+ 	std::unique_ptr<SymbolicExecutionContext> symbolicExecutionContext;
+ 	std::vector<StaticVarHolder> staticVars;
+ 	DynamicValueMap dynamicVars;
++	std::unordered_map<void*, std::string> mangledNameCache;
+ };
+
+ } // namespace nautilus::tracing
+Index: nautilus/src/nautilus/tracing/TracingUtil.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision d6d1e2c277e09f98e21e60d7c46b90c7452cad69)
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision 13df6b16ca1fd7d7bdbe26a219f41df57f8ca66f)
+@@ -9,28 +9,6 @@
+ #include <sstream>
+ namespace nautilus::tracing {
+
+-std::string getMangledName(void* fnptr) {
+-	Dl_info info;
+-	dladdr(reinterpret_cast<void*>(fnptr), &info);
+-	if (info.dli_sname != nullptr) {
+-		return info.dli_sname;
+-	}
+-	std::stringstream ss;
+-	ss << fnptr;
+-	return ss.str();
+-}
+-
+-std::string getFunctionName(const std::string& mangledName) {
+-	// std::size_t sz = 25;
+-	// char* buffer = static_cast<char*>(std::malloc(sz));
+-	// int status;
+-	// char* realname = abi::__cxa_demangle(mangledName.c_str(), buffer, &sz, &status);
+-	// if (realname) {
+-	//	return realname;
+-	// }
+-	return mangledName;
+-}
+-
+ void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) {
+ 	TraceContext::get()->traceAssignment(target, source, resultType);
+ }
+@@ -79,9 +57,10 @@
+
+ TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+                          const FunctionAttributes fnAttrs) {
+-	auto mangledName = getMangledName(fptn);
+-	auto functionName = getFunctionName(mangledName);
+-	return TraceContext::get()->traceCall(functionName, mangledName, fptn, resultType, arguments, fnAttrs);
++	auto traceContext = TraceContext::get();
++	auto mangledName = traceContext->getMangledName(fptn);
++	auto functionName = traceContext->getFunctionName(mangledName);
++	return traceContext->traceCall(functionName, mangledName, fptn, resultType, arguments, fnAttrs);
+ }
+
+ TypedValueRef& traceUnaryOp(Op operation, Type resultType, const TypedValueRef& input) {
