@@ -14,6 +14,7 @@
 
 #include <SinksParsing/CSVFormat.hpp>
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
@@ -67,24 +68,33 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
         auto fields
             = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                  [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
+                  [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index) -> std::string
                   {
                       const auto physicalType = formattingContext.physicalTypes[index];
+                      auto fieldValueStart = tuple.subspan(formattingContext.offsets[index], physicalType.getSizeInBytesWithNull());
+                      if (physicalType.nullable)
+                      {
+                          /// Convert byte to bool: true if byte is non-zero, false otherwise
+                          const bool isNull = static_cast<bool>(std::to_integer<int>(fieldValueStart[0]));
+                          fieldValueStart = fieldValueStart.subspan(1);
+                          if (isNull)
+                          {
+                              /// We need to write null, as otherwise, we can not detect a single null in our output
+                              return "NULL";
+                          }
+                      }
+
                       if (physicalType.type == DataType::Type::VARSIZED)
                       {
-                          const auto base = formattingContext.offsets[index];
-                          uint64_t index{};
-                          uint64_t offset{};
-                          uint64_t size{};
-                          auto indexAddress = &tuple[base + offsetof(VariableSizedAccess, index)];
-                          auto offsetAddress = &tuple[base + offsetof(VariableSizedAccess, offset)];
-                          auto sizeAddress = &tuple[base + offsetof(VariableSizedAccess, size)];
-                          std::memcpy(&index, indexAddress, sizeof(uint32_t));
-                          std::memcpy(&offset, offsetAddress, sizeof(uint32_t));
-                          std::memcpy(&size, sizeAddress, sizeof(uint64_t));
-                          const VariableSizedAccess variableSizedAccess{VariableSizedAccess{
-                              VariableSizedAccess::Index(index), VariableSizedAccess::Offset(offset), VariableSizedAccess::Size(size)}};
+                          const auto base = formattingContext.offsets[index] + physicalType.nullable;
+                          const auto* indexPtr = std::bit_cast<const uint32_t*>(&tuple[base + offsetof(VariableSizedAccess, index)]);
+                          const auto* offsetPtr = std::bit_cast<const uint32_t*>(&tuple[base + offsetof(VariableSizedAccess, offset)]);
+                          const auto* sizePtr = std::bit_cast<const uint64_t*>(&tuple[base + offsetof(VariableSizedAccess, size)]);
 
+                          const VariableSizedAccess variableSizedAccess{
+                              VariableSizedAccess::Index(*indexPtr),
+                              VariableSizedAccess::Offset(*offsetPtr),
+                              VariableSizedAccess::Size(*sizePtr)};
                           auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
                           if (copyOfEscapeStrings)
                           {
@@ -92,7 +102,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
                           }
                           return varSizedData;
                       }
-                      return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
+                      return physicalType.formattedBytesToString(fieldValueStart.data());
                   });
         ss << fmt::format("{}\n", fmt::join(fields, ","));
     }

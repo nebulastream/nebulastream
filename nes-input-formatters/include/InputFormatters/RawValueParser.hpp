@@ -14,18 +14,23 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cstdint>
-#include <span>
+
+#include <cstddef>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
+#include <ErrorHandling.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
@@ -39,26 +44,71 @@ enum class QuotationType : uint8_t
 };
 
 template <typename T>
-nautilus::val<T> parseIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
+struct ParseResult
 {
-    return nautilus::invoke(
-        +[](const char* fieldAddress, const uint64_t fieldSize)
-        {
-            const auto fieldView = std::string_view(fieldAddress, fieldSize);
-            return NES::from_chars_with_exception<T>(fieldView);
-        },
-        fieldAddress,
-        fieldSize);
-}
-
-VariableSizedData parseVarSizedIntoNautilusRecord(
-    const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, QuotationType quotationType);
+    T value;
+    bool isNull;
+};
 
 void parseRawValueIntoRecord(
-    DataType::Type physicalType,
+    DataType dataType,
     Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
+    const std::vector<std::string>& nullValues,
     QuotationType quotationType);
+
+/// We expect a pointer and the size so that we can use this method from the nautilus runtime
+bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;
+
+template <typename T, bool Nullable>
+requires(
+    not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
+        || std::is_same_v<T, unsigned char*> || std::is_same_v<T, signed char*>))
+ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
+{
+    PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
+
+    /// We use the thread local to return multiple values.
+    /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
+    thread_local static ParseResult<T> result;
+    result.isNull = false;
+
+    /// Checking if the field is null but only if the field is nullable
+    if constexpr (Nullable)
+    {
+        if (checkIsNullProxy(fieldAddress, fieldSize, nullValues))
+        {
+            result.isNull = true;
+            result.value = T{0};
+            return &result;
+        }
+    }
+
+    const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
+    result.value = NES::from_chars_with_exception<T>(fieldAsString);
+    return &result;
+}
+
+template <typename T>
+VarVal parseFixedSizeIntoVarVal(
+    const bool nullable,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues)
+{
+    if (nullable)
+    {
+        const auto parseResult = nautilus::invoke(
+            parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
+        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
+        return VarVal{nautilusValue, nullable, isNull};
+    }
+    const auto parseResult = nautilus::invoke(
+        parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
+    return VarVal{nautilusValue, nullable, false};
+}
 }
