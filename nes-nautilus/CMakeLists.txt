@@ -48,5 +48,6 @@ target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
         # Dialects
         MLIRSCFDialect
         MLIRFuncToLLVM
+        MLIRMathToLLVM
         MLIRSCFToControlFlow
 )
