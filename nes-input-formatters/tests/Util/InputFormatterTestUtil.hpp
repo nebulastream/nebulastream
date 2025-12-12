@@ -43,8 +43,6 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/std/cstring.h>
 #include <nautilus/std/sstream.h>
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
@@ -348,7 +346,7 @@ void writeFieldToBuffer(
     const RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
     const auto fieldName = tupleBufferRef.getAllFieldNames().at(fieldIndex);
 
-    /// Creating a Nautilus::Record containing the current field
+    /// Creating a Record containing the current field
     if constexpr (std::is_same_v<T, std::string>)
     {
         const auto varSizedAccess
