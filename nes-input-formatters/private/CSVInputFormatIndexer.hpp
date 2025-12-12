@@ -70,12 +70,20 @@ struct CSVMetaData
 
     static QuotationType getQuotationType() { return QuotationType::NONE; }
 
+    static std::vector<std::string> getNullValues() { return {""}; }
+
     [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
     {
+        PRECONDITION(i < fieldNames.size(), "Trying to access position, larger than the size of fieldNames {}", fieldNames.size());
         return fieldNames[i];
     }
 
-    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
+    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const
+    {
+        PRECONDITION(
+            i < fieldDataTypes.size(), "Trying to access position, larger than the size of fieldDataTypes {}", fieldDataTypes.size());
+        return fieldDataTypes[i];
+    }
 
     [[nodiscard]] uint64_t getNumberOfFields() const
     {
