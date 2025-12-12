@@ -31,6 +31,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -55,16 +56,31 @@ struct VarSizedResult
     uint64_t size{};
 };
 
-VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
+VarVal SIMDJSONFIF::parseStringIntoNautilusRecord(
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
     const nautilus::val<SIMDJSONMetaData*>& metaData,
-    const ArenaRef& arenaRef)
+    const ArenaRef& arenaRef,
+    const nautilus::val<bool>& isNull,
+    const DataType::NULLABLE isNullable)
 {
     const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
-        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena)
+        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena, const bool isNull)
         {
-            thread_local auto result = VarSizedResult{};
+            /// We use thread_local to ensure that result exists as long as the thread exist.
+            /// We require this, as we return a pointer to the storage, due to use not being able to return two values in nautilus, i.e.,
+            /// the size of the var sized and the pointer to it
+            thread_local static VarSizedResult result{};
+
+            /// We handle null in the nautilus::invoke to reduce the amount of branches in nautilus code and reducing the tracing time.
+            if (isNull)
+            {
+                constexpr auto sizeOfValue = 0;
+                const auto arenaPointer = arena->allocateMemory(sizeOfValue);
+                result = VarSizedResult{.varSizedPointer = arenaPointer, .size = sizeOfValue};
+                return &result;
+            }
+
             INVARIANT(
                 fieldIndex < metaData->getNumberOfFields(),
                 "fieldIndex {} is out or bounds for schema keys of size: {}",
@@ -77,25 +93,26 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
             const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
             auto valueBytes = std::as_bytes(std::span(value));
 
-            /// Get memory from arena that holds length of the string and the bytes of the string
+            /// Get memory from arena that holds the bytes of the string
             auto arenaPointer = arena->allocateMemory(value.size());
             std::ranges::copy(valueBytes, arenaPointer.begin());
+
             result = VarSizedResult{.varSizedPointer = arenaPointer, .size = value.size()};
             return &result;
         },
         fieldIdx,
         fieldIndexFunction,
         metaData,
-        arenaRef.getArena());
-
-    VariableSizedData varSizedString{
+        arenaRef.getArena(),
+        isNull);
+    const VariableSizedData varSizedString{
         *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(VarSizedResult, varSizedPointer)),
         *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(VarSizedResult, size))};
-    return varSizedString;
+    return VarVal{VariableSizedData{varSizedString}, isNullable, isNull};
 }
 
 void SIMDJSONFIF::writeValueToRecord(
-    const DataType::Type physicalType,
+    const DataType dataType,
     Record& record,
     const std::string& fieldName,
     const nautilus::val<FieldIndex>& fieldIdx,
@@ -103,58 +120,110 @@ void SIMDJSONFIF::writeValueToRecord(
     const nautilus::val<const SIMDJSONMetaData*>& metaData,
     ArenaRef& arenaRef) const
 {
-    switch (physicalType)
+    nautilus::val<bool> isNull = false;
+    if (dataType.isNullableAsBool())
+    {
+        isNull = nautilus::invoke(
+            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
+            {
+                const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
+                auto currentDoc = *fieldIndexFunction->docStreamIterator;
+
+                /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
+                if (not currentDoc[fieldName].has_value())
+                {
+                    return true;
+                }
+
+                /// Second, we need to check if the key is equal to one of the null values
+                if (accessSIMDJsonFieldOrThrow(currentDoc, fieldName).is_null())
+                {
+                    return true;
+                }
+                return false;
+            },
+            fieldIdx,
+            fieldIndexFunction,
+            metaData);
+    }
+
+    switch (dataType.type)
     {
         case DataType::Type::INT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int8_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<int8_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::INT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int16_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<int16_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::INT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int32_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<int32_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::INT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int64_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<int64_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint8_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<uint8_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint16_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<uint16_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint32_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<uint32_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UINT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint64_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<uint64_t>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<float>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<float>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<double>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<double>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::CHAR: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<char>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<char>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<bool>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(
+                fieldName,
+                parseNonStringValueIntoNautilusRecord<bool>(fieldIdx, fieldIndexFunction, metaData, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData, arenaRef));
+            record.write(
+                fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData, arenaRef, isNull, dataType.isNullable));
             return;
         }
         case DataType::Type::UNDEFINED:

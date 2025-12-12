@@ -28,7 +28,7 @@
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -92,6 +92,12 @@ struct SIMDJSONMetaData
 
     [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
+    static std::vector<std::string> getNullValues()
+    {
+        INVARIANT(false, "This method should not be called, as SIMDJson has a is_null() method");
+        std::unreachable();
+    }
+
     [[nodiscard]] uint64_t getNumberOfFields() const
     {
         INVARIANT(fieldNamesOutput.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
@@ -152,14 +158,22 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     }
 
     template <typename T>
-    nautilus::val<T> parseNonStringValueIntoNautilusRecord(
+    [[nodiscard]] VarVal parseNonStringValueIntoNautilusRecord(
         nautilus::val<FieldIndex> fieldIdx,
         nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
-        nautilus::val<const SIMDJSONMetaData*> metaData) const
+        nautilus::val<const SIMDJSONMetaData*> metaData,
+        const nautilus::val<bool>& isNull,
+        const DataType::NULLABLE isNullable) const
     {
-        return nautilus::invoke(
-            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
+        auto nautilusValue = nautilus::invoke(
+            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData, const bool isNull)
             {
+                /// We handle null in the nautilus::invoke to reduce the amount of branches in nautilus code and reducing the tracing time.
+                if (isNull)
+                {
+                    return T{0};
+                }
+
                 const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
                 auto currentDoc = *fieldIndexFunction->docStreamIterator;
                 auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
@@ -203,17 +217,22 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             },
             fieldIdx,
             fieldIndexFunction,
-            metaData);
+            metaData,
+            isNull);
+
+        return VarVal{nautilusValue, isNullable, isNull};
     }
 
-    static VariableSizedData parseStringIntoNautilusRecord(
+    static VarVal parseStringIntoNautilusRecord(
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
         const nautilus::val<SIMDJSONMetaData*>& metaData,
-        const ArenaRef& arenaRef);
+        const ArenaRef& arenaRef,
+        const nautilus::val<bool>& isNull,
+        DataType::NULLABLE isNullable);
 
     void writeValueToRecord(
-        DataType::Type physicalType,
+        DataType dataType,
         Record& record,
         const std::string& fieldName,
         const nautilus::val<FieldIndex>& fieldIdx,
@@ -243,13 +262,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             auto fieldIdx = static_cast<nautilus::val<FieldIndex>>(i);
             const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
             writeValueToRecord(
-                fieldDataType.type,
-                record,
-                fieldName,
-                fieldIdx,
-                fieldIndexFunction,
-                nautilus::val<const IndexerMetaData*>(&metaData),
-                arenaRef);
+                fieldDataType, record, fieldName, fieldIdx, fieldIndexFunction, nautilus::val<const IndexerMetaData*>(&metaData), arenaRef);
         }
         /// Increment iterator and return record
         nautilus::invoke(
