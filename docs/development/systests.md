@@ -195,3 +195,166 @@ The endless mode runs tests in an infinite loop i.e. for regression testing (`--
 
 
 To show all currently supported command line arguments, execute the `systest` executable with the `--help` flag.
+
+### Topologies
+
+The systest framework supports configurable multi-worker topologies. By default, it uses the [2-node topology](../../nes-systests/configs/topologies/two-node.yaml).
+
+#### Specifying a Topology
+
+Use the `--clusterConfig` flag to specify a different topology configuration:
+
+```bash
+systest --clusterConfig /path/to/config/single-node.yaml
+```
+
+#### Topology Configuration Format
+
+Topology files are YAML documents that define the worker network structure and source/sink placement policies.
+
+**Example: Two-Node Topology**
+
+```yaml
+workers:
+  - host: "sink-node:9090"      # gRPC control-plane address; used as worker identity (format: hostname:port)
+    max_operators: 10000         # Maximum concurrent operator slots on this worker; use Unlimited for no cap
+  - host: "source-node:9090"    # gRPC control-plane address of this source worker
+    max_operators: 100           # Smaller capacity for edge/source nodes with limited resources
+    downstream:
+      - "sink-node:9090"         # gRPC address of the downstream worker for data routing
+
+allow_source_placement:
+  - "source-node:9090"           # Workers eligible for source operator placement (gRPC addresses)
+
+allow_sink_placement:
+  - "sink-node:9090"             # Workers eligible for sink operator placement
+  - "source-node:9090"
+```
+
+**Configuration Fields:**
+
+| Field | Description |
+|-------|-------------|
+| `workers[].host` | Worker data plane address (format: `hostname:port`) |
+| `workers[].grpc` | Worker control plane address (format: `hostname:port`) |
+| `workers[].max_operators` | Maximum concurrent operator slots on this worker (integer or Unlimited) |
+| `workers[].downstream` | Optional list of downstream workers for data routing |
+| `allow_source_placement` | Workers eligible for source placement (defaults to all workers if omitted) |
+| `allow_sink_placement` | Workers eligible for sink placement (defaults to all workers if omitted) |
+
+#### Automatic Source/Sink Placement
+
+To keep tests portable across topologies, the systest framework automatically assigns physical sources and sinks to workers based on the topology configuration.
+
+**Placement Strategy:**
+- Sources are placed on workers listed in `allow_source_placement`
+- Sinks are placed on workers listed in `allow_sink_placement`
+
+This allows tests to be topology-agnostic and run on both single-node and distributed configurations without modification.
+
+#### Explicit Worker Assignment
+
+For tests that require specific worker placement, use the `SOURCE.HOST` and `SINK.HOST` options:
+
+**Named Sources and Sinks:**
+
+```sql
+CREATE LOGICAL SOURCE nameStream(firstName VARSIZED, lastName VARSIZED);
+
+CREATE PHYSICAL SOURCE FOR nameStream
+TYPE File
+SET("sink-node:9090" AS `SOURCE`.`HOST`);
+ATTACH INLINE
+Alice,Smith
+Bob,Jones
+
+CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED)
+TYPE File
+SET("sink-node:9090" AS `SINK`.`HOST`);
+
+SELECT CONCAT(firstName, lastName) AS firstNameLastName
+FROM nameStream
+INTO firstNameLastNameSink;
+----
+AliceSmith
+BobJones
+```
+
+**Inline Sources and Sinks:**
+
+```sql
+SELECT id, value, timestamp
+FROM File(
+    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+    'source-node:9090' AS `SOURCE`.`HOST`,
+    'CSV' AS PARSER.`TYPE`,
+    SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+INTO File(
+    'sink-node:9090' AS `SINK`.`HOST`,
+    'CSV' AS `SINK`.`INPUT_FORMAT`);
+----
+1,100,1000
+2,200,2000
+3,300,3000
+```
+
+> [!NOTE]
+> Explicit worker assignment overrides the automatic placement strategy. Use this for tests that specifically validate distributed query execution or data routing.
+
+### Remote Tests
+
+By default, systest runs all workers embedded within a single process, using in-memory communication channels for multi-worker topologies. Compared to remote tests with real network overhead, this provides faster test execution and simplified debugging.
+
+#### Running Against Remote Workers
+
+To test against actual distributed workers, use the `--remote` flag. The systest framework will connect to workers at the gRPC addresses specified in the topology configuration.
+
+**Example: Single Remote Worker**
+
+```bash
+# Terminal 1: Start a worker
+cmake-build-debug/nes-single-node-worker/nes-single-node-worker --grpc=localhost:8080
+
+# Terminal 2: Run systest against the remote worker
+cmake-build-debug/nes-systest/nes-systest \
+    --clusterConfig nes-systests/configs/topologies/single-node.yaml \
+    --remote
+```
+
+> [!NOTE]
+> When using remote mode, ensure:
+> - All workers are reachable at the addresses specified in the topology config
+> - Workers are started with the correct `--grpc` addresses
+> - Network connectivity exists between systest and all workers
+> - If using Docker, workers must be in the same network or properly exposed
+
+#### Docker-Based Remote Testing
+
+For complex multi-worker topologies, use Docker Compose to orchestrate the cluster. The [systest-remote-test](../../nes-systests/systest/remote-test/systest_remote_test.bats) demonstrates this approach:
+
+1. The test generates a `docker-compose.yaml` from the topology configuration
+2. Docker Compose starts all workers in containers
+3. Systest runs in remote mode against the containerized cluster
+4. Cleanup happens automatically after test completion
+
+**Requirements:**
+- Enable Docker tests during build: `-DENABLE_DOCKER_TESTS=ON`
+- Docker and Docker Compose must be installed
+- Sufficient system resources for multiple worker containers
+
+**Example Test Invocation:**
+
+```bash
+# Build with Docker support
+cmake -B build -DENABLE_DOCKER_TESTS=ON
+cmake --build build
+
+# Run Docker-based remote tests
+cd build
+ctest -R systest-remote-test -V
+```
+
+The Docker approach provides the most realistic testing environment for distributed deployments, validating network communication, serialization, and multi-node query execution.
+
+> [!NOTE]
+> If you are using a Docker-based development environment, you must provide access to the Docker daemon (e.g., by mounting the Docker socket). Otherwise, Docker-based tests are disabled.
