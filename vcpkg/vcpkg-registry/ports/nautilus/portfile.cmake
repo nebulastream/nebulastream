@@ -19,6 +19,7 @@ vcpkg_from_github(
 		0001-disable-ubsan-function-call-check.patch
 		0002-fix-ambiguous-val-overload.patch
 		0003-ubsan-fix-variadic-expansion.patch
+		0004-printing_pointers_as_hex.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

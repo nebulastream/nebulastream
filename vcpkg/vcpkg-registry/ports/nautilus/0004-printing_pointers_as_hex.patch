@@ -1,0 +1,28 @@
+Subject: [PATCH] chore: Clang-tidy no function as variable name
+---
+Index: nautilus/include/nautilus/std/ostream.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/std/ostream.h b/nautilus/include/nautilus/std/ostream.h
+--- a/nautilus/include/nautilus/std/ostream.h	(revision 5fa4c9043d961238d283bf129b82c59e1476974a)
++++ b/nautilus/include/nautilus/std/ostream.h	(date 1764592062239)
+@@ -122,7 +122,16 @@
+ 	template <class T>
+ 	static void pipe(std::basic_ostream<CharT, Traits>* ptr, T value) {
+ 		auto& s = *ptr;
+-		s << value;
++		if constexpr (std::is_pointer_v<T> && !std::is_same_v<std::remove_cv_t<T>, char*>) {
++			if constexpr (not std::is_const_v<std::remove_pointer_t<T>> or
++			              not std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char>) {
++				s << std::showbase << std::hex << reinterpret_cast<const void*>(value);
++			} else {
++				s << value;
++			}
++		} else {
++			s << value;
++		}
+ 	}
+
+ 	static void flash(std::basic_ostream<CharT, Traits>* ptr) {
