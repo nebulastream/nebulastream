@@ -247,16 +247,15 @@ assert_json_contains() {
   setup_distributed tests/topologies/1-node.yaml
 
   run DOCKER_NES_CLI -t tests/good/crazy-join-one-fast-source.yaml start
-  echo $output
-  cat nes-cli.log
   [ "$status" -eq 0 ]
   # Output should be a query ID (numeric)
   [[ "$output" =~ ^[0-9]+$ ]]
   QUERY_ID=$output
 
-  sleep 1
+  sleep 3
 
   run DOCKER_NES_CLI -t tests/good/crazy-join-one-fast-source.yaml status "$QUERY_ID"
+  [ "$status" -eq 0 ]
   echo "${output}" | jq -e '(. | length) == 1' # 1 local
   QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
   [ "$QUERY_STATUS" = "Running" ]
