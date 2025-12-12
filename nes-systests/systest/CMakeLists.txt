@@ -141,7 +141,7 @@ add_dependencies(nes-systest-lib test-data)
 
 add_tests_if_enabled(tests)
 
-if (ENABLE_DOCKER_TESTS)
+if (ENABLE_DOCKER_TESTS AND ENABLE_BATS_TESTS)
     add_test(
             NAME systest-remote-test
             COMMAND
