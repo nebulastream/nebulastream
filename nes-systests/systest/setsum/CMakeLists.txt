@@ -15,3 +15,6 @@ target_include_directories(systest-setsum PUBLIC .)
 
 add_nes_test(setsum-test SetsumTest.cpp)
 target_link_libraries(setsum-test systest-setsum)
+
+add_executable(setsum SetsumStarter.cpp)
+target_link_libraries(setsum systest-setsum)
