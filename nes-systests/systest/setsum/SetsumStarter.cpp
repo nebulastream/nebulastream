@@ -67,10 +67,8 @@ int main(int argc, char* argv[])
     std::string line;
     while (std::getline(*inputStream, line))
     {
-        // Add newline back if needed? Actually Setsum should care about content.
-        // If we want exact binary reconstruction, we need newline. 
-        // But for line-based CSV order agnostic check, usually we hash the line content.
-        // Let's stick to line content for this demo.
+        // might be dangerous if the line is too long
+        // however this is starter, so we don't expect long lines
         setsum.add(line);
     }
 
