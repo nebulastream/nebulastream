@@ -284,8 +284,15 @@ void ChainedHashMap::serialize(std::ostream& out, const HashMapSerializationOpti
             const auto* keyPtr = reinterpret_cast<const char*>(entry) + sizeof(Interface::ChainedHashMapEntry);
             out.write(keyPtr, static_cast<std::streamsize>(header.keySize));
             const auto* valuePtr = keyPtr + header.keySize;
-            auto* pagedVector = reinterpret_cast<const Interface::PagedVector*>(valuePtr);
-            pagedVector->serialize(out);
+            if (hashMapOptions.valuesContainPagedVectors)
+            {
+                auto* pagedVector = reinterpret_cast<const Interface::PagedVector*>(valuePtr);
+                pagedVector->serialize(out);
+            }
+            else
+            {
+                out.write(valuePtr, static_cast<std::streamsize>(header.valueSize));
+            }
             entry = entry->next;
             ++writtenEntries;
         }
@@ -319,8 +326,15 @@ void ChainedHashMap::deserialize(
         auto* const keyPtr  = reinterpret_cast<char*>(newEntry) + sizeof(Interface::ChainedHashMapEntry);
         in.read(keyPtr, static_cast<std::streamsize>(header.keySize));
         auto* valuePtr = keyPtr + header.keySize;
-        auto* pagedVector = new (valuePtr) Interface::PagedVector();
-        pagedVector->deserialize(in, bufferProvider);
+        if (hashMapOptions.valuesContainPagedVectors)
+        {
+            auto* pagedVector = new (valuePtr) Interface::PagedVector();
+            pagedVector->deserialize(in, bufferProvider);
+        }
+        else
+        {
+            in.read(valuePtr, static_cast<std::streamsize>(header.valueSize));
+        }
     }
 
 }

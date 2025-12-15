@@ -223,7 +223,8 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
         keySize,
         valueSize,
         pageSize,
-        numberOfBuckets};
+        numberOfBuckets,
+        true};
     return hashMapOptions;
 }
 }

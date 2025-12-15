@@ -1,0 +1,43 @@
+# name: operator/aggregation/CheckpointingTest.test
+# description: Test Hashmap checkpoint creation and recovery
+# groups: [Aggregation, Checkpointing]
+
+
+CREATE LOGICAL SOURCE stream(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 20' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE INT64 0 100 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE stream2(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+0,1
+0,2
+0,3
+0,4
+0,5
+0,6
+0,7
+0,8
+
+CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i64_out UINT64)  TYPE File;
+CREATE SINK sinkStream2(stream2.start UINT64, stream2.end UINT64, stream2.i64_out UINT64)  TYPE File;
+
+CONFIGURATION worker.checkpoint.checkpoint_directory: /tmp/nes-systest-checkpoints/operator_aggregation_checkpointing
+CONFIGURATION worker.checkpoint.checkpoint_interval_ms: 1
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream WINDOW TUMBLING(ts, size 100ms) INTO sinkStream CHECKPOINT on;
+----
+0,100,100
+
+CONFIGURATION worker.checkpoint.recover_checkpoint_directory: /tmp/nes-systest-checkpoints/operator_aggregation_checkpointing
+CONFIGURATION worker.checkpoint.checkpoint_directory: /tmp/nes-systest-checkpoints/operator_aggregation_checkpointing
+CONFIGURATION worker.checkpoint.checkpoint_interval_ms: 0
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream2 WINDOW TUMBLING(ts, size 100ms) INTO sinkStream2 CHECKPOINT restore;
+----
+0,100,108

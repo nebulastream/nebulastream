@@ -207,7 +207,8 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         keySize,
         valueSize,
         pageSize,
-        numberOfBuckets);
+        numberOfBuckets,
+        false);
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());

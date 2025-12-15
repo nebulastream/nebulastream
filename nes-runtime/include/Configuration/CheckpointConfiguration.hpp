@@ -39,13 +39,16 @@ public:
            "60000",
            "Interval in milliseconds for periodic checkpointing. Set to 0 to disable automatic checkpoints."};
 
-    BoolOption recoverFromCheckpoint
-        = {"recover_from_checkpoint",
-           "false",
-           "If enabled, the worker attempts to recover the latest checkpoint at startup."};
+    ScalarOption<std::string> recoverCheckpointDirectory
+        = {"recover_checkpoint_directory",
+           "",
+           "Optional directory containing checkpoint files that should be recovered at startup."};
 
 private:
-    std::vector<BaseOption*> getOptions() override { return {&checkpointDirectory, &checkpointIntervalMs, &recoverFromCheckpoint}; }
+    std::vector<BaseOption*> getOptions() override
+    {
+        return {&checkpointDirectory, &checkpointIntervalMs, &recoverCheckpointDirectory};
+    }
 };
 
 }

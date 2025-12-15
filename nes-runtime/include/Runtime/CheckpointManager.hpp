@@ -17,6 +17,7 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -28,11 +29,18 @@ class CheckpointManager final
 public:
     using Callback = std::function<void()>;
 
-    static void initialize(std::filesystem::path checkpointDirectory, std::chrono::milliseconds checkpointInterval);
+    static void initialize(
+        std::filesystem::path checkpointDirectory,
+        std::chrono::milliseconds checkpointInterval,
+        bool recoverFromCheckpoint);
     static void shutdown();
 
     [[nodiscard]] static std::filesystem::path getCheckpointDirectory();
     [[nodiscard]] static std::filesystem::path getCheckpointPath(std::string_view fileName);
+    static void persistFile(std::string_view fileName, std::string_view contents);
+    [[nodiscard]] static std::optional<std::string> loadFile(const std::filesystem::path& absolutePath);
+    [[nodiscard]] static bool isCheckpointingEnabled();
+    [[nodiscard]] static bool shouldRecoverFromCheckpoint();
 
     static void registerCallback(const std::string& identifier, Callback callback);
     static void unregisterCallback(const std::string& identifier);

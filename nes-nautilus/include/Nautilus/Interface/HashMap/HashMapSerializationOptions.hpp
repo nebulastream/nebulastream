@@ -24,6 +24,7 @@ struct HashMapSerializationOptions
 {
     uint64_t keySize{0};
     uint64_t valueSize{0};
+    bool valuesContainPagedVectors{false};
 };
 
 }

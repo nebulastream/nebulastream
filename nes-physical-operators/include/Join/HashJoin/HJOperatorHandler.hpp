@@ -14,10 +14,12 @@
 
 #pragma once
 #include <algorithm>
+#include <atomic>
 #include <bit>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -70,6 +72,7 @@ public:
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         uint64_t maxNumberOfBuckets);
+    ~HJOperatorHandler() override;
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -78,6 +81,13 @@ public:
     void setNautilusCleanupExec(
         std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> nautilusCleanupExec, const JoinBuildSideType& buildSide);
     [[nodiscard]] std::vector<std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec>> getNautilusCleanupExec() const;
+    void requestCheckpoint(const JoinBuildSideType buildSide) const;
+    bool consumeCheckpointRequest(const JoinBuildSideType buildSide) const;
+    void setCheckpointCallbackId(const JoinBuildSideType buildSide, std::string callbackId);
+    bool hasCheckpointCallback(const JoinBuildSideType buildSide) const;
+    void clearCheckpointCallback(const JoinBuildSideType buildSide) const;
+    [[nodiscard]] bool wasCheckpointRestored(const JoinBuildSideType buildSide) const;
+    bool markCheckpointRestored(const JoinBuildSideType buildSide) const;
 
 private:
     /// Is required to not perform the setup again and resolving a race condition to the cleanup state function
@@ -86,6 +96,12 @@ private:
     /// shared_ptr as multiple slices need access to it
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> leftCleanupStateNautilusFunction;
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> rightCleanupStateNautilusFunction;
+    mutable std::atomic<bool> leftCheckpointRequested{false};
+    mutable std::atomic<bool> rightCheckpointRequested{false};
+    mutable std::atomic<bool> leftCheckpointRestored{false};
+    mutable std::atomic<bool> rightCheckpointRestored{false};
+    mutable std::optional<std::string> leftCheckpointCallbackId;
+    mutable std::optional<std::string> rightCheckpointCallbackId;
 
 
     void emitSlicesToProbe(

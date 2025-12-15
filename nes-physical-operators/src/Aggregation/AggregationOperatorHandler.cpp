@@ -28,6 +28,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -49,6 +50,40 @@ AggregationOperatorHandler::AggregationOperatorHandler(
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
 {
+}
+
+AggregationOperatorHandler::~AggregationOperatorHandler()
+{
+    if (checkpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+    }
+}
+
+void AggregationOperatorHandler::requestCheckpoint()
+{
+    checkpointRequested.store(true, std::memory_order_relaxed);
+}
+
+bool AggregationOperatorHandler::consumeCheckpointRequest()
+{
+    bool expected = true;
+    return checkpointRequested.compare_exchange_strong(expected, false, std::memory_order_acq_rel);
+}
+
+void AggregationOperatorHandler::setCheckpointCallbackId(std::string callbackId)
+{
+    checkpointCallbackId = std::move(callbackId);
+}
+
+void AggregationOperatorHandler::clearCheckpointCallback()
+{
+    checkpointCallbackId.reset();
+}
+
+bool AggregationOperatorHandler::hasCheckpointCallback() const
+{
+    return checkpointCallbackId.has_value();
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>

@@ -50,6 +50,17 @@ namespace NES
 namespace
 {
 std::regex PlanFilePattern(R"(query_[0-9]+\.plan)");
+
+std::optional<std::filesystem::path> resolveRecoveryDirectory(const CheckpointConfiguration& checkpointConfiguration)
+{
+    const auto recoveryValue = checkpointConfiguration.recoverCheckpointDirectory.getValue();
+    if (recoveryValue.empty())
+    {
+        return std::nullopt;
+    }
+
+    return std::filesystem::path{recoveryValue};
+}
 }
 
 SingleNodeWorker::~SingleNodeWorker()
@@ -62,10 +73,12 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
-    const auto checkpointDir = configuration.workerConfiguration.checkpointConfiguration.checkpointDirectory.getValue();
-    const auto checkpointInterval = std::chrono::milliseconds(
-        configuration.workerConfiguration.checkpointConfiguration.checkpointIntervalMs.getValue());
-    CheckpointManager::initialize(checkpointDir, checkpointInterval);
+    const auto& checkpointConfig = configuration.workerConfiguration.checkpointConfiguration;
+    const auto checkpointDir = std::filesystem::path(checkpointConfig.checkpointDirectory.getValue());
+    const auto checkpointInterval = std::chrono::milliseconds(checkpointConfig.checkpointIntervalMs.getValue());
+    const auto recoveryDir = resolveRecoveryDirectory(checkpointConfig);
+
+    CheckpointManager::initialize(checkpointDir, checkpointInterval, recoveryDir.has_value());
 
     if (configuration.enableGoogleEventTrace.getValue())
     {
@@ -80,9 +93,9 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
 
-    if (configuration.workerConfiguration.checkpointConfiguration.recoverFromCheckpoint.getValue())
+    if (recoveryDir)
     {
-        recoverLatestCheckpoint();
+        recoverLatestCheckpoint(*recoveryDir);
     }
 }
 
@@ -106,19 +119,17 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         INVARIANT(result, "expected successfull query compilation or exception, but got nothing");
         const auto queryId = nodeEngine->registerCompiledQueryPlan(std::move(result));
         const auto callbackId = fmt::format("query_plan_{}", queryId.getRawValue());
-        auto persistPlan = [planBytes = serializedPlan, queryId]() mutable
+        const auto checkpointIntervalMs = configuration.workerConfiguration.checkpointConfiguration.checkpointIntervalMs.getValue();
+        if (checkpointIntervalMs > 0)
         {
-            const auto planFile = CheckpointManager::getCheckpointPath(fmt::format("query_{}.plan", queryId.getRawValue()));
-            const auto directory = planFile.parent_path();
-            if (!directory.empty())
+            auto persistPlan = [planBytes = serializedPlan, queryId]() mutable
             {
-                std::filesystem::create_directories(directory);
-            }
-            std::ofstream out(planFile, std::ios::binary | std::ios::trunc);
-            out.write(planBytes.data(), static_cast<std::streamsize>(planBytes.size()));
-        };
-        persistPlan();
-        CheckpointManager::registerCallback(callbackId, persistPlan);
+                const auto fileName = fmt::format("query_{}.plan", queryId.getRawValue());
+                CheckpointManager::persistFile(fileName, planBytes);
+            };
+            persistPlan();
+            CheckpointManager::registerCallback(callbackId, std::move(persistPlan));
+        }
         return queryId;
     }
     CPPTRACE_CATCH(...)
@@ -198,11 +209,10 @@ std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) cons
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }
 
-void SingleNodeWorker::recoverLatestCheckpoint()
+void SingleNodeWorker::recoverLatestCheckpoint(const std::filesystem::path& checkpointDir)
 {
     try
     {
-        const auto checkpointDir = std::filesystem::path(configuration.workerConfiguration.checkpointConfiguration.checkpointDirectory.getValue());
         if (!std::filesystem::exists(checkpointDir))
         {
             NES_INFO("Checkpoint directory {} does not exist, skipping recovery", checkpointDir.string());
@@ -272,12 +282,7 @@ void SingleNodeWorker::recoverLatestCheckpoint()
 
 std::optional<std::string> SingleNodeWorker::loadSerializedPlanFromFile(const std::filesystem::path& planFilePath)
 {
-    std::ifstream in(planFilePath, std::ios::binary);
-    if (!in.is_open())
-    {
-        return std::nullopt;
-    }
-    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    return CheckpointManager::loadFile(planFilePath);
 }
 
 }

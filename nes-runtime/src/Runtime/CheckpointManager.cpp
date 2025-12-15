@@ -18,9 +18,11 @@
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -28,6 +30,7 @@ namespace
 {
 std::filesystem::path checkpointDirectory{std::filesystem::path{"/tmp"} / "nebulastream"};
 std::chrono::milliseconds checkpointInterval{0};
+bool recoveryEnabled = false;
 std::unordered_map<std::string, CheckpointManager::Callback> callbacks;
 std::mutex checkpointMutex;
 std::condition_variable checkpointCv;
@@ -94,13 +97,14 @@ void stopScheduler()
 
 }
 
-void CheckpointManager::initialize(std::filesystem::path directory, std::chrono::milliseconds interval)
+void CheckpointManager::initialize(std::filesystem::path directory, std::chrono::milliseconds interval, bool recoverFromCheckpoint)
 {
     stopScheduler();
     {
         std::scoped_lock lock(checkpointMutex);
         checkpointDirectory = std::move(directory);
         checkpointInterval = interval;
+        recoveryEnabled = recoverFromCheckpoint;
     }
     ensureScheduler();
 }
@@ -124,6 +128,45 @@ std::filesystem::path CheckpointManager::getCheckpointPath(std::string_view file
     auto path = checkpointDirectory;
     path /= fileName;
     return path;
+}
+
+void CheckpointManager::persistFile(std::string_view fileName, std::string_view contents)
+{
+    const auto filePath = getCheckpointPath(fileName);
+    const auto directory = filePath.parent_path();
+    if (!directory.empty())
+    {
+        std::filesystem::create_directories(directory);
+    }
+
+    std::ofstream out(filePath, std::ios::binary | std::ios::trunc);
+    if (!out.is_open())
+    {
+        throw CheckpointError("Cannot open checkpoint file {}", filePath.string());
+    }
+    out.write(contents.data(), static_cast<std::streamsize>(contents.size()));
+}
+
+std::optional<std::string> CheckpointManager::loadFile(const std::filesystem::path& absolutePath)
+{
+    std::ifstream in(absolutePath, std::ios::binary);
+    if (!in.is_open())
+    {
+        return std::nullopt;
+    }
+    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+}
+
+bool CheckpointManager::isCheckpointingEnabled()
+{
+    std::scoped_lock lock(checkpointMutex);
+    return checkpointInterval.count() > 0;
+}
+
+bool CheckpointManager::shouldRecoverFromCheckpoint()
+{
+    std::scoped_lock lock(checkpointMutex);
+    return recoveryEnabled;
 }
 
 void CheckpointManager::registerCallback(const std::string& identifier, Callback callback)

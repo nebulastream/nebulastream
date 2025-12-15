@@ -34,6 +34,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <Runtime/CheckpointManager.hpp>
 
 namespace NES
 {
@@ -48,6 +49,107 @@ HJOperatorHandler::HJOperatorHandler(
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
 {
+}
+
+HJOperatorHandler::~HJOperatorHandler()
+{
+    if (leftCheckpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*leftCheckpointCallbackId);
+    }
+    if (rightCheckpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*rightCheckpointCallbackId);
+    }
+}
+
+void HJOperatorHandler::requestCheckpoint(const JoinBuildSideType buildSide) const
+{
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            leftCheckpointRequested.store(true, std::memory_order_relaxed);
+            break;
+        case JoinBuildSideType::Right:
+            rightCheckpointRequested.store(true, std::memory_order_relaxed);
+            break;
+    }
+}
+
+bool HJOperatorHandler::consumeCheckpointRequest(const JoinBuildSideType buildSide) const
+{
+    bool expected = true;
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            return leftCheckpointRequested.compare_exchange_strong(expected, false, std::memory_order_acq_rel);
+        case JoinBuildSideType::Right:
+            return rightCheckpointRequested.compare_exchange_strong(expected, false, std::memory_order_acq_rel);
+    }
+    return false;
+}
+
+void HJOperatorHandler::setCheckpointCallbackId(const JoinBuildSideType buildSide, std::string callbackId)
+{
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            leftCheckpointCallbackId = std::move(callbackId);
+            break;
+        case JoinBuildSideType::Right:
+            rightCheckpointCallbackId = std::move(callbackId);
+            break;
+    }
+}
+
+bool HJOperatorHandler::hasCheckpointCallback(const JoinBuildSideType buildSide) const
+{
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            return leftCheckpointCallbackId.has_value();
+        case JoinBuildSideType::Right:
+            return rightCheckpointCallbackId.has_value();
+    }
+    return false;
+}
+
+void HJOperatorHandler::clearCheckpointCallback(const JoinBuildSideType buildSide) const
+{
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            leftCheckpointCallbackId.reset();
+            break;
+        case JoinBuildSideType::Right:
+            rightCheckpointCallbackId.reset();
+            break;
+    }
+}
+
+bool HJOperatorHandler::wasCheckpointRestored(const JoinBuildSideType buildSide) const
+{
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            return leftCheckpointRestored.load(std::memory_order_acquire);
+        case JoinBuildSideType::Right:
+            return rightCheckpointRestored.load(std::memory_order_acquire);
+    }
+    return false;
+}
+
+bool HJOperatorHandler::markCheckpointRestored(const JoinBuildSideType buildSide) const
+{
+    bool expected = false;
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            return leftCheckpointRestored.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
+        case JoinBuildSideType::Right:
+            return rightCheckpointRestored.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
+    }
+    return false;
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>

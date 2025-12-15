@@ -37,6 +37,20 @@ Interface::HashMap* getHashJoinHashMapProxy(
     WorkerThreadId workerThreadId,
     JoinBuildSideType buildSide,
     const HJBuildPhysicalOperator* buildOperator);
+void serializeHashMapProxy(
+    const HJOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    JoinBuildSideType buildSide,
+    AbstractBufferProvider* bufferProvider,
+    const HJBuildPhysicalOperator* buildOperator);
+Interface::HashMap* deserializeHashMapProxy(
+    const HJOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    JoinBuildSideType buildSide,
+    AbstractBufferProvider* bufferProvider,
+    const HJBuildPhysicalOperator* buildOperator);
 
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in a hash map of a
 /// corresponding slice one after the other. Afterward, the second phase (HJProbe) will start joining the tuples by comparing the join keys
@@ -49,6 +63,20 @@ public:
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
         JoinBuildSideType buildSide,
+        const HJBuildPhysicalOperator* buildOperator);
+    friend void serializeHashMapProxy(
+        const HJOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        JoinBuildSideType buildSide,
+        AbstractBufferProvider* bufferProvider,
+        const HJBuildPhysicalOperator* buildOperator);
+    friend Interface::HashMap* deserializeHashMapProxy(
+        const HJOperatorHandler* operatorHandler,
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        JoinBuildSideType buildSide,
+        AbstractBufferProvider* bufferProvider,
         const HJBuildPhysicalOperator* buildOperator);
     HJBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,

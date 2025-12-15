@@ -22,6 +22,8 @@
 #include <CompilationContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
+#include <Time/Timestamp.hpp>
+#include <optional>
 #include <val.hpp>
 
 namespace NES
