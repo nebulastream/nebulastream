@@ -31,7 +31,6 @@
 #include <absl/strings/internal/str_format/extension.h>
 #include <absl/strings/str_format.h>
 #include <google/protobuf/stubs/port.h>
-#include "../../../../../../nes-physical-operators/include/HashMapOptions.hpp"
 #include "Nautilus/Interface/PagedVector/PagedVector.hpp"
 
 #include <ErrorHandling.hpp>
@@ -267,7 +266,7 @@ void ChainedHashMap::clear() noexcept
     storageSpace.clear();
 }
 
-void ChainedHashMap::serialize(std::ostream& out, const HashMapOptions& hashMapOptions) const
+void ChainedHashMap::serialize(std::ostream& out, const HashMapSerializationOptions& hashMapOptions) const
 {
     const ChainedHashMapHeader header{
         .numberOfEntries = this->getNumberOfTuples(),
@@ -299,7 +298,10 @@ void ChainedHashMap::serialize(std::ostream& out, const HashMapOptions& hashMapO
     );
 }
 
-void ChainedHashMap::deserialize(std::istream& in, const HashMapOptions& hashMapOptions, AbstractBufferProvider* bufferProvider)
+void ChainedHashMap::deserialize(
+    std::istream& in,
+    const HashMapSerializationOptions& hashMapOptions,
+    AbstractBufferProvider* bufferProvider)
 {
 
     ChainedHashMapHeader header;

@@ -24,6 +24,7 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/HashMap/HashMapSerializationOptions.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -155,6 +156,11 @@ struct HashMapOptions
     uint64_t valueSize;
     uint64_t pageSize;
     uint64_t numberOfBuckets;
+
+    [[nodiscard]] Nautilus::Interface::HashMapSerializationOptions getSerializationOptions() const
+    {
+        return {.keySize = keySize, .valueSize = valueSize};
+    }
 };
 
 }

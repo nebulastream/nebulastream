@@ -26,11 +26,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES
-{
-struct HashMapOptions;
-}
-
 namespace NES::Nautilus::Interface
 {
 /// Forward declaration of the ChainedHashMapRef, to avoid cyclic dependencies between ChainedHashMap and ChainedHashMapRef
@@ -101,10 +96,13 @@ public:
     /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
     static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
 
-    void serialize(std::ostream& out, const HashMapOptions& hashMapOptions) const override;
+    void serialize(std::ostream& out, const HashMapSerializationOptions& hashMapOptions) const override;
 
     /// Overwrites the buffers of this current instance with the serialized data
-    void deserialize(std::istream& in, const HashMapOptions& hashMapOptions, AbstractBufferProvider* bufferProvider) override;
+    void deserialize(
+        std::istream& in,
+        const HashMapSerializationOptions& hashMapOptions,
+        AbstractBufferProvider* bufferProvider) override;
 
 private:
     friend class ChainedHashMapRef;

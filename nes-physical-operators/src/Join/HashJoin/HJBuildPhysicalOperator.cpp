@@ -83,7 +83,7 @@ void serializeHashJoinState(
     {
         throw CheckpointError("Cannot open output file {}", path.string());
     }
-    hashMap->serialize(out, buildOperator->getHashMapOptions());
+    hashMap->serialize(out, buildOperator->getHashMapOptions().getSerializationOptions());
 }
 
 void deserializeHashJoinState(
@@ -103,7 +103,7 @@ void deserializeHashJoinState(
     {
         throw CheckpointError("Cannot open input file {}", path.string());
     }
-    hashMap->deserialize(in, buildOperator->getHashMapOptions(), bufferProvider);
+    hashMap->deserialize(in, buildOperator->getHashMapOptions().getSerializationOptions(), bufferProvider);
 }
 }
 

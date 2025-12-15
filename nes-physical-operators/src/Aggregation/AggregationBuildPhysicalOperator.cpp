@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <ranges>
@@ -123,7 +124,12 @@ void serializeHashMapProxy(
     auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId, buildOperator);
     const auto checkpointFile = getAggregationCheckpointFile();
     ensureCheckpointDirectory(checkpointFile);
-    hashMap->serialize(checkpointFile, buildOperator->getHashMapOptions());
+    std::ofstream out(checkpointFile, std::ios::binary);
+    if (!out.is_open())
+    {
+        throw CheckpointError("Cannot open aggregation checkpoint {}", checkpointFile.string());
+    }
+    hashMap->serialize(out, buildOperator->getHashMapOptions().getSerializationOptions());
     serialized = true;
 }
 
@@ -145,7 +151,12 @@ Interface::HashMap* deserializeHashMapProxy(
         return hashMap;
     }
     ensureCheckpointDirectory(checkpointFile);
-    hashMap->deserialize(checkpointFile, bufferProvider);
+    std::ifstream in(checkpointFile, std::ios::binary);
+    if (!in.is_open())
+    {
+        throw CheckpointError("Cannot open aggregation checkpoint {}", checkpointFile.string());
+    }
+    hashMap->deserialize(in, buildOperator->getHashMapOptions().getSerializationOptions(), bufferProvider);
     return hashMap;
 }
 

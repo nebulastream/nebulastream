@@ -15,12 +15,8 @@
 #pragma once
 #include <cstdint>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/HashMapSerializationOptions.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-
-namespace NES
-{
-struct HashMapOptions;
-}
 
 namespace NES::Nautilus::Interface
 {
@@ -38,7 +34,7 @@ public:
     virtual AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) = 0;
     [[nodiscard]] virtual uint64_t getNumberOfTuples() const = 0;
 
-    virtual void serialize(std::ostream&, const HashMapOptions&) const = 0;
-    virtual void deserialize(std::istream&, const HashMapOptions&, AbstractBufferProvider* bufferProvider) = 0;
+    virtual void serialize(std::ostream&, const HashMapSerializationOptions&) const = 0;
+    virtual void deserialize(std::istream&, const HashMapSerializationOptions&, AbstractBufferProvider* bufferProvider) = 0;
 };
 }
