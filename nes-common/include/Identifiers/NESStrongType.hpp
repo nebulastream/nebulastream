@@ -64,7 +64,11 @@ struct StringLiteral
     /// C-Strings cannot be converted to std::array, so we are using a fixed size char array where the length N can be deduced.
     /// StringLiteral is intended to be used as a non-type template parameter like fun<"my_string"> so we want the non-explicit constructor.
     ///NOLINTNEXTLINE(modernize-avoid-c-arrays, google-explicit-constructor)
-    constexpr StringLiteral(const char (&str)[N]) { std::copy_n(str, N, value.begin()); }
+    constexpr StringLiteral(const char (&str)[N])
+    {
+        std::string_view stringView(str, N);
+        std::copy_n(stringView.begin(), N, value.begin());
+    }
 
     std::array<char, N> value;
 };
