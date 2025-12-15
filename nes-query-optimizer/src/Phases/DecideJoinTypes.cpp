@@ -48,7 +48,8 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
     auto allowedLogicalFunction = [](const LogicalFunction& logicalFunction)
     {
         return logicalFunction.tryGetAs<AndLogicalFunction>().has_value() or logicalFunction.tryGetAs<EqualsLogicalFunction>().has_value()
-            or logicalFunction.tryGetAs<OrLogicalFunction>().has_value() or logicalFunction.tryGetAs<FieldAccessLogicalFunction>().has_value();
+            or logicalFunction.tryGetAs<OrLogicalFunction>().has_value()
+            or logicalFunction.tryGetAs<FieldAccessLogicalFunction>().has_value();
     };
 
     std::unordered_set<LogicalFunction> parentsOfJoinComparisons;

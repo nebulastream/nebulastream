@@ -112,8 +112,10 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                 throw UnknownJoinStrategy(
                     "Could not handle join strategy that has chained logical functions operating over the join fields!");
             }
-            const auto leftField = leftInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
-            const auto rightField = rightInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
+            const auto leftField
+                = leftInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
+            const auto rightField
+                = rightInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
 
             /// If they do not have the same data types, we need to cast both to a common one
             if (firstChild->getDataType() != secondChild->getDataType())

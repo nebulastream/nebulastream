@@ -111,8 +111,7 @@ FieldAssignmentLogicalFunction FieldAssignmentLogicalFunction::withInferredDataT
     {
         if (const auto dataType = copy.logicalFunction.getDataType().join(copy.fieldAccess.getDataType()))
         {
-            copy.fieldAccess
-                = fieldAccess.withFieldName(existingField.value().name).withDataType(dataType.value());
+            copy.fieldAccess = fieldAccess.withFieldName(existingField.value().name).withDataType(dataType.value());
         }
         else
         {

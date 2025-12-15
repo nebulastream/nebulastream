@@ -26,11 +26,11 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
@@ -63,25 +63,25 @@ concept LogicalFunctionConcept = requires(
     { thisFunction.getChildren() } -> std::convertible_to<std::vector<LogicalFunction>>;
 
     /// Returns the data type of the function
-    { thisFunction.getDataType()} -> std::convertible_to<DataType>;
+    { thisFunction.getDataType() } -> std::convertible_to<DataType>;
 
     /// Creates a new function with the given children
     { thisFunction.withChildren(children) } -> std::convertible_to<T>;
 
     /// Creates a new operator with the given datatype
-    { thisFunction.withDataType(dataType)} -> std::convertible_to<T>;
+    { thisFunction.withDataType(dataType) } -> std::convertible_to<T>;
 
     /// Creates a new function with inferred data type based on input schema
-    { thisFunction.withInferredDataType(schema)} -> std::convertible_to<T>;
+    { thisFunction.withInferredDataType(schema) } -> std::convertible_to<T>;
 
     /// Returns the type of the function
-    { thisFunction.getType()} -> std::convertible_to<std::string_view>;
+    { thisFunction.getType() } -> std::convertible_to<std::string_view>;
 
     /// Serializes the function to a protobuf message
-    { thisFunction.serialize()} -> std::convertible_to<SerializableFunction>;
+    { thisFunction.serialize() } -> std::convertible_to<SerializableFunction>;
 
     /// Compares this function with another for equality
-    { thisFunction == rhs} -> std::convertible_to<bool>;
+    { thisFunction == rhs } -> std::convertible_to<bool>;
 };
 
 namespace detail
@@ -103,9 +103,9 @@ struct ErasedLogicalFunction
 
     friend bool operator==(const ErasedLogicalFunction& lhs, const ErasedLogicalFunction& rhs) { return lhs.equals(rhs); }
 
-    private:
-        template <typename T>
-        friend struct NES::TypedLogicalFunction;
+private:
+    template <typename T>
+    friend struct NES::TypedLogicalFunction;
     ///If the function inherits from DynamicBase (over Castable), then returns a pointer to the wrapped operator as DynamicBase,
     ///so that we can then safely try to dyncast the DynamicBase* to Castable<T>*
     [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
@@ -248,23 +248,26 @@ struct TypedLogicalFunction
         std::unreachable();
     }
 
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const {return self->explain(verbosity);};
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const { return self->explain(verbosity); };
 
-    [[nodiscard]] DataType getDataType() const { return self->getDataType();};
+    [[nodiscard]] DataType getDataType() const { return self->getDataType(); };
 
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(dataType);};
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(dataType); };
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const { return self->withInferredDataType(schema);};
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const { return self->withInferredDataType(schema); };
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const { return self->getChildren();};
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const { return self->getChildren(); };
 
-    [[nodiscard]] TypedLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const { return self->withChildren(children);};
+    [[nodiscard]] TypedLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const
+    {
+        return self->withChildren(children);
+    };
 
-    [[nodiscard]] std::string_view getType() const { return self->getType();};
+    [[nodiscard]] std::string_view getType() const { return self->getType(); };
 
-    [[nodiscard]] SerializableFunction serialize() const { return self->serialize();};
+    [[nodiscard]] SerializableFunction serialize() const { return self->serialize(); };
 
-    [[nodiscard]] bool operator==(const LogicalFunction& other) const { return self->equals(*other.self);};
+    [[nodiscard]] bool operator==(const LogicalFunction& other) const { return self->equals(*other.self); };
 
 private:
     template <typename FriendChecked>
@@ -301,10 +304,7 @@ struct FunctionModel : ErasedLogicalFunction
 
     [[nodiscard]] FunctionType get() const { return impl; }
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override
-    {
-        return impl.withInferredDataType(schema);
-    }
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override { return impl.withInferredDataType(schema); }
 
     [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return impl.withDataType(dataType); }
 

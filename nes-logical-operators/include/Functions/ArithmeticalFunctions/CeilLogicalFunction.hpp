@@ -38,7 +38,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] CeilLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] CeilLogicalFunction withInferredDataType(const Schema& schema) const ;
+    [[nodiscard]] CeilLogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] CeilLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

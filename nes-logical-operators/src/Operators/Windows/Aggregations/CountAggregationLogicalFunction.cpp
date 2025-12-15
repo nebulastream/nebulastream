@@ -73,10 +73,8 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
         }
 
         /// a count aggregation is always on an uint 64
-        this->setOnField(
-            this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
-        this->setAsField(
-            this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
+        this->setOnField(this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
+        this->setAsField(this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
     }
     else
     {

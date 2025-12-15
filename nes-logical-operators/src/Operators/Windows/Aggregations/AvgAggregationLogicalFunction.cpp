@@ -67,13 +67,11 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     {
         if (this->getOnField().getDataType().isSignedInteger())
         {
-            newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64));
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64));
         }
         else
         {
-            newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64));
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64));
         }
     }
     else

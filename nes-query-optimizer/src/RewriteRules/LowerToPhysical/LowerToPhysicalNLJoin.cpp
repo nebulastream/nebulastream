@@ -58,7 +58,8 @@ static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& 
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().has_value(); })
-        | std::views::transform([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>()->get().getFieldName(); })
+        | std::views::transform([](const auto& child)
+                                { return child.template tryGetAs<FieldAccessLogicalFunction>()->get().getFieldName(); })
         | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
         | std::ranges::to<std::vector<std::string>>();
 };
