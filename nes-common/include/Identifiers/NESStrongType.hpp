@@ -86,8 +86,20 @@ public:
     explicit constexpr NESStrongStringType(std::string_view view) : value(std::string(view)) { }
 
     template <std::convertible_to<std::string> StringType>
-    explicit constexpr NESStrongStringType(StringType&& stringType) : value(static_cast<std::string>(std::forward<StringType>(stringType)))
+    explicit constexpr NESStrongStringType(StringType&& stringType)
     {
+        if constexpr (std::is_same_v<std::decay_t<StringType>, std::string>)
+        {
+            value = std::forward<StringType>(stringType);
+        }
+        else if constexpr (std::is_convertible_v<StringType, std::string>)
+        {
+            value = static_cast<std::string>(std::forward<StringType>(stringType));
+        }
+        else
+        {
+            static_assert(std::is_convertible_v<StringType, std::string>, "StringType must be convertible to std::string");
+        }
     }
 
     [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongStringType& lhs, const NESStrongStringType& rhs) noexcept
