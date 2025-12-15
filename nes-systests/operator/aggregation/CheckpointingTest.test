@@ -27,15 +27,15 @@ ATTACH INLINE
 CREATE SINK sinkStream(stream.start UINT64, stream.end UINT64, stream.i64_out UINT64)  TYPE File;
 CREATE SINK sinkStream2(stream2.start UINT64, stream2.end UINT64, stream2.i64_out UINT64)  TYPE File;
 
-CONFIGURATION worker.checkpoint.checkpoint_directory: /tmp/nes-systest-checkpoints/operator_aggregation_checkpointing
+CONFIGURATION worker.checkpoint.checkpoint_directory: CHECKPOINT_DIR
 CONFIGURATION worker.checkpoint.checkpoint_interval_ms: 1
 
 SELECT start, end, COUNT(i64) as i64_out FROM stream WINDOW TUMBLING(ts, size 100ms) INTO sinkStream CHECKPOINT on;
 ----
 0,100,100
 
-CONFIGURATION worker.checkpoint.recover_checkpoint_directory: /tmp/nes-systest-checkpoints/operator_aggregation_checkpointing
-CONFIGURATION worker.checkpoint.checkpoint_directory: /tmp/nes-systest-checkpoints/operator_aggregation_checkpointing
+CONFIGURATION worker.checkpoint.recover_checkpoint_directory: CHECKPOINT_DIR
+CONFIGURATION worker.checkpoint.checkpoint_directory: CHECKPOINT_DIR
 CONFIGURATION worker.checkpoint.checkpoint_interval_ms: 0
 
 SELECT start, end, COUNT(i64) as i64_out FROM stream2 WINDOW TUMBLING(ts, size 100ms) INTO sinkStream2 CHECKPOINT restore;

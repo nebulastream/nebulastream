@@ -806,9 +806,23 @@ struct SystestBinder::Impl
                  substitute = configDir;
                  if (!substitute.empty() && substitute.back() != '/')
                  {
+                 substitute.push_back('/');
+                 }
+             }});
+        const auto checkpointDir = workingDir / "checkpoints";
+        std::filesystem::create_directories(checkpointDir);
+        parser.registerSubstitutionRule(
+            {.keyword = "CHECKPOINT_DIR/",
+             .ruleFunction = [checkpointDir](std::string& substitute)
+             {
+                 substitute = checkpointDir.string();
+                 if (!substitute.empty() && substitute.back() != '/')
+                 {
                      substitute.push_back('/');
                  }
              }});
+        parser.registerSubstitutionRule(
+            {.keyword = "CHECKPOINT_DIR", .ruleFunction = [checkpointDir](std::string& substitute) { substitute = checkpointDir.string(); }});
 
         if (!parser.loadFile(testFilePath))
         {
