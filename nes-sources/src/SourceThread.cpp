@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <atomic>
 #include <exception>
 #include <functional>
 #include <future>
@@ -28,8 +29,10 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/ReplayableSourceStorage.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -43,9 +46,20 @@ namespace NES
 
 SourceThread::SourceThread(
     OriginId originId, std::shared_ptr<AbstractBufferProvider> poolProvider, std::unique_ptr<Source> sourceImplementation)
-    : originId(originId), localBufferManager(std::move(poolProvider)), sourceImplementation(std::move(sourceImplementation))
+    : originId(originId)
+    , localBufferManager(std::move(poolProvider))
+    , sourceImplementation(std::move(sourceImplementation))
+    , started(false)
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
+}
+
+SourceThread::~SourceThread()
+{
+    if (checkpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+    }
 }
 
 namespace detail
@@ -105,7 +119,11 @@ struct SourceHandle
 };
 
 SourceImplementationTermination
-dataSourceThreadRoutine(const std::stop_token& stopToken, Source& source, AbstractBufferProvider& bufferProvider, const EmitFn& emit)
+dataSourceThreadRoutine(
+    const std::stop_token& stopToken,
+    Source& source,
+    AbstractBufferProvider& bufferProvider,
+    const EmitFn& emit)
 {
     const SourceHandle sourceHandle(source);
     while (!stopToken.stop_requested())
@@ -149,22 +167,45 @@ void dataSourceThread(
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
-    std::shared_ptr<AbstractBufferProvider> bufferProvider)
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    ReplayableSourceStorage* replayStorage,
+    std::atomic<uint64_t>* latestEmittedSequence)
 {
     threadSetup(originId);
 
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
+    if (replayStorage)
+    {
+        if (const auto last = replayStorage->loadLastCheckpointedSequence())
+        {
+            sequenceNumberGenerator = static_cast<size_t>(*last + 1);
+        }
+    }
+
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         }
+        if (replayStorage && shouldAddMetadata)
+        {
+            replayStorage->persistBuffer(buffer);
+            if (latestEmittedSequence)
+            {
+                latestEmittedSequence->store(buffer.getSequenceNumber().getRawValue(), std::memory_order_relaxed);
+            }
+        }
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
 
     try
     {
+        if (CheckpointManager::shouldRecoverFromCheckpoint() && replayStorage)
+        {
+            replayStorage->replayPending(*bufferProvider, dataEmit, stopToken);
+        }
+
         result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
@@ -192,13 +233,41 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
+    const bool replayEnabled = CheckpointManager::isCheckpointingEnabled() || CheckpointManager::shouldRecoverFromCheckpoint();
+    if (replayEnabled)
+    {
+        const auto storageDir
+            = CheckpointManager::getCheckpointDirectory() / "source_replay" / fmt::format("origin_{}", originId.getRawValue());
+        replayStorage = std::make_unique<ReplayableSourceStorage>(originId, storageDir);
+    }
+
+    if (CheckpointManager::isCheckpointingEnabled() && replayStorage)
+    {
+        const auto callbackId = fmt::format("source_replay_{}", originId.getRawValue());
+        CheckpointManager::registerCallback(callbackId, [this]()
+        {
+            if (!replayStorage)
+            {
+                return;
+            }
+            const auto latest = latestEmittedSequence.load(std::memory_order_relaxed);
+            if (latest > 0)
+            {
+                replayStorage->markCheckpoint(SequenceNumber(latest));
+            }
+        });
+        checkpointCallbackId = callbackId;
+    }
+
     std::jthread sourceThread(
         detail::dataSourceThread,
         std::move(terminationPromise),
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager);
+        localBufferManager,
+        replayStorage.get(),
+        &latestEmittedSequence);
     thread = std::move(sourceThread);
     return true;
 }
@@ -221,6 +290,12 @@ void SourceThread::stop()
     catch (const Exception& exception)
     {
         NES_ERROR("Source encountered an error: {}", exception.what());
+    }
+
+    if (checkpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+        checkpointCallbackId.reset();
     }
 }
 
@@ -246,6 +321,11 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
     }
 
     NES_DEBUG("SourceThread  {} : stopped", originId);
+    if (checkpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+        checkpointCallbackId.reset();
+    }
     return SourceReturnType::TryStopResult::SUCCESS;
 }
 

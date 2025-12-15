@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <thread>
@@ -32,6 +33,8 @@
 
 namespace NES
 {
+class ReplayableSourceStorage;
+
 struct SourceImplementationTermination
 {
     enum : uint8_t
@@ -60,6 +63,7 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation);
+    ~SourceThread();
 
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
@@ -90,6 +94,9 @@ protected:
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
+    std::unique_ptr<ReplayableSourceStorage> replayStorage;
+    std::atomic<uint64_t> latestEmittedSequence{0};
+    std::optional<std::string> checkpointCallbackId;
 
     std::jthread thread;
     std::future<SourceImplementationTermination> terminationFuture;
