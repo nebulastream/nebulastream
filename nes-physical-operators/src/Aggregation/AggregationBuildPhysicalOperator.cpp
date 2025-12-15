@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <ranges>
+#include <sstream>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -28,6 +29,7 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <fmt/format.h>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -51,6 +53,13 @@ namespace
 {
 constexpr std::string_view AggregationCheckpointFileName = "aggregation_hashmap.bin";
 std::mutex AggregationCheckpointMutex;
+
+PipelineMemoryProvider createPipelineMemoryProvider(AbstractBufferProvider* bufferProvider)
+{
+    // We only need the buffer provider for merging hash map entries during checkpointing.
+    // An empty arena is sufficient because the aggregation functions do not allocate from it when combining states.
+    return PipelineMemoryProvider(nautilus::val<Arena*>{nullptr}, nautilus::val<AbstractBufferProvider*>{bufferProvider});
+}
 
 std::filesystem::path getAggregationCheckpointFile()
 {
@@ -79,12 +88,13 @@ Interface::HashMap* getAggHashMapProxy(
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
     /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
+    const auto& hashMapOptions = buildOperator->getHashMapOptions();
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
         {operatorHandler->cleanupStateNautilusFunction},
-        buildOperator->hashMapOptions.keySize,
-        buildOperator->hashMapOptions.valueSize,
-        buildOperator->hashMapOptions.pageSize,
-        buildOperator->hashMapOptions.numberOfBuckets};
+        hashMapOptions.keySize,
+        hashMapOptions.valueSize,
+        hashMapOptions.pageSize,
+        hashMapOptions.numberOfBuckets};
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
          cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
@@ -106,6 +116,125 @@ Interface::HashMap* getAggHashMapProxy(
 
     const std::size_t numTuples = aggregationSlice->getHashMapPtrOrCreate(workerThreadId)->getNumberOfTuples();
     return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+}
+
+std::unique_ptr<Interface::HashMap> mergeHashMapsForCheckpoint(
+    const AggregationOperatorHandler* operatorHandler,
+    Timestamp timestamp,
+    WorkerThreadId workerThreadId,
+    AbstractBufferProvider* bufferProvider,
+    const AggregationBuildPhysicalOperator* buildOperator)
+{
+    PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
+    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
+
+    const auto& hashMapOptions = buildOperator->getHashMapOptions();
+    const auto& aggregationPhysicalFunctions = buildOperator->getAggregationFunctions();
+    // Ensure the slice exists so we can access all thread-local hash maps.
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+        {operatorHandler->cleanupStateNautilusFunction},
+        hashMapOptions.keySize,
+        hashMapOptions.valueSize,
+        hashMapOptions.pageSize,
+        hashMapOptions.numberOfBuckets};
+    auto wrappedCreateFunction(
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs)](
+            const SliceStart sliceStart, const SliceEnd sliceEnd)
+        { return createFunction(sliceStart, sliceEnd); });
+    auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
+    INVARIANT(
+        slices.size() == 1,
+        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support slicing, but got {}",
+        slices.size());
+    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slices[0]);
+    INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
+
+    auto pipelineMemoryProvider = createPipelineMemoryProvider(bufferProvider);
+
+    Interface::HashMap* referenceMap = aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+    if (referenceMap == nullptr)
+    {
+        return nullptr;
+    }
+
+    auto* chainedReference = dynamic_cast<Nautilus::Interface::ChainedHashMap*>(referenceMap);
+    INVARIANT(chainedReference != nullptr, "Aggregation checkpoints expect a chained hash map implementation");
+    auto snapshot = Nautilus::Interface::ChainedHashMap::createNewMapWithSameConfiguration(*chainedReference);
+
+    auto snapshotMapVal = nautilus::val<Interface::HashMap*>{snapshot.get()};
+    Interface::ChainedHashMapRef snapshotRef(
+        snapshotMapVal,
+        hashMapOptions.fieldKeys,
+        hashMapOptions.fieldValues,
+        nautilus::val<uint64_t>{hashMapOptions.entriesPerPage},
+        nautilus::val<uint64_t>{hashMapOptions.entrySize});
+
+    for (uint64_t mapIdx = 0; mapIdx < aggregationSlice->getNumberOfHashMaps(); ++mapIdx)
+    {
+        auto* sourceMap = aggregationSlice->getHashMapPtrOrCreate(WorkerThreadId(mapIdx));
+        if ((sourceMap == nullptr) || sourceMap->getNumberOfTuples() == 0)
+        {
+            continue;
+        }
+
+        Interface::ChainedHashMapRef sourceRef(
+            nautilus::val<Interface::HashMap*>{sourceMap},
+            hashMapOptions.fieldKeys,
+            hashMapOptions.fieldValues,
+            nautilus::val<uint64_t>{hashMapOptions.entriesPerPage},
+            nautilus::val<uint64_t>{hashMapOptions.entrySize});
+
+        for (const auto entry : sourceRef)
+        {
+            const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(
+                entry,
+                nautilus::val<Interface::HashMap*>{sourceMap},
+                hashMapOptions.fieldKeys,
+                hashMapOptions.fieldValues);
+            snapshotRef.insertOrUpdateEntry(
+                entryRef.entryRef,
+                [fieldKeys = hashMapOptions.fieldKeys,
+                 fieldValues = hashMapOptions.fieldValues,
+                 &pipelineMemoryProvider,
+                 entryRef,
+                 &aggregationPhysicalFunctions,
+                 snapshotMapVal](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnUpdate)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(
+                        entryOnUpdate, snapshotMapVal, fieldKeys, fieldValues);
+                    auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
+                    auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+                    {
+                        aggFunction->combine(globalState, entryRefState, pipelineMemoryProvider);
+                        globalState = globalState + aggFunction->getSizeOfStateInBytes();
+                        entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
+                    }
+                },
+                [fieldKeys = hashMapOptions.fieldKeys,
+                 fieldValues = hashMapOptions.fieldValues,
+                 &pipelineMemoryProvider,
+                 entryRef,
+                 &aggregationPhysicalFunctions,
+                 snapshotMapVal](const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnInsert)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(
+                        entryOnInsert, snapshotMapVal, fieldKeys, fieldValues);
+                    auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
+                    auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+                    {
+                        aggFunction->reset(globalState, pipelineMemoryProvider);
+                        aggFunction->combine(globalState, entryRefState, pipelineMemoryProvider);
+                        globalState = globalState + aggFunction->getSizeOfStateInBytes();
+                        entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
+                    }
+                },
+                pipelineMemoryProvider.bufferProvider);
+        }
+    }
+
+    return snapshot;
 }
 
 void serializeHashMapProxy(
@@ -132,12 +261,17 @@ void serializeHashMapProxy(
     const auto checkpointFile = getAggregationCheckpointFile();
     ensureCheckpointDirectory(checkpointFile);
     std::lock_guard lock(AggregationCheckpointMutex);
+    auto combinedHashMap = mergeHashMapsForCheckpoint(operatorHandler, timestamp, workerThreadId, bufferProvider, buildOperator);
+    if (!combinedHashMap)
+    {
+        return;
+    }
     std::ofstream out(checkpointFile, std::ios::binary | std::ios::trunc);
     if (!out.is_open())
     {
         throw CheckpointError("Cannot open aggregation checkpoint {}", checkpointFile.string());
     }
-    hashMap->serialize(out, serializationOptions);
+    combinedHashMap->serialize(out, serializationOptions);
 }
 
 Interface::HashMap* deserializeHashMapProxy(
@@ -164,18 +298,43 @@ Interface::HashMap* deserializeHashMapProxy(
     }
     ensureCheckpointDirectory(checkpointFile);
     std::lock_guard lock(AggregationCheckpointMutex);
-    std::ifstream in(checkpointFile, std::ios::binary);
-    if (!in.is_open())
+    const auto contents = CheckpointManager::loadFile(checkpointFile);
+    if (!contents)
     {
-        throw CheckpointError("Cannot open aggregation checkpoint {}", checkpointFile.string());
+        return hashMap;
     }
+
     const auto serializationOptions = buildOperator->getHashMapOptions().getSerializationOptions();
     INVARIANT(
         !serializationOptions.valuesContainPagedVectors,
         "Aggregation checkpointing expects raw value serialization but received paged vectors");
-    hashMap->deserialize(in, serializationOptions, bufferProvider);
-    NES_INFO("Aggregations deserialized checkpoint | entries={}"
-             , hashMap->getNumberOfTuples());
+
+    const auto& hashMapOptions = buildOperator->getHashMapOptions();
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+        {operatorHandler->cleanupStateNautilusFunction},
+        hashMapOptions.keySize,
+        hashMapOptions.valueSize,
+        hashMapOptions.pageSize,
+        hashMapOptions.numberOfBuckets};
+    auto wrappedCreateFunction(
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs)](
+            const SliceStart sliceStart, const SliceEnd sliceEnd)
+        { return createFunction(sliceStart, sliceEnd); });
+    auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
+    INVARIANT(
+        slices.size() == 1,
+        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support slicing, but got {}",
+        slices.size());
+    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slices[0]);
+    INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
+
+    // Restore the snapshot into the current worker's hash map only to avoid duplicating state across threads.
+    if (auto* localHashMap = aggregationSlice->getHashMapPtrOrCreate(workerThreadId))
+    {
+        std::istringstream inStream(*contents);
+        localHashMap->deserialize(inStream, serializationOptions, bufferProvider);
+    }
+    NES_INFO("Aggregations deserialized checkpoint | entries={}", hashMap->getNumberOfTuples());
     return hashMap;
 }
 

@@ -89,6 +89,10 @@ private:
 
 public:
     [[nodiscard]] const HashMapOptions& getHashMapOptions() const { return hashMapOptions; }
+    [[nodiscard]] const std::vector<std::shared_ptr<AggregationPhysicalFunction>>& getAggregationFunctions() const
+    {
+        return aggregationPhysicalFunctions;
+    }
 };
 
 }
