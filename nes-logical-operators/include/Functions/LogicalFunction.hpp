@@ -144,7 +144,7 @@ struct TypedLogicalFunction
 
     explicit TypedLogicalFunction(std::shared_ptr<const NES::detail::ErasedLogicalFunction> op) : self(std::move(op)) { }
 
-    TypedLogicalFunction() = delete;
+    TypedLogicalFunction() = default;
 
     ///@brief Alternative to operator*
     [[nodiscard]] const Checked& get() const
@@ -252,7 +252,7 @@ struct TypedLogicalFunction
 
     [[nodiscard]] DataType getDataType() const { return self->getDataType();};
 
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(std::move(dataType));};
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(dataType);};
 
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const { return self->withInferredDataType(schema);};
 
@@ -282,7 +282,7 @@ struct FunctionModel : ErasedLogicalFunction
 {
     FunctionType impl;
 
-    explicit FunctionModel(FunctionType d) : impl(std::move(d)) { }
+    explicit FunctionModel(FunctionType impl) : impl(std::move(impl)) { }
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity); }
 
@@ -310,18 +310,18 @@ struct FunctionModel : ErasedLogicalFunction
 
     [[nodiscard]] bool operator==(const LogicalFunction& other) const
     {
-        if (auto p = dynamic_cast<const FunctionModel*>(&other))
+        if (auto ptr = dynamic_cast<const FunctionModel*>(&other))
         {
-            return impl.operator==(p->impl);
+            return impl.operator==(ptr->impl);
         }
         return false;
     }
 
     [[nodiscard]] bool equals(const ErasedLogicalFunction& other) const override
     {
-        if (auto p = dynamic_cast<const FunctionModel*>(&other))
+        if (auto ptr = dynamic_cast<const FunctionModel*>(&other))
         {
-            return impl.operator==(p->impl);
+            return impl.operator==(ptr->impl);
         }
         return false;
     }
