@@ -176,11 +176,17 @@ std::vector<std::pair<SequenceNumber::Underlying, std::filesystem::path>> Replay
 void ReplayableSourceStorage::markCheckpoint(SequenceNumber sequenceNumber)
 {
     std::scoped_lock lock(mutex);
-    lastCheckpointed = sequenceNumber.getRawValue();
+    const auto checkpointValue = sequenceNumber.getRawValue();
+    if (lastCheckpointed && checkpointValue < *lastCheckpointed)
+    {
+        return;
+    }
+    lastCheckpointed = checkpointValue;
     writeCheckpointMeta(sequenceNumber);
+    pruneCoveredFiles(checkpointValue);
 }
 
-void ReplayableSourceStorage::replayPending(
+std::optional<SequenceNumber> ReplayableSourceStorage::replayPending(
     AbstractBufferProvider& bufferProvider,
     const detail::EmitFn& emit,
     const std::stop_token& stopToken)
@@ -188,9 +194,16 @@ void ReplayableSourceStorage::replayPending(
     std::scoped_lock lock(mutex);
 
     auto files = listPersistedFiles();
+    const auto checkpointSequence = lastCheckpointed;
+    std::optional<SequenceNumber> lastReplayed;
     for (const auto& [seq, path] : files)
     {
         if (stopToken.stop_requested())
+        {
+            continue;
+        }
+
+        if (checkpointSequence && seq <= *checkpointSequence)
         {
             continue;
         }
@@ -208,19 +221,21 @@ void ReplayableSourceStorage::replayPending(
             continue;
         }
 
-    auto buffer = bufferProvider.getBufferBlocking();
-    auto data = buffer.getAvailableMemoryArea<std::byte>();
-    const auto bytesToCopy = std::min<uint64_t>(header.dataSize, data.size());
-    in.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(bytesToCopy));
+        auto buffer = bufferProvider.getBufferBlocking();
+        auto data = buffer.getAvailableMemoryArea<std::byte>();
+        const auto bytesToCopy = std::min<uint64_t>(header.dataSize, data.size());
+        in.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(bytesToCopy));
 
-    buffer.setNumberOfTuples(bytesToCopy);
+        buffer.setNumberOfTuples(bytesToCopy);
         buffer.setSequenceNumber(SequenceNumber(header.sequence));
         buffer.setChunkNumber(ChunkNumber(header.chunk));
         buffer.setLastChunk(header.lastChunk != 0);
         buffer.setOriginId(originId);
 
         emit(std::move(buffer), false);
+        lastReplayed = SequenceNumber(header.sequence);
     }
+    return lastReplayed;
 }
 
 }

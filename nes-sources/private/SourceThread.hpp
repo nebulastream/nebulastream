@@ -22,6 +22,7 @@
 #include <optional>
 #include <ostream>
 #include <stop_token>
+#include <string>
 #include <thread>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -99,6 +100,8 @@ protected:
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
     std::unique_ptr<ReplayableSourceStorage> replayStorage;
+    std::atomic<SequenceNumber::Underlying> lastEmittedSequence;
+    std::optional<std::string> checkpointCallbackId;
 
     std::jthread thread;
     std::future<SourceImplementationTermination> terminationFuture;

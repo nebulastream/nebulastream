@@ -14,6 +14,7 @@
 
 #include <SourceThread.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <atomic>
@@ -56,11 +57,18 @@ SourceThread::SourceThread(
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , started(false)
+    , lastEmittedSequence(INVALID_SEQ_NUMBER.getRawValue())
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
-SourceThread::~SourceThread() = default;
+SourceThread::~SourceThread()
+{
+    if (checkpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+    }
+}
 
 namespace detail
 {
@@ -168,16 +176,20 @@ void dataSourceThread(
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    ReplayableSourceStorage* replayStorage)
+    ReplayableSourceStorage* replayStorage,
+    std::atomic<SequenceNumber::Underlying>* lastEmittedSequence)
 {
     threadSetup(originId);
 
-    size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
+    SequenceNumber::Underlying sequenceNumberGenerator = SequenceNumber::INITIAL;
+    std::optional<SequenceNumber::Underlying> lastCheckpointedSequence;
     if (replayStorage && CheckpointManager::shouldRecoverFromCheckpoint())
     {
-        if (const auto last = replayStorage->loadLastCheckpointedSequence())
+        lastCheckpointedSequence = replayStorage->loadLastCheckpointedSequence();
+        if (lastCheckpointedSequence)
         {
-            sequenceNumberGenerator = static_cast<size_t>(*last + 1);
+            sequenceNumberGenerator = std::max(
+                sequenceNumberGenerator, static_cast<SequenceNumber::Underlying>(*lastCheckpointedSequence + 1));
         }
     }
 
@@ -185,7 +197,16 @@ void dataSourceThread(
     {
         if (shouldAddMetadata)
         {
-            addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
+            const auto sequenceNumber = SequenceNumber(sequenceNumberGenerator++);
+            addBufferMetaData(originId, sequenceNumber, buffer);
+            if (lastEmittedSequence)
+            {
+                lastEmittedSequence->store(sequenceNumber.getRawValue(), std::memory_order_release);
+            }
+        }
+        else if (lastEmittedSequence)
+        {
+            lastEmittedSequence->store(buffer.getSequenceNumber().getRawValue(), std::memory_order_release);
         }
         if (replayStorage && shouldAddMetadata)
         {
@@ -198,7 +219,11 @@ void dataSourceThread(
     {
         if (CheckpointManager::shouldRecoverFromCheckpoint() && replayStorage)
         {
-            replayStorage->replayPending(*bufferProvider, dataEmit, stopToken);
+            if (const auto replayed = replayStorage->replayPending(*bufferProvider, dataEmit, stopToken))
+            {
+                sequenceNumberGenerator
+                    = std::max(sequenceNumberGenerator, static_cast<SequenceNumber::Underlying>(replayed->getRawValue() + 1));
+            }
         }
 
         result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, dataEmit));
@@ -229,12 +254,30 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     this->terminationFuture = terminationPromise.get_future();
 
     const bool enableReplay = CheckpointManager::isCheckpointingEnabled() || CheckpointManager::shouldRecoverFromCheckpoint();
+    lastEmittedSequence.store(INVALID_SEQ_NUMBER.getRawValue(), std::memory_order_release);
     if (enableReplay)
     {
         const auto storageDir
             = CheckpointManager::getCheckpointDirectory() / "source_replay"
             / fmt::format("origin_{}_ps_{}", originId.getRawValue(), physicalSourceId.getRawValue());
         replayStorage = std::make_unique<ReplayableSourceStorage>(originId, storageDir, physicalSourceId);
+
+        if (CheckpointManager::isCheckpointingEnabled() && !checkpointCallbackId)
+        {
+            checkpointCallbackId
+                = fmt::format("source_replay_{}_{}", originId.getRawValue(), physicalSourceId.getRawValue());
+            CheckpointManager::registerCallback(
+                *checkpointCallbackId,
+                [this]()
+                {
+                    const auto lastSeq = lastEmittedSequence.load(std::memory_order_acquire);
+                    if (lastSeq == INVALID_SEQ_NUMBER.getRawValue() || !replayStorage)
+                    {
+                        return;
+                    }
+                    replayStorage->markCheckpoint(SequenceNumber(lastSeq));
+                });
+        }
     }
 
     std::jthread sourceThread(
@@ -244,7 +287,8 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         std::move(emitFunction),
         originId,
         localBufferManager,
-        replayStorage.get());
+        replayStorage.get(),
+        enableReplay ? &lastEmittedSequence : nullptr);
     thread = std::move(sourceThread);
     return true;
 }

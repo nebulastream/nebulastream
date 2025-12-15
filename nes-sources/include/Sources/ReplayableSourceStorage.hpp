@@ -49,7 +49,11 @@ public:
 
     /// Replay all persisted buffers that are newer than the last checkpoint.
     /// Uses the provided emit function to push data back into the pipeline without modifying metadata.
-    void replayPending(AbstractBufferProvider& bufferProvider, const detail::EmitFn& emit, const std::stop_token& stopToken);
+    /// Returns the last replayed sequence number if any buffer was replayed.
+    std::optional<SequenceNumber> replayPending(
+        AbstractBufferProvider& bufferProvider,
+        const detail::EmitFn& emit,
+        const std::stop_token& stopToken);
 
     /// Load previously persisted checkpoint metadata if present.
     std::optional<SequenceNumber::Underlying> loadLastCheckpointedSequence();
