@@ -339,6 +339,20 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     progressTracker.setTotalQueries(queries.size());
     for (const auto& queryToRun : queries)
     {
+        if (queryToRun.differentialQueryPlan.has_value())
+        {
+            NES_INFO("Skipping differential test for benchmarking: {}", queryToRun.testName);
+            progressTracker.incrementQueryCounter();
+            continue;
+        }
+
+        if (std::holds_alternative<ExpectedError>(queryToRun.expectedResultsOrExpectedError))
+        {
+            NES_INFO("Skipping test expecting error for benchmarking: {}", queryToRun.testName);
+            progressTracker.incrementQueryCounter();
+            continue;
+        }
+
         if (not queryToRun.planInfoOrException.has_value())
         {
             NES_ERROR("skip failing query: {}", queryToRun.testName);
