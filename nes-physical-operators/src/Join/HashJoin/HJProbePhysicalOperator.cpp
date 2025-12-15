@@ -83,10 +83,12 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
 
     /// Getting necessary values from the record buffer
     const auto windowInfoRef = Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
-    const nautilus::val<Timestamp> windowStart{
-        Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
-    const nautilus::val<Timestamp> windowEnd{
-        Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
+    const auto windowStartRaw
+        = Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowStart));
+    const auto windowEndRaw
+        = Nautilus::Util::readValueFromMemRef<uint64_t>(Nautilus::Util::getMemberRef(windowInfoRef, &WindowInfo::windowEnd));
+    const nautilus::val<Timestamp> windowStart{windowStartRaw};
+    const nautilus::val<Timestamp> windowEnd{windowEndRaw};
     auto leftHashMapRefs = Nautilus::Util::readValueFromMemRef<Interface::HashMap**>(
         Nautilus::Util::getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
     auto rightHashMapRefs = Nautilus::Util::readValueFromMemRef<Interface::HashMap**>(
@@ -94,6 +96,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
 
 
     /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps
+    uint64_t emittedJoins = 0;
     for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
     {
         const nautilus::val<Interface::HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
@@ -141,6 +144,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                             auto joinedRecord
                                 = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
                             executeChild(executionCtx, joinedRecord);
+                            ++emittedJoins;
                         }
                     }
                 }

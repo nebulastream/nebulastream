@@ -239,6 +239,14 @@ void HJOperatorHandler::emitSlicesToProbe(
     const auto leftHashMaps = getHashMapsForSlice(sliceLeft, JoinBuildSideType::Left);
     const auto rightHashMaps = getHashMapsForSlice(sliceRight, JoinBuildSideType::Right);
 
+    NES_DEBUG(
+        "HJ emit window {}-{} | leftMaps={} rightMaps={} totalTuples={}",
+        windowInfo.windowStart,
+        windowInfo.windowEnd,
+        leftHashMaps.size(),
+        rightHashMaps.size(),
+        totalNumberOfTuples);
+
     /// We need a buffer that is large enough to store:
     /// - all pointers to (left + right) hashmaps of the window to be triggered
     /// - size of EmittedHJWindowTrigger

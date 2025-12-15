@@ -76,6 +76,13 @@ uint64_t HashMapSlice::getNumberOfTuples() const
         hashMaps.begin(),
         hashMaps.end(),
         0,
-        [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+        [](uint64_t runningSum, const auto& hashMap)
+        {
+            if (!hashMap)
+            {
+                return runningSum;
+            }
+            return runningSum + hashMap->getNumberOfTuples();
+        });
 }
 }
