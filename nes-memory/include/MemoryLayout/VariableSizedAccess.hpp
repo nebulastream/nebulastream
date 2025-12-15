@@ -115,6 +115,8 @@ private:
     Size size;
 
 public:
+    VariableSizedAccess() : offset(0), index(0), size(0) { }
+
     explicit VariableSizedAccess(const CombinedIndex combinedIdxOffset)
         : offset(Offset::convertToOffset(combinedIdxOffset))
         , index(Index::convertToIndex(combinedIdxOffset))
