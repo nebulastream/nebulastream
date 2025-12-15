@@ -92,6 +92,7 @@ private:
 
 public:
     [[nodiscard]] const HashMapOptions& getHashMapOptions() const { return hashMapOptions; }
+    [[nodiscard]] const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& getBufferRef() const { return bufferRef; }
 };
 
 }
