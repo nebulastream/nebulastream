@@ -1,0 +1,49 @@
+# name: join/JoinCheckpointing.test
+# description: Checkpointing and recovery for hash join build side
+# groups: [Join, Checkpointing]
+
+CREATE LOGICAL SOURCE left_stream(id UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR left_stream TYPE File;
+ATTACH INLINE
+1,0
+1,5
+
+CREATE LOGICAL SOURCE right_stream(id2 UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR right_stream TYPE File;
+ATTACH INLINE
+
+CREATE LOGICAL SOURCE left_stream_recover(id UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR left_stream_recover TYPE File;
+ATTACH INLINE
+
+CREATE LOGICAL SOURCE right_stream_recover(id2 UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR right_stream_recover TYPE File;
+ATTACH INLINE
+1,10
+1,20
+
+CREATE SINK sinkJoinCk(left_streamright_stream.start UINT64, left_streamright_stream.end UINT64, left_stream.id UINT64, left_stream.ts UINT64, right_stream.id2 UINT64, right_stream.ts UINT64) TYPE File;
+CREATE SINK sinkJoinCkRecover(left_stream_recoverright_stream_recover.start UINT64, left_stream_recoverright_stream_recover.end UINT64, left_stream_recover.id UINT64, left_stream_recover.ts UINT64, right_stream_recover.id2 UINT64, right_stream_recover.ts UINT64) TYPE File;
+
+CONFIGURATION worker.checkpoint.checkpoint_directory: CHECKPOINT_DIR
+CONFIGURATION worker.checkpoint.checkpoint_interval_ms: 1
+
+SELECT *
+FROM (SELECT * FROM left_stream) INNER JOIN (SELECT * FROM right_stream)
+ON id = id2 WINDOW TUMBLING(ts, size 100ms)
+INTO sinkJoinCk CHECKPOINT on;
+----
+
+CONFIGURATION worker.checkpoint.recover_checkpoint_directory: CHECKPOINT_DIR
+CONFIGURATION worker.checkpoint.checkpoint_directory: CHECKPOINT_DIR
+CONFIGURATION worker.checkpoint.checkpoint_interval_ms: 0
+
+SELECT *
+FROM (SELECT * FROM left_stream_recover) INNER JOIN (SELECT * FROM right_stream_recover)
+ON id = id2 WINDOW TUMBLING(ts, size 100ms)
+INTO sinkJoinCkRecover CHECKPOINT restore;
+----
+0 100 1 0 1 10
+0 100 1 0 1 20
+0 100 1 5 1 10
+0 100 1 5 1 20
