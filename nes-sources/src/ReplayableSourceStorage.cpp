@@ -35,8 +35,9 @@ constexpr std::string_view CheckpointMetaFileName = "checkpoint.meta";
 constexpr std::string_view FileExtension = ".bin";
 }
 
-ReplayableSourceStorage::ReplayableSourceStorage(OriginId originId, std::filesystem::path storageDirectory)
+ReplayableSourceStorage::ReplayableSourceStorage(OriginId originId, std::filesystem::path storageDirectory, PhysicalSourceId physicalSourceId)
     : originId(originId)
+    , physicalSourceId(physicalSourceId)
     , storageDir(std::move(storageDirectory))
     , metaFilePath(storageDir / CheckpointMetaFileName)
 {
@@ -57,7 +58,7 @@ void ReplayableSourceStorage::persistBuffer(const TupleBuffer& buffer)
     std::scoped_lock lock(mutex);
     ensureDirectory();
 
-    FileHeader header;
+    FileHeader header{};
     header.sequence = buffer.getSequenceNumber().getRawValue();
     header.chunk = buffer.getChunkNumber().getRawValue();
     header.lastChunk = buffer.isLastChunk() ? 1 : 0;
@@ -177,7 +178,6 @@ void ReplayableSourceStorage::markCheckpoint(SequenceNumber sequenceNumber)
     std::scoped_lock lock(mutex);
     lastCheckpointed = sequenceNumber.getRawValue();
     writeCheckpointMeta(sequenceNumber);
-    pruneCoveredFiles(sequenceNumber.getRawValue());
 }
 
 void ReplayableSourceStorage::replayPending(
@@ -187,13 +187,10 @@ void ReplayableSourceStorage::replayPending(
 {
     std::scoped_lock lock(mutex);
 
-    const auto checkpointSequence = lastCheckpointed.value_or(INVALID_SEQ_NUMBER.getRawValue());
-    pruneCoveredFiles(checkpointSequence);
-
     auto files = listPersistedFiles();
     for (const auto& [seq, path] : files)
     {
-        if (seq <= checkpointSequence || stopToken.stop_requested())
+        if (stopToken.stop_requested())
         {
             continue;
         }
@@ -211,12 +208,12 @@ void ReplayableSourceStorage::replayPending(
             continue;
         }
 
-        auto buffer = bufferProvider.getBufferBlocking();
-        auto data = buffer.getAvailableMemoryArea<std::byte>();
-        const auto bytesToCopy = std::min<uint64_t>(header.dataSize, data.size());
-        in.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(bytesToCopy));
+    auto buffer = bufferProvider.getBufferBlocking();
+    auto data = buffer.getAvailableMemoryArea<std::byte>();
+    const auto bytesToCopy = std::min<uint64_t>(header.dataSize, data.size());
+    in.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(bytesToCopy));
 
-        buffer.setNumberOfTuples(bytesToCopy);
+    buffer.setNumberOfTuples(bytesToCopy);
         buffer.setSequenceNumber(SequenceNumber(header.sequence));
         buffer.setChunkNumber(ChunkNumber(header.chunk));
         buffer.setLastChunk(header.lastChunk != 0);

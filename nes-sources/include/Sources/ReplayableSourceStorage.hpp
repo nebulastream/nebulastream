@@ -38,7 +38,7 @@ using EmitFn = std::function<void(TupleBuffer, bool addBufferMetadata)>;
 class ReplayableSourceStorage
 {
 public:
-    ReplayableSourceStorage(OriginId originId, std::filesystem::path storageDirectory);
+    ReplayableSourceStorage(OriginId originId, std::filesystem::path storageDirectory, PhysicalSourceId physicalSourceId);
 
     /// Persist a buffer to disk. Expects metadata (seq/chunk/last) to already be set on the buffer.
     void persistBuffer(const TupleBuffer& buffer);
@@ -55,6 +55,7 @@ public:
     std::optional<SequenceNumber::Underlying> loadLastCheckpointedSequence();
 
 private:
+    #pragma pack(push, 1)
     struct FileHeader
     {
         uint64_t sequence{0};
@@ -62,6 +63,7 @@ private:
         uint8_t lastChunk{0};
         uint64_t dataSize{0};
     };
+    #pragma pack(pop)
 
     void ensureDirectory();
     void writeCheckpointMeta(SequenceNumber sequenceNumber);
@@ -69,6 +71,7 @@ private:
     std::vector<std::pair<SequenceNumber::Underlying, std::filesystem::path>> listPersistedFiles();
 
     OriginId originId;
+    PhysicalSourceId physicalSourceId;
     std::filesystem::path storageDir;
     std::filesystem::path metaFilePath;
     std::mutex mutex;

@@ -45,8 +45,14 @@ namespace NES
 {
 
 SourceThread::SourceThread(
-    OriginId originId, std::shared_ptr<AbstractBufferProvider> poolProvider, std::unique_ptr<Source> sourceImplementation)
+    OriginId originId,
+    PhysicalSourceId physicalSourceId,
+    std::filesystem::path replayBaseDir,
+    std::shared_ptr<AbstractBufferProvider> poolProvider,
+    std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
+    , physicalSourceId(physicalSourceId)
+    , replayBaseDir(std::move(replayBaseDir))
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , started(false)
@@ -54,13 +60,7 @@ SourceThread::SourceThread(
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
-SourceThread::~SourceThread()
-{
-    if (checkpointCallbackId)
-    {
-        CheckpointManager::unregisterCallback(*checkpointCallbackId);
-    }
-}
+SourceThread::~SourceThread() = default;
 
 namespace detail
 {
@@ -168,13 +168,12 @@ void dataSourceThread(
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    ReplayableSourceStorage* replayStorage,
-    std::atomic<uint64_t>* latestEmittedSequence)
+    ReplayableSourceStorage* replayStorage)
 {
     threadSetup(originId);
 
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    if (replayStorage)
+    if (replayStorage && CheckpointManager::shouldRecoverFromCheckpoint())
     {
         if (const auto last = replayStorage->loadLastCheckpointedSequence())
         {
@@ -191,10 +190,6 @@ void dataSourceThread(
         if (replayStorage && shouldAddMetadata)
         {
             replayStorage->persistBuffer(buffer);
-            if (latestEmittedSequence)
-            {
-                latestEmittedSequence->store(buffer.getSequenceNumber().getRawValue(), std::memory_order_relaxed);
-            }
         }
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
@@ -233,30 +228,13 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
-    const bool replayEnabled = CheckpointManager::isCheckpointingEnabled() || CheckpointManager::shouldRecoverFromCheckpoint();
-    if (replayEnabled)
+    const bool enableReplay = CheckpointManager::isCheckpointingEnabled() || CheckpointManager::shouldRecoverFromCheckpoint();
+    if (enableReplay)
     {
         const auto storageDir
-            = CheckpointManager::getCheckpointDirectory() / "source_replay" / fmt::format("origin_{}", originId.getRawValue());
-        replayStorage = std::make_unique<ReplayableSourceStorage>(originId, storageDir);
-    }
-
-    if (CheckpointManager::isCheckpointingEnabled() && replayStorage)
-    {
-        const auto callbackId = fmt::format("source_replay_{}", originId.getRawValue());
-        CheckpointManager::registerCallback(callbackId, [this]()
-        {
-            if (!replayStorage)
-            {
-                return;
-            }
-            const auto latest = latestEmittedSequence.load(std::memory_order_relaxed);
-            if (latest > 0)
-            {
-                replayStorage->markCheckpoint(SequenceNumber(latest));
-            }
-        });
-        checkpointCallbackId = callbackId;
+            = CheckpointManager::getCheckpointDirectory() / "source_replay"
+            / fmt::format("origin_{}_ps_{}", originId.getRawValue(), physicalSourceId.getRawValue());
+        replayStorage = std::make_unique<ReplayableSourceStorage>(originId, storageDir, physicalSourceId);
     }
 
     std::jthread sourceThread(
@@ -266,8 +244,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         std::move(emitFunction),
         originId,
         localBufferManager,
-        replayStorage.get(),
-        &latestEmittedSequence);
+        replayStorage.get());
     thread = std::move(sourceThread);
     return true;
 }
@@ -292,11 +269,6 @@ void SourceThread::stop()
         NES_ERROR("Source encountered an error: {}", exception.what());
     }
 
-    if (checkpointCallbackId)
-    {
-        CheckpointManager::unregisterCallback(*checkpointCallbackId);
-        checkpointCallbackId.reset();
-    }
 }
 
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
@@ -321,11 +293,6 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
     }
 
     NES_DEBUG("SourceThread  {} : stopped", originId);
-    if (checkpointCallbackId)
-    {
-        CheckpointManager::unregisterCallback(*checkpointCallbackId);
-        checkpointCallbackId.reset();
-    }
     return SourceReturnType::TryStopResult::SUCCESS;
 }
 

@@ -45,6 +45,7 @@ class SourceHandle
 public:
     explicit SourceHandle(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
+        PhysicalSourceId physicalSourceId,
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
         std::unique_ptr<Source> sourceImplementation);
@@ -61,10 +62,12 @@ public:
 
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getSourceId() const;
+    [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const { return physicalSourceId; }
 
     const SourceRuntimeConfiguration& getRuntimeConfiguration() const { return configuration; }
 
 private:
+    PhysicalSourceId physicalSourceId;
     SourceRuntimeConfiguration configuration;
     /// Used to print the data source via the overloaded '<<' operator.
     std::unique_ptr<SourceThread> sourceThread;

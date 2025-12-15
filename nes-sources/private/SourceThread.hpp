@@ -61,6 +61,8 @@ class SourceThread
 public:
     explicit SourceThread(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
+        PhysicalSourceId physicalSourceId,
+        std::filesystem::path replayBaseDir,
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation);
     ~SourceThread();
@@ -91,12 +93,12 @@ public:
 
 protected:
     OriginId originId;
+    PhysicalSourceId physicalSourceId;
+    std::filesystem::path replayBaseDir;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
     std::unique_ptr<ReplayableSourceStorage> replayStorage;
-    std::atomic<uint64_t> latestEmittedSequence{0};
-    std::optional<std::string> checkpointCallbackId;
 
     std::jthread thread;
     std::future<SourceImplementationTermination> terminationFuture;
