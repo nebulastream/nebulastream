@@ -29,8 +29,8 @@ namespace NES
 class LowerToCompiledQueryPlanPhase
 {
 public:
-    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations, bool dumpGraph = false)
-        : dumpQueryCompilationIntermediateRepresentations(dumpQueryCompilationIntermediateRepresentations), dumpGraph(dumpGraph)
+    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations)
     {
     }
 
@@ -55,7 +55,6 @@ private:
     std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan;
 
     /// Config parameter
-    DumpMode dumpQueryCompilationIntermediateRepresentations;
-    bool dumpGraph;
+    DumpMode dumpQueryCompilationIR;
 };
 }
