@@ -218,10 +218,17 @@ void SingleNodeWorker::recoverLatestCheckpoint(const std::filesystem::path& chec
             NES_INFO("Checkpoint directory {} does not exist, skipping recovery", checkpointDir.string());
             return;
         }
+        if (!std::filesystem::is_directory(checkpointDir))
+        {
+            NES_WARNING("Checkpoint path {} is not a directory, skipping recovery", checkpointDir.string());
+            return;
+        }
 
         std::optional<std::filesystem::directory_entry> newestEntry;
-        for (const auto& entry : std::filesystem::directory_iterator(checkpointDir))
+        std::error_code ec;
+        for (std::filesystem::directory_iterator it(checkpointDir, ec); !ec && it != std::filesystem::directory_iterator(); ++it)
         {
+            const auto& entry = *it;
             if (!entry.is_regular_file())
             {
                 continue;
@@ -235,6 +242,11 @@ void SingleNodeWorker::recoverLatestCheckpoint(const std::filesystem::path& chec
             {
                 newestEntry = entry;
             }
+        }
+        if (ec)
+        {
+            NES_WARNING("Failed to iterate checkpoint directory {}: {}", checkpointDir.string(), ec.message());
+            return;
         }
 
         if (!newestEntry)

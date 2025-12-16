@@ -77,7 +77,7 @@ std::filesystem::path getHashJoinCheckpointFile(OperatorHandlerId handlerId, Joi
 std::optional<std::filesystem::path> findLatestCheckpointForSide(JoinBuildSideType buildSide, std::optional<WorkerThreadId> workerId)
 {
     const auto checkpointDir = CheckpointManager::getCheckpointDirectory();
-    if (!std::filesystem::exists(checkpointDir))
+    if (!std::filesystem::exists(checkpointDir) || !std::filesystem::is_directory(checkpointDir))
     {
         return std::nullopt;
     }
@@ -95,8 +95,10 @@ std::optional<std::filesystem::path> findLatestCheckpointForSide(JoinBuildSideTy
 
     std::optional<std::filesystem::path> newestFile;
     std::optional<std::filesystem::file_time_type> newestTime;
-    for (const auto& entry : std::filesystem::directory_iterator(checkpointDir))
+    std::error_code ec;
+    for (std::filesystem::directory_iterator it(checkpointDir, ec); !ec && it != std::filesystem::directory_iterator(); ++it)
     {
+        const auto& entry = *it;
         if (!entry.is_regular_file())
         {
             continue;
@@ -114,6 +116,10 @@ std::optional<std::filesystem::path> findLatestCheckpointForSide(JoinBuildSideTy
             newestTime = writeTime;
             newestFile = entry.path();
         }
+    }
+    if (ec)
+    {
+        NES_WARNING("Failed to inspect checkpoint directory {}: {}", checkpointDir.string(), ec.message());
     }
     return newestFile;
 }
