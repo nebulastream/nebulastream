@@ -1,0 +1,43 @@
+# name: Trim
+# description: Checks that trim in projections works as expected
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE nameStream(fullName VARSIZED);
+CREATE PHYSICAL SOURCE FOR nameStream TYPE File;
+ATTACH INLINE
+ Edgar Codd
+        Jim Grey
+Michael Stonebraker
+
+CREATE SINK fullNameTrimmedSink(fullNameTrimmed VARSIZED) TYPE File;
+
+SELECT TRIM(fullName) as fullNameTrimmed FROM nameStream INTO fullNameTrimmedSink;
+----
+Edgar Codd
+Jim Grey
+Michael Stonebraker
+
+CREATE LOGICAL SOURCE noWhiteSpaceStream(text VARSIZED);
+CREATE PHYSICAL SOURCE FOR noWhiteSpaceStream TYPE File;
+ATTACH INLINE
+EdgarCodd
+JimGrey
+MichaelStonebraker
+
+CREATE SINK noWhitespaceSink(trimmedText VARSIZED) TYPE File;
+
+SELECT TRIM(text) as trimmedText FROM noWhitespaceStream INTO noWhitespaceSink;
+----
+EdgarCodd
+JimGrey
+MichaelStonebraker
+
+CREATE LOGICAL SOURCE emptyStringStream(text VARSIZED);
+CREATE PHYSICAL SOURCE FOR emptyStringStream TYPE File;
+ATTACH INLINE
+
+CREATE SINK emptyStringSink(trimmedText VARSIZED) TYPE File;
+
+SELECT TRIM(text) as trimmedText FROM emptyStringStream INTO emptyStringSink;
+----
+
