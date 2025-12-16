@@ -105,37 +105,30 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
         }
     }
     /// See: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
-    switch (dumpQueryCompilationIntermediateRepresentations)
+    switch (dumpQueryCompilationIR.getDumpOption())
     {
-        case DumpMode::NONE:
+        case DumpMode::Options::NONE:
             options.setOption("dump.all", false);
             options.setOption("dump.console", false);
             options.setOption("dump.file", false);
             break;
-        case DumpMode::CONSOLE:
+        case DumpMode::Options::CONSOLE:
             options.setOption("dump.all", true);
             options.setOption("dump.console", true);
             options.setOption("dump.file", false);
             break;
-        case DumpMode::FILE:
+        case DumpMode::Options::FILE:
             options.setOption("dump.all", true);
             options.setOption("dump.console", false);
             options.setOption("dump.file", true);
             break;
-        case DumpMode::FILE_AND_CONSOLE:
+        case DumpMode::Options::FILE_AND_CONSOLE:
             options.setOption("dump.all", true);
             options.setOption("dump.console", true);
             options.setOption("dump.file", true);
             break;
     }
-    if (dumpGraph)
-    {
-        options.setOption("dump.graph", true);
-    }
-    else
-    {
-        options.setOption("dump.graph", false);
-    }
+    options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 

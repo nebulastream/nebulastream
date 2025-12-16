@@ -52,10 +52,10 @@ public:
            "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
-    EnumOption<DumpMode> dumpQueryCompilationIntermediateRepresentations
+    EnumOption<DumpMode::Options> dumpQueryCompilationIR
         = {"dump_compilation_result",
-           DumpMode::NONE,
-           fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode>())};
+           DumpMode::Options::NONE,
+           fmt::format("If and where to dump query compilation results: {}", enumPipeList<DumpMode::Options>())};
 
     BoolOption dumpGraph = {"dump_graph", "false", "If to dump graph of the compilation results"};
 
@@ -67,7 +67,7 @@ private:
             &defaultQueryExecution,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
-            &dumpQueryCompilationIntermediateRepresentations,
+            &dumpQueryCompilationIR,
             &dumpGraph};
     }
 };
