@@ -80,7 +80,8 @@ NES::Systest::SystestQuery makeQuery(
         .expectedResultsOrExpectedError = std::move(expected),
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::Systest::ConfigurationOverride{},
-        .differentialQueryPlan = std::nullopt};
+        .differentialQueryPlan = std::nullopt,
+        .runAfter = std::nullopt};
 }
 }
 
