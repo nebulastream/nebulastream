@@ -14,9 +14,12 @@
 
 #pragma once
 #include <memory>
+#include <ostream>
 #include <string>
+#include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
 
@@ -46,7 +49,7 @@ connections.  Valid values include dns:///localhost:1234,
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &connection, &enableGoogleEventTrace}; }
+    std::vector<BaseOption*> getOptions() override;
 
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
