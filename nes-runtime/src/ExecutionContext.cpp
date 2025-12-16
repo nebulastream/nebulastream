@@ -76,7 +76,7 @@ nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
             /// This increases the reference counter in the buffer.
             /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
             const auto buffer = pec->allocateTupleBuffer();
-            auto* tb = new TupleBuffer(buffer);
+            auto* tb = new TupleBuffer(buffer); /// NOLINT (cppcoreguidelines-owning-memory)
             return tb;
         },
         pipelineContext);
@@ -99,7 +99,7 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
     pipelineCtx->emitBuffer(*tb);
 
     /// delete tuple buffer as it was allocated within the pipeline and is not required anymore
-    delete tb;
+    delete tb; /// NOLINT (cppcoreguidelines-owning-memory)
 }
 
 void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const

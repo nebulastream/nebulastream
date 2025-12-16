@@ -75,6 +75,7 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
     return fmt::to_string(buf);
 }
 
+/// We might want to move this to the engine.
 std::atomic_uint64_t nextId{INITIAL_PIPELINE_ID.getRawValue()};
 }
 

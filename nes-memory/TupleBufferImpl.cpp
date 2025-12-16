@@ -63,6 +63,7 @@ MemorySegment::MemorySegment(uint8_t* ptr, const uint32_t size, std::function<vo
 {
     INVARIANT(this->ptr, "invalid pointer");
     INVARIANT(this->size, "invalid size={}", this->size);
+    /// NOLINTNEXTLINE (cppcoreguidelines-owning-memory)
     controlBlock.reset(new BufferControlBlock(this, std::move(recycleFunction)), magic_enum::enum_integer(MemorySegmentType::Wrapped));
 }
 

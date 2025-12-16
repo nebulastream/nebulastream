@@ -47,6 +47,7 @@ public:
     /// @param buffer the buffer to recycle
     /// @param threadCopyLastChunkPtr stores the thread id and last chunk ptr
     virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer, const AllocationThreadInfo& threadCopyLastChunkPtr) = 0;
+    virtual ~BufferRecycler() = default;
 };
 
 }
