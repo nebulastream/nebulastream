@@ -162,7 +162,6 @@ WarningsAsErrors: '
   -performance-avoid-endl,
   -performance-enum-size,
   -performance-for-range-copy,
-  -performance-inefficient-string-concatenation,
   -performance-move-const-arg,
   -performance-no-int-to-ptr,
   -performance-unnecessary-copy-initialization,
