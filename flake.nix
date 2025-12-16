@@ -32,10 +32,27 @@
         spdlogPkg = pkgs.spdlog.override { fmt = fmtPkg; };
         follyPkg = import ./.nix/folly/package.nix { inherit pkgs; };
         antlr4Pkg = import ./.nix/antlr4/package.nix { inherit pkgs; };
+        simdjsonPkg =
+          let
+            version = "4.0.7";
+          in
+          pkgs.simdjson.overrideAttrs (_:
+            {
+              inherit version;
+              src = pkgs.fetchFromGitHub {
+                owner = "simdjson";
+                repo = "simdjson";
+                rev = "v${version}";
+                hash = "sha256-8pmFtMpML7tTXbH1E3aIpSTQkNF8TFcIPOm2nwnKxkA=";
+              };
+            });
 
         baseThirdPartyDeps = (with pkgs; [
           fmtPkg
           spdlogPkg
+          simdjsonPkg
+          follyPkg
+          antlr4Pkg
           grpc
           protobuf
           abseil-cpp
@@ -57,8 +74,7 @@
           tbb
           python3
           openjdk21
-          simdjson
-        ]) ++ [ follyPkg antlr4Pkg ];
+        ]);
 
         antlr4Jar = pkgs.fetchurl {
           url = "https://www.antlr.org/download/antlr-${antlr4Pkg.version}-complete.jar";
