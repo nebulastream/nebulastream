@@ -52,7 +52,7 @@ protected:
     template <DerivedBaseOption T>
     friend class SequenceOption;
 
-    void parseFromYAMLNode(const YAML::Node config) override;
+    void parseFromYAMLNode(YAML::Node config) override;
     void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
     virtual std::vector<BaseOption*> getOptions() = 0;
     std::unordered_map<std::string, BaseOption*> getOptionMap();

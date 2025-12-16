@@ -275,7 +275,7 @@ public:
     public:
         explicit TupleIterator(const TestTupleBuffer& buffer);
 
-        explicit TupleIterator(const TestTupleBuffer& buffer, const uint64_t currentIndex);
+        explicit TupleIterator(const TestTupleBuffer& buffer, uint64_t currentIndex);
 
         TupleIterator(const TupleIterator& other);
 

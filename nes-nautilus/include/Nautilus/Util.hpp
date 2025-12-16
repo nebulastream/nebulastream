@@ -28,7 +28,7 @@
 
 namespace NES
 {
-void logProxy(const char* message, const LogLevel logLevel);
+void logProxy(const char* message, LogLevel logLevel);
 
 /// Allows to use our general logging calls from our nautilus-runtime
 #define NES_TRACE_EXEC(TEXT) \

@@ -44,7 +44,7 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
 private:
-    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
+    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, uint64_t fieldIndex) const;
 
     /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
     /// the same, during tracing and during the execution of the generated code.
