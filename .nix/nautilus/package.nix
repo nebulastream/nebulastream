@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "77a2e028e69ce0b6ed4be5867395c489f19ab9c8";
-    hash = "sha256-W4gzAHo68dVSfMTUeOZJUqVEjuvaf5/C+HGc44l91ME=";
+    rev = "fe607618bb0683a3335e3199c7c4651523ab2a4f";
+    hash = "sha256-7SOBayt7UXZa6VQyFPFXjZ6lBWu8FPoWjlaI6tBfkfM=";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -64,7 +64,6 @@ let
     src = nautilusSrc;
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
-      ./patches/0002-fix-logical-operators-to-accept-const-references.patch
     ];
 
     nativeBuildInputs = [
