@@ -56,7 +56,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId, bool) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](const SystestParser::ErrorExpectation&, const SystestQueryId)
@@ -75,7 +75,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
     const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId) { ASSERT_EQ(query, expectQuery); });
+    parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId, bool) { ASSERT_EQ(query, expectQuery); });
 
     parser.registerOnErrorExpectationCallback(
         [&](const SystestParser::ErrorExpectation&, const SystestQueryId)
@@ -92,7 +92,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
     const auto* const filename = SYSTEST_DATA_DIR "invalid_token.dummy";
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId, bool) { /* nop, ensure parsing*/ });
     parser.registerOnCreateCallback(
         [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
 
@@ -108,7 +108,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
     parser.registerOnCreateCallback(
         [&](const std::string&,
             const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { /* nop, ensure parsing*/ });
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId, bool) { /* nop, ensure parsing*/ });
     parser.registerOnDifferentialQueryBlockCallback(
         [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });
 

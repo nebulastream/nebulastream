@@ -1,0 +1,48 @@
+# name: parser/SequentialExecution.test
+# description: tests functionality of the SEQUENTIAL_EXECUTION statement
+# groups: [Parser, Sequential]
+
+SEQUENTIAL_EXECUTION
+
+CREATE LOGICAL SOURCE generatorDefault(id UINT64, field2 UINT64);
+CREATE PHYSICAL SOURCE FOR generatorDefault TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE generatorDefault2(id UINT64, field2 UINT64);
+CREATE PHYSICAL SOURCE FOR generatorDefault2 TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE SINK generator_sink(generatorDefault.id UINT64, generatorDefault.field2 UINT64) TYPE File;
+CREATE SINK generator_sink2(generatorDefault2.id UINT64, generatorDefault2.field2 UINT64) TYPE File;
+
+SELECT * FROM generatorDefault INTO generator_sink;
+----
+0 0
+1 1
+2 2
+3 3
+4 4
+5 5
+6 5
+7 5
+8 5
+9 5
+
+SELECT * FROM generatorDefault2 INTO generator_sink2;
+----
+0 0
+1 1
+2 2
+3 3
+4 4
+5 5
+6 5
+7 5
+8 5
+9 5
