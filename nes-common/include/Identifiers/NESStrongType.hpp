@@ -89,13 +89,13 @@ public:
         {
             value = std::forward<StringType>(stringType);
         }
-        else if constexpr (std::is_convertible_v<StringType, std::string>)
+        else if constexpr (std::is_convertible_v<StringType, std::string_view>)
         {
-            value = static_cast<std::string>(std::forward<StringType>(stringType));
+            value = std::string_view(std::forward<StringType>(stringType));
         }
         else
         {
-            static_assert(std::is_convertible_v<StringType, std::string>, "StringType must be convertible to std::string");
+            value = static_cast<std::string>(std::forward<StringType>(stringType));
         }
     }
 
