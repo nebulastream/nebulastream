@@ -1,0 +1,571 @@
+From f11e6f5246e34e480b43f88e4ab4a0e9e8202640 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 14 Dec 2025 05:53:33 +0000
+Subject: [PATCH 1/3] Fix logical operators to accept const references
+
+Change lOr, lAnd, and lNot functions to accept const lvalue references
+instead of non-const references. These functions only read the operand
+values, so const references are appropriate. This eliminates unnecessary
+copies when temporaries are passed from make_value().
+---
+ nautilus/include/nautilus/val.hpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+index 1895a6642..04ba83c2d 100644
+--- a/nautilus/include/nautilus/val.hpp
++++ b/nautilus/include/nautilus/val.hpp
+@@ -466,7 +466,7 @@ auto& operator>>=(val<LHS>& left, RHS right) {
+ }
+
+ namespace details {
+-val<bool> inline lOr(val<bool>& left, val<bool>& right) {
++val<bool> inline lOr(const val<bool>& left, const val<bool>& right) {
+ #ifdef ENABLE_TRACING
+ 	if SHOULD_TRACE () {
+ 		auto tc = tracing::traceBinaryOp(tracing::OR, Type::b, left.state, right.state);
+@@ -476,7 +476,7 @@ val<bool> inline lOr(val<bool>& left, val<bool>& right) {
+ 	return RawValueResolver<bool>::getRawValue(left) || RawValueResolver<bool>::getRawValue(right);
+ }
+
+-val<bool> inline lAnd(val<bool>& left, val<bool>& right) {
++val<bool> inline lAnd(const val<bool>& left, const val<bool>& right) {
+ #ifdef ENABLE_TRACING
+ 	if SHOULD_TRACE () {
+ 		auto tc = tracing::traceBinaryOp(tracing::AND, Type::b, left.state, right.state);
+@@ -486,7 +486,7 @@ val<bool> inline lAnd(val<bool>& left, val<bool>& right) {
+ 	return RawValueResolver<bool>::getRawValue(left) && RawValueResolver<bool>::getRawValue(right);
+ }
+
+-val<bool> inline lNot(val<bool>& arg) {
++val<bool> inline lNot(const val<bool>& arg) {
+ #ifdef ENABLE_TRACING
+ 	if SHOULD_TRACE () {
+ 		auto tc = tracing::traceUnaryOp(tracing::NOT, Type::b, arg.state);
+
+From 9d8429bf65f49990b46974b12d17757b57579f89 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 14 Dec 2025 06:16:25 +0000
+Subject: [PATCH 2/3] Fix bitwise NOT operator to accept const reference
+
+Change neg function to accept const lvalue reference instead of
+non-const reference. This function only reads the operand value,
+so const reference is appropriate and allows temporaries to bind
+directly without unnecessary copies.
+---
+ nautilus/include/nautilus/val.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+index 04ba83c2d..7b4b02166 100644
+--- a/nautilus/include/nautilus/val.hpp
++++ b/nautilus/include/nautilus/val.hpp
+@@ -323,7 +323,7 @@ DEFINE_BINARY_OPERATOR_HELPER(|, bOr, BOR, COMMON_RETURN_TYPE)
+ DEFINE_BINARY_OPERATOR_HELPER(^, bXOr, BXOR, COMMON_RETURN_TYPE)
+
+ template <is_integral LHS>
+-val<LHS> neg(val<LHS>& val) {
++val<LHS> neg(const val<LHS>& val) {
+ #ifdef ENABLE_TRACING
+ 	if (tracing::inTracer()) {
+ 		auto tc = tracing::traceUnaryOp(tracing::NEGATE, tracing::TypeResolver<LHS>::to_type(), val.state);
+
+From bf8ffe39ca779b69661c16657da767a0a3a49324 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 14 Dec 2025 06:28:12 +0000
+Subject: [PATCH 3/3] Optimize logical operators to accept const references
+
+Change logical operator overloads (||, &&, !) to accept const references
+instead of by-value parameters. This eliminates unnecessary copies when
+calling these operators.
+
+Regenerate test reference traces to reflect the optimized behavior where
+fewer copy operations are recorded during tracing.
+
+Changes:
+- operator||(bool, const val<bool>&)
+- operator||(const val<bool>&, bool)
+- operator||(const val<bool>&, const val<bool>&)
+- operator&&(bool, const val<bool>&)
+- operator&&(const val<bool>&, bool)
+- operator&&(const val<bool>&, const val<bool>&)
+- operator!(const val<bool>&)
+---
+ nautilus/include/nautilus/val.hpp             | 14 ++++----
+ .../data/bool-tests/after_ssa/boolAnd.trace   |  4 +--
+ .../after_ssa/boolAssignmentOr.trace          |  4 +--
+ .../data/bool-tests/after_ssa/boolConst.trace |  6 ++--
+ .../bool-tests/after_ssa/boolIfElse.trace     | 16 ++++-----
+ .../data/bool-tests/after_ssa/boolNot.trace   |  4 +--
+ .../data/bool-tests/after_ssa/boolOr.trace    |  4 +--
+ .../test/data/bool-tests/ir/boolAnd.trace     |  4 +--
+ .../data/bool-tests/ir/boolAssignmentOr.trace |  4 +--
+ .../test/data/bool-tests/ir/boolConst.trace   |  6 ++--
+ .../test/data/bool-tests/ir/boolIfElse.trace  | 16 ++++-----
+ .../test/data/bool-tests/ir/boolNot.trace     |  4 +--
+ nautilus/test/data/bool-tests/ir/boolOr.trace |  4 +--
+ .../data/bool-tests/tracing/boolAnd.trace     |  6 ++--
+ .../bool-tests/tracing/boolAssignmentOr.trace |  6 ++--
+ .../data/bool-tests/tracing/boolConst.trace   |  7 ++--
+ .../data/bool-tests/tracing/boolIfElse.trace  | 14 ++++----
+ .../data/bool-tests/tracing/boolNot.trace     |  5 ++-
+ .../test/data/bool-tests/tracing/boolOr.trace |  6 ++--
+ .../after_ssa/andFunction.trace               | 26 +++++++--------
+ .../control-flow-tests/ir/andFunction.trace   | 26 +++++++--------
+ .../tracing/andFunction.trace                 | 33 +++++++++----------
+ .../after_ssa/logicalNot_bool.trace           |  4 +--
+ .../expression-tests/ir/logicalNot_bool.trace |  4 +--
+ .../tracing/logicalNot_bool.trace             |  5 ++-
+ 25 files changed, 109 insertions(+), 123 deletions(-)
+
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+index 7b4b02166..db2f2fc0f 100644
+--- a/nautilus/include/nautilus/val.hpp
++++ b/nautilus/include/nautilus/val.hpp
+@@ -497,31 +497,31 @@ val<bool> inline lNot(const val<bool>& arg) {
+ }
+ } // namespace details
+
+-auto inline operator||(bool left, val<bool> right) {
++auto inline operator||(bool left, const val<bool>& right) {
+ 	auto leftVal = make_value(left);
+ 	return details::lOr(leftVal, right);
+ }
+-auto inline operator||(val<bool> left, bool right) {
++auto inline operator||(const val<bool>& left, bool right) {
+ 	auto rightVal = make_value(right);
+ 	return details::lOr(left, rightVal);
+ }
+-auto inline operator||(val<bool> left, val<bool> right) {
++auto inline operator||(const val<bool>& left, const val<bool>& right) {
+ 	return details::lOr(left, right);
+ }
+
+-auto inline operator&&(bool left, val<bool> right) {
++auto inline operator&&(bool left, const val<bool>& right) {
+ 	auto leftVal = make_value(left);
+ 	return details::lAnd(leftVal, right);
+ }
+-auto inline operator&&(val<bool> left, bool right) {
++auto inline operator&&(const val<bool>& left, bool right) {
+ 	auto rightVal = make_value(right);
+ 	return details::lAnd(left, rightVal);
+ }
+-auto inline operator&&(val<bool> left, val<bool> right) {
++auto inline operator&&(const val<bool>& left, const val<bool>& right) {
+ 	return details::lAnd(left, right);
+ }
+
+-auto inline operator!(val<bool> left) {
++auto inline operator!(const val<bool>& left) {
+ 	return details::lNot(left);
+ }
+
+diff --git a/nautilus/test/data/bool-tests/after_ssa/boolAnd.trace b/nautilus/test/data/bool-tests/after_ssa/boolAnd.trace
+index 9b6163a99..fd887e5d1 100644
+--- a/nautilus/test/data/bool-tests/after_ssa/boolAnd.trace
++++ b/nautilus/test/data/bool-tests/after_ssa/boolAnd.trace
+@@ -1,3 +1,3 @@
+ B0($1:bool,$2:bool)
+-	AND	$5	$1	$2	:bool
+-	RETURN	$0	$5	:bool
++	AND	$3	$1	$2	:bool
++	RETURN	$0	$3	:bool
+diff --git a/nautilus/test/data/bool-tests/after_ssa/boolAssignmentOr.trace b/nautilus/test/data/bool-tests/after_ssa/boolAssignmentOr.trace
+index 407001a76..8c4b89eb1 100644
+--- a/nautilus/test/data/bool-tests/after_ssa/boolAssignmentOr.trace
++++ b/nautilus/test/data/bool-tests/after_ssa/boolAssignmentOr.trace
+@@ -1,3 +1,3 @@
+ B0($1:bool,$2:bool)
+-	OR	$6	$1	$2	:bool
+-	RETURN	$0	$6	:bool
++	OR	$4	$1	$2	:bool
++	RETURN	$0	$4	:bool
+diff --git a/nautilus/test/data/bool-tests/after_ssa/boolConst.trace b/nautilus/test/data/bool-tests/after_ssa/boolConst.trace
+index 4a0bad219..026851965 100644
+--- a/nautilus/test/data/bool-tests/after_ssa/boolConst.trace
++++ b/nautilus/test/data/bool-tests/after_ssa/boolConst.trace
+@@ -1,4 +1,4 @@
+ B0($1:bool)
+-	CONST	$3	true	:bool
+-	AND	$4	$1	$3	:bool
+-	RETURN	$0	$4	:bool
++	CONST	$2	true	:bool
++	AND	$3	$1	$2	:bool
++	RETURN	$0	$3	:bool
+diff --git a/nautilus/test/data/bool-tests/after_ssa/boolIfElse.trace b/nautilus/test/data/bool-tests/after_ssa/boolIfElse.trace
+index 84c9e638f..b2a38d6a8 100644
+--- a/nautilus/test/data/bool-tests/after_ssa/boolIfElse.trace
++++ b/nautilus/test/data/bool-tests/after_ssa/boolIfElse.trace
+@@ -1,11 +1,11 @@
+ B0($1:bool,$2:bool)
+-	AND	$5	$1	$2	:bool
+-	CMP	$6	$5	B1()	B2()	:void
++	AND	$3	$1	$2	:bool
++	CMP	$4	$3	B1()	B2()	:void
+ B1()
+-	CONST	$7	true	:bool
+-	JMP	$0	B3($7)	:void
++	CONST	$5	true	:bool
++	JMP	$0	B3($5)	:void
+ B2()
+-	CONST	$10	false	:bool
+-	JMP	$0	B3($10)	:void
+-B3($7:bool)
+-	RETURN	$0	$7	:bool
++	CONST	$8	false	:bool
++	JMP	$0	B3($8)	:void
++B3($5:bool)
++	RETURN	$0	$5	:bool
+diff --git a/nautilus/test/data/bool-tests/after_ssa/boolNot.trace b/nautilus/test/data/bool-tests/after_ssa/boolNot.trace
+index 7a3c8c724..35391e0b2 100644
+--- a/nautilus/test/data/bool-tests/after_ssa/boolNot.trace
++++ b/nautilus/test/data/bool-tests/after_ssa/boolNot.trace
+@@ -1,3 +1,3 @@
+ B0($1:bool)
+-	NOT	$3	$1	:bool
+-	RETURN	$0	$3	:bool
++	NOT	$2	$1	:bool
++	RETURN	$0	$2	:bool
+diff --git a/nautilus/test/data/bool-tests/after_ssa/boolOr.trace b/nautilus/test/data/bool-tests/after_ssa/boolOr.trace
+index 66fac2ef6..223edb2bf 100644
+--- a/nautilus/test/data/bool-tests/after_ssa/boolOr.trace
++++ b/nautilus/test/data/bool-tests/after_ssa/boolOr.trace
+@@ -1,3 +1,3 @@
+ B0($1:bool,$2:bool)
+-	OR	$5	$1	$2	:bool
+-	RETURN	$0	$5	:bool
++	OR	$3	$1	$2	:bool
++	RETURN	$0	$3	:bool
+diff --git a/nautilus/test/data/bool-tests/ir/boolAnd.trace b/nautilus/test/data/bool-tests/ir/boolAnd.trace
+index 47b9f6d0a..2aeeebf6a 100644
+--- a/nautilus/test/data/bool-tests/ir/boolAnd.trace
++++ b/nautilus/test/data/bool-tests/ir/boolAnd.trace
+@@ -1,7 +1,7 @@
+ NautilusIr {
+ execute() {
+ Block_0($1:bool, $2:bool):
+-	$5 = $1 and $2 :bool
+-	return ($5) :bool
++	$3 = $1 and $2 :bool
++	return ($3) :bool
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/bool-tests/ir/boolAssignmentOr.trace b/nautilus/test/data/bool-tests/ir/boolAssignmentOr.trace
+index 61270a659..7e2833c37 100644
+--- a/nautilus/test/data/bool-tests/ir/boolAssignmentOr.trace
++++ b/nautilus/test/data/bool-tests/ir/boolAssignmentOr.trace
+@@ -1,7 +1,7 @@
+ NautilusIr {
+ execute() {
+ Block_0($1:bool, $2:bool):
+-	$6 = $1 or $2 :bool
+-	return ($6) :bool
++	$4 = $1 or $2 :bool
++	return ($4) :bool
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/bool-tests/ir/boolConst.trace b/nautilus/test/data/bool-tests/ir/boolConst.trace
+index 876afda18..5b90ab134 100644
+--- a/nautilus/test/data/bool-tests/ir/boolConst.trace
++++ b/nautilus/test/data/bool-tests/ir/boolConst.trace
+@@ -1,8 +1,8 @@
+ NautilusIr {
+ execute() {
+ Block_0($1:bool):
+-	$3 = true :bool
+-	$4 = $1 and $3 :bool
+-	return ($4) :bool
++	$2 = true :bool
++	$3 = $1 and $2 :bool
++	return ($3) :bool
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/bool-tests/ir/boolIfElse.trace b/nautilus/test/data/bool-tests/ir/boolIfElse.trace
+index c51384413..9dfca68d4 100644
+--- a/nautilus/test/data/bool-tests/ir/boolIfElse.trace
++++ b/nautilus/test/data/bool-tests/ir/boolIfElse.trace
+@@ -1,18 +1,18 @@
+ NautilusIr {
+ execute() {
+ Block_0($1:bool, $2:bool):
+-	$5 = $1 and $2 :bool
+-	if $5 ? Block_1() : Block_2() :void
++	$3 = $1 and $2 :bool
++	if $3 ? Block_1() : Block_2() :void
+
+ Block_1():
+-	$7 = true :bool
+-	br Block_3($7) :void
++	$5 = true :bool
++	br Block_3($5) :void
+
+-Block_3($7:bool):
+-	return ($7) :bool
++Block_3($5:bool):
++	return ($5) :bool
+
+ Block_2():
+-	$10 = false :bool
+-	br Block_3($10) :void
++	$8 = false :bool
++	br Block_3($8) :void
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/bool-tests/ir/boolNot.trace b/nautilus/test/data/bool-tests/ir/boolNot.trace
+index 574d5ebc5..2b6f27fbc 100644
+--- a/nautilus/test/data/bool-tests/ir/boolNot.trace
++++ b/nautilus/test/data/bool-tests/ir/boolNot.trace
+@@ -1,7 +1,7 @@
+ NautilusIr {
+ execute() {
+ Block_0($1:bool):
+-	$3 = !$1 :bool
+-	return ($3) :bool
++	$2 = !$1 :bool
++	return ($2) :bool
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/bool-tests/ir/boolOr.trace b/nautilus/test/data/bool-tests/ir/boolOr.trace
+index a1478e228..52bb9c1c9 100644
+--- a/nautilus/test/data/bool-tests/ir/boolOr.trace
++++ b/nautilus/test/data/bool-tests/ir/boolOr.trace
+@@ -1,7 +1,7 @@
+ NautilusIr {
+ execute() {
+ Block_0($1:bool, $2:bool):
+-	$5 = $1 or $2 :bool
+-	return ($5) :bool
++	$3 = $1 or $2 :bool
++	return ($3) :bool
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/bool-tests/tracing/boolAnd.trace b/nautilus/test/data/bool-tests/tracing/boolAnd.trace
+index cb65defbe..fd887e5d1 100644
+--- a/nautilus/test/data/bool-tests/tracing/boolAnd.trace
++++ b/nautilus/test/data/bool-tests/tracing/boolAnd.trace
+@@ -1,5 +1,3 @@
+ B0($1:bool,$2:bool)
+-	ASSIGN	$3	$1	:bool
+-	ASSIGN	$4	$2	:bool
+-	AND	$5	$3	$4	:bool
+-	RETURN	$0	$5	:bool
++	AND	$3	$1	$2	:bool
++	RETURN	$0	$3	:bool
+diff --git a/nautilus/test/data/bool-tests/tracing/boolAssignmentOr.trace b/nautilus/test/data/bool-tests/tracing/boolAssignmentOr.trace
+index 2f010a1fb..11deffaac 100644
+--- a/nautilus/test/data/bool-tests/tracing/boolAssignmentOr.trace
++++ b/nautilus/test/data/bool-tests/tracing/boolAssignmentOr.trace
+@@ -1,7 +1,5 @@
+ B0($1:bool,$2:bool)
+ 	ASSIGN	$3	$1	:bool
+ 	ASSIGN	$1	$2	:bool
+-	ASSIGN	$4	$3	:bool
+-	ASSIGN	$5	$2	:bool
+-	OR	$6	$4	$5	:bool
+-	RETURN	$0	$6	:bool
++	OR	$4	$3	$2	:bool
++	RETURN	$0	$4	:bool
+diff --git a/nautilus/test/data/bool-tests/tracing/boolConst.trace b/nautilus/test/data/bool-tests/tracing/boolConst.trace
+index badc985f1..026851965 100644
+--- a/nautilus/test/data/bool-tests/tracing/boolConst.trace
++++ b/nautilus/test/data/bool-tests/tracing/boolConst.trace
+@@ -1,5 +1,4 @@
+ B0($1:bool)
+-	ASSIGN	$2	$1	:bool
+-	CONST	$3	true	:bool
+-	AND	$4	$2	$3	:bool
+-	RETURN	$0	$4	:bool
++	CONST	$2	true	:bool
++	AND	$3	$1	$2	:bool
++	RETURN	$0	$3	:bool
+diff --git a/nautilus/test/data/bool-tests/tracing/boolIfElse.trace b/nautilus/test/data/bool-tests/tracing/boolIfElse.trace
+index 549b0dd31..f587e91f0 100644
+--- a/nautilus/test/data/bool-tests/tracing/boolIfElse.trace
++++ b/nautilus/test/data/bool-tests/tracing/boolIfElse.trace
+@@ -1,11 +1,9 @@
+ B0($1:bool,$2:bool)
+-	ASSIGN	$3	$1	:bool
+-	ASSIGN	$4	$2	:bool
+-	AND	$5	$3	$4	:bool
+-	CMP	$6	$5	B1()	B2()	:void
++	AND	$3	$1	$2	:bool
++	CMP	$4	$3	B1()	B2()	:void
+ B1()
+-	CONST	$7	true	:bool
+-	RETURN	$0	$7	:bool
++	CONST	$5	true	:bool
++	RETURN	$0	$5	:bool
+ B2()
+-	CONST	$10	false	:bool
+-	RETURN	$0	$10	:bool
++	CONST	$8	false	:bool
++	RETURN	$0	$8	:bool
+diff --git a/nautilus/test/data/bool-tests/tracing/boolNot.trace b/nautilus/test/data/bool-tests/tracing/boolNot.trace
+index 9fb620495..35391e0b2 100644
+--- a/nautilus/test/data/bool-tests/tracing/boolNot.trace
++++ b/nautilus/test/data/bool-tests/tracing/boolNot.trace
+@@ -1,4 +1,3 @@
+ B0($1:bool)
+-	ASSIGN	$2	$1	:bool
+-	NOT	$3	$2	:bool
+-	RETURN	$0	$3	:bool
++	NOT	$2	$1	:bool
++	RETURN	$0	$2	:bool
+diff --git a/nautilus/test/data/bool-tests/tracing/boolOr.trace b/nautilus/test/data/bool-tests/tracing/boolOr.trace
+index 039262585..223edb2bf 100644
+--- a/nautilus/test/data/bool-tests/tracing/boolOr.trace
++++ b/nautilus/test/data/bool-tests/tracing/boolOr.trace
+@@ -1,5 +1,3 @@
+ B0($1:bool,$2:bool)
+-	ASSIGN	$3	$1	:bool
+-	ASSIGN	$4	$2	:bool
+-	OR	$5	$3	$4	:bool
+-	RETURN	$0	$5	:bool
++	OR	$3	$1	$2	:bool
++	RETURN	$0	$3	:bool
+diff --git a/nautilus/test/data/control-flow-tests/after_ssa/andFunction.trace b/nautilus/test/data/control-flow-tests/after_ssa/andFunction.trace
+index 059528d0a..398128ca7 100644
+--- a/nautilus/test/data/control-flow-tests/after_ssa/andFunction.trace
++++ b/nautilus/test/data/control-flow-tests/after_ssa/andFunction.trace
+@@ -1,15 +1,15 @@
+ B0($1:i32)
+ 	CONST	$2	true	:bool
+-	CONST	$4	42	:i64
+-	CAST	$5	$1	:i64
+-	EQ	$6	$5	$4	:bool
+-	AND	$7	$2	$6	:bool
+-	CONST	$9	42	:i64
+-	CAST	$10	$1	:i64
+-	EQ	$11	$10	$9	:bool
+-	AND	$12	$7	$11	:bool
+-	CONST	$14	42	:i64
+-	CAST	$15	$1	:i64
+-	EQ	$16	$15	$14	:bool
+-	AND	$17	$12	$16	:bool
+-	RETURN	$0	$17	:bool
++	CONST	$3	42	:i64
++	CAST	$4	$1	:i64
++	EQ	$5	$4	$3	:bool
++	AND	$6	$2	$5	:bool
++	CONST	$7	42	:i64
++	CAST	$8	$1	:i64
++	EQ	$9	$8	$7	:bool
++	AND	$10	$6	$9	:bool
++	CONST	$11	42	:i64
++	CAST	$12	$1	:i64
++	EQ	$13	$12	$11	:bool
++	AND	$14	$10	$13	:bool
++	RETURN	$0	$14	:bool
+diff --git a/nautilus/test/data/control-flow-tests/ir/andFunction.trace b/nautilus/test/data/control-flow-tests/ir/andFunction.trace
+index 8b1515a07..69f30e14c 100644
+--- a/nautilus/test/data/control-flow-tests/ir/andFunction.trace
++++ b/nautilus/test/data/control-flow-tests/ir/andFunction.trace
+@@ -2,18 +2,18 @@ NautilusIr {
+ execute() {
+ Block_0($1:i32):
+ 	$2 = true :bool
+-	$4 = 42 :i64
+-	$5 = $1 cast_to i64 :i64
+-	$6 = $5 == $4 :bool
+-	$7 = $2 and $6 :bool
+-	$9 = 42 :i64
+-	$10 = $1 cast_to i64 :i64
+-	$11 = $10 == $9 :bool
+-	$12 = $7 and $11 :bool
+-	$14 = 42 :i64
+-	$15 = $1 cast_to i64 :i64
+-	$16 = $15 == $14 :bool
+-	$17 = $12 and $16 :bool
+-	return ($17) :bool
++	$3 = 42 :i64
++	$4 = $1 cast_to i64 :i64
++	$5 = $4 == $3 :bool
++	$6 = $2 and $5 :bool
++	$7 = 42 :i64
++	$8 = $1 cast_to i64 :i64
++	$9 = $8 == $7 :bool
++	$10 = $6 and $9 :bool
++	$11 = 42 :i64
++	$12 = $1 cast_to i64 :i64
++	$13 = $12 == $11 :bool
++	$14 = $10 and $13 :bool
++	return ($14) :bool
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/control-flow-tests/tracing/andFunction.trace b/nautilus/test/data/control-flow-tests/tracing/andFunction.trace
+index 9a82b42f3..61edf663b 100644
+--- a/nautilus/test/data/control-flow-tests/tracing/andFunction.trace
++++ b/nautilus/test/data/control-flow-tests/tracing/andFunction.trace
+@@ -1,21 +1,18 @@
+ B0($1:i32)
+ 	CONST	$2	true	:bool
+-	ASSIGN	$3	$2	:bool
+-	CONST	$4	42	:i64
+-	CAST	$5	$1	:i64
+-	EQ	$6	$5	$4	:bool
+-	AND	$7	$3	$6	:bool
+-	ASSIGN	$2	$7	:bool
+-	ASSIGN	$8	$2	:bool
+-	CONST	$9	42	:i64
+-	CAST	$10	$1	:i64
+-	EQ	$11	$10	$9	:bool
+-	AND	$12	$8	$11	:bool
+-	ASSIGN	$2	$12	:bool
+-	ASSIGN	$13	$2	:bool
+-	CONST	$14	42	:i64
+-	CAST	$15	$1	:i64
+-	EQ	$16	$15	$14	:bool
+-	AND	$17	$13	$16	:bool
+-	ASSIGN	$2	$17	:bool
++	CONST	$3	42	:i64
++	CAST	$4	$1	:i64
++	EQ	$5	$4	$3	:bool
++	AND	$6	$2	$5	:bool
++	ASSIGN	$2	$6	:bool
++	CONST	$7	42	:i64
++	CAST	$8	$1	:i64
++	EQ	$9	$8	$7	:bool
++	AND	$10	$2	$9	:bool
++	ASSIGN	$2	$10	:bool
++	CONST	$11	42	:i64
++	CAST	$12	$1	:i64
++	EQ	$13	$12	$11	:bool
++	AND	$14	$2	$13	:bool
++	ASSIGN	$2	$14	:bool
+ 	RETURN	$0	$2	:bool
+diff --git a/nautilus/test/data/expression-tests/after_ssa/logicalNot_bool.trace b/nautilus/test/data/expression-tests/after_ssa/logicalNot_bool.trace
+index 7a3c8c724..35391e0b2 100644
+--- a/nautilus/test/data/expression-tests/after_ssa/logicalNot_bool.trace
++++ b/nautilus/test/data/expression-tests/after_ssa/logicalNot_bool.trace
+@@ -1,3 +1,3 @@
+ B0($1:bool)
+-	NOT	$3	$1	:bool
+-	RETURN	$0	$3	:bool
++	NOT	$2	$1	:bool
++	RETURN	$0	$2	:bool
+diff --git a/nautilus/test/data/expression-tests/ir/logicalNot_bool.trace b/nautilus/test/data/expression-tests/ir/logicalNot_bool.trace
+index 574d5ebc5..2b6f27fbc 100644
+--- a/nautilus/test/data/expression-tests/ir/logicalNot_bool.trace
++++ b/nautilus/test/data/expression-tests/ir/logicalNot_bool.trace
+@@ -1,7 +1,7 @@
+ NautilusIr {
+ execute() {
+ Block_0($1:bool):
+-	$3 = !$1 :bool
+-	return ($3) :bool
++	$2 = !$1 :bool
++	return ($2) :bool
+ }
+ } //NESIR
+diff --git a/nautilus/test/data/expression-tests/tracing/logicalNot_bool.trace b/nautilus/test/data/expression-tests/tracing/logicalNot_bool.trace
+index 9fb620495..35391e0b2 100644
+--- a/nautilus/test/data/expression-tests/tracing/logicalNot_bool.trace
++++ b/nautilus/test/data/expression-tests/tracing/logicalNot_bool.trace
+@@ -1,4 +1,3 @@
+ B0($1:bool)
+-	ASSIGN	$2	$1	:bool
+-	NOT	$3	$2	:bool
+-	RETURN	$0	$3	:bool
++	NOT	$2	$1	:bool
++	RETURN	$0	$2	:bool

@@ -7,18 +7,18 @@ let
 
   mlirBinary = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "nes-mlir";
-    version = "20";
+    version = "21";
 
     src =
       if pkgs.stdenv.hostPlatform.isAarch64 then
         pkgs.fetchurl {
-          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-arm64-none-libstdcxx.tar.zstd";
+          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-v2/nes-llvm-21-arm64-none-libstdcxx.tar.zstd";
           sha256 = "3e74c024e865efac646abe09b2cadcf88530b9af799b2d6fd0a5e5e1e01e685e";
         }
       else if pkgs.stdenv.hostPlatform.isx86_64 then
         pkgs.fetchurl {
-          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-x64-none-libstdcxx.tar.zstd";
-          sha256 = "aef98d5bd61a8530392796e86a15a36d7fde9d553579cf64dfd465454e3fae7a";
+          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-v2/nes-llvm-21-x64-none-libstdcxx.tar.zstd";
+          sha256 = "944a71730086f49a80b3cdb44278cec2d5fcb04e28e50bb4fd258eb12ddb06db";
         }
       else
         throw "Unsupported system: ${pkgs.stdenv.hostPlatform.system}";
@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "5fa4c9043d961238d283bf129b82c59e1476974a";
-    hash = "sha512-woWgqYDU5SW2hqMh/VhDD9adUt1XFI2K75YOeIW7Yi/fDEmX59bOXmlk4z1nbPJqVFPip7pPJkCvWEZ+WmM/cg==";
+    rev = "77a2e028e69ce0b6ed4be5867395c489f19ab9c8";
+    hash = "sha256-W4gzAHo68dVSfMTUeOZJUqVEjuvaf5/C+HGc44l91ME=";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -64,8 +64,7 @@ let
     src = nautilusSrc;
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
-      ./patches/0002-fix-ambiguous-val-overload.patch
-      ./patches/0003-ubsan-fix-variadic-expansion.patch
+      ./patches/0002-fix-logical-operators-to-accept-const-references.patch
     ];
 
     nativeBuildInputs = [
@@ -112,6 +111,7 @@ let
       "-DENABLE_MLIR_BACKEND=ON"
       "-DENABLE_C_BACKEND=ON"
       "-DENABLE_BC_BACKEND=OFF"
+      "-DENABLE_INLINING_PASS=OFF"
       "-DENABLE_TESTS=OFF"
       "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
       "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"
