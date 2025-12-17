@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -64,12 +65,9 @@ LogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) const
 
 LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return withChildren(newChildren);
+    const auto newLeft = left.withInferredDataType(schema);
+    const auto newRight = right.withInferredDataType(schema);
+    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newLeft, newRight});
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
@@ -82,7 +80,6 @@ LogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFuncti
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType().join(children[1].getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
     return copy;
 };
 
