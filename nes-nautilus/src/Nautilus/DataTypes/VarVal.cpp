@@ -138,10 +138,6 @@ VarVal VarVal::castToType(const DataType::Type type) const
         case DataType::Type::VARSIZED: {
             return cast<VariableSizedData>();
         }
-        case DataType::Type::VARSIZED_POINTER_REP:
-            throw UnknownDataType(
-                "Not supporting reading {} data type from memory. VARSIZED_POINTER_REP should is only supported in the ChainedHashMap!",
-                magic_enum::enum_name(type));
         case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
@@ -190,7 +186,6 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
             return {readValueFromMemRef<double>(memRef)};
         }
         case DataType::Type::VARSIZED:
-        case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
     }

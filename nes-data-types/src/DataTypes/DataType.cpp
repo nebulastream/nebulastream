@@ -138,8 +138,6 @@ uint32_t DataType::getSizeInBytes() const
             /// Returning '16' for VARSIZED, because we store 'uint64_t' data that represent how to access the data, c.f., @class VariableSizedAccess
             /// and 8 byte for the size of the VARSIZED
             return 16;
-        case Type::VARSIZED_POINTER_REP:
-            return sizeof(int8_t*);
         case Type::INT64:
         case Type::UINT64:
         case Type::FLOAT64:
@@ -186,7 +184,6 @@ std::string DataType::formattedBytesToString(const void* data) const
             }
             return std::string{*static_cast<const char*>(data)};
         }
-        case Type::VARSIZED_POINTER_REP:
         case Type::VARSIZED: {
             /// Read the length of the VariableSizedDataType from the first StringLengthType bytes from the buffer and adjust the data pointer.
             using StringLengthType = uint32_t;
@@ -274,11 +271,6 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
 {
     return DataType{.type = DataType::Type::VARSIZED};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZED_POINTER_REPDataType(DataTypeRegistryArguments)
-{
-    return DataType{.type = DataType::Type::VARSIZED_POINTER_REP};
 }
 
 bool DataType::isInteger() const

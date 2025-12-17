@@ -44,7 +44,6 @@ struct DataType final
         CHAR,
         UNDEFINED,
         VARSIZED,
-        VARSIZED_POINTER_REP,
     };
 
     template <class T>
