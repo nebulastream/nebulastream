@@ -111,7 +111,6 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
             return ConstantBooleanValueFunction(parseConstantValue<bool>(stringValue));
         case DataType::Type::CHAR:
             return ConstantCharValueFunction(parseConstantValue<char>(stringValue));
-        case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::VARSIZED: {
             return ConstantValueVariableSizePhysicalFunction(std::bit_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
         };
