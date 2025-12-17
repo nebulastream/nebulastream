@@ -55,11 +55,6 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     {
         return lowerConstantFunction(*constantValueFunction);
     }
-    if (const auto castToTypeNode = logicalFunction.tryGet<CastToTypeLogicalFunction>())
-    {
-        INVARIANT(childFunctions.size() == 1, "CastFieldPhysicalFunction expects exact one child!");
-        return CastFieldPhysicalFunction(childFunctions[0], castToTypeNode->getDataType());
-    }
 
     /// 3. Calling the registry to create an executable function.
     PhysicalFunctionRegistryArguments executableFunctionArguments{
