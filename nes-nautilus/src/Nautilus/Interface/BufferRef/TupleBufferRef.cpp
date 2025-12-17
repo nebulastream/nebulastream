@@ -115,7 +115,7 @@ VarVal TupleBufferRef::storeValue(
         recordBuffer.getReference(),
         bufferProvider,
         varSizedValue.getReference(),
-        varSizedValue.getTotalSize(),
+        varSizedValue.getContentSize(),
         refToIndex);
 
     return value;
