@@ -204,7 +204,6 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
         const FieldAccessLogicalFunction fieldAccessKey{fieldExtension.newDataType, fieldExtension.newName};
         if (fieldExtension.newDataType.isType(DataType::Type::VARSIZED))
         {
-            fieldExtension.newDataType.type = DataType::Type::VARSIZED_POINTER_REP;
             const bool fieldReplaceSuccess = inputSchema.replaceTypeOfField(fieldExtension.newName, fieldExtension.newDataType);
             INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", fieldExtension.newName, inputSchema);
         }
