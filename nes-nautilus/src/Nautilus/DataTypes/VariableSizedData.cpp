@@ -32,10 +32,6 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 {
 }
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData) : VariableSizedData(pointerToVarSizedData, 0)
-{
-}
-
 VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
 {
 }
@@ -106,11 +102,6 @@ nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) 
 nautilus::val<bool> VariableSizedData::operator!() const
 {
     return !isValid();
-}
-
-nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
-{
-    return getContentSize();
 }
 
 [[nodiscard]] nautilus::val<uint32_t> VariableSizedData::getContentSize() const
