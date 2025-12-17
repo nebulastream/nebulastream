@@ -140,8 +140,8 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
         EXPECT_NE(recordValueExact, exactMap.end()) << "Could not find the record with the key";
 
         /// Populating the error message, if the values are not equal.
-        ss << NautilusTestUtils::compareRecords(recordKeyActual, recordKeyExact, projectionKeys);
-        ss << NautilusTestUtils::compareRecords(recordValueActual, recordValueExact->second, projectionValues);
+        ss << NautilusTestUtils::compareRecords(recordKeyActual, recordKeyExact, projectionKeys).value_or("");
+        ss << NautilusTestUtils::compareRecords(recordValueActual, recordValueExact->second, projectionValues).value_or("");
     }
     return ss.str();
 }
@@ -169,7 +169,7 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
         EXPECT_NE(recordValueExact, exactMap.end()) << "Could not find a record for this key";
 
         /// Populating the error message, if the values are not equal.
-        ss << NautilusTestUtils::compareRecords(recordValueActual, recordValueExact->second, projectionValues);
+        ss << NautilusTestUtils::compareRecords(recordValueActual, recordValueExact->second, projectionValues).value_or("");
     }
     return ss.str();
 }

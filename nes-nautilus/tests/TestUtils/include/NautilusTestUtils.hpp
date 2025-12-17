@@ -161,7 +161,7 @@ public:
         const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
-    static std::string
+    static std::optional<std::string>
     compareRecords(const Record& recordLeft, const Record& recordRight, const std::vector<Record::RecordFieldIdentifier>& projection);
 
     /// Calls an already compiled function. If the method does not exist, we throw an PRECONDITION violation
