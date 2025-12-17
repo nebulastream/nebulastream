@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Functions/CastFieldPhysicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
@@ -36,10 +37,12 @@ namespace NES::QueryCompilation
 PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
-    std::vector<PhysicalFunction> childFunction;
+    std::vector<PhysicalFunction> childFunctions;
+    std::vector<DataType> inputTypes;
     for (const auto& child : logicalFunction.getChildren())
     {
-        childFunction.emplace_back(lowerFunction(child));
+        childFunctions.emplace_back(lowerFunction(child));
+        inputTypes.emplace_back(child.getDataType());
     }
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
@@ -54,12 +57,13 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     }
     if (const auto castToTypeNode = logicalFunction.tryGet<CastToTypeLogicalFunction>())
     {
-        INVARIANT(childFunction.size() == 1, "CastFieldPhysicalFunction expects exact one child!");
-        return CastFieldPhysicalFunction(childFunction[0], castToTypeNode->getDataType());
+        INVARIANT(childFunctions.size() == 1, "CastFieldPhysicalFunction expects exact one child!");
+        return CastFieldPhysicalFunction(childFunctions[0], castToTypeNode->getDataType());
     }
 
     /// 3. Calling the registry to create an executable function.
-    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction);
+    PhysicalFunctionRegistryArguments executableFunctionArguments{
+        .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()};
     if (const auto function
         = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments)))
     {

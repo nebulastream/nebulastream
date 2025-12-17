@@ -13,29 +13,25 @@
 */
 
 #pragma once
-#include <string>
-#include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Util/Registry.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Arena.hpp>
 
 namespace NES
 {
 
-using PhysicalFunctionRegistryReturnType = PhysicalFunction;
-
-struct PhysicalFunctionRegistryArguments
+class CeilPhysicalFunction final : public PhysicalFunctionConcept
 {
-    std::vector<PhysicalFunction> childFunctions;
-    std::vector<DataType> inputTypes;
+public:
+    explicit CeilPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+
+private:
+    PhysicalFunction childFunction;
+    DataType inputType;
     DataType outputType;
 };
 
-class PhysicalFunctionRegistry
-    : public BaseRegistry<PhysicalFunctionRegistry, std::string, PhysicalFunctionRegistryReturnType, PhysicalFunctionRegistryArguments>
-{
-};
 }
-
-#define INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
-#include <PhysicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION

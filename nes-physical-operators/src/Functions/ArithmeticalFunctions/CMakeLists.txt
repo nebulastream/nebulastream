@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_plugin(Add PhysicalFunction nes-physical-operators AddPhysicalFunction.cpp)
+add_plugin(Ceil PhysicalFunction nes-physical-operators CeilPhysicalFunction.cpp)
 add_plugin(Div PhysicalFunction nes-physical-operators DivPhysicalFunction.cpp)
 add_plugin(Mod PhysicalFunction nes-physical-operators ModPhysicalFunction.cpp)
 add_plugin(Mul PhysicalFunction nes-physical-operators MulPhysicalFunction.cpp)
