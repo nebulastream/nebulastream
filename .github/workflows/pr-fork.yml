@@ -24,5 +24,5 @@ jobs:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       head_sha: ${{ github.event.pull_request.head.sha }}"
       base_sha: ${{ github.event.pull_request.base.sha }}"
-      number_of_commits: ${{ github.event.pull_request.commits || -1 }}"
+      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
     secrets: inherit
