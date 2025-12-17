@@ -143,7 +143,7 @@ jobs:
     name: "Build Dev Images"
     needs: [ detect-dependency-changes, lock ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
-    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
+    runs-on: ${{ matrix.runs-on-labels }}
     strategy:
       fail-fast: false
       matrix:
@@ -153,6 +153,11 @@ jobs:
         exclude:
           - arch: arm64
             stdlib: 'libstdcxx'
+        include:
+          - arch: x64
+            runs-on-labels: [ self-hosted, linux, Build, x64, dep-builder ]
+          - arch: arm64
+            runs-on-labels: [ self-hosted, on-demand, type-cax41, image-arm-app-docker-ce ]
     steps:
       - uses: actions/checkout@v4
         with:
