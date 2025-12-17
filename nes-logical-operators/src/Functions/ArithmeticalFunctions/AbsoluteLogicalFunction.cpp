@@ -49,12 +49,8 @@ LogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) 
 
 LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return this->withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    return withDataType(newChild.getDataType()).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const
@@ -102,8 +98,7 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAbsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
