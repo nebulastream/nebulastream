@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -66,12 +67,8 @@ LogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) cons
 
 LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const
