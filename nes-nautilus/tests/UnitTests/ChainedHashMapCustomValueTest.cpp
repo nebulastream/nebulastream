@@ -193,11 +193,10 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
             /// Printing an error message, if the values are not equal.
             const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(outputBuffer)));
             auto recordValueActual = inputBufferRef->readRecord(projectionAllFields, recordBufferOutput, currentPosition);
-            std::stringstream ss;
-            ss << compareRecords(recordValueActual, exactIt->second, projectionAllFields);
-            if (not ss.str().empty())
+            const auto errorMessage = compareRecords(recordValueActual, exactIt->second, projectionAllFields);
+            if (errorMessage.has_value())
             {
-                EXPECT_TRUE(false) << ss.str();
+                EXPECT_TRUE(false) << errorMessage.value();
             }
             ++currentPosition;
         }
