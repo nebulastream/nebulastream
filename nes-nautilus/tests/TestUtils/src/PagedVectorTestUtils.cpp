@@ -152,10 +152,10 @@ void runRetrieveTest(
             auto recordExpected = memoryProviderInputBuffer->readRecord(projections, recordBufferInput, i);
 
             /// Printing an error message, if the values are not equal.
-            auto compareResult = NautilusTestUtils::compareRecords(recordActual, recordExpected, projections);
-            if (not compareResult.empty())
+            const auto compareResult = NautilusTestUtils::compareRecords(recordActual, recordExpected, projections);
+            if (compareResult.has_value())
             {
-                EXPECT_TRUE(false) << compareResult;
+                EXPECT_TRUE(false) << compareResult.value();
             }
 
             /// Incrementing the index of the actual record buffer
