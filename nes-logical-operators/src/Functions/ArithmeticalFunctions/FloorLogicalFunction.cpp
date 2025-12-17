@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -47,12 +48,9 @@ LogicalFunction FloorLogicalFunction::withDataType(const DataType& dataType) con
 
 LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return this->withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    const auto childDataType = newChild.getDataType();
+    return withDataType(childDataType).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> FloorLogicalFunction::getChildren() const
