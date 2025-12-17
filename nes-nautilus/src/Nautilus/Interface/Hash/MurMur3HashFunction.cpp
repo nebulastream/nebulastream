@@ -126,7 +126,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 if constexpr (std::is_same_v<T, VariableSizedData>)
                 {
                     const auto& varSizedContent = val;
-                    return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getContentSize());
+                    return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
                 }
                 else
                 {

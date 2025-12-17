@@ -133,7 +133,7 @@ void storeVarSized(
         bufferProviderRef,
         memoryAddress,
         variableSizedData.getReference(),
-        variableSizedData.getContentSize());
+        variableSizedData.getSize());
 }
 }
 
