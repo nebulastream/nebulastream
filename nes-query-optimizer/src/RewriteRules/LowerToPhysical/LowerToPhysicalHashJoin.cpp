@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <tuple>
@@ -79,6 +80,58 @@ struct FieldNamesExtension
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
 getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rightInputSchema, LogicalFunction& joinFunction)
 {
+    struct FieldMatchResult
+    {
+        std::optional<Schema::Field> field;
+        bool ambiguous{false};
+    };
+
+    auto findExactField = [](const Schema& schema, const std::string& fieldName) -> std::optional<Schema::Field>
+    {
+        for (const auto& field : schema.getFields())
+        {
+            if (field.name == fieldName)
+            {
+                return field;
+            }
+        }
+        return std::nullopt;
+    };
+
+    auto findFieldMatch = [&](const Schema& schema, const std::string& fieldName) -> FieldMatchResult
+    {
+        if (auto exact = findExactField(schema, fieldName))
+        {
+            return {.field = *exact, .ambiguous = false};
+        }
+        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+        {
+            return {.field = std::nullopt, .ambiguous = false};
+        }
+        std::optional<Schema::Field> match;
+        for (const auto& field : schema.getFields())
+        {
+            if (field.getUnqualifiedName() == fieldName)
+            {
+                if (match.has_value())
+                {
+                    return {.field = std::nullopt, .ambiguous = true};
+                }
+                match = field;
+            }
+        }
+        return {.field = match, .ambiguous = false};
+    };
+
+    auto makeFieldAccess = [](const Schema::Field& field, const FieldAccessLogicalFunction& original)
+    {
+        if (field.name == original.getFieldName() && field.dataType == original.getDataType())
+        {
+            return original;
+        }
+        return FieldAccessLogicalFunction(field.dataType, field.name);
+    };
+
     /// Tuple  of left, right join fields and the combined data type, e.g., i32 and i8 --> i32
     std::vector<FieldNamesExtension> leftJoinNames;
     std::vector<FieldNamesExtension> rightJoinNames;
@@ -99,7 +152,8 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
     uint64_t counter = 0;
     std::ranges::for_each(
         parentsOfJoinComparisons,
-        [leftInputSchema, rightInputSchema, &leftJoinNames, &rightJoinNames, &counter](const LogicalFunction& parent)
+        [&leftInputSchema, &rightInputSchema, &leftJoinNames, &rightJoinNames, &counter, &findFieldMatch, &makeFieldAccess](
+            const LogicalFunction& parent)
         {
             /// We expect the parent to have exactly two children and that both children are FieldAccessLogicalFunction
             /// This should be true, as the join operator receives an input schema from its parent operator without any additional functions
@@ -112,42 +166,80 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                 throw UnknownJoinStrategy(
                     "Could not handle join strategy that has chained logical functions operating over the join fields!");
             }
-            const auto leftField = leftInputSchema.getFieldByName(firstChild->getFieldName()).has_value() ? *firstChild : *secondChild;
-            const auto rightField = rightInputSchema.getFieldByName(firstChild->getFieldName()).has_value() ? *firstChild : *secondChild;
+            const auto firstFieldName = firstChild->getFieldName();
+            const auto secondFieldName = secondChild->getFieldName();
+
+            const auto firstMatchLeft = findFieldMatch(leftInputSchema, firstFieldName);
+            const auto firstMatchRight = findFieldMatch(rightInputSchema, firstFieldName);
+            const auto secondMatchLeft = findFieldMatch(leftInputSchema, secondFieldName);
+            const auto secondMatchRight = findFieldMatch(rightInputSchema, secondFieldName);
+
+            if (firstMatchLeft.ambiguous || secondMatchLeft.ambiguous || firstMatchRight.ambiguous || secondMatchRight.ambiguous)
+            {
+                throw CannotInferSchema(
+                    "Join predicate is ambiguous for fields '{}' and '{}'. Use qualified field names.",
+                    firstFieldName,
+                    secondFieldName);
+            }
+
+            const bool leftHasFirst = firstMatchLeft.field.has_value();
+            const bool rightHasFirst = firstMatchRight.field.has_value();
+            const bool leftHasSecond = secondMatchLeft.field.has_value();
+            const bool rightHasSecond = secondMatchRight.field.has_value();
+
+            std::optional<FieldAccessLogicalFunction> leftField;
+            std::optional<FieldAccessLogicalFunction> rightField;
+            if (leftHasFirst && rightHasSecond && !leftHasSecond && !rightHasFirst)
+            {
+                leftField = makeFieldAccess(*firstMatchLeft.field, *firstChild);
+                rightField = makeFieldAccess(*secondMatchRight.field, *secondChild);
+            }
+            else if (leftHasSecond && rightHasFirst && !leftHasFirst && !rightHasSecond)
+            {
+                leftField = makeFieldAccess(*secondMatchLeft.field, *secondChild);
+                rightField = makeFieldAccess(*firstMatchRight.field, *firstChild);
+            }
+            else
+            {
+                throw CannotInferSchema(
+                    "Join predicate fields '{}' and '{}' do not map to left/right input schemas.",
+                    firstFieldName,
+                    secondFieldName);
+            }
 
             /// If they do not have the same data types, we need to cast both to a common one
-            if (firstChild->getDataType() != secondChild->getDataType())
+            if (leftField->getDataType() != rightField->getDataType())
             {
                 /// We are now converting the fields to a physical data type and then joining them together
-                const auto joinedDataType = leftField.getDataType().join(rightField.getDataType());
+                const auto joinedDataType = leftField->getDataType().join(rightField->getDataType());
                 if (joinedDataType.has_value())
                 {
-                    const auto leftFieldNewName = leftField.getFieldName() + "_" + std::to_string(counter++);
-                    const auto rightFieldNewName = rightField.getFieldName() + "_" + std::to_string(counter++);
+                    const auto leftFieldNewName = leftField->getFieldName() + "_" + std::to_string(counter++);
+                    const auto rightFieldNewName = rightField->getFieldName() + "_" + std::to_string(counter++);
                     leftJoinNames.emplace_back(FieldNamesExtension{
-                        .oldName = leftField.getFieldName(),
+                        .oldName = leftField->getFieldName(),
                         .newName = leftFieldNewName,
-                        .oldDataType = leftField.getDataType(),
+                        .oldDataType = leftField->getDataType(),
                         .newDataType = *joinedDataType});
                     rightJoinNames.emplace_back(FieldNamesExtension{
-                        .oldName = rightField.getFieldName(),
+                        .oldName = rightField->getFieldName(),
                         .newName = rightFieldNewName,
-                        .oldDataType = rightField.getDataType(),
+                        .oldDataType = rightField->getDataType(),
                         .newDataType = *joinedDataType});
                 }
             }
             else
             {
                 leftJoinNames.emplace_back(FieldNamesExtension{
-                    .oldName = leftField.getFieldName(),
-                    .newName = leftField.getFieldName(),
-                    .oldDataType = leftField.getDataType(),
-                    .newDataType = leftField.getDataType()});
+                    .oldName = leftField->getFieldName(),
+                    .newName = leftField->getFieldName(),
+                    .oldDataType = leftField->getDataType(),
+                    .newDataType = leftField->getDataType()});
                 rightJoinNames.emplace_back(FieldNamesExtension{
-                    .oldName = rightField.getFieldName(),
-                    .newName = rightField.getFieldName(),
-                    .oldDataType = rightField.getDataType(),
-                    .newDataType = rightField.getDataType()});
+                    .oldName = rightField->getFieldName(),
+                    .newName = rightField->getFieldName(),
+                    .oldDataType = rightField->getDataType(),
+                    .newDataType = rightField->getDataType()});
             }
         });
 
