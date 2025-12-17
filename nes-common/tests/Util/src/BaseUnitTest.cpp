@@ -109,10 +109,6 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
         });
 }
 
-TestSourceNameHelper::TestSourceNameHelper() : srcCnt(1)
-{
-}
-
 std::string TestSourceNameHelper::operator*()
 {
     std::ostringstream oss;

@@ -33,10 +33,7 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : sliceAndWindowStore(std::move(sliceAndWindowStore))
-    , numberOfWorkerThreads(0)
-    , outputOriginId(outputOriginId)
-    , inputOrigins(inputOrigins)
+    : sliceAndWindowStore(std::move(sliceAndWindowStore)), outputOriginId(outputOriginId), inputOrigins(inputOrigins)
 {
 }
 

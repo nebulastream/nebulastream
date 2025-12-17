@@ -47,7 +47,7 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     : Sink(std::move(backpressureController))
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
-    , isOpen(false)
+
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
     {

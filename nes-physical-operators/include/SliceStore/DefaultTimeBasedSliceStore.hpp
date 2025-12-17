@@ -35,13 +35,10 @@ namespace NES
 /// This struct stores a slice ptr and the state. We require this information, as we have to know the state of a slice for a given window
 struct SlicesAndState
 {
-    explicit SlicesAndState(const uint64_t numberOfExpectedSlices) : windowState(WindowInfoState::WINDOW_FILLING)
-    {
-        windowSlices.reserve(numberOfExpectedSlices);
-    }
+    explicit SlicesAndState(const uint64_t numberOfExpectedSlices) { windowSlices.reserve(numberOfExpectedSlices); }
 
     std::vector<std::shared_ptr<Slice>> windowSlices;
-    WindowInfoState windowState;
+    WindowInfoState windowState{WindowInfoState::WINDOW_FILLING};
 };
 
 class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface

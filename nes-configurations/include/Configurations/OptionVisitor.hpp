@@ -25,7 +25,7 @@ class OptionVisitor
 public:
     virtual ~OptionVisitor() = default;
 
-    OptionVisitor() { }
+    OptionVisitor() = default;
 
     virtual void visitConcrete(std::string name, std::string description, std::string_view defaultValue) = 0;
     virtual void push() = 0;

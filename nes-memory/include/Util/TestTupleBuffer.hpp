@@ -60,7 +60,7 @@ public:
     /// @tparam Type of the field requires to be a NesType.
     /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     template <class Type>
-    requires IsNesType<Type> && std::is_pointer<Type>::value
+    requires IsNesType<Type> && std::is_pointer_v<Type>
     [[nodiscard]] Type read() const
     {
         /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess

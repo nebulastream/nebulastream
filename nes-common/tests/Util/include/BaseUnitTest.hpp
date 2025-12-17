@@ -102,7 +102,7 @@ private:
 class TestSourceNameHelper
 {
 public:
-    TestSourceNameHelper();
+    TestSourceNameHelper() = default;
 
     /**
      * @brief Returns the string "source" concatenated with the source counter. The latter is then increased.
@@ -111,7 +111,7 @@ public:
     std::string operator*();
 
 private:
-    uint64_t srcCnt;
+    uint64_t srcCnt{1};
 };
 }
 

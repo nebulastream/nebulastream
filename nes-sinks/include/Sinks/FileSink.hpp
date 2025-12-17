@@ -60,7 +60,7 @@ protected:
 private:
     std::string outputFilePath;
     bool isAppend;
-    bool isOpen;
+    bool isOpen{false};
     std::unique_ptr<Format> formatter;
     folly::Synchronized<std::ofstream> outputFileStream;
 };

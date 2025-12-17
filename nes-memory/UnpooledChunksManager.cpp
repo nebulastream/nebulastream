@@ -38,7 +38,7 @@ UnpooledChunksManager::UnpooledChunksManager(std::shared_ptr<std::pmr::memory_re
 {
 }
 
-UnpooledChunksManager::UnpooledChunk::UnpooledChunk(const uint64_t windowSize) : lastAllocateChunkKey(nullptr), rollingAverage(windowSize)
+UnpooledChunksManager::UnpooledChunk::UnpooledChunk(const uint64_t windowSize) : rollingAverage(windowSize)
 {
 }
 

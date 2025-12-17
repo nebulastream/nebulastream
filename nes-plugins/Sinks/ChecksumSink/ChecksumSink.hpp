@@ -54,7 +54,7 @@ protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
 
 private:
-    bool isOpen;
+    bool isOpen{false};
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Checksum checksum;

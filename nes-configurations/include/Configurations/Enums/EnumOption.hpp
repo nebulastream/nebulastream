@@ -27,7 +27,7 @@ namespace NES
 {
 
 template <class T>
-concept IsEnum = std::is_enum<T>::value;
+concept IsEnum = std::is_enum_v<T>;
 
 /// This class defines an option, which has only the member of an enum as possible values.
 template <IsEnum T>

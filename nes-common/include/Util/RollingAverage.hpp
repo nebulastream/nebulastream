@@ -31,8 +31,8 @@ class RollingAverage
 {
     std::vector<T> buffer;
     uint64_t windowSize;
-    size_t index;
-    size_t rollingCount;
+    size_t index{0};
+    size_t rollingCount{0};
     T average;
 
     void updateAverage()
@@ -47,7 +47,7 @@ class RollingAverage
     }
 
 public:
-    explicit RollingAverage(size_t windowSize) : buffer(windowSize, 0), windowSize(windowSize), index(0), rollingCount(0)
+    explicit RollingAverage(size_t windowSize) : buffer(windowSize, 0), windowSize(windowSize)
     {
         PRECONDITION(windowSize > 0, "Window size {} must be greater than 0", windowSize);
     }

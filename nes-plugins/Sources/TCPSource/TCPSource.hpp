@@ -198,7 +198,7 @@ private:
     int sockfd = -1;
 
     /// buffer for thread-safe strerror_r
-    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
+    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer{};
 
     std::string socketHost;
     std::string socketPort;

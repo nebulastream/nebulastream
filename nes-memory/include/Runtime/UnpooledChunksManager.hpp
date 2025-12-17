@@ -70,7 +70,7 @@ class UnpooledChunksManager
         explicit UnpooledChunk(uint64_t windowSize);
         void emplaceChunkControlBlock(uint8_t* chunkKey, std::unique_ptr<detail::MemorySegment> newMemorySegment);
         std::unordered_map<uint8_t*, ChunkControlBlock> chunks;
-        uint8_t* lastAllocateChunkKey;
+        uint8_t* lastAllocateChunkKey{nullptr};
         RollingAverage<size_t> rollingAverage;
     };
 

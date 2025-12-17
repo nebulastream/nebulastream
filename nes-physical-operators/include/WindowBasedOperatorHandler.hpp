@@ -97,7 +97,7 @@ protected:
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
-    uint64_t numberOfWorkerThreads;
+    uint64_t numberOfWorkerThreads{0};
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
 };

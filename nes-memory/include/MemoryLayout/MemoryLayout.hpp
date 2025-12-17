@@ -92,7 +92,7 @@ public:
 protected:
     uint64_t bufferSize;
     Schema schema;
-    uint64_t recordSize;
+    uint64_t recordSize{0};
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
     std::vector<DataType> physicalTypes;

@@ -35,10 +35,7 @@ enum class BufferManagerType : uint8_t
 class AbstractBufferProvider
 {
 public:
-    virtual ~AbstractBufferProvider()
-    {
-        /// nop
-    }
+    virtual ~AbstractBufferProvider() = default;
 
     virtual BufferManagerType getBufferManagerType() const = 0;
 

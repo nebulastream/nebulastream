@@ -53,8 +53,7 @@ namespace NES
 {
 
 TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
-    : errBuffer{}
-    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
+    : socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
     , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
