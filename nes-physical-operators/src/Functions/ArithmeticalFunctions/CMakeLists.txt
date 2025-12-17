@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_plugin(Abs PhysicalFunction nes-physical-operators AbsolutePhysicalFunction.cpp)
 add_plugin(Add PhysicalFunction nes-physical-operators AddPhysicalFunction.cpp)
 add_plugin(Ceil PhysicalFunction nes-physical-operators CeilPhysicalFunction.cpp)
 add_plugin(Div PhysicalFunction nes-physical-operators DivPhysicalFunction.cpp)

@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Absolute LogicalFunction nes-logical-operators AbsoluteLogicalFunction.cpp)
+add_plugin(Abs LogicalFunction nes-logical-operators AbsoluteLogicalFunction.cpp)
 add_plugin(Add LogicalFunction nes-logical-operators AddLogicalFunction.cpp)
 add_plugin(Ceil LogicalFunction nes-logical-operators CeilLogicalFunction.cpp)
 add_plugin(Div LogicalFunction nes-logical-operators DivLogicalFunction.cpp)
