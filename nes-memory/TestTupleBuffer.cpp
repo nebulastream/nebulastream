@@ -84,7 +84,7 @@ void DynamicTuple::writeVarSized(
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                *reinterpret_cast<VariableSizedAccess::CombinedIndex*>(const_cast<uint8_t*>((*this)[key].getMemory().data()))
+                *reinterpret_cast<VariableSizedAccess::IndexOffsetSize*>(const_cast<uint8_t*>((*this)[key].getMemory().data()))
                     = combinedIdxOffset.getCombinedIdxOffset();
             }
             else
@@ -105,7 +105,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                const VariableSizedAccess index{(*this)[key].template read<VariableSizedAccess::CombinedIndex>()};
+                const VariableSizedAccess index{(*this)[key].template read<VariableSizedAccess::IndexOffsetSize>()};
                 return MemoryLayout::readVarSizedDataAsString(this->buffer, index);
             }
             else
@@ -172,8 +172,8 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
             if (field.dataType.isType(DataType::Type::VARSIZED))
             {
-                const VariableSizedAccess thisVarSizedAccess{thisDynamicField.template read<VariableSizedAccess::CombinedIndex>()};
-                const VariableSizedAccess otherVarSizedAccess{otherDynamicField.template read<VariableSizedAccess::CombinedIndex>()};
+                const VariableSizedAccess thisVarSizedAccess{thisDynamicField.template read<VariableSizedAccess::IndexOffsetSize>()};
+                const VariableSizedAccess otherVarSizedAccess{otherDynamicField.template read<VariableSizedAccess::IndexOffsetSize>()};
                 const auto thisString = MemoryLayout::readVarSizedDataAsString(buffer, thisVarSizedAccess);
                 const auto otherString = MemoryLayout::readVarSizedDataAsString(other.buffer, otherVarSizedAccess);
                 return thisString == otherString;
