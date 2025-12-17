@@ -1,0 +1,28 @@
+# name: function/arithmetical/FunctionCeil.test
+# description: Simple function ceil tests
+# groups: [Function, FunctionCeil]
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23.2,42.45
+
+CREATE SINK sinkStream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 INT32, f64 INT64)  TYPE File;
+
+
+SELECT
+    CEIL(i8) AS i8,
+    CEIL(i16) AS i16,
+    CEIL(i32) AS i32,
+    CEIL(i64) AS i64,
+
+    CEIL(u8) AS u8,
+    CEIL(u16) AS u16,
+    CEIL(u32) AS u32,
+    CEIL(u64) AS u64,
+
+    CEIL(f32) AS f32,
+    CEIL(f64) AS f64
+FROM stream INTO sinkStream;
+----
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,24,43
