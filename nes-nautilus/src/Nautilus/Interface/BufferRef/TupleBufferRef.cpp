@@ -164,12 +164,13 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     {
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
-    const nautilus::val<VariableSizedAccess> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
+
+   const nautilus::val<VariableSizedAccess*> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex*>(fieldReference)};
     const auto varSizedPtr = invoke(
-        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess variableSizedAccess)
+        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccess)
         {
             INVARIANT(tupleBuffer != nullptr, "TupleBuffer MUST NOT be null at this point");
-            return loadAssociatedVarSizedValue(*tupleBuffer, variableSizedAccess).data();
+            return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccess).data();
         },
         recordBuffer.getReference(),
         combinedIdxOffset);
@@ -178,10 +179,10 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
 
 VarVal TupleBufferRef::storeValue(
     const DataType& physicalType,
-    const RecordBuffer& recordBuffer,
+    const RecordBuffer&,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<AbstractBufferProvider*>&)
 {
     if (physicalType.type != DataType::Type::VARSIZED)
     {
