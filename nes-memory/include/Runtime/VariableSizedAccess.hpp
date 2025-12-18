@@ -129,7 +129,7 @@ public:
     }
 
     explicit VariableSizedAccess(const uint64_t combinedIdxOffset, const uint64_t size)
-        : VariableSizedAccess(IndexOffsetSize{combinedIdxOffset, size})
+        : VariableSizedAccess(IndexOffsetSize{.combinedIndexOffset = combinedIdxOffset, .size = size})
     {
     }
 
