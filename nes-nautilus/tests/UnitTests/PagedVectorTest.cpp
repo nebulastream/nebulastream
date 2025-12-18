@@ -122,7 +122,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
     const auto testSchema
         = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     /// smallest possible pageSize ensures that the text is split over multiple pages
-    constexpr auto pageSize = 8UL;
+    constexpr auto pageSize = 16UL;
     constexpr auto sizeVarSizedData = 2 * pageSize;
 
     const auto projections = testSchema.getFieldNames();
