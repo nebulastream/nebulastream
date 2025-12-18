@@ -59,6 +59,19 @@ struct StateResolver<T>
 
 }
 
+template <>
+class val<NES::VariableSizedAccess::CombinedIndex>
+{
+public:
+    using Underlying = NES::VariableSizedAccess::CombinedIndex;
+
+    explicit val(const Underlying combinedIndex) : indexOffsetCombined(combinedIndex.index), size(combinedIndex.size) { }
+
+private:
+    val<uint64_t> indexOffsetCombined;
+    val<uint64_t> size;
+};
+
 /// We are specializing the nautilus::val<> implementation so that we can use nautilus::val<VariableSizedAccess>
 template <>
 class val<NES::VariableSizedAccess>
@@ -81,8 +94,6 @@ public:
 
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     explicit val(const NES::VariableSizedAccess variableSizedAccess) : variableSizedAccess(variableSizedAccess.getCombinedIdxOffset()) { }
-
-    explicit val(tracing::TypedValueRef typedValueRef) : variableSizedAccess(typedValueRef) { }
 
     val(const val& other) = default;
     val& operator=(const val& other) = default;
