@@ -74,10 +74,10 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
                                   const auto base = formattingContext.offsets[index];
                                   uint64_t idxPacked{};
                                   uint64_t size{};
-                                  auto size_address = &tuple[base + offsetof(VariableSizedAccess::CombinedIndex, size)];
+                                  auto sizeAddress = &tuple[base + offsetof(VariableSizedAccess::IndexOffsetSize, size)];
                                   std::memcpy(&idxPacked, &tuple[base], sizeof(uint64_t));
-                                  std::memcpy(&size, size_address, sizeof(uint64_t));
-                                  const VariableSizedAccess variableSizedAccess{VariableSizedAccess::CombinedIndex{idxPacked, size}};
+                                  std::memcpy(&size, sizeAddress, sizeof(uint64_t));
+                                  const VariableSizedAccess variableSizedAccess{VariableSizedAccess::IndexOffsetSize{idxPacked, size}};
 
                                   auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
                                   if (copyOfEscapeStrings)
