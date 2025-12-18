@@ -18,6 +18,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -134,8 +135,9 @@ uint32_t DataType::getSizeInBytes() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '8' for VARSIZED, because we store 'uint64_t' data that represent how to access the data, c.f., @class VariableSizedAccess
-            return 8;
+            /// Returning '16' for VARSIZED, because we store 'uint64_t' data that represent how to access the data, c.f., @class VariableSizedAccess
+            /// and 8 byte for the size of the VARSIZED
+            return 16;
         case Type::VARSIZED_POINTER_REP:
             return sizeof(int8_t*);
         case Type::INT64:
