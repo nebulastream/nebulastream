@@ -135,8 +135,8 @@ uint32_t DataType::getSizeInBytes() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '16' for VARSIZED, because we store 'uint64_t' data that represent how to access the data, c.f., @class VariableSizedAccess
-            /// and 8 byte for the size of the VARSIZED
+            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+            /// and 8 bytes for the size of the VARSIZED
             return 16;
         case Type::INT64:
         case Type::UINT64:
@@ -185,12 +185,8 @@ std::string DataType::formattedBytesToString(const void* data) const
             return std::string{*static_cast<const char*>(data)};
         }
         case Type::VARSIZED: {
-            /// Read the length of the VariableSizedDataType from the first StringLengthType bytes from the buffer and adjust the data pointer.
-            using StringLengthType = uint32_t;
-            const StringLengthType textLength = *static_cast<const uint32_t*>(data);
             const auto* textPointer = static_cast<const char*>(data);
-            textPointer += sizeof(StringLengthType); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            return {textPointer, textLength};
+            return textPointer;
         }
         case Type::UNDEFINED:
             return "invalid physical type";
