@@ -35,13 +35,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/process.hpp>
-#include <boost/process/search_path.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/io.hpp>
+#include <boost/process/v1/pipe.hpp>
+#include <boost/process/v1/search_path.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
 
-namespace bp = boost::process;
 using namespace std::literals;
 
 namespace NES::Nebuli::Inference
@@ -221,7 +222,7 @@ bool checkInferenceToolsAreAvailable()
     std::array tools = {Tool{"iree-import-onnx"sv, false}, Tool{"iree-compile"sv, true}};
     for (auto& tool : tools)
     {
-        auto binaryInPath = bp::search_path(std::string(tool.name));
+        auto binaryInPath = boost::process::v1::search_path(std::string(tool.name));
         if (binaryInPath.empty())
         {
             NES_WARNING("{} is not in PATH", tool.name);
@@ -235,8 +236,8 @@ bool checkInferenceToolsAreAvailable()
             {
                 // Create a child process that executes 'command --version'
                 // Redirect stdout to null to avoid printing output
-                bp::ipstream pipe_stream;
-                bp::child c(binaryInPath, "--version", bp::std_out > pipe_stream);
+                boost::process::v1::ipstream pipe_stream;
+                boost::process::v1::child c(binaryInPath, "--version", boost::process::v1::std_out > pipe_stream);
 
                 // Read the output
                 std::string line;
@@ -248,7 +249,7 @@ bool checkInferenceToolsAreAvailable()
                 // Wait for the process to finish
                 c.wait();
             }
-            catch (const bp::process_error& bpe)
+            catch (const boost::process::v1::process_error& bpe)
             {
                 NES_WARNING("Could not retrieve version of '{}':\n{}", tool.name, bpe.what());
                 tool.available = false;
@@ -334,14 +335,14 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
 
     try
     {
-        bp::pipe mlir_pipe;
-        bp::ipstream import_error;
-        bp::ipstream compile_error;
-        bp::ipstream model_stream;
-        std::vector<bp::child> process;
-        process.emplace_back(bp::search_path("iree-import-onnx"), importArgs, bp::std_out > mlir_pipe, bp::std_err > import_error);
+        boost::process::v1::pipe mlir_pipe;
+        boost::process::v1::ipstream import_error;
+        boost::process::v1::ipstream compile_error;
+        boost::process::v1::ipstream model_stream;
+        std::vector<boost::process::v1::child> process;
+        process.emplace_back(boost::process::v1::search_path("iree-import-onnx"), importArgs, boost::process::v1::std_out > mlir_pipe, boost::process::v1::std_err > import_error);
         process.emplace_back(
-            bp::search_path("iree-compile"), compileArgs, bp::std_in<mlir_pipe, bp::std_out> model_stream, bp::std_err > compile_error);
+            boost::process::v1::search_path("iree-compile"), compileArgs, boost::process::v1::std_in<mlir_pipe, boost::process::v1::std_out> model_stream, boost::process::v1::std_err > compile_error);
 
         /// Read output of iree-compile into a byte buffer
         std::vector<std::byte> modelVmfb;
@@ -400,15 +401,15 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
         }
         NES_ERROR(
             "Errors during Model Import:\nIree Import Error:\n{} {}\n```\n{}```\nIree Compile Error:\n{} {}\n```\n{}```",
-            bp::search_path("iree-import-onnx").string(),
+            boost::process::v1::search_path("iree-import-onnx").string(),
             fmt::join(importArgs, " "),
             std::string{std::istreambuf_iterator(import_error), std::istreambuf_iterator<char>()},
-            bp::search_path("iree-compile").string(),
+            boost::process::v1::search_path("iree-compile").string(),
             fmt::join(compileArgs, " "),
             std::string{std::istreambuf_iterator(compile_error), std::istreambuf_iterator<char>()});
         return std::unexpected(ModelLoadError("Model Import was not successful: Non Zero Exit Code."));
     }
-    catch (bp::process_error& bpe)
+    catch (boost::process::v1::process_error& bpe)
     {
         return std::unexpected(ModelLoadError(fmt::format("Model Import was not successful: {}", bpe.what())));
     }
