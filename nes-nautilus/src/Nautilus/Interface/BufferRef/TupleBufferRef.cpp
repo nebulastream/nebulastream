@@ -68,41 +68,23 @@ TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider,
 
 /// @brief Copies the varSizedValue to the specified location and then increments the number of tuples
 /// @return the new childBufferOffset
-template <TupleBufferRef::PrependMode PrependMode>
 void copyVarSizedAndIncrementMetaData(
     TupleBuffer& childBuffer, const VariableSizedAccess::Offset childBufferOffset, const std::span<const std::byte> varSizedValue)
 {
-    const uint32_t prependSize = (PrependMode == TupleBufferRef::PREPEND_LENGTH_AS_UINT32) ? sizeof(uint32_t) : 0;
     const auto spaceInChildBuffer = childBuffer.getAvailableMemoryArea().subspan(childBufferOffset.getRawOffset());
-    PRECONDITION(spaceInChildBuffer.size() >= varSizedValue.size() + prependSize, "SpaceInChildBuffer must be larger than varSizedValue");
-    if constexpr (PrependMode == TupleBufferRef::PREPEND_LENGTH_AS_UINT32)
-    {
-        uint32_t varSizedLength = varSizedValue.size();
-        const auto varSizedLengthBytes = std::as_bytes<uint32_t>(std::span{&varSizedLength, 1});
-        std::ranges::copy(varSizedLengthBytes, spaceInChildBuffer.begin());
-        std::ranges::copy(varSizedValue, spaceInChildBuffer.begin() + varSizedLengthBytes.size());
-    }
-    else if constexpr (PrependMode == TupleBufferRef::PREPEND_NONE)
-    {
-        std::ranges::copy(varSizedValue, spaceInChildBuffer.begin());
-    }
-    else
-    {
-        throw NotImplemented("prependMode {} is not implemented", magic_enum::enum_name(PrependMode));
-    }
+    PRECONDITION(spaceInChildBuffer.size() >= varSizedValue.size(), "SpaceInChildBuffer must be larger than varSizedValue");
+    std::ranges::copy(varSizedValue, spaceInChildBuffer.begin());
 
     /// We increment the number of tuples by the size of the newly added varsized to store the used no. bytes in the tuple buffer.
     /// We plan on getting rid of this "mis"-use in the near future.
-    childBuffer.setNumberOfTuples(childBuffer.getNumberOfTuples() + varSizedValue.size() + prependSize);
+    childBuffer.setNumberOfTuples(childBuffer.getNumberOfTuples() + varSizedValue.size());
 }
 }
 
-template <TupleBufferRef::PrependMode PrependMode>
 VariableSizedAccess TupleBufferRef::writeVarSized(
     TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
 {
-    constexpr uint32_t prependSize = (PrependMode == PREPEND_LENGTH_AS_UINT32) ? sizeof(uint32_t) : 0;
-    const auto totalVarSizedLength = varSizedValue.size() + prependSize;
+    const auto totalVarSizedLength = varSizedValue.size();
 
 
     /// If there are no child buffers, we get a new buffer and copy the var sized into the newly acquired
@@ -110,9 +92,9 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
     if (numberOfChildBuffers == 0)
     {
         auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
-        copyVarSizedAndIncrementMetaData<PrependMode>(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
+        copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
         const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
-        return VariableSizedAccess{childBufferIndex};
+        return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
     }
 
     /// If there is no space in the lastChildBuffer, we get a new buffer and copy the var sized into the newly acquired
@@ -123,22 +105,16 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
     if (usedMemorySize + totalVarSizedLength >= lastChildBuffer.getBufferSize())
     {
         auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
-        copyVarSizedAndIncrementMetaData<PrependMode>(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
+        copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
         const VariableSizedAccess::Index childBufferIndex{tupleBuffer.storeChildBuffer(newChildBuffer)};
-        return VariableSizedAccess{childBufferIndex};
+        return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
     }
 
     /// There is enough space in the lastChildBuffer, thus, we copy the var sized into it
     const VariableSizedAccess::Offset childOffset{usedMemorySize};
-    copyVarSizedAndIncrementMetaData<PrependMode>(lastChildBuffer, childOffset, varSizedValue);
-    return VariableSizedAccess{childIndex, childOffset};
+    copyVarSizedAndIncrementMetaData(lastChildBuffer, childOffset, varSizedValue);
+    return VariableSizedAccess{childIndex, childOffset, VariableSizedAccess::Size{totalVarSizedLength}};
 }
-
-/// Explicit instantiations for writeVarSized()
-template VariableSizedAccess
-TupleBufferRef::writeVarSized<TupleBufferRef::PrependMode::PREPEND_NONE>(TupleBuffer&, AbstractBufferProvider&, std::span<const std::byte>);
-template VariableSizedAccess TupleBufferRef::writeVarSized<TupleBufferRef::PrependMode::PREPEND_LENGTH_AS_UINT32>(
-    TupleBuffer&, AbstractBufferProvider&, std::span<const std::byte>);
 
 std::span<std::byte>
 TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
@@ -165,24 +141,27 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
 
-   const nautilus::val<VariableSizedAccess*> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex*>(fieldReference)};
+    auto combinedIndexOffset = readValueFromMemRef<uint64_t>(fieldReference);
+    const nautilus::val<uint64_t> size{getMemberWithOffset<uint64_t>(fieldReference, offsetof(VariableSizedAccess::CombinedIndex, size))};
     const auto varSizedPtr = invoke(
-        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccess)
+        +[](const TupleBuffer* tupleBuffer, uint64_t combinedIndexOffset, uint64_t size)
         {
-            INVARIANT(tupleBuffer != nullptr, "TupleBuffer MUST NOT be null at this point");
-            return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccess).data();
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            const VariableSizedAccess access(VariableSizedAccess::CombinedIndex{combinedIndexOffset, size});
+            return loadAssociatedVarSizedValue(*tupleBuffer, access).data();
         },
         recordBuffer.getReference(),
-        combinedIdxOffset);
+        combinedIndexOffset,
+        size);
     return VariableSizedData(varSizedPtr);
 }
 
 VarVal TupleBufferRef::storeValue(
     const DataType& physicalType,
-    const RecordBuffer&,
+    const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
-    const nautilus::val<AbstractBufferProvider*>&)
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     if (physicalType.type != DataType::Type::VARSIZED)
     {
@@ -196,20 +175,30 @@ VarVal TupleBufferRef::storeValue(
     }
 
     const auto varSizedValue = value.cast<VariableSizedData>();
-    const auto variableSizedAccess = invoke(
-        +[](TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const int8_t* varSizedPtr, const uint32_t varSizedValueLength)
+    VariableSizedAccess access;
+    invoke(
+        +[](TupleBuffer* tupleBuffer,
+            AbstractBufferProvider* bufferProvider,
+            const int8_t* varSizedPtr,
+            const uint32_t varSizedValueLength,
+            VariableSizedAccess* access)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
             const std::span varSizedValueSpan{varSizedPtr, varSizedPtr + varSizedValueLength};
-            return writeVarSized<PREPEND_NONE>(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
+            const VariableSizedAccess writtenAccess
+                = writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
+            *access = writtenAccess;
         },
         recordBuffer.getReference(),
         bufferProvider,
         varSizedValue.getReference(),
-        varSizedValue.getTotalSize());
-    auto fieldReferenceCastedU64 = static_cast<nautilus::val<uint64_t*>>(fieldReference);
-    *fieldReferenceCastedU64 = variableSizedAccess.convertToValue();
+        varSizedValue.getTotalSize(),
+        nautilus::val<VariableSizedAccess*>(&access));
+    auto refToIndex = static_cast<nautilus::val<uint64_t*>>(fieldReference);
+    auto refToSize = refToIndex + offsetof(VariableSizedAccess::CombinedIndex, size) / 8;
+    *refToIndex = access.getCombinedIdxOffset().index;
+    *refToSize = access.getCombinedIdxOffset().size;
     return value;
 }
 

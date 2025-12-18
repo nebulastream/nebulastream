@@ -71,9 +71,15 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
                               const auto physicalType = formattingContext.physicalTypes[index];
                               if (physicalType.type == DataType::Type::VARSIZED)
                               {
-                                  const VariableSizedAccess variableSizedAccess{
-                                      *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                                  auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                                  const auto base = formattingContext.offsets[index];
+                                  uint64_t idxPacked{};
+                                  uint64_t size{};
+                                  auto size_address = &tuple[base + offsetof(VariableSizedAccess::CombinedIndex, size)];
+                                  std::memcpy(&idxPacked, &tuple[base], sizeof(uint64_t));
+                                  std::memcpy(&size, size_address, sizeof(uint64_t));
+                                  const VariableSizedAccess variableSizedAccess{VariableSizedAccess::CombinedIndex{idxPacked, size}};
+
+                                  auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
                                   if (copyOfEscapeStrings)
                                   {
                                       return "\"" + varSizedData + "\"";
