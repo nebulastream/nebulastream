@@ -1,0 +1,256 @@
+# name: function/arithmetical/FunctionDiv.test
+# description: Simple function Div tests
+# groups: [Function, FunctionDiv]
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23.0,23.0
+
+CREATE LOGICAL SOURCE stream2(i16 INT16, i8 INT8, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+-129,-42,-32769,-2147483649,42,256,65536,4294967296,23.0,23.0
+
+
+CREATE LOGICAL SOURCE stream3(i16 INT16, i8 INT8, i32 INT32, i64 INT64, u8 UINT64, u16 UINT64, u32 UINT64, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
+ATTACH INLINE
+-129,-42,-32769,-2147483649,42,256,65536,4294967296,23.0,23.0
+
+CREATE LOGICAL SOURCE stream4(i8 INT8, i16 INT16, i32 INT32, i64 INT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
+ATTACH INLINE
+-42,-129,-32769,-2147483649,23.0,23.0
+
+GlobalConfiguration worker.dump_compilation_result: [FILE]
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream INTO File();
+----
+-0.178295 -0.179687 -0.000702 -0.000702 -0.0 -0.0
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream INTO File();
+----
+-0.178295 -0.179687 -0.547619 -0.560976 -0.000702 -0.000702 -0.0 -0.0
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream3 INTO File();
+----
+-0.178295 -0.179687 -0.547619 -0.560976 -0.000702 -0.000702 -0.0 -0.0
+
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream2 INTO File();
+----
+-0.547619 -0.560976 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 -0.0
+
+SELECT
+    # signed
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32
+FROM stream2 INTO File();
+----
+-0.547619 -0.560976 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 23.0
+
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream4 INTO File();
+----
+-0.178295 -0.179687 -0.547619 -0.560976 -0.000702 -0.000702 -0.0 -0.0
+
+### GOOD
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM (SELECT * from stream4) INTO File();
+----
+-0.178295 -0.179687 -0.547619 -0.560976 -0.000702 -0.000702 -0.0 -0.0
+
+SELECT
+    # signed
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32
+FROM stream2 INTO File();
+----
+-0.547619 -0.560976 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 23.0
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream2 INTO File();
+----
+23.0 -0.560976 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 -0.0
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64
+FROM stream2 INTO File();
+----
+-0.547619 -0.560976 -0.178295 -0.179687 -0.000702 -0.000702 -0.0
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream2 INTO File();
+----
+-0.560976 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 -0.0
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i8 AS f32_i8,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream2 INTO File();
+----
+-0.547619 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 -0.0
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1
+FROM stream INTO File();
+----
+-0.178295 -0.179687 -0.547619 -0.560976 -0.000702 -0.000702
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1
+FROM stream INTO File();
+----
+-0.178295 -0.179687 -0.547619 -0.560976
+
+# Div f32 value with all other data types
+SELECT
+    # signed
+    f32 / i8 AS f32_i8,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream INTO File();
+----
+-0.547619 -0.560976 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 -0.0
+
+SELECT
+    # signed
+    f32 / i16 AS f32_i8,
+    f32 / (i16 + INT16(1)) AS f32_i8_plus_1,
+    f32 / i16 AS f32_i16,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
+    f32 / i32 AS f32_i32,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
+    f32 / i64 AS f32_i64,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1
+FROM stream INTO File();
+----
+-0.178295 -0.179687 -0.178295 -0.179687 -0.000702 -0.000702 -0.0 -0.0

@@ -50,7 +50,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     NES_INFO("After Redundant Union Removal:\n{}", newPlan);
     typeInference.apply(newPlan);
 
-    redundantProjectionRemovalRule.apply(newPlan);
+    // redundantProjectionRemovalRule.apply(newPlan);
     NES_INFO("After Redundant Projection Removal:\n{}", newPlan);
 
     originIdInferencePhase.apply(newPlan);
