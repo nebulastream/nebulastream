@@ -60,10 +60,10 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
 
-    auto combinedIndexOffset = static_cast<nautilus::val<VariableSizedAccess::CombinedIndex*>>(fieldReference);
+    auto combinedIndexOffset = static_cast<nautilus::val<VariableSizedAccess::IndexOffsetSize*>>(fieldReference);
 
     const auto varSizedPtr = invoke(
-        +[](const TupleBuffer* tupleBuffer, VariableSizedAccess::CombinedIndex* combinedIndexOffset)
+        +[](const TupleBuffer* tupleBuffer, VariableSizedAccess::IndexOffsetSize* combinedIndexOffset)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             const VariableSizedAccess access(*combinedIndexOffset);
@@ -73,7 +73,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         combinedIndexOffset);
 
     const nautilus::val<uint64_t> size
-        = *getMemberWithOffset<uint64_t>(combinedIndexOffset, offsetof(VariableSizedAccess::CombinedIndex, size));
+        = *getMemberWithOffset<uint64_t>(combinedIndexOffset, offsetof(VariableSizedAccess::IndexOffsetSize, size));
     return VariableSizedData(varSizedPtr, size);
 }
 
@@ -96,14 +96,14 @@ VarVal TupleBufferRef::storeValue(
     }
 
     const auto varSizedValue = value.cast<VariableSizedData>();
-    auto refToIndex = static_cast<nautilus::val<VariableSizedAccess::CombinedIndex*>>(fieldReference);
+    auto refToIndex = static_cast<nautilus::val<VariableSizedAccess::IndexOffsetSize*>>(fieldReference);
 
     invoke(
         +[](TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
             const int8_t* varSizedPtr,
             const uint32_t varSizedValueLength,
-            VariableSizedAccess::CombinedIndex* refToIndex)
+            VariableSizedAccess::IndexOffsetSize* refToIndex)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
