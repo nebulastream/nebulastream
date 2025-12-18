@@ -35,7 +35,7 @@ LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction
 
 // SourceDescriptor deserializeSourceDescriptor(const SerializedSourceDescriptor& serializedSourceDescriptor);
 
-// SerializedDescriptorConfig serializeDescriptorConfig(const DescriptorConfig::Config& config);
+rfl::Generic serializeDescriptorConfig(const DescriptorConfig::Config& config);
 // DescriptorConfig::Config deserializeDescriptorConfig(const SerializedDescriptorConfig serializedConfig);
 
 }

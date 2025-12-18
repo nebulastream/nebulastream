@@ -152,7 +152,7 @@ SerializedSourceDescriptor SourceDescriptor::serialized() const
     serialized.schema = serializeSchema(*logicalSource.getSchema());
     serialized.parserConfig = rfl::make_box<ParserConfig>(parserConfig);
 
-    // serialized.config = rfl::to_generic(getConfig());
+    serialized.config = serializeDescriptorConfig(getConfig());
 
     return serialized;
 }

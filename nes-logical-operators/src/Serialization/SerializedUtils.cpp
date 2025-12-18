@@ -188,4 +188,118 @@ LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction
     }
     throw Exception{"Oh No", 9999};
 }
+
+
+// TODO: Can be simplified on Source Descriptor refactor
+
+struct ConfigValue
+{
+    std::string type;
+    std::variant<int32_t,
+        uint32_t,
+        int64_t,
+        uint64_t,
+        bool,
+        char,
+        float,
+        double,
+        std::string> value;
+};
+
+
+rfl::Generic serializeDescriptorConfigValue(DescriptorConfig::ConfigType value)
+{
+    ConfigValue serialized;
+    std::visit([&serialized]<typename T>(T&& arg){
+        using U = std::remove_cvref_t<T>;
+        if constexpr (std::is_same_v<U, int32_t>)
+        {
+            serialized.type = "int32_t";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, uint32_t>)
+        {
+            serialized.type = "uint32_t";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, int64_t>)
+        {
+            serialized.type = "int64_t";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, uint64_t>)
+        {
+            serialized.type = "uint64_t";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, bool>)
+        {
+            serialized.type = "bool";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, char>)
+        {
+            serialized.type = "char";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, float>)
+        {
+            serialized.type = "float";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, double>)
+        {
+            serialized.type = "double";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, std::string>)
+        {
+            serialized.type = "string";
+            serialized.value = arg;
+        }
+        else if constexpr (std::is_same_v<U, EnumWrapper>)
+        {
+            serialized.type = "Enum";
+            serialized.value = arg.getValue();
+        }
+        else if constexpr (std::is_same_v<U, FunctionList>)
+        {
+            throw NotImplemented();
+        }
+        else if constexpr (std::is_same_v<U, ProjectionList>)
+        {
+            throw NotImplemented();
+        }
+        else if constexpr (std::is_same_v<U, AggregationFunctionList>)
+        {
+            throw NotImplemented();
+        }
+        else if constexpr (std::is_same_v<U, WindowInfos>)
+        {
+            throw NotImplemented();
+        }
+        else if constexpr (std::is_same_v<U, UInt64List>)
+        {
+            throw NotImplemented();
+        }
+        else
+        {
+            static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
+        }
+    }, value);
+
+    return rfl::to_generic(serialized);
+
+}
+
+rfl::Generic serializeDescriptorConfig(const DescriptorConfig::Config& config)
+{
+    std::map<std::string, rfl::Generic> serializedConfig;
+    for (const auto& [key, value]: config)
+    {
+        serializedConfig.emplace(key, serializeDescriptorConfigValue(value));
+
+    }
+    return rfl::to_generic(serializedConfig);
+}
 }
