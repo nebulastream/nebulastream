@@ -77,7 +77,7 @@ void DynamicTuple::writeVarSized(
     std::variant<const uint64_t, const std::string> field, std::string_view value, AbstractBufferProvider& bufferProvider)
 {
     auto combinedIdxOffset
-        = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(buffer, bufferProvider, std::as_bytes(std::span{value}));
+        = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_NONE>(buffer, bufferProvider, std::as_bytes(std::span{value}));
     std::visit(
         [this, combinedIdxOffset](const auto& key)
         {
@@ -85,7 +85,7 @@ void DynamicTuple::writeVarSized(
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[key].getMemory().data()))
+                *reinterpret_cast<VariableSizedAccess::CombinedIndex*>(const_cast<uint8_t*>((*this)[key].getMemory().data()))
                     = combinedIdxOffset.getCombinedIdxOffset();
             }
             else
@@ -106,7 +106,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                const VariableSizedAccess index{(*this)[key].template read<uint64_t>()};
+                const VariableSizedAccess index{(*this)[key].template read<VariableSizedAccess::CombinedIndex>()};
                 return MemoryLayout::readVarSizedDataAsString(this->buffer, index);
             }
             else

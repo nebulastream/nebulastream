@@ -26,7 +26,7 @@ VariableSizedAccess::Index::Index(const uint64_t index) : index(index)
 
 VariableSizedAccess::Index VariableSizedAccess::Index::convertToIndex(const CombinedIndex combinedIdxOffset)
 {
-    return Index{static_cast<uint32_t>(combinedIdxOffset >> 32UL)};
+    return Index{static_cast<uint32_t>(combinedIdxOffset.index >> 32UL)};
 }
 
 std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Index& index)
@@ -53,7 +53,7 @@ VariableSizedAccess::Offset::Offset(const uint64_t offset) : offset(offset)
 
 VariableSizedAccess::Offset VariableSizedAccess::Offset::convertToOffset(const CombinedIndex combinedIdxOffset)
 {
-    return Offset{static_cast<uint32_t>(combinedIdxOffset & 0xffffffffUL)};
+    return Offset{static_cast<uint32_t>(combinedIdxOffset.index & 0xffffffffUL)};
 }
 
 VariableSizedAccess::Offset::Underlying VariableSizedAccess::Offset::getRawOffset() const
@@ -65,5 +65,20 @@ std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Offset& of
 {
     return os << offset.offset;
 }
+
+VariableSizedAccess::Size::Size(uint64_t size) : size(size)
+{
+}
+
+VariableSizedAccess::Size VariableSizedAccess::Size::convertToSize(CombinedIndex combinedIdx)
+{
+    return Size(combinedIdx.size);
+}
+
+VariableSizedAccess::Size::Underlying VariableSizedAccess::Size::getRawSize() const
+{
+    return size;
+}
+
 
 }
