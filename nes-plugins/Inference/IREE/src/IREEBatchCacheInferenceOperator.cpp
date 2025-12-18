@@ -98,11 +98,12 @@ void garbageCollectBatchesProxy(void* inferModelHandler)
 namespace NES
 {
 
+
 IREEBatchCacheInferenceOperator::IREEBatchCacheInferenceOperator(
     const OperatorHandlerId operatorHandlerId,
     std::vector<PhysicalFunction> inputs,
     std::vector<std::string> outputFieldNames,
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef,
+    std::shared_ptr<TupleBufferRef> tupleBufferRef,
     Configurations::PredictionCacheOptions predictionCacheOptions,
     DataType inputDtype,
     DataType outputDtype)
@@ -118,8 +119,8 @@ IREEBatchCacheInferenceOperator::IREEBatchCacheInferenceOperator(
 
 template <typename T>
 nautilus::val<std::byte*> IREEBatchCacheInferenceOperator::performInference(
-    const Interface::PagedVectorRef& pagedVectorRef,
-    Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+    const PagedVectorRef& pagedVectorRef,
+    TupleBufferRef& tupleBufferRef,
     ExecutionContext& executionCtx) const
 {
     const auto fields = tupleBufferRef.getMemoryLayout()->getSchema().getFieldNames();
@@ -194,8 +195,8 @@ nautilus::val<std::byte*> IREEBatchCacheInferenceOperator::performInference(
 
 template <typename T>
 void IREEBatchCacheInferenceOperator::writeOutputRecord(
-    const Interface::PagedVectorRef& pagedVectorRef,
-    Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+    const PagedVectorRef& pagedVectorRef,
+    TupleBufferRef& tupleBufferRef,
     ExecutionContext& executionCtx,
     const nautilus::val<std::byte*>& prediction) const
 {
@@ -267,7 +268,7 @@ void IREEBatchCacheInferenceOperator::open(ExecutionContext& executionCtx, Recor
             PRECONDITION(batch != nullptr, "batch context should not be null!");
             return batch->getPagedVectorRef();
         }, batchMemRef);
-    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
+    const PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
 
     const auto startOfEntries = nautilus::invoke(
         +[](const IREEBatchInferenceOperatorHandler* opHandler, const WorkerThreadId workerThreadId)

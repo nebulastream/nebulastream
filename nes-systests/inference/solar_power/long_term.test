@@ -1,6 +1,6 @@
 # name: inference/solar_power/long_term.test
 # description: Solar Power dataset experiments
-# groups: [Inference]
+# groups: [Inference, Experiments, TimeSeries, Solar, LongTerm, CacheTypeSize]
 
 GlobalConfiguration enable_event_trace: [true]
 GlobalConfiguration worker.number_of_buffers_in_global_buffer_manager: [131072]

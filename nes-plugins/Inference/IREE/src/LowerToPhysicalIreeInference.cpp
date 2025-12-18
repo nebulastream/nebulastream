@@ -138,7 +138,7 @@ struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 
             const auto pageSize = conf.pageSize.getValue();
 
-            auto memoryProvider = NES::Interface::BufferRef::TupleBufferRef::create(pageSize, inputSchema);
+            auto memoryProvider = NES::TupleBufferRef::create(pageSize, inputSchema);
             auto handler = std::make_shared<NES::IREEBatchInferenceOperatorHandler>(
                 inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, model, batchSize.getValue());
 

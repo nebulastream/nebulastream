@@ -177,7 +177,7 @@ PredictionCache2Q::getDataStructureRef(const nautilus::val<std::byte*>& record, 
 nautilus::val<uint64_t*> PredictionCache2Q::getAgeBit(const nautilus::val<uint64_t>& pos)
 {
     const auto PredictionCacheEntry = startOfLRUEntries + pos * sizeOfEntry;
-    const auto ageBitRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntry2Q::ageBit);
+    const auto ageBitRef = getMemberRef(PredictionCacheEntry, &PredictionCacheEntry2Q::ageBit);
     return ageBitRef;
 }
 }

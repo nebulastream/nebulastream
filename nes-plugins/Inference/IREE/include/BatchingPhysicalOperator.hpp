@@ -28,7 +28,7 @@ class BatchingPhysicalOperator final : public WindowBuildPhysicalOperator
 public:
     explicit BatchingPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef);
+        std::shared_ptr<TupleBufferRef> tupleBufferRef);
 
     BatchingPhysicalOperator(const BatchingPhysicalOperator& other) = default;
 
@@ -41,7 +41,7 @@ public:
     void terminate(ExecutionContext&) const override { /*noop*/ };
 
 protected:
-    const std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef;
+    const std::shared_ptr<TupleBufferRef> tupleBufferRef;
 };
 
 }

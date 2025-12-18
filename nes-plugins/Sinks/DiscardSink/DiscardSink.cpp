@@ -31,7 +31,7 @@
 namespace NES
 {
 
-DiscardSink::DiscardSink(const SinkDescriptor& sinkDescriptor)
+DiscardSink::DiscardSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor) : Sink(std::move(backpressureController))
 {
     const auto outputFilePath = sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH);
     if (std::filesystem::exists(outputFilePath.c_str()))
@@ -104,7 +104,7 @@ SinkValidationRegistryReturnType RegisterDiscardSinkValidation(SinkValidationReg
 
 SinkRegistryReturnType RegisterDiscardSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<DiscardSink>(sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<DiscardSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }

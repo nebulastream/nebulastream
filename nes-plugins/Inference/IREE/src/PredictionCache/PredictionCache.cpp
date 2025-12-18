@@ -53,16 +53,16 @@ void PredictionCache::incrementNumberOfMisses()
 nautilus::val<std::byte*> PredictionCache::getRecord(const nautilus::val<uint64_t>& pos)
 {
     const auto predictionCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto recordRef = Nautilus::Util::getMemberRef(predictionCacheEntry, &PredictionCacheEntry::record);
-    auto record = *Nautilus::Util::getMemberWithOffset<std::byte*>(recordRef, 0);
+    const auto recordRef = getMemberRef(predictionCacheEntry, &PredictionCacheEntry::record);
+    auto record = *getMemberWithOffset<std::byte*>(recordRef, 0);
     return record;
 }
 
 nautilus::val<std::byte*> PredictionCache::getDataStructure(const nautilus::val<uint64_t>& pos)
 {
     const auto predictionCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto dataStructureRef = Nautilus::Util::getMemberRef(predictionCacheEntry, &PredictionCacheEntry::dataStructure);
-    auto dataStructure = *Nautilus::Util::getMemberWithOffset<std::byte*>(dataStructureRef, 0);
+    const auto dataStructureRef = getMemberRef(predictionCacheEntry, &PredictionCacheEntry::dataStructure);
+    auto dataStructure = *getMemberWithOffset<std::byte*>(dataStructureRef, 0);
     return dataStructure;
 }
 

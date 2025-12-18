@@ -65,7 +65,7 @@ void emitBatchesProxy(
 
 BatchingPhysicalOperator::BatchingPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef)
+    std::shared_ptr<TupleBufferRef> tupleBufferRef)
     : WindowBuildPhysicalOperator(operatorHandlerId), tupleBufferRef(std::move(std::move(tupleBufferRef)))
 {
 }
@@ -90,7 +90,7 @@ void BatchingPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
             return batch->getPagedVectorRef();
         }, batchMemRef);
 
-    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
+    const PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
     batchPagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 

@@ -108,11 +108,11 @@ public:
     {
         for (uint64_t i = 0; i < numberOfBatches; ++i)
         {
-            pagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>());
+            pagedVectors.emplace_back(std::make_unique<PagedVector>());
         }
     }
 
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRef() const
+    [[nodiscard]] PagedVector* getPagedVectorRef() const
     {
         return pagedVectors[0].get();
     }
@@ -153,7 +153,7 @@ public:
     mutable BatchState state;
 private:
     std::mutex batchMutex;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> pagedVectors;
+    std::vector<std::unique_ptr<PagedVector>> pagedVectors;
 };
 
 struct EmittedBatch

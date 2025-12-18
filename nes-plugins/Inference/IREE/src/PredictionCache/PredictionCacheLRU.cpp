@@ -33,7 +33,7 @@ PredictionCacheLRU::PredictionCacheLRU(
 nautilus::val<uint64_t*> PredictionCacheLRU::getAgeBit(const nautilus::val<uint64_t>& pos)
 {
     const auto PredictionCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto ageBitRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntryLRU::ageBit);
+    const auto ageBitRef = getMemberRef(PredictionCacheEntry, &PredictionCacheEntryLRU::ageBit);
     return ageBitRef;
 }
 

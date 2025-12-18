@@ -28,9 +28,9 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const
+void SequencePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    auto buffer = nautilus::invoke(
+    auto buffer = invoke(
         +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
         {
             return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(tupleBuffer).value_or(nullptr);
@@ -45,7 +45,7 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
         scan.open(executionCtx, nextBufferInSequence);
         scan.close(executionCtx, nextBufferInSequence);
 
-        buffer = nautilus::invoke(
+        buffer = invoke(
             +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
             {
                 return dynamic_cast<SequenceOperatorHandler*>(handler)->markBufferAsDone(tupleBuffer).value_or(nullptr);
@@ -56,7 +56,7 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
 }
 void SequencePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationCtx) const
 {
-    nautilus::invoke(
+    invoke(
         +[](OperatorHandler* handler, PipelineExecutionContext* ctx) { handler->start(*ctx, 0); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         executionCtx.pipelineContext);
@@ -65,7 +65,7 @@ void SequencePhysicalOperator::setup(ExecutionContext& executionCtx, Compilation
 void SequencePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     scan.terminate(executionCtx);
-    nautilus::invoke(
+    invoke(
         +[](OperatorHandler* handler, PipelineExecutionContext* ctx) { handler->stop(QueryTerminationType::Graceful, *ctx); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         executionCtx.pipelineContext);

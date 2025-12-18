@@ -116,7 +116,7 @@ PredictionCacheLFU::getDataStructureRef(const nautilus::val<std::byte*>& record,
 nautilus::val<uint64_t*> PredictionCacheLFU::getFrequency(const nautilus::val<uint64_t>& pos)
 {
     const auto PredictionCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto frequencyRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntryLFU::frequency);
+    const auto frequencyRef = getMemberRef(PredictionCacheEntry, &PredictionCacheEntryLFU::frequency);
     return frequencyRef;
 }
 

@@ -40,13 +40,8 @@
   },
   "dependencies": [
     "antlr4",
-    "openssl",
     "argparse",
     "boost-asio",
-    "boost-system",
-    "boost-filesystem",
-    "boost-process",
-    "boost-graph",
     "cpptrace",
     "fmt",
     "folly",
@@ -64,12 +59,13 @@
     "nameof",
     "scope-guard",
     "boost-url",
-    "simdjson"
-    "ireeruntime",
-    "nameof",
-    "scope-guard",
-    "boost-url",
-    "simdjson"
+    "simdjson",
+    "openssl",
+    "boost-system",
+    "boost-filesystem",
+    "boost-process",
+    "boost-graph",
+    "ireeruntime"
   ],
   "overrides": [
     {
