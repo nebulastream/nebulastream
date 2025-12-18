@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/algorithm/string.hpp>
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
@@ -350,7 +351,7 @@ std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
         return TokenType::QUERY;
     }
 
-    if (Util::toLowerCase(line).starts_with(Util::toLowerCase(ModelToken)))
+    if (toLowerCase(line).starts_with(toLowerCase(ModelToken)))
     {
         return TokenType::MODEL;
     }
@@ -660,7 +661,7 @@ SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& a
         {
             dataType = DataTypeProvider::provideDataType(type.value());
         }
-        else if (Util::toLowerCase(arguments[i]) == "varsized")
+        else if (toLowerCase(arguments[i]) == "varsized")
         {
             dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
         }
@@ -703,12 +704,12 @@ Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
             throw SLTUnexpectedToken("failed to read model path in {}", modelNameLine);
         }
 
-        auto inputTypeNames = NES::Util::splitWithStringDelimiter<std::string>(inputLine, " ");
+        auto inputTypeNames = NES::splitWithStringDelimiter<std::string>(inputLine, " ");
         auto types = std::views::transform(inputTypeNames, [](const auto& typeName) { return DataTypeProvider::provideDataType(typeName); })
             | std::ranges::to<std::vector>();
         model.inputs = types;
 
-        auto outputSchema = NES::Util::splitWithStringDelimiter<std::string>(outputLine, " ");
+        auto outputSchema = NES::splitWithStringDelimiter<std::string>(outputLine, " ");
 
         for (const auto& [type, name] : parseSchemaFields(outputSchema))
         {

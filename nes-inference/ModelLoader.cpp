@@ -325,8 +325,8 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
 
     /// iree-compile allows to dump a .dot graph containing dispatch operations
     /// while this is not exactly metadata, we can still extract the necessary information from it
-    auto tempPath = Util::createTempDir("/tmp/nebuli-model-loader");
-    Util::TempDirectoryCleanup removeTempPath{tempPath};
+    auto tempPath = createTempDir("/tmp/nebuli-model-loader");
+    TempDirectoryCleanup removeTempPath{tempPath};
 
     auto graphFile = tempPath / "model.dot";
 

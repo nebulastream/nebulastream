@@ -33,7 +33,7 @@ PredictionCacheSecondChance::PredictionCacheSecondChance(
 nautilus::val<bool*> PredictionCacheSecondChance::getSecondChanceBit(const nautilus::val<uint64_t>& pos)
 {
     const auto PredictionCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto secondChanceBitRef = Nautilus::Util::getMemberRef(PredictionCacheEntry, &PredictionCacheEntrySecondChance::secondChanceBit);
+    const auto secondChanceBitRef = getMemberRef(PredictionCacheEntry, &PredictionCacheEntrySecondChance::secondChanceBit);
     return secondChanceBitRef;
 }
 

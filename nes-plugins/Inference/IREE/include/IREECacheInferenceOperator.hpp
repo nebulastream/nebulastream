@@ -51,12 +51,12 @@ public:
 protected:
     template <class T>
     nautilus::val<std::byte*> performInference(
-        ExecutionContext& executionCtx, NES::Nautilus::Record& record, PredictionCache* predictionCache) const;
+        ExecutionContext& executionCtx, NES::Record& record, PredictionCache* predictionCache) const;
 
     template <class T>
     void writeOutputRecord(
         ExecutionContext& executionCtx,
-        NES::Nautilus::Record& record,
+        NES::Record& record,
         const nautilus::val<std::byte*>& prediction,
         PredictionCache* predictionCache) const;
 

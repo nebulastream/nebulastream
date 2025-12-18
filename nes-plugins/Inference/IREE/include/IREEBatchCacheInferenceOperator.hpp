@@ -34,7 +34,7 @@ public:
         const OperatorHandlerId operatorHandlerId,
         std::vector<PhysicalFunction> inputs,
         std::vector<std::string> outputFieldNames,
-        std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef,
+        std::shared_ptr<TupleBufferRef> tupleBufferRef,
         Configurations::PredictionCacheOptions predictionCacheOptions,
         DataType inputDtype,
         DataType outputDtype);
@@ -57,7 +57,7 @@ private:
     const std::vector<PhysicalFunction> inputs;
     const std::vector<std::string> outputFieldNames;
     std::optional<PhysicalOperator> child;
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef;
+    std::shared_ptr<TupleBufferRef> tupleBufferRef;
     Configurations::PredictionCacheOptions predictionCacheOptions;
     DataType inputDtype;
     DataType outputDtype;
@@ -65,14 +65,14 @@ private:
 protected:
     template <class T>
     nautilus::val<std::byte*> performInference(
-        const Interface::PagedVectorRef& pagedVectorRef,
-        Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+        const PagedVectorRef& pagedVectorRef,
+        TupleBufferRef& tupleBufferRef,
         ExecutionContext& executionCtx) const;
 
     template <class T>
     void writeOutputRecord(
-        const Interface::PagedVectorRef& pagedVectorRef,
-        Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+        const PagedVectorRef& pagedVectorRef,
+        TupleBufferRef& tupleBufferRef,
         ExecutionContext& executionCtx,
         const nautilus::val<std::byte*>&) const;
 };

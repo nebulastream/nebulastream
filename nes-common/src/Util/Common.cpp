@@ -32,12 +32,6 @@
 
 namespace NES
 {
-}
-
-namespace NES::Util
-{
-
-
 std::filesystem::path createTempDir(std::string_view prefix)
 {
     std::string tempDirTemplate(prefix.size() + 6, 'X');
@@ -119,5 +113,4 @@ std::string errnoString(int error)
         return result;
     }
 }
-
 }

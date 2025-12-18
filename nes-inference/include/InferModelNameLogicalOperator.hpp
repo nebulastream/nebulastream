@@ -33,7 +33,7 @@ class InferModelNameLogicalOperator : public OriginIdAssigner
 {
     std::string modelName;
     std::vector<LogicalFunction> inputFields;
-    LogicalOperator child;
+    std::vector<LogicalOperator> children;
 
 public:
     InferModelNameLogicalOperator(std::string modelName, std::vector<LogicalFunction> inputFields)
@@ -43,18 +43,18 @@ public:
 
     [[nodiscard]] const std::string& getModelName() const { return modelName; }
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const ;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return {child}; }
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return children; }
     [[nodiscard]] InferModelNameLogicalOperator withChildren(std::vector<LogicalOperator> children) const
     {
         PRECONDITION(children.size() == 1, "Expected exactly one child");
         auto copy = *this;
-        copy.child = std::move(children.front());
+        copy.children = std::move(children);
         return copy;
     }
 
     [[nodiscard]] bool operator==(const InferModelNameLogicalOperator& rhs) const 
     {
-        return modelName == rhs.modelName && inputFields == rhs.inputFields && child == rhs.child;
+        return modelName == rhs.modelName && inputFields == rhs.inputFields && children == rhs.children;
     }
 
     [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const { return inputFields; }
@@ -132,4 +132,6 @@ private:
     static constexpr std::string_view NAME = "InferModelName";
     TraitSet traitSet;
 };
+
+static_assert(LogicalOperatorConcept<InferModelNameLogicalOperator>);
 }

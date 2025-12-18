@@ -87,7 +87,7 @@ IREEBatchInferenceOperator::IREEBatchInferenceOperator(
     const OperatorHandlerId operatorHandlerId,
     std::vector<PhysicalFunction> inputs,
     std::vector<std::string> outputFieldNames,
-    std::shared_ptr<Interface::BufferRef::TupleBufferRef> tupleBufferRef,
+    std::shared_ptr<TupleBufferRef> tupleBufferRef,
     DataType inputDtype,
     DataType outputDtype)
     : WindowProbePhysicalOperator(operatorHandlerId)
@@ -101,8 +101,8 @@ IREEBatchInferenceOperator::IREEBatchInferenceOperator(
 
 template <typename T>
 void IREEBatchInferenceOperator::performInference(
-    const Interface::PagedVectorRef& pagedVectorRef,
-    Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+    const PagedVectorRef& pagedVectorRef,
+    TupleBufferRef& tupleBufferRef,
     ExecutionContext& executionCtx) const
 {
     const auto fields = tupleBufferRef.getMemoryLayout()->getSchema().getFieldNames();
@@ -145,8 +145,8 @@ void IREEBatchInferenceOperator::performInference(
 
 template <typename T>
 void IREEBatchInferenceOperator::writeOutputRecord(
-    const Interface::PagedVectorRef& pagedVectorRef,
-    Interface::BufferRef::TupleBufferRef& tupleBufferRef,
+    const PagedVectorRef& pagedVectorRef,
+    TupleBufferRef& tupleBufferRef,
     ExecutionContext& executionCtx) const
 {
     const auto fields = tupleBufferRef.getMemoryLayout()->getSchema().getFieldNames();
@@ -218,7 +218,7 @@ void IREEBatchInferenceOperator::open(ExecutionContext& executionCtx, RecordBuff
             return batch->getPagedVectorRef();
         }, batchMemRef);
 
-    const Interface::PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
+    const PagedVectorRef batchPagedVectorRef(batchPagedVectorMemRef, tupleBufferRef);
 
     switch (inputDtype.type)
     {

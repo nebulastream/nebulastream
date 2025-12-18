@@ -157,13 +157,13 @@ TEST(UtilFunctionTest, tempDirTest)
         threads.emplace_back(
             [&barrier]()
             {
-                auto dir = Util::createTempDir("/tmp/tempDirTest-");
-                Util::TempDirectoryCleanup cleanup(dir);
+                auto dir = createTempDir("/tmp/tempDirTest-");
+                TempDirectoryCleanup cleanup(dir);
                 barrier.arrive_and_wait();
                 for (size_t i = 0; i < numIterations; i++)
                 {
-                    auto dir = Util::createTempDir("/tmp/tempDirTest-");
-                    cleanup = Util::TempDirectoryCleanup(dir);
+                    auto dir = createTempDir("/tmp/tempDirTest-");
+                    cleanup = TempDirectoryCleanup(dir);
                     EXPECT_TRUE(dir.string().starts_with("/tmp/tempDirTest-"));
                     ASSERT_TRUE(std::filesystem::exists(dir));
                     ASSERT_TRUE(std::filesystem::is_directory(dir));
@@ -177,9 +177,9 @@ TEST(UtilFunctionTest, tempDirTest)
 
 TEST(UtilFunctionTest, errnoStringTest)
 {
-    EXPECT_EQ(Util::errnoString(EINVAL), "Invalid argument");
-    EXPECT_EQ(Util::errnoString(EADDRNOTAVAIL), "Cannot assign requested address");
-    EXPECT_EQ(Util::errnoString(EILSEQ), "Invalid or incomplete multibyte or wide character");
+    EXPECT_EQ(errnoString(EINVAL), "Invalid argument");
+    EXPECT_EQ(errnoString(EADDRNOTAVAIL), "Cannot assign requested address");
+    EXPECT_EQ(errnoString(EILSEQ), "Invalid or incomplete multibyte or wide character");
 }
 
 }

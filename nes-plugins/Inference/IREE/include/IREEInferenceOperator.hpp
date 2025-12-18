@@ -45,10 +45,10 @@ public:
 
 protected:
     template <class T>
-    void performInference(ExecutionContext& executionCtx, NES::Nautilus::Record& record) const;
+    void performInference(ExecutionContext& executionCtx, NES::Record& record) const;
 
     template <class T>
-    void writeOutputRecord(ExecutionContext& executionCtx, NES::Nautilus::Record& record) const;
+    void writeOutputRecord(ExecutionContext& executionCtx, NES::Record& record) const;
 
 private:
     const OperatorHandlerId inferModelHandlerIndex;

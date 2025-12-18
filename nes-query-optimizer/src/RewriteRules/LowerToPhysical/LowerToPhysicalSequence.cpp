@@ -39,12 +39,12 @@ RewriteRuleResultSubgraph LowerToPhysicalSequence::apply(LogicalOperator logical
     auto schema = logicalOperator.getInputSchemas().at(0);
 
     auto layout = std::make_shared<RowLayout>(conf.operatorBufferSize.getValue(), schema);
-    const auto memoryProvider = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout);
+    const auto memoryProvider = std::make_shared<RowTupleBufferRef>(layout);
 
     auto operatorHandlerId = getNextOperatorHandlerId();
     auto handler = std::make_shared<Runtime::Execution::Operators::SequenceOperatorHandler>();
     auto physicalOperator = Runtime::Execution::Operators::SequencePhysicalOperator(
-        operatorHandlerId, ScanPhysicalOperator(memoryProvider, schema.getFieldNames()));
+        operatorHandlerId, ScanPhysicalOperator(memoryProvider));
 
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,

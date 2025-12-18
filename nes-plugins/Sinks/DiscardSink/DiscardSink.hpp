@@ -31,7 +31,7 @@ class DiscardSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Discard";
-    explicit DiscardSink(const SinkDescriptor& sinkDescriptor);
+    explicit DiscardSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
     ~DiscardSink() override = default;
 
     DiscardSink(const DiscardSink&) = delete;
