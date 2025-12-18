@@ -17,8 +17,12 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -55,12 +59,11 @@ LogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
 
 LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return this->withChildren(newChildren);
+    /// Instead of having our own ExpPhysicalFunction, we use the existing Pow(e, childFunction)
+    const auto newChild = child.withInferredDataType(schema);
+    const std::string eulerNumber = "2.7182818284590452353602874713527";
+    const ConstantValueLogicalFunction expConstantValue{DataTypeProvider::provideDataType(DataType::Type::FLOAT64), eulerNumber};
+    return PowLogicalFunction(expConstantValue, newChild).withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
