@@ -33,7 +33,7 @@ class VariableSizedData
 {
 public:
     /// @param bufferBacked: If set to true the VariableSizedData object is backed by a tuple buffer.
-    explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size);
+    explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size);
     explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData);
     VariableSizedData(const VariableSizedData& other);
     VariableSizedData& operator=(const VariableSizedData& other) noexcept;
@@ -66,7 +66,7 @@ public:
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
 private:
-    nautilus::val<uint32_t> size;
+    nautilus::val<uint64_t> size;
     nautilus::val<int8_t*> ptrToVarSized;
 };
 
