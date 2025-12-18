@@ -27,7 +27,7 @@
 namespace NES
 {
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size)
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size)
     : size(size), ptrToVarSized(reference)
 {
 }
