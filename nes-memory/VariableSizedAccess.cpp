@@ -29,6 +29,11 @@ VariableSizedAccess::Index VariableSizedAccess::Index::convertToIndex(const Comb
     return Index{static_cast<uint32_t>(combinedIdxOffset.index >> 32UL)};
 }
 
+VariableSizedAccess::Index::Underlying VariableSizedAccess::Index::getRawIndex() const
+{
+    return index;
+}
+
 std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Index& index)
 {
     return os << index.index;
