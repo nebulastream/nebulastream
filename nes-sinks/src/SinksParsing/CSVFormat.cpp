@@ -66,21 +66,16 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
         auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
+                          [&formattingContext](const auto& index)
                           {
                               const auto physicalType = formattingContext.physicalTypes[index];
                               if (physicalType.type == DataType::Type::VARSIZED)
                               {
-                                  const VariableSizedAccess variableSizedAccess{
-                                      *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                                  auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
-                                  if (copyOfEscapeStrings)
-                                  {
-                                      return "\"" + varSizedData + "\"";
-                                  }
-                                  return varSizedData;
+                                  constexpr std::string_view mockSV = "";
+                                  return mockSV;
                               }
-                              return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
+                              constexpr std::string_view mockSV = "";
+                              return mockSV;
                           });
         ss << fmt::format("{}\n", fmt::join(fields, ","));
     }

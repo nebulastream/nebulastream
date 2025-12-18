@@ -32,8 +32,7 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 {
 }
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
-    : VariableSizedData(pointerToVarSizedData, readValueFromMemRef<uint32_t>(pointerToVarSizedData))
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData) : VariableSizedData(pointerToVarSizedData, 0)
 {
 }
 
@@ -111,7 +110,7 @@ nautilus::val<bool> VariableSizedData::operator!() const
 
 nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
 {
-    return getContentSize() + nautilus::val<uint32_t>(sizeof(uint32_t));
+    return getContentSize();
 }
 
 [[nodiscard]] nautilus::val<uint32_t> VariableSizedData::getContentSize() const
@@ -121,7 +120,7 @@ nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
-    return ptrToVarSized + nautilus::val<uint64_t>(sizeof(uint32_t));
+    return ptrToVarSized;
 }
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const

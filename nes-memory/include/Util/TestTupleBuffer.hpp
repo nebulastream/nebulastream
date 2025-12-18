@@ -38,7 +38,8 @@ namespace NES
 {
 
 template <class Type>
-concept IsNesType = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>>;
+concept IsNesType = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>>
+    || std::is_same_v<Type, VariableSizedAccess::CombinedIndex>;
 
 
 /// This concept checks via tuple unpacking if Types contains at least one string.
@@ -425,8 +426,8 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                const VariableSizedAccess childBufferIdx{
-                    *reinterpret_cast<uint64_t*>(const_cast<uint8_t*>((*this)[recordIndex][I].getMemory().data()))};
+                const VariableSizedAccess childBufferIdx{*reinterpret_cast<VariableSizedAccess::CombinedIndex*>(
+                    const_cast<uint8_t*>((*this)[recordIndex][I].getMemory().data()))};
                 std::get<I>(record) = MemoryLayout::readVarSizedDataAsString(this->buffer, childBufferIdx);
             }
             else
