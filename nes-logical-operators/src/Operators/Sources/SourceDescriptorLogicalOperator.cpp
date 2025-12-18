@@ -113,4 +113,16 @@ void SourceDescriptorLogicalOperator::serialize(SerializableOperator& serializab
     serializableOperator.mutable_source()->CopyFrom(proto);
 }
 
+struct SerializedSourceDescriptorLogicalOperator
+{
+    rfl::Box<SerializedSourceDescriptor> descriptor;
+};
+
+void SourceDescriptorLogicalOperator::serialized(SerializedOperator& serialized) const
+{
+    serialized.config = rfl::to_generic(SerializedSourceDescriptorLogicalOperator{
+        .descriptor = rfl::make_box<SerializedSourceDescriptor>(sourceDescriptor.serialized())}
+    );
+}
+
 }

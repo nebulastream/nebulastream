@@ -24,15 +24,56 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/SerializedUtils.hpp>
 #include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <rfl/json.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <from_current.hpp>
+#include <rfl.hpp>
+#include "Operators/SelectionLogicalOperator.hpp"
+#include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
 
 namespace NES
 {
+
+void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
+{
+    SerializedOperator serializableOperator;
+    serializableOperator.type = op.getName();
+    auto inputSchemas = std::vector<SerializedSchema>();
+    for (const auto& inputSchema: op.getInputSchemas())
+    {
+        inputSchemas.emplace_back(serializeSchema(inputSchema));
+    }
+    serializableOperator.inputSchemas = std::move(inputSchemas);
+
+    auto outputSchema = serializeSchema(op.getOutputSchema());
+    serializableOperator.outputSchema = std::move(outputSchema);
+
+    auto childrenIds = std::vector<uint64_t>{};
+    for (const auto& child: op.getChildren())
+    {
+        childrenIds.emplace_back(child.getId().getRawValue());
+    }
+    serializableOperator.childrenIds = std::move(childrenIds);
+
+    // TODO: Add support for traits
+
+    // POC: No need for if-clause, once all Operators support `.serialized` function
+    if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
+    {
+        selectOp.value()->serialized(serializableOperator);
+    } else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
+    {
+        sourceOp.value()->serialized(serializableOperator);
+    }
+
+    const auto serializedString = rfl::json::write(serializableOperator);
+    serialized.set_reflect(serializedString);
+}
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
@@ -53,6 +94,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         auto* sOp = serializableQueryPlan.add_operators();
         itr.serialize(*sOp);
+        serialized(itr, *sOp);
         TraitSetSerializationUtil::serialize(itr.getTraitSet(), sOp->mutable_trait_set());
     }
 
@@ -73,6 +115,9 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     {
         CPPTRACE_TRY
         {
+
+
+
             const auto operatorId = serializedOp.operator_id();
             auto [_, inserted] = baseOps.emplace(operatorId, OperatorSerializationUtil::deserializeOperator(serializedOp));
             if (!inserted)

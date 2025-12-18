@@ -20,6 +20,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -31,6 +32,7 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
+#include "Serialization/SerializedUtils.hpp"
 
 namespace NES
 {
@@ -140,6 +142,21 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
                escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
 }
+
+SerializedSourceDescriptor SourceDescriptor::serialized() const
+{
+    SerializedSourceDescriptor serialized;
+    serialized.physicalSourceId = physicalSourceId.getRawValue();
+    serialized.name = logicalSource.getLogicalSourceName();
+    serialized.type = sourceType;
+    serialized.schema = serializeSchema(*logicalSource.getSchema());
+    serialized.parserConfig = rfl::make_box<ParserConfig>(parserConfig);
+
+    // serialized.config = rfl::to_generic(getConfig());
+
+    return serialized;
+}
+
 
 SerializableSourceDescriptor SourceDescriptor::serialize() const
 {

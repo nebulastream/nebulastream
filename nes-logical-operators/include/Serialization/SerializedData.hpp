@@ -69,7 +69,7 @@ struct SerializedOperator
     std::string type;
     uint64_t operatorId;
     std::vector<uint64_t> childrenIds;
-    std::map<std::string, rfl::Generic> config;
+    rfl::Generic config;
     rfl::Box<SerializedTraitSet> traitSet;
     std::vector<SerializedSchema> inputSchemas;
     std::optional<SerializedSchema> outputSchema;

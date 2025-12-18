@@ -27,6 +27,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
+#include <Serialization/SerializedData.hpp>
 
 namespace NES
 {
@@ -45,6 +46,7 @@ public:
 
     [[nodiscard]] bool operator==(const SourceDescriptorLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
+    void serialized(SerializedOperator& serialized) const;
 
     [[nodiscard]] SourceDescriptorLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;

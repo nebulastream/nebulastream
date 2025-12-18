@@ -47,6 +47,17 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 {
     std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
     {
+        // if (serializedOperator.operator_().operator_type() == "Source")
+        // {
+        //
+        //
+        // } else if (serializedOperator.operator_().operator_type() == "Equal")
+        // {
+        //
+        // }
+
+
+
         if (serializedOperator.has_source())
         {
             const auto& serializedSource = serializedOperator.source();

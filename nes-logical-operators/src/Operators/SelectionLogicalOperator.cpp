@@ -138,60 +138,15 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
 }
 
 
-struct SelectionLogicalOperatorSerializer
+struct SerializedSelectionLogicalOperator
 {
-    std::vector<SerializedSchema> inputSchemas;
-    rfl::Box<SerializedSchema> outputSchema;
-    std::vector<uint64_t> childrenIds;
     rfl::Box<SerializedFunction> predicate;
 };
 
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
 
-    auto childrenIds = std::vector<uint64_t>{};
-    auto config = std::map<std::string, rfl::Generic>();
-    auto serializedTraitSet = SerializedTraitSet{};
-    auto inputSchemas = std::vector<SerializedSchema>();
-    SerializedSchema outputSchema;
-
-
-    for (const auto& inputSchema: getInputSchemas())
-    {
-        inputSchemas.emplace_back(serializeSchema(inputSchema));
-    }
-
-    outputSchema = serializeSchema(getOutputSchema());
-
-    for (const auto& child: getChildren())
-    {
-        childrenIds.emplace_back(child.getId().getRawValue());
-    }
-
-
-    auto fun = getPredicate();
-    if ( fun.getType() == "Equals")
-    {
-        auto serFun = rfl::to_generic(fun.tryGet<EqualsLogicalFunction>()->serialized());
-        config.emplace("predicate", serFun);
-    }
-
     SerializableLogicalOperator proto;
-
-    auto data = SerializedOperator{};
-    data.type = NAME;
-    data.operatorId = 0;
-    data.childrenIds = childrenIds;
-    data.config = config;
-    data.traitSet = rfl::make_box<SerializedTraitSet>(serializedTraitSet);
-    data.outputSchema = std::move(outputSchema);
-    data.inputSchemas = std::move(inputSchemas);
-
-    const auto serializedString = rfl::json::write(data);
-    serializableOperator.set_reflect(serializedString);
-
-
-    // END OF POC
 
     proto.set_operator_type(NAME);
 
@@ -219,36 +174,32 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+void SelectionLogicalOperator::serialized(SerializedOperator& serialized) const
+{
+    // If all functions support the serialized function, the if-clause and tryGet call can be dropped
+
+    if (getPredicate().getType() == "Equals")
+    {
+        auto predicate = getPredicate().tryGet<EqualsLogicalFunction>()->serialized();
+        const auto config = SerializedSelectionLogicalOperator {
+            .predicate = rfl::make_box<SerializedFunction>(predicate)
+        };
+        serialized.config = rfl::to_generic(config);
+    }
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-
-    auto data = rfl::json::read<SerializedOperator>(arguments.reflec).value();
-
-    // Access data.operatorData using visitor pattern
-    if ( data.config.contains("predicate"))
+    const auto data = rfl::json::read<SerializedOperator>(arguments.reflec).value();
+    if (auto serializedOperator = rfl::from_generic<SerializedSelectionLogicalOperator>(data.config); serializedOperator.has_value())
     {
-        auto serializedPredicate = rfl::from_generic<SerializedFunction>(data.config.at("predicate")).value();
-        auto predicate =  deserializeFunction(serializedPredicate);
-        auto logicalOperator = SelectionLogicalOperator(predicate);
+        const auto predicate = deserializeFunction(*serializedOperator.value().predicate);
+        const auto logicalOperator = SelectionLogicalOperator(predicate);
 
-        auto inputSchemas = deserializeSchemas(data.inputSchemas);
+        const auto inputSchemas = deserializeSchemas(data.inputSchemas);
         return logicalOperator.withInferredSchema(inputSchemas);
     }
-
-    // auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
-    // if (std::holds_alternative<FunctionList>(functionVariant))
-    // {
-    //     const auto functions = std::get<FunctionList>(functionVariant).functions();
-    //
-    //     if (functions.size() != 1)
-    //     {
-    //         throw CannotDeserialize("Expected exactly one function but got {}", functions.size());
-    //     }
-    //     auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-    //     auto logicalOperator = SelectionLogicalOperator(function);
-    //     return logicalOperator.withInferredSchema(arguments.inputSchemas);
-    // }
     throw UnknownLogicalOperator();
 }
 }

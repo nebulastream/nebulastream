@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Serialization/SerializedUtils.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Serialization/SerializedUtils.hpp>
+#include "Sources/SourceDescriptor.hpp"
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -148,6 +149,16 @@ std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& seri
     }
     return schemas;
 }
+
+// SourceDescriptor deserializeSourceDescriptor(const SerializedSourceDescriptor serializedSourceDescriptor)
+// {
+//     const LogicalSource logicalSource {
+//         serializedSourceDescriptor.name,
+//         deserializeSchema(serializedSourceDescriptor.schema)
+//     };
+//
+//
+// }
 
 LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction)
 {

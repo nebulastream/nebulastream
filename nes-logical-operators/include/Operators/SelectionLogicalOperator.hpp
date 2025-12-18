@@ -19,6 +19,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -28,6 +29,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
+#include "Serialization/SerializedData.hpp"
 
 namespace NES
 {
@@ -42,6 +44,7 @@ public:
 
     [[nodiscard]] bool operator==(const SelectionLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
+    void serialized(SerializedOperator& serialized) const;
 
     [[nodiscard]] SelectionLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;

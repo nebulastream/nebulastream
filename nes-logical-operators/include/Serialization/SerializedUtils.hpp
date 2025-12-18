@@ -18,17 +18,24 @@
 #include <DataTypes/Schema.hpp>
 #include <Serialization/SerializedData.hpp>
 #include "Functions/LogicalFunction.hpp"
-
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES
 {
 SerializedDataType serializeDataType(const DataType& dataType);
-SerializedSchema serializeSchema(const Schema& schema);
-
 DataType deserializeDataType(const SerializedDataType& dataType);
-Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout);
+
+SerializedSchema serializeSchema(const Schema& schema);
 Schema deserializeSchema(const SerializedSchema& schema);
 std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& schemas);
+
+Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout);
+
 LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction);
+
+// SourceDescriptor deserializeSourceDescriptor(const SerializedSourceDescriptor& serializedSourceDescriptor);
+
+// SerializedDescriptorConfig serializeDescriptorConfig(const DescriptorConfig::Config& config);
+// DescriptorConfig::Config deserializeDescriptorConfig(const SerializedDescriptorConfig serializedConfig);
 
 }
