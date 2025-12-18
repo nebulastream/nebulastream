@@ -290,7 +290,7 @@ inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
             {
                 for (const auto& varSizedOffset : varSizedFieldOffsets)
                 {
-                    const auto childBufferOffset = tupleIdx * sizeOfSchemaInBytes + varSizedOffset;
+                    const auto childBufferOffset = (tupleIdx * sizeOfSchemaInBytes) + varSizedOffset;
                     const auto varSizedAccess
                         = reinterpret_cast<VariableSizedAccess*>(parentBuffer.getAvailableMemoryArea().data() + childBufferOffset);
                     if (auto nextChildBuffer = bufferProvider.getUnpooledBuffer(varSizedAccess->getSize().getRawSize()))
