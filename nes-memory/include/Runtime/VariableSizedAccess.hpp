@@ -38,7 +38,11 @@ class BufferControlBlock;
 class VariableSizedAccess
 {
 public:
-    using CombinedIndex = uint64_t;
+    struct CombinedIndex
+    {
+        uint64_t index;
+        uint64_t size;
+    };
 
     class Index
     {
@@ -85,25 +89,44 @@ public:
         Underlying offset;
     };
 
+    class Size
+    {
+    public:
+        using Underlying = size_t;
+        static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
+
+        explicit Size(uint64_t size);
+
+        static Size convertToSize(CombinedIndex combinedIdx);
+        [[nodiscard]] Underlying getRawSize() const;
+
+        friend std::ostream& operator<<(std::ostream& os, const Size& size);
+
+    private:
+        Underlying size;
+    };
+
 private:
     /// The order of the variables are of utmost importance, as we are providing a nautilus::val<> wrapper.
     /// By calling the C++-runtime (via nautilus::invoke()), we do not call any conversion but rather "bit_cast" the CombinedIndex.
     /// Thus, we initialize the values of the offset and index indirectly and not via the constructor call.
     Offset offset;
     Index index;
-
+    Size size;
 
 public:
     explicit VariableSizedAccess(const CombinedIndex combinedIdxOffset)
-        : offset(Offset::convertToOffset(combinedIdxOffset)), index(Index::convertToIndex(combinedIdxOffset))
+        : offset(Offset::convertToOffset(combinedIdxOffset))
+        , index(Index::convertToIndex(combinedIdxOffset))
+        , size(Size::convertToSize(combinedIdxOffset))
     {
     }
 
-    explicit VariableSizedAccess(const Index index) : offset(0), index(index) { }
+    explicit VariableSizedAccess(const Index index, const Size size) : offset(0), index(index), size(size) { }
 
-    explicit VariableSizedAccess(const Index index, const Offset offset) : offset(offset), index(index) { }
+    explicit VariableSizedAccess(const Index index, const Offset offset, const Size size) : offset(offset), index(index), size(size) { }
 
-    explicit VariableSizedAccess(const Offset offset) : offset(offset), index(0) { }
+    explicit VariableSizedAccess(const Offset offset, const Size size) : offset(offset), index(0), size(size) { }
 
     ~VariableSizedAccess() = default;
 
@@ -111,11 +134,13 @@ public:
 
     [[nodiscard]] Offset getOffset() const { return offset; };
 
+    [[nodiscard]] Size getSize() const { return size; };
+
     [[nodiscard]] CombinedIndex getCombinedIdxOffset() const
     {
         const uint64_t indexBitsCombined = static_cast<uint64_t>(index.index) << 32UL;
         const uint64_t offsetBitsCombined = offset.offset;
-        return indexBitsCombined | offsetBitsCombined;
+        return CombinedIndex{.index = indexBitsCombined | offsetBitsCombined, .size = size.getRawSize()};
     }
 
     friend std::ostream& operator<<(std::ostream& os, const VariableSizedAccess& obj)
@@ -124,8 +149,8 @@ public:
     }
 };
 
-static_assert(sizeof(VariableSizedAccess) == 8, "Underlying type must be 8 bytes (64 bits)");
-static_assert(sizeof(VariableSizedAccess::CombinedIndex) == 8, "Underlying type must be 8 bytes (64 bits)");
+static_assert(sizeof(VariableSizedAccess) == 16, "Underlying type must be 12 bytes");
+static_assert(sizeof(VariableSizedAccess::CombinedIndex) == 16, "Underlying type must be 8 bytes (64 bits)");
 
 }
 
