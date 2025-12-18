@@ -60,12 +60,12 @@ struct StateResolver<T>
 }
 
 template <>
-class val<NES::VariableSizedAccess::CombinedIndex>
+class val<NES::VariableSizedAccess::IndexOffsetSize>
 {
 public:
-    using Underlying = NES::VariableSizedAccess::CombinedIndex;
+    using Underlying = NES::VariableSizedAccess::IndexOffsetSize;
 
-    explicit val(const Underlying combinedIndex) : indexOffsetCombined(combinedIndex.index), size(combinedIndex.size) { }
+    explicit val(const Underlying combinedIndex) : indexOffsetCombined(combinedIndex.combinedIndexOffset), size(combinedIndex.size) { }
 
 private:
     val<uint64_t> indexOffsetCombined;
@@ -84,7 +84,7 @@ public:
     template <typename T>
     friend struct details::StateResolver;
 
-    using Underlying = NES::VariableSizedAccess::CombinedIndex;
+    using Underlying = NES::VariableSizedAccess::IndexOffsetSize;
 
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     explicit val(const Underlying variableSizedAccess) : variableSizedAccess(variableSizedAccess) { }
