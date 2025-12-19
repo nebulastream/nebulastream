@@ -115,7 +115,7 @@ SerializedFunction EqualsLogicalFunction::serialized() const
 {
     SerializedFunction serializedFunction;
     serializedFunction.functionType = NAME;
-    serializedFunction.dataType = serializeDataType(this->getDataType());
+    serializedFunction.dataType = SerializedUtils::serializeDataType(this->getDataType());
     for (const auto& child : getChildren())
     {
         // TODO: Will be generalized when `serialized` function is added to concept

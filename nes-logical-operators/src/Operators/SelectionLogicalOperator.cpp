@@ -194,10 +194,10 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
     const auto data = rfl::json::read<SerializedOperator>(arguments.reflec).value();
     if (auto serializedOperator = rfl::from_generic<SerializedSelectionLogicalOperator>(data.config); serializedOperator.has_value())
     {
-        const auto predicate = deserializeFunction(*serializedOperator.value().predicate);
+        const auto predicate = SerializedUtils::deserializeFunction(*serializedOperator.value().predicate);
         const auto logicalOperator = SelectionLogicalOperator(predicate);
 
-        const auto inputSchemas = deserializeSchemas(data.inputSchemas);
+        const auto inputSchemas = SerializedUtils::deserializeSchemas(data.inputSchemas);
         return logicalOperator.withInferredSchema(inputSchemas);
     }
     throw UnknownLogicalOperator();

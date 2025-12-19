@@ -22,20 +22,27 @@
 
 namespace NES
 {
-SerializedDataType serializeDataType(const DataType& dataType);
-DataType deserializeDataType(const SerializedDataType& dataType);
 
-SerializedSchema serializeSchema(const Schema& schema);
-Schema deserializeSchema(const SerializedSchema& schema);
-std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& schemas);
+class SerializedUtils
+{
+public:
+    static SerializedDataType serializeDataType(const DataType& dataType);
+    static DataType deserializeDataType(const SerializedDataType& dataType);
 
-Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout);
+    static SerializedSchema serializeSchema(const Schema& schema);
+    static Schema deserializeSchema(const SerializedSchema& schema);
+    static std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& schemas);
 
-LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction);
+    static Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout);
 
-// SourceDescriptor deserializeSourceDescriptor(const SerializedSourceDescriptor& serializedSourceDescriptor);
+    static LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction);
 
-rfl::Generic serializeDescriptorConfig(const DescriptorConfig::Config& config);
-// DescriptorConfig::Config deserializeDescriptorConfig(const SerializedDescriptorConfig serializedConfig);
+    static SourceDescriptor deserializeSourceDescriptor(const SerializedSourceDescriptor& serialized);
 
+    static SerializedDescriptorConfig serializeDescriptorConfig(const DescriptorConfig::Config& config);
+    static DescriptorConfig::Config deserializeDescriptorConfig(SerializedDescriptorConfig serializedConfig);
+
+    static ConfigValue serializeDescriptorConfigValue(DescriptorConfig::ConfigType value);
+    static DescriptorConfig::ConfigType deserializeDescriptorConfigValue(ConfigValue configValue);
+};
 }

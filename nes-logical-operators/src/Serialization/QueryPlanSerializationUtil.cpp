@@ -41,37 +41,38 @@ namespace NES
 
 void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
 {
-    SerializedOperator serializableOperator;
-    serializableOperator.type = op.getName();
+    SerializedOperator serializedOperator;
+    serializedOperator.operatorId = op.getId().getRawValue();
+    serializedOperator.type = op.getName();
     auto inputSchemas = std::vector<SerializedSchema>();
     for (const auto& inputSchema: op.getInputSchemas())
     {
-        inputSchemas.emplace_back(serializeSchema(inputSchema));
+        inputSchemas.emplace_back(SerializedUtils::serializeSchema(inputSchema));
     }
-    serializableOperator.inputSchemas = std::move(inputSchemas);
+    serializedOperator.inputSchemas = std::move(inputSchemas);
 
-    auto outputSchema = serializeSchema(op.getOutputSchema());
-    serializableOperator.outputSchema = std::move(outputSchema);
+    auto outputSchema = SerializedUtils::serializeSchema(op.getOutputSchema());
+    serializedOperator.outputSchema = std::move(outputSchema);
 
     auto childrenIds = std::vector<uint64_t>{};
     for (const auto& child: op.getChildren())
     {
         childrenIds.emplace_back(child.getId().getRawValue());
     }
-    serializableOperator.childrenIds = std::move(childrenIds);
+    serializedOperator.childrenIds = std::move(childrenIds);
 
     // TODO: Add support for traits
 
     // POC: No need for if-clause, once all Operators support `.serialized` function
     if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
     {
-        selectOp.value()->serialized(serializableOperator);
+        selectOp.value()->serialized(serializedOperator);
     } else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
     {
-        sourceOp.value()->serialized(serializableOperator);
+        sourceOp.value()->serialized(serializedOperator);
     }
 
-    const auto serializedString = rfl::json::write(serializableOperator);
+    const auto serializedString = rfl::json::write(serializedOperator);
     serialized.set_reflect(serializedString);
 }
 
@@ -115,8 +116,6 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     {
         CPPTRACE_TRY
         {
-
-
 
             const auto operatorId = serializedOp.operator_id();
             auto [_, inserted] = baseOps.emplace(operatorId, OperatorSerializationUtil::deserializeOperator(serializedOp));

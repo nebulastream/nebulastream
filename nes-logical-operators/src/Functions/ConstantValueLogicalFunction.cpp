@@ -113,7 +113,7 @@ SerializedFunction ConstantValueLogicalFunction::serialized() const
 {
     SerializedFunction serialized;
     serialized.functionType = NAME;
-    serialized.dataType = serializeDataType(getDataType());
+    serialized.dataType = SerializedUtils::serializeDataType(getDataType());
     serialized.config.emplace("constantValueAsString", getConstantValue());
     return serialized;
 }

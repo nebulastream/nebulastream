@@ -120,9 +120,7 @@ struct SerializedSourceDescriptorLogicalOperator
 
 void SourceDescriptorLogicalOperator::serialized(SerializedOperator& serialized) const
 {
-    serialized.config = rfl::to_generic(SerializedSourceDescriptorLogicalOperator{
-        .descriptor = rfl::make_box<SerializedSourceDescriptor>(sourceDescriptor.serialized())}
-    );
+    serialized.config = rfl::to_generic(sourceDescriptor.serialized());
 }
 
 }

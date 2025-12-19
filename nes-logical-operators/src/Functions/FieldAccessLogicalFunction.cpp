@@ -142,7 +142,7 @@ SerializedFunction FieldAccessLogicalFunction::serialized() const
     SerializedFunction serializedFunction;
     serializedFunction.functionType = NAME;
     serializedFunction.config.emplace("FieldName", getFieldName());
-    serializedFunction.dataType = serializeDataType(dataType);
+    serializedFunction.dataType = SerializedUtils::serializeDataType(dataType);
     return serializedFunction;
 }
 

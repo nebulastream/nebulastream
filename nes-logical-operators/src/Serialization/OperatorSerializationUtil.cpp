@@ -35,9 +35,12 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
+#include <rfl/json/read.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <rfl.hpp>
+#include "Serialization/SerializedUtils.hpp"
 
 namespace NES
 {
@@ -47,23 +50,38 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 {
     std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
     {
-        // if (serializedOperator.operator_().operator_type() == "Source")
-        // {
-        //
-        //
-        // } else if (serializedOperator.operator_().operator_type() == "Equal")
-        // {
-        //
-        // }
-
-
-
-        if (serializedOperator.has_source())
+        auto serializedOpt = rfl::json::read<SerializedOperator>(serializedOperator.reflect());
+        if (serializedOpt.has_value() && serializedOpt.value().type == "Source")
         {
-            const auto& serializedSource = serializedOperator.source();
-            auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
+            auto serialized = std::move(serializedOpt.value());
+            auto serializedSourceDescriptor = rfl::from_generic<SerializedSourceDescriptor>(serialized.config).value();
+            auto sourceDescriptor = SerializedUtils::deserializeSourceDescriptor(serializedSourceDescriptor);
             auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
             return sourceOperator;
+
+        }
+        if (serializedOpt.has_value() && serializedOpt.value().type == "Equal")
+        {
+            auto serialized = std::move(serializedOpt.value());
+            auto registryArgument = LogicalOperatorRegistryArguments{
+                .inputSchemas = {},
+                .outputSchema = Schema(),
+                .config = {},
+                .reflec = ""};
+
+
+            if (!serializedOperator.reflect().empty())
+            {
+                registryArgument.reflec = serializedOperator.reflect();
+            }
+
+            registryArgument.inputSchemas = SerializedUtils::deserializeSchemas(serialized.inputSchemas);
+            if (serialized.outputSchema.has_value())
+            {
+                registryArgument.outputSchema = SerializedUtils::deserializeSchema(serialized.outputSchema.value());
+            }
+
+            return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
         }
 
         if (serializedOperator.has_sink())

@@ -35,10 +35,11 @@
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <SerializableOperator.pb.h>
-#include "Serialization/SerializedData.hpp"
+#include <Serialization/SerializedData.hpp>
 
 namespace NES
 {
+class SerializedUtils;
 class SourceCatalog;
 class OperatorSerializationUtil;
 
@@ -93,6 +94,7 @@ public:
 private:
     friend class SourceCatalog;
     friend OperatorSerializationUtil;
+    friend SerializedUtils;
 
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;

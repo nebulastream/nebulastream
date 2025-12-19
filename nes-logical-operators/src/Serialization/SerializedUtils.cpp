@@ -26,7 +26,7 @@
 
 namespace NES
 {
-SerializedDataType serializeDataType(const DataType& dataType)
+SerializedDataType SerializedUtils::serializeDataType(const DataType& dataType)
 {
     switch (dataType.type)
     {
@@ -63,7 +63,7 @@ SerializedDataType serializeDataType(const DataType& dataType)
     }
 }
 
-SerializedSchema serializeSchema(const Schema& schema)
+SerializedSchema SerializedUtils::serializeSchema(const Schema& schema)
 {
     SerializedSchema serializer;
 
@@ -79,7 +79,7 @@ SerializedSchema serializeSchema(const Schema& schema)
 }
 
 
-DataType deserializeDataType(const SerializedDataType& serializedDataType)
+DataType SerializedUtils::deserializeDataType(const SerializedDataType& serializedDataType)
 {
     switch (serializedDataType)
     {
@@ -116,7 +116,7 @@ DataType deserializeDataType(const SerializedDataType& serializedDataType)
     }
 }
 
-Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout)
+Schema::MemoryLayoutType SerializedUtils::deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout)
 {
     switch (serializedMemoryLayout)
     {
@@ -129,7 +129,7 @@ Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& s
     }
 }
 
-Schema deserializeSchema(const SerializedSchema& serialized)
+Schema SerializedUtils::deserializeSchema(const SerializedSchema& serialized)
 {
 
     auto schema = Schema{deserializeMemoryLayout(serialized.memoryLayout)};
@@ -140,7 +140,7 @@ Schema deserializeSchema(const SerializedSchema& serialized)
     return schema;
 }
 
-std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& serializedSchemas)
+std::vector<Schema> SerializedUtils::deserializeSchemas(const std::vector<SerializedSchema>& serializedSchemas)
 {
     std::vector<Schema> schemas;
     for (const auto& schema : serializedSchemas)
@@ -150,17 +150,7 @@ std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& seri
     return schemas;
 }
 
-// SourceDescriptor deserializeSourceDescriptor(const SerializedSourceDescriptor serializedSourceDescriptor)
-// {
-//     const LogicalSource logicalSource {
-//         serializedSourceDescriptor.name,
-//         deserializeSchema(serializedSourceDescriptor.schema)
-//     };
-//
-//
-// }
-
-LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction)
+LogicalFunction SerializedUtils::deserializeFunction(const SerializedFunction& serializedFunction)
 {
 
     const auto& functionType = serializedFunction.functionType;
@@ -192,22 +182,7 @@ LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction
 
 // TODO: Can be simplified on Source Descriptor refactor
 
-struct ConfigValue
-{
-    std::string type;
-    std::variant<int32_t,
-        uint32_t,
-        int64_t,
-        uint64_t,
-        bool,
-        char,
-        float,
-        double,
-        std::string> value;
-};
-
-
-rfl::Generic serializeDescriptorConfigValue(DescriptorConfig::ConfigType value)
+ConfigValue SerializedUtils::serializeDescriptorConfigValue(DescriptorConfig::ConfigType value)
 {
     ConfigValue serialized;
     std::visit([&serialized]<typename T>(T&& arg){
@@ -215,52 +190,52 @@ rfl::Generic serializeDescriptorConfigValue(DescriptorConfig::ConfigType value)
         if constexpr (std::is_same_v<U, int32_t>)
         {
             serialized.type = "int32_t";
-            serialized.value = arg;
+            serialized.int32 = arg;
         }
         else if constexpr (std::is_same_v<U, uint32_t>)
         {
             serialized.type = "uint32_t";
-            serialized.value = arg;
+            serialized.uint32 = arg;
         }
         else if constexpr (std::is_same_v<U, int64_t>)
         {
             serialized.type = "int64_t";
-            serialized.value = arg;
+            serialized.int64 = arg;
         }
         else if constexpr (std::is_same_v<U, uint64_t>)
         {
             serialized.type = "uint64_t";
-            serialized.value = arg;
+            serialized.uint64 = arg;
         }
         else if constexpr (std::is_same_v<U, bool>)
         {
             serialized.type = "bool";
-            serialized.value = arg;
+            serialized.boolean = arg;
         }
         else if constexpr (std::is_same_v<U, char>)
         {
             serialized.type = "char";
-            serialized.value = arg;
+            serialized.character = arg;
         }
         else if constexpr (std::is_same_v<U, float>)
         {
             serialized.type = "float";
-            serialized.value = arg;
+            serialized.float_v = arg;
         }
         else if constexpr (std::is_same_v<U, double>)
         {
             serialized.type = "double";
-            serialized.value = arg;
+            serialized.double_v = arg;
         }
         else if constexpr (std::is_same_v<U, std::string>)
         {
             serialized.type = "string";
-            serialized.value = arg;
+            serialized.string = arg;
         }
         else if constexpr (std::is_same_v<U, EnumWrapper>)
         {
             serialized.type = "Enum";
-            serialized.value = arg.getValue();
+            serialized.string = arg.getValue();
         }
         else if constexpr (std::is_same_v<U, FunctionList>)
         {
@@ -288,18 +263,99 @@ rfl::Generic serializeDescriptorConfigValue(DescriptorConfig::ConfigType value)
         }
     }, value);
 
-    return rfl::to_generic(serialized);
+    return serialized;
 
 }
 
-rfl::Generic serializeDescriptorConfig(const DescriptorConfig::Config& config)
+SerializedDescriptorConfig SerializedUtils::serializeDescriptorConfig(const DescriptorConfig::Config& config)
 {
-    std::map<std::string, rfl::Generic> serializedConfig;
+    std::map<std::string, ConfigValue> serializedConfig;
+    uint64_t test {744073709551610};
     for (const auto& [key, value]: config)
     {
         serializedConfig.emplace(key, serializeDescriptorConfigValue(value));
 
     }
-    return rfl::to_generic(serializedConfig);
+
+    return SerializedDescriptorConfig{serializedConfig};
+}
+
+DescriptorConfig::ConfigType SerializedUtils::deserializeDescriptorConfigValue(ConfigValue configValue)
+{
+    if (configValue.type == "int32_t")
+    {
+        return configValue.int32;
+    }
+    if (configValue.type == "uint32_t")
+    {
+        return configValue.uint32;
+    }
+    if (configValue.type == "int64_t")
+    {
+        return configValue.int64;
+    }
+    if (configValue.type == "uint64_t")
+    {
+        return configValue.uint64;
+    }
+    if (configValue.type == "bool")
+    {
+        return configValue.boolean;
+    }
+    if (configValue.type == "char")
+    {
+        return configValue.character;
+    }
+    if (configValue.type == "float")
+    {
+        return configValue.float_v;
+    }
+    if (configValue.type == "double")
+    {
+        return configValue.double_v;
+    }
+    if (configValue.type == "string")
+    {
+        return configValue.string;
+    }
+    if (configValue.type == "Enum")
+    {
+        return EnumWrapper{configValue.string};
+    }
+    throw NotImplemented();
+
+}
+
+DescriptorConfig::Config SerializedUtils::deserializeDescriptorConfig(SerializedDescriptorConfig serializedConfig)
+{
+
+    DescriptorConfig::Config config;
+
+    for (const auto& [key, value] : serializedConfig.config)
+    {
+        config.emplace(key, deserializeDescriptorConfigValue(value));
+    }
+
+    return config;
+}
+
+SourceDescriptor SerializedUtils::deserializeSourceDescriptor(const SerializedSourceDescriptor& serialized)
+{
+
+    auto schema = deserializeSchema(serialized.schema);
+    LogicalSource logicalSource{serialized.name, schema};
+
+    const auto physicalSourceId = PhysicalSourceId{serialized.physicalSourceId};
+    const auto& sourceType = serialized.type;
+    ParserConfig parserConfig;
+    parserConfig.parserType = serialized.parserConfig->parserType;
+    parserConfig.tupleDelimiter = serialized.parserConfig->tupleDelimiter;
+    parserConfig.fieldDelimiter = serialized.parserConfig->fieldDelimiter;
+
+    auto serializedDescriptorConfig = rfl::from_generic<SerializedDescriptorConfig>(serialized.config).value();
+    DescriptorConfig::Config config = deserializeDescriptorConfig(serializedDescriptorConfig);
+
+    return SourceDescriptor{physicalSourceId, logicalSource, sourceType, std::move(config), parserConfig};
+
 }
 }

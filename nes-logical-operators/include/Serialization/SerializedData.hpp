@@ -74,4 +74,23 @@ struct SerializedOperator
     std::vector<SerializedSchema> inputSchemas;
     std::optional<SerializedSchema> outputSchema;
 };
+
+struct ConfigValue
+{
+    std::string type;
+    int32_t int32;
+    uint32_t uint32;
+    int64_t int64;
+    uint64_t uint64;
+    bool boolean;
+    char character;
+    float float_v;
+    double double_v;
+    std::string string;
+};
+
+struct SerializedDescriptorConfig
+{
+    std::map<std::string, ConfigValue> config;
+};
 }

@@ -149,10 +149,10 @@ SerializedSourceDescriptor SourceDescriptor::serialized() const
     serialized.physicalSourceId = physicalSourceId.getRawValue();
     serialized.name = logicalSource.getLogicalSourceName();
     serialized.type = sourceType;
-    serialized.schema = serializeSchema(*logicalSource.getSchema());
+    serialized.schema = SerializedUtils::serializeSchema(*logicalSource.getSchema());
     serialized.parserConfig = rfl::make_box<ParserConfig>(parserConfig);
 
-    serialized.config = serializeDescriptorConfig(getConfig());
+    serialized.config = rfl::to_generic(SerializedUtils::serializeDescriptorConfig(getConfig()));
 
     return serialized;
 }
