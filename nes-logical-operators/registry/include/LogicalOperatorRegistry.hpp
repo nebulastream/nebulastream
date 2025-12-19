@@ -30,10 +30,11 @@ using LogicalOperatorRegistryReturnType = LogicalOperator;
 
 struct LogicalOperatorRegistryArguments
 {
+    /// TODO: Remove all but reflect string
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     DescriptorConfig::Config config;
-    std::string reflec; // CHANGE ME
+    std::string reflec;
 };
 
 class LogicalOperatorRegistry

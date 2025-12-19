@@ -30,6 +30,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/SerializedUtils.hpp>
 #include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -40,7 +41,6 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <rfl.hpp>
-#include "Serialization/SerializedUtils.hpp"
 
 namespace NES
 {
@@ -58,16 +58,12 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             auto sourceDescriptor = SerializedUtils::deserializeSourceDescriptor(serializedSourceDescriptor);
             auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
             return sourceOperator;
-
         }
         if (serializedOpt.has_value() && serializedOpt.value().type == "Equal")
         {
             auto serialized = std::move(serializedOpt.value());
-            auto registryArgument = LogicalOperatorRegistryArguments{
-                .inputSchemas = {},
-                .outputSchema = Schema(),
-                .config = {},
-                .reflec = ""};
+            auto registryArgument
+                = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .reflec = ""};
 
 
             if (!serializedOperator.reflect().empty())

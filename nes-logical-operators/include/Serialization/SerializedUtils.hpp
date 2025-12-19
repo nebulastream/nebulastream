@@ -16,9 +16,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/SerializedData.hpp>
-#include "Functions/LogicalFunction.hpp"
-#include "Sources/SourceDescriptor.hpp"
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {

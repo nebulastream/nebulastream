@@ -21,7 +21,9 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SerializedUtils.hpp>
@@ -33,8 +35,6 @@
 #include <SerializableQueryPlan.pb.h>
 #include <from_current.hpp>
 #include <rfl.hpp>
-#include "Operators/SelectionLogicalOperator.hpp"
-#include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
 
 namespace NES
 {
@@ -45,7 +45,7 @@ void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
     serializedOperator.operatorId = op.getId().getRawValue();
     serializedOperator.type = op.getName();
     auto inputSchemas = std::vector<SerializedSchema>();
-    for (const auto& inputSchema: op.getInputSchemas())
+    for (const auto& inputSchema : op.getInputSchemas())
     {
         inputSchemas.emplace_back(SerializedUtils::serializeSchema(inputSchema));
     }
@@ -55,19 +55,19 @@ void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
     serializedOperator.outputSchema = std::move(outputSchema);
 
     auto childrenIds = std::vector<uint64_t>{};
-    for (const auto& child: op.getChildren())
+    for (const auto& child : op.getChildren())
     {
         childrenIds.emplace_back(child.getId().getRawValue());
     }
     serializedOperator.childrenIds = std::move(childrenIds);
 
-    // TODO: Add support for traits
-
-    // POC: No need for if-clause, once all Operators support `.serialized` function
+    /// TODO: Add support for traits
+    /// TODO: No need for if-clause, once all Operators support `.serialized` function
     if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
     {
         selectOp.value()->serialized(serializedOperator);
-    } else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
+    }
+    else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
     {
         sourceOp.value()->serialized(serializedOperator);
     }
@@ -116,7 +116,6 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     {
         CPPTRACE_TRY
         {
-
             const auto operatorId = serializedOp.operator_id();
             auto [_, inserted] = baseOps.emplace(operatorId, OperatorSerializationUtil::deserializeOperator(serializedOp));
             if (!inserted)

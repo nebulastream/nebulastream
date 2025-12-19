@@ -28,6 +28,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -35,7 +36,6 @@
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <SerializableOperator.pb.h>
-#include <Serialization/SerializedData.hpp>
 
 namespace NES
 {
@@ -61,7 +61,6 @@ struct SerializedSourceDescriptor
     SerializedSchema schema;
     rfl::Box<ParserConfig> parserConfig;
     rfl::Generic config;
-
 };
 
 class SourceDescriptor final : public Descriptor

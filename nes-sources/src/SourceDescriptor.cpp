@@ -24,6 +24,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/SerializedUtils.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -32,7 +33,6 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
-#include "Serialization/SerializedUtils.hpp"
 
 namespace NES
 {
@@ -156,7 +156,6 @@ SerializedSourceDescriptor SourceDescriptor::serialized() const
 
     return serialized;
 }
-
 
 SerializableSourceDescriptor SourceDescriptor::serialize() const
 {

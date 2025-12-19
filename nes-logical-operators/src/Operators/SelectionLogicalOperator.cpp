@@ -22,10 +22,10 @@
 #include <variant>
 #include <vector>
 
-#include <Serialization/SerializedUtils.hpp>
-#include <fmt/format.h>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Serialization/SerializedData.hpp>
+#include <Serialization/SerializedUtils.hpp>
+#include <fmt/format.h>
 
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -40,8 +40,8 @@
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
-#include <rfl.hpp>
 #include <rfl/json.hpp>
+#include <rfl.hpp>
 
 namespace NES
 {
@@ -137,7 +137,6 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-
 struct SerializedSelectionLogicalOperator
 {
     rfl::Box<SerializedFunction> predicate;
@@ -145,7 +144,6 @@ struct SerializedSelectionLogicalOperator
 
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
-
     SerializableLogicalOperator proto;
 
     proto.set_operator_type(NAME);
@@ -170,20 +168,16 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
 
 
-
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
 void SelectionLogicalOperator::serialized(SerializedOperator& serialized) const
 {
-    // If all functions support the serialized function, the if-clause and tryGet call can be dropped
-
+    /// TODO: If all functions support the serialized function, the if-clause and tryGet call can be dropped
     if (getPredicate().getType() == "Equals")
     {
         auto predicate = getPredicate().tryGet<EqualsLogicalFunction>()->serialized();
-        const auto config = SerializedSelectionLogicalOperator {
-            .predicate = rfl::make_box<SerializedFunction>(predicate)
-        };
+        const auto config = SerializedSelectionLogicalOperator{.predicate = rfl::make_box<SerializedFunction>(predicate)};
         serialized.config = rfl::to_generic(config);
     }
 }

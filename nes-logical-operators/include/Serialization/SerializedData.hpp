@@ -15,17 +15,27 @@
 #pragma once
 
 #include <string>
-
-#include <grpcpp/support/config.h>
-#include "Identifiers/NESStrongTypeJson.hpp"
-
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <rfl.hpp>
 
 namespace NES
 {
 enum class SerializedDataType
 {
-    UINT8, UINT16, UINT32, UINT64, INT8, INT16, INT32, INT64, FLOAT32, FLOAT64, BOOLEAN, CHAR, UNDEFINED, VARSIZED
+    UINT8,
+    UINT16,
+    UINT32,
+    UINT64,
+    INT8,
+    INT16,
+    INT32,
+    INT64,
+    FLOAT32,
+    FLOAT64,
+    BOOLEAN,
+    CHAR,
+    UNDEFINED,
+    VARSIZED
 };
 
 struct SerializedField
@@ -36,7 +46,8 @@ struct SerializedField
 
 enum class SerializedMemoryLayout
 {
-    ROW_LAYOUT, COL_LAYOUT
+    ROW_LAYOUT,
+    COL_LAYOUT
 };
 
 struct SerializedSchema
@@ -62,7 +73,6 @@ struct SerializedTraitSet
 {
     std::map<std::string, SerializedTrait> traits;
 };
-
 
 struct SerializedOperator
 {

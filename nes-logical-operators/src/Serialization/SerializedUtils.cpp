@@ -11,15 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
-#include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Serialization/SerializedUtils.hpp>
-#include "Sources/SourceDescriptor.hpp"
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Serialization/SerializedData.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 
 #include "LogicalFunctionRegistry.hpp"
@@ -59,7 +59,7 @@ SerializedDataType SerializedUtils::serializeDataType(const DataType& dataType)
         case DataType::Type::VARSIZED:
             return SerializedDataType::VARSIZED;
         default:
-            throw Exception{"Oh No", 9999}; // TODO Improve
+            throw Exception{"Oh No", 9999}; /// TODO Improve error handling
     }
 }
 
@@ -67,17 +67,14 @@ SerializedSchema SerializedUtils::serializeSchema(const Schema& schema)
 {
     SerializedSchema serializer;
 
-    serializer.memoryLayout =
-        schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT ?
-            SerializedMemoryLayout::ROW_LAYOUT:
-            SerializedMemoryLayout::COL_LAYOUT;
+    serializer.memoryLayout = schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT ? SerializedMemoryLayout::ROW_LAYOUT
+                                                                                              : SerializedMemoryLayout::COL_LAYOUT;
     for (const Schema::Field& field : schema.getFields())
     {
         serializer.fields.emplace_back(field.name, rfl::make_box<SerializedDataType>(serializeDataType(field.dataType)));
     }
     return serializer;
 }
-
 
 DataType SerializedUtils::deserializeDataType(const SerializedDataType& serializedDataType)
 {
@@ -112,7 +109,7 @@ DataType SerializedUtils::deserializeDataType(const SerializedDataType& serializ
         case SerializedDataType::VARSIZED:
             return DataType{DataType::Type::VARSIZED};
         default:
-            throw Exception{"Oh No", 9999}; // TODO Improve
+            throw Exception{"Oh No", 9999}; /// TODO: Improve error handling
     }
 }
 
@@ -125,15 +122,14 @@ Schema::MemoryLayoutType SerializedUtils::deserializeMemoryLayout(const Serializ
         case SerializedMemoryLayout::COL_LAYOUT:
             return Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
         default:
-            throw Exception{"Oh No", 9999}; // TODO improve
+            throw Exception{"Oh No", 9999}; /// TODO: Improve error handling
     }
 }
 
 Schema SerializedUtils::deserializeSchema(const SerializedSchema& serialized)
 {
-
     auto schema = Schema{deserializeMemoryLayout(serialized.memoryLayout)};
-    for (auto &field: serialized.fields)
+    for (auto& field : serialized.fields)
     {
         schema.addField(field.name, deserializeDataType(*field.type));
     }
@@ -152,7 +148,6 @@ std::vector<Schema> SerializedUtils::deserializeSchemas(const std::vector<Serial
 
 LogicalFunction SerializedUtils::deserializeFunction(const SerializedFunction& serializedFunction)
 {
-
     const auto& functionType = serializedFunction.functionType;
 
     std::vector<LogicalFunction> children;
@@ -161,120 +156,121 @@ LogicalFunction SerializedUtils::deserializeFunction(const SerializedFunction& s
         children.emplace_back(deserializeFunction(child));
     }
 
-    auto dataType =  deserializeDataType(serializedFunction.dataType);
+    auto dataType = deserializeDataType(serializedFunction.dataType);
 
 
-    // TODO this will be generalized. Just implemented this as a quick hack.
+    /// TODO: this will be generalized. Just implemented this as a quick hack.
     if (functionType == "Equals")
     {
         return EqualsLogicalFunction{children[0], children[1]};
-    } else if (functionType == "ConstantValue")
+    }
+    else if (functionType == "ConstantValue")
     {
         return ConstantValueLogicalFunction{dataType, serializedFunction.config.at("constantValueAsString").to_string().value()};
-
-    } else if (functionType == "FieldAccess")
+    }
+    else if (functionType == "FieldAccess")
     {
         return FieldAccessLogicalFunction{dataType, serializedFunction.config.at("FieldName").to_string().value()};
     }
     throw Exception{"Oh No", 9999};
 }
 
-
-// TODO: Can be simplified on Source Descriptor refactor
-
+/// TODO: Everything related to Source Descriptor can be simplified once DescriptorConfig::ConfigType stops relying on Protobuf classes
+///       will be updated in a separate PR.
 ConfigValue SerializedUtils::serializeDescriptorConfigValue(DescriptorConfig::ConfigType value)
 {
     ConfigValue serialized;
-    std::visit([&serialized]<typename T>(T&& arg){
-        using U = std::remove_cvref_t<T>;
-        if constexpr (std::is_same_v<U, int32_t>)
+    std::visit(
+        [&serialized]<typename T>(T&& arg)
         {
-            serialized.type = "int32_t";
-            serialized.int32 = arg;
-        }
-        else if constexpr (std::is_same_v<U, uint32_t>)
-        {
-            serialized.type = "uint32_t";
-            serialized.uint32 = arg;
-        }
-        else if constexpr (std::is_same_v<U, int64_t>)
-        {
-            serialized.type = "int64_t";
-            serialized.int64 = arg;
-        }
-        else if constexpr (std::is_same_v<U, uint64_t>)
-        {
-            serialized.type = "uint64_t";
-            serialized.uint64 = arg;
-        }
-        else if constexpr (std::is_same_v<U, bool>)
-        {
-            serialized.type = "bool";
-            serialized.boolean = arg;
-        }
-        else if constexpr (std::is_same_v<U, char>)
-        {
-            serialized.type = "char";
-            serialized.character = arg;
-        }
-        else if constexpr (std::is_same_v<U, float>)
-        {
-            serialized.type = "float";
-            serialized.float_v = arg;
-        }
-        else if constexpr (std::is_same_v<U, double>)
-        {
-            serialized.type = "double";
-            serialized.double_v = arg;
-        }
-        else if constexpr (std::is_same_v<U, std::string>)
-        {
-            serialized.type = "string";
-            serialized.string = arg;
-        }
-        else if constexpr (std::is_same_v<U, EnumWrapper>)
-        {
-            serialized.type = "Enum";
-            serialized.string = arg.getValue();
-        }
-        else if constexpr (std::is_same_v<U, FunctionList>)
-        {
-            throw NotImplemented();
-        }
-        else if constexpr (std::is_same_v<U, ProjectionList>)
-        {
-            throw NotImplemented();
-        }
-        else if constexpr (std::is_same_v<U, AggregationFunctionList>)
-        {
-            throw NotImplemented();
-        }
-        else if constexpr (std::is_same_v<U, WindowInfos>)
-        {
-            throw NotImplemented();
-        }
-        else if constexpr (std::is_same_v<U, UInt64List>)
-        {
-            throw NotImplemented();
-        }
-        else
-        {
-            static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
-        }
-    }, value);
+            using U = std::remove_cvref_t<T>;
+            if constexpr (std::is_same_v<U, int32_t>)
+            {
+                serialized.type = "int32_t";
+                serialized.int32 = arg;
+            }
+            else if constexpr (std::is_same_v<U, uint32_t>)
+            {
+                serialized.type = "uint32_t";
+                serialized.uint32 = arg;
+            }
+            else if constexpr (std::is_same_v<U, int64_t>)
+            {
+                serialized.type = "int64_t";
+                serialized.int64 = arg;
+            }
+            else if constexpr (std::is_same_v<U, uint64_t>)
+            {
+                serialized.type = "uint64_t";
+                serialized.uint64 = arg;
+            }
+            else if constexpr (std::is_same_v<U, bool>)
+            {
+                serialized.type = "bool";
+                serialized.boolean = arg;
+            }
+            else if constexpr (std::is_same_v<U, char>)
+            {
+                serialized.type = "char";
+                serialized.character = arg;
+            }
+            else if constexpr (std::is_same_v<U, float>)
+            {
+                serialized.type = "float";
+                serialized.float_v = arg;
+            }
+            else if constexpr (std::is_same_v<U, double>)
+            {
+                serialized.type = "double";
+                serialized.double_v = arg;
+            }
+            else if constexpr (std::is_same_v<U, std::string>)
+            {
+                serialized.type = "string";
+                serialized.string = arg;
+            }
+            else if constexpr (std::is_same_v<U, EnumWrapper>)
+            {
+                serialized.type = "Enum";
+                serialized.string = arg.getValue();
+            }
+            else if constexpr (std::is_same_v<U, FunctionList>)
+            {
+                throw NotImplemented();
+            }
+            else if constexpr (std::is_same_v<U, ProjectionList>)
+            {
+                throw NotImplemented();
+            }
+            else if constexpr (std::is_same_v<U, AggregationFunctionList>)
+            {
+                throw NotImplemented();
+            }
+            else if constexpr (std::is_same_v<U, WindowInfos>)
+            {
+                throw NotImplemented();
+            }
+            else if constexpr (std::is_same_v<U, UInt64List>)
+            {
+                throw NotImplemented();
+            }
+            else
+            {
+                static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
+            }
+        },
+        value);
 
     return serialized;
-
 }
 
 SerializedDescriptorConfig SerializedUtils::serializeDescriptorConfig(const DescriptorConfig::Config& config)
 {
     std::map<std::string, ConfigValue> serializedConfig;
-    uint64_t test {744073709551610};
-    for (const auto& [key, value]: config)
+    uint64_t test{744073709551610};
+    for (const auto& [key, value] : config)
     {
         serializedConfig.emplace(key, serializeDescriptorConfigValue(value));
-
     }
 
     return SerializedDescriptorConfig{serializedConfig};
@@ -323,12 +319,10 @@ DescriptorConfig::ConfigType SerializedUtils::deserializeDescriptorConfigValue(C
         return EnumWrapper{configValue.string};
     }
     throw NotImplemented();
-
 }
 
 DescriptorConfig::Config SerializedUtils::deserializeDescriptorConfig(SerializedDescriptorConfig serializedConfig)
 {
-
     DescriptorConfig::Config config;
 
     for (const auto& [key, value] : serializedConfig.config)
@@ -341,7 +335,6 @@ DescriptorConfig::Config SerializedUtils::deserializeDescriptorConfig(Serialized
 
 SourceDescriptor SerializedUtils::deserializeSourceDescriptor(const SerializedSourceDescriptor& serialized)
 {
-
     auto schema = deserializeSchema(serialized.schema);
     LogicalSource logicalSource{serialized.name, schema};
 
@@ -356,6 +349,5 @@ SourceDescriptor SerializedUtils::deserializeSourceDescriptor(const SerializedSo
     DescriptorConfig::Config config = deserializeDescriptorConfig(serializedDescriptorConfig);
 
     return SourceDescriptor{physicalSourceId, logicalSource, sourceType, std::move(config), parserConfig};
-
 }
 }
