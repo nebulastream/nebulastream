@@ -56,7 +56,9 @@ target_include_directories(nes-grpc PUBLIC
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
-add_library(nes-common ${NES_COMMON_SOURCE_FILES})
+add_library(nes-common ${NES_COMMON_SOURCE_FILES}
+        ../nes-plugins/Sources/RestApiSource/RestApiSource.cpp
+        ../nes-plugins/Sources/RestApiSource/RestApiSource.hpp)
 
 find_package(cpptrace   CONFIG REQUIRED)
 find_package(fmt        CONFIG REQUIRED)
