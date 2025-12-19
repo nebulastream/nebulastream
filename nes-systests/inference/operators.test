@@ -30,9 +30,11 @@ ATTACH INLINE
 
 CREATE SINK classificationThreeSeparate(setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32) TYPE File;
 
-MODEL iris TESTDATA/model/model.onnx
-FLOAT32 FLOAT32 FLOAT32 FLOAT32
-FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+CREATE MODEL iris(
+    PATH "TESTDATA/model/model.onnx"
+    INPUTS (FLOAT32, FLOAT32, FLOAT32, FLOAT32)
+    OUTPUTS (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32)
+);
 
 # IREEInferenceOperator
 SELECT setosa, versicolor, virginica
