@@ -12,18 +12,16 @@
     limitations under the License.
 */
 #include <Serialization/SerializedUtils.hpp>
-#include "Serialization/FunctionSerializationUtil.hpp"
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SerializedData.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-
-#include "LogicalFunctionRegistry.hpp"
 
 namespace NES
 {
@@ -240,14 +238,17 @@ ConfigValue SerializedUtils::serializeDescriptorConfigValue(DescriptorConfig::Co
                 std::vector<SerializedFunction> serializedFunctions;
                 for (auto function : arg.functions())
                 {
-                    LogicalFunction logicalFunction = FunctionSerializationUtil::deserializeFunction(function);;
+                    LogicalFunction logicalFunction = FunctionSerializationUtil::deserializeFunction(function);
+                    ;
                     if (logicalFunction.getType() == "Equals")
                     {
                         serializedFunctions.emplace_back(logicalFunction.get<EqualsLogicalFunction>().serialized());
-                    } else if (logicalFunction.getType() == "ConstantValue")
+                    }
+                    else if (logicalFunction.getType() == "ConstantValue")
                     {
                         serializedFunctions.emplace_back(logicalFunction.get<ConstantValueLogicalFunction>().serialized());
-                    } else if (logicalFunction.getType() == "FieldAccess")
+                    }
+                    else if (logicalFunction.getType() == "FieldAccess")
                     {
                         serializedFunctions.emplace_back(logicalFunction.get<FieldAccessLogicalFunction>().serialized());
                     }
