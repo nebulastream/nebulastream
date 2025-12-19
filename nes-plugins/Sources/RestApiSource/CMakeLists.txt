@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(RESTAPI Source nes-sources-registry rest_api_source_plugin_library RestApiSource.cpp)
-add_plugin_as_library(RESTAPI SourceValidation nes-sources-registry rest_api_source_validation_plugin_library RestApiSource.cpp)
+add_plugin_as_library(RestApi Source nes-sources-registry rest_api_source_plugin_library RestApiSource.cpp)
+add_plugin_as_library(RestApi SourceValidation nes-sources-registry rest_api_source_validation_plugin_library RestApiSource.cpp)
 
 
 target_include_directories(rest_api_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
