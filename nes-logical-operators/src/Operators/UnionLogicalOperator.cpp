@@ -40,7 +40,7 @@ namespace NES
 
 UnionLogicalOperator::UnionLogicalOperator() = default;
 
-std::string_view UnionLogicalOperator::getName() const noexcept
+std::string_view UnionLogicalOperator::getName() noexcept
 {
     return NAME;
 }

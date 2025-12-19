@@ -379,10 +379,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const TupleBuffer& buffer
         auto memoryLayout = std::make_shared<ColumnLayout>(buffer.getBufferSize(), schema);
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
-    else
-    {
-        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema.memoryLayoutType));
-    }
+    throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema.memoryLayoutType));
 }
 
 uint64_t TestTupleBuffer::countOccurrences(DynamicTuple& tuple) const

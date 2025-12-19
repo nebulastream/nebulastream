@@ -57,7 +57,7 @@ JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction, std::shar
 {
 }
 
-std::string_view JoinLogicalOperator::getName() const noexcept
+std::string_view JoinLogicalOperator::getName() noexcept
 {
     return NAME;
 }

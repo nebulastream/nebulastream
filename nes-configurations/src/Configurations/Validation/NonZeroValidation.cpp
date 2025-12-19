@@ -23,10 +23,6 @@ namespace NES
 bool NonZeroValidation::isValid(const std::string& parameter) const
 {
     std::regex numberRegex("^0.?0?$");
-    if (std::regex_match(parameter, numberRegex))
-    {
-        return false;
-    }
-    return true;
+    return !std::regex_match(parameter, numberRegex);
 }
 }

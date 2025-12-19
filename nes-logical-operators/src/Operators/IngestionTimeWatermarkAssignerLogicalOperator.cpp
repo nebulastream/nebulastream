@@ -36,7 +36,7 @@ namespace NES
 
 IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator() = default;
 
-std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const noexcept
+std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() noexcept
 {
     return NAME;
 }

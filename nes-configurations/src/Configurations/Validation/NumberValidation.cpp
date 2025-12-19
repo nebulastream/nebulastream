@@ -23,10 +23,6 @@ namespace NES
 bool NumberValidation::isValid(const std::string& parameter) const
 {
     std::regex numberRegex("^\\d+$");
-    if (!std::regex_match(parameter, numberRegex))
-    {
-        return false;
-    }
-    return true;
+    return std::regex_match(parameter, numberRegex);
 }
 }

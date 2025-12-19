@@ -54,7 +54,7 @@ TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
     if (oldControlBlock != controlBlock)
     {
         retain();
-        if (oldControlBlock)
+        if (oldControlBlock != nullptr)
         {
             oldControlBlock->release();
         }
@@ -86,7 +86,7 @@ TupleBuffer::~TupleBuffer() noexcept
 
 TupleBuffer& TupleBuffer::retain() noexcept
 {
-    if (controlBlock)
+    if (controlBlock != nullptr)
     {
         controlBlock->retain();
     }
@@ -95,7 +95,7 @@ TupleBuffer& TupleBuffer::retain() noexcept
 
 void TupleBuffer::release() noexcept
 {
-    if (controlBlock)
+    if (controlBlock != nullptr)
     {
         controlBlock->release();
     }
@@ -106,7 +106,7 @@ void TupleBuffer::release() noexcept
 
 uint32_t TupleBuffer::getReferenceCounter() const noexcept
 {
-    return controlBlock ? controlBlock->getReferenceCount() : 0;
+    return (controlBlock != nullptr) ? controlBlock->getReferenceCount() : 0;
 }
 
 uint64_t TupleBuffer::getBufferSize() const noexcept
@@ -195,8 +195,8 @@ TupleBuffer TupleBuffer::loadChildBuffer(VariableSizedAccess::Index bufferIndex)
 bool recycleTupleBuffer(void* bufferPointer)
 {
     PRECONDITION(bufferPointer, "invalid bufferPointer");
-    auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
+    auto* buffer = reinterpret_cast<uint8_t*>(bufferPointer);
+    auto* block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
     return block->release();
 }
 

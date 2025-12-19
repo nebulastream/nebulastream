@@ -77,7 +77,7 @@ public:
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
-    [[nodiscard]] std::string_view getName() const noexcept;
+    [[nodiscard]] static std::string_view getName() noexcept;
 
     [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 

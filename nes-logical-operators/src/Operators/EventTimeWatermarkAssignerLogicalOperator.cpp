@@ -48,7 +48,7 @@ EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOper
 {
 }
 
-std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noexcept
+std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() noexcept
 {
     return NAME;
 }

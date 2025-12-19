@@ -58,7 +58,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
 {
 }
 
-std::string_view WindowedAggregationLogicalOperator::getName() const noexcept
+std::string_view WindowedAggregationLogicalOperator::getName() noexcept
 {
     return NAME;
 }

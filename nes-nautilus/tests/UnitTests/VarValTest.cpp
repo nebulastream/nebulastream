@@ -116,7 +116,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); /* NOLINT (hicpp-signed-bitwise) */ \
                 return 0; \
             } \
             else \
@@ -168,7 +168,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); /* NOLINT (hicpp-signed-bitwise) */ \
                 return 0; \
             } \
             else \

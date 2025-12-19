@@ -65,7 +65,7 @@ public:
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
-    [[nodiscard]] std::string_view getName() const noexcept;
+    [[nodiscard]] static std::string_view getName() noexcept;
 
     [[nodiscard]] std::vector<std::string> getAccessedFields() const;
 

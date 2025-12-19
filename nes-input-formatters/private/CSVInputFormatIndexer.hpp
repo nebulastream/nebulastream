@@ -79,8 +79,8 @@ public:
     CSVInputFormatIndexer() = default;
     ~CSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(
-        FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
+    static void
+    indexRawBuffer(FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData);
 
     friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
 };

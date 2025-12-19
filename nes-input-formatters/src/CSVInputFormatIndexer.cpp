@@ -65,7 +65,7 @@ namespace NES
 {
 
 void CSVInputFormatIndexer::indexRawBuffer(
-    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
+    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData)
 {
     fieldOffsets.startSetup(metaData.getSchema().getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
 

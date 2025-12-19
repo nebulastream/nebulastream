@@ -150,7 +150,7 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::unordered
 std::string BaseConfiguration::toString()
 {
     std::stringstream ss;
-    for (auto option : getOptions())
+    for (auto* option : getOptions())
     {
         ss << option->toString() << "\n";
     }

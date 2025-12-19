@@ -282,7 +282,7 @@ std::optional<QueryResult> loadQueryResult(const std::filesystem::path& resultFi
 
     QueryResult result;
     std::string firstLine;
-    auto isNotEmpty = std::getline(resultFile, firstLine) ? true : false;
+    auto isNotEmpty = static_cast<bool>(std::getline(resultFile, firstLine));
     INVARIANT(isNotEmpty, "Result file is empty: {}", resultFilePath);
 
     result.schema = parseFieldNames(firstLine);

@@ -247,7 +247,7 @@ TEST_F(VariableSizedDataTest, ostreamTest)
     expectedOutput << "Size(" << sizeInBytes << "): ";
     for (uint32_t i = 0; i < sizeInBytes; ++i)
     {
-        expectedOutput << std::hex << static_cast<int>(variableSizedData[sizeOfLengthInBytes + i] & 0xff) << " ";
+        expectedOutput << std::hex << static_cast<int>(static_cast<uint8_t>(variableSizedData[sizeOfLengthInBytes + i]) & 0xffu) << " ";
     }
     nautilus::stringstream expected;
     expected << expectedOutput.str().c_str();

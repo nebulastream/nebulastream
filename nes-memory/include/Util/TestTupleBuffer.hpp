@@ -95,7 +95,7 @@ public:
     /// @return Value of the field.
     template <class Type>
     requires(NESIdentifier<Type> && not std::is_pointer_v<Type>)
-    inline Type read() const
+    Type read() const
     {
         /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
         if (not physicalType.isSameDataType<Type>()

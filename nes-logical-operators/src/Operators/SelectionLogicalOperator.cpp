@@ -44,7 +44,7 @@ SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : 
 {
 }
 
-std::string_view SelectionLogicalOperator::getName() const noexcept
+std::string_view SelectionLogicalOperator::getName() noexcept
 {
     return NAME;
 }

@@ -47,13 +47,13 @@ struct HelperStructLiterals
 {
     T val;
 
-    [[maybe_unused]] constexpr inline explicit HelperStructLiterals(T v) : val(v) { }
+    [[maybe_unused]] constexpr explicit HelperStructLiterals(T v) : val(v) { }
 
-    constexpr inline T operator-() const { return -val; }
+    constexpr T operator-() const { return -val; }
 
-    constexpr inline T operator+() const { return +val; }
+    constexpr T operator+() const { return +val; }
 
-    constexpr inline operator T() const { return val; }
+    constexpr operator T() const { return val; }
 };
 
 /**

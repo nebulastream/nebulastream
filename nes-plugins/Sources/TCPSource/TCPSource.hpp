@@ -191,7 +191,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
+    bool tryToConnect(const addrinfo* result, size_t flags);
     bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
 
     int connection = -1;

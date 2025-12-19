@@ -80,7 +80,8 @@ public:
     JSONInputFormatIndexer() = default;
     ~JSONInputFormatIndexer() = default;
 
-    void indexRawBuffer(FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData&) const;
+    static void
+    indexRawBuffer(FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData&);
 
     friend std::ostream& operator<<(std::ostream& os, const JSONInputFormatIndexer& jsonInputFormatIndexer);
 };

@@ -85,7 +85,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
-bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
+bool TCPSource::tryToConnect(const addrinfo* result, const size_t flags)
 {
     const std::chrono::seconds socketConnectDefaultTimeout{connectionTimeout};
 
@@ -126,7 +126,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             close();
             /// if connection was unsuccessful, throw an exception with context using errno
-            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            auto* const strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
             throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
         }
 
@@ -143,7 +143,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
             /// Timeout or error
             errno = ETIMEDOUT;
             close();
-            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            auto* const strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
             throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
         }
 
@@ -154,7 +154,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             errno = error;
             close();
-            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            auto* const strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
             throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
         }
     }

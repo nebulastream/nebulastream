@@ -74,7 +74,7 @@ std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
     return fmt::format("SINK({})", sinkName);
 }
 
-std::string_view SinkLogicalOperator::getName() const noexcept
+std::string_view SinkLogicalOperator::getName() noexcept
 {
     return NAME;
 }

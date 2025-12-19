@@ -72,7 +72,7 @@ void SourceNameLogicalOperator::inferInputOrigins()
     NES_INFO("Data sources have no input origins, so inferInputOrigins is a noop.");
 }
 
-std::string_view SourceNameLogicalOperator::getName() const noexcept
+std::string_view SourceNameLogicalOperator::getName() noexcept
 {
     return "Source";
 }
@@ -128,7 +128,7 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-void SourceNameLogicalOperator::serialize(SerializableOperator&) const
+void SourceNameLogicalOperator::serialize(SerializableOperator&)
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
 }

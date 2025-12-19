@@ -39,7 +39,7 @@ SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(SourceDescripto
 {
 }
 
-std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
+std::string_view SourceDescriptorLogicalOperator::getName() noexcept
 {
     return NAME;
 }

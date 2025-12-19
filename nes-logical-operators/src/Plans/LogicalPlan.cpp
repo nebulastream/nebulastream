@@ -343,7 +343,7 @@ bool LogicalPlan::operator==(const LogicalPlan& other) const
 
     auto pushPair = [&](const LogicalOperator& l, const LogicalOperator& r)
     {
-        const std::size_t key = ((l.getId().getRawValue()) << 32) | (r.getId().getRawValue());
+        const std::size_t key = ((l.getId().getRawValue()) << 32u) | (r.getId().getRawValue());
         if (seenPairs.insert(key).second)
         {
             work.emplace(l, r);

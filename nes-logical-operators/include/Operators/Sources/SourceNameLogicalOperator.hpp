@@ -48,7 +48,7 @@ public:
 
 
     [[nodiscard]] bool operator==(const SourceNameLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
+    static void serialize(SerializableOperator&);
 
     [[nodiscard]] SourceNameLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -60,7 +60,7 @@ public:
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
-    [[nodiscard]] std::string_view getName() const noexcept;
+    [[nodiscard]] static std::string_view getName() noexcept;
 
     [[nodiscard]] SourceNameLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
 

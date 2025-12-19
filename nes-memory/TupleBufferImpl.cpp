@@ -69,7 +69,7 @@ MemorySegment::MemorySegment(uint8_t* ptr, const uint32_t size, std::function<vo
 
 MemorySegment::~MemorySegment()
 {
-    if (ptr)
+    if (ptr != nullptr)
     {
         /// XXX: If we want to make `release` noexcept as we discussed, we need to make sure that the
         ///      MemorySegment is noexcept destructible. I therefore transformed this error into an assertion

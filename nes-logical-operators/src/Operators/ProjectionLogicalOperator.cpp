@@ -65,7 +65,7 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<Projection> pro
 {
 }
 
-std::string_view ProjectionLogicalOperator::getName() const noexcept
+std::string_view ProjectionLogicalOperator::getName() noexcept
 {
     return NAME;
 }

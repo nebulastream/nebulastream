@@ -171,8 +171,8 @@ public:
         std::string currentTestFilePath;
     };
 
-    size_t getNumberOfExpectedBuffers(
-        const TestConfig& testConfig, const std::filesystem::path& testFilePath, USED_IN_DEBUG const size_t sizeOfSchemaInBytes) const
+    static size_t getNumberOfExpectedBuffers(
+        const TestConfig& testConfig, const std::filesystem::path& testFilePath, USED_IN_DEBUG const size_t sizeOfSchemaInBytes)
     {
         const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
         PRECONDITION(

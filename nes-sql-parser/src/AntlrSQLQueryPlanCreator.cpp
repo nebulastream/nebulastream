@@ -357,7 +357,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
 void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
 {
     /// Get Index of Parent Rule to check type of parent rule in conditions
-    const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
+    auto* const parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
     const bool isParentRuleTableAlias = (parentContext != nullptr) && parentContext->getRuleIndex() == AntlrSQLParser::RuleTableAlias;
     if (helpers.top().isFrom && !helpers.top().isJoinRelation)
     {
@@ -524,7 +524,7 @@ void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* co
 {
     /// Get Index of Parent Rule to check type of parent rule in conditions
     std::optional<size_t> parentRuleIndex;
-    if (const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)
+    if (auto* const parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)
     {
         parentRuleIndex = parentContext->getRuleIndex();
     }
@@ -807,7 +807,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     {
         throw InvalidQuerySyntax("When exiting a constant, there must be exactly one children in the context {}", context->getText());
     }
-    if (const auto stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
+    if (auto* const stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
     {
         if (!(stringLiteralContext->getText().size() > 2))
         {

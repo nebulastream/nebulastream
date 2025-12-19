@@ -146,7 +146,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTest)
     for (auto i = 0; i < 10; ++i)
     {
         (*testBuffer)[i]["test$t1"].write<uint16_t>(i);
-        (*testBuffer)[i]["test$t2"].write<bool>(i % 2);
+        (*testBuffer)[i]["test$t2"].write<bool>((i % 2) != 0u);
         (*testBuffer)[i]["test$t3"].write<double_t>(i * 42.0);
 
         ASSERT_EQ((*testBuffer)[i]["test$t1"].read<uint16_t>(), i);
@@ -192,7 +192,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBuffer)
     for (auto i = 0_u64; i < testBuffer->getCapacity(); ++i)
     {
         (*testBuffer)[i]["test$t1"].write<uint16_t>(i);
-        (*testBuffer)[i]["test$t2"].write<bool>(i % 2);
+        (*testBuffer)[i]["test$t2"].write<bool>((i % 2) != 0u);
         (*testBuffer)[i]["test$t3"].write<double_t>(i * 42.0);
 
         ASSERT_EQ((*testBuffer)[i]["test$t1"].read<uint16_t>(), i);

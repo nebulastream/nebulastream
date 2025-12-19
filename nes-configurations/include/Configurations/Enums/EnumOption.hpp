@@ -59,7 +59,7 @@ public:
     {
         auto* config = dynamic_cast<BaseConfiguration*>(this);
         visitor.visitConcrete(this->name, this->description, magic_enum::enum_name(this->getDefaultValue()));
-        if (config)
+        if (config != nullptr)
         {
             config->accept(visitor);
         }

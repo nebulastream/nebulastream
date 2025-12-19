@@ -99,7 +99,7 @@ namespace NES
 {
 
 void JSONInputFormatIndexer::indexRawBuffer(
-    FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData& metaData) const
+    FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData& metaData)
 {
     fieldOffsets.startSetup(metaData.getSchema().getNumberOfFields(), FIELD_DELIMITER);
 

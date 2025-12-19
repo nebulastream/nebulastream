@@ -113,7 +113,7 @@ private:
     #define PRECONDITION(condition, formatString, ...) \
         do \
         { \
-            if (!(condition)) \
+            if (!(condition)) /* NOLINT (readability-simplify-boolean-expr) */ \
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
                 NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
@@ -132,7 +132,7 @@ private:
     #define INVARIANT(condition, formatString, ...) \
         do \
         { \
-            if (!(condition)) \
+            if (!(condition)) /* NOLINT (readability-simplify-boolean-expr) */ \
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
                 NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
