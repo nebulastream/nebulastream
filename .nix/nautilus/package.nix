@@ -12,13 +12,13 @@ let
     src =
       if pkgs.stdenv.hostPlatform.isAarch64 then
         pkgs.fetchurl {
-          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-v2/nes-llvm-21-arm64-none-libstdcxx.tar.zstd";
-          sha256 = "3e74c024e865efac646abe09b2cadcf88530b9af799b2d6fd0a5e5e1e01e685e";
+          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-with-fix-173075/nes-llvm-21-with-fix-173075-arm64-none-libstdcxx.tar.zstd";
+          sha256 = "d01f375f5943d25cecf109ceae78797a13ed48214ceddac4d3c8d608d74694bc";
         }
       else if pkgs.stdenv.hostPlatform.isx86_64 then
         pkgs.fetchurl {
-          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-v2/nes-llvm-21-x64-none-libstdcxx.tar.zstd";
-          sha256 = "944a71730086f49a80b3cdb44278cec2d5fcb04e28e50bb4fd258eb12ddb06db";
+          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-with-fix-173075/nes-llvm-21-with-fix-173075-x64-none-libstdcxx.tar.zstd";
+          sha256 = "217c4004dab06cc00416733017bdf9f9fc23795c48942cbb08303ac9c0d696a1";
         }
       else
         throw "Unsupported system: ${pkgs.stdenv.hostPlatform.system}";

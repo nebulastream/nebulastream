@@ -34,6 +34,7 @@ vcpkg_from_github(
         0004-disable-libomp-aliases.patch
         0005-create-destination-mlir-directory.patch
         82407.patch # [Clang][Sema] Fix incorrect rejection default construction of union with nontrivial member #82407
+        173075.patch # [X86] combineConcatVectorOps - fix typo where we were comparing the same subvector types #173075
 )
 
 vcpkg_check_features(
