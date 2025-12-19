@@ -1,18 +1,4 @@
 /*
-// Created by tim on 17.12.25.
-//
-
-#ifndef NES_HTTPSOURCE_HPP
-#define NES_HTTPSOURCE_HPP
-
-class RestApiSource
-{
-};
-
-
-#endif //NES_HTTPSOURCE_HPP
-*/
-/*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -47,119 +33,102 @@ class RestApiSource
 #include <Util/Logger/Logger.hpp>
 
 namespace NES
+{
+
+/// Defines the names, defaults, validation & config functions, for all HTTP config parameters.
+struct ConfigParametersHTTP
+{
+    /// Mandatory endpoint, e.g. "http://localhost:8000/"
+    static inline const DescriptorConfig::ConfigParameter<std::string> ENDPOINT{
+        "endpoint",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ENDPOINT, config); }};
+
+    /// Poll interval in milliseconds.
+    static inline const DescriptorConfig::ConfigParameter<uint64_t> INTERVAL_MS{
+        "interval_ms",
+        1000,
+        [](const std::unordered_map<std::string, std::string>& config)
         {
+            const auto v = DescriptorConfig::tryGet(INTERVAL_MS, config);
+            return v;
+        }};
 
-            /// Defines the names, defaults, validation & config functions, for all HTTP config parameters.
-            struct ConfigParametersHTTP
-            {
-                /// Mandatory endpoint, e.g. "http://localhost:8000/"
-                static inline const DescriptorConfig::ConfigParameter<std::string> ENDPOINT{
-                    "endpoint",
-                    std::nullopt,
-                    [](const std::unordered_map<std::string, std::string>& config)
-                    {
-                        return DescriptorConfig::tryGet(ENDPOINT, config);
-                    }};
+    /// TCP connect timeout for the HTTP request (seconds)
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
+        "connect_timeout_seconds",
+        10,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
 
-                /// Poll interval in milliseconds.
-                static inline const DescriptorConfig::ConfigParameter<uint64_t> INTERVAL_MS{
-                    "interval_ms",
-                    1000,
-                    [](const std::unordered_map<std::string, std::string>& config)
-                    {
-                        const auto v = DescriptorConfig::tryGet(INTERVAL_MS, config);
-                        return v;
-                    }};
+    /// Optional: append a newline after body (useful if downstream expects delimiter separated messages)
+    static inline const DescriptorConfig::ConfigParameter<bool> APPEND_NEWLINE{
+        "append_newline",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND_NEWLINE, config); }};
 
-                /// TCP connect timeout for the HTTP request (seconds)
-                static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-                    "connect_timeout_seconds",
-                    10,
-                    [](const std::unordered_map<std::string, std::string>& config)
-                    {
-                        return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config);
-                    }};
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(
+            SourceDescriptor::parameterMap, ENDPOINT, INTERVAL_MS, CONNECT_TIMEOUT, APPEND_NEWLINE);
+};
 
-                /// Optional: append a newline after body (useful if downstream expects delimiter separated messages)
-                static inline const DescriptorConfig::ConfigParameter<bool> APPEND_NEWLINE{
-                    "append_newline",
-                    false,
-                    [](const std::unordered_map<std::string, std::string>& config)
-                    {
-                        return DescriptorConfig::tryGet(APPEND_NEWLINE, config);
-                    }};
+class RestApiSource final : public Source
+{
+    constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
 
-                static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-                    = DescriptorConfig::createConfigParameterContainerMap(
-                        SourceDescriptor::parameterMap,
-                        ENDPOINT,
-                        INTERVAL_MS,
-                        CONNECT_TIMEOUT,
-                        APPEND_NEWLINE);
-            };
+public:
+    static const std::string& name()
+    {
+        static const std::string Instance = "HTTP";
+        return Instance;
+    }
 
-            class RestApiSource final : public Source
-            {
-                constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
+    explicit RestApiSource(const SourceDescriptor& sourceDescriptor);
+    ~RestApiSource() override = default;
 
-            public:
-                static const std::string& name()
-                {
-                    static const std::string Instance = "HTTP";
-                    return Instance;
-                }
+    RestApiSource(const RestApiSource&) = delete;
+    RestApiSource& operator=(const RestApiSource&) = delete;
+    RestApiSource(RestApiSource&&) = delete;
+    RestApiSource& operator=(RestApiSource&&) = delete;
 
-                explicit RestApiSource(const SourceDescriptor& sourceDescriptor);
-                ~RestApiSource() override = default;
+    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
+    void close() override;
 
-                RestApiSource(const RestApiSource&) = delete;
-                RestApiSource& operator=(const RestApiSource&) = delete;
-                RestApiSource(RestApiSource&&) = delete;
-                RestApiSource& operator=(RestApiSource&&) = delete;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
-                void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
-                void close() override;
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
-                FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
-                static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+private:
+    struct ParsedUrl
+    {
+        std::string host;
+        std::string port;
+        std::string path;
+    };
 
-                [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+private:
+    static ParsedUrl parseHttpUrlOrThrow(const std::string& url);
+    bool shouldPoll() const;
+    size_t fetchOnceAndWriteBody(TupleBuffer& tupleBuffer);
 
-            private:
-                struct ParsedUrl
-                {
-                    std::string host;
-                    std::string port;
-                    std::string path;
-                };
+    /// Performs HTTP GET and returns response body (no headers). Basic HTTP/1.1, no TLS.
+    std::string httpGetBody(const ParsedUrl& u);
 
-            private:
-                static ParsedUrl parseHttpUrlOrThrow(const std::string& url);
-                bool shouldPoll() const;
-                size_t fetchOnceAndWriteBody(TupleBuffer& tupleBuffer);
+private:
+    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer{};
 
-                /// Performs HTTP GET and returns response body (no headers). Basic HTTP/1.1, no TLS.
-                std::string httpGetBody(const ParsedUrl& u);
+    std::string endpoint;
+    ParsedUrl parsed{};
 
-            private:
-                std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer{};
+    std::chrono::milliseconds interval;
+    std::chrono::steady_clock::time_point lastPoll;
 
-                std::string endpoint;
-                ParsedUrl parsed{};
+    uint32_t connectTimeoutSeconds;
+    bool appendNewline;
 
-                std::chrono::milliseconds interval;
-                std::chrono::steady_clock::time_point lastPoll;
+    uint64_t generatedTuples{0};
+    uint64_t generatedBuffers{0};
+};
 
-                uint32_t connectTimeoutSeconds;
-                bool appendNewline;
-
-                uint64_t generatedTuples{0};
-                uint64_t generatedBuffers{0};
-            };
-
-            /// Registrations (mirror TCPSource pattern)
-            SourceValidationRegistryReturnType RegisterHTTPSourceValidation(SourceValidationRegistryArguments sourceConfig);
-            SourceRegistryReturnType SourceGeneratedRegistrar::RegisterHTTPSource(SourceRegistryArguments sourceRegistryArguments);
-
-        } // namespace NES
+}
