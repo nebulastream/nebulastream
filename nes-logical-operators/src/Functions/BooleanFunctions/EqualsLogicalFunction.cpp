@@ -35,7 +35,6 @@
 
 namespace NES
 {
-class FieldAccessLogicalFunction;
 
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
