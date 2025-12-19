@@ -261,16 +261,26 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
     VarVal VarVal::operatorName(const VarVal& other) const \
     { \
         return std::visit( \
-            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
+            [leftIsNullable = this->isNullable(), \
+             rightIsNullable = other.isNullable(), \
+             leftIsNull = this->isNull(), \
+             rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
             { \
                 if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
                 { \
-                    return detail::var_val_t(lhsVal op rhsVal); \
+                    auto newIsNullable = VarVal::NULLABLE_ENUM::NOT_NULLABLE; \
+                    if (leftIsNullable or rightIsNullable) \
+                    { \
+                        newIsNullable = VarVal::NULLABLE_ENUM::NULLABLE; \
+                    } \
+                    const nautilus::val<bool> newNullValue = static_cast<nautilus::val<int>>(leftIsNullable & leftIsNull) \
+                        | static_cast<nautilus::val<int>>(rightIsNullable & rightIsNull); \
+                    return VarVal{lhsVal op rhsVal, newIsNullable, newNullValue}; \
                 } \
                 else \
                 { \
                     throw UnknownOperation("VarVal operation not implemented: {} " #op " {}", NAMEOF_TYPE(LHS), NAMEOF_TYPE(RHS)); \
-                    return detail::var_val_t(lhsVal); \
+                    return VarVal{lhsVal, VarVal::NULLABLE_ENUM::NULLABLE, true}; \
                 } \
             }, \
             this->value, \
@@ -280,21 +290,66 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
     VarVal VarVal::operatorName() const \
     { \
         return std::visit( \
-            [&]<typename RHS>(const RHS& rhsVal) \
+            [isNullable = isNullable(), isNull = isNull()]<typename RHS>(const RHS& rhsVal) \
             { \
                 if constexpr (!requires(RHS rhs) { op rhs; }) \
                 { \
                     throw UnknownOperation("VarVal operation not implemented: " #op "{}", NAMEOF_TYPE(RHS)); \
-                    return detail::var_val_t(rhsVal); \
+                    return VarVal{detail::var_val_t(rhsVal), VarVal::NULLABLE_ENUM::NULLABLE, false}; \
                 } \
                 else \
                 { \
+                    auto newIsNullable = VarVal::NULLABLE_ENUM::NOT_NULLABLE; \
+                    if (isNullable) \
+                    { \
+                        newIsNullable = VarVal::NULLABLE_ENUM::NULLABLE; \
+                    } \
+                    nautilus::val<bool> newNullValue = isNullable & isNull; \
                     detail::var_val_t result = op rhsVal; \
-                    return result; \
+                    return VarVal{detail::var_val_t(result), newIsNullable, newNullValue}; \
                 } \
             }, \
             this->value); \
     }
+
+/// With div we might have a problem if we divide by 0 even though the VarVal is null. To handle this special case,
+/// we create a custom method for this and do not use the #define for the other binary operators
+VarVal VarVal::operator/(const VarVal& other) const
+{
+    return std::visit(
+        [leftIsNullable = this->isNullable(),
+         rightIsNullable = other.isNullable(),
+         leftIsNull = this->isNull(),
+         rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal)
+        {
+            if constexpr (requires(LHS l, RHS r) { l / r; })
+            {
+                auto newIsNullable = VarVal::NULLABLE_ENUM::NOT_NULLABLE;
+                if (leftIsNullable or rightIsNullable)
+                {
+                    newIsNullable = VarVal::NULLABLE_ENUM::NULLABLE;
+                }
+                /// We use an val<int> to use bitwise operators to reduce the number of branches created in the nautilus trace.
+                const auto leftIsNullableInt = static_cast<int>(leftIsNullable);
+                const auto rightIsNullableInt = static_cast<int>(rightIsNull);
+                const auto leftIsNullInt = static_cast<nautilus::val<int>>(leftIsNull);
+                const auto rightIsNullInt = static_cast<nautilus::val<int>>(rightIsNull);
+                const nautilus::val<bool> newNullValue = leftIsNullableInt & leftIsNullInt | rightIsNullableInt & rightIsNullInt;
+                const nautilus::val<bool> isZeroDenominator
+                    = static_cast<nautilus::val<int>>(rhsVal == 0) & (rightIsNullableInt & rightIsNullInt);
+                /// Using safe denominator if it is zero and rhs is null
+                return VarVal{lhsVal / (rhsVal + isZeroDenominator), newIsNullable, newNullValue};
+            }
+            else
+            {
+                throw UnknownOperation(
+                    std::string("VarVal operation not implemented: ") + " " + +" " + typeid(LHS).name() + " " + typeid(RHS).name());
+                return VarVal{lhsVal, VarVal::NULLABLE_ENUM::NULLABLE, true};
+            }
+        },
+        this->value,
+        other.value);
+}
 
 /// Defining operations on VarVal. In the macro, we use std::variant and std::visit to automatically call the already
 /// existing operations on the underlying nautilus::val<> data types.
@@ -302,7 +357,6 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator+, +);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator-, -);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator*, *);
-DEFINE_OPERATOR_VAR_VAL_BINARY(operator/, /);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator%, %);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator==, ==);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator!=, !=);
