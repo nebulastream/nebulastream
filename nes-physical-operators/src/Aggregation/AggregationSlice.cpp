@@ -42,6 +42,10 @@ HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) co
     const auto pos = workerThreadId % getNumberOfHashMaps();
     INVARIANT(pos < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
     auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        return nullptr;
+    }
     auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
     auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
     return childBufferMemoryArea[0];

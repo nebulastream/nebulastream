@@ -52,19 +52,6 @@ HashMapSlice::HashMapSlice(
         for (uint32_t i = 0; i < workerAddressMap.hashMapCount; i++)
         {
             basePointer[i] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
-            // // create child buffer for this worker
-            // auto childBuffer = bufferProvider->getBufferBlocking();
-            // // create a chained hash map into the child buffer
-            // auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
-            // childBufferMemoryArea[0] = new ChainedHashMap(bufferProvider,
-            //     createNewHashMapSliceArgs.keySize,
-            //     createNewHashMapSliceArgs.valueSize,
-            //     createNewHashMapSliceArgs.numberOfBuckets,
-            //     createNewHashMapSliceArgs.pageSize);
-            // // store child buffer into the main buffer
-            // const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
-            // // store the childbufferindex into the mainBuffer header file
-            // basePointer[i] = childBufferIndex;
         }
     }
     else
