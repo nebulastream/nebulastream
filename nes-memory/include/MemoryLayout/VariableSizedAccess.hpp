@@ -122,6 +122,13 @@ public:
     {
         return os << "VariableSizedAccess(index: " << obj.index << " offset: " << obj.offset << ")";
     }
+
+    friend bool operator==(const VariableSizedAccess& lhs, const VariableSizedAccess& rhs)
+    {
+        // Compare the two objects by comparing their individual components.
+        // Since Index and Offset have defaulted operator<=>, operator== is also available.
+        return lhs.index == rhs.index && lhs.offset == rhs.offset;
+    }
 };
 
 static_assert(sizeof(VariableSizedAccess) == 8, "Underlying type must be 8 bytes (64 bits)");

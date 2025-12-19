@@ -52,18 +52,18 @@ AggregationOperatorHandler::AggregationOperatorHandler(
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-AggregationOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const
+AggregationOperatorHandler::getCreateNewSlicesFunction(AbstractBufferProvider* bufferProvider, const CreateNewSlicesArguments& newSlicesArguments) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
     auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
     newHashMapArgs.numberOfBuckets = std::clamp(rollingAverageNumberOfKeys.rlock()->getAverage(), 1UL, maxNumberOfBuckets);
     return std::function(
-        [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
+        [bufferProvider, outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
             SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE("Creating new aggregation slice with for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<AggregationSlice>(sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
+            return {std::make_shared<AggregationSlice>(bufferProvider, sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
         });
 }
 
@@ -83,16 +83,16 @@ void AggregationOperatorHandler::triggerSlices(
             for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
             {
                 if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
-                    (hashMap != nullptr) and hashMap->getNumberOfTuples() > 0)
+                    (hashMap != nullptr) and hashMap->numberOfTuples() > 0)
                 {
                     /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
-                    rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
+                    rollingAverageNumberOfKeys.wlock()->add(hashMap->numberOfTuples());
 
                     allHashMaps.emplace_back(hashMap);
-                    totalNumberOfTuples += hashMap->getNumberOfTuples();
+                    totalNumberOfTuples += hashMap->numberOfTuples();
                     if (not finalHashMap)
                     {
-                        finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(*dynamic_cast<ChainedHashMap*>(hashMap));
+                        finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(pipelineCtx->getBufferManager().get(), *dynamic_cast<ChainedHashMap*>(hashMap));
                     }
                 }
             }

@@ -44,6 +44,7 @@
 namespace NES
 {
 HashMap* getHashJoinHashMapProxy(
+    AbstractBufferProvider* bufferProvider,
     const HJOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -60,7 +61,7 @@ HashMap* getHashJoinHashMapProxy(
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
-        timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
+        timestamp, operatorHandler->getCreateNewSlicesFunction(bufferProvider, hashMapSliceArgs));
     INVARIANT(
         hashMap.size() == 1,
         "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support "
@@ -70,7 +71,7 @@ HashMap* getHashJoinHashMapProxy(
     /// Converting the slice to an HJSlice and returning the pointer to the hashmap
     const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
-    return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
+    return hjSlice->getHashMapPtrOrCreate(bufferProvider, workerThreadId, buildSide);
 }
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -128,6 +129,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
         getHashJoinHashMapProxy,
+        ctx.pipelineMemoryProvider.bufferProvider,
         operatorHandler,
         timestamp,
         ctx.workerThreadId,

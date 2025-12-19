@@ -74,43 +74,66 @@ public:
         uint64_t numberOfEntries{0};
     };
 
-    ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
-    ~ChainedHashMap() override;
-    [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
+    ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
+    ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
+    // ~ChainedHashMap() override;
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
+    VariableSizedAccess::Index appendPage(AbstractBufferProvider* bufferProvider);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
-    [[nodiscard]] uint64_t getNumberOfTuples() const override;
-    [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
+    [[nodiscard]] uint64_t numberOfTuples() const override;
+    [[nodiscard]] const TupleBuffer getPage(uint64_t pageIndex) const;
+    [[nodiscard]] static uint64_t calculateMainBufferSize(uint64_t numberOfChains);
     [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] ChainedHashMapEntry* getStartOfChain(uint64_t entryIdx) const;
-    [[nodiscard]] uint64_t getNumberOfChains() const;
+    [[nodiscard]] uint64_t numberOfChains() const;
+    [[nodiscard]] uint64_t entrySize() const;
+    [[nodiscard]] uint64_t entriesPerPage() const;
+    [[nodiscard]] uint64_t pageSize() const;
+    [[nodiscard]] uint64_t mask() const;
+    [[nodiscard]] VariableSizedAccess::Index storageSpaceChildBufferIndex() const;
+    [[nodiscard]] VariableSizedAccess::Index varSizedSpaceChildBufferIndex() const;
+    [[nodiscard]] VariableSizedAccess::Index storageSpaceLastPageIndex() const;
+    [[nodiscard]] VariableSizedAccess::Index varSizedSpaceLastPageIndex() const;
+    void setStorageSpaceLastPageIndex(VariableSizedAccess::Index childBufferIndex);
+    void setVarSizedSpaceLastPageIndex(VariableSizedAccess::Index childBufferIndex);
+    [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos) const;
+
 
     /// Clears and deletes all entries in the hash map. It also releases the memory of any allocated buffers or other memory.
-    void clear() noexcept;
-
-    /// The passed method is being executed, once the destructor is called. This is necessary as the value type of this hash map
-    /// might allocate its own memory. Thus, the destructor of the value type should be called to release the memory.
-    void setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback);
+    // void clear() noexcept;
 
     /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
-    static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
+    static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(AbstractBufferProvider* bufferProvider, const ChainedHashMap& other);
 
 private:
     friend class ChainedHashMapRef;
 
-    /// Specifies the number of pre-allocated var sized
-    static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
-    TupleBuffer entrySpace;
-    std::vector<TupleBuffer> storageSpace;
-    std::vector<TupleBuffer> varSizedSpace;
-    uint64_t numberOfTuples; /// Number of entries in the hash map
-    uint64_t pageSize; /// Size of one storage page in bytes
-    uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize
-    uint64_t entriesPerPage; /// Number of entries per page
-    uint64_t numberOfChains; /// Number of buckets in the hash map
-    ChainedHashMapEntry** entries; /// Stores the pointers to the first entry in each chain
-    HashFunction::HashValue::raw_type mask; /// Mask to calculate the bucket position from the hash value. Always a (power of 2)-1
-    std::function<void(ChainedHashMapEntry*)> destructorCallBack; /// Callback function to be executed, once the destructor is called
+    /// Metadata for accessing the main buffer
+    struct Metadata
+    {
+        /// Specifies the number of pre-allocated var sized
+        static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
+        // for main buffer size calculation and code clarity
+        static constexpr auto MAIN_BUFFER_UINT64_FIELDS_NUM = 7;
+        static constexpr auto MAIN_BUFFER_UINT32_FIELDS_NUM = 4;
+        /// main buffer metadata field position indices (uint64 fields)
+        /// always cast to uint64_t when using the offsets below
+        static constexpr auto NUM_CHAINS_POS = 0;
+        static constexpr auto PAGE_SIZE_POS = 1;
+        static constexpr auto ENTRY_SIZE_POS = 2;
+        static constexpr auto ENTRIES_PER_PAGE_POS = 3;
+        static constexpr auto NUM_TUPLES_POS = 4;
+        static constexpr auto MASK_POS = 5;
+        static constexpr auto NUM_PAGES_POS = 6;           // actively maintained as pages are inserted
+        /// always cast to VariableSizedAccess::Index when using the offsets below
+        static constexpr uint32_t STORAGE_SPACE_INDEX_POS = (NUM_PAGES_POS + 1) * sizeof(uint64_t) / sizeof(VariableSizedAccess::Index);
+        static constexpr uint32_t VARSIZED_SPACE_INDEX_POS = STORAGE_SPACE_INDEX_POS + 1; // points to the first varsized space page
+        static constexpr uint32_t STORAGE_SPACE_LAST_PAGE_INDEX_POS = VARSIZED_SPACE_INDEX_POS + 1;
+        static constexpr uint32_t VARSIZED_SPACE_LAST_PAGE_INDEX_POS = STORAGE_SPACE_LAST_PAGE_INDEX_POS + 1;
+        /// always cast to uint64_t when using the offset below
+        static constexpr auto CHAINS_BEGIN_POS = (VARSIZED_SPACE_LAST_PAGE_INDEX_POS + 1) * sizeof(VariableSizedAccess::Index) / sizeof(uint64_t);
+    };
+
+    /// the main tuple buffer containing everything
+    TupleBuffer mainBuffer;
 };
 }

@@ -20,41 +20,59 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
+#include <spdlog/spdlog.h>
+
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
 
 namespace NES
 {
 AggregationSlice::AggregationSlice(
+    AbstractBufferProvider* bufferProvider,
     const SliceStart sliceStart,
     const SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
     const uint64_t numberOfHashMaps)
-    : HashMapSlice(sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1)
+    : HashMapSlice(bufferProvider, sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1)
 {
 }
 
 HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % hashMaps.size();
-    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
-    return hashMaps[pos].get();
+    const auto pos = workerThreadId % getNumberOfHashMaps();
+    INVARIANT(pos < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
+    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
+    return childBufferMemoryArea[0];
 }
 
-HashMap* AggregationSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId)
+HashMap* AggregationSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
 {
-    const auto pos = workerThreadId % hashMaps.size();
-    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
+    const auto pos = workerThreadId % getNumberOfHashMaps();
+    INVARIANT(pos < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
 
-    if (hashMaps.at(pos) == nullptr)
+    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
-        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
+        // create child buffer for this worker
+        auto childBuffer = bufferProvider->getBufferBlocking();
+        // create a chained hash map into the child buffer
+        auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
+        childBufferMemoryArea[0] = new ChainedHashMap(bufferProvider,
             createNewHashMapSliceArgs.keySize,
             createNewHashMapSliceArgs.valueSize,
             createNewHashMapSliceArgs.numberOfBuckets,
             createNewHashMapSliceArgs.pageSize);
+        // store child buffer into the main buffer
+        const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
+        // store the childbufferindex into the mainBuffer header file
+        basePointer[pos] = childBufferIndex;
+
     }
-    return hashMaps[pos].get();
+    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
+    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
+    return childBufferMemoryArea[0];
 }
 
 }

@@ -28,8 +28,8 @@
 namespace NES
 {
 HJSlice::HJSlice(
-    SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, const uint64_t numberOfHashMaps)
-    : HashMapSlice(std::move(sliceStart), std::move(sliceEnd), createNewHashMapSliceArgs, numberOfHashMaps, 2)
+    AbstractBufferProvider* bufferProvider, SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, const uint64_t numberOfHashMaps)
+    : HashMapSlice(bufferProvider, std::move(sliceStart), std::move(sliceEnd), createNewHashMapSliceArgs, numberOfHashMaps, 2)
 {
 }
 
@@ -40,37 +40,51 @@ HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinB
         + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMapsPerInputStream));
 
     INVARIANT(
-        not hashMaps.empty() and pos < hashMaps.size(),
+        workerAddressMap.hashMapCount > 0 and pos < workerAddressMap.hashMapCount,
         "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
         workerThreadId,
         pos,
-        hashMaps.size());
-    return hashMaps[pos].get();
+        workerAddressMap.hashMapCount);
+    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
+    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
+    return childBufferMemoryArea[0];
 }
 
-HashMap* HJSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
+HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
 {
     /// Hashmaps of the left build side come before right
     auto pos = (workerThreadId % numberOfHashMapsPerInputStream)
         + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMapsPerInputStream));
 
     INVARIANT(
-        not hashMaps.empty() and pos < hashMaps.size(),
+        workerAddressMap.hashMapCount > 0 and pos < workerAddressMap.hashMapCount,
         "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
         workerThreadId,
         pos,
-        hashMaps.size());
+        workerAddressMap.hashMapCount);
 
-    if (hashMaps.at(pos) == nullptr)
+    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
-        /// Hashmap at pos has not been initialized
-        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
+        // create child buffer for this worker
+        auto childBuffer = bufferProvider->getBufferBlocking();
+        // create a chained hash map into the child buffer
+        auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
+        childBufferMemoryArea[0] = new ChainedHashMap(bufferProvider,
             createNewHashMapSliceArgs.keySize,
             createNewHashMapSliceArgs.valueSize,
             createNewHashMapSliceArgs.numberOfBuckets,
             createNewHashMapSliceArgs.pageSize);
+        // store child buffer into the main buffer
+        const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
+        // store the childbufferindex into the mainBuffer header file
+        basePointer[pos] = childBufferIndex;
+
     }
-    return hashMaps.at(pos).get();
+    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
+    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
+    return childBufferMemoryArea[0];
 }
 
 uint64_t HJSlice::getNumberOfHashMapsForSide() const

@@ -69,7 +69,7 @@ public:
         uint64_t maxNumberOfBuckets);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
+    getCreateNewSlicesFunction(AbstractBufferProvider* bufferProvider, const CreateNewSlicesArguments& newSlicesArguments) const override;
 
     bool wasSetupCalled(const JoinBuildSideType& buildSide);
     void setNautilusCleanupExec(

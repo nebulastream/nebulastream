@@ -65,14 +65,27 @@ struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 class HashMapSlice : public Slice
 {
 public:
+    /// Holds the internals of the main TupleBuffer.
+    /// | threadHashMapAddress0 | threadHashMapAddress1 | ... | threadHashMapAddressN-1 |
+    /// |        64 bits        |        64 bits        |     |          64 bits        |
+    /// |           0           |           1           |     |            N-1          |
+    struct WorkerAddressMap
+    {
+        explicit WorkerAddressMap(const uint64_t hashMapCount) : hashMapCount(hashMapCount) {}
+        uint64_t hashMapCount{0};   /// todo: move this inside the mainBuffer
+        TupleBuffer mainBuffer;
+        [[nodiscard]] size_t calculateHeaderSize() const;
+    };
+
     explicit HashMapSlice(
+        AbstractBufferProvider* bufferProvider,
         SliceStart sliceStart,
         SliceEnd sliceEnd,
         const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
         uint64_t numberOfHashMaps,
         uint64_t numberOfInputStreams);
 
-    ~HashMapSlice() override;
+    // ~HashMapSlice() override;
 
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
@@ -80,10 +93,11 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
 protected:
-    std::vector<std::unique_ptr<HashMap>> hashMaps;
+    // std::vector<std::unique_ptr<HashMap>> hashMaps;
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
     uint64_t numberOfHashMapsPerInputStream;
     uint64_t numberOfInputStreams;
-};
 
+    WorkerAddressMap workerAddressMap;
+};
 }

@@ -353,7 +353,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     ChainedHashMap& hashMap, const std::map<RecordWithFields, Record>& exactMap)
 {
     /// Ensuring that the number of tuples is correct.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());
+    ASSERT_EQ(hashMap.numberOfTuples(), exactMap.size());
 
     /// Calling now the compiled function to write all values of the map to the output buffer.
     const auto numberOfInputTuples = std::accumulate(
@@ -383,7 +383,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
 void ChainedHashMapTestUtils::checkEntryIterator(ChainedHashMap& hashMap, const std::map<TestUtils::RecordWithFields, Record>& exactMap)
 {
     /// Ensuring that the number of tuples is correct.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());
+    ASSERT_EQ(hashMap.numberOfTuples(), exactMap.size());
     auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBuffer();
     for (auto& inputBuffer : inputBuffers)
     {

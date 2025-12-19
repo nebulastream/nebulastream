@@ -41,6 +41,7 @@
 namespace NES
 {
 HashMap* getAggHashMapProxy(
+    AbstractBufferProvider* bufferProvider,
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -57,7 +58,7 @@ HashMap* getAggHashMapProxy(
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
     auto wrappedCreateFunction(
-        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(bufferProvider, hashMapSliceArgs),
          cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
             const auto createdSlices = createFunction(sliceStart, sliceEnd);
@@ -74,7 +75,7 @@ HashMap* getAggHashMapProxy(
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+    return aggregationSlice->getHashMapPtrOrCreate(bufferProvider, workerThreadId);
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -127,7 +128,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy, ctx.pipelineMemoryProvider.bufferProvider, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 

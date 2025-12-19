@@ -56,16 +56,10 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     return capacity;
 }
 
-ChainedHashMap::ChainedHashMap(uint64_t entrySize, const uint64_t numberOfBuckets, uint64_t pageSize)
-    : numberOfTuples(0)
-    , pageSize(pageSize)
-    , entrySize(entrySize)
-    , entriesPerPage(pageSize / entrySize)
-    , numberOfChains(calcCapacity(numberOfBuckets, assumedLoadFactor))
-    , entries(nullptr)
-    , mask(numberOfChains - 1)
-    , destructorCallBack(nullptr)
+ChainedHashMap::ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t entrySize, const uint64_t numberOfBuckets, uint64_t pageSize)
 {
+    const uint64_t entriesPerPage = pageSize / entrySize;
+    const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     PRECONDITION(
         entriesPerPage > 0,
@@ -80,18 +74,40 @@ ChainedHashMap::ChainedHashMap(uint64_t entrySize, const uint64_t numberOfBucket
         (numberOfChains & (numberOfChains - 1)) == 0,
         "Number of chains has to be a power of 2. Number of chains is set to small for number of chains {}",
         numberOfChains);
+
+    // get the tuple buffer for the main buffer
+    const auto totalSpace = 9 * sizeof(uint64_t) + (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
+    const auto buffer = bufferProvider->getUnpooledBuffer(totalSpace);
+    if (not buffer)
+    {
+        throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
+    }
+    mainBuffer = std::move(buffer.value());
+    // fill in the metadata and the entries mapping
+    auto basePointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
+    basePointer[Metadata::NUM_CHAINS_POS] = numberOfChains;
+    basePointer[Metadata::PAGE_SIZE_POS] = pageSize;
+    basePointer[Metadata::ENTRY_SIZE_POS] = entrySize;
+    basePointer[Metadata::ENTRIES_PER_PAGE_POS] = entriesPerPage;
+    basePointer[Metadata::NUM_TUPLES_POS] = 0;
+    basePointer[Metadata::MASK_POS] = numberOfChains - 1;
+    auto entriesPointer = basePointer.subspan(Metadata::CHAINS_BEGIN_POS, numberOfChains - 1);
+    std::ranges::fill(entriesPointer, 0);
+    // num pages
+    basePointer[Metadata::NUM_PAGES_POS] = 0;
+    auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    // child buffer indices
+    indexPointer[Metadata::STORAGE_SPACE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    indexPointer[Metadata::VARSIZED_SPACE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    indexPointer[Metadata::STORAGE_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    indexPointer[Metadata::VARSIZED_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
 }
 
-ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
-    : numberOfTuples(0)
-    , pageSize(pageSize)
-    , entrySize(sizeof(ChainedHashMapEntry) + keySize + valueSize)
-    , entriesPerPage(pageSize / entrySize)
-    , numberOfChains(calcCapacity(numberOfBuckets, assumedLoadFactor))
-    , entries(nullptr)
-    , mask(numberOfChains - 1)
-    , destructorCallBack({})
+ChainedHashMap::ChainedHashMap(AbstractBufferProvider* bufferProvider, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
 {
+    const uint64_t entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
+    const uint64_t entriesPerPage = pageSize / entrySize;
+    const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     PRECONDITION(
         entriesPerPage > 0,
@@ -106,156 +122,293 @@ ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize,
         (numberOfChains & (numberOfChains - 1)) == 0,
         "Number of chains has to be a power of 2. Number of chains is set to small for number of chains {}",
         numberOfChains);
+    // get the tuple buffer for the main buffer
+    const auto totalSpace = calculateMainBufferSize(numberOfChains);
+    const auto buffer = bufferProvider->getUnpooledBuffer(totalSpace);
+    if (not buffer)
+    {
+        throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
+    }
+    mainBuffer = std::move(buffer.value());
+
+    // fill in the metadata and the entries mapping
+    auto basePointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
+    basePointer[Metadata::NUM_CHAINS_POS] = numberOfChains;
+    basePointer[Metadata::PAGE_SIZE_POS] = pageSize;
+    basePointer[Metadata::ENTRY_SIZE_POS] = entrySize;
+    basePointer[Metadata::ENTRIES_PER_PAGE_POS] = entriesPerPage;
+    basePointer[Metadata::NUM_TUPLES_POS] = 0;
+    basePointer[Metadata::MASK_POS] = numberOfChains - 1;
+    auto entriesPointer = basePointer.subspan(Metadata::CHAINS_BEGIN_POS, numberOfChains - 1);
+    std::ranges::fill(entriesPointer, 0);
+    // num pages
+    basePointer[Metadata::NUM_PAGES_POS] = 0;
+    // child buffer indices pointer
+    auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    // initialize child buffer indices
+    indexPointer[Metadata::STORAGE_SPACE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    indexPointer[Metadata::VARSIZED_SPACE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    indexPointer[Metadata::STORAGE_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    indexPointer[Metadata::VARSIZED_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
 }
 
-ChainedHashMap::~ChainedHashMap()
+std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguration(AbstractBufferProvider* bufferProvider, const ChainedHashMap& other)
 {
-    clear();
+    return std::make_unique<ChainedHashMap>(bufferProvider, other.entrySize(), other.numberOfChains(), other.pageSize());
 }
 
-void ChainedHashMap::setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback)
-{
-    destructorCallBack = callback;
-}
-
-std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguration(const ChainedHashMap& other)
-{
-    return std::make_unique<ChainedHashMap>(other.entrySize, other.numberOfChains, other.pageSize);
-}
-
-ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::raw_type hash) const
-{
-    const auto entryStartPos = hash & mask;
-    return entries[entryStartPos];
-}
+// ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::raw_type hash) const
+// {
+//     const auto entryStartPos = hash & getMask();
+//     return entries[entryStartPos];
+// }
 
 std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
-    if (varSizedSpace.empty() or varSizedSpace.back().getNumberOfTuples() + neededSize >= varSizedSpace.back().getBufferSize())
+    uint64_t varSizedStorageLastPageSize = 0;
+    uint64_t varSizedStorageLastPageNumTuples = 0;
+    if (varSizedSpaceLastPageIndex() != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        auto varSizedStorageLastPageBuffer = mainBuffer.loadChildBuffer(varSizedSpaceLastPageIndex());
+        varSizedStorageLastPageSize = varSizedStorageLastPageBuffer.getBufferSize();
+        varSizedStorageLastPageNumTuples = varSizedStorageLastPageBuffer.getNumberOfTuples();
+    }
+    if (varSizedStorageLastPageSize == 0 or varSizedStorageLastPageNumTuples + neededSize >= varSizedStorageLastPageSize)
     {
         /// We allocate more space than currently necessary for the variable sized data to reduce the allocation overhead
-        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS);
+        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * Metadata::NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS);
         if (not varSizedBuffer)
         {
             throw CannotAllocateBuffer(
                 "Could not allocate memory for ChainedHashMap of size {}",
-                std::to_string(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS));
+                std::to_string(neededSize * Metadata::NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS));
         }
-        varSizedSpace.emplace_back(varSizedBuffer.value());
+        // store new var sized buffer page
+        auto newVarSizedBufferIndex = mainBuffer.storeChildBuffer(varSizedBuffer.value());
+        if (varSizedSpaceLastPageIndex() != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+        {
+            // append new page for var sized storage
+            auto varSizedStorageLastPageBuffer = mainBuffer.loadChildBuffer(varSizedSpaceLastPageIndex());
+            auto bufferPointer = varSizedStorageLastPageBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+            bufferPointer[0] = newVarSizedBufferIndex;
+        } else
+        {
+            // first page for var sized storage
+            auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+            // store at the storage space pointer of the main buffer
+            indexPointer[Metadata::VARSIZED_SPACE_INDEX_POS] = newVarSizedBufferIndex;
+        }
+        // set last page index
+        setVarSizedSpaceLastPageIndex(newVarSizedBufferIndex);
     }
 
-    varSizedSpace.back().setNumberOfTuples(varSizedSpace.back().getNumberOfTuples() + neededSize);
-    return varSizedSpace.back().getAvailableMemoryArea().subspan(varSizedSpace.back().getNumberOfTuples() - neededSize);
+    auto newlyAddedPage = mainBuffer.loadChildBuffer(varSizedSpaceLastPageIndex());
+    newlyAddedPage.setNumberOfTuples(newlyAddedPage.getNumberOfTuples() + neededSize);
+    return newlyAddedPage.getAvailableMemoryArea().subspan(newlyAddedPage.getNumberOfTuples() - neededSize);
 }
 
-uint64_t ChainedHashMap::getNumberOfTuples() const
+uint64_t ChainedHashMap::numberOfTuples() const
 {
-    return numberOfTuples;
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_TUPLES_POS];
+}
+
+VariableSizedAccess::Index ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
+{
+    // create and initialize new page
+    auto newPage = bufferProvider->getUnpooledBuffer(pageSize());
+    if (not newPage)
+    {
+        throw CannotAllocateBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(pageSize()));
+    }
+    std::ranges::fill(newPage.value().getAvailableMemoryArea(), std::byte{0});
+    auto newPagePointer = newPage->getAvailableMemoryArea<VariableSizedAccess::Index>();
+    newPagePointer[0] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    // store new page as child buffer to the main buffer and as the last page index
+    auto newPageIndex = mainBuffer.storeChildBuffer(newPage.value());
+    if (getNumberOfPages() > 0)
+    {
+        // a page exists
+        auto lastPage = mainBuffer.loadChildBuffer(storageSpaceLastPageIndex());
+        auto indexPointer = lastPage.getAvailableMemoryArea<VariableSizedAccess::Index>();
+        // store at the next child buffer index position of the last page
+        indexPointer[Metadata::STORAGE_SPACE_INDEX_POS] = newPageIndex;
+    } else
+    {
+        // no pages yet, insert first page
+        auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+        // store at the storage space pointer of the main buffer
+        indexPointer[Metadata::STORAGE_SPACE_INDEX_POS] = newPageIndex;
+    }
+    setStorageSpaceLastPageIndex(newPageIndex);
+    // increase num page count
+    auto numPagesPointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
+    numPagesPointer[Metadata::NUM_PAGES_POS]++;
+    return newPageIndex;
 }
 
 AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
 {
     /// 0. Checking, if we have to set fill the entry space. This should be only done once, i.e., when the entries are still null
-    if (entries == nullptr) [[unlikely]]
-    {
-        /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
-        /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator
-        const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-        const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
-        if (not entryBuffer)
-        {
-            throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
-        }
-        entrySpace = entryBuffer.value();
-        entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-        std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
-
-        /// Pointing the end of the entries to itself
-        entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
-    }
+    // if (entries == nullptr) [[unlikely]]
+    // {
+    //     /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
+    //     /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator
+    //     const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
+    //     const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
+    //     if (not entryBuffer)
+    //     {
+    //         throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
+    //     }
+    //     entrySpace = entryBuffer.value();
+    //     entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
+    //     std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
+    //
+    //     /// Pointing the end of the entries to itself
+    //     entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
+    // }
 
     /// 1. Check if we need to allocate a new page
-    if (numberOfTuples % entriesPerPage == 0)
+    if (numberOfTuples() % entriesPerPage() == 0)
     {
-        auto newPage = bufferProvider->getUnpooledBuffer(pageSize);
-        if (not newPage)
-        {
-            throw CannotAllocateBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(pageSize));
-        }
-        std::ranges::fill(newPage.value().getAvailableMemoryArea(), std::byte{0});
-        storageSpace.emplace_back(newPage.value());
+        // create new page and add it as the last page in the linked list
+        auto newPage = appendPage(bufferProvider);
     }
 
     /// 2. Finding the new entry
-    const auto pageIndex = numberOfTuples / entriesPerPage;
+    const auto pageIndex = numberOfTuples() / entriesPerPage();
     INVARIANT(
-        storageSpace.size() > pageIndex,
+        getNumberOfPages() > pageIndex,
         "Invalid page index {} as it is greater than the number of pages {}",
         pageIndex,
-        storageSpace.size());
-    auto& bufferStorage = storageSpace[pageIndex];
-    bufferStorage.setNumberOfTuples(bufferStorage.getNumberOfTuples() + 1);
-    const auto entryOffsetInBuffer = (numberOfTuples - (pageIndex * entriesPerPage)) * entrySize;
+        getNumberOfPages());
+    // get the page by iterating the linked list
+    // todo: room for improvement here since iterating for a specific page is sub-optimal (ideas: use index, prune iterations etc.)
+    auto currPage = mainBuffer.loadChildBuffer(storageSpaceChildBufferIndex());
+    for (uint64_t i=1; i<pageIndex; i++)
+    {
+        auto nextChildBufferIndex = currPage.getAvailableMemoryArea<VariableSizedAccess::Index>()[0];
+        currPage = mainBuffer.loadChildBuffer(nextChildBufferIndex);
+    }
+    currPage.setNumberOfTuples(currPage.getNumberOfTuples() + 1);
+    const auto entryOffsetInBuffer = (numberOfTuples() - (pageIndex * entriesPerPage())) * entrySize();
 
     /// 3. Inserting the new entry
-    const auto entryPos = hash & mask;
-    INVARIANT(entryPos <= mask, "Invalid entry position, as pos {} is greater than mask {}", entryPos, mask);
-    INVARIANT(entryPos < numberOfChains, "Invalid entry position as pos {} is greater than capacity {}", entryPos, numberOfChains);
-    auto* const newEntry = new (bufferStorage.getAvailableMemoryArea().subspan(entryOffsetInBuffer).data()) ChainedHashMapEntry(hash);
+    const auto entryPos = hash & mask();
+    INVARIANT(entryPos <= mask(), "Invalid entry position, as pos {} is greater than mask {}", entryPos, mask());
+    INVARIANT(entryPos < numberOfChains(), "Invalid entry position as pos {} is greater than capacity {}", entryPos, numberOfChains());
+    auto* const newEntry = new (currPage.getAvailableMemoryArea().subspan(entryOffsetInBuffer).data()) ChainedHashMapEntry(hash);
 
     /// 4. Updating the chain and the current size
-    auto* const oldValue = entries[entryPos];
-    newEntry->next = oldValue;
-    entries[entryPos] = newEntry;
-    this->numberOfTuples++;
+    auto mainBufferPointer = mainBuffer.getAvailableMemoryArea<ChainedHashMapEntry*>();
+    if (mainBufferPointer[Metadata::CHAINS_BEGIN_POS + entryPos] == nullptr)
+    {
+        mainBufferPointer[Metadata::CHAINS_BEGIN_POS + entryPos] = newEntry;
+    } else
+    {
+        auto *oldValue = mainBufferPointer[Metadata::CHAINS_BEGIN_POS + entryPos];
+        newEntry->next = oldValue;
+        mainBufferPointer[Metadata::CHAINS_BEGIN_POS + entryPos] = newEntry;
+    }
+
+    /// 4. Updating the chain and the current size
+    // auto* const oldValue = entries[entryPos];
+    // newEntry->next = oldValue;
+    // entries[entryPos] = newEntry;
+    // this->numberOfTuples++;
+    auto numTuplesPointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
+    numTuplesPointer[Metadata::NUM_PAGES_POS]++;
     return newEntry;
 }
 
-const TupleBuffer& ChainedHashMap::getPage(const uint64_t pageIndex) const
+const TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
-    PRECONDITION(pageIndex < storageSpace.size(), "Page index {} is greater than the number of pages {}", pageIndex, storageSpace.size());
-    return storageSpace[pageIndex];
+    PRECONDITION(pageIndex < getNumberOfPages(), "Page index {} is greater than the number of pages {}", pageIndex, getNumberOfPages());
+    auto currPage = mainBuffer.loadChildBuffer(storageSpaceChildBufferIndex());
+    for (uint64_t i=1; i<pageIndex; i++)
+    {
+        auto nextChildBufferIndex = currPage.getAvailableMemoryArea<VariableSizedAccess::Index>()[0];
+        currPage = mainBuffer.loadChildBuffer(nextChildBufferIndex);
+    }
+    return currPage;
+}
+
+uint64_t ChainedHashMap::calculateMainBufferSize(uint64_t numberOfChains)
+{
+    return (Metadata::MAIN_BUFFER_UINT64_FIELDS_NUM * sizeof(uint64_t)) + // metadata
+        ((numberOfChains + 1) * sizeof(ChainedHashMapEntry*)) + // entries
+        (Metadata::MAIN_BUFFER_UINT32_FIELDS_NUM * sizeof(VariableSizedAccess::Index)); // storageSpaceChildBufferIndex + varSizedSpaceChildBufferIndex
 }
 
 uint64_t ChainedHashMap::getNumberOfPages() const
 {
-    return storageSpace.size();
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_PAGES_POS];
 }
 
-ChainedHashMapEntry* ChainedHashMap::getStartOfChain(const uint64_t entryIdx) const
+uint64_t ChainedHashMap::numberOfChains() const
 {
-    PRECONDITION(entryIdx <= numberOfChains, "Entry index {} is greater than the capacity {}", entryIdx, numberOfChains);
-    return entries[entryIdx];
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_CHAINS_POS];
 }
 
-uint64_t ChainedHashMap::getNumberOfChains() const
+uint64_t ChainedHashMap::entrySize() const
 {
-    return numberOfChains;
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::ENTRY_SIZE_POS];
 }
 
-void ChainedHashMap::clear() noexcept
+uint64_t ChainedHashMap::entriesPerPage() const
 {
-    /// Deleting all entries in the hash map
-    if (entries != nullptr and destructorCallBack != nullptr)
-    {
-        /// Calling for every value in the hash map the destructor callback
-        /// We start here by iterating over all entries while starting in the entry space
-        for (uint64_t entryIdx = 0; entryIdx < numberOfChains; ++entryIdx)
-        {
-            auto* entry = entries[entryIdx];
-            while (entry != nullptr)
-            {
-                auto* next = entry->next;
-                destructorCallBack(entry);
-                entry = next;
-            }
-        }
-    }
-    entries = nullptr;
-    numberOfTuples = 0;
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::ENTRIES_PER_PAGE_POS];
+}
 
-    /// Releasing all memory
-    storageSpace.clear();
+uint64_t ChainedHashMap::pageSize() const
+{
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::PAGE_SIZE_POS];
+}
+
+uint64_t ChainedHashMap::mask() const
+{
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::MASK_POS];
+}
+
+VariableSizedAccess::Index ChainedHashMap::storageSpaceChildBufferIndex() const
+{
+    return mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[Metadata::STORAGE_SPACE_INDEX_POS];
+}
+
+VariableSizedAccess::Index ChainedHashMap::varSizedSpaceChildBufferIndex() const
+{
+    return mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[Metadata::VARSIZED_SPACE_INDEX_POS];
+}
+
+VariableSizedAccess::Index ChainedHashMap::storageSpaceLastPageIndex() const
+{
+    return mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[Metadata::STORAGE_SPACE_LAST_PAGE_INDEX_POS];
+}
+
+VariableSizedAccess::Index ChainedHashMap::varSizedSpaceLastPageIndex() const
+{
+    return mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[Metadata::VARSIZED_SPACE_INDEX_POS];
+}
+
+
+void ChainedHashMap::setStorageSpaceLastPageIndex(VariableSizedAccess::Index childBufferIndex)
+{
+    // child buffer indices pointer
+    auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    // set as lat page
+    indexPointer[Metadata::STORAGE_SPACE_LAST_PAGE_INDEX_POS] = childBufferIndex;
+}
+
+void ChainedHashMap::setVarSizedSpaceLastPageIndex(VariableSizedAccess::Index childBufferIndex)
+{
+    // child buffer indices pointer
+    auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    // set as lat page
+    indexPointer[Metadata::VARSIZED_SPACE_LAST_PAGE_INDEX_POS] = childBufferIndex;
+}
+
+ChainedHashMapEntry* ChainedHashMap::getChain(uint64_t pos) const
+{
+    return mainBuffer.getAvailableMemoryArea<ChainedHashMapEntry*>()[Metadata::CHAINS_BEGIN_POS + pos];
 }
 
 }

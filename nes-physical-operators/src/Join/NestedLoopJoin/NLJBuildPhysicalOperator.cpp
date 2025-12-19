@@ -64,13 +64,14 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto sliceReference = invoke(
-        +[](OperatorHandler* ptrOpHandler, const Timestamp timestampVal)
+        +[](AbstractBufferProvider* bufferProvider, OperatorHandler* ptrOpHandler, const Timestamp timestampVal)
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
             const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-            const auto createFunction = opHandler->getCreateNewSlicesFunction({});
+            const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider, {});
             return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestampVal, createFunction)[0].get());
         },
+        executionCtx.pipelineMemoryProvider.bufferProvider,
         operatorHandler,
         timestamp);
     const auto nljPagedVectorMemRef = invoke(

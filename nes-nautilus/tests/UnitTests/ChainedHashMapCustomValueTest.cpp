@@ -95,7 +95,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     /// Creating the hash map
     auto hashMap = ChainedHashMap(keySize, valueSize, params.numberOfBuckets, params.pageSize);
     hashMap.setDestructorCallback(destructorCallback);
-    ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
+    ASSERT_EQ(hashMap.numberOfTuples(), 0);
 
     /// We are writing the keys and values to the paged vector. This does not make sense in a real world scenario, but it is a good way to test the hashmap
     /// with a custom value being a paged vector. We need to create a projection for all fields, as we are writing all fields to the paged vector.

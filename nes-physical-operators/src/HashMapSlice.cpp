@@ -21,16 +21,19 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
+#include <antlr4-runtime/antlr4-common.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
 HashMapSlice::HashMapSlice(
+    AbstractBufferProvider* bufferProvider,
     const SliceStart sliceStart,
     const SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
@@ -40,42 +43,55 @@ HashMapSlice::HashMapSlice(
     , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
     , numberOfHashMapsPerInputStream(numberOfHashMaps)
     , numberOfInputStreams(numberOfInputStreams)
+    , workerAddressMap(numberOfHashMaps * numberOfInputStreams)
 {
-    for (uint64_t i = 0; i < numberOfHashMaps * numberOfInputStreams; i++)
+    if (auto buffer = bufferProvider->getUnpooledBuffer(workerAddressMap.calculateHeaderSize()))
     {
-        hashMaps.emplace_back(nullptr);
+        workerAddressMap.mainBuffer = std::move(buffer.value());
+        auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+        for (uint32_t i = 0; i < workerAddressMap.hashMapCount; i++)
+        {
+            basePointer[i] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+            // // create child buffer for this worker
+            // auto childBuffer = bufferProvider->getBufferBlocking();
+            // // create a chained hash map into the child buffer
+            // auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
+            // childBufferMemoryArea[0] = new ChainedHashMap(bufferProvider,
+            //     createNewHashMapSliceArgs.keySize,
+            //     createNewHashMapSliceArgs.valueSize,
+            //     createNewHashMapSliceArgs.numberOfBuckets,
+            //     createNewHashMapSliceArgs.pageSize);
+            // // store child buffer into the main buffer
+            // const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
+            // // store the childbufferindex into the mainBuffer header file
+            // basePointer[i] = childBufferIndex;
+        }
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available!");
     }
 }
 
-HashMapSlice::~HashMapSlice()
+size_t HashMapSlice::WorkerAddressMap::calculateHeaderSize() const
 {
-    INVARIANT(createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams, "We expect one cleanup function per input ");
-
-    /// As we assume that each hashmap of an input stream lie one after the other.
-    /// Thus, we need to call #numbnumberOfHashMaps times the same nautilusCleanup function and then move to the next one.
-    for (size_t i = 0; i < hashMaps.size(); i++)
-    {
-        if (hashMaps[i] and hashMaps[i]->getNumberOfTuples() > 0)
-        {
-            /// Calling the compiled nautilus function
-            createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->operator()(hashMaps[i].get());
-        }
-    }
-
-    hashMaps.clear();
+    return hashMapCount * sizeof(VariableSizedAccess::Index);
 }
 
 uint64_t HashMapSlice::getNumberOfHashMaps() const
 {
-    return hashMaps.size();
+    return workerAddressMap.hashMapCount;
 }
 
 uint64_t HashMapSlice::getNumberOfTuples() const
 {
-    return std::accumulate(
-        hashMaps.begin(),
-        hashMaps.end(),
-        0,
-        [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+    uint64_t runningSum = 0;
+    auto bufferMemoryArea = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    for (uint64_t i = 0; i < workerAddressMap.hashMapCount; i++)
+    {
+        auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(bufferMemoryArea[i]);
+        runningSum += childBuffer.getNumberOfTuples();
+    }
+    return runningSum;
 }
 }

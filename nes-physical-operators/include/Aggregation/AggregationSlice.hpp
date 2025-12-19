@@ -30,12 +30,13 @@ class AggregationSlice final : public HashMapSlice
 {
 public:
     AggregationSlice(
-        SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
+        AbstractBufferProvider* bufferProvider, SliceStart sliceStart, SliceEnd sliceEnd,
+        const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
 
     /// Returns the pointer to the underlying hashmap.
     /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.
     [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId);
+    [[nodiscard]] HashMap* getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, WorkerThreadId workerThreadId);
 };
 
 }
