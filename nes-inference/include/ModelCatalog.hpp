@@ -15,6 +15,8 @@
 #pragma once
 #include "ModelLoader.hpp"
 
+#include <folly/Synchronized.h>
+#include <magic_enum/magic_enum.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <ranges>
@@ -34,41 +36,23 @@ struct ModelDescriptor
 class ModelCatalog
 {
     mutable std::unordered_map<std::string, Model> catalogImpl;
-    std::unordered_map<std::string, ModelDescriptor> registeredModels;
+    folly::Synchronized<std::unordered_map<std::string, ModelDescriptor>> registeredModels;
 
 public:
     void registerModel(const ModelDescriptor& model);
     Model load(const std::string Model) const;
-    size_t getTypeSizeC(DataType::Type dtype) const
-    {
-        size_t size = 0;
-        switch (dtype)
-        {
-            case DataType::Type::UINT8: size = sizeof(uint8_t); break;
-            case DataType::Type::UINT16: size = sizeof(uint16_t); break;
-            case DataType::Type::UINT32: size = sizeof(uint32_t); break;
-            case DataType::Type::UINT64: size = sizeof(uint64_t); break;
-            case DataType::Type::INT8: size = sizeof(int8_t); break;
-            case DataType::Type::INT16: size = sizeof(int16_t); break;
-            case DataType::Type::INT32: size = sizeof(int32_t); break;
-            case DataType::Type::INT64: size = sizeof(int64_t); break;
-            case DataType::Type::FLOAT32: size = sizeof(float); break;
-            case DataType::Type::FLOAT64: size = sizeof(double); break;
 
-            case DataType::Type::BOOLEAN:
-            case DataType::Type::CHAR:
-            case DataType::Type::UNDEFINED:
-            case DataType::Type::VARSIZED:
-            case DataType::Type::VARSIZED_POINTER_REP:
-                throw std::runtime_error("ModelCatalog: Unsupported data type");
-        }
-        return size;
-    }
+    std::optional<ModelDescriptor> addModelDescriptor(std::string name, std::string path, std::vector<DataType> inputs, Schema outputs);
+    std::optional<ModelDescriptor> getModelDescriptor(const std::string name);
+    std::vector<ModelDescriptor> getAllModelDescriptors() const;
+    bool removeModelDescriptor(const ModelDescriptor& modelDescriptor);
+    size_t getTypeSizeC(DataType::Type dtype) const;
 };
 
 inline void ModelCatalog::registerModel(const ModelDescriptor& model)
 {
-    registeredModels.emplace(model.name, model);
+    auto modelsLock = registeredModels.wlock();
+    modelsLock->emplace(model.name, model);
 }
 
 inline Model ModelCatalog::load(const std::string modelName) const
@@ -78,7 +62,8 @@ inline Model ModelCatalog::load(const std::string modelName) const
         return it->second;
     }
 
-    if (auto it = registeredModels.find(modelName); it != registeredModels.end())
+    auto modelsLock = registeredModels.rlock();
+    if (auto it = modelsLock->find(modelName); it != modelsLock->end())
     {
         auto result = Inference::load(it->second.path, {});
         if (result)
@@ -121,6 +106,64 @@ inline Model ModelCatalog::load(const std::string modelName) const
     {
         throw std::runtime_error(fmt::format("Model '{}' was never registered", modelName));
     }
+}
+
+inline std::optional<ModelDescriptor> ModelCatalog::addModelDescriptor(std::string name, std::string path, std::vector<DataType> inputs, Schema outputs)
+{
+    auto model = ModelDescriptor{std::move(name), std::move(path), std::move(inputs), std::move(outputs)};
+    auto modelsLock = registeredModels.wlock();
+    modelsLock->emplace(std::move(name), model);
+    return model;
+}
+
+inline std::optional<ModelDescriptor> ModelCatalog::getModelDescriptor(const std::string name)
+{
+    auto modelsLock = registeredModels.rlock();
+    const auto modelDescriptorOpt = modelsLock->find(std::string{name});
+    if (modelDescriptorOpt == modelsLock->end())
+    {
+        return std::nullopt;
+    }
+    return modelDescriptorOpt->second;
+}
+
+inline std::vector<ModelDescriptor> ModelCatalog::getAllModelDescriptors() const
+{
+    const auto modelsLock = registeredModels.rlock();
+    return *modelsLock | std::ranges::views::transform([](const auto& modelDescriptor) { return modelDescriptor.second; })
+        | std::ranges::to<std::vector>();
+}
+
+inline bool ModelCatalog::removeModelDescriptor(const ModelDescriptor& modelDescriptor)
+{
+    const auto modelsLock = registeredModels.wlock();
+    return modelsLock->erase(modelDescriptor.name) == 1;
+}
+
+inline size_t ModelCatalog::getTypeSizeC(DataType::Type dtype) const
+{
+    size_t size = 0;
+    switch (dtype)
+    {
+        case DataType::Type::UINT8: size = sizeof(uint8_t); break;
+        case DataType::Type::UINT16: size = sizeof(uint16_t); break;
+        case DataType::Type::UINT32: size = sizeof(uint32_t); break;
+        case DataType::Type::UINT64: size = sizeof(uint64_t); break;
+        case DataType::Type::INT8: size = sizeof(int8_t); break;
+        case DataType::Type::INT16: size = sizeof(int16_t); break;
+        case DataType::Type::INT32: size = sizeof(int32_t); break;
+        case DataType::Type::INT64: size = sizeof(int64_t); break;
+        case DataType::Type::FLOAT32: size = sizeof(float); break;
+        case DataType::Type::FLOAT64: size = sizeof(double); break;
+
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::VARSIZED_POINTER_REP:
+            throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(dtype));
+    }
+    return size;
 }
 
 }

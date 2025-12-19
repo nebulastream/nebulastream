@@ -529,10 +529,23 @@ struct SystestBinder::Impl
         sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
     }
 
+    static void createModel(Nebuli::Inference::ModelCatalog& modelCatalog, const CreateModelStatement& statement)
+    {
+        Nebuli::Inference::ModelDescriptor model;
+
+        model.name = statement.modelName;
+        model.path = statement.modelPath;
+        model.inputs = std::move(statement.inputTypes);
+        model.outputs = std::move(statement.outputs);
+
+        modelCatalog.registerModel(std::move(model));
+    }
+
     void createCallback(
         const StatementBinder& binder,
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         SLTSinkFactory& sltSinkProvider,
+        Nebuli::Inference::ModelCatalog& modelCatalog,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
@@ -561,6 +574,10 @@ struct SystestBinder::Impl
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
             createSink(sltSinkProvider, std::get<CreateSinkStatement>(statement));
+        }
+        else if (std::holds_alternative<CreateModelStatement>(statement))
+        {
+            createModel(modelCatalog, std::get<CreateModelStatement>(statement));
         }
         else
         {
@@ -878,13 +895,7 @@ struct SystestBinder::Impl
 
         parser.registerOnCreateCallback(
             [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
-
-        parser.registerOnModelCallback(
-            [&](Nebuli::Inference::ModelDescriptor&& model)
-        {
-            modelCatalog.registerModel(std::move(model));
-        });
+            { createCallback(binder, sourceCatalog, sltSinkProvider, modelCatalog, sourceThreads, query, std::move(input)); });
 
         try
         {

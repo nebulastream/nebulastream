@@ -61,7 +61,7 @@ multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: query | createStatement | dropStatement | showStatement;
 
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -70,9 +70,15 @@ createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier (SET '(' options=namedConfigExpressionSeq ')')?;
 
+createModelDefinition: MODEL modelName=identifier '('
+                             PATH modelPath=constant
+                             INPUTS typeChain
+                             OUTPUTS schemaDefinition
+                       ')';
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition;
+typeChain: '(' typeDefinition (',' typeDefinition)* ')';
 
 typeDefinition: DATA_TYPE;
 
@@ -582,6 +588,10 @@ SOURCE : 'SOURCE';
 LOGICAL: 'LOGICAL';
 PHYSICAL: 'PHYSICAL';
 SINK : 'SINK';
+MODEL: 'MODEL';
+PATH: 'PATH';
+INPUTS: 'INPUTS';
+OUTPUTS: 'OUTPUTS';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work

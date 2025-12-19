@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <boost/algorithm/string.hpp>
 #include <memory>
 #include <utility>
 #include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
@@ -35,7 +36,7 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
     for (auto modelNameOperator : NES::getOperatorByType<InferModel::InferModelNameLogicalOperator>(queryPlan))
     {
         auto name = modelNameOperator->getModelName();
-        auto model = catalog->load(name);
+        auto model = catalog->load(boost::to_upper_copy(name));
         auto inferModel = InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields());
 
         if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)

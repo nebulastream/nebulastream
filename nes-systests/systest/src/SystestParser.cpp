@@ -135,7 +135,6 @@ static constexpr std::string_view ErrorToken = "ERROR"sv;
 static constexpr std::string_view DifferentialToken = "===="sv;
 static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
 static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
-static constexpr std::string_view ModelToken = "MODEL";
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
@@ -144,8 +143,7 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {ErrorToken, TokenType::ERROR_EXPECTATION},
      {ConfigurationToken, TokenType::CONFIGURATION},
      {GlobalConfigurationToken, TokenType::GLOBAL_CONFIGURATION},
-     {DifferentialToken, TokenType::DIFFERENTIAL},
-     {ModelToken, TokenType::MODEL}});
+     {DifferentialToken, TokenType::DIFFERENTIAL}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -232,11 +230,6 @@ void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBl
     this->onDifferentialQueryBlockCallback = std::move(callback);
 }
 
-void SystestParser::registerOnModelCallback(ModelCallback callback)
-{
-    this->onModelCallback = std::move(callback);
-}
-
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
 {
@@ -315,11 +308,6 @@ void SystestParser::parse()
                 }
                 break;
             }
-            case TokenType::MODEL: {
-                auto model = expectModel();
-                onModelCallback(std::move(model));
-                break;
-            }
             case TokenType::ERROR_EXPECTATION:
                 throw TestException(
                     "Should never run into the ERROR_EXPECTATION token during systest file parsing, but got line: {}", lines[currentLine]);
@@ -349,11 +337,6 @@ std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
     if (toLowerCase(line).starts_with(toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
-    }
-
-    if (toLowerCase(line).starts_with(toLowerCase(ModelToken)))
-    {
-        return TokenType::MODEL;
     }
 
     std::string potentialToken;
@@ -673,58 +656,6 @@ SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& a
     }
 
     return schema;
-}
-
-Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
-{
-    try
-    {
-        Nebuli::Inference::ModelDescriptor model;
-        auto& modelNameLine = lines[currentLine];
-        ++currentLine;
-
-        auto& inputLine = lines[currentLine];
-        ++currentLine;
-
-        auto& outputLine = lines[currentLine];
-        ++currentLine;
-
-        std::istringstream stream(modelNameLine);
-        std::string discard;
-        if (!(stream >> discard))
-        {
-            throw SLTUnexpectedToken("failed to read the first word in: {}", modelNameLine);
-        }
-        if (!(stream >> model.name))
-        {
-            throw SLTUnexpectedToken("failed to read model name in {}", modelNameLine);
-        }
-        if (!(stream >> model.path))
-        {
-            throw SLTUnexpectedToken("failed to read model path in {}", modelNameLine);
-        }
-
-        auto inputTypeNames = NES::splitWithStringDelimiter<std::string>(inputLine, " ");
-        auto types = std::views::transform(inputTypeNames, [](const auto& typeName) { return DataTypeProvider::provideDataType(typeName); })
-            | std::ranges::to<std::vector>();
-        model.inputs = types;
-
-        auto outputSchema = NES::splitWithStringDelimiter<std::string>(outputLine, " ");
-
-        for (const auto& [type, name] : parseSchemaFields(outputSchema))
-        {
-            model.outputs.addField(boost::to_upper_copy(name), type);
-        }
-        return model;
-    }
-    catch (Exception& e)
-    {
-        auto modelParserSchema = "MODEL <model_name> <model_path>"
-                                 "<type-0> ... <type-N>"
-                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"sv;
-        e.what() += fmt::format("\nWhen Parsing a Model Statement:\n{}", modelParserSchema);
-        throw;
-    }
 }
 
 SystestParser::ErrorExpectation SystestParser::expectError() const

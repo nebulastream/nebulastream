@@ -44,8 +44,7 @@ enum class TokenType : uint8_t
     ERROR_EXPECTATION,
     CONFIGURATION,
     GLOBAL_CONFIGURATION,
-    DIFFERENTIAL,
-    MODEL
+    DIFFERENTIAL
 };
 
 enum class TestDataIngestionType : uint8_t
@@ -169,7 +168,6 @@ public:
     void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
     void registerOnConfigurationCallback(ConfigurationCallback callback);
     void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
-    void registerOnModelCallback(ModelCallback callback);
 
     void parse();
     void parseResultLines();
@@ -206,7 +204,6 @@ private:
     DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;
     ConfigurationCallback onConfigurationCallback;
     GlobalConfigurationCallback onGlobalConfigurationCallback;
-    ModelCallback onModelCallback;
 
     std::optional<std::string> lastParsedQuery;
     std::optional<SystestQueryId> lastParsedQueryId;

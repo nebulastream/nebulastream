@@ -14,13 +14,17 @@ ATTACH FILE large/wind_power/wind-power.csv
 
 CREATE SINK windPowerVarsizedDiscard(powerProdNext2Min VARSIZED) TYPE Discard;
 
-MODEL minMaxScalerWind TESTDATA/model/wind_power/preprocessor/scaler_wind.onnx
-FLOAT64
-FLOAT32 value_sc
+CREATE MODEL minMaxScalerWind(
+    PATH "TESTDATA/model/wind_power/preprocessor/scaler_wind.onnx"
+    INPUTS (FLOAT64)
+    OUTPUTS (value_sc FLOAT32)
+);
 
-MODEL dLinear TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx
-VARSIZED
-VARSIZED powerProdNext2Min
+CREATE MODEL dLinear(
+    PATH "TESTDATA/model/wind_power/pretrained/dlinear/dlinear_wind_size_600_stride_60.onnx"
+    INPUTS (VARSIZED)
+    OUTPUTS (powerProdNext2Min VARSIZED)
+);
 
 SELECT powerProdNext2Min FROM (
     SELECT INFER_MODEL(dLinear, (value_60_sec))

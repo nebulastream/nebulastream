@@ -166,7 +166,7 @@ void IREEInferenceOperator::execute(ExecutionContext& executionCtx, NES::Record&
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED:
         case DataType::Type::VARSIZED_POINTER_REP:
-            throw std::runtime_error("ModelCatalog: Unsupported data type");
+            throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(inputDtype.type));
     }
 
     switch (outputDtype.type)
@@ -187,7 +187,7 @@ void IREEInferenceOperator::execute(ExecutionContext& executionCtx, NES::Record&
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED:
         case DataType::Type::VARSIZED_POINTER_REP:
-            throw std::runtime_error("ModelCatalog: Unsupported data type");
+            throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(outputDtype.type));
     }
 }
 

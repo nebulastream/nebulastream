@@ -167,6 +167,47 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
+ModelStatementHandler::ModelStatementHandler(const std::shared_ptr<Nebuli::Inference::ModelCatalog>& modelCatalog) : modelCatalog(modelCatalog)
+{
+}
+
+std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const NES::CreateModelStatement& statement)
+{
+    if (auto created = modelCatalog->addModelDescriptor(
+        statement.modelName, statement.modelPath, statement.inputTypes, statement.outputs))
+    {
+        return CreateModelStatementResult{created.value()};
+    }
+    return std::unexpected{ModelAlreadyExists(statement.modelName)};
+}
+
+std::expected<ShowModelsStatementResult, Exception> ModelStatementHandler::operator()(const ShowModelsStatement& statement) const
+{
+    if (statement.name)
+    {
+        if (const auto foundModel = modelCatalog->getModelDescriptor(*statement.name))
+        {
+            return ShowModelsStatementResult{std::vector{*foundModel}};
+        }
+        return ShowModelsStatementResult{{}};
+    }
+    return ShowModelsStatementResult{modelCatalog->getAllModelDescriptors()};
+}
+
+std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operator()(const DropModelStatement& statement)
+{
+    const auto model = modelCatalog->getModelDescriptor(statement.name);
+    if (not model.has_value())
+    {
+        throw UnknownSinkName("Cannot remove unknown model: {}", statement.name);
+    }
+    if (modelCatalog->removeModelDescriptor(model.value()))
+    {
+        return DropModelStatementResult{model.value()};
+    }
+    return std::unexpected{UnknownModelName(statement.name)};
+}
+
 QueryStatementHandler::QueryStatementHandler(
     const std::shared_ptr<QueryManager>& queryManager, const std::shared_ptr<LegacyOptimizer>& optimizer)
     : queryManager(queryManager), optimizer(optimizer)
