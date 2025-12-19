@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Serialization/SerializedUtils.hpp>
+#include "Serialization/FunctionSerializationUtil.hpp"
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -236,7 +237,23 @@ ConfigValue SerializedUtils::serializeDescriptorConfigValue(DescriptorConfig::Co
             }
             else if constexpr (std::is_same_v<U, FunctionList>)
             {
-                throw NotImplemented();
+                std::vector<SerializedFunction> serializedFunctions;
+                for (auto function : arg.functions())
+                {
+                    LogicalFunction logicalFunction = FunctionSerializationUtil::deserializeFunction(function);;
+                    if (logicalFunction.getType() == "Equals")
+                    {
+                        serializedFunctions.emplace_back(logicalFunction.get<EqualsLogicalFunction>().serialized());
+                    } else if (logicalFunction.getType() == "ConstantValue")
+                    {
+                        serializedFunctions.emplace_back(logicalFunction.get<ConstantValueLogicalFunction>().serialized());
+                    } else if (logicalFunction.getType() == "FieldAccess")
+                    {
+                        serializedFunctions.emplace_back(logicalFunction.get<FieldAccessLogicalFunction>().serialized());
+                    }
+                }
+                serialized.type = "functionList";
+                serialized.generic = rfl::to_generic(serializedFunctions);
             }
             else if constexpr (std::is_same_v<U, ProjectionList>)
             {
@@ -267,7 +284,6 @@ ConfigValue SerializedUtils::serializeDescriptorConfigValue(DescriptorConfig::Co
 SerializedDescriptorConfig SerializedUtils::serializeDescriptorConfig(const DescriptorConfig::Config& config)
 {
     std::map<std::string, ConfigValue> serializedConfig;
-    uint64_t test{744073709551610};
     for (const auto& [key, value] : config)
     {
         serializedConfig.emplace(key, serializeDescriptorConfigValue(value));
@@ -317,6 +333,23 @@ DescriptorConfig::ConfigType SerializedUtils::deserializeDescriptorConfigValue(C
     if (configValue.type == "Enum")
     {
         return EnumWrapper{configValue.string};
+    }
+    if (configValue.type == "functionList")
+    {
+        auto serializedFunctionsOpt = rfl::from_generic<std::vector<SerializedFunction>>(configValue.generic);
+        if (!serializedFunctionsOpt.has_value())
+        {
+            throw NotImplemented(); /// TODO: Improve error handling
+        }
+        auto serializedFunctions = serializedFunctionsOpt.value();
+        FunctionList functionList;
+        for (const auto& serialized : serializedFunctions)
+        {
+            auto function = deserializeFunction(serialized);
+            auto* serializedFunction = functionList.add_functions();
+            serializedFunction->CopyFrom(function.serialize());
+        }
+        return functionList;
     }
     throw NotImplemented();
 }

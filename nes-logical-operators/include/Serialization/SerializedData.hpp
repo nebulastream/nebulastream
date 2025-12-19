@@ -97,6 +97,7 @@ struct ConfigValue
     float float_v;
     double double_v;
     std::string string;
+    rfl::Generic generic;
 };
 
 struct SerializedDescriptorConfig
