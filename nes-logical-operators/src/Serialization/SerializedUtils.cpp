@@ -171,7 +171,7 @@ LogicalFunction SerializedUtils::deserializeFunction(const SerializedFunction& s
     {
         return FieldAccessLogicalFunction{dataType, serializedFunction.config.at("FieldName").to_string().value()};
     }
-    throw Exception{"Oh No", 9999};
+    throw Exception{"Oh No", 9999}; /// TODO: Improve Error handling
 }
 
 /// TODO: Everything related to Source Descriptor can be simplified once DescriptorConfig::ConfigType stops relying on Protobuf classes
