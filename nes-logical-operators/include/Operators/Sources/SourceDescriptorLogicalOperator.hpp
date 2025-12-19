@@ -65,6 +65,7 @@ private:
 
     std::vector<LogicalOperator> children;
     SourceDescriptor sourceDescriptor;
+    WeakLogicalOperator self;
 
     std::optional<Schema> outputSchema;
 

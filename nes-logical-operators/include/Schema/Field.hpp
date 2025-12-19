@@ -44,6 +44,7 @@ struct Field
     [[nodiscard]] Identifier getLastName() const { return name; }
     [[nodiscard]] DataType getDataType() const { return dataType; }
 
+    /// TODO template this method over IdListExtent when adding either named relations or compound types
     [[nodiscard]] UnboundFieldBase<1> unbound() const;
     static std::function<UnboundFieldBase<1>(Field)> unbinder();
     static std::function<Field(UnboundFieldBase<1>)> binder(LogicalOperator logicalOperator);

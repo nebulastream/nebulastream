@@ -91,35 +91,32 @@ std::optional<JoinTimeCharacteristic> JoinLogicalOperator::createJoinTimeCharact
 
 namespace
 {
-Schema inferOutputSchema(
-    const std::array<LogicalOperator, 2>& children,
-    const TypedLogicalOperator<JoinLogicalOperator>& joinOperator,
-    const std::array<UnboundFieldBase<1>, 2>& startEndFields)
+UnboundSchemaBase<1>
+inferOutputSchema(const std::array<LogicalOperator, 2>& children, const std::array<UnboundFieldBase<1>, 2>& startEndFields)
 {
     const std::vector<Field> inputFields = children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
         | std::views::join | std::ranges::to<std::vector>();
 
-    std::vector<Field> outputFields = inputFields
-        | std::views::transform([&joinOperator](const Field& field)
-                                { return Field{joinOperator, field.getLastName(), field.getDataType()}; })
-        | std::ranges::to<std::vector>();
+    std::vector<UnboundFieldBase<1>> outputFields
+        = inputFields | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
 
-    outputFields.emplace_back(Field{joinOperator, startEndFields[0].getName(), startEndFields[1].getDataType()});
-    outputFields.emplace_back(Field{joinOperator, startEndFields[1].getName(), startEndFields[1].getDataType()});
+    outputFields.emplace_back(UnboundFieldBase<1>{startEndFields[0].getName(), startEndFields[1].getDataType()});
+    outputFields.emplace_back(UnboundFieldBase<1>{startEndFields[1].getName(), startEndFields[1].getDataType()});
 
-    auto outputSchemaOrCollisions = Schema::tryCreateCollisionFree(outputFields);
+    auto outputSchemaOrCollisions = UnboundSchemaBase<1>::tryCreateCollisionFree(outputFields);
 
     if (!outputSchemaOrCollisions.has_value())
     {
         throw CannotInferSchema(
             "Found collisions in of input schemas with added fields from windows join: "
-            + Schema::createCollisionString(outputSchemaOrCollisions.error()));
+            + UnboundSchemaBase<1>::createCollisionString(outputSchemaOrCollisions.error()));
     }
     return outputSchemaOrCollisions.value();
 }
 }
 
 JoinLogicalOperator::JoinLogicalOperator(
+    WeakLogicalOperator self,
     LogicalFunction joinFunction,
     std::shared_ptr<Windowing::WindowType> windowType,
     JoinType joinType,
@@ -127,11 +124,13 @@ JoinLogicalOperator::JoinLogicalOperator(
     : windowType(std::move(windowType))
     , joinType(joinType)
     , joinFunction(std::move(joinFunction))
+    , self(std::move(self))
     , timestampFields(std::move(timeCharacteristics))
 {
 }
 
-JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children, DescriptorConfig::Config config)
+JoinLogicalOperator::JoinLogicalOperator(WeakLogicalOperator self, std::array<LogicalOperator, 2> children, DescriptorConfig::Config config)
+    : self(std::move(self))
 {
     auto functionVariant = config[JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION];
     auto joinTypeVariant = config[JoinLogicalOperator::ConfigParameters::JOIN_TYPE];
@@ -226,7 +225,7 @@ JoinLogicalOperator::JoinLogicalOperator(std::array<LogicalOperator, 2> children
         this->joinFunction = joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
 
         this->children = std::move(children);
-        this->outputSchema = inferOutputSchema(this->children, *this, this->startEndFields.value());
+        this->outputSchema = inferOutputSchema(this->children, this->startEndFields.value());
         return;
     }
     throw UnknownLogicalOperator();
@@ -239,7 +238,7 @@ std::string_view JoinLogicalOperator::getName() const noexcept
 
 bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 {
-    return *getWindowType() == *rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and getOutputSchema() == rhs.outputSchema
+    return *getWindowType() == *rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and outputSchema == rhs.outputSchema
         and getTraitSet() == rhs.getTraitSet();
 }
 
@@ -292,7 +291,7 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema() const
         UnboundFieldBase{IdentifierListBase<1>{startIdentifier}, DataType::Type::UINT64},
         UnboundFieldBase{IdentifierListBase<1>{endIdentifier}, DataType::Type::UINT64}};
 
-    copy.outputSchema = inferOutputSchema(copy.children, copy, copy.startEndFields.value());
+    copy.outputSchema = inferOutputSchema(copy.children, copy.startEndFields.value());
 
     return copy;
 }
@@ -320,7 +319,7 @@ JoinLogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperato
 Schema JoinLogicalOperator::getOutputSchema() const
 {
     PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
-    return outputSchema.value();
+    return Schema::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
@@ -407,7 +406,8 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
     {
         throw CannotDeserialize("Expected two children for WindowedAggregationLogicalOperator, but found {}", arguments.children.size());
     }
-    return JoinLogicalOperator{std::array{std::move(arguments.children.at(0)), std::move(arguments.children.at(1))}, arguments.config};
+    return TypedLogicalOperator<JoinLogicalOperator>{
+        std::array{std::move(arguments.children.at(0)), std::move(arguments.children.at(1))}, arguments.config};
 }
 
 }

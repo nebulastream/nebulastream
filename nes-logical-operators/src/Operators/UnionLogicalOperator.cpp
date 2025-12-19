@@ -47,7 +47,7 @@ namespace NES
 
 namespace
 {
-Schema inferOutputSchema(const std::vector<LogicalOperator>& children, const UnionLogicalOperator& unionOperator)
+UnboundSchemaBase<1> inferOutputSchema(const std::vector<LogicalOperator>& children)
 {
     auto inputSchemas
         = children | std::views::transform([](const auto& child) { return child.getOutputSchema(); }) | std::ranges::to<std::vector>();
@@ -94,16 +94,18 @@ Schema inferOutputSchema(const std::vector<LogicalOperator>& children, const Uni
             }
         }
         throw CannotInferSchema(
-            "Union expects all children to have the same fields, but the common schema was {} and found these additional fields in children: {}",
+            "Union expects all children to have the same fields, but the common schema was {} and found these additional fields in "
+            "children: {}",
             commonFields | std::ranges::to<std::vector>(),
-            fmt::join(fieldMismatches | std::views::transform([](const auto& childMismatch) { return fmt::format("{}: {}", childMismatch.first, childMismatch.second); }), ", "));
+            fmt::join(
+                fieldMismatches
+                    | std::views::transform([](const auto& childMismatch)
+                                            { return fmt::format("{}: {}", childMismatch.first, childMismatch.second); }),
+                ", "));
     }
 
     /// For some reason, c++ doesn't convert *std::ranges::begin(inputSchemas) into a range of fields correctly
-    return Schema{
-        (inputSchemas | std::ranges::to<std::vector<Schema>>()).at(0)
-        | std::views::transform([&unionOperator](const Field& field)
-                                { return Field{unionOperator, field.getLastName(), field.getDataType()}; })};
+    return (inputSchemas | std::ranges::to<std::vector<Schema>>()).at(0).unbind();
 }
 }
 

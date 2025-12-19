@@ -58,9 +58,10 @@ private:
     static constexpr std::string_view NAME = "Union";
 
     std::vector<LogicalOperator> children;
+    WeakLogicalOperator self;
 
     /// Set during schema inference
-    std::optional<Schema> outputSchema;
+    std::optional<UnboundSchemaBase<1>> outputSchema;
 
     TraitSet traitSet;
     friend struct std::hash<UnionLogicalOperator>;

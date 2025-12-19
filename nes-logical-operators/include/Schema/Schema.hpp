@@ -189,13 +189,10 @@ public:
 
     static std::string createCollisionString(const std::unordered_map<IdentifierList, std::vector<Field>>& collisions);
 
-    template <size_t Extent>
-    UnboundSchemaBase<Extent> unbind() const
+    /// TODO template this method over IdListExtent when adding either named relations or compound types
+    UnboundSchemaBase<1> unbind() const
     {
-        return UnboundSchemaBase{
-            *this
-            | std::views::transform([](const Field& field) { return UnboundFieldBase<Extent>{field.getLastName(), field.getDataType()}; })
-            | std::ranges::to<std::vector>()};
+        return UnboundSchemaBase{*this | std::views::transform(Field::unbinder()) | std::ranges::to<std::vector>()};
     }
 
     static Schema bind(LogicalOperator logicalOperator, UnboundSchemaBase<1> unboundSchema);

@@ -46,17 +46,6 @@
 namespace NES
 {
 
-namespace
-{
-Schema inferOutputSchema(const Schema& inputSchema, const SelectionLogicalOperator& selectionOperator)
-{
-    return inputSchema
-        | std::views::transform([&selectionOperator](const auto& field)
-                                { return Field{selectionOperator, field.getLastName(), field.getDataType()}; })
-        | std::ranges::to<Schema>();
-}
-}
-
 SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate) : predicate(std::move(std::move(predicate))), self(std::move(self))
 {
 }
@@ -83,7 +72,7 @@ SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, Log
         }
         this->predicate = inferredPredicate;
 
-        this->outputSchema = inferOutputSchema(childOutputSchema, *this);
+        this->outputSchema = childOutputSchema.unbind();
     }
     else
     {
@@ -126,7 +115,7 @@ SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema() const
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }
-    copy.outputSchema = inferOutputSchema(inputSchema, copy);
+    copy.outputSchema = inputSchema.unbind();
     return copy;
 }
 
@@ -153,7 +142,7 @@ SelectionLogicalOperator SelectionLogicalOperator::withChildren(std::vector<Logi
 Schema SelectionLogicalOperator::getOutputSchema() const
 {
     INVARIANT(outputSchema.has_value(), "Accessed output schema before calling schema inference");
-    return outputSchema.value();
+    return Schema::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const

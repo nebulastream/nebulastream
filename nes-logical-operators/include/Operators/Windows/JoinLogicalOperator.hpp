@@ -28,6 +28,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Traits/Trait.hpp>
@@ -37,7 +38,6 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Operators/Windows/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -61,11 +61,12 @@ public:
     };
 
     explicit JoinLogicalOperator(
+        WeakLogicalOperator self,
         LogicalFunction joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
         JoinType joinType,
         JoinTimeCharacteristic timeCharacteristics);
-    explicit JoinLogicalOperator(std::array<LogicalOperator, 2> children, DescriptorConfig::Config config);
+    explicit JoinLogicalOperator(WeakLogicalOperator self, std::array<LogicalOperator, 2> children, DescriptorConfig::Config config);
 
     static std::optional<JoinTimeCharacteristic> createJoinTimeCharacteristic(
         std::array<std::variant<Windowing::UnboundTimeCharacteristic, Windowing::BoundTimeCharacteristic>, 2> timestampFields);
@@ -152,9 +153,11 @@ private:
     std::array<LogicalOperator, 2> children;
     LogicalFunction joinFunction;
 
+    WeakLogicalOperator self;
+
     /// Set during schema inference
     std::optional<std::array<UnboundFieldBase<1>, 2>> startEndFields;
-    std::optional<Schema> outputSchema;
+    std::optional<UnboundSchemaBase<1>> outputSchema;
     JoinTimeCharacteristic timestampFields;
 
     TraitSet traitSet;

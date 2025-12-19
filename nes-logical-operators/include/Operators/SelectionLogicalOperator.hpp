@@ -80,7 +80,7 @@ private:
     WeakLogicalOperator self;
 
     /// Set during schema inference
-    std::optional<Schema> outputSchema;
+    std::optional<UnboundSchemaBase<1>> outputSchema;
 
     TraitSet traitSet;
     friend struct std::hash<SelectionLogicalOperator>;

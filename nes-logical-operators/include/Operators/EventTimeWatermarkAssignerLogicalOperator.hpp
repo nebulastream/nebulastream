@@ -38,8 +38,8 @@ namespace NES
 class EventTimeWatermarkAssignerLogicalOperator
 {
 public:
-    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
-    EventTimeWatermarkAssignerLogicalOperator(LogicalOperator child, DescriptorConfig::Config config);
+    EventTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self, LogicalFunction onField, const Windowing::TimeUnit& unit);
+    EventTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config config);
 
 
     [[nodiscard]] bool operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const;
@@ -82,8 +82,10 @@ private:
 
     Windowing::TimeUnit unit;
     LogicalFunction onField;
+    WeakLogicalOperator self;
+
     /// Set during schema inference
-    std::optional<Schema> outputSchema;
+    std::optional<UnboundSchemaBase<1>> outputSchema;
 
     TraitSet traitSet;
 

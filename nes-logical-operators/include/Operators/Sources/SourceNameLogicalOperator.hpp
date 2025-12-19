@@ -64,7 +64,7 @@ private:
 
     std::vector<LogicalOperator> children;
     Identifier logicalSourceName;
-    WeakTypedLogicalOperator<SourceNameLogicalOperator> self;
+    WeakLogicalOperator self;
 
     TraitSet traitSet;
     friend struct std::hash<SourceNameLogicalOperator>;

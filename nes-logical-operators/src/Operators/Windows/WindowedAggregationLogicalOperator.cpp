@@ -61,34 +61,38 @@ namespace NES
 namespace
 {
 
-Schema inferSchema(const TypedLogicalOperator<WindowedAggregationLogicalOperator>& forOperator)
+auto inferSchema(
+    const UnboundFieldBase<1>& windowStartField,
+    const UnboundFieldBase<1>& windowEndField,
+    const std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation>& aggregationFunctions,
+    const WindowedAggregationLogicalOperator::GroupingKeyType& groupingKeys) -> UnboundSchemaBase<1>
 {
-    std::vector<Field> outputFields{};
+    std::vector<UnboundFieldBase<1>> outputFields{};
 
-    outputFields.push_back(
-        Field{forOperator, forOperator->getWindowStartField().getName(), forOperator->getWindowStartField().getDataType()});
-    outputFields.push_back(Field{forOperator, forOperator->getWindowEndField().getName(), forOperator->getWindowEndField().getDataType()});
+    outputFields.push_back(windowStartField);
+    outputFields.push_back(windowEndField);
 
-    for (const auto& [aggFunction, name] : forOperator->getWindowAggregation())
+    for (const auto& [aggFunction, name] : aggregationFunctions)
     {
-        outputFields.emplace_back(forOperator, name, aggFunction->getAggregateType());
+        outputFields.emplace_back(name, aggFunction->getAggregateType());
     }
-    const auto fieldsAreBound = std::holds_alternative<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(
-        forOperator->getGroupingKeysWithName());
+    const auto fieldsAreBound
+        = std::holds_alternative<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(groupingKeys);
     PRECONDITION(fieldsAreBound, "Internal schema inference of windowed aggregation called before binding grouping keys");
     for (const auto& [aggFunction, name] :
-         std::get<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(forOperator->getGroupingKeysWithName()))
+         std::get<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(groupingKeys))
     {
         if (name.has_value())
         {
-            outputFields.emplace_back(forOperator, name.value(), aggFunction.getDataType());
+            outputFields.emplace_back(name.value(), aggFunction.getDataType());
         }
     }
 
-    const auto outputSchemaOrCollisions = Schema::tryCreateCollisionFree(outputFields);
+    const auto outputSchemaOrCollisions = UnboundSchemaBase<1>::tryCreateCollisionFree(outputFields);
     if (not outputSchemaOrCollisions.has_value())
     {
-        throw CannotInferSchema("Found collisions in inpu schema: " + Schema::createCollisionString(outputSchemaOrCollisions.error()));
+        throw CannotInferSchema(
+            "Found collisions in inpu schema: " + UnboundSchemaBase<1>::createCollisionString(outputSchemaOrCollisions.error()));
     }
 
     return outputSchemaOrCollisions.value();
@@ -96,6 +100,7 @@ Schema inferSchema(const TypedLogicalOperator<WindowedAggregationLogicalOperator
 }
 
 WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
+    WeakLogicalOperator self,
     GroupingKeyType groupingKey,
     std::vector<ProjectedAggregation> aggregationFunctions,
     std::shared_ptr<Windowing::WindowType> windowType,
@@ -103,11 +108,14 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     : windowType(std::move(windowType))
     , groupingKeys(std::move(groupingKey))
     , aggregationFunctions(std::move(aggregationFunctions))
+    , self(std::move(self))
     , timestampField(std::move(timeCharacteristic))
 {
 }
 
-WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(LogicalOperator child, DescriptorConfig::Config config)
+WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
+    WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config config)
+    : self(std::move(self))
 {
     auto aggregationsVariant = config[ConfigParameters::WINDOW_AGGREGATIONS];
     auto keysVariant = config[ConfigParameters::WINDOW_KEYS];
@@ -178,7 +186,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(LogicalOp
             throw CannotInferSchema("Unsupported window type {}", getWindowType()->toString());
         }
 
-        outputSchema = inferSchema(*this);
+        outputSchema = inferSchema((*startEndField)[0], (*startEndField)[1], aggregationFunctions, groupingKeys);
     }
     throw CannotDeserialize("Invalid variants in WindowedAggregationLogicalOperator config");
 }
@@ -305,7 +313,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     copy.aggregationFunctions = newFunctions;
 
     copy.timestampField = Windowing::TimeCharacteristicWrapper{std::move(copy.timestampField)}.withInferredSchema(inputSchema);
-    copy.outputSchema = inferSchema(copy);
+    copy.outputSchema = inferSchema((*copy.startEndField)[0], (*copy.startEndField)[1], copy.aggregationFunctions, copy.groupingKeys);
     return copy;
 }
 
@@ -337,7 +345,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withChild
 Schema WindowedAggregationLogicalOperator::getOutputSchema() const
 {
     INVARIANT(outputSchema.has_value(), "Retrieving output schema before calling schema inference");
-    return outputSchema.value();
+    return Schema::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> WindowedAggregationLogicalOperator::getChildren() const
@@ -379,7 +387,8 @@ WindowedAggregationLogicalOperator::getGroupingKeys() const
 
 std::unordered_map<Field, std::unordered_set<Field>> WindowedAggregationLogicalOperator::getAccessedFieldsForOutput() const
 {
-    const auto isBound = std::holds_alternative<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(groupingKeys);
+    const auto isBound
+        = std::holds_alternative<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(groupingKeys);
     INVARIANT(isBound, "Tried accessing accessed fields for output before calling schema inference");
     auto boundGroupingKeys = std::get<std::vector<std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>>(groupingKeys);
 
@@ -488,7 +497,7 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
     {
         throw CannotDeserialize("Expected one child for WindowedAggregationLogicalOperator, but found {}", arguments.children.size());
     }
-    return WindowedAggregationLogicalOperator(std::move(arguments.children.at(0)), std::move(arguments.config));
+    return TypedLogicalOperator<WindowedAggregationLogicalOperator>{std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
 
 bool operator==(

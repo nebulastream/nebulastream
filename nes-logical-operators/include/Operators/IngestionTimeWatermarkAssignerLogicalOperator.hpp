@@ -35,7 +35,7 @@ public:
     IngestionTimeWatermarkAssignerLogicalOperator();
     /// I do not understand why, but if we just pass the child in an explicit constructor,
     /// this class stops being convertible to itself (how is that even a thing) and thus doesn't fulfill the concept.
-    IngestionTimeWatermarkAssignerLogicalOperator(LogicalOperator child, DescriptorConfig::Config);
+    IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config);
 
     [[nodiscard]] bool operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
@@ -58,9 +58,10 @@ protected:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
 
     LogicalOperator child;
+    WeakLogicalOperator self;
 
     /// Set during schema inference
-    std::optional<Schema> outputSchema;
+    std::optional<UnboundSchemaBase<1>> outputSchema;
 
     TraitSet traitSet;
 

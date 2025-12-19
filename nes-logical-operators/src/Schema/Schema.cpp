@@ -124,9 +124,11 @@ std::string Schema::createCollisionString(const std::unordered_map<IdentifierLis
 Schema Schema::bind(LogicalOperator logicalOperator, UnboundSchemaBase<1> unboundSchema)
 {
     return unboundSchema
-        | std::views::transform([&logicalOperator](const auto& unboundField) { return Field{logicalOperator, unboundField.getName(), unboundField.getDataType()}; })
+        | std::views::transform([&logicalOperator](const auto& unboundField)
+                                { return Field{logicalOperator, unboundField.getName(), unboundField.getDataType()}; })
         | std::ranges::to<Schema>();
 }
+
 
 template Schema::Schema(const std::vector<Field>& input) noexcept;
 

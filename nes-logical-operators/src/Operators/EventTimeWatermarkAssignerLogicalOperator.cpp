@@ -45,24 +45,15 @@
 namespace NES
 {
 
-namespace
+EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(
+    WeakLogicalOperator self, LogicalFunction onField, const Windowing::TimeUnit& unit)
+    : unit(unit), onField(std::move(onField)), self(std::move(self))
 {
-Schema inferOutputSchema(const Schema& inputSchema, const LogicalOperator& newOperator)
-{
-    return inputSchema
-        | std::views::transform([&newOperator](const auto& field) { return Field{newOperator, field.getLastName(), field.getDataType()}; })
-        | std::ranges::to<Schema>();
-}
 }
 
 EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(
-    LogicalFunction onField, const Windowing::TimeUnit& unit)
-    : unit(unit), onField(std::move(onField))
-{
-}
-
-EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(LogicalOperator child, DescriptorConfig::Config config)
-    : unit(0)
+    WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config config)
+    : unit(0), self(std::move(self))
 {
     const auto timeVariant = config[ConfigParameters::TIME_MS];
     const auto functionVariant = config[ConfigParameters::FUNCTION];
@@ -81,7 +72,7 @@ EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOper
         this->onField = FunctionSerializationUtil::deserializeFunction(functions[0], this->child.getOutputSchema());
         this->unit = time;
 
-        this->outputSchema = inferOutputSchema(this->child.getOutputSchema(), *this);
+        this->outputSchema = this->child.getOutputSchema().unbind();
     }
     else
     {
@@ -119,7 +110,7 @@ EventTimeWatermarkAssignerLogicalOperator EventTimeWatermarkAssignerLogicalOpera
     copy.child = copy.child.withInferredSchema();
     const auto& inputSchema = copy.child.getOutputSchema();
     copy.onField = onField.withInferredDataType(inputSchema);
-    copy.outputSchema = inferOutputSchema(inputSchema, copy);
+    copy.outputSchema = inputSchema.unbind();
     return copy;
 }
 
@@ -147,7 +138,7 @@ EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOpera
 Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 {
     PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
-    return outputSchema.value();
+    return Schema::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
@@ -198,7 +189,8 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
         throw CannotDeserialize(
             "Expected one child for EventTimeWatermarkAssignerLogicalOperator, but found {}", arguments.children.size());
     }
-    return EventTimeWatermarkAssignerLogicalOperator{std::move(arguments.children.at(0)), std::move(arguments.config)};
+    return TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>{
+        std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
 }
 

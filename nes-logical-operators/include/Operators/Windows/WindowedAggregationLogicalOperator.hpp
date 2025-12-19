@@ -63,11 +63,12 @@ public:
         std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>;
 
     WindowedAggregationLogicalOperator(
+        WeakLogicalOperator self,
         WindowedAggregationLogicalOperator::GroupingKeyType groupingKey,
         std::vector<ProjectedAggregation> aggregationFunctions,
         std::shared_ptr<Windowing::WindowType> windowType,
         Windowing::TimeCharacteristic timeCharacteristic);
-    explicit WindowedAggregationLogicalOperator(LogicalOperator child, DescriptorConfig::Config arguments);
+    explicit WindowedAggregationLogicalOperator(WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config arguments);
 
 
     [[nodiscard]] bool isKeyed() const;
@@ -164,9 +165,11 @@ private:
     GroupingKeyType groupingKeys;
     std::vector<ProjectedAggregation> aggregationFunctions;
 
+    WeakLogicalOperator self;
+
     /// Set during schema inference
     std::optional<std::array<UnboundFieldBase<1>, 2>> startEndField;
-    std::optional<Schema> outputSchema;
+    std::optional<UnboundSchemaBase<1>> outputSchema;
     Windowing::TimeCharacteristic timestampField;
 
     TraitSet traitSet;

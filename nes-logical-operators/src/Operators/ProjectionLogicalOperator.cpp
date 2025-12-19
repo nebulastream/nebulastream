@@ -60,9 +60,8 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
     return builder.str();
 }
 
-Schema inferOutputSchema(
+UnboundSchemaBase<1> inferOutputSchema(
     const Schema& inputSchema,
-    const ProjectionLogicalOperator& projectionOperator,
     const std::vector<ProjectionLogicalOperator::Projection>& inferredProjections,
     bool asterisk)
 {
@@ -70,22 +69,21 @@ Schema inferOutputSchema(
     {
         if (asterisk)
         {
-            return inputSchema
-                | std::views::transform([&projectionOperator](const Field& field)
-                                        { return Field(projectionOperator, field.getLastName(), field.getDataType()); })
-                | std::ranges::to<std::vector>();
+            return inputSchema.unbind() | std::ranges::to<std::vector>();
         }
-        return std::vector<Field>();
+        return std::vector<UnboundFieldBase<1>>();
     }();
 
     const auto projections = inferredProjections
-        | std::views::transform([&projectionOperator](const auto& projection)
-                                { return Field{projectionOperator, projection.first.getLastName(), projection.second.getDataType()}; })
+        | std::views::transform([](const auto& projection)
+                                { return UnboundFieldBase<1>{projection.first.getLastName(), projection.second.getDataType()}; })
         | std::ranges::to<std::vector>();
-    auto outputSchema = Schema::tryCreateCollisionFree(std::vector{projections, fieldProjections} | std::views::join);
+    auto outputSchema = UnboundSchemaBase<1>::tryCreateCollisionFree(
+        std::vector{projections, fieldProjections} | std::views::join | std::ranges::to<std::vector>());
     if (!outputSchema.has_value())
     {
-        throw CannotInferSchema("Found collisions of field names in projection: {}", Schema::createCollisionString(outputSchema.error()));
+        throw CannotInferSchema(
+            "Found collisions of field names in projection: {}", UnboundSchemaBase<1>::createCollisionString(outputSchema.error()));
     }
     return outputSchema.value();
 }
@@ -134,7 +132,7 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(WeakLogicalOperator self, L
                                        })
             | std::ranges::to<std::vector>();
 
-        this->outputSchema = inferOutputSchema(childOutputSchema, *this, inferredProjections, this->asterisk).unbind<1>();
+        this->outputSchema = inferOutputSchema(childOutputSchema, inferredProjections, this->asterisk);
         this->projections = std::move(inferredProjections);
     }
     else
@@ -277,7 +275,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema() const
             }},
         copy.projections);
 
-    copy.outputSchema = inferOutputSchema(inputSchema, copy, newProjections, copy.asterisk).unbind<1>();
+    copy.outputSchema = inferOutputSchema(inputSchema, newProjections, copy.asterisk);
     copy.projections = std::move(newProjections);
     return copy;
 }

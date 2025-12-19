@@ -18,6 +18,7 @@
 
 
 #include <functional>
+#include <numeric>
 #include <ostream>
 #include <span>
 #include <unordered_map>
@@ -81,18 +82,18 @@ namespace NES
 template <size_t IdListExtent>
 class UnboundSchemaBase
 {
-public:
-    // explicit UnboundSchemaBase(std::initializer_list<UnboundFieldBase<MaxIdentifierSize>> fields);
-    explicit UnboundSchemaBase(std::vector<UnboundFieldBase<IdListExtent>> fields) : fields(std::move(fields))
+    using IdSpan = std::span<const Identifier, IdListExtent>;
+    using FieldRef = std::reference_wrapper<const UnboundFieldBase<IdListExtent>>;
+    using FieldByNameRefType = std::unordered_map<IdSpan, FieldRef, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>>;
+    using CollisionsRefType
+        = std::unordered_map<IdSpan, std::vector<FieldRef>, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>>;
+
+    std::pair<FieldByNameRefType, CollisionsRefType> initialize(const std::vector<UnboundFieldBase<IdListExtent>>& fields)
     {
-        using IdSpan = std::span<const Identifier, IdListExtent>;
-        std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>> fieldsByName{};
-        std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>> collisions{};
-        for (const auto& [idxSigned, field] : this->fields | std::views::enumerate)
+        FieldByNameRefType fieldsByName{};
+        CollisionsRefType collisions{};
+        for (const auto& field : fields)
         {
-            sizeInBytes += field.getDataType().getSizeInBytes();
-            INVARIANT(idxSigned >= 0, "negative index");
-            const auto idx = static_cast<size_t>(idxSigned);
             const auto& fullName = field.getName();
             for (size_t i = 0; i < std::ranges::size(fullName); i++)
             {
@@ -101,20 +102,28 @@ public:
                 {
                     if (auto existingIdList = fieldsByName.find(idSubSpan); existingIdList != fieldsByName.end())
                     {
-                        collisions.insert(std::pair{idSubSpan, std::vector{existingIdList->second, idx}});
+                        collisions.insert(std::pair{idSubSpan, std::vector{existingIdList->second, field}});
                         fieldsByName.erase(existingIdList);
                     }
                     else
                     {
-                        fieldsByName.insert(std::pair{idSubSpan, idx});
+                        fieldsByName.insert(std::pair{idSubSpan, field});
                     }
                 }
                 else
                 {
-                    existingCollisions->second.push_back(idx);
+                    existingCollisions->second.push_back(field);
                 }
             }
         }
+        return std::pair{fieldsByName, collisions};
+    }
+
+public:
+    // explicit UnboundSchemaBase(std::initializer_list<UnboundFieldBase<MaxIdentifierSize>> fields);
+    explicit UnboundSchemaBase(std::vector<UnboundFieldBase<IdListExtent>> fields) : fields(std::move(fields))
+    {
+        auto [fieldsByName, collisions] = initialize(fields);
         if (!collisions.empty())
         {
             NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
@@ -122,11 +131,75 @@ public:
         this->fieldsByName = fieldsByName
             | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first}, pair.second}; })
             | std::ranges::to<std::unordered_map>();
+        sizeInBytes = std::ranges::fold_left(
+            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytes(); });
     }
 
-    explicit UnboundSchemaBase(const std::initializer_list<UnboundFieldBase<IdListExtent>> fields) : UnboundSchemaBase{std::vector(fields)}
+    template <std::ranges::input_range Range>
+    requires(
+        std::same_as<UnboundFieldBase<IdListExtent>, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<UnboundFieldBase<IdListExtent>>>
+        && !std::same_as<Range, std::vector<UnboundFieldBase<IdListExtent>>> && !std::same_as<Range, UnboundSchemaBase>)
+    explicit UnboundSchemaBase(Range&& input) noexcept : fields{input | std::ranges::to<std::vector>()}
     {
+        auto [fieldsByName, collisions] = initialize(fields);
+        if (!collisions.empty())
+        {
+            NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
+        }
+        this->fieldsByName = fieldsByName
+            | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first}, pair.second}; })
+            | std::ranges::to<std::unordered_map>();
+        sizeInBytes = std::ranges::fold_left(
+            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytes(); });
     }
+
+    static std::expected<UnboundSchemaBase, std::unordered_map<IdentifierList, std::vector<UnboundFieldBase<IdListExtent>>>>
+    tryCreateCollisionFree(std::vector<UnboundFieldBase<IdListExtent>> fields)
+    {
+        auto [fieldsByName, collisions] = initialize(fields);
+        if (!collisions.empty())
+        {
+            return std::unexpected{
+                collisions
+                | std::views::transform(
+                    [](const auto& pair)
+                    {
+                        return std::pair{
+                            IdentifierList{pair.first},
+                            pair.second | std::ranges::transform([](const auto& field) { return field.get(); })
+                                | std::ranges::to<std::vector<UnboundFieldBase<IdListExtent>>>()};
+                    })
+                | std::ranges::to<std::unordered_map<IdentifierList, UnboundFieldBase<IdListExtent>>>()};
+        }
+        return UnboundSchemaBase{std::move(fields)};
+    }
+
+    static std::string
+    createCollisionString(const std::unordered_map<IdentifierList, std::vector<UnboundFieldBase<IdListExtent>>>& collisions)
+    {
+        return fmt::format(
+            "{}",
+            fmt::join(
+                collisions
+                    | std::views::transform(
+                        [](const auto& pair)
+                        {
+                            return fmt::format(
+                                "{} : ({})",
+                                pair.first,
+                                fmt::join(
+                                    pair.second
+                                        | std::views::transform(
+                                            [](const UnboundFieldBase<IdListExtent>& field) -> std::string
+                                            { return fmt::format("{}:{}", field.getName(), field.getDataType()); }),
+                                    ", "));
+                        }),
+                ", "));
+    }
+
+    // explicit UnboundSchemaBase(const std::initializer_list<UnboundFieldBase<IdListExtent>> fields) : UnboundSchemaBase{std::vector(fields)}
+    // {
+    // }
 
     UnboundSchemaBase() = default;
 
@@ -172,7 +245,7 @@ public:
 private:
     std::vector<UnboundFieldBase<IdListExtent>> fields;
     std::unordered_map<IdentifierListBase<IdListExtent>, size_t> fieldsByName;
-    size_t sizeInBytes = 0;
+    size_t sizeInBytes;
 };
 
 using UnboundSchema = UnboundSchemaBase<std::dynamic_extent>;
