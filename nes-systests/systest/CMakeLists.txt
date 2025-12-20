@@ -10,8 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+find_package(yaml CONFIG REQUIRED)
+find_package(cJSON CONFIG REQUIRED)
+find_package(libwebsockets CONFIG REQUIRED)
 find_package(kubernetes CONFIG REQUIRED)
-find_package(cjson CONFIG REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(checksum)
@@ -49,7 +51,7 @@ list(APPEND SLT_SOURCE_FILES ../k8s/src/K8sQueryBuilder.cpp
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
 target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib nes-sql-parser
-        PRIVATE nes-input-formatters kubernetes::kubernetes cJSON::csjon)
+        PRIVATE nes-input-formatters kubernetes::kubernetes cjson websockets)
 target_include_directories(nes-systest-lib PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../k8s/include>

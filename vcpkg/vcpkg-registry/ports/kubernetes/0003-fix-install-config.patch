@@ -1,0 +1,21 @@
+From 5d20f606854950a8b600bdc0a25a3f624cc38253 Mon Sep 17 00:00:00 2001
+From: hirishh <jyxpowa@gmail.com>
+Date: Wed, 19 Nov 2025 18:32:52 +0100
+Subject: [PATCH] fix cmake config
+
+---
+ kubernetes/Config.cmake.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/kubernetes/Config.cmake.in b/kubernetes/Config.cmake.in
+index 9015c2ba..e951c934 100644
+--- a/kubernetes/Config.cmake.in
++++ b/kubernetes/Config.cmake.in
+@@ -1,5 +1,5 @@
+ @PACKAGE_INIT@
+
+-include(${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake)
++include(${CMAKE_CURRENT_LIST_DIR}/@pkgName@Targets.cmake)
+
+-check_required_components("@PROJECT_NAME@")
++check_required_components("@pkgName@")

@@ -49,7 +49,7 @@
 #include <fmt/format.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include "../../k8s/include/K8sQueryBuilder.hpp"
-#include "../../k8s/include/K8sTopologyBuilder.hpp
+#include "../../k8s/include/K8sTopologyBuilder.hpp"
 
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
@@ -159,7 +159,7 @@ std::vector<RunningQuery> runQueries(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    K8sJSONSubmitter yamlSubmitter("default");
+    K8sJSONSubmitter jsonSubmitter("default");
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
     {
