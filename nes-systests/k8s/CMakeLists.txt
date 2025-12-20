@@ -11,5 +11,5 @@ target_include_directories(k8s_operator_test
 target_link_libraries(k8s_operator_test
         PRIVATE
         kubernetes::kubernetes
-        cJSON::cjson
+        cJSON
 )
