@@ -29,6 +29,7 @@
 
 namespace NES
 {
+/// NOLINTBEGIN(cppcoreguidelines-macro-usage)
 #define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
     VarVal operatorName(const VarVal& rhs) const \
     { \
@@ -87,6 +88,7 @@ namespace NES
         } \
     }
 
+/// NOLINTEND(cppcoreguidelines-macro-usage)
 namespace detail
 {
 template <typename... T>

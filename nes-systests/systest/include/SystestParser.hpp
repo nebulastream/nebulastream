@@ -145,7 +145,7 @@ public:
 
     struct ErrorExpectation
     {
-        ErrorCode code;
+        ErrorCode code{};
         std::optional<std::string> message;
         bool operator==(const ErrorExpectation& other) const = default;
     };

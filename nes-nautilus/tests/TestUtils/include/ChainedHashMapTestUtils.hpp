@@ -68,7 +68,7 @@ public:
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
     std::vector<TupleBuffer> inputBuffers;
     std::shared_ptr<TupleBufferRef> inputBufferRef;
-    uint64_t keySize, valueSize, entriesPerPage, entrySize;
+    uint64_t keySize{}, valueSize{}, entriesPerPage{}, entrySize{};
     TestParams params;
 
     enum ExactMapInsert : uint8_t

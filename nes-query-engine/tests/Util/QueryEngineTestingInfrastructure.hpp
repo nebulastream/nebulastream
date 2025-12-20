@@ -91,7 +91,7 @@ public:
 struct ExpectStats
 {
     std::shared_ptr<TestQueryStatisticListener> listener;
-
+/// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define STAT_TYPE(Name) \
     struct Name \
     { \

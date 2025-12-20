@@ -66,9 +66,6 @@ namespace detail
 
 class MemorySegment;
 
-#define PLACEHOLDER_LIKELY(cond) (cond) [[likely]]
-#define PLACEHOLDER_UNLIKELY(cond) (cond) [[unlikely]]
-
 /**
  * @brief This class provides a convenient way to track the reference counter as well metadata for its owning
  * MemorySegment/TupleBuffer. In particular, it stores the atomic reference counter that tracks how many

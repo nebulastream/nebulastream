@@ -23,9 +23,9 @@
 namespace NES::Testing
 {
 
-
 /// Defines the SKIP_IF_TSAN macro, which skips the current test if the test was built with tsan.
 /// This is usually necessary if the test uses gtests EXPECT_DEATH_DEBUG
+/// NOLINTBEGIN(cppcoreguidelines-macro-usage)
 #if defined(__has_feature) && __has_feature(thread_sanitizer)
     #define SKIP_IF_TSAN() \
         do \
@@ -78,6 +78,8 @@ namespace NES::Testing
     { \
         ASSERT_EQ(ex.code(), errorCode); \
     }
+
+/// NOLINTEND(cppcoreguidelines-macro-usage)
 
 namespace detail
 {

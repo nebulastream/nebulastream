@@ -141,7 +141,7 @@ std::optional<std::pair<SequenceNumber, Timestamp>> ChunkCollector<NodeSize, Ali
         return const_cast<Node&>(*it);
     }();
 
-    auto& chunk = node.data[sequence % NodeSize].v;
+    auto& chunk = node.data.at(sequence % NodeSize).v;
 
     if (auto finalWatermark = chunk.update(data, watermark.getRawValue()))
     {

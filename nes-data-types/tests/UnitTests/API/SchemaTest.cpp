@@ -45,7 +45,7 @@ public:
         {
             const auto& values = magic_enum::enum_values<DataType::Type>();
             std::uniform_int_distribution<uint64_t>(0, values.size() - 1);
-            return values[rndPos % values.size()];
+            return values.at(rndPos % values.size());
         };
         constexpr auto RND_SEED = 42;
         std::random_device rd;

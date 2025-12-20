@@ -322,7 +322,7 @@ std::string RunningQuery::getThroughput() const
             throughput /= nextUnit;
             unitIndex++;
         }
-        return fmt::format("{:.3f} {}", throughput, units[unitIndex]);
+        return fmt::format("{:.3f} {}", throughput, units.at(unitIndex));
     };
     return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
 }

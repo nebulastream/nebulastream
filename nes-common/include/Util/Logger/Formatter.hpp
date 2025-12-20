@@ -17,8 +17,10 @@
 #include <fmt/ostream.h>
 
 /// Macro to derive a fmt formatter if the underlying class implements the ostream operator
+/// NOLINTBEGIN(cppcoreguidelines-macro-usage, bugprone-macro-parentheses)
 #define FMT_OSTREAM(TypeName) \
     template <> \
-    struct fmt::formatter<typename TypeName> : fmt::ostream_formatter /* NOLINT (bugprone-macro-parentheses) */ \
+    struct fmt::formatter<typename TypeName> : fmt::ostream_formatter \
     { \
     }
+/// NOLINTEND(cppcoreguidelines-macro-usage, bugprone-macro-parentheses)

@@ -47,6 +47,7 @@ template <LogLevel L>
 struct LogCaller
 {
     template <typename... arguments>
+    /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
     constexpr static void do_call(spdlog::source_loc&&, fmt::format_string<arguments...>, arguments&&...)
     {
         /// nop
@@ -119,6 +120,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
 };
 
 /// Macro to suppress unused warnings
+/// NOLINTBEGIN(cppcoreguidelines-macro-usage)
 #define SUPPRESS_UNUSED_WARNING(...) \
     do \
     { \
@@ -153,4 +155,5 @@ struct LogCaller<LogLevel::LOG_WARNING>
 #define NES_WARNING(...) NES_LOG(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
 /// Creates a log message with log level error.
 #define NES_ERROR(...) NES_LOG(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
+/// NOLINTEND(cppcoreguidelines-macro-usage)
 }

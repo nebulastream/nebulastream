@@ -46,7 +46,7 @@ struct TaskExecutionStart : EventBase
 
     PipelineId pipelineId = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
-    size_t numberOfTuples;
+    size_t numberOfTuples{};
 };
 
 struct TaskEmit : EventBase

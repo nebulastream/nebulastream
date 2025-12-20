@@ -36,7 +36,7 @@ template <size_t N, typename... Ts>
 std::string toText(const std::pair<std::array<std::string_view, N>, std::vector<std::tuple<Ts...>>>& resultTupleType)
 {
     std::stringstream stringBuilder;
-    std::array<std::size_t, N> columnWidths;
+    std::array<std::size_t, N> columnWidths{};
     std::vector<std::array<std::string, N>> rows;
     std::array<std::string, N> columnHeader;
     std::ranges::copy(
@@ -65,7 +65,7 @@ std::string toText(const std::pair<std::array<std::string_view, N>, std::vector<
     {
         for (size_t i = 0; i < (N - 1); ++i)
         {
-            stringBuilder << fmt::format("{:<{}s} | ", row[i], columnWidths[i]);
+            stringBuilder << fmt::format("{:<{}s} | ", row.at(i), columnWidths.at(i));
         }
         stringBuilder << fmt::format("{:<{}s}", row[N - 1], columnWidths[N - 1]);
         stringBuilder << '\n';

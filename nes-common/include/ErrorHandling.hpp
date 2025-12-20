@@ -36,6 +36,7 @@ namespace NES
 /// Represents error codes as strong type.
 /// `ErrorCode` needs to be hidden in `ErrorCodeDetail` namespace to not interfere with the throw function with the same name.
 /// We use a trick to keep the shorthand version of error code (e.g., `return ErrorCode::UnknownException;`) via the following using.
+/// NOLINTBEGIN(cppcoreguidelines-macro-usage)
 namespace ErrorCodeDetail
 {
 enum ErrorCode : std::uint16_t
@@ -145,6 +146,7 @@ private:
         } while (false)
 
 #endif
+/// NOLINTEND(cppcoreguidelines-macro-usage)
 
 /// @brief This function is used to log the current exception.
 /// @warning This function should be used only in a catch block.

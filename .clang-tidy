@@ -189,6 +189,7 @@ HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories
 
 # We choose the following naming conventions that are quite similar to the ClickHouse naming conventions
 CheckOptions:
+  cppcoreguidelines-macro-usage.AllowedRegexp: 'NES_*'
   cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 'true'
   readability-identifier-naming.ClassCase: CamelCase
   readability-identifier-naming.StructCase: CamelCase

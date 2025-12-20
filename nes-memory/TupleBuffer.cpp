@@ -40,7 +40,7 @@ TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
 {
-    if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
+    if (this == std::addressof(other)) [[unlikely]]
     {
         return *this;
     }
@@ -66,7 +66,7 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) noexcept
 {
     /// Especially for rvalues, the following branch should most likely never be taken if the caller writes
     /// reasonable code. Therefore, this branch is considered unlikely.
-    if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
+    if (this == std::addressof(other)) [[unlikely]]
     {
         return *this;
     }

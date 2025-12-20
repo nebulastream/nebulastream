@@ -146,7 +146,7 @@ private:
     size_t numOfBuffers;
 
     uint8_t* basePointer{nullptr};
-    size_t allocatedAreaSize;
+    size_t allocatedAreaSize{};
 
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};

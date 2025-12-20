@@ -113,7 +113,7 @@ public:
         currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
         /// read the value from the correct slot.
         auto seqIndexInBlock = currentSequenceNumber % BlockSize;
-        auto& value = currentBlock->log[seqIndexInBlock];
+        auto& value = currentBlock->log.at(seqIndexInBlock);
         return value.value.load(std::memory_order_relaxed);
     }
 
@@ -169,8 +169,8 @@ private:
         /// and thus can't modify this value.
         /// Concurrent can also not happen yet as the currentSeq is only modified in shiftCurrent.
         auto seqIndexInBlock = seq % BlockSize;
-        currentBlock->log[seqIndexInBlock].seq.store(seq, std::memory_order::relaxed);
-        currentBlock->log[seqIndexInBlock].value.store(value, std::memory_order::relaxed);
+        currentBlock->log.at(seqIndexInBlock).seq.store(seq, std::memory_order::relaxed);
+        currentBlock->log.at(seqIndexInBlock).value.store(value, std::memory_order::relaxed);
     }
 
     /// @brief This method shifts tries to shift the current value.
@@ -214,7 +214,7 @@ private:
             else
             {
                 auto seqIndexInBlock = nextSeqNumber % BlockSize;
-                auto& value = currentBlock->log[seqIndexInBlock];
+                auto& value = currentBlock->log.at(seqIndexInBlock);
                 if (value.seq == nextSeqNumber)
                 {
                     /// the next sequence number is still in the current block thus we only have to exchange the currentSeq.

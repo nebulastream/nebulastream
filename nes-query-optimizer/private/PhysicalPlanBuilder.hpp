@@ -42,7 +42,7 @@ public:
 private:
     QueryId queryId;
     Roots sinks;
-    ExecutionMode executionMode;
+    ExecutionMode executionMode{};
     uint64_t operatorBufferSize{};
 
     /// Used internally to flip the plan from sink->source tstatic o source->sink
