@@ -36,6 +36,7 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -329,7 +330,7 @@ struct Descriptor
             const auto& value = config.at(configParameter);
             return std::get<typename ConfigParameter::Type>(value);
         }
-        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, NAMEOF_TYPE(ConfigParameter));
         return std::nullopt;
     }
 
@@ -341,7 +342,7 @@ struct Descriptor
             const auto& value = config.at(configParameter);
             return std::get<ConfigParameterType>(value);
         }
-        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameterType).name());
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, NAMEOF_TYPE(ConfigParameterType));
         return std::nullopt;
     }
 

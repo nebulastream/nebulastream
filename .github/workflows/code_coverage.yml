@@ -54,3 +54,4 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           override_branch: ${{ inputs.branch-name }}
           override_commit: ${{ inputs.head_sha }}
+          report_type: coverage

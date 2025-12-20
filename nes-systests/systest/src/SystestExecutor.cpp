@@ -326,9 +326,32 @@ SystestExecutorResult SystestExecutor::executeSystests()
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
+                std::vector<Systest::SystestQuery> benchmarkQueries;
+                benchmarkQueries.reserve(queries.size());
+
+                for (const auto& query : queries)
+                {
+                    if (query.differentialQueryPlan.has_value())
+                    {
+                        std::cout << "Skipping differential query for benchmarking: " << query.testName << ":"
+                                  << query.queryIdInFile.toString() << "\n";
+                        continue;
+                    }
+
+                    if (std::holds_alternative<Systest::ExpectedError>(query.expectedResultsOrExpectedError))
+                    {
+                        std::cout << "Skipping query expecting error for benchmarking: " << query.testName << ":"
+                                  << query.queryIdInFile.toString() << "\n";
+                        continue;
+                    }
+
+                    benchmarkQueries.push_back(query);
+                }
+
                 progressTracker.reset();
-                progressTracker.setTotalQueries(queries.size());
-                auto failed = runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults, progressTracker);
+                progressTracker.setTotalQueries(benchmarkQueries.size());
+                auto failed = runQueriesAndBenchmark(benchmarkQueries, singleNodeWorkerConfiguration, benchmarkResults, progressTracker);
+
                 failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";

@@ -69,15 +69,6 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
     return id.getRawValue() % containerSize;
 }
 
-class WorkerId
-{
-    std::string value;
+using WorkerId = NESStrongStringType<struct WorkerId_, "INVALID">;
 
-public:
-    explicit WorkerId(std::string value) : value(std::move(value)) { }
-
-    const std::string& getRawValue() const { return value; }
-
-    auto operator<=>(const WorkerId&) const = default;
-};
 }

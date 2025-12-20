@@ -21,7 +21,8 @@ get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
 # Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
-target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
+find_package(simdjson CONFIG REQUIRED)
+target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators simdjson::simdjson)
 
 target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

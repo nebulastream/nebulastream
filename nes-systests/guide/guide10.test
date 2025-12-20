@@ -1,0 +1,49 @@
+# name: guide/guide10.test
+# description: Max and min stock prices per ticker in tumbling windows with HAVING clause
+# groups: [Window, Aggregation, Tumbling, Max, Min, Having]
+
+CREATE LOGICAL SOURCE stock_quotes(
+    ticker VARSIZED,
+    price  FLOAT64,
+    ts     INT64
+);
+
+CREATE PHYSICAL SOURCE FOR stock_quotes TYPE File;
+ATTACH INLINE
+AAPL,95.0,5
+AAPL,97.0,10
+AAPL,98.0,15
+AAPL,99.0,20
+AAPL,100.0,25
+AAPL,101.0,30
+AAPL,102.0,35
+AAPL,105.0,40
+AAPL,108.0,45
+AAPL,110.0,50
+GOOG,150.0,5
+GOOG,148.0,10
+GOOG,149.0,15
+GOOG,151.0,20
+GOOG,152.0,25
+
+CREATE SINK sink(
+    `STOCK_QUOTES$TICKER`    VARSIZED,
+    `STOCK_QUOTES$MAX_PRICE` FLOAT64,
+    `STOCK_QUOTES$MIN_PRICE` FLOAT64,
+    `STOCK_QUOTES$CNT`       UINT64
+) TYPE File;
+
+SELECT
+    ticker,
+    MAX(price) AS max_price,
+    MIN(price) AS min_price,
+    COUNT(price) AS cnt
+FROM stock_quotes
+GROUP BY ticker
+WINDOW TUMBLING(ts, SIZE 1 MINUTES)
+HAVING
+    max_price > FLOAT64(100.0)
+    AND cnt >= UINT64(10)
+INTO sink;
+----
+AAPL,110.0,95.0,10

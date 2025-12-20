@@ -1,0 +1,27 @@
+# name: guide/guide8.test
+# description: Median oxygen level per tumbling window
+# groups: [Window, Aggregation, Tumbling, Median]
+
+CREATE LOGICAL SOURCE health_sensor(
+    oxygen_level FLOAT64,
+    ts INT64
+);
+CREATE PHYSICAL SOURCE FOR health_sensor TYPE File;
+ATTACH INLINE
+95.0,10
+96.0,20
+97.0,30
+94.0,40
+98.0,110
+96.5,120
+99.0,130
+
+CREATE SINK sink(`HEALTH_SENSOR$OXYGEN_LEVEL_MEDIAN` FLOAT64) TYPE File;
+
+SELECT MEDIAN(oxygen_level)
+FROM health_sensor
+WINDOW TUMBLING(ts, SIZE 100 MS)
+INTO sink;
+----
+95.5
+98.0

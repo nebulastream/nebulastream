@@ -34,6 +34,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -275,7 +276,7 @@ struct TypedLogicalOperator
         {
             return TypedLogicalOperator<T>{std::static_pointer_cast<const NES::detail::ErasedLogicalOperator>(model)};
         }
-        PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
         std::unreachable();
     }
 
@@ -294,7 +295,7 @@ struct TypedLogicalOperator
                 return std::shared_ptr<const Castable<T>>{self, ptr};
             }
         }
-        PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
         std::unreachable();
     }
 
@@ -424,16 +425,6 @@ private:
 inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 {
     return os << op.explain(ExplainVerbosity::Short);
-}
-
-/// Adds additional traits to the given operator, returning a new operator
-/// If the same trait (with the same data) is already present, the new trait will not be added.
-template <IsTrait... TraitType>
-LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitType&... traits)
-{
-    auto result = op.getTraitSet();
-    (result.tryInsert(traits), ...);
-    return op.withTraitSet(std::move(result));
 }
 
 }

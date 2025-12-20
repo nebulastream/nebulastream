@@ -127,6 +127,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
             std::exit(-1); ///NOLINT(concurrency-mt-unsafe)
         }
         std::cout << "Running systests in benchmarking mode. Only one query is run at a time!\n";
+        std::cout << "Any included differential queries and queries expecting an error will be skipped.\n";
         config.numberConcurrentQueries = 1;
     }
 

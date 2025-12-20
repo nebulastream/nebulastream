@@ -1,0 +1,47 @@
+# name: guide/guide6.test
+# description: Union web and mobile events
+# groups: [SetOps, Union]
+
+# Web events source
+CREATE LOGICAL SOURCE web_events(
+    user_id INT64,
+    action VARSIZED,
+    timestamp INT64
+);
+CREATE PHYSICAL SOURCE FOR web_events TYPE File;
+ATTACH INLINE
+1,login,1000
+2,click,1010
+3,logout,1020
+4,login,1030
+
+# Mobile events source
+CREATE LOGICAL SOURCE mobile_events(
+    user_id INT64,
+    action VARSIZED,
+    timestamp INT64
+);
+CREATE PHYSICAL SOURCE FOR mobile_events TYPE File;
+ATTACH INLINE
+3,logout,1020
+5,login,1040
+2,click,1010
+6,purchase,1050
+
+# Sink schema must match projected output
+CREATE SINK sink(`USER_ID` INT64, `ACTION` VARSIZED, `TIMESTAMP` INT64) TYPE File;
+
+# Query under test
+SELECT user_id, action, timestamp FROM web_events
+UNION
+SELECT user_id, action, timestamp FROM mobile_events
+INTO sink;
+----
+1,login,1000
+2,click,1010
+2,click,1010
+3,logout,1020
+3,logout,1020
+4,login,1030
+5,login,1040
+6,purchase,1050

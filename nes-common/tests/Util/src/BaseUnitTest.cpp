@@ -24,6 +24,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <gtest/gtest.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -34,7 +35,7 @@ namespace Testing
 void BaseUnitTest::SetUp()
 {
     testing::Test::SetUp();
-    startWaitingThread(typeid(*this).name());
+    startWaitingThread(std::string(NAMEOF_TYPE_EXPR(*this)));
 }
 
 void BaseUnitTest::TearDown()

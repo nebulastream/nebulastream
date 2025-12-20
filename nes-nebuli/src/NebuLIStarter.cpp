@@ -42,6 +42,7 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -264,7 +265,7 @@ int main(int argc, char** argv)
             std::ifstream file{input};
             if (!file)
             {
-                throw NES::QueryDescriptionNotReadable(std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+                throw NES::QueryDescriptionNotReadable(NES::getErrorMessageFromERRNO());
             }
             return yamlBinder.parseAndBind(file);
         }();

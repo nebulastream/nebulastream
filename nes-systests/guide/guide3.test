@@ -1,0 +1,36 @@
+# name: guide/guide3.test
+# description: Test CEIL(speed) != UINT64(0) OR altitude == 0
+# groups: [Function, Filter, Ceil]
+
+# Define source
+CREATE LOGICAL SOURCE s(speed FLOAT64, altitude FLOAT64);
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+0.2, 100
+-0.7,  50
+0.0,   0
+1.1,   5
+-1.2,  0
+2.9,   7
+3.0,   0
+-0.1,  9
+0.01,  1
+5.4,   8
+
+# Define sink
+CREATE SINK sink(`S$SPEED` FLOAT64, `S$ALTITUDE` FLOAT64) TYPE File;
+
+SELECT *
+FROM s
+WHERE CEIL(speed) != UINT64(0)
+   OR altitude == UINT64(0)
+INTO sink;
+----
+0.2, 100
+0.0,   0
+1.1,   5
+-1.2,  0
+2.9,   7
+3.0,   0
+0.01,  1
+5.4,   8

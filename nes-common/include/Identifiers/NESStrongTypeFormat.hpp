@@ -30,4 +30,22 @@ struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::
         return fmt::format_to(ctx.out(), "{}", t.getRawValue());
     }
 };
+
+template <typename Tag, NES::StringLiteral Invalid>
+struct formatter<NES::NESStrongStringType<Tag, Invalid>> : formatter<std::string>
+{
+    auto format(const NES::NESStrongStringType<Tag, Invalid>& t, format_context& ctx) const -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "{}", t.getRawValue());
+    }
+};
+
+template <typename Tag>
+struct formatter<NES::NESStrongUUIDType<Tag>> : formatter<std::string>
+{
+    auto format(const NES::NESStrongUUIDType<Tag>& t, format_context& ctx) const -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "{}", t.getRawValue());
+    }
+};
 }

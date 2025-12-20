@@ -30,7 +30,7 @@ namespace NES
 class CastToTypeLogicalFunction final
 {
 public:
-    static constexpr std::string_view NAME = "CastToType";
+    static constexpr std::string_view NAME = "Cast";
 
     CastToTypeLogicalFunction(DataType dataType, LogicalFunction child);
 
