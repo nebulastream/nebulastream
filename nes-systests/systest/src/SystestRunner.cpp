@@ -164,7 +164,7 @@ std::vector<RunningQuery> runQueries(
     using SystestKey = std::pair<TestName, SystestQueryId>;
     std::unordered_set<SystestKey> completedQueries; /// Track which queries have completed
 
-    K8sJSONSubmitter yamlSubmitter("default");
+    K8sJSONSubmitter jsonSubmitter("default");
     std::queue<SystestQuery> pending;
     std::vector<SystestQuery> dependentQueries;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)

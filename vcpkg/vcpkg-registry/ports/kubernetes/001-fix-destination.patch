@@ -1,0 +1,13 @@
+diff --git a/kubernetes/CMakeLists.txt b/kubernetes/CMakeLists.txt
+--- a/kubernetes/CMakeLists.txt
++++ b/kubernetes/CMakeLists.txt
+@@ -1656,7 +1656,7 @@ if(MSVC)
+     install(TARGETS ${pkgName} DESTINATION lib)
+ else()
+     include(GNUInstallDirs)
+-    install(TARGETS ${pkgName} DESTINATION lib EXPORT ${pkgName}Targets)
++    install(TARGETS ${pkgName} EXPORT ${pkgName}Targets)
+
+     foreach(HDR_FILE ${HDRS})
+         get_filename_component(HDR_DIRECTORY ${HDR_FILE} DIRECTORY)
+	
