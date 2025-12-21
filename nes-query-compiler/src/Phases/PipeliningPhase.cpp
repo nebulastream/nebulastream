@@ -22,7 +22,6 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
@@ -32,6 +31,7 @@
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>

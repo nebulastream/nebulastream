@@ -41,7 +41,6 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -60,6 +59,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>

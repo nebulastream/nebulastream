@@ -22,13 +22,13 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 #include <RawValueParser.hpp>
 #include <static.hpp>
 

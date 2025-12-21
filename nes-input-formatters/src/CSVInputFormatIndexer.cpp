@@ -20,13 +20,13 @@
 #include <string_view>
 #include <utility>
 
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatter.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 
 namespace
 {
