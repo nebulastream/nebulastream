@@ -114,6 +114,7 @@ include(cmake/Sanitizers.cmake)
 include(cmake/CheckToolchain.cmake)
 include(cmake/UseCCache.cmake)
 include(cmake/UseMold.cmake)
+include(cmake/NautilusInlining.cmake)
 
 if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)
@@ -232,6 +233,9 @@ else ()
 endif ()
 
 add_custom_target(build_all_plugins)
+
+# Includes nautilus-inline cmake function
+include(cmake/NautilusInlining.cmake)
 
 # Adds sub-directories
 file(GLOB NES_DIRECTORIES_ALL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")

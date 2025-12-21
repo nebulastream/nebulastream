@@ -1,3 +1,8 @@
+/*
+   Note: The nautilus inlining LLVM pass is currently disabled in nix because it doesnt build correctly
+   Remove the respective CMake flag below to enable it again, if you wish to
+*/
+
 { pkgs }:
 
 let
@@ -53,8 +58,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "5fa4c9043d961238d283bf129b82c59e1476974a";
-    hash = "sha512-woWgqYDU5SW2hqMh/VhDD9adUt1XFI2K75YOeIW7Yi/fDEmX59bOXmlk4z1nbPJqVFPip7pPJkCvWEZ+WmM/cg==";
+    rev = "413c123da42c478e2da5dc8c8c5155a62d3760a6";
+    hash = "sha512-HVijJ1ScaKfBEDYjkZl8yV1tl2RMzSEvs7lN7Z96X88hfKQ6wX1e4A9YO9Iy/AQnXBsAJaF1JO+Dfbfrpqi34w==";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -64,8 +69,6 @@ let
     src = nautilusSrc;
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
-      ./patches/0002-fix-ambiguous-val-overload.patch
-      ./patches/0003-ubsan-fix-variadic-expansion.patch
     ];
 
     nativeBuildInputs = [
@@ -113,6 +116,7 @@ let
       "-DENABLE_C_BACKEND=ON"
       "-DENABLE_BC_BACKEND=OFF"
       "-DENABLE_TESTS=OFF"
+      "-DENABLE_INLINING_PASS=OFF" # remove this to enable the nautilus inlining llvm pass
       "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
       "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"
     ];
