@@ -36,7 +36,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
@@ -54,6 +53,7 @@
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>

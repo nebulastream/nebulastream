@@ -10,13 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-input-formatters
-        SequenceShredder.cpp
-        SpanningTupleBuffer.cpp
-        SpanningTupleBufferState.cpp
-        RawValueParser.cpp
-        InputFormatterTupleBufferRef.cpp
-)
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(JSON InputFormatIndexer nes-input-formatters-registry json_input_format_indexer_plugin_library SIMDJSONInputFormatIndexer.cpp SIMDJSONFIF.cpp)
+target_include_directories(json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
-# Register plugins
-add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp)
+find_package(simdjson CONFIG REQUIRED)
+target_link_libraries(json_input_format_indexer_plugin_library PRIVATE simdjson::simdjson)
