@@ -210,9 +210,10 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::generate_n(randomString.begin(), size, randchar);
 
                             /// Adding the random string to the buffer and returning the pointer to the data
-                            const auto combinedIdxOffset
-                                = MemoryLayout::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
-                            return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, combinedIdxOffset).data();
+                            return reinterpret_cast<int8_t*>(
+                                VariableSizedAccess::attachTo(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}))
+                                    .access(*inputBuffer)
+                                    .data());
                         },
                         recordBuffer.getReference(),
                         bufferProvider,

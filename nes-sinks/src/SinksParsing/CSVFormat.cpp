@@ -66,26 +66,21 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
         auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
+                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings, i](const auto& index)
                           {
                               const auto physicalType = formattingContext.physicalTypes[index];
                               if (physicalType.type == DataType::Type::VARSIZED)
                               {
                                   const auto base = formattingContext.offsets[index];
-                                  uint64_t idxPacked{};
-                                  uint64_t size{};
-                                  auto sizeAddress = &tuple[base + offsetof(VariableSizedAccess::IndexOffsetSize, size)];
-                                  std::memcpy(&idxPacked, &tuple[base], sizeof(uint64_t));
-                                  std::memcpy(&size, sizeAddress, sizeof(uint64_t));
-                                  const VariableSizedAccess variableSizedAccess{
-                                      VariableSizedAccess::IndexOffsetSize{.combinedIndexOffset = idxPacked, .size = size}};
-
-                                  auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                                  auto varSizedAccess
+                                      = VariableSizedAccess::readFrom(tbuffer, i * formattingContext.schemaSizeInBytes + base);
+                                  auto bytes = varSizedAccess.access(tbuffer);
+                                  std::string_view view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
                                   if (copyOfEscapeStrings)
                                   {
-                                      return "\"" + varSizedData + "\"";
+                                      return fmt::format("\"{}\"", view);
                                   }
-                                  return varSizedData;
+                                  return std::string(view);
                               }
                               return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
                           });

@@ -25,7 +25,6 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
@@ -174,10 +173,10 @@ public:
     void setOriginId(OriginId id) noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(TupleBuffer& buffer) noexcept;
+    [[nodiscard]] size_t storeChildBuffer(TupleBuffer& buffer) noexcept;
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
-    [[nodiscard]] TupleBuffer loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept;
+    [[nodiscard]] TupleBuffer loadChildBuffer(size_t bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 

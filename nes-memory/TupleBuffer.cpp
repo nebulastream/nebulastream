@@ -14,6 +14,7 @@
 
 #include <Runtime/TupleBuffer.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <ostream>
@@ -174,7 +175,7 @@ void TupleBuffer::setOriginId(const OriginId id) noexcept
     controlBlock->setOriginId(id);
 }
 
-VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
+size_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
@@ -184,7 +185,7 @@ VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) no
     return index;
 }
 
-TupleBuffer TupleBuffer::loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept
+TupleBuffer TupleBuffer::loadChildBuffer(size_t bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
     const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);

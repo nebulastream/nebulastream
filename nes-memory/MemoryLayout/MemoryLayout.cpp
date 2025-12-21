@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <cstring>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
@@ -36,95 +37,6 @@
 
 namespace NES
 {
-namespace
-{
-TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint32_t newBufferSize)
-{
-    /// If the fixed size buffers are not large enough, we get an unpooled buffer
-    if (tupleBufferProvider.getBufferSize() > newBufferSize)
-    {
-        if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
-        {
-            return newBuffer.value();
-        }
-    }
-    const auto unpooledBuffer = tupleBufferProvider.getUnpooledBuffer(newBufferSize);
-    if (not unpooledBuffer.has_value())
-    {
-        throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size {}", newBufferSize);
-    }
-
-    return unpooledBuffer.value();
-}
-
-/// @brief Copies the varSizedValue to the specified location and then increments the number of tuples
-/// @return the new childBufferOffset
-void copyVarSizedAndIncrementMetaData(
-    TupleBuffer& childBuffer, const VariableSizedAccess::Offset childBufferOffset, const std::span<const std::byte> varSizedValue)
-{
-    const auto spaceInChildBuffer = childBuffer.getAvailableMemoryArea().subspan(childBufferOffset.getRawOffset());
-    PRECONDITION(spaceInChildBuffer.size() >= varSizedValue.size(), "SpaceInChildBuffer must be larger than varSizedValue");
-    std::ranges::copy(varSizedValue, spaceInChildBuffer.begin());
-
-    childBuffer.setNumberOfTuples(childBuffer.getNumberOfTuples() + varSizedValue.size());
-}
-}
-
-VariableSizedAccess MemoryLayout::writeVarSized(
-    TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
-{
-    const auto totalVarSizedLength = varSizedValue.size();
-
-
-    /// If there are no child buffers, we get a new buffer and copy the var sized into the newly acquired
-    const auto numberOfChildBuffers = tupleBuffer.getNumberOfChildBuffers();
-    if (numberOfChildBuffers == 0)
-    {
-        auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
-        copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
-        const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
-        return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size(totalVarSizedLength)};
-    }
-
-    /// If there is no space in the lastChildBuffer, we get a new buffer and copy the var sized into the newly acquired
-    const VariableSizedAccess::Index childIndex{numberOfChildBuffers - 1};
-    auto lastChildBuffer = tupleBuffer.loadChildBuffer(childIndex);
-    const auto usedMemorySize = lastChildBuffer.getNumberOfTuples();
-    if (usedMemorySize + totalVarSizedLength >= lastChildBuffer.getBufferSize())
-    {
-        auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
-        copyVarSizedAndIncrementMetaData(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
-        const VariableSizedAccess::Index childBufferIndex{tupleBuffer.storeChildBuffer(newChildBuffer)};
-        return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size(totalVarSizedLength)};
-    }
-
-    /// There is enough space in the lastChildBuffer, thus, we copy the var sized into it
-    const VariableSizedAccess::Offset childOffset{usedMemorySize};
-    copyVarSizedAndIncrementMetaData(lastChildBuffer, childOffset, varSizedValue);
-    return VariableSizedAccess{childIndex, childOffset, VariableSizedAccess::Size(totalVarSizedLength)};
-}
-
-std::span<std::byte>
-MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
-{
-    /// Loading the childbuffer containing the variable sized data.
-    auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
-
-    /// Creating a subspan that starts at the required offset. It still can contain multiple other var sized, as we have solely offset the
-    /// lower bound but not the upper bound.
-    const auto varSized = childBuffer.getAvailableMemoryArea().subspan(variableSizedAccess.getOffset().getRawOffset());
-
-    return varSized.subspan(0, variableSizedAccess.getSize().getRawSize());
-}
-
-std::string MemoryLayout::readVarSizedDataAsString(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
-{
-    const auto str = loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
-    const auto stringSize = variableSizedAccess.getSize().getRawSize();
-    const auto* const strPtrContent = reinterpret_cast<const char*>(str.subspan(0, stringSize).data());
-    INVARIANT(str.size() >= stringSize, "Parsed varSized {} must NOT be larger than the span size {} ", stringSize, str.size());
-    return std::string{strPtrContent, stringSize};
-}
 
 uint64_t MemoryLayout::getTupleSize() const
 {

@@ -47,12 +47,11 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {
-        const VariableSizedAccess::Index varSizedIndex{childIdx};
-        auto childBuffer = buffer.loadChildBuffer(varSizedIndex);
+        auto childBuffer = buffer.loadChildBuffer(childIdx);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
         auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
         INVARIANT(
-            ret == varSizedIndex,
+            ret == childIdx,
             "Child buffer index: {}, does not match index: {}",
             childIdx,
             copiedBuffer.storeChildBuffer(copiedChildBuffer));

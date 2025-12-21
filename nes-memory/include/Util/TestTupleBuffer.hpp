@@ -38,8 +38,8 @@ namespace NES
 {
 
 template <class Type>
-concept IsNesType = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>>
-    || std::is_same_v<Type, VariableSizedAccess::IndexOffsetSize>;
+concept IsNesType
+    = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>> || std::is_same_v<Type, VariableSizedAccess>;
 
 
 /// This concept checks via tuple unpacking if Types contains at least one string.
@@ -67,9 +67,7 @@ public:
     {
         /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
         if (not physicalType.isSameDataType<Type>()
-            and not(
-                physicalType.isType(DataType::Type::VARSIZED)
-                and std::is_same_v<std::remove_cvref_t<Type>, VariableSizedAccess::IndexOffsetSize>))
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, VariableSizedAccess>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, NAMEOF_TYPE(Type));
         }
@@ -86,9 +84,7 @@ public:
     {
         /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
         if (not physicalType.isSameDataType<Type>()
-            and not(
-                physicalType.isType(DataType::Type::VARSIZED)
-                and std::is_same_v<std::remove_cvref_t<Type>, VariableSizedAccess::IndexOffsetSize>))
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, VariableSizedAccess>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, NAMEOF_TYPE(Type));
         }
@@ -105,9 +101,7 @@ public:
     {
         /// For VARSIZED, we access the field via uint64_t to read the @class VariableSizedAccess
         if (not physicalType.isSameDataType<Type>()
-            and not(
-                physicalType.isType(DataType::Type::VARSIZED)
-                and std::is_same_v<std::remove_cvref_t<Type>, VariableSizedAccess::IndexOffsetSize>))
+            and not(physicalType.isType(DataType::Type::VARSIZED) and std::is_same_v<std::remove_cvref_t<Type>, VariableSizedAccess>))
         {
             throw CannotAccessBuffer("Wrong field type passed. Field is of type {} but accessed as {}", physicalType, NAMEOF_TYPE(Type));
         }
@@ -432,9 +426,8 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                const VariableSizedAccess childBufferIdx{*reinterpret_cast<VariableSizedAccess::IndexOffsetSize*>(
-                    const_cast<uint8_t*>((*this)[recordIndex][I].getMemory().data()))};
-                std::get<I>(record) = MemoryLayout::readVarSizedDataAsString(this->buffer, childBufferIdx);
+                auto data = (*this)[recordIndex][I].read<VariableSizedAccess>().access(this->getBuffer());
+                std::get<I>(record) = std::string{reinterpret_cast<const char*>(data.data()), data.size()};
             }
             else
             {

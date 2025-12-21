@@ -46,35 +46,99 @@
 namespace NES
 {
 
-struct CombinedIndexTest
+namespace
 {
-    uint64_t index;
-    uint64_t size;
-};
+[[maybe_unused]]
+VariableSizedData loadVarSized1(const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+{
+    thread_local struct
+    {
+        int8_t* ptr;
+        size_t size;
+    } ptrAndSize;
+
+    nautilus::val<int8_t**> ptr(&ptrAndSize.ptr);
+    nautilus::val<size_t*> size(&ptrAndSize.size);
+
+    invoke(
+        +[](TupleBuffer* tupleBuffer, int8_t* fieldReference, int8_t** ptr, size_t* size)
+        {
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            const auto varSizedAccess = VariableSizedAccess::readFrom(*tupleBuffer, fieldReference);
+            auto varSizedData = varSizedAccess.access(*tupleBuffer);
+            *ptr = reinterpret_cast<int8_t*>(varSizedData.data());
+            *size = varSizedData.size();
+        },
+        recordBuffer.getReference(),
+        fieldReference,
+        ptr,
+        size);
+
+    return VariableSizedData(*ptr, *size);
+}
+
+VariableSizedData loadVarSized2(const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+{
+    auto ptr = invoke(
+        +[](TupleBuffer* tupleBuffer, int8_t* fieldReference)
+        {
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            const auto varSizedAccess = VariableSizedAccess::readFrom(*tupleBuffer, fieldReference);
+            auto varSizedData = varSizedAccess.access(*tupleBuffer);
+            return varSizedData.data();
+        },
+        recordBuffer.getReference(),
+        fieldReference);
+
+    auto size = invoke(
+        +[](TupleBuffer* tupleBuffer, int8_t* fieldReference)
+        {
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            const auto varSizedAccess = VariableSizedAccess::readFrom(*tupleBuffer, fieldReference);
+            auto varSizedData = varSizedAccess.access(*tupleBuffer);
+            return varSizedData.size();
+        },
+        recordBuffer.getReference(),
+        fieldReference);
+
+    return VariableSizedData(ptr, size);
+}
+
+void storeVarsizedData(
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<int8_t*>& fieldReference,
+    const VariableSizedData& data,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    invoke(
+        +[](TupleBuffer* tupleBuffer,
+            AbstractBufferProvider* bufferProvider,
+            const int8_t* varSizedPtr,
+            const uint32_t varSizedValueLength,
+            const int8_t* fieldReference)
+        {
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
+            const std::span varSizedValueSpan{reinterpret_cast<const std::byte*>(varSizedPtr), varSizedValueLength};
+            VariableSizedAccess::writeTo(*tupleBuffer, fieldReference, *bufferProvider, varSizedValueSpan);
+        },
+        recordBuffer.getReference(),
+        bufferProvider,
+        data.getReference(),
+        data.getSize(),
+        fieldReference);
+}
+
+}
 
 VarVal
 TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
-    if (physicalType.type != DataType::Type::VARSIZED)
+    if (physicalType.type == DataType::Type::VARSIZED)
     {
-        return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
+        return loadVarSized2(recordBuffer, fieldReference);
     }
-
-    auto combinedIndexOffset = static_cast<nautilus::val<VariableSizedAccess::IndexOffsetSize*>>(fieldReference);
-
-    const auto varSizedPtr = invoke(
-        +[](const TupleBuffer* tupleBuffer, VariableSizedAccess::IndexOffsetSize* combinedIndexOffset)
-        {
-            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            const VariableSizedAccess access(*combinedIndexOffset);
-            return MemoryLayout::loadAssociatedVarSizedValue(*tupleBuffer, access).data();
-        },
-        recordBuffer.getReference(),
-        combinedIndexOffset);
-
-    const nautilus::val<uint64_t> size
-        = *getMemberWithOffset<uint64_t>(combinedIndexOffset, offsetof(VariableSizedAccess::IndexOffsetSize, size));
-    return VariableSizedData(varSizedPtr, size);
+    return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
 }
 
 VarVal TupleBufferRef::storeValue(
@@ -84,39 +148,18 @@ VarVal TupleBufferRef::storeValue(
     VarVal value,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    if (physicalType.type != DataType::Type::VARSIZED)
+    if (physicalType.type == DataType::Type::VARSIZED)
     {
-        /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
-        /// We get the correct function to call via a unordered_map
-        if (const auto storeFunction = storeValueFunctionMap.find(physicalType.type); storeFunction != storeValueFunctionMap.end())
-        {
-            return storeFunction->second(value, fieldReference);
-        }
+        storeVarsizedData(recordBuffer, fieldReference, value.cast<VariableSizedData>(), bufferProvider);
+    }
+    else if (const auto storeFunction = storeValueFunctionMap.find(physicalType.type); storeFunction != storeValueFunctionMap.end())
+    {
+        return storeFunction->second(value, fieldReference);
+    }
+    else
+    {
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
-
-    const auto varSizedValue = value.cast<VariableSizedData>();
-    auto refToIndex = static_cast<nautilus::val<VariableSizedAccess::IndexOffsetSize*>>(fieldReference);
-
-    invoke(
-        +[](TupleBuffer* tupleBuffer,
-            AbstractBufferProvider* bufferProvider,
-            const int8_t* varSizedPtr,
-            const uint32_t varSizedValueLength,
-            VariableSizedAccess::IndexOffsetSize* refToIndex)
-        {
-            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
-            const std::span varSizedValueSpan{varSizedPtr, varSizedPtr + varSizedValueLength};
-            const VariableSizedAccess writtenAccess
-                = MemoryLayout::writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
-            *refToIndex = writtenAccess.getCombinedIdxOffset();
-        },
-        recordBuffer.getReference(),
-        bufferProvider,
-        varSizedValue.getReference(),
-        varSizedValue.getSize(),
-        refToIndex);
 
     return value;
 }

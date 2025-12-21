@@ -47,18 +47,6 @@ public:
 
     virtual ~MemoryLayout() = default;
 
-    /// @brief Writes the variable sized data to the buffer
-    static VariableSizedAccess
-    writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
-
-    /// @brief Reads the variable sized data and returns the pointer to the var sized data
-    /// @return Pointer to variable sized data
-    static std::span<std::byte> loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
-
-    /// @brief Reads the variable sized data. Similar as loadAssociatedVarSizedValue, but returns a string
-    /// @return Variable sized data as a string
-    static std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
-
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;

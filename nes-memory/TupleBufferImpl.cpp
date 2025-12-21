@@ -14,6 +14,7 @@
 
 #include <TupleBufferImpl.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -306,19 +307,18 @@ void BufferControlBlock::setOriginId(const OriginId originId)
 /// ------------------ VarLen fields support for TupleBuffer --------------------
 /// -----------------------------------------------------------------------------
 
-VariableSizedAccess::Index BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
+size_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
 {
     control->retain();
     children.emplace_back(control->owner);
-    return VariableSizedAccess::Index{children.size() - 1};
+    return children.size() - 1;
 }
 
-bool BufferControlBlock::loadChildBuffer(
-    const VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
+bool BufferControlBlock::loadChildBuffer(const size_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
-    PRECONDITION(index.index < children.size(), "Index={} is out of range={}", index, children.size());
+    PRECONDITION(index < children.size(), "Index={} is out of range={}", index, children.size());
 
-    auto* child = children[index.index];
+    auto* child = children[index];
     control = child->controlBlock->retain();
     ptr = child->ptr;
     size = child->size;

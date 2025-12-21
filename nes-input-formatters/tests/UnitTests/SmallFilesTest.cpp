@@ -47,24 +47,6 @@
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
-namespace
-{
-std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
-{
-    size_t priorFieldOffset = 0;
-    std::vector<size_t> varSizedFieldOffsets;
-    for (const auto& field : schema)
-    {
-        if (field.dataType.isType(NES::DataType::Type::VARSIZED))
-        {
-            varSizedFieldOffsets.emplace_back(priorFieldOffset);
-        }
-        priorFieldOffset += field.dataType.getSizeInBytes();
-    }
-    return varSizedFieldOffsets;
-}
-}
-
 /// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
 {
@@ -235,10 +217,7 @@ public:
 
     template <bool WriteExpectedResultsFile>
     bool compareResults(
-        const std::vector<std::vector<TupleBuffer>>& resultBuffers,
-        const SetupResult& setupResult,
-        const std::vector<size_t>& varSizedFieldOffsets,
-        BufferManager& testBufferManager)
+        const std::vector<std::vector<TupleBuffer>>& resultBuffers, const SetupResult& setupResult, BufferManager& testBufferManager)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);
@@ -260,11 +239,14 @@ public:
         {
             const auto tmpExpectedResultsPath
                 = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-            writeTupleBuffersToFile(resultBufferVec, setupResult.schema, tmpExpectedResultsPath, varSizedFieldOffsets);
+            writeTupleBuffersToFile(resultBufferVec, tmpExpectedResultsPath);
         }
+
+        /// Use a dedicated buffer manager to load the expected buffers
+        auto expectedResultBufferManager = BufferManager::create(testBufferManager.getBufferSize(), 4096);
         const auto expectedResultsPath
             = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-        auto expectedBuffers = loadTupleBuffersFromFile(testBufferManager, setupResult.schema, expectedResultsPath, varSizedFieldOffsets);
+        auto expectedBuffers = loadTupleBuffersFromFile(*expectedResultBufferManager, expectedResultsPath);
         return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultBufferVec, expectedBuffers, setupResult.schema);
     }
 
@@ -276,7 +258,6 @@ public:
 
         const auto setupResult = setupTest(testConfig, rawBuffers);
 
-        const auto varSizedFieldOffsets = getVarSizedFieldOffsets(setupResult.schema);
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             /// Prepare TestTaskQueue for processing the input formatter tasks
@@ -306,8 +287,7 @@ public:
             taskQueue->waitForCompletion();
 
             /// Check results
-            const auto isCorrectResult
-                = compareResults<WriteExpectedResultsFile>(*resultBuffers, setupResult, varSizedFieldOffsets, *testBufferManager);
+            const auto isCorrectResult = compareResults<WriteExpectedResultsFile>(*resultBuffers, setupResult, *testBufferManager);
             ASSERT_TRUE(isCorrectResult);
 
             /// Cleanup

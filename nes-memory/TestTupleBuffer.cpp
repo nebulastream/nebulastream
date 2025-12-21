@@ -40,6 +40,7 @@
 #include <include/Runtime/TupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include "MemoryLayout/VariableSizedAccess.hpp"
 
 namespace NES
 {
@@ -76,45 +77,18 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 void DynamicTuple::writeVarSized(
     std::variant<const uint64_t, const std::string> field, std::string_view value, AbstractBufferProvider& bufferProvider)
 {
-    auto combinedIdxOffset = MemoryLayout::writeVarSized(buffer, bufferProvider, std::as_bytes(std::span{value}));
-    std::visit(
-        [this, combinedIdxOffset](const auto& key)
-        {
-            if constexpr (
-                std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
-                || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
-            {
-                *reinterpret_cast<VariableSizedAccess::IndexOffsetSize*>(const_cast<uint8_t*>((*this)[key].getMemory().data()))
-                    = combinedIdxOffset.getCombinedIdxOffset();
-            }
-            else
-            {
-                PRECONDITION(
-                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", NAMEOF_TYPE_EXPR(key));
-            }
-        },
+    auto offset = std::visit(
+        [&](const auto& key)
+        { return const_cast<uint8_t*>((*this)[key].getMemory().data()) - this->buffer.getAvailableMemoryArea<const uint8_t>().data(); },
         field);
+    VariableSizedAccess::writeTo(
+        this->buffer, offset, bufferProvider, std::span{reinterpret_cast<const std::byte*>(value.data()), value.size()});
 }
 
 std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::string> field) const
 {
-    return std::visit(
-        [this](const auto& key)
-        {
-            if constexpr (
-                std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
-                || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
-            {
-                const VariableSizedAccess index{(*this)[key].template read<VariableSizedAccess::IndexOffsetSize>()};
-                return MemoryLayout::readVarSizedDataAsString(this->buffer, index);
-            }
-            else
-            {
-                PRECONDITION(
-                    false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", NAMEOF_TYPE_EXPR(key));
-            }
-        },
-        field);
+    auto data = std::visit([&](const auto& key) { return (*this)[key].template read<VariableSizedAccess>().access(buffer); }, field);
+    return std::string{reinterpret_cast<const char*>(data.data()), data.size()};
 }
 
 std::string DynamicTuple::toString(const Schema& schema) const
@@ -159,7 +133,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
     return std::ranges::all_of(
         this->memoryLayout->getSchema().getFields(),
-        [this, &other](const auto& field)
+        [this, &other](const Schema::Field& field)
         {
             if (!other.memoryLayout->getSchema().getFieldByName(field.name))
             {
@@ -167,18 +141,13 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
                 return false;
             }
 
-            auto thisDynamicField = (*this)[field.name];
-            auto otherDynamicField = other[field.name];
-
             if (field.dataType.isType(DataType::Type::VARSIZED))
             {
-                const VariableSizedAccess thisVarSizedAccess{thisDynamicField.template read<VariableSizedAccess::IndexOffsetSize>()};
-                const VariableSizedAccess otherVarSizedAccess{otherDynamicField.template read<VariableSizedAccess::IndexOffsetSize>()};
-                const auto thisString = MemoryLayout::readVarSizedDataAsString(buffer, thisVarSizedAccess);
-                const auto otherString = MemoryLayout::readVarSizedDataAsString(other.buffer, otherVarSizedAccess);
-                return thisString == otherString;
+                return std::ranges::equal(
+                    (*this)[field.name].read<VariableSizedAccess>().access(buffer),
+                    other[field.name].read<VariableSizedAccess>().access(other.buffer));
             }
-            return thisDynamicField == otherDynamicField;
+            return (*this)[field.name] == other[field.name];
         });
 }
 

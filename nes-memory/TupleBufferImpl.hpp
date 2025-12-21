@@ -111,8 +111,8 @@ public:
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
     [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
-    [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(BufferControlBlock* control);
-    [[nodiscard]] bool loadChildBuffer(VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
+    [[nodiscard]] size_t storeChildBuffer(BufferControlBlock* control);
+    [[nodiscard]] bool loadChildBuffer(size_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

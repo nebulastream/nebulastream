@@ -14,16 +14,19 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <istream>
+#include <ostream>
 #include <span>
 #include <string>
 #include <utility>
 #include <vector>
+#include <endian.h>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -32,23 +35,90 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Ranges.hpp>
+#include <netinet/in.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
+template <typename T>
+void binaryRead(std::istream& istream, T& value)
+{
+    static_assert(std::is_trivially_copyable_v<T>, "Type must be safe to copy via bytes");
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    istream.read(reinterpret_cast<char*>(&value), sizeof(T));
+}
+
+template <typename T>
+std::ostream& binaryWrite(std::ostream& os, const T& value)
+{
+    static_assert(std::is_trivially_copyable_v<T>, "Type must be safe to copy via bytes");
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    os.write(reinterpret_cast<const char*>(&value), sizeof(T));
+    return os;
+}
+
 struct BinaryFileHeader
 {
     uint64_t numberOfBuffers = 0;
-    uint64_t sizeOfBuffersInBytes = 4096;
+
+    std::ostream& serialize(std::ostream& stream) const { return binaryWrite(stream, htobe64(numberOfBuffers)); }
+
+    std::istream& deserialize(std::istream& stream)
+    {
+        uint64_t value{};
+        binaryRead(stream, value);
+        numberOfBuffers = be64toh(value);
+        return stream;
+    }
 };
 
 struct BinaryBufferHeader
 {
     uint64_t numberOfTuples = 0;
+    uint64_t bufferSize = 0;
     uint64_t numberChildBuffers = 0;
-    uint64_t sequenceNumber = 0;
-    uint64_t chunkNumber = 0;
+    SequenceNumber::Underlying sequenceNumber = 0;
+    ChunkNumber::Underlying chunkNumber = 0;
+
+    std::ostream& serialize(std::ostream& stream) const
+    {
+        return binaryWrite(
+            stream,
+            std::to_array(
+                {htobe64(numberOfTuples),
+                 htobe64(bufferSize),
+                 htobe64(numberChildBuffers),
+                 htobe64(sequenceNumber),
+                 htobe64(chunkNumber)}));
+    }
+
+    std::istream& deserialize(std::istream& stream)
+    {
+        std::array<uint64_t, 5> values{};
+        binaryRead(stream, values);
+        numberOfTuples = be64toh(values[0]);
+        bufferSize = be64toh(values[1]);
+        numberChildBuffers = be64toh(values[2]);
+        sequenceNumber = be64toh(values[3]);
+        chunkNumber = be64toh(values[4]);
+        return stream;
+    }
+};
+
+struct BinaryChildBufferHeader
+{
+    uint64_t bufferSize = 0;
+
+    std::ostream& serialize(std::ostream& stream) const { return binaryWrite(stream, htobe64(bufferSize)); }
+
+    std::istream& deserialize(std::istream& stream)
+    {
+        uint64_t value{};
+        binaryRead(stream, value);
+        bufferSize = be64toh(value);
+        return stream;
+    }
 };
 
 enum class FileOpenMode : uint8_t
@@ -108,73 +178,6 @@ inline std::ofstream createFile(const std::filesystem::path& filepath, const Fil
     return file;
 }
 
-inline void writeFileHeaderToFile(const BinaryFileHeader& binaryFileHeader, const std::filesystem::path& filepath)
-{
-    /// create new file and write file header
-    auto file = createFile(filepath, FileOpenMode::TRUNCATE);
-    file.write(std::bit_cast<const char*>(&binaryFileHeader), sizeof(BinaryFileHeader));
-    file.close();
-}
-
-inline void writePagedSizeBufferChunkToFile(
-    const BinaryBufferHeader& binaryHeader,
-    const size_t sizeOfSchemaInBytes,
-    const std::span<TupleBuffer> pagedSizeBufferChunk,
-    std::ofstream& file)
-{
-    file.write(std::bit_cast<const char*>(&binaryHeader), sizeof(BinaryBufferHeader));
-
-    for (const auto& buffer : pagedSizeBufferChunk)
-    {
-        const auto sizeOfBufferInBytes = buffer.getNumberOfTuples() * sizeOfSchemaInBytes;
-        file.write(buffer.getAvailableMemoryArea<const char>().data(), static_cast<std::streamsize>(sizeOfBufferInBytes));
-    }
-}
-
-inline void writePagedSizeTupleBufferChunkToFile(
-    std::span<TupleBuffer> pagedSizeBufferChunk,
-    const SequenceNumber::Underlying sequenceNumber,
-    const size_t numTuplesInChunk,
-    std::ofstream& appendFile,
-    const size_t sizeOfSchemaInBytes,
-    const std::vector<size_t>& varSizedFieldOffsets)
-{
-    const auto numChildBuffers = numTuplesInChunk * varSizedFieldOffsets.size();
-    writePagedSizeBufferChunkToFile(
-        {.numberOfTuples = numTuplesInChunk,
-         .numberChildBuffers = numChildBuffers,
-         .sequenceNumber = sequenceNumber,
-         .chunkNumber = ChunkNumber::INITIAL},
-        sizeOfSchemaInBytes,
-        pagedSizeBufferChunk,
-        appendFile);
-
-    if (not varSizedFieldOffsets.empty())
-    {
-        for (auto& buffer : pagedSizeBufferChunk)
-        {
-            for (size_t tupleIdx = 0; tupleIdx < buffer.getNumberOfTuples(); ++tupleIdx)
-            {
-                for (const auto& varSizedFieldOffset : varSizedFieldOffsets)
-                {
-                    const auto currentTupleOffset = tupleIdx * sizeOfSchemaInBytes;
-                    const auto currentTupleVarSizedFieldOffset = currentTupleOffset + varSizedFieldOffset;
-                    const VariableSizedAccess varSizedAccess{
-                        *reinterpret_cast<VariableSizedAccess*>(buffer.getAvailableMemoryArea().data() + currentTupleVarSizedFieldOffset)};
-                    const auto variableSizedData = MemoryLayout::readVarSizedDataAsString(buffer, varSizedAccess);
-                    appendFile.write(variableSizedData.data(), static_cast<std::streamsize>(variableSizedData.size()));
-                }
-            }
-        }
-    }
-}
-
-struct TupleBufferChunk
-{
-    size_t lastBufferInChunkIdx;
-    size_t numTuplesInChunk = 0;
-};
-
 inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
 {
     std::ranges::sort(
@@ -187,131 +190,76 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
         });
 }
 
-inline void writeTupleBuffersToFile(
-    std::vector<TupleBuffer>& resultBufferVec,
-    const Schema& schema,
-    const std::filesystem::path& actualResultFilePath,
-    const std::vector<size_t>& varSizedFieldOffsets)
+inline void writeTupleBuffersToFile(std::vector<TupleBuffer>& resultBufferVec, const std::filesystem::path& actualResultFilePath)
 {
     sortTupleBuffers(resultBufferVec);
-    const auto sizeOfSchemaInBytes = schema.getSizeOfSchemaInBytes();
-
-    const std::vector<TupleBufferChunk> pagedSizedChunkOffsets
-        = [](const std::vector<TupleBuffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
+    auto file = createFile(actualResultFilePath, FileOpenMode::TRUNCATE);
+    BinaryFileHeader{.numberOfBuffers = resultBufferVec.size()}.serialize(file);
+    for (const auto& buffer : resultBufferVec)
     {
-        size_t numBytesInNextChunk = 0;
-        size_t numTuplesInNextChunk = 0;
-        std::vector<TupleBufferChunk> offsets;
-        for (const auto& [bufferIdx, buffer] : resultBufferVec | NES::views::enumerate)
+        BinaryBufferHeader{
+            .numberOfTuples = buffer.getNumberOfTuples(),
+            .bufferSize = buffer.getAvailableMemoryArea().size(),
+            .numberChildBuffers = buffer.getNumberOfChildBuffers(),
+            .sequenceNumber = buffer.getSequenceNumber().getRawValue(),
+            .chunkNumber = buffer.getChunkNumber().getRawValue()}
+            .serialize(file);
+        file.write(buffer.getAvailableMemoryArea<const char>().data(), buffer.getAvailableMemoryArea().size());
+        for (size_t childIndex = 0; childIndex < buffer.getNumberOfChildBuffers(); childIndex++)
         {
-            if (const auto sizeOfCurrentBufferInBytes = buffer.getNumberOfTuples() * sizeOfSchemaInBytes;
-                numBytesInNextChunk + sizeOfCurrentBufferInBytes > 4096)
-            {
-                offsets.emplace_back(bufferIdx, numTuplesInNextChunk);
-                numBytesInNextChunk = buffer.getNumberOfTuples() * sizeOfSchemaInBytes;
-                numTuplesInNextChunk = buffer.getNumberOfTuples();
-            }
-            else
-            {
-                numBytesInNextChunk += sizeOfCurrentBufferInBytes;
-                numTuplesInNextChunk += buffer.getNumberOfTuples();
-            }
+            auto child = buffer.loadChildBuffer(childIndex);
+            BinaryChildBufferHeader{.bufferSize = child.getAvailableMemoryArea().size()}.serialize(file);
+            file.write(child.getAvailableMemoryArea<const char>().data(), child.getAvailableMemoryArea().size());
         }
-        offsets.emplace_back(resultBufferVec.size(), numTuplesInNextChunk);
-        return offsets;
-    }(resultBufferVec, sizeOfSchemaInBytes);
-
-    writeFileHeaderToFile({.numberOfBuffers = pagedSizedChunkOffsets.size()}, actualResultFilePath);
-    auto appendFile = createFile(actualResultFilePath, FileOpenMode::APPEND);
-
-    size_t nextChunkStart = 0;
-    size_t nextChunkSequenceNumber = SequenceNumber::INITIAL;
-    for (const auto& [lastBufferIdxInChunk, numTuplesInChunk] : pagedSizedChunkOffsets)
-    {
-        const auto nextChunk = std::span(resultBufferVec).subspan(nextChunkStart, lastBufferIdxInChunk - nextChunkStart);
-        writePagedSizeTupleBufferChunkToFile(
-            nextChunk, nextChunkSequenceNumber, numTuplesInChunk, appendFile, sizeOfSchemaInBytes, varSizedFieldOffsets);
-        nextChunkStart = lastBufferIdxInChunk;
-        ++nextChunkSequenceNumber;
     }
-    appendFile.close();
+
+    file.close();
 }
 
-inline void updateChildBufferIdx(
-    TupleBuffer& parentBuffer,
-    const VariableSizedAccess varSizedAccess,
-    const std::vector<size_t>& varSizedFieldOffsets,
-    const size_t sizeOfSchemaInBytes)
+inline std::vector<TupleBuffer> loadTupleBuffersFromFile(AbstractBufferProvider& bufferProvider, const std::filesystem::path& filepath)
 {
-    /// Write index of child buffer that 'parentBuffer' returned to the corresponding place in the parent buffer
-    const auto tupleIdx = varSizedAccess.getIndex() / varSizedFieldOffsets.size();
-    const auto tupleByteOffset = tupleIdx * sizeOfSchemaInBytes;
-    const size_t varSizedOffsetIdx = varSizedAccess.getIndex() % varSizedFieldOffsets.size();
-    const auto varSizedOffset = varSizedFieldOffsets.at(varSizedOffsetIdx) + tupleByteOffset;
-    const auto combinedIndexOffset = varSizedAccess.getCombinedIdxOffset();
-    const auto combinedIndexOffsetBytes = std::as_bytes(std::span{&combinedIndexOffset, 1});
-    std::ranges::copy(combinedIndexOffsetBytes, parentBuffer.getAvailableMemoryArea().begin() + varSizedOffset);
-}
-
-inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
-    AbstractBufferProvider& bufferProvider,
-    const Schema& schema,
-    const std::filesystem::path& filepath,
-    const std::vector<size_t>& varSizedFieldOffsets)
-{
-    const auto sizeOfSchemaInBytes = schema.getSizeOfSchemaInBytes();
-    if (std::ifstream file(filepath, std::ifstream::binary); file.is_open())
+    auto allocateBuffer = [&](size_t bufferSize)
     {
-        const auto fileHeader = [](std::ifstream& file, const std::filesystem::path& filepath)
+        if (bufferSize == bufferProvider.getBufferSize())
         {
-            BinaryFileHeader tmpFileHeader;
-            if (file.read(reinterpret_cast<char*>(&tmpFileHeader), sizeof(BinaryFileHeader)))
-            {
-                return tmpFileHeader;
-            }
-            throw FormattingError("Failed to read file header from file: {}", filepath.string());
-        }(file, filepath);
-
-        std::vector<TupleBuffer> expectedResultBuffers(fileHeader.numberOfBuffers);
-        for (size_t bufferIdx = 0; bufferIdx < fileHeader.numberOfBuffers; ++bufferIdx)
-        {
-            const auto bufferHeader = [](std::ifstream& file)
-            {
-                BinaryBufferHeader header;
-                file.read(std::bit_cast<char*>(&header), sizeof(BinaryBufferHeader));
-                return header;
-            }(file);
-
-            auto parentBuffer = bufferProvider.getBufferBlocking();
-            const auto numBytesInBuffer = bufferHeader.numberOfTuples * sizeOfSchemaInBytes;
-            file.read(parentBuffer.getAvailableMemoryArea<char>().data(), static_cast<std::streamsize>(numBytesInBuffer));
-
-            for (size_t tupleIdx = 0; tupleIdx < bufferHeader.numberOfTuples; ++tupleIdx)
-            {
-                for (const auto& varSizedOffset : varSizedFieldOffsets)
-                {
-                    const auto childBufferOffset = (tupleIdx * sizeOfSchemaInBytes) + varSizedOffset;
-                    const auto varSizedAccess
-                        = reinterpret_cast<VariableSizedAccess*>(parentBuffer.getAvailableMemoryArea().data() + childBufferOffset);
-                    if (auto nextChildBuffer = bufferProvider.getUnpooledBuffer(varSizedAccess->getSize().getRawSize()))
-                    {
-                        file.read(nextChildBuffer.value().getAvailableMemoryArea<char>().data(), varSizedAccess->getSize().getRawSize());
-
-                        const auto newChildBufferIdx = parentBuffer.storeChildBuffer(nextChildBuffer.value());
-                        *varSizedAccess = VariableSizedAccess{newChildBufferIdx, VariableSizedAccess::Offset(0), varSizedAccess->getSize()};
-                        continue;
-                    }
-                    throw BufferAllocationFailure("Failed to get unpooled buffer");
-                }
-            }
-            parentBuffer.setNumberOfTuples(bufferHeader.numberOfTuples);
-            parentBuffer.setSequenceNumber(SequenceNumber(bufferHeader.sequenceNumber));
-            parentBuffer.setChunkNumber(ChunkNumber(bufferHeader.chunkNumber));
-            expectedResultBuffers.at(bufferIdx) = std::move(parentBuffer);
+            return bufferProvider.getBufferBlocking();
         }
-        file.close();
-        return expectedResultBuffers;
+        return bufferProvider.getUnpooledBuffer(bufferSize).value();
+    };
+
+    std::ifstream file(filepath);
+    if (!file)
+    {
+        return {};
     }
-    throw InvalidConfigParameter("Invalid filepath: {}", filepath.string());
+
+    auto buffers = std::vector<TupleBuffer>();
+    BinaryFileHeader header{};
+    header.deserialize(file);
+
+    buffers.reserve(header.numberOfBuffers);
+
+    for (size_t bufferIdx = 0; bufferIdx < header.numberOfBuffers; bufferIdx++)
+    {
+        BinaryBufferHeader bufferHeader{};
+        bufferHeader.deserialize(file);
+
+        auto buffer = allocateBuffer(bufferHeader.bufferSize);
+        buffer.setChunkNumber(ChunkNumber(bufferHeader.chunkNumber));
+        buffer.setSequenceNumber(SequenceNumber(bufferHeader.sequenceNumber));
+        buffer.setNumberOfTuples(bufferHeader.numberOfTuples);
+        file.read(buffer.getAvailableMemoryArea<char>().data(), bufferHeader.bufferSize);
+        for (size_t childBufferIndex = 0; childBufferIndex < bufferHeader.numberChildBuffers; childBufferIndex++)
+        {
+            BinaryChildBufferHeader childBufferHeader{};
+            childBufferHeader.deserialize(file);
+            auto child = allocateBuffer(childBufferHeader.bufferSize);
+            file.read(child.getAvailableMemoryArea<char>().data(), childBufferHeader.bufferSize);
+            [[maybe_unused]] auto index = buffer.storeChildBuffer(child);
+        }
+        buffers.emplace_back(std::move(buffer));
+    }
+
+    return buffers;
 }
 }
