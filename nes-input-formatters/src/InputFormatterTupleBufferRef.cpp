@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 
 #include <memory>
 #include <ostream>
