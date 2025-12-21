@@ -49,13 +49,13 @@ public:
     static constexpr auto maxUI16Plus1 = static_cast<uint32_t>(std::numeric_limits<uint16_t>::max()) + 1;
     static constexpr auto maxUI32Plus1 = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1;
 
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("VarValTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup VarValTest class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down VarValTest class."); }
+    static void TearDownTestSuite() { NES_INFO("Tear down VarValTest class."); }
 };
 
 TEST_F(VarValTest, SimpleConstruction)

@@ -25,6 +25,6 @@ class NonZeroValidation : public ConfigurationValidation
 {
 public:
     /// @brief Method to check the validity of a parameter as a non-negative non-zero integer
-    bool isValid(const std::string& number) const override;
+    bool isValid(const std::string& parameter) const override;
 };
 }

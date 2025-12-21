@@ -35,7 +35,7 @@ public:
 
     grpc::Status RequestQueryStatus(grpc::ServerContext*, const QueryStatusRequest*, QueryStatusReply*) override;
 
-    grpc::Status RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* response) override;
+    grpc::Status RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* reply) override;
 
     explicit GRPCServer(SingleNodeWorker&& delegate) : delegate(std::move(delegate)) { }
 

@@ -40,13 +40,13 @@ class VariableSizedDataTest : public Testing::BaseUnitTest
 public:
     static constexpr auto sizeOfLengthInBytes = 4;
 
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("VariableSizedDataTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup VariableSizedDataTest class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down VariableSizedDataTest class."); }
+    static void TearDownTestSuite() { NES_INFO("Tear down VariableSizedDataTest class."); }
 
     static std::vector<int8_t> createVariableSizedRandomData(uint32_t size)
     {

@@ -46,7 +46,7 @@ private:
     uint64_t operatorBufferSize{};
 
     /// Used internally to flip the plan from sink->source tstatic o source->sink
-    static Roots flip(const Roots& roots);
+    static Roots flip(const Roots& rootOperators);
 };
 
 }

@@ -21,5 +21,5 @@
 namespace NES::QueryCompilation::PipeliningPhase
 {
 /// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
-std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& queryPlan);
+std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan);
 }

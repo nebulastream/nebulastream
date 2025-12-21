@@ -28,7 +28,7 @@ namespace NES
 class ThreadNamingTest : public Testing::BaseUnitTest
 {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("ThreadNamingTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("ThreadNamingTest test class SetUpTestCase.");

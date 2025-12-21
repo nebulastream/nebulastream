@@ -49,7 +49,7 @@ public:
     Schema schema, varSizedDataSchema;
     std::unique_ptr<TestTupleBuffer> testBuffer, testBufferVarSize;
 
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("TestTupleBufferTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup TestTupleBufferTest test class.");

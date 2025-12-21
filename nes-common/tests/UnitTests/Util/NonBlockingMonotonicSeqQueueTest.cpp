@@ -49,7 +49,7 @@ class NonBlockingMonotonicSeqQueueTest : public Testing::BaseUnitTest
 {
 public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("NonBlockingMonotonicSeqQueueTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup NonBlockingMonotonicSeqQueueTest test class.");

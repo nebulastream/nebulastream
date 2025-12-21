@@ -119,7 +119,7 @@ class SmallFilesTest : public Testing::BaseUnitTest
     SourceCatalog sourceCatalog;
 
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("InputFormatterTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup InputFormatterTest test class.");

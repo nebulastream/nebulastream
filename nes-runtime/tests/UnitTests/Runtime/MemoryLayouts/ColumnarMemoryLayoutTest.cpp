@@ -41,7 +41,7 @@ public:
     std::mt19937 rng;
     std::uniform_int_distribution<std::mt19937::result_type> dist;
 
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("ColumnarMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup ColumnarMemoryLayoutTest test class.");

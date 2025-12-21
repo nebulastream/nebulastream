@@ -25,6 +25,6 @@ class BooleanValidation : public ConfigurationValidation
 {
 public:
     /// @brief Method to check the validity of a parameter as a bool
-    bool isValid(const std::string& boolean) const override;
+    bool isValid(const std::string& parameter) const override;
 };
 }

@@ -338,11 +338,11 @@ using SourceStops = EmittedTask<SourceStopArgs, OriginId>;
 
 template <>
 template <typename... TArgs>
-std::unique_ptr<SourceStops> SourceStops::setup(const RangeOf<OriginId> auto& originIds, TArgs&&... args)
+std::unique_ptr<SourceStops> SourceStops::setup(const RangeOf<OriginId> auto& stages, TArgs&&... args)
 {
     auto setups = std::make_unique<SourceStops>();
     auto& controller = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
-    for (auto originId : originIds)
+    for (auto originId : stages)
     {
         EXPECT_CALL(controller, initializeSourceStop(::testing::_, ::testing::_, ::testing::_))
             .WillOnce(

@@ -35,13 +35,13 @@ namespace NES::Systest
 class SystestParserTest : public Testing::BaseUnitTest
 {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("SystestParserTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SystestParserTest test class.");
     }
 
-    static void TearDownTestCase() { NES_DEBUG("Tear down SystestParserTest test class."); }
+    static void TearDownTestSuite() { NES_DEBUG("Tear down SystestParserTest test class."); }
 };
 
 TEST_F(SystestParserTest, testEmptyFile)

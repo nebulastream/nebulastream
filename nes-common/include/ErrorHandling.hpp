@@ -162,7 +162,7 @@ Exception wrapExternalException(std::string contextMsg);
 [[nodiscard]] ErrorCode getCurrentErrorCode();
 
 [[nodiscard]] std::optional<ErrorCode> errorCodeExists(uint64_t code) noexcept;
-[[nodiscard]] std::optional<ErrorCode> errorTypeExists(std::string_view name) noexcept;
+[[nodiscard]] std::optional<ErrorCode> errorTypeExists(std::string_view codeOrTypeStr) noexcept;
 }
 
 namespace fmt

@@ -28,7 +28,7 @@ public:
     static PhysicalFunction lowerFunction(LogicalFunction logicalFunction);
 
 private:
-    static PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);
+    static PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction);
 };
 
 }

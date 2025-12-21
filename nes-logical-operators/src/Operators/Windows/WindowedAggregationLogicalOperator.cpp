@@ -222,9 +222,10 @@ std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> WindowedAggregati
     return aggregationFunctions;
 }
 
-void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> wa)
+void WindowedAggregationLogicalOperator::setWindowAggregation(
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation)
 {
-    aggregationFunctions = std::move(wa);
+    aggregationFunctions = std::move(windowAggregation);
 }
 
 std::shared_ptr<Windowing::WindowType> WindowedAggregationLogicalOperator::getWindowType() const
@@ -232,9 +233,9 @@ std::shared_ptr<Windowing::WindowType> WindowedAggregationLogicalOperator::getWi
     return windowType;
 }
 
-void WindowedAggregationLogicalOperator::setWindowType(std::shared_ptr<Windowing::WindowType> wt)
+void WindowedAggregationLogicalOperator::setWindowType(std::shared_ptr<Windowing::WindowType> windowType)
 {
-    windowType = std::move(wt);
+    this->windowType = std::move(windowType);
 }
 
 std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getGroupingKeys() const

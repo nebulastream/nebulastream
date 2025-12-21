@@ -37,7 +37,7 @@ class RowMemoryLayoutTest : public Testing::BaseUnitTest
 public:
     std::shared_ptr<BufferManager> bufferManager;
 
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("RowMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup RowMemoryLayoutTest test class.");

@@ -31,7 +31,7 @@ namespace NES
 class SpecificSequenceTest : public Testing::BaseUnitTest
 {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("InputFormatterTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup InputFormatterTest test class.");

@@ -31,13 +31,13 @@ namespace NES
 class SchemaTest : public Testing::BaseUnitTest
 {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("SchemaTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("SchemaTest test class SetUpTestCase.");
     }
 
-    static void TearDownTestCase() { NES_INFO("SchemaTest test class TearDownTestCase."); }
+    static void TearDownTestSuite() { NES_INFO("SchemaTest test class TearDownTestCase."); }
 
     auto getRandomFields(const auto numberOfFields)
     {

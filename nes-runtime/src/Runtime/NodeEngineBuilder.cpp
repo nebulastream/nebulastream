@@ -27,8 +27,8 @@ namespace NES
 {
 
 
-NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticsListener)
-    : workerConfiguration(workerConfiguration), statisticsListener(std::move(statisticsListener))
+NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticListener)
+    : workerConfiguration(workerConfiguration), statisticsListener(std::move(statisticListener))
 {
 }
 

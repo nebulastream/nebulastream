@@ -133,8 +133,8 @@ void EmitPhysicalOperator::emitRecordBuffer(
     ctx.emitBuffer(recordBuffer);
 }
 
-EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
-    : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
+EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef)
+    : bufferRef(std::move(bufferRef)), operatorHandlerId(operatorHandlerId)
 {
 }
 

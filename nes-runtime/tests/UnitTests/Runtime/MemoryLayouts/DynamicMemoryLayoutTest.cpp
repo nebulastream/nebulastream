@@ -40,7 +40,7 @@ public:
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("DynamicMemoryLayoutTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");

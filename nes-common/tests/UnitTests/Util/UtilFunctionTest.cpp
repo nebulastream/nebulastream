@@ -26,13 +26,13 @@ namespace NES
 class UtilFunctionTest : public Testing::BaseUnitTest
 {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Logger::setupLogging("UtilFunctionTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("UtilFunctionTest test class SetUpTestCase.");
     }
 
-    static void TearDownTestCase() { NES_INFO("UtilFunctionTest test class TearDownTestCase."); }
+    static void TearDownTestSuite() { NES_INFO("UtilFunctionTest test class TearDownTestCase."); }
 };
 
 TEST(UtilFunctionTest, replaceNothing)
