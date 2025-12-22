@@ -296,6 +296,7 @@ Supported data types:
 These types match primitive C++ data types.
 The numeric suffix denotes the bit width.
 `VARSIZED` supports arbitrary-length data like strings.
+For output types of arithmetical operations, we stick to the C++ standard, c.f.[Integer Promotions](https://en.cppreference.com/w/cpp/language/implicit_conversion.html#Integer_promotions) and [Conversion Ranks](https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions.html#Integer_conversion_rank).
 
 ---
 
