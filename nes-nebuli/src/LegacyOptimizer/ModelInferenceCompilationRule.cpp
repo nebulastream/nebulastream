@@ -19,7 +19,6 @@
 #include <InferModelLogicalOperator.hpp>
 #include <InferModelNameLogicalOperator.hpp>
 #include <ModelCatalog.hpp>
-#include <Operators/SequenceLogicalOperator.hpp>
 
 namespace NES
 {
@@ -39,20 +38,9 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
         auto model = catalog->load(boost::to_upper_copy(name));
         auto inferModel = InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields());
 
-        if (model.getInputShape().front() == 1 && model.getOutputShape().front() == 1)
-        {
-            USED_IN_DEBUG auto shouldReplace = replaceOperator(
+        USED_IN_DEBUG auto shouldReplace = replaceOperator(
             queryPlan, modelNameOperator.getId(), InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields()));
             queryPlan = std::move(shouldReplace.value());
-        }
-        else
-        {
-            queryPlan = replaceSubtree(
-                            queryPlan,
-                            modelNameOperator.getId(),
-                            inferModel.withChildren({SequenceLogicalOperator().withChildren(modelNameOperator.getChildren())}))
-                            .value();
-        }
     }
 }
 

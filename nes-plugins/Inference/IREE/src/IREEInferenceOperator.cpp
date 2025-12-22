@@ -19,7 +19,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <nautilus/function.hpp>
-#include <ranges>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

@@ -72,11 +72,6 @@ WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId opera
 {
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId)
-    : operatorHandlerId(operatorHandlerId)
-{
-}
-
 void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices

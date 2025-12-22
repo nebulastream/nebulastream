@@ -97,6 +97,9 @@ struct ModelMetadataGraph
         boost::read_graphviz(in, graph, dp);
     }
 
+    /// in order to parse the shape of the input/output tensor we rely on the graph of dispatches produced during model compilation
+    /// a more consistent way would be to parse the MLIR produced by the import binary, but this adds a lot of complexity
+    /// the downside of this approach is that the imported object should actually contain dispatches, e.g., multiplication ops
     std::vector<size_t> parseTensorShape(const std::string& label)
     {
         std::regex tensor_regex(R"(tensor<([?0-9x]+)(?:ui8|ui16|ui32|ui64|i8|i16|i32|i64|f32|f64)>)"); // NES-supported numeric types
@@ -122,9 +125,12 @@ struct ModelMetadataGraph
         return result;
     }
 
+    /// if an input and/or output type specified by the user is varsized, we still need to know the numeric C++ type for the tensor
+    /// we parse it from the same graph of dispatches as in the shape parsing case
+    /// unfortunately, in this case the parsed data type is not always the same as in the generated MLIR, but generally they map 1 to 1
     std::string parseTensorDtype(const std::string& label)
     {
-        std::regex tensor_regex(R"(tensor<([?0-9x]+)x(ui8|ui16|ui32|ui64|i8|i16|i32|i64|f32|f64)>)"); // NES-supported numeric types
+        std::regex tensor_regex(R"(tensor<([?0-9x]+)x(ui8|ui16|ui32|ui64|si8|si16|si32|si64|f32|f64)>)"); // NES-supported numeric types
         std::smatch match;
         std::string dtype;
         if (std::regex_search(label, match, tensor_regex))
@@ -134,6 +140,8 @@ struct ModelMetadataGraph
         return dtype;
     }
 
+    /// inference operation is expressed as a function, and IREE runtime needs to know what function to invoke during execution
+    /// the required function is usually easy to parse based on the simple regex, even if the IR contains some other utility functions
     std::string parseFunctionName(const std::string& label)
     {
         std::regex graph_name_regex(R"(@([a-zA-Z0-9_]+)\$)");

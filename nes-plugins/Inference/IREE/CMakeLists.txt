@@ -11,15 +11,3 @@
 # limitations under the License.
 
 add_subdirectory(src)
-
-add_plugin(ArgMax LogicalFunction nes-logical-operators ArgMaxLogicalFunction.cpp)
-add_plugin(ArgMax PhysicalFunction nes-physical-operators ArgMaxExecutableFunction.cpp)
-
-add_plugin(MaxValue LogicalFunction nes-logical-operators MaxValueLogicalFunction.cpp)
-add_plugin(MaxValue PhysicalFunction nes-physical-operators MaxValueExecutableFunction.cpp)
-
-add_plugin(iris_label LogicalFunction nes-logical-operators IrisLabelLogicalFunction.cpp)
-add_plugin(iris_label PhysicalFunction nes-physical-operators IrisLabelExecutableFunction.cpp)
-
-add_plugin(SpeechRecognitionLabel LogicalFunction nes-logical-operators SpeechRecognitionLabelLogicalFunction.cpp)
-add_plugin(SpeechRecognitionLabel PhysicalFunction nes-physical-operators SpeechRecognitionLabelExecutableFunction.cpp)
