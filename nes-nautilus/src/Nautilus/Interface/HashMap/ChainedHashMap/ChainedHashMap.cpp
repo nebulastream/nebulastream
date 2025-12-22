@@ -271,7 +271,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     if (numberOfTuples() % entriesPerPage() == 0)
     {
         // create new page and add it as the last page in the linked list
-        auto newPage = appendPage(bufferProvider);
+        auto newPageIndex = appendPage(bufferProvider);
     }
 
     /// 2. Finding the new entry
@@ -309,12 +309,6 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         newEntry->next = oldValue;
         mainBufferPointer[Metadata::CHAINS_BEGIN_POS + entryPos] = newEntry;
     }
-
-    /// 4. Updating the chain and the current size
-    // auto* const oldValue = entries[entryPos];
-    // newEntry->next = oldValue;
-    // entries[entryPos] = newEntry;
-    // this->numberOfTuples++;
     auto numTuplesPointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
     numTuplesPointer[Metadata::NUM_PAGES_POS]++;
     return newEntry;

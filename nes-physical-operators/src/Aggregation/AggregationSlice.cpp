@@ -47,8 +47,7 @@ HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) co
         return nullptr;
     }
     auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
-    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
-    return childBufferMemoryArea[0];
+    return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
 HashMap* AggregationSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
@@ -61,9 +60,7 @@ HashMap* AggregationSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferP
     {
         // create child buffer for this worker
         auto childBuffer = bufferProvider->getBufferBlocking();
-        // create a chained hash map into the child buffer
-        auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
-        childBufferMemoryArea[0] = new ChainedHashMap(bufferProvider,
+        new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
             createNewHashMapSliceArgs.keySize,
             createNewHashMapSliceArgs.valueSize,
             createNewHashMapSliceArgs.numberOfBuckets,
@@ -72,11 +69,10 @@ HashMap* AggregationSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferP
         const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
         // store the childbufferindex into the mainBuffer header file
         basePointer[pos] = childBufferIndex;
-
     }
+    // return pointer to the hash map object
     auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
-    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
-    return childBufferMemoryArea[0];
+    return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
 }
