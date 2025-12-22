@@ -91,8 +91,6 @@ ChainedHashMap::ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t 
     basePointer[Metadata::ENTRIES_PER_PAGE_POS] = entriesPerPage;
     basePointer[Metadata::NUM_TUPLES_POS] = 0;
     basePointer[Metadata::MASK_POS] = numberOfChains - 1;
-    auto entriesPointer = basePointer.subspan(Metadata::CHAINS_BEGIN_POS, numberOfChains - 1);
-    std::ranges::fill(entriesPointer, 0);
     // num pages
     basePointer[Metadata::NUM_PAGES_POS] = 0;
     auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
@@ -101,6 +99,9 @@ ChainedHashMap::ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t 
     indexPointer[Metadata::VARSIZED_SPACE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
     indexPointer[Metadata::STORAGE_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
     indexPointer[Metadata::VARSIZED_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    // entries
+    auto entriesPointer = basePointer.subspan(Metadata::CHAINS_BEGIN_POS, numberOfChains - 1);
+    std::ranges::fill(entriesPointer, 0);
 }
 
 ChainedHashMap::ChainedHashMap(AbstractBufferProvider* bufferProvider, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
@@ -139,17 +140,18 @@ ChainedHashMap::ChainedHashMap(AbstractBufferProvider* bufferProvider, const uin
     basePointer[Metadata::ENTRIES_PER_PAGE_POS] = entriesPerPage;
     basePointer[Metadata::NUM_TUPLES_POS] = 0;
     basePointer[Metadata::MASK_POS] = numberOfChains - 1;
-    auto entriesPointer = basePointer.subspan(Metadata::CHAINS_BEGIN_POS, numberOfChains - 1);
-    std::ranges::fill(entriesPointer, 0);
     // num pages
     basePointer[Metadata::NUM_PAGES_POS] = 0;
     // child buffer indices pointer
     auto indexPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    // initialize child buffer indices
+    // child buffer indices
     indexPointer[Metadata::STORAGE_SPACE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
     indexPointer[Metadata::VARSIZED_SPACE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
     indexPointer[Metadata::STORAGE_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
     indexPointer[Metadata::VARSIZED_SPACE_LAST_PAGE_INDEX_POS] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+    // entries
+    auto entriesPointer = basePointer.subspan(Metadata::CHAINS_BEGIN_POS, numberOfChains - 1);
+    std::ranges::fill(entriesPointer, 0);
 }
 
 std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguration(AbstractBufferProvider* bufferProvider, const ChainedHashMap& other)
@@ -314,10 +316,11 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     return newEntry;
 }
 
+/// Not working as is. It should return the page child buffer index and loaded out of here
 const TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
     PRECONDITION(pageIndex < getNumberOfPages(), "Page index {} is greater than the number of pages {}", pageIndex, getNumberOfPages());
-    auto currPage = mainBuffer.loadChildBuffer(storageSpaceChildBufferIndex());
+    TupleBuffer currPage = mainBuffer.loadChildBuffer(storageSpaceChildBufferIndex());
     for (uint64_t i=1; i<pageIndex; i++)
     {
         auto nextChildBufferIndex = currPage.getAvailableMemoryArea<VariableSizedAccess::Index>()[0];
