@@ -41,7 +41,7 @@ LessEqualsPhysicalFunction::LessEqualsPhysicalFunction(PhysicalFunction leftPhys
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterLessEqualsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two sub-functions");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two child functions");
     return LessEqualsPhysicalFunction(
         physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
