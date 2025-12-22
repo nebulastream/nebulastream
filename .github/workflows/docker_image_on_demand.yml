@@ -14,18 +14,9 @@ on:
         default: 'main'
 
 jobs:
-  get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      branch-name: ${{ inputs.branch }}
-      ref: ${{ inputs.branch }}
-
   create_image:
-    needs: [ get-dev-images ]
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
       head_sha: ${{ inputs.branch }}
       dockerhub-tag: ${{ inputs.branch }}
-      dev_image_tag: ${{needs.get-dev-images.outputs.image-tag}}
