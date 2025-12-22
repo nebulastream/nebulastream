@@ -25,7 +25,6 @@
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
-#include <InferenceConfiguration.hpp>
 
 namespace NES
 {
@@ -85,8 +84,6 @@ public:
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
-    Configurations::InferenceConfiguration inferenceConfiguration = {"inference", "ML Inference Configuration"};
-
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -97,8 +94,7 @@ private:
             &joinStrategy,
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
-            &operatorBufferSize,
-            &inferenceConfiguration};
+            &operatorBufferSize};
     }
 };
 

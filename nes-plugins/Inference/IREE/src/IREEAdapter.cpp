@@ -37,26 +37,23 @@ iree_const_byte_span_t asIREESpan(std::span<const std::byte> span)
 }
 }
 
-void IREEAdapter::initializeModel(Nebuli::Inference::Model& model, uint64_t batch_size)
+void IREEAdapter::initializeModel(Nebuli::Inference::Model& model)
 {
     this->runtimeWrapper = IREERuntimeWrapper();
     runtimeWrapper.setup(asIREESpan(model.getByteCode()));
 
     auto inputShape = model.getInputShape();
-    inputShape[0] = batch_size;
     runtimeWrapper.setInputShape(inputShape);
 
     runtimeWrapper.setNDim(model.getNDim());
     this->functionName = model.getFunctionName();
 
-    auto inputSize = model.inputSize() * batch_size;
     this->inputData = std::make_unique<std::byte[]>(inputSize);
-    this->inputSize = inputSize;
+    this->inputSize = model.inputSize();
     runtimeWrapper.setInputDtype(dtypeMap.at(model.getInputDtype()));
 
-    auto outputSize = model.outputSize() * batch_size;
     this->outputData = std::make_unique<std::byte[]>(outputSize);
-    this->outputSize = outputSize;
+    this->outputSize = model.outputSize();
     runtimeWrapper.setOutputDtype(dtypeMap.at(model.getOutputDtype()));
 }
 

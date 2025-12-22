@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-#include <PredictionCacheOperatorHandler.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Model.hpp>
@@ -23,44 +22,16 @@
 namespace NES
 {
 class IREEAdapter;
-class IREEInferenceOperatorHandler : public OperatorHandler, public PredictionCacheOperatorHandler
+class IREEInferenceOperatorHandler : public OperatorHandler
 {
 public:
     IREEInferenceOperatorHandler(Nebuli::Inference::Model model);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
-    void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
+    void stop(QueryTerminationType, PipelineExecutionContext&) override;
 
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
     [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter(WorkerThreadId threadId) const;
-    void allocatePredictionCacheEntries(
-        const uint64_t sizeOfEntry, const uint64_t numberOfEntries, AbstractBufferProvider* bufferProvider) override;
-
-    struct StartPredictionCacheEntriesIREEInference final : StartPredictionCacheEntriesArgs
-    {
-        explicit StartPredictionCacheEntriesIREEInference(const WorkerThreadId workerThreadId)
-            : StartPredictionCacheEntriesArgs(workerThreadId)
-        {
-        }
-
-        StartPredictionCacheEntriesIREEInference(StartPredictionCacheEntriesIREEInference&& other) = default;
-        StartPredictionCacheEntriesIREEInference& operator=(StartPredictionCacheEntriesIREEInference&& other) = default;
-
-        StartPredictionCacheEntriesIREEInference(const StartPredictionCacheEntriesIREEInference& other)
-            : StartPredictionCacheEntriesArgs(other.workerThreadId)
-        {
-        }
-
-        StartPredictionCacheEntriesIREEInference& operator=(const StartPredictionCacheEntriesIREEInference& other)
-        {
-            workerThreadId = other.workerThreadId;
-            return *this;
-        };
-
-        ~StartPredictionCacheEntriesIREEInference() override = default;
-    };
-
-    const int8_t* getStartOfPredictionCacheEntries(const StartPredictionCacheEntriesArgs& startPredictionCacheEntriesArgs) const override;
 
 private:
     Nebuli::Inference::Model model;

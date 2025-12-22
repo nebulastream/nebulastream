@@ -30,7 +30,7 @@ public:
 
     IREEAdapter() = default;
 
-    void initializeModel(Nebuli::Inference::Model& model, uint64_t batch_size);
+    void initializeModel(Nebuli::Inference::Model& model);
 
     template <class T>
     void addModelInput(size_t index, T value)
@@ -69,22 +69,20 @@ public:
     size_t inputSize;
     size_t outputSize;
 
-    uint64_t misses;
-
 private:
     std::string functionName;
     IREERuntimeWrapper runtimeWrapper;
-    std::unordered_map<NES::DataType, iree_hal_element_types_t> dtypeMap = {
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT8), IREE_HAL_ELEMENT_TYPE_UINT_8},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16), IREE_HAL_ELEMENT_TYPE_UINT_16},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32), IREE_HAL_ELEMENT_TYPE_UINT_32},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32), IREE_HAL_ELEMENT_TYPE_UINT_64},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT8), IREE_HAL_ELEMENT_TYPE_INT_8},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT16), IREE_HAL_ELEMENT_TYPE_INT_16},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32), IREE_HAL_ELEMENT_TYPE_INT_32},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32), IREE_HAL_ELEMENT_TYPE_INT_64},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32), IREE_HAL_ELEMENT_TYPE_FLOAT_32},
-        {NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64), IREE_HAL_ELEMENT_TYPE_FLOAT_64},
+    std::unordered_map<DataType, iree_hal_element_types_t> dtypeMap = {
+        {DataTypeProvider::provideDataType(DataType::Type::UINT8), IREE_HAL_ELEMENT_TYPE_UINT_8},
+        {DataTypeProvider::provideDataType(DataType::Type::UINT16), IREE_HAL_ELEMENT_TYPE_UINT_16},
+        {DataTypeProvider::provideDataType(DataType::Type::UINT32), IREE_HAL_ELEMENT_TYPE_UINT_32},
+        {DataTypeProvider::provideDataType(DataType::Type::UINT64), IREE_HAL_ELEMENT_TYPE_UINT_64},
+        {DataTypeProvider::provideDataType(DataType::Type::INT8), IREE_HAL_ELEMENT_TYPE_INT_8},
+        {DataTypeProvider::provideDataType(DataType::Type::INT16), IREE_HAL_ELEMENT_TYPE_INT_16},
+        {DataTypeProvider::provideDataType(DataType::Type::INT32), IREE_HAL_ELEMENT_TYPE_INT_32},
+        {DataTypeProvider::provideDataType(DataType::Type::INT64), IREE_HAL_ELEMENT_TYPE_INT_64},
+        {DataTypeProvider::provideDataType(DataType::Type::FLOAT32), IREE_HAL_ELEMENT_TYPE_FLOAT_32},
+        {DataTypeProvider::provideDataType(DataType::Type::FLOAT64), IREE_HAL_ELEMENT_TYPE_FLOAT_64},
     };
 };
 

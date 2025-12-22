@@ -75,6 +75,8 @@ inline Model ModelCatalog::load(const std::string modelName) const
                                         { return std::pair<std::string, DataType>{schemaField.name, schemaField.dataType}; })
                 | std::ranges::to<std::vector>();
 
+            /// if we didn't manage to parse the data type, we rely on the user-provided types
+            /// we take the data type of the first field, because it must be the same for all the fields
             if (result->inputDtype.type == DataType::Type::UNDEFINED
                 || (result->inputs.at(0).type != DataType::Type::VARSIZED
                     && result->inputDtype.type != result->inputs.at(0).type))
