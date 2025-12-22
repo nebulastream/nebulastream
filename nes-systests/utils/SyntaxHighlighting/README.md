@@ -14,4 +14,10 @@ To import the syntax highlighting settings in CLion, follow these steps:
 6. Click OK to proceed.
 7. Restart CLion to apply the new syntax highlighting settings.
 
+To update the syntax highlighting settings the `filetypes/System-level test.xml` file within the zip must be edited by
+adding or subtracting keywords from the asorted lists. Each list uses a different color within the editor (see below)  
+
+After modifying the grammar the settings can be updated automatically by running the `updateHighlight.py` script, providing the `.g4` grammar file and the previous `Clion.zip` settings  
+
+
 ![Syntax Highlighting in Clion](syntaxHighlighting.png)
