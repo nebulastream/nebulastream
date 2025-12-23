@@ -43,54 +43,68 @@ query: |
   WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
   HAVING avgSpeed < FLOAT32(40)
   INTO csv_sink;
-  
-sink:
-  name: csv_sink
-  type: File
-  config:
-    inputFormat: CSV
-    filePath: "<path>"
-    append: false
 
-logicalSources:
+sinks:
+  - name: csv_sink
+    schema:
+      - name: lrb$start
+        type: UINT64
+      - name: lrb$end
+        type: UINT64
+      - name: lrb$highway
+        type: INT16
+      - name: lrb$direction
+        type: INT16
+      - name: positionDiv5280
+        type: INT32
+      - name: lrb$avgSpeed
+        type: FLOAT64
+    type: File
+    config:
+      file_path: "<path>"
+      input_format: CSV
+      append: false
+
+logical:
   - name: lrb
     schema:
       - name: creationTS
-        dataType: UINT64
-      - name: vehicle 
-        dataType: INT16
+        type: UINT64
+      - name: vehicle
+        type: INT16
       - name: speed
-        dataType: FLOAT32
+        type: FLOAT32
       - name: highway
-        dataType: INT16
+        type: INT16
       - name: lane
-        dataType: INT16
+        type: INT16
       - name: direction
-        dataType: INT16
+        type: INT16
       - name: position
-        dataType: INT32
-        
-physicalSources:
-  - logicalSource: lrb
-    parserConfig:
+        type: INT32
+
+physical:
+  - logical: lrb
+    parser_config:
       type: CSV
-      tupleDelimiter: "\n"
       fieldDelimiter: ","
-    sourceConfig:
-      type: TCP
-      socketHost: localhost
-      socketPort: 50501
-      socketBufferSize: 65536
-      flushIntervalMS: 100
-      connectTimeoutSeconds: 60
-  - logicalSource: lrb
-    parserConfig:
+    type: TCP
+    source_config:
+      socket_host: localhost
+      socket_port: 50501
+      socket_buffer_size: 65536
+      flush_interval_ms: 100
+      connect_timeout_seconds: 60
+  - logical: lrb
+    host: worker-1:9090
+    parser_config:
       type: JSON
-    sourceConfig:
-      type: File
-      filePath: LRB.json
+    type: File
+    source_config:
+      file_path: LRB.json
+
 ```
-This YAML can be sent to `nebuli` to register or run the query. 
+This YAML can be sent to `nes-cli` to register or run the query.
 Here's the equivalent SQL syntax:
 
 ```sql
@@ -121,16 +135,16 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
 );
 
 CREATE SINK csv_sink(
-  start UINT64,
-  end UINT64,
-  highway INT16,
-  direction INT16,
+  lrb.start UINT64,
+  lrb.end UINT64,
+  lrb.highway INT16,
+  lrb.direction INT16,
   positionDiv5280 INT32,
-  avgSpeed FLOAT32
+  lrb.avgSpeed FLOAT64
 ) TYPE File SET(
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
-  false as `SINK`.APPEND
+  'false' as `SINK`.APPEND
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -241,7 +255,7 @@ CREATE SINK csv_sink(
 ) TYPE File SET(
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
-  false as `SINK`.APPEND
+  'false' as `SINK`.APPEND
 );
 ```
 The sink name (`csv_sink`) must match the name used in the query's `INTO` clause.
