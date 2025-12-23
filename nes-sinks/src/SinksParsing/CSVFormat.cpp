@@ -66,13 +66,24 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
         auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
+                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index) -> std::string
                           {
                               const auto physicalType = formattingContext.physicalTypes[index];
+                              auto fieldValueStart = tuple.subspan(formattingContext.offsets[index], physicalType.getSizeInBytes());
+                              if (physicalType.isNullable)
+                              {
+                                  const bool isNull = static_cast<bool>(fieldValueStart[0]);
+                                  fieldValueStart = fieldValueStart.subspan(1);
+                                  if (isNull)
+                                  {
+                                      /// We need to write null, as otherwise, we can not detect a single null in our output
+                                      return "NULL";
+                                  }
+                              }
+
                               if (physicalType.type == DataType::Type::VARSIZED)
                               {
-                                  const VariableSizedAccess variableSizedAccess{
-                                      *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
+                                  const VariableSizedAccess variableSizedAccess{*std::bit_cast<const uint64_t*>(fieldValueStart.data())};
                                   auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
                                   if (copyOfEscapeStrings)
                                   {
@@ -80,7 +91,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
                                   }
                                   return varSizedData;
                               }
-                              return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
+                              return physicalType.formattedBytesToString(fieldValueStart.data());
                           });
         ss << fmt::format("{}\n", fmt::join(fields, ","));
     }

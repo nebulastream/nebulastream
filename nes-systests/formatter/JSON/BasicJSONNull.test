@@ -1,0 +1,48 @@
+# name: JSON.test
+# description: tests general input formatter behavior
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE jsonStream(KEY UINT64, value UINT64 NULL, name VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStream TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":1, "NAME":"john"}
+{"KEY":1, "VALUE":2, "NAME":"max"}
+
+CREATE LOGICAL SOURCE jsonStreamWithNulls(key UINT64, value UINT64 NULL, name VARSIZED NULL);
+CREATE PHYSICAL SOURCE FOR jsonStreamWithNulls TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":null, "NAME":"john1"}
+{"KEY":2, "VALUE":1}
+{"KEY":3, "VALUE":2, "NAME":"john2"}
+{"KEY":4, "NAME":"max1"}
+{"KEY":5, "NAME":"max2"}
+{"KEY":6, "NAME":null}
+
+
+CREATE SINK keySink(jsonStream.key UINT64) TYPE File;
+CREATE SINK keySinkWithNulls(jsonStreamWithNulls.key UINT64) TYPE File;
+CREATE SINK allFieldsSink(jsonStreamWithNulls.key UINT64, jsonStreamWithNulls.value UINT64 NULL, jsonStreamWithNulls.name VARSIZED NULL) TYPE File;
+
+SELECT KEY FROM jsonStream WHERE NOT ISNULL(value) INTO keySink;
+----
+1
+1
+
+SELECT KEY FROM jsonStreamWithNulls WHERE NOT ISNULL(value) INTO keySinkWithNulls;
+----
+2
+3
+
+SELECT * FROM jsonStreamWithNulls WHERE ISNULL(value) INTO allFieldsSink;
+----
+1,NULL,john1
+4,NULL,max1
+5,NULL,max2
+6,NULL,NULL
+
+
+SELECT * FROM jsonStreamWithNulls WHERE NOT ISNULL(value) INTO allFieldsSink;
+----
+2,1,NULL
+3,2,john2
+

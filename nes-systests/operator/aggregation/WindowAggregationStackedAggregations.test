@@ -1,5 +1,5 @@
 # name: window/WindowAggregationStackedAggregations.test
-# description: Test window aggregations over different data types for (keyed) windows with stacked aggregations
+# description: Test window aggregations over different data types for (keyed) windows with stacked aggregations TODO #1272
 # groups: [Aggregation, WindowOperators, CompilationIntensive]
 
 # Source definitions

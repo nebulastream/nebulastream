@@ -1,5 +1,5 @@
 # name: join/JoinMultipleStreams.test
-# description: Test join operator
+# description: Test join operator TODO #1272
 # groups: [WindowOperators, Join, CompilationIntensive]
 
 # Source definitions

@@ -1,5 +1,5 @@
 # name: differential/AggregationEquivalence.test
-# description: Ensure differential queries agree for logically equivalent aggregation
+# description: Ensure differential queries agree for logically equivalent aggregation TODO #1272
 # groups: [Differential, Aggregation, CompilationIntensive]
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);

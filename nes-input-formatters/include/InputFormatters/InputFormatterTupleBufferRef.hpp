@@ -67,6 +67,11 @@ public:
         std::unreachable();
     }
 
+    [[nodiscard]] std::vector<DataType> getAllDataTypes() const override
+    {
+        INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
+    }
+
     Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const override
     {
         INVARIANT(false, "Does not implement 'readRecord()'");
