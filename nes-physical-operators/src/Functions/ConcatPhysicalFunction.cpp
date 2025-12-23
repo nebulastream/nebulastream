@@ -53,10 +53,7 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     nautilus::val<uint32_t> outIdx{0};
     for (nautilus::val<uint32_t> i = 0; i < leftCount; ++i)
     {
-        nautilus::memcpy(
-            newVarSizeData.getContent() + outIdx * floatSize,
-            leftValue.getContent() + i * floatSize,
-            floatSize);
+        nautilus::memcpy(newVarSizeData.getContent() + outIdx * floatSize, leftValue.getContent() + i * floatSize, floatSize);
         ++outIdx;
 
         nautilus::memcpy(

@@ -19,8 +19,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 
-#include <SerializableVariantDescriptor.pb.h>
 #include <DataTypes/DataType.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES::Nebuli::Inference
 {
@@ -33,11 +33,14 @@ class Model
     {
         std::shared_ptr<std::byte[]> buffer;
         size_t size = 0;
+
         friend bool operator==(const RefCountedByteBuffer& lhs, const RefCountedByteBuffer& rhs)
         {
             return std::ranges::equal(std::span{lhs.buffer.get(), lhs.size}, std::span{rhs.buffer.get(), rhs.size});
         }
+
         friend bool operator!=(const RefCountedByteBuffer& lhs, const RefCountedByteBuffer& rhs) { return !(lhs == rhs); }
+
         std::span<const std::byte> getBuffer() const { return {buffer.get(), size}; }
     };
 
@@ -58,23 +61,29 @@ public:
     Model(std::shared_ptr<std::byte[]> modelByteCode, size_t modelSize) : byteCode(std::move(modelByteCode), modelSize) { }
 
     std::span<const std::byte> getByteCode() const { return byteCode.getBuffer(); }
+
     const std::vector<DataType>& getInputs() const { return inputs; }
+
     const std::vector<std::pair<std::string, DataType>>& getOutputs() const { return outputs; }
 
     bool operator==(const Model&) const = default;
 
     const std::vector<size_t>& getInputShape() const { return inputShape; }
+
     const std::vector<size_t>& getOutputShape() const { return outputShape; }
 
     size_t getNDim() { return inputDims; }
+
     size_t getOutputDims() { return outputDims; }
 
     size_t inputSize() const { return inputSizeInBytes; }
+
     size_t outputSize() const { return outputSizeInBytes; }
 
     const std::string& getFunctionName() { return functionName; }
 
     DataType getInputDtype() const { return inputDtype; }
+
     DataType getOutputDtype() const { return outputDtype; }
 
     friend class ModelCatalog;

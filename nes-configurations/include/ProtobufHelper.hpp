@@ -55,7 +55,6 @@ inline std::ostream& operator<<(std::ostream& os, const UInt64List& descriptor)
     return os << descriptor.DebugString();
 }
 
-
 inline std::ostream& operator<<(std::ostream& os, const SerializableModel& model)
 {
     os << model.DebugString();

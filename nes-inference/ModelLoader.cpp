@@ -53,6 +53,7 @@ namespace
 struct Tool
 {
     Tool(const std::string_view& name, bool hasVersion) : name(name), hasVersion(hasVersion) { }
+
     std::string_view name;
     bool hasVersion = false;
     bool available = false;
@@ -75,13 +76,17 @@ struct ModelMetadataGraph
         std::string outputDtype;
         std::string functionName;
 
-        const std::unordered_map<std::string, DataType> dtypeMap = {
-            {"ui8",  DataTypeProvider::provideDataType(DataType::Type::UINT8)},   {"ui16", DataTypeProvider::provideDataType(DataType::Type::UINT16)},
-            {"ui32", DataTypeProvider::provideDataType(DataType::Type::UINT32)},  {"ui64", DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-            {"i8",   DataTypeProvider::provideDataType(DataType::Type::INT8)},    {"i16",  DataTypeProvider::provideDataType(DataType::Type::INT16)},
-            {"i32",  DataTypeProvider::provideDataType(DataType::Type::INT32)},   {"i64",  DataTypeProvider::provideDataType(DataType::Type::INT64)},
-            {"f32",  DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},   {"f64",  DataTypeProvider::provideDataType(DataType::Type::FLOAT64)}
-        };
+        const std::unordered_map<std::string, DataType> dtypeMap
+            = {{"ui8", DataTypeProvider::provideDataType(DataType::Type::UINT8)},
+               {"ui16", DataTypeProvider::provideDataType(DataType::Type::UINT16)},
+               {"ui32", DataTypeProvider::provideDataType(DataType::Type::UINT32)},
+               {"ui64", DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+               {"i8", DataTypeProvider::provideDataType(DataType::Type::INT8)},
+               {"i16", DataTypeProvider::provideDataType(DataType::Type::INT16)},
+               {"i32", DataTypeProvider::provideDataType(DataType::Type::INT32)},
+               {"i64", DataTypeProvider::provideDataType(DataType::Type::INT64)},
+               {"f32", DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+               {"f64", DataTypeProvider::provideDataType(DataType::Type::FLOAT64)}};
     };
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProps> Graph;
@@ -348,9 +353,16 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
         boost::process::v1::ipstream compile_error;
         boost::process::v1::ipstream model_stream;
         std::vector<boost::process::v1::child> process;
-        process.emplace_back(boost::process::v1::search_path("iree-import-onnx"), importArgs, boost::process::v1::std_out > mlir_pipe, boost::process::v1::std_err > import_error);
         process.emplace_back(
-            boost::process::v1::search_path("iree-compile"), compileArgs, boost::process::v1::std_in<mlir_pipe, boost::process::v1::std_out> model_stream, boost::process::v1::std_err > compile_error);
+            boost::process::v1::search_path("iree-import-onnx"),
+            importArgs,
+            boost::process::v1::std_out > mlir_pipe,
+            boost::process::v1::std_err > import_error);
+        process.emplace_back(
+            boost::process::v1::search_path("iree-compile"),
+            compileArgs,
+            boost::process::v1::std_in<mlir_pipe, boost::process::v1::std_out> model_stream,
+            boost::process::v1::std_err > compile_error);
 
         /// Read output of iree-compile into a byte buffer
         std::vector<std::byte> modelVmfb;

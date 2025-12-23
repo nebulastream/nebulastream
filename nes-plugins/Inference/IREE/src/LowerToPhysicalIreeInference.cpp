@@ -13,21 +13,22 @@
 */
 
 #include <DataTypes/DataTypeProvider.hpp>
-#include <QueryExecutionConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Traits/OutputOriginIdsTrait.hpp>
-#include <InferModelLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRuleRegistry.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
+#include <iree/runtime/api.h>
 #include <IREEInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
-#include <iree/runtime/api.h>
+#include <InferModelLogicalOperator.hpp>
+#include <QueryExecutionConfiguration.hpp>
+#include <RewriteRuleRegistry.hpp>
 
 struct LowerToPhysicalIREEInferenceOperator : NES::AbstractRewriteRule
 {
     explicit LowerToPhysicalIREEInferenceOperator(NES::QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     NES::RewriteRuleResultSubgraph apply(NES::LogicalOperator logicalOperator) override
     {
         auto inferModelOperator = logicalOperator.getAs<NES::InferModel::InferModelLogicalOperator>();

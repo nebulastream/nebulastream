@@ -15,12 +15,12 @@
 #pragma once
 #include "ModelLoader.hpp"
 
-#include <folly/Synchronized.h>
-#include <magic_enum/magic_enum.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <ranges>
 #include <unordered_map>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
+#include <folly/Synchronized.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Nebuli::Inference
 {
@@ -78,8 +78,7 @@ inline Model ModelCatalog::load(const std::string modelName) const
             /// if we didn't manage to parse the data type, we rely on the user-provided types
             /// we take the data type of the first field, because it must be the same for all the fields
             if (result->inputDtype.type == DataType::Type::UNDEFINED
-                || (result->inputs.at(0).type != DataType::Type::VARSIZED
-                    && result->inputDtype.type != result->inputs.at(0).type))
+                || (result->inputs.at(0).type != DataType::Type::VARSIZED && result->inputDtype.type != result->inputs.at(0).type))
             {
                 result->inputDtype = DataTypeProvider::provideDataType(result->inputs.at(0).type);
             }
@@ -92,12 +91,12 @@ inline Model ModelCatalog::load(const std::string modelName) const
             }
 
             result->inputDims = result->inputShape.size();
-            result->inputSizeInBytes = getTypeSizeC(result->inputDtype.type) *
-                std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
+            result->inputSizeInBytes = getTypeSizeC(result->inputDtype.type)
+                * std::accumulate(result->inputShape.begin(), result->inputShape.end(), 1, std::multiplies<int>());
 
             result->outputDims = result->outputShape.size();
-            result->outputSizeInBytes = getTypeSizeC(result->outputDtype.type) *
-                std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
+            result->outputSizeInBytes = getTypeSizeC(result->outputDtype.type)
+                * std::accumulate(result->outputShape.begin(), result->outputShape.end(), 1, std::multiplies<int>());
 
             catalogImpl.emplace(modelName, *result);
             return *result;
@@ -110,7 +109,8 @@ inline Model ModelCatalog::load(const std::string modelName) const
     }
 }
 
-inline std::optional<ModelDescriptor> ModelCatalog::addModelDescriptor(std::string name, std::string path, std::vector<DataType> inputs, Schema outputs)
+inline std::optional<ModelDescriptor>
+ModelCatalog::addModelDescriptor(std::string name, std::string path, std::vector<DataType> inputs, Schema outputs)
 {
     auto model = ModelDescriptor{std::move(name), std::move(path), std::move(inputs), std::move(outputs)};
     auto modelsLock = registeredModels.wlock();
@@ -147,16 +147,36 @@ inline size_t ModelCatalog::getTypeSizeC(DataType::Type dtype) const
     size_t size = 0;
     switch (dtype)
     {
-        case DataType::Type::UINT8: size = sizeof(uint8_t); break;
-        case DataType::Type::UINT16: size = sizeof(uint16_t); break;
-        case DataType::Type::UINT32: size = sizeof(uint32_t); break;
-        case DataType::Type::UINT64: size = sizeof(uint64_t); break;
-        case DataType::Type::INT8: size = sizeof(int8_t); break;
-        case DataType::Type::INT16: size = sizeof(int16_t); break;
-        case DataType::Type::INT32: size = sizeof(int32_t); break;
-        case DataType::Type::INT64: size = sizeof(int64_t); break;
-        case DataType::Type::FLOAT32: size = sizeof(float); break;
-        case DataType::Type::FLOAT64: size = sizeof(double); break;
+        case DataType::Type::UINT8:
+            size = sizeof(uint8_t);
+            break;
+        case DataType::Type::UINT16:
+            size = sizeof(uint16_t);
+            break;
+        case DataType::Type::UINT32:
+            size = sizeof(uint32_t);
+            break;
+        case DataType::Type::UINT64:
+            size = sizeof(uint64_t);
+            break;
+        case DataType::Type::INT8:
+            size = sizeof(int8_t);
+            break;
+        case DataType::Type::INT16:
+            size = sizeof(int16_t);
+            break;
+        case DataType::Type::INT32:
+            size = sizeof(int32_t);
+            break;
+        case DataType::Type::INT64:
+            size = sizeof(int64_t);
+            break;
+        case DataType::Type::FLOAT32:
+            size = sizeof(float);
+            break;
+        case DataType::Type::FLOAT64:
+            size = sizeof(double);
+            break;
 
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR:
