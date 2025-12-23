@@ -29,7 +29,7 @@ namespace NES
 class AbsoluteLogicalFunction final
 {
 public:
-    static constexpr std::string_view NAME = "Absolute";
+    static constexpr std::string_view NAME = "Abs";
 
     explicit AbsoluteLogicalFunction(const LogicalFunction& child);
 

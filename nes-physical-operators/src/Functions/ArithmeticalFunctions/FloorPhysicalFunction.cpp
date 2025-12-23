@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/ArithmeticalFunctions/CeilPhysicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/FloorPhysicalFunction.hpp>
 
 #include <utility>
 #include <DataTypes/DataType.hpp>
@@ -27,32 +27,33 @@
 
 namespace NES
 {
-CeilPhysicalFunction::CeilPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType)
+FloorPhysicalFunction::FloorPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType)
     : childFunction(std::move(childFunction)), inputType(std::move(inputType)), outputType(std::move(outputType))
 {
 }
 
-VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    /// If the input type is a float, we need to ceil the value and returned the ceiled value.
-    /// If the input type is an integer, we do not need to do anything.
+    /// If the input type is a float, we need to floor the value and return the floored value.
+    /// If the input type is an integer, we only need to cast to the output type.
     if (inputType.isFloat())
     {
-        const auto ceiledValue = nautilus::ceil(value.cast<nautilus::val<double>>());
-        return VarVal{ceiledValue}.castToType(outputType.type);
+        const auto flooredValue = nautilus::floor(value.cast<nautilus::val<double>>());
+        return VarVal{flooredValue}.castToType(outputType.type);
     }
     return value.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCeilPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterFloorPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Ceil function must have exactly one child function");
-    PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Ceil function must have exactly one input type");
-    return CeilPhysicalFunction(
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Floor function must have exactly one child function");
+    PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Floor function must have exactly one input type");
+    return FloorPhysicalFunction(
         physicalFunctionRegistryArguments.childFunctions[0],
         physicalFunctionRegistryArguments.inputTypes[0],
         physicalFunctionRegistryArguments.outputType);
 }
+
 }

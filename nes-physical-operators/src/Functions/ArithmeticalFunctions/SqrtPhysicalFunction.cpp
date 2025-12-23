@@ -12,36 +12,37 @@
     limitations under the License.
 */
 
-#include <Functions/CastFieldPhysicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SqrtPhysicalFunction.hpp>
 
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <std/cmath.h>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <val.hpp>
 
 namespace NES
 {
-
-CastFieldPhysicalFunction::CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType)
-    : castToType(std::move(castToType)), childFunction(std::move(childFunction))
+SqrtPhysicalFunction::SqrtPhysicalFunction(PhysicalFunction childFunction, DataType outputType)
+    : childFunction(std::move(childFunction)), outputType(std::move(outputType))
 {
 }
 
-VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal SqrtPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    return value.castToType(castToType.type);
+    return VarVal{nautilus::sqrt(value.cast<nautilus::val<double>>())}.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCastPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterSqrtPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Cast function must have exactly one child functions");
-    return CastFieldPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Sqrt function must have exactly one child function");
+    return SqrtPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
 }
 
 }

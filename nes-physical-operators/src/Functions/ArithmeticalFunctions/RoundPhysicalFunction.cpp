@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/ArithmeticalFunctions/CeilPhysicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/RoundPhysicalFunction.hpp>
 
 #include <utility>
 #include <DataTypes/DataType.hpp>
@@ -27,32 +27,33 @@
 
 namespace NES
 {
-CeilPhysicalFunction::CeilPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType)
+RoundPhysicalFunction::RoundPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType)
     : childFunction(std::move(childFunction)), inputType(std::move(inputType)), outputType(std::move(outputType))
 {
 }
 
-VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    /// If the input type is a float, we need to ceil the value and returned the ceiled value.
-    /// If the input type is an integer, we do not need to do anything.
+    /// If the input type is a float, we need to round the value and return the rounded value.
+    /// If the input type is an integer, we only need to cast to the output type.
     if (inputType.isFloat())
     {
-        const auto ceiledValue = nautilus::ceil(value.cast<nautilus::val<double>>());
-        return VarVal{ceiledValue}.castToType(outputType.type);
+        const auto roundedValue = nautilus::round(value.cast<nautilus::val<double>>());
+        return VarVal{roundedValue}.castToType(outputType.type);
     }
     return value.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCeilPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterRoundPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Ceil function must have exactly one child function");
-    PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Ceil function must have exactly one input type");
-    return CeilPhysicalFunction(
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Round function must have exactly one child function");
+    PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Round function must have exactly one input type");
+    return RoundPhysicalFunction(
         physicalFunctionRegistryArguments.childFunctions[0],
         physicalFunctionRegistryArguments.inputTypes[0],
         physicalFunctionRegistryArguments.outputType);
 }
+
 }

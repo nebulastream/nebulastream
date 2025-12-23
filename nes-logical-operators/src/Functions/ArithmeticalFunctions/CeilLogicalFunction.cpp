@@ -49,20 +49,7 @@ CeilLogicalFunction CeilLogicalFunction::withInferredDataType(const Schema& sche
 {
     const auto newChild = child.withInferredDataType(schema);
     const auto childDataType = newChild.getDataType();
-    auto outputType = newChild.getDataType();
-    if (childDataType.isFloat())
-    {
-        if (childDataType.isSameDataType<float>())
-        {
-            outputType = DataTypeProvider::provideDataType(DataType::Type::INT32);
-        }
-        else
-        {
-            outputType = DataTypeProvider::provideDataType(DataType::Type::INT64);
-        }
-    }
-
-    return withDataType(outputType).withChildren({newChild});
+    return withDataType(childDataType).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> CeilLogicalFunction::getChildren() const

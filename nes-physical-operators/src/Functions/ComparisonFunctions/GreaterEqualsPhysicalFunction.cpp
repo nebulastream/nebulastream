@@ -42,7 +42,7 @@ PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterG
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
-        physicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
+        physicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two child functions");
     return GreaterEqualsPhysicalFunction(
         physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
