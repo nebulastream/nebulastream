@@ -1,6 +1,6 @@
 # name: sources/TCP.test
 # description: forwarding queries with mixed CSV/TCP sources
-# groups: [Sources]
+# groups: [Sources, TCP]
 
 # Source/Sink for single TCP stream
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);

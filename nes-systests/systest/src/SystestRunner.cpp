@@ -43,18 +43,21 @@
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/URI.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestConfiguration.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
+#include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -131,8 +134,8 @@ std::vector<RunningQuery> runQueries(
         pending.push(*it);
     }
 
-    std::unordered_map<LocalQueryId, std::shared_ptr<RunningQuery>> active;
-    std::unordered_map<LocalQueryId, LocalQueryStatus> finishedDifferentialQueries;
+    std::unordered_map<DistributedQueryId, std::shared_ptr<RunningQuery>> active;
+    std::unordered_map<DistributedQueryId, DistributedQueryStatus> finishedDifferentialQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
 
     const auto startMoreQueries = [&] -> bool
@@ -203,10 +206,9 @@ std::vector<RunningQuery> runQueries(
 
             auto& runningQuery = it->second;
 
-            if (queryStatus.state == QueryState::Failed)
+            if (queryStatus.getGlobalQueryState() == DistributedQueryState::Failed)
             {
-                INVARIANT(queryStatus.metrics.error.has_value(), "A query that failed must have a corresponding error.");
-                processQueryWithError(it->second, progressTracker, failed, queryStatus.metrics.error, queryPerformanceMessage);
+                processQueryWithError(it->second, progressTracker, failed, queryStatus.coalesceException(), queryPerformanceMessage);
                 active.erase(it);
                 continue;
             }
@@ -322,10 +324,16 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
     const SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
+    const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
-    auto worker = std::make_unique<QueryManager>(
-        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
+    auto catalog = std::make_shared<WorkerCatalog>();
+    for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+    {
+        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
+    }
+
+    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
@@ -352,22 +360,15 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         submitter.startQuery(queryId);
         const auto summary = submitter.finishedQueries().at(0);
 
-        if (summary.state == QueryState::Failed)
+        if (summary.getGlobalQueryState() == DistributedQueryState::Failed)
         {
-            if (summary.metrics.error.has_value())
-            {
-                NES_ERROR("Query {} has failed with: {}", queryId, summary.metrics.error->what());
-            }
-            else
-            {
-                NES_ERROR("Query {} has failed without additional error details.", queryId);
-            }
+            NES_ERROR("Query {} has failed with: {}", queryId, summary.coalesceException());
             continue;
         }
 
-        if (summary.state != QueryState::Stopped)
+        if (summary.getGlobalQueryState() != DistributedQueryState::Stopped)
         {
-            NES_ERROR("Query {} terminated in unexpected state {}", queryId, summary.state);
+            NES_ERROR("Query {} terminated in unexpected state {}", queryId, summary.getGlobalQueryState());
             continue;
         }
 
@@ -463,25 +464,51 @@ void printQueryResultToStdOut(
 std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker)
 {
-    auto embeddedQueryManager = std::make_unique<QueryManager>(
-        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
-    QuerySubmitter submitter(std::move(embeddedQueryManager));
+    auto catalog = std::make_shared<WorkerCatalog>();
+    for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+    {
+        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
+    }
+
+    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
 
 std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
-    const URI& serverURI,
+    const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
-    auto remoteQueryManager = std::make_unique<QueryManager>(
-        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI.toString())}));
+    auto catalog = std::make_shared<WorkerCatalog>();
+    for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+    {
+        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
+    }
+
+    /// Running the Systest against a remote worker setup cannot use configuration overrides as the worker configuration is not handled
+    /// by the systest tool. Currently we will skip any query which has a configuration override.
+    const auto queriesWithoutConfigurationOverrides
+        = queries
+        | std::views::filter(
+              [](const auto& query)
+              {
+                  if (!query.configurationOverride.overrideParameters.empty())
+                  {
+                      fmt::println("Skipping test {} because it is has a configuration override", query.testName);
+                      return false;
+                  }
+                  return true;
+              })
+        | std::ranges::to<std::vector>();
+
+    auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
     QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
+    return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
 
 }

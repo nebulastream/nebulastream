@@ -1,0 +1,16 @@
+workers:
+  - host: "sink-node:9090"
+    grpc: "sink-node:8080"
+    capacity: 10000
+  - host: "source-node:9090"
+    grpc: "source-node:8080"
+    capacity: 4
+    downstream:
+      - "sink-node:9090"
+
+allow_source_placement:
+  - "source-node:9090"
+
+allow_sink_placement:
+  - "sink-node:9090"
+  - "source-node:9090"

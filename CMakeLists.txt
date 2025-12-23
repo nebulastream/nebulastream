@@ -22,11 +22,14 @@ option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(CODE_COVERAGE "Compute test coverage" OFF)
+
 option(NES_ENABLES_TESTS "Enable tests" ON)
+option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
+option(ENABLE_DOCKER_TESTS, "Runs testcases that require a docker daemon to be available" OFF)
+
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
-option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 
 
