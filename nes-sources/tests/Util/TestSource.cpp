@@ -236,6 +236,6 @@ NES::getTestSource(BackpressureListener backpressureListener, OriginId originId,
     SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
 
     auto sourceHandle = std::make_unique<SourceHandle>(
-        std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
+        std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource), std::nullopt);
     return {std::move(sourceHandle), ctrl};
 }

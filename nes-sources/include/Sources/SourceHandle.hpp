@@ -17,6 +17,8 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <optional>
+#include <Decoders/Decoder.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -41,6 +43,7 @@ struct SourceRuntimeConfiguration
 /// start(): The underlying source starts consuming data. All queries using the source start processing.
 /// stop(): The underlying source stops consuming data, notifying the QueryEngine,
 /// that decides whether to keep queries, which used the particular source, alive.
+/// Obtains decoder implementation if the source produces encoded data.
 class SourceHandle
 {
 public:
@@ -49,7 +52,8 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::optional<std::unique_ptr<Decoder>> decoderImplementation);
 
     ~SourceHandle();
 

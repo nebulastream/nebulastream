@@ -108,9 +108,65 @@ teardown() {
   docker compose down -v || true
 }
 
+limit_container_bandwidth() {
+  local svc="$1"
+  local veth="$2"
+  local rate="$3"
+
+  # Clean existing qdisc if present
+  sudo tc qdisc del dev "$veth" root 2>/dev/null || true
+
+  # HTB root
+  sudo tc qdisc add dev "$veth" root handle 1: htb default 10
+
+  # Bandwidth class
+  sudo tc class add dev "$veth" parent 1: classid 1:10 htb \
+    rate "$rate" ceil "$rate"
+
+  echo "#   tc: $svc limited to $rate on $veth" >&3
+}
+
+# Help function that displays the veths for each container to enable sending rate tracking via btop
+print_container_veths() {
+  local RATE="$1"
+  echo "# Container → veth mapping" >&3
+
+  for svc in $(docker compose ps --services); do
+    CID=$(docker compose ps -q "$svc")
+    [ -z "$CID" ] && continue
+
+    PID=$(docker inspect -f '{{.State.Pid}}' "$CID")
+    [ "$PID" = "0" ] && continue
+
+    # Enter netns and extract ifindex after @if
+    IFIDX=$(sudo nsenter -t "$PID" -n ip -o link \
+      | awk -F'@if' '/eth0/ {print $2}' | cut -d':' -f1)
+
+    if [ -z "$IFIDX" ]; then
+      echo "#   $svc → <no ifindex>" >&3
+      continue
+    fi
+
+    VETH=$(ip -o link \
+      | awk -F': ' -v ifidx="$IFIDX" '$1 == ifidx {print $2}' \
+      | cut -d'@' -f1)
+
+    if [ -z "$VETH" ]; then
+      echo "#   $svc → <no veth>" >&3
+      continue
+    fi
+
+    echo "#   $svc → $VETH" >&3
+    if [ "$svc" != "systest" ]; then
+      limit_container_bandwidth "$svc" "$VETH" "$RATE"
+    fi
+  done
+}
+
 function setup_distributed() {
   $NES_DIR/nes-systests/systest/remote-test/create_compose.sh "$1" >docker-compose.yaml
   docker compose up -d --wait
+  print_container_veths "$2"
 }
 
 DOCKER_SYSTEST() {
@@ -138,15 +194,14 @@ assert_json_contains() {
     return 1
   fi
 }
-
-@test "two node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node.yaml
-  run DOCKER_SYSTEST -e large TCP --clusterConfig nes-systests/configs/topologies/two-node.yaml --remote
+@test "2 node systest" {
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node.yaml "5mbit"
+  run DOCKER_SYSTEST -t "nes-systests/benchmark/ClusterMonitoring.test:1" --clusterConfig nes-systests/configs/topologies/two-node.yaml --remote -- 
   [ "$status" -eq 0 ]
 }
-
-@test "8 node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run DOCKER_SYSTEST -e large TCP --clusterConfig nes-systests/configs/topologies/8-node.yaml --remote
-  [ "$status" -eq 0 ]
+    
+@test "my cool test" {
+    setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node.yaml "50mbits"
+    run DOCKER_SYSTEST -e LARGE source --clusterConfig nes-systests/configs/topologies/two-node.yaml --remote 
+    [ "$status" -eq 0 ]
 }

@@ -15,13 +15,16 @@
 #include <Sources/SourceProvider.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
+#include <Decoders/DecoderProvider.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -47,8 +50,16 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
             : defaultMaxInflightBuffers;
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
+        /// If the source uses a codec, we need to create a decoder for it and also pass it to the source handle
+        if (const auto usedCodec = sourceDescriptor.getFromConfig(SourceDescriptor::CODEC); usedCodec != "None")
+        {
+            std::unique_ptr<Decoder> decoder = DecoderProvider::provideDecoder(usedCodec);
+            return std::make_unique<SourceHandle>(
+                 std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()), std::move(decoder));
+        }
+
         return std::make_unique<SourceHandle>(
-            std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
+             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()), std::nullopt);
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
