@@ -391,7 +391,9 @@ booleanValue
     : TRUE | FALSE
     ;
 
-
+///****************************
+/// Start of the keywords list
+///****************************
 ALL: 'ALL' | 'all';
 AND: 'AND' | 'and';
 ANY: 'ANY';
