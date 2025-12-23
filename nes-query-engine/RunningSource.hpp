@@ -15,6 +15,7 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -38,20 +39,20 @@ class RunningSource
 public:
     /// Creates and starts the underlying source implementation. As long as the RunningSource is kept alive the source will run,
     /// once the last reference to the RunningSource is destroyed the source is stopped.
-    /// UnRegistering a source should not block, but it may not succeed (immediately), the tryUnregister
+    /// The onSourceStopped callback is invoked after the source has been successfully stopped.
     static std::shared_ptr<RunningSource> create(
         QueryId queryId,
         std::unique_ptr<SourceHandle> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
-        std::function<void(Exception)> unregisterWithError,
+        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped,
+        std::function<void(Exception)> onSourceFailure,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
 
     RunningSource(const RunningSource& other) = delete;
     RunningSource& operator=(const RunningSource& other) = delete;
-    RunningSource(RunningSource&& other) noexcept = default;
-    RunningSource& operator=(RunningSource&& other) noexcept = default;
+    RunningSource(RunningSource&& other) noexcept = delete;
+    RunningSource& operator=(RunningSource&& other) noexcept = delete;
 
     ~RunningSource();
     [[nodiscard]] OriginId getOriginId() const;
@@ -66,13 +67,14 @@ private:
     RunningSource(
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<SourceHandle> source,
-        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
-        std::function<void(Exception)> unregisterWithError);
+        std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped,
+        std::function<void(Exception)> onSourceFailure);
 
+    mutable std::mutex mutex; /// Protects against race between create() (starting the source) and tryStop() (stopping the source)
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<SourceHandle> source;
-    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister;
-    std::function<void(Exception)> unregisterWithError;
+    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped;
+    std::function<void(Exception)> onSourceFailure;
 };
 
 }
