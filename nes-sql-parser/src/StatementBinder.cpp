@@ -14,8 +14,7 @@
 
 #include <SQLQueryParser/StatementBinder.hpp>
 
-#include <cctype>
-#include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <expected>
@@ -85,6 +84,11 @@ public:
         return {bindIdentifier(showFilterAST->attr), bindLiteral(showFilterAST->value)};
     }
 
+    std::pair<std::string, Literal> bindDropFilter(const AntlrSQLParser::DropFilterContext* dropFilterAST) const
+    {
+        return {bindIdentifier(dropFilterAST->attr), bindLiteral(dropFilterAST->value)};
+    }
+
     StatementOutputFormat bindFormat(AntlrSQLParser::ShowFormatContext* formatAST) const
     {
         if (formatAST->TEXT() != nullptr)
@@ -115,9 +119,9 @@ public:
         const std::string type = physicalSourceDefAST->type->getText();
         auto configOptions = [&]()
         {
-            if (physicalSourceDefAST->options != nullptr)
+            if (physicalSourceDefAST->optionsClause() != nullptr)
             {
-                return bindConfigOptions(physicalSourceDefAST->options->namedConfigExpression());
+                return bindConfigOptions(physicalSourceDefAST->optionsClause()->options->namedConfigExpression());
             }
             return ConfigMap{};
         }();
@@ -135,9 +139,9 @@ public:
         const auto sinkType = sinkDefAST->type->getText();
         const auto configOptions = [&]()
         {
-            if (sinkDefAST->options != nullptr)
+            if (sinkDefAST->optionsClause() != nullptr)
             {
-                return bindConfigOptions(sinkDefAST->options->namedConfigExpression());
+                return bindConfigOptions(sinkDefAST->optionsClause()->options->namedConfigExpression());
             }
             return ConfigMap{};
         }();
@@ -293,32 +297,67 @@ public:
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
+        const auto* const dropFilter = dropAst->dropFilter();
+        PRECONDITION(dropFilter != nullptr, "Drop statement must have a WHERE filter");
+        const auto [attr, value] = bindDropFilter(dropFilter);
+
         if (AntlrSQLParser::DropSourceContext* dropSourceAst = dropAst->dropSubject()->dropSource(); dropSourceAst != nullptr)
         {
             if (const auto* const logicalSourceSubject = dropSourceAst->dropLogicalSourceSubject(); logicalSourceSubject != nullptr)
             {
-                const auto logicalSourceName = LogicalSourceName(bindIdentifier(logicalSourceSubject->name));
+                if (attr != "NAME")
+                {
+                    throw InvalidQuerySyntax("Filter for DROP LOGICAL SOURCE must be on NAME attribute");
+                }
+                if (not std::holds_alternative<std::string>(value))
+                {
+                    throw InvalidQuerySyntax("Filter value for DROP LOGICAL SOURCE must be a string");
+                }
+                const auto logicalSourceName = LogicalSourceName(std::get<std::string>(value));
                 return DropLogicalSourceStatement{logicalSourceName};
             }
             if (const auto* const physicalSourceSubject = dropSourceAst->dropPhysicalSourceSubject(); physicalSourceSubject != nullptr)
             {
-                if (const auto physicalSource
-                    = sourceCatalog->getPhysicalSource(PhysicalSourceId{bindUnsignedIntegerLiteral(physicalSourceSubject->id)});
+                if (attr != "ID")
+                {
+                    throw InvalidQuerySyntax("Filter for DROP PHYSICAL SOURCE must be on ID attribute");
+                }
+                if (not std::holds_alternative<uint64_t>(value))
+                {
+                    throw InvalidQuerySyntax("Filter value for DROP PHYSICAL SOURCE must be an unsigned integer");
+                }
+                if (const auto physicalSource = sourceCatalog->getPhysicalSource(PhysicalSourceId{std::get<uint64_t>(value)});
                     physicalSource.has_value())
                 {
                     return DropPhysicalSourceStatement{*physicalSource};
                 }
-                throw UnknownSourceName("There is no physical source with id {}", physicalSourceSubject->id->getText());
+                throw UnknownSourceName("There is no physical source with id {}", std::get<uint64_t>(value));
             }
         }
         else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
         {
-            const auto id = QueryId{std::stoul(dropQueryAst->id->getText())};
+            if (attr != "ID")
+            {
+                throw InvalidQuerySyntax("Filter for DROP QUERY must be on ID attribute");
+            }
+            if (not std::holds_alternative<uint64_t>(value))
+            {
+                throw InvalidQuerySyntax("Filter value for DROP QUERY must be a number");
+            }
+            const auto id = QueryId{std::get<uint64_t>(value)};
             return DropQueryStatement{id};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
         {
-            const auto sinkName = bindIdentifier(dropSinkAst->name);
+            if (attr != "NAME")
+            {
+                throw InvalidQuerySyntax("Filter for DROP SINK must be on NAME attribute");
+            }
+            if (not std::holds_alternative<std::string>(value))
+            {
+                throw InvalidQuerySyntax("Filter value for DROP SINK must be a string");
+            }
+            const auto sinkName = std::get<std::string>(value);
             return DropSinkStatement{sinkName};
         }
         throw InvalidStatement("Unrecognized DROP statement");
@@ -326,15 +365,6 @@ public:
 
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
     {
-        if (statementAST->query() != nullptr)
-        {
-            return QueryStatement{queryBinder(statementAST->query())};
-        }
-        if (auto* const explainStatementAST = statementAST->explainStatement())
-        {
-            INVARIANT(explainStatementAST->query() != nullptr, "Should be enforced by antlr");
-            return ExplainQueryStatement{queryBinder(explainStatementAST->query())};
-        }
         try
         {
             if (auto* const createAST = statementAST->createStatement(); createAST != nullptr)
@@ -349,9 +379,31 @@ public:
             {
                 return bindDropStatement(dropAst);
             }
-            if (auto* const queryAst = statementAST->query(); queryAst != nullptr)
+            if (auto* const explainStatementAST = statementAST->explainStatement())
             {
-                return QueryStatement{queryBinder(queryAst)};
+                INVARIANT(explainStatementAST->query() != nullptr, "Should be enforced by antlr");
+                return ExplainQueryStatement{queryBinder(explainStatementAST->query())};
+            }
+            if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
+            {
+                std::optional<size_t> queryId;
+                if (queryAst->optionsClause() != nullptr)
+                {
+                    auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
+                    if (auto optionsIter = options.find("QUERY"); optionsIter != options.end())
+                    {
+                        if (auto idIter = optionsIter->second.find("ID"); idIter != optionsIter->second.end())
+                        {
+                            auto* literal = std::get_if<Literal>(&idIter->second);
+                            if ((literal == nullptr) || !std::holds_alternative<size_t>(*literal))
+                            {
+                                throw InvalidQuerySyntax("Query id must be a number");
+                            }
+                            queryId = std::get<size_t>(*literal);
+                        }
+                    }
+                }
+                return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
             }
 
             throw InvalidStatement(statementAST->toString());
