@@ -12,19 +12,18 @@
     limitations under the License.
 */
 
+#include <Nautilus/Interface/Record.hpp>
+#include <nautilus/function.hpp>
 #include <ExecutionContext.hpp>
 #include <IREEAdapter.hpp>
 #include <IREEInferenceOperator.hpp>
 #include <IREEInferenceOperatorHandler.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <QueryExecutionConfiguration.hpp>
-#include <nautilus/function.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 class PhysicalInferModelOperator;
 }
-
 
 namespace NES::IREEInference
 {
@@ -131,14 +130,20 @@ void IREEInferenceOperator::writeOutputRecord(ExecutionContext& executionCtx, NE
     {
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            VarVal result = VarVal(invoke(IREEInference::getValueFromModelProxy<T>, nautilus::val<int>(i), inferModelHandler, executionCtx.workerThreadId));
+            VarVal result = VarVal(
+                invoke(IREEInference::getValueFromModelProxy<T>, nautilus::val<int>(i), inferModelHandler, executionCtx.workerThreadId));
             record.write(outputFieldNames.at(i), result);
         }
     }
     else
     {
         auto output = executionCtx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-        invoke(IREEInference::copyVarSizedFromModelProxy, output.getContent(), output.getContentSize(), inferModelHandler, executionCtx.workerThreadId);
+        invoke(
+            IREEInference::copyVarSizedFromModelProxy,
+            output.getContent(),
+            output.getContentSize(),
+            inferModelHandler,
+            executionCtx.workerThreadId);
         record.write(outputFieldNames.at(0), output);
     }
 
@@ -149,16 +154,36 @@ void IREEInferenceOperator::execute(ExecutionContext& executionCtx, NES::Record&
 {
     switch (inputDtype.type)
     {
-        case DataType::Type::UINT8: performInference<uint8_t>(executionCtx, record); break;
-        case DataType::Type::UINT16: performInference<uint16_t>(executionCtx, record); break;
-        case DataType::Type::UINT32: performInference<uint32_t>(executionCtx, record); break;
-        case DataType::Type::UINT64: performInference<uint64_t>(executionCtx, record); break;
-        case DataType::Type::INT8: performInference<int8_t>(executionCtx, record); break;
-        case DataType::Type::INT16: performInference<int16_t>(executionCtx, record); break;
-        case DataType::Type::INT32: performInference<int32_t>(executionCtx, record); break;
-        case DataType::Type::INT64: performInference<int64_t>(executionCtx, record); break;
-        case DataType::Type::FLOAT32: performInference<float>(executionCtx, record); break;
-        case DataType::Type::FLOAT64: performInference<double>(executionCtx, record); break;
+        case DataType::Type::UINT8:
+            performInference<uint8_t>(executionCtx, record);
+            break;
+        case DataType::Type::UINT16:
+            performInference<uint16_t>(executionCtx, record);
+            break;
+        case DataType::Type::UINT32:
+            performInference<uint32_t>(executionCtx, record);
+            break;
+        case DataType::Type::UINT64:
+            performInference<uint64_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT8:
+            performInference<int8_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT16:
+            performInference<int16_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT32:
+            performInference<int32_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT64:
+            performInference<int64_t>(executionCtx, record);
+            break;
+        case DataType::Type::FLOAT32:
+            performInference<float>(executionCtx, record);
+            break;
+        case DataType::Type::FLOAT64:
+            performInference<double>(executionCtx, record);
+            break;
 
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR:
@@ -170,16 +195,36 @@ void IREEInferenceOperator::execute(ExecutionContext& executionCtx, NES::Record&
 
     switch (outputDtype.type)
     {
-        case DataType::Type::UINT8: writeOutputRecord<uint8_t>(executionCtx, record); break;
-        case DataType::Type::UINT16: writeOutputRecord<uint16_t>(executionCtx, record); break;
-        case DataType::Type::UINT32: writeOutputRecord<uint32_t>(executionCtx, record); break;
-        case DataType::Type::UINT64: writeOutputRecord<uint64_t>(executionCtx, record); break;
-        case DataType::Type::INT8: writeOutputRecord<int8_t>(executionCtx, record); break;
-        case DataType::Type::INT16: writeOutputRecord<int16_t>(executionCtx, record); break;
-        case DataType::Type::INT32: writeOutputRecord<int32_t>(executionCtx, record); break;
-        case DataType::Type::INT64: writeOutputRecord<int64_t>(executionCtx, record); break;
-        case DataType::Type::FLOAT32: writeOutputRecord<float>(executionCtx, record); break;
-        case DataType::Type::FLOAT64: writeOutputRecord<double>(executionCtx, record); break;
+        case DataType::Type::UINT8:
+            writeOutputRecord<uint8_t>(executionCtx, record);
+            break;
+        case DataType::Type::UINT16:
+            writeOutputRecord<uint16_t>(executionCtx, record);
+            break;
+        case DataType::Type::UINT32:
+            writeOutputRecord<uint32_t>(executionCtx, record);
+            break;
+        case DataType::Type::UINT64:
+            writeOutputRecord<uint64_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT8:
+            writeOutputRecord<int8_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT16:
+            writeOutputRecord<int16_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT32:
+            writeOutputRecord<int32_t>(executionCtx, record);
+            break;
+        case DataType::Type::INT64:
+            writeOutputRecord<int64_t>(executionCtx, record);
+            break;
+        case DataType::Type::FLOAT32:
+            writeOutputRecord<float>(executionCtx, record);
+            break;
+        case DataType::Type::FLOAT64:
+            writeOutputRecord<double>(executionCtx, record);
+            break;
 
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR:

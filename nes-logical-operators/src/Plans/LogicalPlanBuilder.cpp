@@ -134,7 +134,6 @@ LogicalPlanBuilder::addInferModel(const std::string& model, const std::vector<Lo
     return promoteOperatorToRoot(queryPlan, LogicalOperator(InferModel::InferModelNameLogicalOperator(model, inputFields)));
 }
 
-
 LogicalPlan LogicalPlanBuilder::addJoin(
     LogicalPlan leftLogicalPlan,
     LogicalPlan rightLogicalPlan,

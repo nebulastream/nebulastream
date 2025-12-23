@@ -130,11 +130,7 @@ struct StatementOutputAssembler<CreateModelStatementResult>
     {
         return std::make_pair(
             modelDescriptorOutputColumns,
-            std::vector{std::make_tuple(
-                result.created.name,
-                result.created.path,
-                result.created.inputs,
-                result.created.outputs)});
+            std::vector{std::make_tuple(result.created.name, result.created.path, result.created.inputs, result.created.outputs)});
     }
 };
 
@@ -266,11 +262,7 @@ struct StatementOutputAssembler<DropModelStatementResult>
     {
         return std::make_pair(
             modelDescriptorOutputColumns,
-            std::vector{std::make_tuple(
-                result.dropped.name,
-                result.dropped.path,
-                result.dropped.inputs,
-                result.dropped.outputs)});
+            std::vector{std::make_tuple(result.dropped.name, result.dropped.path, result.dropped.inputs, result.dropped.outputs)});
     }
 };
 

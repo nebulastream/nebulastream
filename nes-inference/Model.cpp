@@ -17,6 +17,7 @@
 
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Model.hpp>
+
 NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const SerializableModel& grpcModel)
 {
     auto modelByteCodeSize = grpcModel.bytecode().size();

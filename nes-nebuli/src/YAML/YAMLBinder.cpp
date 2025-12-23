@@ -103,7 +103,6 @@ struct convert<NES::CLI::PhysicalSource>
     }
 };
 
-
 template <>
 struct convert<NES::CLI::Model>
 {
@@ -228,8 +227,7 @@ std::vector<Nebuli::Inference::ModelDescriptor> CLI::YAMLBinder::bindRegisterMod
                                {
                                    schema.addField(name, type);
                                }
-                               return Nebuli::Inference::ModelDescriptor{
-                               model.name, model.path, model.inputs, schema};
+                               return Nebuli::Inference::ModelDescriptor{model.name, model.path, model.inputs, schema};
                            })
         | std::ranges::to<std::vector>();
     std::ranges::for_each(boundModels, [&](const auto& model) { modelCatalog->registerModel(model); });
@@ -240,7 +238,8 @@ LogicalPlan CLI::YAMLBinder::parseAndBind(std::istream& inputStream)
 {
     try
     {
-        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources, unboundModels] = YAML::Load(inputStream).as<QueryConfig>();
+        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources, unboundModels]
+            = YAML::Load(inputStream).as<QueryConfig>();
         bindRegisterLogicalSources(unboundLogicalSources);
         bindRegisterPhysicalSources(unboundPhysicalSources);
         bindRegisterSinks(unboundSinks);

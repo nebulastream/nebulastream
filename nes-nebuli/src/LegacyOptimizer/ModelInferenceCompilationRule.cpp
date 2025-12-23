@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <boost/algorithm/string.hpp>
 #include <memory>
 #include <utility>
 #include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
+#include <boost/algorithm/string.hpp>
 #include <InferModelLogicalOperator.hpp>
 #include <InferModelNameLogicalOperator.hpp>
 #include <ModelCatalog.hpp>
@@ -40,7 +40,7 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
 
         USED_IN_DEBUG auto shouldReplace = replaceOperator(
             queryPlan, modelNameOperator.getId(), InferModel::InferModelLogicalOperator(model, modelNameOperator->getInputFields()));
-            queryPlan = std::move(shouldReplace.value());
+        queryPlan = std::move(shouldReplace.value());
     }
 }
 

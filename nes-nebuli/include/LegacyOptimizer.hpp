@@ -15,8 +15,8 @@
 #pragma once
 #include <memory>
 #include <utility>
-#include <ModelCatalog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <ModelCatalog.hpp>
 
 namespace NES
 {
@@ -37,9 +37,7 @@ public:
         std::shared_ptr<SourceCatalog> sourceCatalog,
         std::shared_ptr<SinkCatalog> sinkCatalog,
         std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog)
-        : sourceCatalog(std::move(sourceCatalog)),
-        sinkCatalog(std::move(sinkCatalog)),
-        modelCatalog(std::move(modelCatalog))
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(std::move(modelCatalog))
     {
     }
 

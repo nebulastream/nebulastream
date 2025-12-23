@@ -167,14 +167,14 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
-ModelStatementHandler::ModelStatementHandler(const std::shared_ptr<Nebuli::Inference::ModelCatalog>& modelCatalog) : modelCatalog(modelCatalog)
+ModelStatementHandler::ModelStatementHandler(const std::shared_ptr<Nebuli::Inference::ModelCatalog>& modelCatalog)
+    : modelCatalog(modelCatalog)
 {
 }
 
 std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const NES::CreateModelStatement& statement)
 {
-    if (auto created = modelCatalog->addModelDescriptor(
-        statement.modelName, statement.modelPath, statement.inputTypes, statement.outputs))
+    if (auto created = modelCatalog->addModelDescriptor(statement.modelName, statement.modelPath, statement.inputTypes, statement.outputs))
     {
         return CreateModelStatementResult{created.value()};
     }

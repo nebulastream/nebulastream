@@ -103,8 +103,6 @@ std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
     return nullptr;
 }
 
-
-
 /// Creates new unique temporary directory with a custom prefix
 std::filesystem::path createTempDir(std::string_view prefix);
 

@@ -36,6 +36,7 @@ public:
     void terminate(ExecutionContext& executionCtx) const override;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override { return child; }
+
     void setChild(PhysicalOperator child) override { this->child = std::move(child); }
 
     bool isVarSizedInput = false;

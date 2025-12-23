@@ -22,6 +22,7 @@
 namespace NES
 {
 class IREEAdapter;
+
 class IREEInferenceOperatorHandler : public OperatorHandler
 {
 public:

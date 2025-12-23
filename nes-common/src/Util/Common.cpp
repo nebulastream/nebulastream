@@ -42,6 +42,7 @@ std::filesystem::path createTempDir(std::string_view prefix)
     }
     return std::filesystem::path(std::move(tempDirTemplate));
 }
+
 void TempDirectoryCleanup::cleanup() noexcept
 {
     if (!deleteOnExit)
@@ -84,6 +85,7 @@ TempDirectoryCleanup& TempDirectoryCleanup::operator=(TempDirectoryCleanup&& oth
     other.deleteOnExit.reset();
     return *this;
 }
+
 std::string errnoString(int error)
 {
     char localBuffer[128] = {};

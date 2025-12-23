@@ -28,8 +28,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <ModelCatalog.hpp>
 #include <experimental/propagate_const>
+#include <ModelCatalog.hpp>
 
 namespace NES::CLI
 {

@@ -32,6 +32,7 @@ void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecu
         threadLocalAdapters.back()->initializeModel(model);
     }
 }
+
 void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
     threadLocalAdapters.clear();

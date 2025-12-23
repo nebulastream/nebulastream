@@ -25,8 +25,8 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
 #include <Model.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES::InferModel
 {
@@ -43,7 +43,7 @@ public:
 
     void serialize(SerializableOperator& serializableOperator) const;
 
-    [[nodiscard]] InferModelLogicalOperator withTraitSet(TraitSet traitSet) const ;
+    [[nodiscard]] InferModelLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
 
     [[nodiscard]] InferModelLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
@@ -55,7 +55,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] InferModelLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const ;
+    [[nodiscard]] InferModelLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
 private:
     static constexpr std::string_view NAME = "INFERENCEMODEL";
