@@ -47,14 +47,7 @@ public:
 
     virtual ~MemoryLayout() = default;
 
-    enum PrependMode : uint8_t
-    {
-        PREPEND_NONE,
-        PREPEND_LENGTH_AS_UINT32
-    };
-
     /// @brief Writes the variable sized data to the buffer
-    template <PrependMode PrependMode>
     static VariableSizedAccess
     writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 

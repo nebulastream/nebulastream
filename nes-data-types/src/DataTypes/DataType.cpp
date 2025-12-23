@@ -18,6 +18,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -134,10 +135,9 @@ uint32_t DataType::getSizeInBytes() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '8' for VARSIZED, because we store 'uint64_t' data that represent how to access the data, c.f., @class VariableSizedAccess
-            return 8;
-        case Type::VARSIZED_POINTER_REP:
-            return sizeof(int8_t*);
+            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+            /// and 8 bytes for the size of the VARSIZED
+            return 16;
         case Type::INT64:
         case Type::UINT64:
         case Type::FLOAT64:
@@ -184,14 +184,9 @@ std::string DataType::formattedBytesToString(const void* data) const
             }
             return std::string{*static_cast<const char*>(data)};
         }
-        case Type::VARSIZED_POINTER_REP:
         case Type::VARSIZED: {
-            /// Read the length of the VariableSizedDataType from the first StringLengthType bytes from the buffer and adjust the data pointer.
-            using StringLengthType = uint32_t;
-            const StringLengthType textLength = *static_cast<const uint32_t*>(data);
             const auto* textPointer = static_cast<const char*>(data);
-            textPointer += sizeof(StringLengthType); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            return {textPointer, textLength};
+            return textPointer;
         }
         case Type::UNDEFINED:
             return "invalid physical type";
@@ -272,11 +267,6 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
 {
     return DataType{.type = DataType::Type::VARSIZED};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZED_POINTER_REPDataType(DataTypeRegistryArguments)
-{
-    return DataType{.type = DataType::Type::VARSIZED_POINTER_REP};
 }
 
 bool DataType::isInteger() const

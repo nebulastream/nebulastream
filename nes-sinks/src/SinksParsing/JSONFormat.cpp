@@ -64,16 +64,13 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
         auto fields
             = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                  [&formattingContext, &tuple, &tbuffer](const auto& index)
+                  [&formattingContext, &tuple](const auto& index)
                   {
                       auto type = formattingContext.physicalTypes[index];
                       auto offset = formattingContext.offsets[index];
                       if (type.type == DataType::Type::VARSIZED)
                       {
-                          const VariableSizedAccess variableSizedAccess{
-                              *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                          const auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
-                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedData);
+                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), 3);
                       }
                       return fmt::format("\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(&tuple[offset]));
                   });

@@ -179,7 +179,6 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         auto loweredFunctionType = nodeFunctionKey.getDataType();
         if (loweredFunctionType.isType(DataType::Type::VARSIZED))
         {
-            loweredFunctionType.type = DataType::Type::VARSIZED_POINTER_REP;
             const bool fieldReplaceSuccess = newInputSchema.replaceTypeOfField(nodeFunctionKey.getFieldName(), loweredFunctionType);
             INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", nodeFunctionKey.getFieldName(), newInputSchema);
         }
