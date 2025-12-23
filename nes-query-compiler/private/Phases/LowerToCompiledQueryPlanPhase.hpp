@@ -29,8 +29,8 @@ namespace NES
 class LowerToCompiledQueryPlanPhase
 {
 public:
-    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
-        : dumpQueryCompilationIntermediateRepresentations(dumpQueryCompilationIntermediateRepresentations)
+    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations, std::string tracer)
+        : dumpQueryCompilationIntermediateRepresentations(dumpQueryCompilationIntermediateRepresentations), tracer(std::move(tracer))
     {
     }
 
@@ -56,5 +56,6 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIntermediateRepresentations;
+    std::string tracer;
 };
 }

@@ -72,7 +72,9 @@ LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) c
 {
     const auto newLeft = left.withInferredDataType(schema);
     const auto newRight = right.withInferredDataType(schema);
-    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newLeft, newRight});
+    return withDataType(DataTypeProvider::provideDataType(
+                            DataType::Type::FLOAT64, newLeft.getDataType().isNullable || newRight.getDataType().isNullable))
+        .withChildren({newLeft, newRight});
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const

@@ -52,6 +52,7 @@ public:
            "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
+    StringOption nautilusTracer = {"nautilus_tracer", "exception", "nautilus tracer (exception, fork). defaults to exception"};
     EnumOption<DumpMode> dumpQueryCompilationIntermediateRepresentations
         = {"dump_compilation_result",
            DumpMode::NONE,
@@ -63,6 +64,7 @@ private:
         return {
             &queryEngine,
             &defaultQueryExecution,
+            &nautilusTracer,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIntermediateRepresentations};
