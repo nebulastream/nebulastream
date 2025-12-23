@@ -68,8 +68,11 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
     this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
+    /// The output of an aggregation is never NULL
+    auto newFinalAggregationStamp = this->getOnField().getDataType();
+    newFinalAggregationStamp.isNullable = false;
+    this->setFinalAggregateStamp(newFinalAggregationStamp);
+    this->setAsField(this->getAsField().withDataType(newFinalAggregationStamp).get<FieldAccessLogicalFunction>());
 }
 
 SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() const

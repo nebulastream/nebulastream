@@ -92,9 +92,9 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 {
     bufferManager = BufferManager::create();
     const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataType::Type::UINT64)
-                                .addField("value3", DataType::Type::UINT64);
+                                .addField("value1", DataType::Type::UINT64, false)
+                                .addField("value2", DataType::Type::UINT64, false)
+                                .addField("value3", DataType::Type::UINT64, false);
     constexpr auto pageSize = PAGE_SIZE;
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
@@ -109,9 +109,9 @@ TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 {
     bufferManager = BufferManager::create();
     const auto testSchema = Schema{}
-                                .addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+                                .addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false))
+                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false))
+                                .addField("value3", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     constexpr auto pageSize = PAGE_SIZE;
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
@@ -126,7 +126,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 {
     /// We need to increase the number of buffers, otherwise we run out of them for this test
     bufferManager = BufferManager::create(8 * 1024, 10 * 1000);
-    const auto testSchema = Schema{}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    const auto testSchema = Schema{}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     /// smallest possible pageSize ensures that the text is split over multiple pages
     constexpr auto pageSize = 8UL;
     constexpr auto sizeVarSizedData = 2 * pageSize;
@@ -144,9 +144,9 @@ TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 {
     bufferManager = BufferManager::create();
     const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
+                                .addField("value1", DataType::Type::UINT64, false)
+                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false))
+                                .addField("value3", DataType::Type::FLOAT64, false);
     constexpr auto pageSize = PAGE_SIZE;
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
@@ -160,7 +160,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}.addField("value1", DataType::Type::UINT64).addField("value2", DataType::Type::UINT64);
+    const auto testSchema = Schema{}.addField("value1", DataType::Type::UINT64, false).addField("value2", DataType::Type::UINT64, false);
     constexpr auto pageSize = 73UL;
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
@@ -175,8 +175,8 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 {
     bufferManager = BufferManager::create();
     const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+                                .addField("value1", DataType::Type::UINT64, false)
+                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
     const auto entrySize = testSchema.getSizeOfSchemaInBytes();
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 2UL;
@@ -204,9 +204,9 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 {
     bufferManager = BufferManager::create();
     const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
+                                .addField("value1", DataType::Type::UINT64, false)
+                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false))
+                                .addField("value3", DataType::Type::FLOAT64, false);
     const auto entrySize = testSchema.getSizeOfSchemaInBytes();
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 4UL;
@@ -234,9 +234,9 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 {
     bufferManager = BufferManager::create();
     const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
+                                .addField("value1", DataType::Type::UINT64, false)
+                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false))
+                                .addField("value3", DataType::Type::FLOAT64, false);
     const auto entrySize = testSchema.getSizeOfSchemaInBytes();
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 4UL;
@@ -264,9 +264,9 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
     bufferManager = BufferManager::create();
     const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
+                                .addField("value1", DataType::Type::UINT64, false)
+                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false))
+                                .addField("value3", DataType::Type::FLOAT64, false);
     const auto entrySize = testSchema.getSizeOfSchemaInBytes();
     constexpr auto pageSize = PAGE_SIZE;
     constexpr auto numVectors = 4UL;
@@ -299,7 +299,7 @@ INSTANTIATE_TEST_CASE_P(
     [](const testing::TestParamInfo<PagedVectorTest::ParamType>& info)
     {
         std::stringstream ss;
-        ss << magic_enum::enum_name(std::get<0>(info.param));
+        ss << magic_enum::enum_name(std::get<0>(info.param)) << "_";
         ss << magic_enum::enum_name(std::get<1>(info.param));
         return ss.str();
     });

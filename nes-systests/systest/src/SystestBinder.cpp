@@ -116,8 +116,8 @@ public:
     static inline const Schema checksumSchema = []
     {
         Schema checksumSinkSchema;
-        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
+        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
         return checksumSinkSchema;
     }();
 
@@ -757,6 +757,8 @@ struct SystestBinder::Impl
         const auto differentialTestResultFileName = std::string(testFileName) + "differential";
 
         auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
+
+
         currentTest.setConfigurationOverrides(configOverrides);
 
         try
@@ -919,5 +921,4 @@ std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(
 }
 
 SystestBinder::~SystestBinder() = default;
-
 }

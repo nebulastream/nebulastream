@@ -24,9 +24,9 @@
 namespace NES::DataTypeProvider
 {
 
-std::optional<DataType> tryProvideDataType(const std::string& type)
+std::optional<DataType> tryProvideDataType(const std::string& type, const bool isNullable)
 {
-    auto args = DataTypeRegistryArguments{};
+    const DataTypeRegistryArguments args{isNullable};
     if (const auto dataType = DataTypeRegistry::instance().create(type, args))
     {
         return dataType;
@@ -34,11 +34,10 @@ std::optional<DataType> tryProvideDataType(const std::string& type)
     return std::nullopt;
 }
 
-DataType provideDataType(const std::string& type)
+DataType provideDataType(const std::string& type, const bool isNullable)
 {
-    /// Empty argument struct, since we do not have data types that take arguments at the moment.
     /// However, we provide the empty struct to be consistent with the design of our registries.
-    auto args = DataTypeRegistryArguments{};
+    const DataTypeRegistryArguments args{isNullable};
     if (const auto dataType = DataTypeRegistry::instance().create(type, args))
     {
         return dataType.value();
@@ -46,10 +45,10 @@ DataType provideDataType(const std::string& type)
     throw UnknownPluginType("Unknown data type: {}", type);
 }
 
-DataType provideDataType(const DataType::Type type)
+DataType provideDataType(const DataType::Type type, const bool isNullable)
 {
     const auto typeAsString = std::string(magic_enum::enum_name(type));
-    return provideDataType(typeAsString);
+    return provideDataType(typeAsString, isNullable);
 }
 
 }

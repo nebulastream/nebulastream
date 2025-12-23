@@ -56,8 +56,8 @@ TEST_F(SourceCatalogTest, AddInspectLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
+    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32, false));
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -68,8 +68,8 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
+    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32, false));
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -114,8 +114,8 @@ TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
+    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32, false));
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -127,8 +127,8 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
+    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32, false));
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -164,8 +164,8 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
     constexpr unsigned int concurrentLogicalSourceNames = 3;
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, false));
+    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32, false));
 
     std::atomic_uint64_t successfulPhysicalAdds{0};
     std::atomic_uint64_t failedPhysicalAdds{0};

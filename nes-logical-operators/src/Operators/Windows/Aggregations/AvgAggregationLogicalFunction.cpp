@@ -31,8 +31,8 @@ namespace NES
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field)
 {
 }
@@ -41,8 +41,8 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field,
           asField)
 {
@@ -68,17 +68,21 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
         if (this->getOnField().getDataType().isSignedInteger())
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64)).get<FieldAccessLogicalFunction>();
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64, getOnField().getDataType().isNullable))
+                      .get<FieldAccessLogicalFunction>();
         }
         else
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, getOnField().getDataType().isNullable))
+                      .get<FieldAccessLogicalFunction>();
         }
     }
     else
     {
-        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).get<FieldAccessLogicalFunction>();
+        newOnField
+            = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, getOnField().getDataType().isNullable))
+                  .get<FieldAccessLogicalFunction>();
     }
 
     ///Set fully qualified name for the as Field
@@ -96,8 +100,10 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
     }
-    auto newAsField = this->getAsField().withDataType(getFinalAggregateStamp());
-    this->setAsField(newAsField.get<FieldAccessLogicalFunction>());
+    /// The output of an aggregation is never NULL
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(finalAggregateStampType, false);
+    this->setFinalAggregateStamp(newFinalAggregateStamp);
+    this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp).get<FieldAccessLogicalFunction>());
     this->setOnField(newOnField);
     this->setInputStamp(newOnField.getDataType());
 }

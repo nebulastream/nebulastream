@@ -73,7 +73,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
     Schema addField(std::string name, const DataType& dataType);
-    Schema addField(std::string name, DataType::Type type);
+    Schema addField(std::string name, DataType::Type type, bool isNullable);
 
     /// Replaces the type of the field
     [[nodiscard]] bool replaceTypeOfField(const std::string& name, DataType type);
