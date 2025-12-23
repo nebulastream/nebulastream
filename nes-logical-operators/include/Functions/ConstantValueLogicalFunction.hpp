@@ -23,6 +23,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -44,6 +45,7 @@ public:
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
 
     [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] SerializedFunction serialized() const;
 
     [[nodiscard]] DataType getDataType() const override;
     [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;

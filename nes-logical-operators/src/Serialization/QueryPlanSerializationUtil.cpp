@@ -21,18 +21,60 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/SerializedUtils.hpp>
 #include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <rfl/json.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <from_current.hpp>
+#include <rfl.hpp>
 
 namespace NES
 {
+
+void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
+{
+    SerializedOperator serializedOperator;
+    serializedOperator.operatorId = op.getId().getRawValue();
+    serializedOperator.type = op.getName();
+    auto inputSchemas = std::vector<SerializedSchema>();
+    for (const auto& inputSchema : op.getInputSchemas())
+    {
+        inputSchemas.emplace_back(SerializedUtils::serializeSchema(inputSchema));
+    }
+    serializedOperator.inputSchemas = std::move(inputSchemas);
+
+    auto outputSchema = SerializedUtils::serializeSchema(op.getOutputSchema());
+    serializedOperator.outputSchema = std::move(outputSchema);
+
+    auto childrenIds = std::vector<uint64_t>{};
+    for (const auto& child : op.getChildren())
+    {
+        childrenIds.emplace_back(child.getId().getRawValue());
+    }
+    serializedOperator.childrenIds = std::move(childrenIds);
+
+    /// TODO: Add support for traits
+    /// TODO: No need for if-clause, once all Operators support `.serialized` function
+    if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
+    {
+        selectOp.value()->serialized(serializedOperator);
+    }
+    else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
+    {
+        sourceOp.value()->serialized(serializedOperator);
+    }
+
+    const auto serializedString = rfl::json::write(serializedOperator);
+    serialized.set_reflect(serializedString);
+}
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
@@ -53,6 +95,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         auto* sOp = serializableQueryPlan.add_operators();
         itr.serialize(*sOp);
+        serialized(itr, *sOp);
         TraitSetSerializationUtil::serialize(itr.getTraitSet(), sOp->mutable_trait_set());
     }
 

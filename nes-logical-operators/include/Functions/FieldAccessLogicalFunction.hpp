@@ -20,10 +20,12 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -45,6 +47,7 @@ public:
     [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
 
     [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] SerializedFunction serialized() const;
 
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
     friend bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
