@@ -37,19 +37,17 @@ HashMapSlice::HashMapSlice(
     const SliceStart sliceStart,
     const SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
-    const uint64_t numberOfHashMaps,
-    const uint64_t numberOfInputStreams)
+    const uint64_t numHashMaps,
+    const uint64_t numInputStreams)
     : Slice(sliceStart, sliceEnd)
     , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
-    , numberOfHashMapsPerInputStream(numberOfHashMaps)
-    , numberOfInputStreams(numberOfInputStreams)
-    , workerAddressMap(numberOfHashMaps * numberOfInputStreams)
+    , workerAddressMap(numHashMaps, numInputStreams)
 {
     if (auto buffer = bufferProvider->getUnpooledBuffer(workerAddressMap.calculateHeaderSize()))
     {
         workerAddressMap.mainBuffer = std::move(buffer.value());
         auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-        for (uint32_t i = 0; i < workerAddressMap.hashMapCount; i++)
+        for (uint32_t i = 0; i < numberOfHashMaps(); i++)
         {
             basePointer[i] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
         }
@@ -62,19 +60,29 @@ HashMapSlice::HashMapSlice(
 
 size_t HashMapSlice::WorkerAddressMap::calculateHeaderSize() const
 {
-    return hashMapCount * sizeof(VariableSizedAccess::Index);
+    return numHashMaps * sizeof(VariableSizedAccess::Index);
 }
 
 uint64_t HashMapSlice::numberOfHashMaps() const
 {
-    return workerAddressMap.hashMapCount;
+    return workerAddressMap.numHashMaps;
+}
+
+uint64_t HashMapSlice::numInputStreams() const
+{
+    return workerAddressMap.numInputStreams;
+}
+
+uint64_t HashMapSlice::numHashMapsPerInputStream() const
+{
+    return workerAddressMap.numHashMapsPerInputStream;
 }
 
 uint64_t HashMapSlice::getNumberOfTuples() const
 {
     uint64_t runningSum = 0;
     auto bufferMemoryArea = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    for (uint64_t i = 0; i < workerAddressMap.hashMapCount; i++)
+    for (uint64_t i = 0; i < workerAddressMap.numHashMaps; i++)
     {
         auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(bufferMemoryArea[i]);
         runningSum += childBuffer.getNumberOfTuples();

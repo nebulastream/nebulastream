@@ -36,8 +36,8 @@ HJSlice::HJSlice(
 HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const
 {
     /// Hashmaps of the left build side come before right
-    auto pos = (workerThreadId % numberOfHashMaps())
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMaps()));
+    auto pos = (workerThreadId % numHashMapsPerInputStream())
+        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numHashMapsPerInputStream()));
 
     INVARIANT(
         numberOfHashMaps() > 0 and pos < numberOfHashMaps(),
@@ -57,11 +57,11 @@ HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinB
 HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
 {
     /// Hashmaps of the left build side come before right
-    auto pos = (workerThreadId % numberOfHashMapsPerInputStream)
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMapsPerInputStream));
+    auto pos = (workerThreadId % numHashMapsPerInputStream())
+        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numHashMapsPerInputStream()));
 
     INVARIANT(
-        workerAddressMap.hashMapCount > 0 and pos < workerAddressMap.hashMapCount,
+        numberOfHashMaps() > 0 and pos < numberOfHashMaps(),
         "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
         workerThreadId,
         pos,
@@ -89,7 +89,7 @@ HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, 
 
 uint64_t HJSlice::getNumberOfHashMapsForSide() const
 {
-    return numberOfHashMapsPerInputStream;
+    return numHashMapsPerInputStream();
 }
 
 }
