@@ -275,6 +275,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                 {
                     auto args = nlohmann::json::object();
                     args["pipeline_id"] = pipelineStop.pipelineId.getRawValue();
+                    args["tuples"] = pipelineTuplesProcessed[pipelineStop.pipelineId];
 
                     /// Use the thread ID from the PipelineStart event to ensure matching begin/end pairs
                     auto it = activePipelines.find(pipelineStop.pipelineId);
@@ -286,7 +287,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         Category::Pipeline,
                         Phase::End,
                         timestampToMicroseconds(pipelineStop.timestamp),
-                        0,
+                        pipelineDurations[pipelineStop.pipelineId],
                         args);
                     traceEvent["tid"] = originalTid;
 
@@ -311,7 +312,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskStart.threadId.getRawValue();
 
-                    emit(traceEvent);
+                    // emit(traceEvent);
 
                     /// Track this task for duration calculation
                     activeTasks.emplace(taskStart.taskId, taskStart.timestamp);
@@ -339,7 +340,8 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskComplete.threadId.getRawValue();
 
-                    emit(traceEvent);
+                    pipelineDurations[taskComplete.pipelineId] += duration;
+                    // emit(traceEvent);
                 },
                 [&](const TaskEmit& taskEmit)
                 {
@@ -363,7 +365,8 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskEmit.threadId.getRawValue();
 
-                    emit(traceEvent);
+                    pipelineTuplesProcessed[taskEmit.fromPipeline] += taskEmit.numberOfTuples;
+                    // emit(traceEvent);
                 },
                 [&](const TaskExpired& taskExpired)
                 {
@@ -381,7 +384,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         args);
                     traceEvent["tid"] = taskExpired.threadId.getRawValue();
 
-                    emit(traceEvent);
+                    // emit(traceEvent);
 
                     /// Remove from active tasks if present
                     activeTasks.erase(taskExpired.taskId);

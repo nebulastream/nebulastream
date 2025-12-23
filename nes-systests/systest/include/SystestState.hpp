@@ -48,6 +48,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <SystestConfiguration.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
@@ -224,12 +225,16 @@ struct RunningQuery
 struct TestFile
 {
     explicit TestFile(
-        const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
+        const std::filesystem::path& file,
+        std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<SinkCatalog> sinkCatalog,
+        std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog);
     explicit TestFile(
         const std::filesystem::path& file,
         std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
         std::shared_ptr<SourceCatalog> sourceCatalog,
-        std::shared_ptr<SinkCatalog> sinkCatalog);
+        std::shared_ptr<SinkCatalog> sinkCatalog,
+        std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog);
     [[nodiscard]] std::string getLogFilePath() const;
 
     [[nodiscard]] TestName name() const { return file.stem().string(); }
@@ -240,6 +245,7 @@ struct TestFile
     std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
+    std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog;
 };
 
 /// intermediate representation storing all considered test files

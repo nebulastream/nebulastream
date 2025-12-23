@@ -52,6 +52,7 @@ struct Repl::Impl
 {
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
+    ModelStatementHandler modelStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
 
@@ -73,6 +74,7 @@ struct Repl::Impl
     Impl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        ModelStatementHandler modelStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         const ErrorBehaviour errorBehaviour,
@@ -80,6 +82,7 @@ struct Repl::Impl
         const bool interactiveMode)
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
+        , modelStatementHandler(std::move(modelStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
         , binder(std::move(binder))
         , interactiveMode(interactiveMode)
@@ -395,6 +398,10 @@ struct Repl::Impl
                 {
                     return sinkStatementHandler.apply(stmt);
                 }
+                else if constexpr (requires { modelStatementHandler.apply(stmt); })
+                {
+                    return modelStatementHandler.apply(stmt);
+                }
                 else if constexpr (requires { queryStatementHandler->apply(stmt); })
                 {
                     return queryStatementHandler->apply(stmt);
@@ -533,6 +540,7 @@ struct Repl::Impl
 Repl::Repl(
     SourceStatementHandler sourceStatementHandler,
     SinkStatementHandler sinkStatementHandler,
+    ModelStatementHandler modelStatementHandler,
     std::shared_ptr<QueryStatementHandler> queryStatementHandler,
     StatementBinder binder,
     ErrorBehaviour errorBehaviour,
@@ -541,6 +549,7 @@ Repl::Repl(
     : impl(std::make_unique<Impl>(
           std::move(sourceStatementHandler),
           std::move(sinkStatementHandler),
+          std::move(modelStatementHandler),
           std::move(queryStatementHandler),
           std::move(binder),
           errorBehaviour,
