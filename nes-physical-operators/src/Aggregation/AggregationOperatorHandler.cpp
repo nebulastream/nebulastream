@@ -80,7 +80,7 @@ void AggregationOperatorHandler::triggerSlices(
         for (const auto& slice : allSlices)
         {
             const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
-            for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
+            for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->numberOfHashMaps(); ++hashMapIdx)
             {
                 if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
                     (hashMap != nullptr) and hashMap->numberOfTuples() > 0)

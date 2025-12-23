@@ -36,19 +36,22 @@ HJSlice::HJSlice(
 HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const
 {
     /// Hashmaps of the left build side come before right
-    auto pos = (workerThreadId % numberOfHashMapsPerInputStream)
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMapsPerInputStream));
+    auto pos = (workerThreadId % numberOfHashMaps())
+        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMaps()));
 
     INVARIANT(
-        workerAddressMap.hashMapCount > 0 and pos < workerAddressMap.hashMapCount,
+        numberOfHashMaps() > 0 and pos < numberOfHashMaps(),
         "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
         workerThreadId,
         pos,
-        workerAddressMap.hashMapCount);
+        numberOfHashMaps());
     auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        return nullptr;
+    }
     auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
-    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
-    return childBufferMemoryArea[0];
+    return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
 HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
@@ -62,16 +65,14 @@ HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, 
         "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
         workerThreadId,
         pos,
-        workerAddressMap.hashMapCount);
+        numberOfHashMaps());
 
     auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
     if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         // create child buffer for this worker
         auto childBuffer = bufferProvider->getBufferBlocking();
-        // create a chained hash map into the child buffer
-        auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
-        childBufferMemoryArea[0] = new ChainedHashMap(bufferProvider,
+        new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
             createNewHashMapSliceArgs.keySize,
             createNewHashMapSliceArgs.valueSize,
             createNewHashMapSliceArgs.numberOfBuckets,
@@ -80,11 +81,10 @@ HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, 
         const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
         // store the childbufferindex into the mainBuffer header file
         basePointer[pos] = childBufferIndex;
-
     }
+    // return pointer to the hash map object
     auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
-    auto childBufferMemoryArea = childBuffer.getAvailableMemoryArea<ChainedHashMap*>();
-    return childBufferMemoryArea[0];
+    return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
 uint64_t HJSlice::getNumberOfHashMapsForSide() const

@@ -65,7 +65,7 @@ size_t HashMapSlice::WorkerAddressMap::calculateHeaderSize() const
     return hashMapCount * sizeof(VariableSizedAccess::Index);
 }
 
-uint64_t HashMapSlice::getNumberOfHashMaps() const
+uint64_t HashMapSlice::numberOfHashMaps() const
 {
     return workerAddressMap.hashMapCount;
 }

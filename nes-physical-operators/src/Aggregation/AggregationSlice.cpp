@@ -39,8 +39,8 @@ AggregationSlice::AggregationSlice(
 
 HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % getNumberOfHashMaps();
-    INVARIANT(pos < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+    const auto pos = workerThreadId % numberOfHashMaps();
+    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
     auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
     if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
@@ -52,8 +52,8 @@ HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) co
 
 HashMap* AggregationSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
 {
-    const auto pos = workerThreadId % getNumberOfHashMaps();
-    INVARIANT(pos < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+    const auto pos = workerThreadId % numberOfHashMaps();
+    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
 
     auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
     if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)

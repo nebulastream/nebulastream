@@ -88,7 +88,7 @@ public:
     // ~HashMapSlice() override;
 
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
-    [[nodiscard]] uint64_t getNumberOfHashMaps() const;
+    [[nodiscard]] uint64_t numberOfHashMaps() const;
 
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 

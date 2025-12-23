@@ -209,12 +209,7 @@ std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProv
     return newlyAddedPage.getAvailableMemoryArea().subspan(newlyAddedPage.getNumberOfTuples() - neededSize);
 }
 
-uint64_t ChainedHashMap::numberOfTuples() const
-{
-    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_TUPLES_POS];
-}
-
-VariableSizedAccess::Index ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
+void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
 {
     // create and initialize new page
     auto newPage = bufferProvider->getUnpooledBuffer(pageSize());
@@ -245,7 +240,6 @@ VariableSizedAccess::Index ChainedHashMap::appendPage(AbstractBufferProvider* bu
     // increase num page count
     auto numPagesPointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
     numPagesPointer[Metadata::NUM_PAGES_POS]++;
-    return newPageIndex;
 }
 
 AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
@@ -273,7 +267,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     if (numberOfTuples() % entriesPerPage() == 0)
     {
         // create new page and add it as the last page in the linked list
-        auto newPageIndex = appendPage(bufferProvider);
+        appendPage(bufferProvider);
     }
 
     /// 2. Finding the new entry
@@ -312,7 +306,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         mainBufferPointer[Metadata::CHAINS_BEGIN_POS + entryPos] = newEntry;
     }
     auto numTuplesPointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
-    numTuplesPointer[Metadata::NUM_PAGES_POS]++;
+    numTuplesPointer[Metadata::NUM_TUPLES_POS]++;
     return newEntry;
 }
 
@@ -336,9 +330,18 @@ uint64_t ChainedHashMap::calculateMainBufferSize(uint64_t numberOfChains)
         (Metadata::MAIN_BUFFER_UINT32_FIELDS_NUM * sizeof(VariableSizedAccess::Index)); // storageSpaceChildBufferIndex + varSizedSpaceChildBufferIndex
 }
 
+uint64_t ChainedHashMap::numberOfTuples() const
+{
+    uint64_t numTuples = mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_TUPLES_POS];
+    return numTuples;
+    // return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_TUPLES_POS];
+}
+
 uint64_t ChainedHashMap::getNumberOfPages() const
 {
-    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_PAGES_POS];
+    uint64_t numPages = mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_PAGES_POS];
+    return numPages;
+    // return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_PAGES_POS];
 }
 
 uint64_t ChainedHashMap::numberOfChains() const

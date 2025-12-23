@@ -78,7 +78,7 @@ public:
     ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     // ~ChainedHashMap() override;
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
-    VariableSizedAccess::Index appendPage(AbstractBufferProvider* bufferProvider);
+    void appendPage(AbstractBufferProvider* bufferProvider);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t numberOfTuples() const override;
     [[nodiscard]] const TupleBuffer getPage(uint64_t pageIndex) const;
