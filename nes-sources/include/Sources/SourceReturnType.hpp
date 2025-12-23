@@ -41,7 +41,8 @@ struct EoS
 enum class TryStopResult : uint8_t
 {
     SUCCESS,
-    TIMEOUT
+    TIMEOUT,
+    NOT_RUNNING /// Thread was already stopped or never started
 };
 
 enum class EmitResult : uint8_t

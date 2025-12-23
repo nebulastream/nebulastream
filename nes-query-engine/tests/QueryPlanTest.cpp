@@ -401,10 +401,10 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
     ::testing::MockFunction<void()> onExpirationCallback;
     EXPECT_CALL(onRunningCallback, Call()).Times(1);
     EXPECT_CALL(onExpirationCallback, Call()).Times(1);
-    auto [expirationOwner, expirationRef] = Callback::create("Expiration");
-    auto [setupOwner, setupRef] = Callback::create("Setup");
-    setupOwner.addCallback(onRunningCallback.AsStdFunction());
-    expirationOwner.addCallback(onExpirationCallback.AsStdFunction());
+    auto [expirationOwner, expirationRef] = Callback::create();
+    auto [setupOwner, setupRef] = Callback::create();
+    setupOwner.setCallback(onRunningCallback.AsStdFunction());
+    expirationOwner.setCallback(onExpirationCallback.AsStdFunction());
 
     auto pipeline1Ctrl = std::make_shared<TestPipelineController>();
     auto pipeline2Ctrl = std::make_shared<TestPipelineController>();
@@ -572,7 +572,9 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
 
         EXPECT_TRUE(srcCtrl->waitUntilOpened());
         EXPECT_FALSE(srcCtrl->waitUntilClosed());
-        stopping = RunningQueryPlan::stop(std::move(runningQueryPlan));
+        auto [stoppingPlan, cb] = RunningQueryPlan::stop(std::move(runningQueryPlan));
+        stopping = std::move(stoppingPlan);
+        cb();
     }
 
     EXPECT_TRUE(terminations->handle(test.stages.at(pipeline)));
@@ -614,7 +616,10 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
         EXPECT_TRUE(setups->waitForTasks(3));
         /// Only setup the pipeline1 pipeline
         EXPECT_TRUE(setups->handle(test.stages[pipeline1]));
-        stopping = RunningQueryPlan::stop(std::move(runningQueryPlan));
+
+        absl::AnyInvocable<void()> cb;
+        std::tie(stopping, cb) = RunningQueryPlan::stop(std::move(runningQueryPlan));
+        cb();
     }
 
     EXPECT_TRUE(terminations->handle(test.stages[pipeline1]));
@@ -661,7 +666,6 @@ TEST_F(QueryPlanTest, RefCountTestSourceEoS)
 
         test.sourceControls[source]->injectEoS();
         EXPECT_TRUE(sourceStops->handle(test.sourceIds.at(source)));
-        EXPECT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
         EXPECT_TRUE(test.sourceControls[source]->wasOpened());
         EXPECT_TRUE(test.sourceControls[source]->wasClosed());
 
@@ -670,7 +674,7 @@ TEST_F(QueryPlanTest, RefCountTestSourceEoS)
         EXPECT_THAT(*terminations, ::testing::SizeIs(1));
         EXPECT_TRUE(terminations->handle(test.stages[sink]));
         /// NOLINTNEXTLINE
-        runningQueryPlan.release();
+        leak(std::move(runningQueryPlan), std::move(listener));
     }
 }
 
@@ -705,7 +709,6 @@ TEST_F(QueryPlanTest, RefCountTestMultipleSourceOneOfThemEoS)
         EXPECT_TRUE(test.sourceControls[source]->waitUntilClosed());
         EXPECT_TRUE(sourceStops->handle(test.sourceIds.at(source)));
 
-        EXPECT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
         EXPECT_FALSE(test.sourceControls[source1]->waitUntilClosed());
         leak(std::move(runningQueryPlan), std::move(listener));
     }

@@ -20,6 +20,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <semaphore>
 #include <stop_token>
 #include <utility>
@@ -110,12 +111,12 @@ OriginId RunningSource::getOriginId() const
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::unique_ptr<SourceHandle> source,
-    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
-    std::function<void(Exception)> unregisterWithError)
+    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped,
+    std::function<void(Exception)> onSourceFailure)
     : successors(std::move(successors))
     , source(std::move(source))
-    , tryUnregister(std::move(tryUnregister))
-    , unregisterWithError(std::move(unregisterWithError))
+    , onSourceStopped(std::move(onSourceStopped))
+    , onSourceFailure(std::move(onSourceFailure))
 {
 }
 
@@ -123,16 +124,19 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryId queryId,
     std::unique_ptr<SourceHandle> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> tryUnregister,
-    std::function<void(Exception)> unregisterWithError,
+    std::function<bool(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> onSourceStopped,
+    std::function<void(Exception)> onSourceFailure,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
     const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
     auto runningSource = std::shared_ptr<RunningSource>(
-        new RunningSource(successors, std::move(source), std::move(tryUnregister), std::move(unregisterWithError)));
+        new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
-    runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+    {
+        const std::scoped_lock lock(runningSource->mutex);
+        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+    }
     return runningSource;
 }
 
@@ -150,7 +154,18 @@ RunningSource::~RunningSource()
 
 bool RunningSource::attemptUnregister()
 {
-    if (tryUnregister(std::move(this->successors)))
+    const auto result = tryStop();
+    if (result == SourceReturnType::TryStopResult::NOT_RUNNING)
+    {
+        /// Source was already stopped, callback was already called
+        return true;
+    }
+    if (result != SourceReturnType::TryStopResult::SUCCESS)
+    {
+        return false;
+    }
+
+    if (onSourceStopped(std::move(this->successors)))
     {
         /// Since we moved the content of the successors vector out of the successors vector above,
         /// we clear it to avoid accidentally working with null values
@@ -162,12 +177,13 @@ bool RunningSource::attemptUnregister()
 
 SourceReturnType::TryStopResult RunningSource::tryStop() const
 {
+    const std::scoped_lock lock(mutex);
     return this->source->tryStop(std::chrono::milliseconds(0));
 }
 
 void RunningSource::fail(Exception exception) const
 {
-    unregisterWithError(std::move(exception));
+    onSourceFailure(std::move(exception));
 }
 
 }

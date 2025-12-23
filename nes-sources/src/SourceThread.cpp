@@ -222,6 +222,11 @@ void SourceThread::stop()
 
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
 {
+    if (!thread.joinable())
+    {
+        NES_DEBUG("SourceThread {}: thread is not running", originId);
+        return SourceReturnType::TryStopResult::NOT_RUNNING;
+    }
     PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
     NES_DEBUG("SourceThread {}: attempting to stop source", originId);
     thread.requestStop();
