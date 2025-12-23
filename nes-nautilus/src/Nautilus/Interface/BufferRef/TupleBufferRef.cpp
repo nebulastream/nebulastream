@@ -15,6 +15,9 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
 #include <algorithm>
+#include <array>
+#include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>
@@ -24,20 +27,16 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>
@@ -46,6 +45,118 @@
 namespace NES
 {
 
+namespace
+{
+TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint32_t newBufferSize)
+{
+    /// If the fixed size buffers are not large enough, we get an unpooled buffer
+    if (tupleBufferProvider.getBufferSize() > newBufferSize)
+    {
+        if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
+        {
+            return newBuffer.value();
+        }
+    }
+    const auto unpooledBuffer = tupleBufferProvider.getUnpooledBuffer(newBufferSize);
+    if (not unpooledBuffer.has_value())
+    {
+        throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size {}", newBufferSize);
+    }
+
+    return unpooledBuffer.value();
+}
+
+/// @brief Copies the varSizedValue to the specified location and then increments the number of tuples
+/// @return the new childBufferOffset
+template <TupleBufferRef::PrependMode PrependMode>
+void copyVarSizedAndIncrementMetaData(
+    TupleBuffer& childBuffer, const VariableSizedAccess::Offset childBufferOffset, const std::span<const std::byte> varSizedValue)
+{
+    const uint32_t prependSize = (PrependMode == TupleBufferRef::PREPEND_LENGTH_AS_UINT32) ? sizeof(uint32_t) : 0;
+    const auto spaceInChildBuffer = childBuffer.getAvailableMemoryArea().subspan(childBufferOffset.getRawOffset());
+    PRECONDITION(spaceInChildBuffer.size() >= varSizedValue.size() + prependSize, "SpaceInChildBuffer must be larger than varSizedValue");
+    if constexpr (PrependMode == TupleBufferRef::PREPEND_LENGTH_AS_UINT32)
+    {
+        uint32_t varSizedLength = varSizedValue.size();
+        const auto varSizedLengthBytes = std::as_bytes<uint32_t>(std::span{&varSizedLength, 1});
+        std::ranges::copy(varSizedLengthBytes, spaceInChildBuffer.begin());
+        std::ranges::copy(varSizedValue, spaceInChildBuffer.begin() + varSizedLengthBytes.size());
+    }
+    else if constexpr (PrependMode == TupleBufferRef::PREPEND_NONE)
+    {
+        std::ranges::copy(varSizedValue, spaceInChildBuffer.begin());
+    }
+    else
+    {
+        throw NotImplemented("prependMode {} is not implemented", magic_enum::enum_name(PrependMode));
+    }
+
+    /// We increment the number of tuples by the size of the newly added varsized to store the used no. bytes in the tuple buffer.
+    /// We plan on getting rid of this "mis"-use in the near future.
+    childBuffer.setNumberOfTuples(childBuffer.getNumberOfTuples() + varSizedValue.size() + prependSize);
+}
+}
+
+template <TupleBufferRef::PrependMode PrependMode>
+VariableSizedAccess TupleBufferRef::writeVarSized(
+    TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
+{
+    constexpr uint32_t prependSize = (PrependMode == PREPEND_LENGTH_AS_UINT32) ? sizeof(uint32_t) : 0;
+    const auto totalVarSizedLength = varSizedValue.size() + prependSize;
+
+
+    /// If there are no child buffers, we get a new buffer and copy the var sized into the newly acquired
+    const auto numberOfChildBuffers = tupleBuffer.getNumberOfChildBuffers();
+    if (numberOfChildBuffers == 0)
+    {
+        auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
+        copyVarSizedAndIncrementMetaData<PrependMode>(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
+        const auto childBufferIndex = tupleBuffer.storeChildBuffer(newChildBuffer);
+        return VariableSizedAccess{childBufferIndex};
+    }
+
+    /// If there is no space in the lastChildBuffer, we get a new buffer and copy the var sized into the newly acquired
+    /// We store the number of used bytes in the no. tuples field.  We plan on getting rid of this "mis"-use in the near future.
+    const VariableSizedAccess::Index childIndex{numberOfChildBuffers - 1};
+    auto lastChildBuffer = tupleBuffer.loadChildBuffer(childIndex);
+    const auto usedMemorySize = lastChildBuffer.getNumberOfTuples();
+    if (usedMemorySize + totalVarSizedLength >= lastChildBuffer.getBufferSize())
+    {
+        auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
+        copyVarSizedAndIncrementMetaData<PrependMode>(newChildBuffer, VariableSizedAccess::Offset{0}, varSizedValue);
+        const VariableSizedAccess::Index childBufferIndex{tupleBuffer.storeChildBuffer(newChildBuffer)};
+        return VariableSizedAccess{childBufferIndex};
+    }
+
+    /// There is enough space in the lastChildBuffer, thus, we copy the var sized into it
+    const VariableSizedAccess::Offset childOffset{usedMemorySize};
+    copyVarSizedAndIncrementMetaData<PrependMode>(lastChildBuffer, childOffset, varSizedValue);
+    return VariableSizedAccess{childIndex, childOffset};
+}
+
+/// Explicit instantiations for writeVarSized()
+template VariableSizedAccess
+TupleBufferRef::writeVarSized<TupleBufferRef::PrependMode::PREPEND_NONE>(TupleBuffer&, AbstractBufferProvider&, std::span<const std::byte>);
+template VariableSizedAccess TupleBufferRef::writeVarSized<TupleBufferRef::PrependMode::PREPEND_LENGTH_AS_UINT32>(
+    TupleBuffer&, AbstractBufferProvider&, std::span<const std::byte>);
+
+std::span<std::byte>
+TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
+{
+    /// Loading the childbuffer containing the variable sized data.
+    auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
+
+    /// Creating a subspan that starts at the required offset. It still can contain multiple other var sized, as we have solely offset the
+    /// lower bound but not the upper bound.
+    const auto varSized = childBuffer.getAvailableMemoryArea().subspan(variableSizedAccess.getOffset().getRawOffset());
+
+    /// Reading the first 32-bit (size of var sized) and then cutting the span to only contain the required var sized
+    alignas(uint32_t) std::array<std::byte, sizeof(uint32_t)> varSizedLengthBuffer{};
+    std::ranges::copy(varSized.first<sizeof(uint32_t)>(), varSizedLengthBuffer.begin());
+    const auto varSizedLength = std::bit_cast<uint32_t>(varSizedLengthBuffer);
+    return varSized.subspan(0, varSizedLength + sizeof(uint32_t));
+}
+
 VarVal
 TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
@@ -53,12 +164,12 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     {
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
-    nautilus::val<VariableSizedAccess> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
+    const nautilus::val<VariableSizedAccess> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
     const auto varSizedPtr = invoke(
         +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess variableSizedAccess)
         {
-            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            return MemoryLayout::loadAssociatedVarSizedValue(*tupleBuffer, variableSizedAccess).data();
+            INVARIANT(tupleBuffer != nullptr, "TupleBuffer MUST NOT be null at this point");
+            return loadAssociatedVarSizedValue(*tupleBuffer, variableSizedAccess).data();
         },
         recordBuffer.getReference(),
         combinedIdxOffset);
@@ -89,8 +200,8 @@ VarVal TupleBufferRef::storeValue(
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
-            const std::span<const int8_t> varSizedValueSpan{varSizedPtr, varSizedPtr + varSizedValueLength};
-            return MemoryLayout::writeVarSized<MemoryLayout::PREPEND_NONE>(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
+            const std::span varSizedValueSpan{varSizedPtr, varSizedPtr + varSizedValueLength};
+            return writeVarSized<PREPEND_NONE>(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
         },
         recordBuffer.getReference(),
         bufferProvider,
@@ -107,20 +218,25 @@ bool TupleBufferRef::includesField(
     return std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
-TupleBufferRef::~TupleBufferRef() = default;
-
-std::shared_ptr<TupleBufferRef> TupleBufferRef::create(const uint64_t bufferSize, const Schema& schema)
+uint64_t TupleBufferRef::getCapacity() const
 {
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
-    {
-        auto rowMemoryLayout = std::make_shared<RowLayout>(bufferSize, schema);
-        return std::make_shared<RowTupleBufferRef>(std::move(rowMemoryLayout));
-    }
-    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto columnMemoryLayout = std::make_shared<ColumnLayout>(bufferSize, schema);
-        return std::make_shared<ColumnTupleBufferRef>(std::move(columnMemoryLayout));
-    }
-    throw NotImplemented("Currently only row and column layout are supported");
+    return capacity;
 }
+
+uint64_t TupleBufferRef::getBufferSize() const
+{
+    return bufferSize;
+}
+
+uint64_t TupleBufferRef::getTupleSize() const
+{
+    return tupleSize;
+}
+
+TupleBufferRef::TupleBufferRef(const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
+    : capacity(capacity), bufferSize(bufferSize), tupleSize(tupleSize)
+{
+}
+
+TupleBufferRef::~TupleBufferRef() = default;
 }

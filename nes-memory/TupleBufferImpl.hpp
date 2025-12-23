@@ -22,8 +22,8 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
+#include <include/Runtime/VariableSizedAccess.hpp>
 #include <TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <deque>

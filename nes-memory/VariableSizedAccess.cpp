@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <MemoryLayout/VariableSizedAccess.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 
 #include <cstdint>
 #include <ostream>

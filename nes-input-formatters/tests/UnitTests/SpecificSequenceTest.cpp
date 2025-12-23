@@ -16,6 +16,7 @@
 #include <tuple>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
@@ -53,6 +54,7 @@ TEST_F(SpecificSequenceTest, oneTupleWithTupleDelimiters)
         .sizeOfFormattedBuffers = 20,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
         = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"},
@@ -71,6 +73,7 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOutOfOrder)
         .sizeOfFormattedBuffers = 20,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
         = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"},
@@ -89,6 +92,7 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
         .sizeOfFormattedBuffers = 20, /// 8 bytes metadata, 12 bytes per formatted tuple
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
         .rawBytesPerThread
         = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,12345\n"},
@@ -107,6 +111,7 @@ TEST_F(SpecificSequenceTest, DISABLED_testDelimiterThatIsMoreThanOneCharacter)
         .sizeOfFormattedBuffers = 20,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
         .rawBytesPerThread
         = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,1234--"},
@@ -126,6 +131,7 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
         = 16, /// size of formatted tuple: 4 bytes, size of indexes: 8 bytes <-- 8 bytes metadata: 1 tuple per index buffer, 4 formatted buffers, 12 index buffers
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{
             {{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}},
              {TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
@@ -148,6 +154,7 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
         .sizeOfFormattedBuffers = 28,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
         /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
         .rawBytesPerThread
@@ -168,6 +175,7 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
         .sizeOfFormattedBuffers = 28,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
         = {WorkerThreadResults<TestTuple>{{{TestTuple(123, 124, 125, 126)}}},
            WorkerThreadResults<TestTuple>{{{TestTuple(127, 128, 129, 456789)}}}},

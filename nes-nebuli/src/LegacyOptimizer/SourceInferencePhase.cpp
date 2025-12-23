@@ -46,7 +46,6 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
         }
         const auto& logicalSource = logicalSourceOpt.value();
         schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
-        schema.memoryLayoutType = logicalSource.getSchema()->memoryLayoutType;
         auto qualifierName = source->getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
         std::ranges::for_each(

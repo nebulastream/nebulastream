@@ -25,9 +25,11 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <nautilus/Engine.hpp>
@@ -143,15 +145,20 @@ public:
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
         const Schema& schema,
+        const MemoryLayoutType& memoryLayout,
         uint64_t numberOfTuples,
         BufferManager& bufferManager,
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
     std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
-        const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager, uint64_t minSizeVarSizedData);
-    std::vector<TupleBuffer>
-    createMonotonicallyIncreasingValues(const Schema& schema, uint64_t numberOfTuples, BufferManager& bufferManager);
+        const Schema& schema,
+        const MemoryLayoutType& memoryLayout,
+        uint64_t numberOfTuples,
+        BufferManager& bufferManager,
+        uint64_t minSizeVarSizedData);
+    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+        const Schema& schema, const MemoryLayoutType& memoryLayout, uint64_t numberOfTuples, BufferManager& bufferManager);
 
     void compileFillBufferFunction(
         std::string_view functionName,

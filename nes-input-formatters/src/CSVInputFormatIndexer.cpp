@@ -51,12 +51,12 @@ void initializeIndexFunctionForTuple(
     }
     /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
     fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
-    if (fieldIdx != metaData.getSchema().getNumberOfFields())
+    if (fieldIdx != metaData.getNumberOfFields())
     {
         throw NES::CannotFormatSourceData(
             "Number of parsed fields does not match number of fields in schema (parsed {} vs {} schema",
             fieldIdx,
-            metaData.getSchema().getNumberOfFields());
+            metaData.getNumberOfFields());
     }
 }
 }
@@ -67,7 +67,7 @@ namespace NES
 void CSVInputFormatIndexer::indexRawBuffer(
     FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
-    fieldOffsets.startSetup(metaData.getSchema().getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
+    fieldOffsets.startSetup(metaData.getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
 
     const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(metaData.getTupleDelimiter()));
 

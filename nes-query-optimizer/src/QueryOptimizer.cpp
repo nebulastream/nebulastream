@@ -15,6 +15,7 @@
 #include <QueryOptimizer.hpp>
 
 #include <Phases/DecideJoinTypes.hpp>
+#include <Phases/DecideMemoryLayout.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <PhysicalPlan.hpp>
@@ -29,9 +30,11 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecutionConfiguration& defaultQueryExecution)
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
-    /// For now, we just decide the join type (if one exists in the query) and lower to physical operators in a pure function.
+    /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
     DecideJoinTypes joinTypeDecider(defaultQueryExecution.joinStrategy);
-    const auto optimizedPlan = joinTypeDecider.apply(plan);
+    DecideMemoryLayout memoryLayoutDecider;
+    auto optimizedPlan = joinTypeDecider.apply(plan);
+    optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
     return LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
 }
 

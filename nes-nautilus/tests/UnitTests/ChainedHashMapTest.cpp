@@ -20,6 +20,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -100,7 +101,7 @@ TEST_P(ChainedHashMapTest, fixedDataTypesUpdate)
     ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
 
     /// Getting new values for updating the values in the hash map.
-    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, params.numberOfItems, *bufferManager);
+    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
 
     /// We are inserting the records from the random key and value buffers into a map.
     /// Thus, we can check if the provided values are correct.

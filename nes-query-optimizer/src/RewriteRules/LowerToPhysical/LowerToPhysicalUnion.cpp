@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -32,12 +33,14 @@ namespace NES
 
 RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator)
 {
+    PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
+
     const auto source = logicalOperator.getAs<UnionLogicalOperator>();
     auto inputSchemas = logicalOperator.getInputSchemas();
     auto outputSchema = logicalOperator.getOutputSchema();
-
-    PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
-
+    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     auto renames = inputSchemas
         | std::views::transform(
                        [&](const auto& schema)
@@ -46,14 +49,18 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
                                UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
                                schema,
                                outputSchema,
+                               memoryLayoutType,
+                               memoryLayoutType,
                                PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
                        })
         | std::ranges::to<std::vector>();
 
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         UnionPhysicalOperator(),
         source.getOutputSchema(),
         logicalOperator.getOutputSchema(),
+        memoryLayoutType,
+        memoryLayoutType,
         std::nullopt,
         std::nullopt,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,

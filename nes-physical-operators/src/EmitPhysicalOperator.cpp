@@ -140,7 +140,7 @@ EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, 
 
 [[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const
 {
-    return bufferRef->getMemoryLayout()->getCapacity();
+    return bufferRef->getCapacity();
 }
 
 std::optional<PhysicalOperator> EmitPhysicalOperator::getChild() const

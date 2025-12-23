@@ -10,5 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(MemoryLayouts)
 add_nes_runtime_test(query-log-test "QueryLogTest.cpp")

@@ -51,8 +51,6 @@ std::string Schema::Field::getUnqualifiedName() const
     return name.substr(separatorPosition + 1);
 }
 
-Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memoryLayoutType) { };
-
 Schema Schema::addField(std::string name, const DataType& dataType)
 {
     return addField(std::move(name), dataType.type);
@@ -131,11 +129,7 @@ Schema::Field Schema::getFieldAt(const size_t index) const
 
 std::ostream& operator<<(std::ostream& os, const Schema& schema)
 {
-    os << fmt::format(
-        "Schema(fields({}), size in bytes: {}, layout type: {})",
-        fmt::join(schema.fields, ","),
-        schema.sizeOfSchemaInBytes,
-        magic_enum::enum_name(schema.memoryLayoutType));
+    os << fmt::format("Schema(fields({}), size in bytes: {})", fmt::join(schema.fields, ","), schema.sizeOfSchemaInBytes);
     return os;
 }
 
@@ -212,7 +206,6 @@ size_t Schema::getSizeOfSchemaInBytes() const
 Schema withoutSourceQualifier(const Schema& input)
 {
     Schema withoutPrefix{};
-    withoutPrefix.memoryLayoutType = input.memoryLayoutType;
     auto stripPrefix = [](const std::string& name)
     {
         if (const auto pos = name.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR); pos != std::string::npos)

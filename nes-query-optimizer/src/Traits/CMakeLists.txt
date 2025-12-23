@@ -16,5 +16,6 @@ add_source_files(nes-query-optimizer
         ImplementationTypeTrait.cpp
         OutputOriginIdsTrait.cpp)
 
-add_plugin(ImplementationType Trait nes-query-optimizer ImplementationTypeTrait.cpp)
+add_plugin(JoinImplementationType Trait nes-query-optimizer ImplementationTypeTrait.cpp)
+add_plugin(MemoryLayoutType Trait nes-query-optimizer MemoryLayoutTypeTrait.cpp)
 add_plugin(OutputOriginIds Trait nes-query-optimizer OutputOriginIdsTrait.cpp)

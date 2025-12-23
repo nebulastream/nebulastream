@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -58,7 +57,6 @@ public:
 private:
     nautilus::val<PagedVector*> pagedVectorRef;
     std::shared_ptr<TupleBufferRef> bufferRef;
-    nautilus::val<MemoryLayout*> memoryLayout;
 };
 
 class PagedVectorRefIter

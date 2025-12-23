@@ -35,8 +35,12 @@ public:
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal);
     nautilus::val<uint64_t> getNumberOfFields() const;
+    [[nodiscard]] bool hasField(const RecordFieldIdentifier& fieldName) const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
+    friend nautilus::val<bool> operator==(const Record& lhs, const Record& rhs);
+
+    friend nautilus::val<bool> operator!=(const Record& lhs, const Record& rhs) { return !(lhs == rhs); }
 
 private:
     std::unordered_map<RecordFieldIdentifier, VarVal> recordFields;

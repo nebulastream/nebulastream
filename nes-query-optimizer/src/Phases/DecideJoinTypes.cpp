@@ -94,15 +94,15 @@ LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
     {
         if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
         {
-            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }
         else if (shallUseHashJoin(joinOperator.value()->getJoinFunction()))
         {
-            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
         }
         else
         {
-            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
             if (this->joinStrategy == StreamJoinStrategy::HASH_JOIN)
             {
                 NES_WARNING(
@@ -114,7 +114,7 @@ LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
     }
     else
     {
-        tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::CHOICELESS});
+        tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
     }
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }

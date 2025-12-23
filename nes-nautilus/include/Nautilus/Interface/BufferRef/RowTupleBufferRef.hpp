@@ -14,10 +14,17 @@
 
 #pragma once
 
-#include <memory>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
+
+#include <cstdint>
+#include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+
+namespace NES
+{
+class LowerSchemaProvider;
+}
 
 namespace NES
 {
@@ -25,12 +32,30 @@ namespace NES
 /// Implements BufferRef. Provides row-wise memory access.
 class RowTupleBufferRef final : public TupleBufferRef
 {
+    struct Field
+    {
+        Record::RecordFieldIdentifier name;
+        DataType type;
+        uint64_t fieldOffset;
+    };
+
+    std::vector<Field> fields;
+
+    /// Private constructor to prevent direct instantiation
+    explicit RowTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
+
+    /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
+    friend class NES::LowerSchemaProvider;
+
 public:
-    /// Creates a row memory provider based on a valid row memory layout pointer.
-    explicit RowTupleBufferRef(std::shared_ptr<RowLayout> rowMemoryLayoutPtr);
+    RowTupleBufferRef(const RowTupleBufferRef&) = default;
+    RowTupleBufferRef(RowTupleBufferRef&&) = default;
+
     ~RowTupleBufferRef() override = default;
 
-    [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
+    [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
+
+    [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -42,13 +67,6 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
-
-private:
-    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
-
-    /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
-    /// the same, during tracing and during the execution of the generated code.
-    std::shared_ptr<RowLayout> rowMemoryLayout;
 };
 
 }

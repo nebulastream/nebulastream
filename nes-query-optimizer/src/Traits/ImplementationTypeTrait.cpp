@@ -32,45 +32,46 @@
 namespace NES
 {
 /// Required for plugin registration, no implementation necessary
-TraitRegistryReturnType TraitGeneratedRegistrar::RegisterImplementationTypeTrait(TraitRegistryArguments arguments)
+TraitRegistryReturnType TraitGeneratedRegistrar::RegisterJoinImplementationTypeTrait(TraitRegistryArguments arguments)
 {
-    if (const auto typeIter = arguments.config.find("implementationType"); typeIter != arguments.config.end())
+    if (const auto typeIter = arguments.config.find("implementationJoinType"); typeIter != arguments.config.end())
     {
         if (std::holds_alternative<EnumWrapper>(typeIter->second))
         {
             if (const auto implementation = std::get<EnumWrapper>(typeIter->second).asEnum<JoinImplementation>();
                 implementation.has_value())
             {
-                return ImplementationTypeTrait{implementation.value()};
+                return JoinImplementationTypeTrait{implementation.value()};
             }
         }
     }
     throw CannotDeserialize("Failed to deserialize ImplementationTypeTrait");
 }
 
-ImplementationTypeTrait::ImplementationTypeTrait(const JoinImplementation implementationType) : implementationType(implementationType)
+JoinImplementationTypeTrait::JoinImplementationTypeTrait(const JoinImplementation implementationType)
+    : implementationType(implementationType)
 {
 }
 
-const std::type_info& ImplementationTypeTrait::getType() const
+const std::type_info& JoinImplementationTypeTrait::getType() const
 {
-    return typeid(ImplementationTypeTrait);
+    return typeid(JoinImplementationTypeTrait);
 }
 
-SerializableTrait ImplementationTypeTrait::serialize() const
+SerializableTrait JoinImplementationTypeTrait::serialize() const
 {
     SerializableTrait trait;
-    auto wrappedImplType = SerializableEnumWrapper{};
+    SerializableEnumWrapper wrappedImplType;
     wrappedImplType.set_value(magic_enum::enum_name(implementationType));
     SerializableVariantDescriptor variant{};
     variant.set_allocated_enum_value(&wrappedImplType);
-    (*trait.mutable_config())["implementationType"] = variant;
+    (*trait.mutable_config())["implementationJoinType"] = variant;
     return trait;
 }
 
-bool ImplementationTypeTrait::operator==(const TraitConcept& other) const
+bool JoinImplementationTypeTrait::operator==(const TraitConcept& other) const
 {
-    const auto* const casted = dynamic_cast<const ImplementationTypeTrait*>(&other);
+    const auto* const casted = dynamic_cast<const JoinImplementationTypeTrait*>(&other);
     if (casted == nullptr)
     {
         return false;
@@ -78,18 +79,19 @@ bool ImplementationTypeTrait::operator==(const TraitConcept& other) const
     return implementationType == casted->implementationType;
 }
 
-size_t ImplementationTypeTrait::hash() const
+size_t JoinImplementationTypeTrait::hash() const
 {
     return magic_enum::enum_integer(implementationType);
 }
 
-std::string ImplementationTypeTrait::explain(ExplainVerbosity) const
+std::string JoinImplementationTypeTrait::explain(ExplainVerbosity) const
 {
-    return fmt::format("ImplementationTypeTrait: {}", magic_enum::enum_name(implementationType));
+    return fmt::format("JoinImplementationTypeTrait: {}", magic_enum::enum_name(implementationType));
 }
 
-std::string_view ImplementationTypeTrait::getName() const
+std::string_view JoinImplementationTypeTrait::getName() const
 {
     return NAME;
 }
+
 }

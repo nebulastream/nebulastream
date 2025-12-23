@@ -14,13 +14,16 @@
 
 #pragma once
 #include <concepts>
+#include <cstdint>
 #include <ostream>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -36,6 +39,22 @@ public:
     explicit Format(const Schema& schema) : schema(schema) { }
 
     virtual ~Format() noexcept = default;
+
+    /// @brief Reads the variable sized data. Similar as loadAssociatedVarSizedValue, but returns a string
+    /// @return Variable sized data as a string
+    static std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess)
+    {
+        /// Getting the pointer to the @class VariableSizedData with the first 32-bit storing the size.
+        const auto strWithSize = TupleBufferRef::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
+        const auto stringSize = strWithSize.size() - sizeof(uint32_t);
+        const auto* const strPtrContent = reinterpret_cast<const char*>(strWithSize.subspan(sizeof(uint32_t), stringSize).data());
+        INVARIANT(
+            strWithSize.size() >= stringSize,
+            "Parsed varSized {} must NOT be larger than the span size {} ",
+            stringSize,
+            strWithSize.size());
+        return std::string{strPtrContent, stringSize};
+    }
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
     [[nodiscard]] std::string getFormattedSchema() const

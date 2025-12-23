@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -49,13 +49,23 @@ public:
     template <typename T>
     requires(not std::same_as<std::decay_t<T>, InputFormatterTupleBufferRef>)
     explicit InputFormatterTupleBufferRef(T&& inputFormatter)
-        : inputFormatter(std::make_unique<InputFormatterModel<T>>(std::forward<T>(inputFormatter)))
+        : TupleBufferRef(0, 0, 0), inputFormatter(std::make_unique<InputFormatterModel<T>>(std::forward<T>(inputFormatter)))
     {
     }
 
     ~InputFormatterTupleBufferRef() override = default;
 
-    [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
+    [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override
+    {
+        INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
+        std::unreachable();
+    }
+
+    [[nodiscard]] std::vector<DataType> getAllDataTypes() const override
+    {
+        INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
+        std::unreachable();
+    }
 
     Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const override
     {
@@ -69,6 +79,7 @@ public:
     writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override
     {
         INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
+        std::unreachable();
     }
 
     nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arenaRef) const;
@@ -82,7 +93,6 @@ public:
         virtual void readBuffer(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const
             = 0;
         virtual nautilus::val<bool> indexBuffer(RecordBuffer&, ArenaRef&) const = 0;
-        [[nodiscard]] virtual std::shared_ptr<MemoryLayout> getMemoryLayout() const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -103,8 +113,6 @@ public:
         {
             return InputFormatter.readBuffer(executionCtx, recordBuffer, executeChild);
         }
-
-        [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override { return InputFormatter.getMemoryLayout(); }
 
     private:
         T InputFormatter;

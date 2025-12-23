@@ -21,6 +21,7 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -38,7 +39,7 @@ PhysicalOperatorConcept::PhysicalOperatorConcept() : id(getNextPhysicalOperatorI
 {
 }
 
-PhysicalOperatorConcept::PhysicalOperatorConcept(OperatorId existingId) : id(existingId)
+PhysicalOperatorConcept::PhysicalOperatorConcept(const OperatorId existingId) : id(existingId)
 {
 }
 
@@ -159,8 +160,15 @@ std::string PhysicalOperator::toString() const
     return self->id;
 }
 
-PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(
+    PhysicalOperator physicalOperator,
+    Schema inputSchema,
+    Schema outputSchema,
+    MemoryLayoutType inputMemoryLayoutType,
+    MemoryLayoutType outputMemoryLayoutType)
     : physicalOperator(std::move(physicalOperator))
+    , inputMemoryLayoutType(inputMemoryLayoutType)
+    , outputMemoryLayoutType(outputMemoryLayoutType)
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
     , pipelineLocation(PipelineLocation::INTERMEDIATE)
@@ -168,8 +176,15 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperat
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
-    PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineLocation pipelineLocation)
+    PhysicalOperator physicalOperator,
+    Schema inputSchema,
+    Schema outputSchema,
+    MemoryLayoutType inputMemoryLayoutType,
+    MemoryLayoutType outputMemoryLayoutType,
+    const PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator))
+    , inputMemoryLayoutType(inputMemoryLayoutType)
+    , outputMemoryLayoutType(outputMemoryLayoutType)
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
     , pipelineLocation(pipelineLocation)
@@ -180,14 +195,18 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
     Schema inputSchema,
     Schema outputSchema,
+    MemoryLayoutType inputMemoryLayoutType,
+    MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
-    PipelineLocation pipelineLocation)
-    : physicalOperator(std::move(physicalOperator))
+    const PipelineLocation pipelineLocation)
+    : physicalOperator(std::move(std::move(physicalOperator)))
+    , inputMemoryLayoutType(inputMemoryLayoutType)
+    , outputMemoryLayoutType(outputMemoryLayoutType)
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
     , handler(std::move(handler))
-    , handlerId(handlerId)
+    , handlerId(std::move(handlerId))
     , pipelineLocation(pipelineLocation)
 {
 }
@@ -196,16 +215,20 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
     Schema inputSchema,
     Schema outputSchema,
+    MemoryLayoutType inputMemoryLayoutType,
+    MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
-    PipelineLocation pipelineLocation,
+    const PipelineLocation pipelineLocation,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children)
-    : physicalOperator(std::move(physicalOperator))
+    : physicalOperator(std::move(std::move(physicalOperator)))
+    , inputMemoryLayoutType(inputMemoryLayoutType)
+    , outputMemoryLayoutType(outputMemoryLayoutType)
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
     , children(std::move(children))
     , handler(std::move(handler))
-    , handlerId(handlerId)
+    , handlerId(std::move(handlerId))
     , pipelineLocation(pipelineLocation)
 {
 }
@@ -242,6 +265,16 @@ const std::optional<Schema>& PhysicalOperatorWrapper::getInputSchema() const
 const std::optional<Schema>& PhysicalOperatorWrapper::getOutputSchema() const
 {
     return outputSchema;
+}
+
+const std::optional<MemoryLayoutType>& PhysicalOperatorWrapper::getInputMemoryLayoutType() const
+{
+    return inputMemoryLayoutType;
+}
+
+const std::optional<MemoryLayoutType>& PhysicalOperatorWrapper::getOutputMemoryLayoutType() const
+{
+    return outputMemoryLayoutType;
 }
 
 void PhysicalOperatorWrapper::addChild(const std::shared_ptr<PhysicalOperatorWrapper>& child)

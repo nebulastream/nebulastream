@@ -78,4 +78,27 @@ nautilus::val<uint64_t> Record::getNumberOfFields() const
     return recordFields.size();
 }
 
+bool Record::hasField(const RecordFieldIdentifier& fieldName) const
+{
+    return recordFields.contains(fieldName);
+}
+
+nautilus::val<bool> operator==(const Record& lhs, const Record& rhs)
+{
+    if (lhs.recordFields.size() != rhs.recordFields.size())
+    {
+        return false;
+    }
+
+    for (const auto& [fieldName, value] : nautilus::static_iterable(lhs.recordFields))
+    {
+        if (not rhs.hasField(fieldName) or value != rhs.read(fieldName))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 }

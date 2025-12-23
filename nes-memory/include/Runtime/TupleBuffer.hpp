@@ -25,8 +25,8 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 

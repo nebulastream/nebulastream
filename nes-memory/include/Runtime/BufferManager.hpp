@@ -54,7 +54,7 @@ namespace NES
 class BufferManager final : public std::enable_shared_from_this<BufferManager>, public BufferRecycler, public AbstractBufferProvider
 {
     friend class TupleBuffer;
-    friend class detail::MemorySegment;
+    friend class NES::detail::MemorySegment;
 
     /// Hide the BufferManager constructor and only allow creation via BufferManager::create().
     /// Following: https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
@@ -127,18 +127,18 @@ public:
      * @brief Recycle a pooled buffer by making it available to others
      * @param buffer
      */
-    void recyclePooledBuffer(detail::MemorySegment* segment) override;
+    void recyclePooledBuffer(NES::detail::MemorySegment* segment) override;
 
     /**
     * @brief Recycle an unpooled buffer by making it available to others
     * @param buffer
     */
-    void recycleUnpooledBuffer(detail::MemorySegment* segment, const AllocationThreadInfo&) override;
+    void recycleUnpooledBuffer(NES::detail::MemorySegment* segment, const AllocationThreadInfo&) override;
 
 private:
-    std::vector<detail::MemorySegment> allBuffers;
+    std::vector<NES::detail::MemorySegment> allBuffers;
 
-    folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
+    folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
 
     std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
 

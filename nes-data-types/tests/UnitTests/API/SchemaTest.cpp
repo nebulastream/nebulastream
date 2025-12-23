@@ -63,40 +63,13 @@ public:
     }
 };
 
-TEST_F(SchemaTest, createTest)
-{
-    {
-        /// Checking for default values
-        Schema testSchema;
-        ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
-        ASSERT_EQ(testSchema.memoryLayoutType, Schema::MemoryLayoutType::ROW_LAYOUT);
-    }
-
-    {
-        /// Checking with row memory layout
-        Schema testSchema;
-        ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
-        ASSERT_EQ(testSchema.memoryLayoutType, Schema::MemoryLayoutType::ROW_LAYOUT);
-    }
-
-    {
-        /// Checking with col memory layout
-        Schema testSchema;
-        ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT});
-        ASSERT_EQ(testSchema.memoryLayoutType, Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-    }
-}
-
 TEST_F(SchemaTest, addFieldTest)
 {
     {
         /// Adding one field
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            Schema testSchema;
-            ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT});
-            ASSERT_EQ(testSchema.memoryLayoutType, Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            testSchema.addField("field", basicTypeVal);
+            const auto testSchema = Schema{}.addField("field", basicTypeVal);
             NES_DEBUG("{}", testSchema);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
@@ -108,7 +81,7 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        Schema testSchema;
         for (const auto& field : rndFields)
         {
             testSchema.addField(field.name, field.dataType);
@@ -214,9 +187,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Replacing one field with a random one
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            auto testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT};
-            EXPECT_EQ(testSchema.memoryLayoutType, Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            testSchema.addField("field", basicTypeVal);
+            auto testSchema = Schema{}.addField("field", basicTypeVal);
             EXPECT_EQ(testSchema.getNumberOfFields(), 1);
             EXPECT_EQ(testSchema.getFieldAt(0).name, "field");
             EXPECT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal));
@@ -232,7 +203,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        Schema testSchema;
         for (const auto& field : rndFields)
         {
             testSchema.addField(field.name, field.dataType);
@@ -270,10 +241,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         /// Calculating the schema size for each data type
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            Schema testSchema;
-            ASSERT_NO_THROW(testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT});
-            ASSERT_EQ(testSchema.memoryLayoutType, Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            testSchema.addField("field", basicTypeVal);
+            const auto testSchema = Schema{}.addField("field", basicTypeVal);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal));
@@ -284,12 +252,12 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
     {
         using enum DataType::Type;
         /// Calculating the schema size for multiple fields
-        auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("field1", UINT8)
-                              .addField("field2", UINT16)
-                              .addField("field3", INT32)
-                              .addField("field4", FLOAT32)
-                              .addField("field5", FLOAT64);
+        const auto testSchema = Schema{}
+                                    .addField("field1", UINT8)
+                                    .addField("field2", UINT16)
+                                    .addField("field3", INT32)
+                                    .addField("field4", FLOAT32)
+                                    .addField("field5", FLOAT64);
         EXPECT_EQ(testSchema.getSizeOfSchemaInBytes(), 1 + 2 + 4 + 4 + 8);
     }
 }
@@ -299,19 +267,19 @@ TEST_F(SchemaTest, containsTest)
     using enum DataType::Type;
     {
         /// Checking contains for one fieldName
-        auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("field1", UINT8);
+        const auto testSchema = Schema{}.addField("field1", UINT8);
         EXPECT_TRUE(testSchema.contains("field1"));
         EXPECT_FALSE(testSchema.contains("notExistingField1"));
     }
 
     {
         /// Checking contains with multiple fields
-        auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("field1", UINT8)
-                              .addField("field2", UINT16)
-                              .addField("field3", INT32)
-                              .addField("field4", FLOAT32)
-                              .addField("field5", FLOAT64);
+        const auto testSchema = Schema{}
+                                    .addField("field1", UINT8)
+                                    .addField("field2", UINT16)
+                                    .addField("field3", INT32)
+                                    .addField("field4", FLOAT32)
+                                    .addField("field5", FLOAT64);
 
         /// Existing fields
         EXPECT_TRUE(testSchema.contains("field3"));
@@ -326,7 +294,7 @@ TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
     using enum DataType::Type;
 
     /// Checking contains for one fieldName but with fields containing already a source name, e.g., after a join
-    const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
+    const auto testSchema = Schema{}
                                 .addField("streamstream2$start", UINT64)
                                 .addField("streamstream2$end", UINT64)
                                 .addField("stream$id", UINT64)
@@ -344,12 +312,12 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
     using enum DataType::Type;
     /// TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
-    auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                          .addField(sourceName + "$field1", UINT8)
-                          .addField(sourceName + "$field2", UINT16)
-                          .addField(sourceName + "$field3", INT32)
-                          .addField(sourceName + "$field4", FLOAT32)
-                          .addField(sourceName + "$field5", FLOAT64);
+    const auto testSchema = Schema{}
+                                .addField(sourceName + "$field1", UINT8)
+                                .addField(sourceName + "$field2", UINT16)
+                                .addField(sourceName + "$field3", INT32)
+                                .addField(sourceName + "$field4", FLOAT32)
+                                .addField(sourceName + "$field5", FLOAT64);
 
     EXPECT_TRUE(testSchema.getSourceNameQualifier().has_value());
     EXPECT_EQ(testSchema.getSourceNameQualifier(), sourceName);
@@ -357,12 +325,10 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
 
 TEST_F(SchemaTest, copyTest)
 {
-    const auto testSchema
-        = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("field1", DataType::Type::UINT8).addField("field2", DataType::Type::UINT16);
+    const auto testSchema = Schema{}.addField("field1", DataType::Type::UINT8).addField("field2", DataType::Type::UINT16);
     const auto& testSchemaCopy = testSchema;
 
     ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), testSchemaCopy.getSizeOfSchemaInBytes());
-    ASSERT_EQ(testSchema.memoryLayoutType, testSchemaCopy.memoryLayoutType);
     ASSERT_EQ(testSchema.getNumberOfFields(), testSchemaCopy.getNumberOfFields());
 
     /// Comparing fields
@@ -378,12 +344,8 @@ TEST_F(SchemaTest, copyTest)
 TEST_F(SchemaTest, withoutSourceQualifierTest)
 {
     {
-        const auto schema = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-                                .addField("source1$id", DataType::Type::INT64)
-                                .addField("source1$source2$test", DataType::Type::INT32);
-        const auto expected = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-                                  .addField("id", DataType::Type::INT64)
-                                  .addField("test", DataType::Type::INT32);
+        const auto schema = Schema{}.addField("source1$id", DataType::Type::INT64).addField("source1$source2$test", DataType::Type::INT32);
+        const auto expected = Schema{}.addField("id", DataType::Type::INT64).addField("test", DataType::Type::INT32);
         EXPECT_NE(schema, expected);
         EXPECT_EQ(withoutSourceQualifier(schema), expected);
     }
