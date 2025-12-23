@@ -25,9 +25,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
@@ -161,7 +159,7 @@ void writeVarVal(
 
     if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
     {
-        const auto varSizedValue = value.cast<VariableSizedData>();
+        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
         storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
     }
     else

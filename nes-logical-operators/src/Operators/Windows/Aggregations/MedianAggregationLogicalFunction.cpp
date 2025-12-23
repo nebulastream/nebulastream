@@ -31,24 +31,13 @@
 namespace NES
 {
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          /// The output of an aggregation is never NULL
-          DataTypeProvider::provideDataType(partialAggregateStampType, false),
-          DataTypeProvider::provideDataType(finalAggregateStampType, false),
-          field)
+    : WindowAggregationLogicalFunction(field)
 {
 }
 
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          /// The output of an aggregation is never NULL
-          DataTypeProvider::provideDataType(partialAggregateStampType, false),
-          DataTypeProvider::provideDataType(finalAggregateStampType, false),
-          field,
-          std::move(asField))
+    : WindowAggregationLogicalFunction(field, std::move(asField))
 {
 }
 
@@ -74,17 +63,16 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+        setFieldNameAsField(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+        setFieldNameAsField(attributeNameResolver + fieldName);
     }
-    /// The output of an aggregation is never NULL
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64, false);
-    this->setFinalAggregateStamp(newFinalAggregateStamp);
-    this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp).get<FieldAccessLogicalFunction>());
+
+    /// The output of an aggregation is always FLOAT64 and never NULL
+    setDataTypeAsField(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, false));
 }
 
 SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
