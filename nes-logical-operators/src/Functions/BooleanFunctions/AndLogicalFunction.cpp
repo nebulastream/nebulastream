@@ -42,7 +42,7 @@ DataType AndLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AndLogicalFunction::withDataType(const DataType& dataType) const
+AndLogicalFunction AndLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -54,7 +54,7 @@ std::vector<LogicalFunction> AndLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction AndLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+AndLogicalFunction AndLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "AndLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -68,7 +68,7 @@ std::string_view AndLogicalFunction::getType() const
     return NAME;
 }
 
-bool AndLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool AndLogicalFunction::operator==(const AndLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const AndLogicalFunction*>(&rhs))
     {
@@ -84,7 +84,7 @@ std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} AND {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) const
+AndLogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& node : getChildren())

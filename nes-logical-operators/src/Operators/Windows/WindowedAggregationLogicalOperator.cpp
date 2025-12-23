@@ -165,7 +165,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
         auto newKeys = std::vector<FieldAccessLogicalFunction>();
         for (auto& key : keys)
         {
-            auto newKey = key.withInferredDataType(firstSchema).get<FieldAccessLogicalFunction>();
+            auto newKey = key.withInferredDataType(firstSchema);
             newKeys.push_back(newKey);
             copy.outputSchema.addField(newKey.getFieldName(), newKey.getDataType());
         }
@@ -349,9 +349,9 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
         for (const auto& key : keyFunctions)
         {
             auto function = FunctionSerializationUtil::deserializeFunction(key);
-            if (auto fieldAccess = function.tryGet<FieldAccessLogicalFunction>())
+            if (auto fieldAccess = function.tryGetAs<FieldAccessLogicalFunction>())
             {
-                keys.push_back(fieldAccess.value());
+                keys.push_back(fieldAccess.value().get());
             }
             else
             {

@@ -37,7 +37,7 @@ EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFuncti
 {
 }
 
-bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool EqualsLogicalFunction::operator==(const EqualsLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const EqualsLogicalFunction*>(&rhs))
     {
@@ -53,14 +53,14 @@ DataType EqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
+EqualsLogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+EqualsLogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -75,7 +75,7 @@ std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction EqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+EqualsLogicalFunction EqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "EqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;

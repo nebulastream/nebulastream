@@ -34,7 +34,7 @@ MulLogicalFunction::MulLogicalFunction(const LogicalFunction& left, const Logica
 {
 }
 
-bool MulLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool MulLogicalFunction::operator==(const MulLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const MulLogicalFunction*>(&rhs))
     {
@@ -59,14 +59,14 @@ DataType MulLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction MulLogicalFunction::withDataType(const DataType& dataType) const
+MulLogicalFunction MulLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction MulLogicalFunction::withInferredDataType(const Schema& schema) const
+MulLogicalFunction MulLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -81,7 +81,7 @@ std::vector<LogicalFunction> MulLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction MulLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+MulLogicalFunction MulLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "MulLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;

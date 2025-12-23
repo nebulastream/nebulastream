@@ -37,7 +37,7 @@ GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left,
 {
 }
 
-bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool GreaterEqualsLogicalFunction::operator==(const GreaterEqualsLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs))
     {
@@ -58,14 +58,14 @@ DataType GreaterEqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
+GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -80,7 +80,7 @@ std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "GreaterEqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;

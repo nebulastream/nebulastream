@@ -36,7 +36,7 @@ namespace NES
 
 ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool ExpLogicalFunction::operator==(const ExpLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
     {
@@ -50,14 +50,14 @@ DataType ExpLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
+ExpLogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
+ExpLogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     /// Instead of having our own ExpPhysicalFunction, we use the existing Pow(e, childFunction)
     const auto newChild = child.withInferredDataType(schema);
@@ -71,7 +71,7 @@ std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction ExpLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+ExpLogicalFunction ExpLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "ExpLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;

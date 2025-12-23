@@ -79,7 +79,7 @@ LogicalPlan LogicalPlanBuilder::addProjection(
 LogicalPlan LogicalPlanBuilder::addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add selection operator to query plan");
-    if (selectionFunction.tryGet<RenameLogicalFunction>())
+    if (selectionFunction.tryGetAs<RenameLogicalFunction>())
     {
         throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
@@ -153,12 +153,12 @@ LogicalPlan LogicalPlanBuilder::addJoin(
                     /// ensure that the child nodes are not binary
                     if ((leftChild.getChildren().size() == 1) && (rightChild.getChildren().size() == 1))
                     {
-                        if (leftChild.tryGet<ConstantValueLogicalFunction>() || rightChild.tryGet<ConstantValueLogicalFunction>())
+                        if (leftChild.tryGetAs<ConstantValueLogicalFunction>() || rightChild.tryGetAs<ConstantValueLogicalFunction>())
                         {
                             throw InvalidQuerySyntax("One of the join keys does only consist of a constant function. Use WHERE instead.");
                         }
-                        auto leftKeyFieldAccess = leftChild.get<FieldAccessLogicalFunction>();
-                        auto rightKeyFieldAccess = rightChild.get<FieldAccessLogicalFunction>();
+                        auto leftKeyFieldAccess = leftChild.getAs<FieldAccessLogicalFunction>();
+                        auto rightKeyFieldAccess = rightChild.getAs<FieldAccessLogicalFunction>();
                     }
                 }
             }
