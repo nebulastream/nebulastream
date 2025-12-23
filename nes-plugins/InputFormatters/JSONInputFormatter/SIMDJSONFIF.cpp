@@ -35,7 +35,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatter.hpp>
 #include <function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>

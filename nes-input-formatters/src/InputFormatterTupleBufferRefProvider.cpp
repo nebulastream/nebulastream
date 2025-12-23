@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 
 #include <memory>
 #include <utility>
@@ -26,7 +26,7 @@
 namespace NES
 {
 
-std::shared_ptr<TupleBufferRef>
+std::shared_ptr<InputFormatterTupleBufferRef>
 provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
 {
     if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(

@@ -19,12 +19,12 @@
 #include <string_view>
 
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 #include <RawValueParser.hpp>
 
 namespace NES

@@ -19,8 +19,8 @@
 #include <unordered_map>
 
 #include <Configurations/Descriptor.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <InputFormatIndexer.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 #include <SIMDJSONFIF.hpp>
 
 namespace NES

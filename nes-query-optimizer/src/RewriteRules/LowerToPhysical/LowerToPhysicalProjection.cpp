@@ -22,7 +22,6 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
@@ -33,6 +32,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>

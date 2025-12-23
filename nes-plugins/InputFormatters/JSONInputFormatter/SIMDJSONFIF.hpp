@@ -35,7 +35,6 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
-#include <InputFormatter.hpp>
 #include <RawValueParser.hpp>
 #include <static.hpp>
 #include <val.hpp>

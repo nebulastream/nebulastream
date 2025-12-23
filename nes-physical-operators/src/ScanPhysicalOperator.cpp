@@ -21,12 +21,12 @@
 #include <utility>
 #include <vector>
 
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
 
