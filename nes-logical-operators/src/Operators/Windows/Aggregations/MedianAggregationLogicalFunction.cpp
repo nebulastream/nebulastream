@@ -33,8 +33,9 @@ namespace NES
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           field)
 {
 }
@@ -43,8 +44,9 @@ MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
-          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          /// The output of an aggregation is never NULL
+          DataTypeProvider::provideDataType(partialAggregateStampType, false),
+          DataTypeProvider::provideDataType(finalAggregateStampType, false),
           field,
           std::move(asField))
 {

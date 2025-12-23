@@ -160,11 +160,21 @@ TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, cons
 VarVal
 TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
+    /// For now, we store the null byte before the actual VarVal
+    nautilus::val<bool> null = false;
+    nautilus::val<int8_t*> varValRef = fieldReference;
+    if (physicalType.isNullable)
+    {
+        /// Reading the first byte (null) and then incrementing the memref by 1 byte to read the actual value
+        null = readValueFromMemRef<bool>(fieldReference);
+        varValRef += 1;
+    }
+
     if (physicalType.type != DataType::Type::VARSIZED)
     {
-        return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
+        return VarVal::readVarValFromMemory(varValRef, physicalType, null);
     }
-    const nautilus::val<VariableSizedAccess> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex>(fieldReference)};
+    const nautilus::val<VariableSizedAccess> combinedIdxOffset{readValueFromMemRef<VariableSizedAccess::CombinedIndex>(varValRef)};
     const auto varSizedPtr = invoke(
         +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess variableSizedAccess)
         {
@@ -173,7 +183,8 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         },
         recordBuffer.getReference(),
         combinedIdxOffset);
-    return VariableSizedData(varSizedPtr);
+    const auto isNullable = physicalType.isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE;
+    return VarVal{VariableSizedData(varSizedPtr), isNullable, null};
 }
 
 VarVal TupleBufferRef::storeValue(
@@ -183,13 +194,21 @@ VarVal TupleBufferRef::storeValue(
     VarVal value,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
+    /// For now, we store the null byte before the actual VarVal
+    nautilus::val<int8_t*> varValRef = fieldReference;
+    if (physicalType.isNullable)
+    {
+        /// Writing the null value to the first byte and then incrementing the memref by 1 byte to store the actual value
+        VarVal{value.isNull()}.writeToMemory(varValRef);
+        varValRef += 1;
+    }
     if (physicalType.type != DataType::Type::VARSIZED)
     {
         /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
         if (const auto storeFunction = storeValueFunctionMap.find(physicalType.type); storeFunction != storeValueFunctionMap.end())
         {
-            return storeFunction->second(value, fieldReference);
+            return storeFunction->second(value, varValRef);
         }
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
@@ -207,7 +226,7 @@ VarVal TupleBufferRef::storeValue(
         bufferProvider,
         varSizedValue.getReference(),
         varSizedValue.getTotalSize());
-    auto fieldReferenceCastedU64 = static_cast<nautilus::val<uint64_t*>>(fieldReference);
+    auto fieldReferenceCastedU64 = static_cast<nautilus::val<uint64_t*>>(varValRef);
     *fieldReferenceCastedU64 = variableSizedAccess.convertToValue();
     return value;
 }
