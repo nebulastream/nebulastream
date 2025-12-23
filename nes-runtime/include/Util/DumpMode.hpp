@@ -17,11 +17,25 @@
 
 namespace NES
 {
-enum class DumpMode : uint8_t
+class DumpMode
 {
-    NONE, /// Disables all dumping
-    CONSOLE, /// Dumps intermediate representations to console, std:out
-    FILE, /// Dumps intermediate representations to file
-    FILE_AND_CONSOLE /// Dumps intermediate representations to console and file
+public:
+    enum class Options : uint8_t
+    {
+        NONE, /// Disables all dumping
+        CONSOLE, /// Dumps intermediate representations to console, std:out
+        FILE, /// Dumps intermediate representations to file
+        FILE_AND_CONSOLE /// Dumps intermediate representations to console and file
+    };
+
+    DumpMode(Options option, bool dumpGraph) : option(option), dumpGraph(dumpGraph) { }
+
+    Options getDumpOption() const { return option; }
+
+    bool isDumpGraphEnabled() const { return option != Options::NONE && dumpGraph; }
+
+private:
+    Options option = Options::NONE;
+    bool dumpGraph = false;
 };
 }
