@@ -23,6 +23,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stop_token>
 #include <thread>
 #include <unordered_map>
@@ -836,6 +837,9 @@ void QueryCatalog::start(
             const auto timestamp = std::chrono::system_clock::now();
             if (const auto locked = state.lock())
             {
+                /// We want to avoid running destructors and callbacks while holding the atomic transition lock.
+                /// So we move the queryplan out of the lock and dispose (if there exists one)
+                std::optional<std::variant<std::unique_ptr<RunningQueryPlan>, std::unique_ptr<StoppingQueryPlan>>> toDispose{};
                 /// Regardless of its current state the query should move into the Terminated::Failed state.
                 locked->transition(
                     [](Reserved&&)
@@ -843,22 +847,28 @@ void QueryCatalog::start(
                         ENGINE_LOG_DEBUG("Query was stopped before all pipeline starts were submitted");
                         return Terminated{Terminated::Failed};
                     },
-                    [](Starting&& starting)
+                    [&toDispose](Starting&& starting)
                     {
-                        RunningQueryPlan::dispose(std::move(starting.plan));
+                        toDispose = std::move(starting.plan);
                         return Terminated{Terminated::Failed};
                     },
-                    [](Running&& running)
+                    [&toDispose](Running&& running)
                     {
-                        RunningQueryPlan::dispose(std::move(running.plan));
+                        toDispose = std::move(running.plan);
                         return Terminated{Terminated::Failed};
                     },
-                    [](Stopping&& stopping)
+                    [&toDispose](Stopping&& stopping)
                     {
-                        StoppingQueryPlan::dispose(std::move(stopping.plan));
+                        toDispose = std::move(stopping.plan);
                         return Terminated{Terminated::Failed};
                     },
                     [](Terminated&&) { return Terminated{Terminated::Failed}; });
+
+                /// Dispose after the transition (lock released) to avoid deadlock
+                if (toDispose)
+                {
+                    std::visit([]<typename T>(T&& plan) { T::element_type::dispose(std::forward<T>(plan)); }, std::move(toDispose).value());
+                }
 
                 exception.what() += fmt::format(" in Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
@@ -874,22 +884,33 @@ void QueryCatalog::start(
             const auto timestamp = std::chrono::system_clock::now();
             if (const auto locked = state.lock())
             {
+                /// We want to avoid running destructors and callbacks while holding the atomic transition lock.
+                /// So we move the queryplan out of the lock and dispose (if there exists one)
+                std::optional<std::variant<std::unique_ptr<RunningQueryPlan>, std::unique_ptr<StoppingQueryPlan>>> toDispose{};
+
                 const auto didTransition = locked->transition(
-                    [](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+                    [&toDispose](Starting&& starting)
                     {
-                        RunningQueryPlan::dispose(std::move(starting.plan));
+                        toDispose = std::move(starting.plan);
                         return Terminated{Terminated::Stopped};
                     },
-                    [](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+                    [&toDispose](Running&& running)
                     {
-                        RunningQueryPlan::dispose(std::move(running.plan));
+                        toDispose = std::move(running.plan);
                         return Terminated{Terminated::Stopped};
                     },
-                    [](Stopping&& stopping)
+                    [&toDispose](Stopping&& stopping)
                     {
-                        StoppingQueryPlan::dispose(std::move(stopping.plan));
+                        toDispose = std::move(stopping.plan);
                         return Terminated{Terminated::Stopped};
                     });
+
+                /// Dispose after the transition (lock released) to avoid deadlock
+                if (toDispose)
+                {
+                    std::visit([]<typename T>(T&& plan) { T::element_type::dispose(std::forward<T>(plan)); }, std::move(toDispose).value());
+                }
+
                 if (didTransition)
                 {
                     listener->logQueryStatusChange(queryId, QueryState::Stopped, timestamp);
@@ -936,17 +957,24 @@ void QueryCatalog::stopQuery(QueryId id)
         if (auto it = queryStates.find(id); it != queryStates.end())
         {
             auto& state = *it->second;
-            state.transition(
-                [](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+            absl::AnyInvocable<void()> cleanup;
+            bool didTransition = state.transition(
+                [&cleanup](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                 {
-                    auto stoppingQueryPlan = RunningQueryPlan::stop(std::move(starting.plan));
+                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(starting.plan));
+                    cleanup = std::move(cb);
                     return Stopping{std::move(stoppingQueryPlan)};
                 },
-                [](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+                [&cleanup](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                 {
-                    auto stoppingQueryPlan = RunningQueryPlan::stop(std::move(running.plan));
+                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(running.plan));
+                    cleanup = std::move(cb);
                     return Stopping{std::move(stoppingQueryPlan)};
                 });
+            if (didTransition)
+            {
+                cleanup();
+            }
         }
         else
         {
