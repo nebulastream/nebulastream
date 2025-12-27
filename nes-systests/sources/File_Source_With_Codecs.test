@@ -1,6 +1,6 @@
 # name: sources/File_Source_With_Codecs_test
 # description: Testing the codec option for the source config
-# groups: [Sources]
+# groups: [Sources, Codecs]
 
 CREATE SINK sinkLz4MultiBuffer(lz4MultiBuffer.field_1 UINT64, lz4MultiBuffer.field_2 UINT64, lz4MultiBuffer.field_3 UINT64, lz4MultiBuffer.field_4 UINT64, lz4MultiBuffer.field_5 UINT64, lz4MultiBuffer.field_6 UINT64, lz4MultiBuffer.field_7 UINT64, lz4MultiBuffer.field_8 UINT64) TYPE Checksum;
 CREATE LOGICAL SOURCE lz4MultiBuffer(field_1 UINT64, field_2 UINT64, field_3 UINT64, field_4 UINT64, field_5 UINT64, field_6 UINT64, field_7 UINT64, field_8 UINT64);

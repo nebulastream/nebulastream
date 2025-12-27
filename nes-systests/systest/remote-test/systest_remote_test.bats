@@ -194,14 +194,10 @@ assert_json_contains() {
     return 1
   fi
 }
-@test "2 node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node.yaml "5mbit"
-  run DOCKER_SYSTEST -t "nes-systests/benchmark/ClusterMonitoring.test:1" --clusterConfig nes-systests/configs/topologies/two-node.yaml --remote -- 
-  [ "$status" -eq 0 ]
-}
-    
-@test "my cool test" {
-    setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node.yaml "50mbits"
-    run DOCKER_SYSTEST -e LARGE source --clusterConfig nes-systests/configs/topologies/two-node.yaml --remote 
+
+
+@test "Codecs with bandwidth" {
+    setup_distributed $NES_DIR/nes-systests/configs/topologies/my-topo.yaml "50mbit"
+    run DOCKER_SYSTEST -g Codecs --clusterConfig nes-systests/configs/topologies/my-topo.yaml --remote -- --worker.number_of_buffers_in_global_buffer_manager=30000
     [ "$status" -eq 0 ]
 }

@@ -216,7 +216,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     /// If we have a decoder implementation, we pass a pointer to it to the sourceThread. Otherwise we pass nullopt
     std::optional<Decoder*> optionalDecoderPtr = decoderImplementation ? std::optional(decoderImplementation->get()) : std::nullopt;
 
-    std::jthread sourceThread(
+    Thread sourceThread(
     fmt::format("DataSrc-{}", originId),
         dataSourceThread,
         backpressureListener,

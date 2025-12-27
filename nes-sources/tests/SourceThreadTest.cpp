@@ -379,7 +379,7 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectEoS();
     {
-        SourceThread sourceThread(ingestion, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(ingestion, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control), std::nullopt);
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const auto&)

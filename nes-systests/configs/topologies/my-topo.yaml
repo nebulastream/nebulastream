@@ -1,10 +1,10 @@
 workers:
   - host: "sink-node:9090"
     grpc: "sink-node:8081"
-    capacity: 10000
+    capacity: 20000
   - host: "source-node:9090"
     grpc: "source-node:8080"
-    capacity: 10000
+    capacity: 20000
     downstream:
       - "sink-node:9090"
 
