@@ -1,0 +1,10 @@
+source_name | schema                                                                                                              
+----------------------------------------------------------------------------------------------------------------------------------
+DEMO        | Schema(fields(Field(name: DEMO$VALUE, DataType: DataType(type: UINT64))), size in bytes: 8, layout type: ROW_LAYOUT)
+physical_source_id | source_name | schema                                                                                                               | source_type  | parser_config                                                 | source_config                                                               
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1                  | DEMO        | Schema(fields(Field(name: DEMO$VALUE, DataType: DataType(type: UINT64))), size in bytes: 8, layout type: ROW_LAYOUT) | LinuxProcess | ParserConfig(type: CSV, tupleDelimiter: 
+, fieldDelimiter: ,) | {"max_inflight_buffers": "0", "command": "sh -c \"echo 1; echo 2; echo 3\""}
+sink_name | schema                                                                                                               | sink_type | sink_config                                                                                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+RESULT    | Schema(fields(Field(name: DEMO$VALUE, DataType: DataType(type: UINT64))), size in bytes: 8, layout type: ROW_LAYOUT) | File      | {"add_timestamp": "false", "input_format": "CSV", "file_path": "./demo-output.csv", "append": "false"}
