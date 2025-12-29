@@ -18,21 +18,23 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--asan|--tsan|--ubsan|--no-sanitizer]"
+    echo "Usage: $0 [-l|--local] [-r|--rootless] [-y|--yes] [--libstdcxx|--libcxx] [--asan|--tsan|--ubsan|--no-sanitizer]"
     echo "Options:"
     echo "  -l, --local          Build all Docker images locally"
     echo "  -r, --rootless       Force rootless Docker mode"
+    echo "  -y, --yes            Skip prompts and use defaults"
     echo "  --libstdcxx          Use libstdcxx standard library"
     echo "  --libcxx             Use libcxx standard library"
-    echo "  --address               Enable Address Sanitizer"
-    echo "  --thread               Enable Thread Sanitizer"
-    echo "  --undefined              Enable Undefined Behavior Sanitizer"
+    echo "  --address            Enable Address Sanitizer"
+    echo "  --thread             Enable Thread Sanitizer"
+    echo "  --undefined          Enable Undefined Behavior Sanitizer"
     exit 1
 }
 
 # If set we built rebuilt all docker images locally
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
+SKIP_PROMPTS=0
 STDLIB=""
 SANITIZER="none"
 
@@ -44,6 +46,10 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         -r|--rootless)
             FORCE_ROOTLESS=1
+            shift
+            ;;
+        -y|--yes)
+            SKIP_PROMPTS=1
             shift
             ;;
         --libstdcxx)
@@ -86,7 +92,11 @@ done
 
 # Check if the standard library is set, otherwise prompt the user
 if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
-  echo "Please choose a standard library implementation:"
+  if [[ $SKIP_PROMPTS -eq 1 ]]; then
+    echo "No standard library selected. Auto-selecting libstdcxx because -y was passed."
+    STDLIB="libstdcxx"
+  else
+    echo "Please choose a standard library implementation:"
     echo "1. llvm libc++ "
     echo "2. gcc libstdc++ "
     read -p "Enter the number (1 or 2): " -r
@@ -98,21 +108,33 @@ if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
         exit 1
         ;;
     esac
+  fi
 fi
 
 # Ask for confirmation of settings
 echo "Build configuration:"
 echo "- Standard library: ${STDLIB}"
 echo "- Sanitizer: ${SANITIZER}"
-read -p "Is this configuration correct? [Y/n] " -r
-echo # Move to a new line after input
-input=${REPLY:-Y}
-if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
-  echo "Please re-run the script with the correct options."
-  exit 1
+
+if [[ $SKIP_PROMPTS -ne 1 ]]; then
+  read -p "Is this configuration correct? [Y/n] " -r
+  echo # Move to a new line after input
+  input=${REPLY:-Y}
+  if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo "Please re-run the script with the correct options."
+    exit 1
+  fi
 fi
 
 cd "$(git rev-parse --show-toplevel)"
+
+# Determine if we need sudo for docker
+DOCKER_CMD="docker"
+if ! docker info > /dev/null 2>&1; then
+    echo "Docker seems to require root privileges. Using sudo for docker commands."
+    DOCKER_CMD="sudo docker"
+fi
+
 HASH=$(docker/dependency/hash_dependencies.sh)
 TAG=${HASH}-${STDLIB}-${SANITIZER}
 
@@ -131,7 +153,7 @@ USE_ROOTLESS=false
 USE_UID=$(id -u)
 USE_GID=$(id -g)
 USE_USERNAME=$(whoami)
-if docker info -f "{{println .SecurityOptions}}" | grep -q rootless || [ "$FORCE_ROOTLESS" = 1 ]; then
+if $DOCKER_CMD info -f "{{println .SecurityOptions}}" | grep -q rootless || [ "$FORCE_ROOTLESS" = 1 ]; then
   echo "Detected docker rootless mode. Container internal user will be root"
   USE_ROOTLESS=true
   USE_UID=0
@@ -152,9 +174,9 @@ fi
 if [ $BUILD_LOCAL -eq 1 ]; then
   echo "Building local docker images using hash: ${HASH}."
   echo "This might take a while..."
-  docker build -f docker/dependency/Base.dockerfile -t nebulastream/nes-development-base:local .
+  $DOCKER_CMD build -f docker/dependency/Base.dockerfile -t nebulastream/nes-development-base:local .
 
-  docker build -f docker/dependency/Dependency.dockerfile \
+  $DOCKER_CMD build -f docker/dependency/Dependency.dockerfile \
           --build-arg VCPKG_DEPENDENCY_HASH=${HASH} \
           --build-arg TAG=local \
           --build-arg STDLIB=${STDLIB} \
@@ -162,11 +184,11 @@ if [ $BUILD_LOCAL -eq 1 ]; then
           --build-arg SANITIZER=${SANITIZER} \
           -t nebulastream/nes-development-dependency:local .
 
-  docker build -f docker/dependency/Development.dockerfile \
+  $DOCKER_CMD build -f docker/dependency/Development.dockerfile \
             --build-arg TAG=local \
             -t nebulastream/nes-development:default .
 
-  docker build -f docker/dependency/DevelopmentLocal.dockerfile \
+  $DOCKER_CMD build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t nebulastream/nes-development:local \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
@@ -174,14 +196,14 @@ if [ $BUILD_LOCAL -eq 1 ]; then
                --build-arg ROOTLESS=${USE_ROOTLESS} \
                --build-arg TAG=default .
 else
-  if ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
+  if ! $DOCKER_CMD manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
    echo -e "${RED}Remote image development image for hash ${TAG} does not exist.
 Either build locally with the -l option, or open a PR (draft) and let the CI build the development image${NC}"
    exit 1
   fi
 
   echo "Basing local development image on remote on nebulastream/nes-development:${TAG}"
-  docker build -f docker/dependency/DevelopmentLocal.dockerfile \
+  $DOCKER_CMD build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t nebulastream/nes-development:local \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
