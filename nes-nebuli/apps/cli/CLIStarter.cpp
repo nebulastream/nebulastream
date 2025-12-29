@@ -256,8 +256,21 @@ struct PersistentQueryId
 
     std::string store(const DistributedQueryId& id)
     {
-        const std::filesystem::path path(id.getRawValue());
+        const std::filesystem::path queryDirectory("queries");
+        std::error_code errorCode;
+        std::filesystem::create_directories(queryDirectory, errorCode);
+        if (errorCode)
+        {
+            throw InvalidConfigParameter(
+                fmt::format("Could not create query directory '{}': {}", queryDirectory.string(), errorCode.message()));
+        }
+
+        const auto path = queryDirectory / id.getRawValue();
         std::ofstream output(path);
+        if (!output)
+        {
+            throw InvalidConfigParameter(fmt::format("Could not open file for writing: {}", path.string()));
+        }
         const nlohmann::json json(query.getLocalQueries());
         output << json.dump(4);
         return id.getRawValue();
@@ -265,8 +278,8 @@ struct PersistentQueryId
 
     static PersistentQueryId load(std::string_view persistentId)
     {
-        std::filesystem::path path(persistentId);
-        if (!exists(path))
+        const std::filesystem::path path = std::filesystem::path("queries") / std::string(persistentId);
+        if (!std::filesystem::exists(path))
         {
             throw InvalidConfigParameter(fmt::format("Could not find query with id {}", persistentId));
         }
