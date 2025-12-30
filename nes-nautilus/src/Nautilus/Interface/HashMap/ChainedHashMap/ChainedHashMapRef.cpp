@@ -334,7 +334,10 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
 {
     // const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
     // const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
-    const auto numberOfTuples = getNumberOfTuples();
+
+
+    const auto numberOfTuples = nautilus::invoke(getNumberOfTuplesProxy, hashMapRef);
+    // const auto numberOfTuples = getNumberOfTuples();
     if (numberOfTuples == 0)
     {
         return nullptr;
@@ -342,14 +345,17 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
 
     // const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
     // auto mask = readValueFromMemRef<uint64_t>(maskRef);
-    const auto mask = getMask();
+
+    // const auto mask = getMask();
+    const auto mask = nautilus::invoke(getMaskProxy, hashMapRef);
 
     const auto entryStartPos = hash & mask;
     // const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
     // auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
     // const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
     // return chainStart;
-    return getChain(entryStartPos);
+    const nautilus::val<ChainedHashMapEntry*> chainStart = getChain(entryStartPos);
+    return chainStart;
 }
 
 nautilus::val<ChainedHashMapEntry*>
