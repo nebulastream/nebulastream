@@ -228,7 +228,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
         auto lastPage = mainBuffer.loadChildBuffer(storageSpaceLastPageIndex());
         auto indexPointer = lastPage.getAvailableMemoryArea<VariableSizedAccess::Index>();
         // store at the next child buffer index position of the last page
-        indexPointer[Metadata::STORAGE_SPACE_INDEX_POS] = newPageIndex;
+        indexPointer[0] = newPageIndex;
     } else
     {
         // no pages yet, insert first page
@@ -244,25 +244,6 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
 
 AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
 {
-    /// 0. Checking, if we have to set fill the entry space. This should be only done once, i.e., when the entries are still null
-    // if (entries == nullptr) [[unlikely]]
-    // {
-    //     /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
-    //     /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator
-    //     const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-    //     const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
-    //     if (not entryBuffer)
-    //     {
-    //         throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
-    //     }
-    //     entrySpace = entryBuffer.value();
-    //     entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-    //     std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
-    //
-    //     /// Pointing the end of the entries to itself
-    //     entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
-    // }
-
     /// 1. Check if we need to allocate a new page
     if (numberOfTuples() % entriesPerPage() == 0)
     {
@@ -280,7 +261,7 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     // get the page by iterating the linked list
     // todo: room for improvement here since iterating for a specific page is sub-optimal (ideas: use index, prune iterations etc.)
     auto currPage = mainBuffer.loadChildBuffer(storageSpaceChildBufferIndex());
-    for (uint64_t i=1; i<pageIndex; i++)
+    for (uint64_t i=0; i<pageIndex; i++)
     {
         auto nextChildBufferIndex = currPage.getAvailableMemoryArea<VariableSizedAccess::Index>()[0];
         currPage = mainBuffer.loadChildBuffer(nextChildBufferIndex);
@@ -310,14 +291,13 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     return newEntry;
 }
 
-/// Not working as is. It should return the page child buffer index and loaded out of here
 const TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
     PRECONDITION(pageIndex < getNumberOfPages(), "Page index {} is greater than the number of pages {}", pageIndex, getNumberOfPages());
     TupleBuffer currPage = mainBuffer.loadChildBuffer(storageSpaceChildBufferIndex());
-    for (uint64_t i=1; i<pageIndex; i++)
+    for (uint64_t i=0; i<pageIndex; i++)
     {
-        auto nextChildBufferIndex = currPage.getAvailableMemoryArea<VariableSizedAccess::Index>()[0];
+        const auto nextChildBufferIndex = currPage.getAvailableMemoryArea<VariableSizedAccess::Index>()[0];
         currPage = mainBuffer.loadChildBuffer(nextChildBufferIndex);
     }
     return currPage;
@@ -332,16 +312,12 @@ uint64_t ChainedHashMap::calculateMainBufferSize(uint64_t numberOfChains)
 
 uint64_t ChainedHashMap::numberOfTuples() const
 {
-    uint64_t numTuples = mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_TUPLES_POS];
-    return numTuples;
-    // return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_TUPLES_POS];
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_TUPLES_POS];
 }
 
 uint64_t ChainedHashMap::getNumberOfPages() const
 {
-    uint64_t numPages = mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_PAGES_POS];
-    return numPages;
-    // return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_PAGES_POS];
+    return mainBuffer.getAvailableMemoryArea<uint64_t>()[Metadata::NUM_PAGES_POS];
 }
 
 uint64_t ChainedHashMap::numberOfChains() const
@@ -386,7 +362,7 @@ VariableSizedAccess::Index ChainedHashMap::storageSpaceLastPageIndex() const
 
 VariableSizedAccess::Index ChainedHashMap::varSizedSpaceLastPageIndex() const
 {
-    return mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[Metadata::VARSIZED_SPACE_INDEX_POS];
+    return mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[Metadata::VARSIZED_SPACE_LAST_PAGE_INDEX_POS];
 }
 
 

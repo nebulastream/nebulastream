@@ -324,37 +324,19 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::getChain(const nautilus::
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
-    // const auto numberOfTuples = readValueFromMemRef<uint64_t>(getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
-    // return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
     const auto numberOfTuples = nautilus::invoke(getNumberOfTuplesProxy, hashMapRef);
-    // const auto numberOfTuples = getNumberOfTuples(); // wrong
     return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
-    // const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
-    // const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
-
-
     const auto numberOfTuples = nautilus::invoke(getNumberOfTuplesProxy, hashMapRef);
-    // const auto numberOfTuples = getNumberOfTuples();
     if (numberOfTuples == 0)
     {
         return nullptr;
     }
-
-    // const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
-    // auto mask = readValueFromMemRef<uint64_t>(maskRef);
-
-    // const auto mask = getMask();
     const auto mask = nautilus::invoke(getMaskProxy, hashMapRef);
-
     const auto entryStartPos = hash & mask;
-    // const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
-    // auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
-    // const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
-    // return chainStart;
     const nautilus::val<ChainedHashMapEntry*> chainStart = getChain(entryStartPos);
     return chainStart;
 }
