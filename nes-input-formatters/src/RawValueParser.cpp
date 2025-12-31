@@ -39,8 +39,7 @@ void parseRawValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
-    const QuotationType quotationType,
-    ArenaRef& arenaRef)
+    const QuotationType quotationType)
 {
     switch (physicalType)
     {
@@ -108,8 +107,7 @@ void parseRawValueIntoRecord(
             switch (quotationType)
             {
                 case QuotationType::NONE: {
-                    auto varSized = arenaRef.allocateVariableSizedData(fieldSize);
-                    nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
+                    VariableSizedData varSized(fieldAddress, fieldSize);
                     record.write(fieldName, varSized);
                     return;
                 }
@@ -117,8 +115,7 @@ void parseRawValueIntoRecord(
                     const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
                     const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
 
-                    auto varSized = arenaRef.allocateVariableSizedData(fieldSizeWithoutClosingQuote);
-                    nautilus::memcpy(varSized.getContent(), fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
+                    VariableSizedData varSized(fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
                     record.write(fieldName, varSized);
                     return;
                 }

@@ -82,7 +82,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         nautilus::val<FieldOffsets*> fieldOffsetsPtr,
-        ArenaRef& arenaRef) const
+        [[maybe_unused]] ArenaRef& arenaRef) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
     {
         /// static loop over number of fields (which don't change)
@@ -106,8 +106,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto sizeOfDelimiter = (field == metaData.getSchema().getFields().back()) ? 0 : metaData.getFieldDelimitingBytes().size();
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(
-                field.dataType.type, record, fieldAddress, fieldSize, field.name, metaData.getQuotationType(), arenaRef);
+            parseRawValueIntoRecord(field.dataType.type, record, fieldAddress, fieldSize, field.name, metaData.getQuotationType());
         }
         return record;
     }
@@ -119,7 +118,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         const nautilus::val<FieldOffsets*> fieldOffsetsPtr,
-        ArenaRef& arenaRef) const
+        [[maybe_unused]] ArenaRef& arenaRef) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
     {
         /// static loop over number of fields (which don't change)
@@ -144,8 +143,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             const auto& currentField = field;
-            parseRawValueIntoRecord(
-                field.dataType.type, record, fieldAddress, fieldSize, field.name, metaData.getQuotationType(), arenaRef);
+            parseRawValueIntoRecord(field.dataType.type, record, fieldAddress, fieldSize, field.name, metaData.getQuotationType());
         }
         return record;
     }
