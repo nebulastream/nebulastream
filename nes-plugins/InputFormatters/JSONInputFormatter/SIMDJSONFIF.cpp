@@ -33,6 +33,7 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -48,15 +49,22 @@ SIMDJSONFIF::applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SI
     return not isAtLastTuple;
 }
 
+struct VarSizedResult
+{
+    std::span<std::byte> varSizedPointer;
+    uint64_t size{};
+};
+
 VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
     const nautilus::val<SIMDJSONMetaData*>& metaData,
     const ArenaRef& arenaRef)
 {
-    const nautilus::val<int8_t*> varSizedPointer = nautilus::invoke(
+    const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
         +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena)
         {
+            thread_local auto result = VarSizedResult{};
             INVARIANT(
                 fieldIndex < metaData->getNumberOfFields(),
                 "fieldIndex {} is out or bounds for schema keys of size: {}",
@@ -67,20 +75,22 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
 
             /// Get the value from the document and convert it to a span of bytes
             const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
-            const auto sizeOfValue = static_cast<uint32_t>(value.size());
             auto valueBytes = std::as_bytes(std::span(value));
 
             /// Get memory from arena that holds length of the string and the bytes of the string
-            auto arenaPointer = arena->allocateMemory(sizeOfValue + sizeof(uint32_t));
-            std::memcpy(arenaPointer.data(), &sizeOfValue, sizeof(uint32_t));
-            std::ranges::copy(valueBytes, arenaPointer.subspan(sizeof(uint32_t)).begin());
-            return arenaPointer.data();
+            auto arenaPointer = arena->allocateMemory(value.size());
+            std::ranges::copy(valueBytes, arenaPointer.begin());
+            result = VarSizedResult{.varSizedPointer = arenaPointer, .size = value.size()};
+            return &result;
         },
         fieldIdx,
         fieldIndexFunction,
         metaData,
         arenaRef.getArena());
-    VariableSizedData varSizedString{varSizedPointer};
+
+    VariableSizedData varSizedString{
+        *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(VarSizedResult, varSizedPointer)),
+        *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(VarSizedResult, size))};
     return varSizedString;
 }
 
@@ -147,8 +157,6 @@ void SIMDJSONFIF::writeValueToRecord(
             record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData, arenaRef));
             return;
         }
-        case DataType::Type::VARSIZED_POINTER_REP:
-            throw NotImplemented("Cannot parse varsized pointer rep type.");
         case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
     }
