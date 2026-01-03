@@ -31,13 +31,12 @@
 #include <Setsum.hpp>
 #include <PipelineExecutionContext.hpp>
 
+#include "SinkRegistry.hpp"
+#include "SinkValidationRegistry.hpp"
+
 namespace NES
 {
 
-/// A sink that counts the number of tuples and accumulates a checksum, which is written to file once the query is stopped.
-/// Example output of the sink:
-/// S$Count:UINT64,S$Checksum:UINT64
-/// 1042, 12390478290
 class SetsumSink : public Sink
 {
 public:
@@ -49,6 +48,9 @@ public:
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static SinkValidationRegistryReturnType RegisterSetsumSinkValidation(SinkValidationRegistryArguments sinkConfig);
+    static SinkRegistryReturnType RegisterSetsumSink(SinkRegistryArguments sinkRegistryArguments);
+    const Setsum& getCurrentSetsum() const { return setsum; }
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "SetsumSink"; }

@@ -76,7 +76,7 @@ void SetsumSink::stop(PipelineExecutionContext&)
     NES_INFO("Setsum Sink completed. Setsum: {}", fmt::streamed(setsum));
 
     outputFileStream << "S$Count:UINT32" << '\n' << ",S$Setsum:UINT32" << '\n';
-    for (size_t i = 0; i < 8; ++i) {
+    for (size_t i = 0; i < setsum.columns.size(); ++i) {
         outputFileStream << ",S$Col" << i << ":UINT32";
     }
     outputFileStream << '\n';
@@ -86,7 +86,7 @@ void SetsumSink::stop(PipelineExecutionContext&)
         if (!first) {
             outputFileStream << ",";
         }
-        // You MUST use .load() to get the value out of the atomic
+
         outputFileStream << col.load(std::memory_order_relaxed);
         first = false;
     }
@@ -107,12 +107,12 @@ DescriptorConfig::Config SetsumSink::validateAndFormat(std::unordered_map<std::s
     return DescriptorConfig::validateAndFormat<ConfigParametersSetsum>(std::move(config), NAME);
 }
 
-SinkValidationRegistryReturnType RegisterSetsumSinkValidation(SinkValidationRegistryArguments sinkConfig)
+SinkValidationRegistryReturnType SetsumSink::RegisterSetsumSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return SetsumSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-SinkRegistryReturnType RegisterSetsumSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType SetsumSink::RegisterSetsumSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<SetsumSink>(sinkRegistryArguments.sinkDescriptor);
 }
