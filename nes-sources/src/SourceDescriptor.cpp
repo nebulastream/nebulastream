@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -180,5 +181,22 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
         kv->emplace(key, descriptorConfigTypeToProto(value));
     }
     return serializableSourceDescriptor;
+}
+
+Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
+{
+    const std::pair descriptorAndConfig{sourceDescriptor, sourceDescriptor.getConfig()};
+    return reflect(descriptorAndConfig);
+}
+
+SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
+{
+    auto [descriptorAndConfig, config] = unreflect<std::pair<SourceDescriptor, DescriptorConfig::Config>>(rfl);
+    return SourceDescriptor{
+        descriptorAndConfig.physicalSourceId,
+        std::move(descriptorAndConfig.logicalSource),
+        descriptorAndConfig.sourceType,
+        config,
+        std::move(descriptorAndConfig.parserConfig)};
 }
 }

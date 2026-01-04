@@ -94,11 +94,13 @@ private:
     friend class SourceCatalog;
     friend OperatorSerializationUtil;
     friend SerializedUtils;
+    friend struct Unreflector<SourceDescriptor>;
 
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
     ParserConfig parserConfig;
+
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -122,6 +124,30 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+};
+
+namespace detail
+{
+struct ReflectedSourceDescriptor
+{
+    PhysicalSourceId physicalSourceId;
+    LogicalSource logicalSource;
+    std::string type;
+    ParserConfig parserConfig;
+    DescriptorConfig::Config config;
+};
+}
+
+template <>
+struct Reflector<SourceDescriptor>
+{
+    Reflected operator()(const SourceDescriptor& sourceDescriptor) const;
+};
+
+template <>
+struct Unreflector<SourceDescriptor>
+{
+    SourceDescriptor operator()(const Reflected& rfl) const;
 };
 
 }

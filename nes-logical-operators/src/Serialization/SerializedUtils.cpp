@@ -22,6 +22,8 @@
 #include <Serialization/SerializedData.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
+#include "MemoryLayout/MemoryLayout.hpp"
+#include "Util/Serialization.hpp"
 
 namespace NES
 {
@@ -384,4 +386,5 @@ SourceDescriptor SerializedUtils::deserializeSourceDescriptor(const SerializedSo
 
     return SourceDescriptor{physicalSourceId, logicalSource, sourceType, std::move(config), parserConfig};
 }
+
 }
