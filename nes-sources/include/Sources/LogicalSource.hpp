@@ -22,6 +22,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include "Util/Serialization.hpp"
 
 namespace NES
 {
@@ -52,14 +53,6 @@ private:
     std::shared_ptr<const Schema> schema;
 };
 
-namespace detail
-{
-struct SerializedLogicalSource
-{
-    std::string logicalSourceName;
-    Schema schema;
-};
-}
 
 template <>
 struct Reflector<LogicalSource>

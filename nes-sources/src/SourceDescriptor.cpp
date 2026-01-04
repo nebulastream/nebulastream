@@ -24,6 +24,7 @@
 #include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Serialization/SerializedUtils.hpp>
 #include <Sources/LogicalSource.hpp>
