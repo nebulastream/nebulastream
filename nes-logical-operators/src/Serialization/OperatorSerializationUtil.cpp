@@ -139,19 +139,17 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
 SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
-    std::variant<Identifier, uint64_t> sinkName;
-
-    if (std::ranges::all_of(serializableSinkDescriptor.sinkname(), [](const char character) { return std::isdigit(character); }))
+    auto sinkName = [&] -> std::variant<Identifier, uint64_t>
     {
-        sinkName = std::stoull(serializableSinkDescriptor.sinkname());
-    }
-    else
-    {
-        sinkName = serializableSinkDescriptor.sinkname();
-    }
+        auto deserializedSinkName = IdentifierSerializationUtil::deserializeIdentifier(serializableSinkDescriptor.sinkname());
+        if (std::ranges::all_of(deserializedSinkName.asCanonicalString(), [](const char character) { return std::isdigit(character); }))
+        {
+            return std::stoull(deserializedSinkName.asCanonicalString());
+        }
+        return deserializedSinkName;
+    }();
 
-    const auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
-    auto sinkName = IdentifierSerializationUtil::deserializeIdentifier(serializableSinkDescriptor.sinkname());
+
     const auto schema = UnboundSchemaSerializationUtil::deserializeUnboundSchema(serializableSinkDescriptor.sinkschema());
     auto sinkType = serializableSinkDescriptor.sinktype();
 

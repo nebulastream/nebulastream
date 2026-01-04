@@ -55,7 +55,7 @@ IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLog
 
 IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(
     WeakLogicalOperator self, LogicalOperator child, DescriptorConfig::Config)
-    : child(std::move(child)), self(std::move(self))
+    : self(std::move(self)), child(std::move(child))
 {
     this->outputSchema = unbind(child.getOutputSchema());
 }
@@ -81,9 +81,10 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const IngestionTi
 
 IngestionTimeWatermarkAssignerLogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema() const
 {
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.child = copy.child.withInferredSchema();
-    const auto& inputSchema = copy.child.getOutputSchema();
+    copy.child = copy.child->withInferredSchema();
+    const auto& inputSchema = copy.child->getOutputSchema();
     copy.outputSchema = unbind(inputSchema);
     return copy;
 }
@@ -117,7 +118,11 @@ Schema IngestionTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 
 std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getChildren() const
 {
-    return {child};
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
 void IngestionTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& serializableOperator) const

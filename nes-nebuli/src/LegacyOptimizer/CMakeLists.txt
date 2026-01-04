@@ -13,7 +13,6 @@
 add_source_files(nes-legacy-optimizer
         InlineSinkBindingPhase.cpp
         InlineSourceBindingPhase.cpp
-        SourceInferencePhase.cpp
         LogicalSourceExpansionRule.cpp
         RedundantUnionRemovalRule.cpp
         RedundantProjectionRemovalRule.cpp

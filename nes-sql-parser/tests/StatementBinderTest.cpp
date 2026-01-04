@@ -118,7 +118,7 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
     Schema schema;
     schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64));
     schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    ASSERT_EQ(schema, inlineSinkOperator->getSchema());
+    ASSERT_EQ(schema, inlineSinkOperator->getTargetSchema());
 }
 
 TEST_F(StatementBinderTest, InlineSourceQuery)

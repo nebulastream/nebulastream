@@ -627,7 +627,7 @@ struct SystestBinder::Impl
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
         auto sinkConfig = sinkOperator->getSinkConfig();
-        auto schema = sinkOperator->getSchema();
+        auto schema = sinkOperator->getTargetSchema();
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
 

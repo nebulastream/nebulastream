@@ -78,12 +78,12 @@ public:
 private:
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
 
-    LogicalOperator child;
-
     Windowing::TimeUnit unit;
     LogicalFunction onField;
     WeakLogicalOperator self;
 
+    /// TOOD make non-optional once all ctors require children
+    std::optional<LogicalOperator> child;
     /// Set during schema inference
     std::optional<SchemaBase<1, UnboundFieldBase<1>, false>> outputSchema;
 

@@ -232,15 +232,15 @@ public:
         MemoryLayoutType outputMemoryLayoutType);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
-        Schema inputSchema,
-        Schema outputSchema,
+        std::optional<UnboundOrderedSchema> inputSchema,
+        std::optional<UnboundOrderedSchema> outputSchema,
         MemoryLayoutType inputMemoryLayoutType,
         MemoryLayoutType outputMemoryLayoutType,
         PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
-        Schema inputSchema,
-        Schema outputSchema,
+        std::optional<UnboundOrderedSchema> inputSchema,
+        std::optional<UnboundOrderedSchema> outputSchema,
         MemoryLayoutType inputMemoryLayoutType,
         MemoryLayoutType outputMemoryLayoutType,
         std::optional<OperatorHandlerId> handlerId,

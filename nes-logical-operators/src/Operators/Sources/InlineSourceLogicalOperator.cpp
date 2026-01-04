@@ -22,9 +22,10 @@
 
 #include <fmt/format.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -34,10 +35,10 @@ namespace NES
 {
 
 
-InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema() const
 {
     PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
-    return *this;
+    std::unreachable();
 }
 
 std::string InlineSourceLogicalOperator::getSourceType() const
@@ -55,14 +56,14 @@ std::unordered_map<std::string, std::string> InlineSourceLogicalOperator::getPar
     return parserConfig;
 }
 
-Schema InlineSourceLogicalOperator::getSchema() const
+UnboundOrderedSchema InlineSourceLogicalOperator::getSourceSchema() const
 {
-    return schema;
+    return sourceSchema;
 }
 
 bool InlineSourceLogicalOperator::operator==(const InlineSourceLogicalOperator& rhs) const
 {
-    return this->sourceType == rhs.sourceType && this->schema == rhs.schema && this->parserConfig == rhs.parserConfig
+    return this->sourceType == rhs.sourceType && this->sourceSchema == rhs.sourceSchema && this->parserConfig == rhs.parserConfig
         && this->sourceConfig == rhs.sourceConfig;
 }
 
@@ -99,14 +100,9 @@ InlineSourceLogicalOperator InlineSourceLogicalOperator::withChildren(std::vecto
     return copy;
 }
 
-std::vector<Schema> InlineSourceLogicalOperator::getInputSchemas() const
-{
-    return {schema};
-};
-
 Schema InlineSourceLogicalOperator::getOutputSchema() const
 {
-    return schema;
+    INVARIANT(false, "Convert InlineSourceLogical Operator to SourceDescriptorLogicalOperator before retrieving output schema");
 }
 
 std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
@@ -115,11 +111,16 @@ std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
 }
 
 InlineSourceLogicalOperator::InlineSourceLogicalOperator(
+    WeakLogicalOperator self,
     std::string type,
-    const Schema& schema,
+    UnboundOrderedSchema sourceSchema,
     std::unordered_map<std::string, std::string> sourceConfig,
     std::unordered_map<std::string, std::string> parserConfig)
-    : schema(schema), sourceType(std::move(type)), sourceConfig(std::move(sourceConfig)), parserConfig(std::move(parserConfig))
+    : self(std::move(self))
+    , sourceSchema(std::move(sourceSchema))
+    , sourceType(std::move(type))
+    , sourceConfig(std::move(sourceConfig))
+    , parserConfig(std::move(parserConfig))
 {
 }
 

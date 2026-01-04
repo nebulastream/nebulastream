@@ -49,7 +49,7 @@ template <typename T>
 using ArrayOfTwo = std::array<T, 2>;
 }
 
-using JoinTimeCharacteristic = NES::Util::VariantContainerFrom<NES::detail::ArrayOfTwo, Windowing::TimeCharacteristic>;
+using JoinTimeCharacteristic = NES::VariantContainerFrom<NES::detail::ArrayOfTwo, Windowing::TimeCharacteristic>;
 
 class JoinLogicalOperator final : public OriginIdAssigner
 {

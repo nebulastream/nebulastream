@@ -40,7 +40,7 @@ class FieldAccessLogicalFunction : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "FieldAccess";
 
-    explicit FieldAccessLogicalFunction(Field fieldName);
+    explicit FieldAccessLogicalFunction(Field field);
 
     [[nodiscard]] Field getField() const;
     [[nodiscard]] LogicalFunction withField(Field fieldName) const;

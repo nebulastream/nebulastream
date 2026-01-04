@@ -30,6 +30,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include "Operators/LogicalOperator.hpp"
 
 namespace NES
 {

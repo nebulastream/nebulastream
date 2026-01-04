@@ -42,7 +42,7 @@ namespace NES
 
 SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, Identifier sinkName) : self(std::move(self)), sinkName(std::move(sinkName)) { };
 
-SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, SinkDescriptor sinkDescriptor)
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, const SinkDescriptor& sinkDescriptor)
     : self(std::move(self)), sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
 {
 }
@@ -81,15 +81,16 @@ std::string_view SinkLogicalOperator::getName() const noexcept
 
 SinkLogicalOperator SinkLogicalOperator::withInferredSchema() const
 {
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
     copy.child = child->withInferredSchema();
 
-    auto inputSchema = copy.child.getOutputSchema();
+    auto inputSchema = copy.child->getOutputSchema();
     UnboundOrderedSchema unboundInputSchema{
         inputSchema | std::views::transform([](const Field& field) { return UnboundField{field.getLastName(), field.getDataType()}; })
         | std::ranges::to<std::vector>()};
 
-    if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && sinkDescriptor.value().getSchema()->getFields().empty())
+    if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && std::ranges::empty(*sinkDescriptor.value().getSchema()))
     {
         copy.sinkDescriptor->schema = std::make_shared<const UnboundOrderedSchema>(unboundInputSchema);
     }
@@ -155,16 +156,22 @@ SinkLogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperato
 Schema SinkLogicalOperator::getOutputSchema() const
 {
     INVARIANT(false, "SinkLogicalOperator does not define a output schema");
+    std::unreachable();
 }
 
 std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
 {
-    return {child};
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
 LogicalOperator SinkLogicalOperator::getChild() const
 {
-    return child;
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 Identifier SinkLogicalOperator::getSinkName() const noexcept

@@ -32,7 +32,7 @@ void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan) const
     {
         if (auto sink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); sink.has_value())
         {
-            const auto schema = sink.value()->getSchema();
+            const auto schema = sink.value()->getTargetSchema();
             const auto type = sink.value()->getSinkType();
             const auto config = sink.value()->getSinkConfig();
 

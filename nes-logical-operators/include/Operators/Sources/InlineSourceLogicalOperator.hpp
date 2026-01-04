@@ -17,7 +17,8 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
@@ -35,8 +36,9 @@ class InlineSourceLogicalOperator
 {
 public:
     explicit InlineSourceLogicalOperator(
+        WeakLogicalOperator self,
         std::string type,
-        const Schema& schema,
+        UnboundOrderedSchema sourceSchema,
         std::unordered_map<std::string, std::string> sourceConfig,
         std::unordered_map<std::string, std::string> parserConfig);
 
@@ -55,24 +57,29 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] InlineSourceLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] InlineSourceLogicalOperator withInferredSchema() const;
 
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] std::unordered_map<std::string, std::string> getSourceConfig() const;
     [[nodiscard]] std::unordered_map<std::string, std::string> getParserConfig() const;
-    [[nodiscard]] Schema getSchema() const;
+    [[nodiscard]] UnboundOrderedSchema getSourceSchema() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSource";
 
-    std::vector<LogicalOperator> children;
-    TraitSet traitSet;
-
-    Schema schema;
-
+    WeakLogicalOperator self;
+    UnboundOrderedSchema sourceSchema;
     std::string sourceType;
     std::unordered_map<std::string, std::string> sourceConfig;
     std::unordered_map<std::string, std::string> parserConfig;
+
+    std::vector<LogicalOperator> children;
+
+    TraitSet traitSet;
+
+    /// Set during schema inference
+    std::optional<SchemaBase<1, UnboundFieldBase<1>, false>> outputSchema;
+
 };
 
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);

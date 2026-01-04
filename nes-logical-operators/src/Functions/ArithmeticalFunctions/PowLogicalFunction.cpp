@@ -78,7 +78,7 @@ LogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFuncti
 {
     if ((!children.at(0).getDataType().isNumeric()) || (!children.at(1).getDataType().isNumeric()))
     {
-        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);
+        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", left, right);
     }
     auto copy = *this;
     copy.left = children[0];

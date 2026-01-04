@@ -161,7 +161,8 @@ std::string PhysicalOperator::toString() const
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
-    PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema,
+    PhysicalOperator physicalOperator,
+    std::optional<UnboundOrderedSchema> inputSchema,
     std::optional<UnboundOrderedSchema> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType)
@@ -175,8 +176,7 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
-    PhysicalOperator physicalOperator,
-    std::optional<UnboundOrderedSchema> inputSchema, PipelineLocation pipelineLocation)
+    PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema, PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator)), inputSchema(std::move(inputSchema)), pipelineLocation(pipelineLocation)
 {
 }
@@ -185,7 +185,7 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
     std::optional<UnboundOrderedSchema> inputSchema,
     std::optional<UnboundOrderedSchema> outputSchema,
-   MemoryLayoutType inputMemoryLayoutType,
+    MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     const PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator))

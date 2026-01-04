@@ -52,7 +52,7 @@ public:
 
     using Projection = std::pair<Field, LogicalFunction>;
     using UnboundProjection = std::pair<Identifier, LogicalFunction>;
-    using ProjectionVariant = NES::Util::VariantContainer<std::vector, Projection, UnboundProjection>;
+    using ProjectionVariant = VariantContainer<std::vector, Projection, UnboundProjection>;
 
     ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<UnboundProjection> projections, Asterisk asterisk);
     ProjectionLogicalOperator(WeakLogicalOperator self, LogicalOperator children, DescriptorConfig::Config config);

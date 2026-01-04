@@ -57,7 +57,7 @@ public:
         friend bool operator==(const ProjectedAggregation& lhs, const ProjectedAggregation& rhs);
     };
 
-    using GroupingKeyType = NES::Util::VariantContainer<
+    using GroupingKeyType = NES::VariantContainer<
         std::vector,
         std::pair<UnboundFieldAccessLogicalFunction, std::optional<Identifier>>,
         std::pair<FieldAccessLogicalFunction, std::optional<Identifier>>>;
@@ -76,7 +76,7 @@ public:
 
     [[nodiscard]] std::vector<ProjectedAggregation> getWindowAggregation() const;
 
-    [[nodiscard]] NES::Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>
+    [[nodiscard]] NES::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>
     getGroupingKeys() const;
     [[nodiscard]] std::unordered_map<Field, std::unordered_set<Field>> getAccessedFieldsForOutput() const override;
     [[nodiscard]] const GroupingKeyType& getGroupingKeysWithName() const;

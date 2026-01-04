@@ -17,12 +17,14 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
+#include "DataTypes/UnboundSchema.hpp"
 
 namespace NES
 {
@@ -33,7 +35,7 @@ namespace NES
 class InlineSinkLogicalOperator
 {
 public:
-    explicit InlineSinkLogicalOperator(std::string sinkType, const Schema& schema, std::unordered_map<std::string, std::string> config);
+    explicit InlineSinkLogicalOperator(WeakLogicalOperator self, std::string sinkType, UnboundOrderedSchema schema, std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
     static void serialize(SerializableOperator&);
@@ -44,25 +46,25 @@ public:
     [[nodiscard]] InlineSinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] InlineSinkLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] InlineSinkLogicalOperator withInferredSchema() const;
 
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::unordered_map<std::string, std::string> getSinkConfig() const;
-    [[nodiscard]] Schema getSchema() const;
+    [[nodiscard]] UnboundOrderedSchema getTargetSchema() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSink";
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
+    WeakLogicalOperator self;
 
-    Schema schema;
+    UnboundOrderedSchema targetSchema;
     std::string sinkType;
     std::unordered_map<std::string, std::string> sinkConfig;
 };

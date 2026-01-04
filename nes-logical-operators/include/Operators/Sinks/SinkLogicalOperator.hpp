@@ -37,7 +37,7 @@ struct SinkLogicalOperator final
 {
     /// During query parsing, we require the name of the sink and need to assign it an id.
     explicit SinkLogicalOperator(WeakLogicalOperator self, Identifier sinkName);
-    explicit SinkLogicalOperator(WeakLogicalOperator self, SinkDescriptor sinkDescriptor);
+    explicit SinkLogicalOperator(WeakLogicalOperator self, const SinkDescriptor& sinkDescriptor);
 
     [[nodiscard]] bool operator==(const SinkLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
@@ -75,7 +75,6 @@ struct SinkLogicalOperator final
 private:
     static constexpr std::string_view NAME = "Sink";
 
-    LogicalOperator child;
     TraitSet traitSet;
     std::vector<OriginId> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
@@ -83,6 +82,7 @@ private:
 
     Identifier sinkName;
     std::optional<SinkDescriptor> sinkDescriptor;
+    std::optional<LogicalOperator> child;
 
     friend class OperatorSerializationUtil;
     friend struct std::hash<SinkLogicalOperator>;

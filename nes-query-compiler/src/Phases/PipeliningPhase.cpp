@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -59,11 +59,11 @@ PhysicalOperator createScanOperator(
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
-    if (inputSchema.value().getSizeOfSchemaInBytes() > configuredBufferSize)
+    if (inputSchema.value().getSizeInBytes() > configuredBufferSize)
     {
         throw TuplesTooLargeForPipelineBufferSize(
             "Got pipeline with an input schema size of {}, which is larger than the configured buffer size of the pipeline, which is {}",
-            inputSchema.value().getSizeOfSchemaInBytes(),
+            inputSchema.value().getSizeInBytes(),
             configuredBufferSize);
     }
 
@@ -76,10 +76,15 @@ PhysicalOperator createScanOperator(
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
+                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider),
+                inputSchema.value() | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+                    | std::ranges::to<std::vector>());
         }
     }
-    return ScanPhysicalOperator(memoryProvider, *inputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); }) | std::ranges::to<std::vector>());
+    return ScanPhysicalOperator(
+        memoryProvider,
+        *inputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+            | std::ranges::to<std::vector>());
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline

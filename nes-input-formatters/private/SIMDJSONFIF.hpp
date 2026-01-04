@@ -27,7 +27,7 @@
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -63,14 +63,7 @@ struct SIMDJSONMetaData
         /// We expect the names in the json file to not be source qualified
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
         {
-            if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
-            {
-                fieldNamesInJson.emplace_back(fieldName.substr(qualifierPosition + 1));
-            }
-            else
-            {
-                fieldNamesInJson.emplace_back(fieldName);
-            }
+            fieldNamesInJson.emplace_back(*std::ranges::rbegin(fieldName));
         }
 
         PRECONDITION(fieldNamesInJson.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
@@ -126,7 +119,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         simdjson::simdjson_result<T> simdJsonValue,
         simdjson::simdjson_result<simdjson::ondemand::value>& rawVal,
         const std::string_view expectedType,
-        const std::string_view expectedField)
+        const Identifier expectedField)
     {
         if (not simdJsonValue.has_value())
         {
@@ -141,9 +134,9 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     }
 
     static simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
-        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const Identifier& fieldName)
     {
-        const auto simdJsonResult = simdJsonReference[fieldName];
+        const auto simdJsonResult = simdJsonReference[fieldName.asCanonicalString()];
         if (not simdJsonResult.has_value())
         {
             throw FieldNotFound(

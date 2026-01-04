@@ -69,10 +69,10 @@ EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOper
         {
             throw CannotDeserialize("Expected exactly one function");
         }
-        this->onField = FunctionSerializationUtil::deserializeFunction(functions[0], this->child.getOutputSchema());
+        this->onField = FunctionSerializationUtil::deserializeFunction(functions[0], this->child->getOutputSchema());
         this->unit = time;
 
-        this->outputSchema = unbind(this->child.getOutputSchema());
+        this->outputSchema = unbind(this->child->getOutputSchema());
     }
     else
     {
@@ -106,9 +106,10 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const EventTimeWaterm
 
 EventTimeWatermarkAssignerLogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema() const
 {
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.child = copy.child.withInferredSchema();
-    const auto& inputSchema = copy.child.getOutputSchema();
+    copy.child = copy.child->withInferredSchema();
+    const auto& inputSchema = copy.child->getOutputSchema();
     copy.onField = onField.withInferredDataType(inputSchema);
     copy.outputSchema = unbind(inputSchema);
     return copy;
@@ -143,7 +144,11 @@ Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 
 std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
 {
-    return {child};
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
 LogicalFunction EventTimeWatermarkAssignerLogicalOperator::getOnField() const

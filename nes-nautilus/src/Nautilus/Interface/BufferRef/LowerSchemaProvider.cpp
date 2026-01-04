@@ -19,7 +19,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
@@ -27,7 +27,7 @@
 namespace NES
 {
 std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType)
+LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const UnboundOrderedSchema& schema, const MemoryLayoutType layoutType)
 {
     /// For now, we assume that the fields lie in the exact same order as in the Schema. Later on, we can have a separate optimizer phase
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
@@ -35,12 +35,12 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
     {
         case MemoryLayoutType::ROW_LAYOUT: {
             std::vector<RowTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
+            fields.reserve(std::ranges::size(schema));
             uint64_t fieldOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.name, field.dataType, fieldOffset);
-                fieldOffset += field.dataType.getSizeInBytes();
+                fields.emplace_back(field.getFullyQualifiedName(), field.getDataType(), fieldOffset);
+                fieldOffset += field.getDataType().getSizeInBytes();
             }
             const auto tupleSize = std::accumulate(
                 fields.begin(),
@@ -51,14 +51,14 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
         }
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
-            const uint64_t capacity = bufferSize / schema.getSizeOfSchemaInBytes();
+            const uint64_t capacity = bufferSize / schema.getSizeInBytes();
             std::vector<ColumnTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
+            fields.reserve(std::ranges::size(schema));
             uint64_t columnOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.name, field.dataType, columnOffset);
-                columnOffset += (field.dataType.getSizeInBytes() * capacity);
+                fields.emplace_back(field.getFullyQualifiedName(), field.getDataType(), columnOffset);
+                columnOffset += (field.getDataType().getSizeInBytes() * capacity);
             }
             const auto tupleSize = std::accumulate(
                 fields.begin(),
