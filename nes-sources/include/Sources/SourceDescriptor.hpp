@@ -36,6 +36,7 @@
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <SerializableOperator.pb.h>
+#include "Util/Serialization.hpp"
 
 namespace NES
 {

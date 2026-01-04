@@ -47,16 +47,18 @@ template <typename T>
 T unreflect(const Reflected& data);
 
 template <typename T>
+struct Reflector;
+
+template <typename T>
 requires requires(T data) {
     { rfl::to_generic(data) } -> std::same_as<rfl::Generic>;
-}
+} && (!requires(T data) {
+             { Reflector<T>{}(data) } -> std::same_as<Reflected>;
+         })
 Reflected reflect(const T& data)
 {
     return Reflected{rfl::to_generic(data)};
 }
-
-template <typename T>
-struct Reflector;
 
 template <typename T>
 requires requires(T data) {
@@ -78,7 +80,7 @@ Reflected reflect(const T& data)
 }
 
 template <typename T>
-requires requires(T data) {
+requires requires(rfl::Generic data) {
     { rfl::from_generic<T>(data) } -> std::same_as<rfl::Result<T>>;
 }
 T unreflect(const Reflected& data)
@@ -91,7 +93,7 @@ template <typename T>
 struct Unreflector;
 
 template <typename T>
-requires requires(T data) {
+requires requires(Reflected data) {
     { Unreflector<T>{}(data) } -> std::same_as<T>;
 }
 T unreflect(const Reflected& data)

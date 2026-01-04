@@ -73,4 +73,18 @@ private:
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
+
+template <>
+struct Reflector<SourceDescriptorLogicalOperator>
+{
+    Reflected operator()(const SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const;
+};
+
+template <>
+struct Unreflector<SourceDescriptorLogicalOperator>
+{
+    SourceDescriptorLogicalOperator operator()(const Reflected& rfl) const;
+};
+
+
 }

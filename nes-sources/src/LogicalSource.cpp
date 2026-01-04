@@ -54,12 +54,12 @@ bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs)
 
 Reflected Reflector<LogicalSource>::operator()(const LogicalSource& logicalSource) const
 {
-    return reflect(detail::SerializedLogicalSource{logicalSource.getLogicalSourceName(), *logicalSource.getSchema()});
+    return reflect(std::pair{logicalSource.getLogicalSourceName(), *logicalSource.getSchema()});
 }
 
 LogicalSource Unreflector<LogicalSource>::operator()(const Reflected& rfl) const
 {
-    auto [logicalSourceName, schema] = unreflect<detail::SerializedLogicalSource>(rfl);
+    auto [logicalSourceName, schema] = unreflect<std::pair<std::string, Schema>>(rfl);
     return LogicalSource{std::move(logicalSourceName), schema};
 }
 }
@@ -73,4 +73,3 @@ std::ostream& NES::operator<<(std::ostream& os, const LogicalSource& logicalSour
 {
     return os << fmt::format("LogicalSource(name: {}, schema: {})", logicalSource.getLogicalSourceName(), *logicalSource.getSchema());
 }
-

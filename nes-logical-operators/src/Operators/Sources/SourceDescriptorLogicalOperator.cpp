@@ -118,4 +118,14 @@ void SourceDescriptorLogicalOperator::serialized(SerializedOperator& serialized)
     serialized.config = rfl::to_generic(sourceDescriptor.serialized());
 }
 
+Reflected
+Reflector<SourceDescriptorLogicalOperator>::operator()(const SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const
+{
+    return reflect(sourceDescriptorLogicalOperator.getSourceDescriptor());
+}
+
+SourceDescriptorLogicalOperator Unreflector<SourceDescriptorLogicalOperator>::operator()(const Reflected& rfl) const
+{
+    return SourceDescriptorLogicalOperator{Unreflector<SourceDescriptor>{}(rfl)};
+}
 }
