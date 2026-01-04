@@ -29,6 +29,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
+#include "Util/Serialization.hpp"
 
 namespace NES
 {
@@ -124,10 +125,51 @@ private:
     std::vector<Field> fields;
     size_t sizeOfSchemaInBytes{0};
     std::unordered_map<std::string, size_t> nameToField;
+    friend struct Unreflector<Schema>;
 };
 
 /// Returns a copy of the input schema without any source qualifier on the schema fields
 Schema withoutSourceQualifier(const Schema& input);
+
+namespace detail
+{
+struct ReflectedField
+{
+    std::string name;
+    DataType::Type type;
+};
+
+struct SerializedSchema
+{
+    Schema::MemoryLayoutType memoryLayout;
+    std::vector<Schema::Field> fields;
+};
+
+}
+
+template <>
+struct Reflector<Schema::Field>
+{
+    Reflected operator()(const Schema::Field& field) const;
+};
+
+template <>
+struct Unreflector<Schema::Field>
+{
+    Schema::Field operator()(const Reflected& rfl) const;
+};
+
+template <>
+struct Reflector<Schema>
+{
+    Reflected operator()(const Schema& schema) const;
+};
+
+template <>
+struct Unreflector<Schema>
+{
+    Schema operator()(const Reflected& rfl) const;
+};
 
 }
 

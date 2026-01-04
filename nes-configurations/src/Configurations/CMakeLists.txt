@@ -14,6 +14,7 @@ add_source_files(nes-configurations
         BaseConfiguration.cpp
         BaseOption.cpp
         Descriptor.cpp
+        ConfigSerialization.cpp
 )
 
 add_subdirectory(Validation)

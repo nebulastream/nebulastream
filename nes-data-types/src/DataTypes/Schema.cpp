@@ -24,6 +24,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Serialization.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -249,6 +250,31 @@ auto Schema::begin() const -> decltype(std::declval<std::vector<Field>>().cbegin
 auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
 {
     return fields.cend();
+}
+
+
+Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field) const
+{
+    return reflect(detail::ReflectedField{.name=field.name, .type=field.dataType.type});
+}
+
+Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl) const
+{
+    auto [name, type] = unreflect<detail::ReflectedField>(rfl);
+    return Schema::Field{std::move(name), DataType{type}};
+}
+
+Reflected Reflector<Schema>::operator()(const Schema& schema) const
+{
+    return reflect(detail::SerializedSchema{.memoryLayout=schema.memoryLayoutType, .fields=schema.getFields()});
+}
+
+Schema Unreflector<Schema>::operator()(const Reflected& rfl) const
+{
+    auto [layout, fields] = unreflect<detail::SerializedSchema>(rfl);
+    Schema schema{layout};
+    schema.fields = std::move(fields);
+    return schema;
 }
 
 }

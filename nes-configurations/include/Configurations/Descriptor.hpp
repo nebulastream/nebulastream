@@ -358,6 +358,8 @@ private:
 SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig::ConfigType& var);
 DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& protoVar);
 
+
+
 }
 
 FMT_OSTREAM(NES::Descriptor);

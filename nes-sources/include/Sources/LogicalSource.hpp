@@ -34,6 +34,7 @@ class LogicalSource
     friend SourceCatalog;
     friend OperatorSerializationUtil;
     friend SerializedUtils;
+    friend struct Unreflector<LogicalSource>;
     explicit LogicalSource(std::string logicalSourceName, const Schema& schema);
 
 public:
@@ -49,6 +50,27 @@ private:
     std::string logicalSourceName;
     /// Keep schemas in logical sources dynamically allocated to avoid unnecessary copies
     std::shared_ptr<const Schema> schema;
+};
+
+namespace detail
+{
+struct SerializedLogicalSource
+{
+    std::string logicalSourceName;
+    Schema schema;
+};
+}
+
+template <>
+struct Reflector<LogicalSource>
+{
+    Reflected operator()(const LogicalSource& logicalSource) const;
+};
+
+template <>
+struct Unreflector<LogicalSource>
+{
+    LogicalSource operator()(const Reflected& rfl) const;
 };
 
 }
