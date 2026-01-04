@@ -254,45 +254,12 @@ import sys
 for line in sys.stdin:
     print("ACTUATOR RECEIVED:", line.strip())
 
-slide 11:
-┌─────────────────────────────────────────────────────────────┐
-│                     TESTING PYRAMID                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│                    ┌─────────────┐                          │
-│                    │   Systests  │  End-to-end queries      │
-│                    │  (.test)    │  via nes-systests/       │
-│                    └──────┬──────┘                          │
-│               ┌───────────┴───────────┐                     │
-│               │   Integration Tests   │  Source + Sink      │
-│               │                       │  with formatters    │
-│               └───────────┬───────────┘                     │
-│        ┌──────────────────┴──────────────────┐              │
-│        │           Unit Tests                │  Buffer ops, │
-│        │                                     │  validation  │
-│        └─────────────────────────────────────┘              │
-└─────────────────────────────────────────────────────────────┘
+
 
 
 slide 12:
 Week 1-2: Testing Implementation
-┌────────────────┬────────────────────────────────────────────┐
-│ Saad           │ Unit tests for LinuxProcessSource          │
-│                │ - fillTupleBuffer edge cases               │
-│                │ - Error handling scenarios                 │
-├────────────────┼────────────────────────────────────────────┤
-│ Roshni         │ Unit tests for LinuxProcessSink            │
-│                │ - Formatter integration tests              │
-│                │ - Pipe failure recovery                    │
-├────────────────┼────────────────────────────────────────────┤
-│ Emi            │ System-level tests (.test files)           │
-│                │ - End-to-end query validation              │
-│                │ - Performance benchmarking                 │
-├────────────────┼────────────────────────────────────────────┤
-│ Aleksandar     │ Documentation & edge cases                 │
-│                │ - Process termination handling             │
-│                │ - Resource cleanup verification            │
-└────────────────┴────────────────────────────────────────────┘
+
 
 Week 3: Integration & Polish
 • Final testing round
