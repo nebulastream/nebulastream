@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <fstream>
 #include <memory>
@@ -60,6 +61,7 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Setsum setsum;
+    std::atomic<uint64_t> tupleCount{0};
     std::unique_ptr<Format> formatter;
 };
 

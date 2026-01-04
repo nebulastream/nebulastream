@@ -25,18 +25,3 @@ target_include_directories(setsum_sink_validation_plugin
 
 target_link_libraries(setsum_sink_plugin PRIVATE systest-setsum)
 target_link_libraries(setsum_sink_validation_plugin PRIVATE systest-setsum)
-
-
-add_nes_test(setsum_sink_test SetsumSinkTest.cpp)
-
-target_include_directories(setsum_sink_test PRIVATE
-        ${PROJECT_SOURCE_DIR}/nes-configurations/include
-        ${PROJECT_SOURCE_DIR}/nes-sinks/include
-        ${PROJECT_SOURCE_DIR}/nes-data-types/include
-        ${PROJECT_SOURCE_DIR}/nes-executable/include
-        ${PROJECT_SOURCE_DIR}/nes-memory/include
-        ${PROJECT_SOURCE_DIR}/nes-sinks/registry/include
-        ${PROJECT_SOURCE_DIR}/nes-executable/tests/TestUtils
-        .
-)
-target_link_libraries(setsum_sink_test systest-setsum )

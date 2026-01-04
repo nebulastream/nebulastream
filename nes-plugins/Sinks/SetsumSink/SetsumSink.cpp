@@ -13,6 +13,7 @@
 */
 
 #include "SetsumSink.hpp"
+#include <sstream>
 
 #include <cstddef>
 #include <filesystem>
@@ -75,20 +76,18 @@ void SetsumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Setsum Sink completed. Setsum: {}", fmt::streamed(setsum));
 
-    outputFileStream << "S$Count:UINT32" << '\n' << ",S$Setsum:UINT32" << '\n';
-    for (size_t i = 0; i < setsum.columns.size(); ++i) {
+    // CSV Header: Count, followed by 8 columns
+    outputFileStream << "S$Count:UINT64";
+    for (size_t i = 0; i < 8; ++i) {
         outputFileStream << ",S$Col" << i << ":UINT32";
     }
     outputFileStream << '\n';
 
-    bool first = true;
+    // CSV Values
+    outputFileStream << tupleCount.load(std::memory_order::relaxed);
+    
     for (const auto& col : setsum.columns) {
-        if (!first) {
-            outputFileStream << ",";
-        }
-
-        outputFileStream << col.load(std::memory_order_relaxed);
-        first = false;
+        outputFileStream << "," << col.load(std::memory_order::relaxed);
     }
 
     outputFileStream << '\n';
@@ -98,8 +97,24 @@ void SetsumSink::stop(PipelineExecutionContext&)
 void SetsumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in SetsumSink.");
+    
+    // Get CSV formatted buffer (potentially multiple lines)
     const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
-    setsum.add(formatted);
+    
+    // Split by newline to process each tuple individually
+    std::stringstream ss(formatted);
+    std::string line;
+    uint64_t count = 0;
+    
+    while (std::getline(ss, line)) {
+        if (!line.empty()) {
+            setsum.add(line);
+            count++;
+        }
+    }
+    
+    // Atomically update total tuple count
+    tupleCount.fetch_add(count, std::memory_order::relaxed);
 }
 
 DescriptorConfig::Config SetsumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
