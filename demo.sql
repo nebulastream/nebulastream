@@ -6,6 +6,10 @@
 -- CREATE SINK result(demo.value UINT64) TYPE File SET('./demo-output.csv' AS `SINK`.FILE_PATH, 'CSV' AS `SINK`.INPUT_FORMAT);
 -- SELECT value FROM demo INTO result;
 
+-- *************************************************************************************
+-- *                            SOURCE DEMOS                                           *
+-- *************************************************************************************
+
 ---------------------------------------------------------------------------------------------
 --|||||| first try: a command to execute a python script with flush=true to be safe |||||||||
 ---------------------------------------------------------------------------------------------
@@ -39,3 +43,26 @@ CREATE SINK result(demo.value UINT64) TYPE File SET(
   'CSV' AS `SINK`.INPUT_FORMAT
 );
 SELECT value FROM demo INTO result;
+
+-- *************************************************************************************
+-- *                            SINK DEMOS                                             *
+-- *************************************************************************************
+
+----------------------------------------------------------------------------------------------------------
+--|||||| first try: a command to execute a python script that outputs the dump from nebulastream |||||||||
+----------------------------------------------------------------------------------------------------------
+-- CREATE LOGICAL SOURCE demo(value UINT64);
+--
+-- CREATE PHYSICAL SOURCE FOR demo TYPE LinuxProcess SET(
+--   'python3 /home/saad9098/nebulastream/producer.py' AS `SOURCE`.command,
+--   'CSV' AS PARSER.`TYPE`,
+--   '\n' AS PARSER.TUPLE_DELIMITER,
+--   ','  AS PARSER.FIELD_DELIMITER
+-- );
+--
+-- CREATE SINK result(demo.value UINT64) TYPE LinuxProcess SET(
+--   'python3 /home/saad9098/nebulastream/consumer.py' AS `SINK`.command,
+--   'CSV' AS `SINK`.INPUT_FORMAT
+-- );
+--
+-- SELECT value FROM demo INTO result;

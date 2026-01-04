@@ -131,6 +131,16 @@ void FileSink::stop(PipelineExecutionContext&)
 
 DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
+//    delete *************************
+    NES_ERROR("LinuxProcessSink validator sees keys:");
+    for (const auto& [k,v] : config) NES_ERROR("  key='{}'", k);
+
+    NES_ERROR("parameterMap contains input_format? {}", NES::ConfigParametersFile::parameterMap.contains("input_format"));
+    for (auto const& [k, _] : ConfigParametersFile::parameterMap) {
+        NES_ERROR("parameterMap key: '{}'", k);
+    }
+//    delete *************************
+
     return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 

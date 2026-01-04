@@ -1,6 +1,16 @@
-//
-// Created by saad on 18.11.2025.
-//
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 
 #include <LinuxProcessSource.hpp>
 
@@ -19,7 +29,7 @@ namespace NES
 {
 
 LinuxProcessSource::LinuxProcessSource(const SourceDescriptor& sourceDescriptor)
-    : commandToRun(sourceDescriptor.getFromConfig(ConfigParametersLinuxProcess::COMMAND))
+    : commandToRun(sourceDescriptor.getFromConfig(ConfigParametersLinuxProcessSource::COMMAND))
 {
 }
 
@@ -46,7 +56,7 @@ void LinuxProcessSource::open(std::shared_ptr<AbstractBufferProvider>)
         errbuf[0] = '\0';
         (void)strerror_r(errno, errbuf, sizeof(errbuf));
 
-        throw InvalidConfigParameter("Could not start process '{}' - {}", commandToRun, getErrorMessageFromERRNO());
+        throw InvalidConfigParameter("Could not start process '{}' ", commandToRun);
     }
 }
 
@@ -107,7 +117,7 @@ Source::FillTupleBufferResult LinuxProcessSource::fillTupleBuffer(TupleBuffer& t
 DescriptorConfig::Config LinuxProcessSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     // same style as TCPSource
-    return DescriptorConfig::validateAndFormat<ConfigParametersLinuxProcess>(std::move(config), name());
+    return DescriptorConfig::validateAndFormat<ConfigParametersLinuxProcessSource>(std::move(config), name());
 }
 
 void LinuxProcessSource::close()
