@@ -50,19 +50,21 @@ void CountAggregationPhysicalFunction::lift(
     /// If the value is null and we are taking null values into account
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
-    /// We use a multiplication factor instead of a branch to reduce the tracing time spent in nautilus
-    const nautilus::val<int8_t> multiplicationFactor = 0 * ((inputType.isNullable && not includeNullValues) & value.isNull())
-        + 1 * not((static_cast<int>(inputType.isNullable) & static_cast<int>(not includeNullValues)) & value.isNull());
-
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, resultType);
+    auto count = VarVal::readVarValFromMemory(memAreaCount, resultType);
 
-    /// Updating the count with the new value
-    const auto newCount = count + multiplicationFactor;
+    if (inputType.isNullable)
+    {
+        count = varValSelect(value.isNull(), count, count + nautilus::val<size_t>(1));
+    }
+    else
+    {
+        count = count + nautilus::val<size_t>(1);
+    }
 
     /// Writing the new count and count back to the aggregation state
-    newCount.writeToMemory(memAreaCount);
+    count.writeToMemory(memAreaCount);
 }
 
 void CountAggregationPhysicalFunction::combine(

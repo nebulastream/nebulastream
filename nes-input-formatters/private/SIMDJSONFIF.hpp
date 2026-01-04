@@ -30,7 +30,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Arena.hpp>
@@ -97,6 +96,7 @@ struct SIMDJSONMetaData
     static std::vector<std::string> getNullValues()
     {
         INVARIANT(false, "This method should not be called, as SIMDJson has a is_null() method");
+        return {};
     }
 
     [[nodiscard]] uint64_t getNumberOfFields() const

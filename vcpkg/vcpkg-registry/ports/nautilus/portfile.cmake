@@ -13,10 +13,13 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF fe607618bb0683a3335e3199c7c4651523ab2a4f
-        SHA512 4f344d38e2e377bb7d153c6cf000f3171726ed5bfe80bf5931c6a37bb7645f64959ca64440f0aa82363727287265f5902dbe045117e95e1ebd1c61817182f0fc
+		REF d75a6816436c824090c85191a0c1e39239cf2479
+		SHA512 68c6315bbab9a1fe8855977db2b4ff3ed8fed097cd73e3eef089eb4d487bb09f503c0f348ee36a340a65319617e573f9993cad582a6b5b9b4a53edc0b3dd17f0
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		increase_value_ref_to_u32_better_hashmap_catch_exceptions_logging_timing_wip_ssa_local_ref.patch
+		control_flow_inversion.patch
+		#		find_forks.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
@@ -37,6 +40,7 @@ vcpkg_cmake_configure(
 		-DUSE_EXTERNAL_MLIR=ON
 		-DUSE_EXTERNAL_SPDLOG=ON
 		-DUSE_EXTERNAL_FMT=ON
+		-DENABLE_LOGGING=OFF
 		${ADDITIONAL_CMAKE_OPTIONS}
 )
 

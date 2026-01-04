@@ -68,7 +68,8 @@ LogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) cons
 LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     const auto newChild = child.withInferredDataType(schema);
-    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newChild});
+    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, newChild.getDataType().isNullable))
+        .withChildren({newChild});
 };
 
 std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const

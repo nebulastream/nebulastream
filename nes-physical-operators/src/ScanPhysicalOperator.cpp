@@ -45,18 +45,18 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
 
-    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
+    if (inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
     {
-        executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
+        /// call open on all child operators
+        openChild(executionCtx, recordBuffer);
+
+        /// process buffer
+        const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
+        inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
         return;
     }
 
-    /// call open on all child operators
-    openChild(executionCtx, recordBuffer);
-
-    /// process buffer
-    const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
-    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
+    executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
 }
 
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

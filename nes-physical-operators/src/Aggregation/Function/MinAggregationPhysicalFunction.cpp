@@ -24,6 +24,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
+#include <nautilus/select.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
@@ -42,22 +43,17 @@ void MinAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// If the value is null and we are taking null values into account
-    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-
-    /// We use a multiplication factor instead of a branch to reduce the tracing time spent in nautilus
-    const nautilus::val<int8_t> multiplicationFactor
-        = 0 * (inputType.isNullable & value.isNull()) + 1 * not(inputType.isNullable & value.isNull());
-
+    auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
     /// Reading the old min value from the aggregation state.
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType, false);
 
-    /// Updating the min value with the new value, if the new value is smaller
-    if (value < (min * multiplicationFactor))
+    if (inputType.isNullable)
     {
-        value.writeToMemory(memAreaMin);
+        value = varValSelect(value.isNull(), min, value);
     }
+    varValSelect((value < min).cast<nautilus::val<bool>>(), value, min).writeToMemory(memAreaMin);
 }
 
 void MinAggregationPhysicalFunction::combine(
@@ -73,11 +69,7 @@ void MinAggregationPhysicalFunction::combine(
     const auto memAreaMin2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
     const auto min2 = VarVal::readVarValFromMemory(memAreaMin2, inputType, false);
 
-    /// Updating the min value with the new min value, if the new min value is smaller
-    if (min2 < min1)
-    {
-        min2.writeToMemory(memAreaMin1);
-    }
+    varValSelect((min2 < min1).cast<nautilus::val<bool>>(), min2, min1).writeToMemory(memAreaMin1);
 }
 
 Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)

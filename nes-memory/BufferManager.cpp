@@ -31,6 +31,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
+#include <sys/mman.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
@@ -133,6 +134,10 @@ void BufferManager::initialize(uint32_t withAlignment)
     const size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
+    if (allocatedAreaSize > 10000)
+    {
+        madvise(basePointer, allocatedAreaSize, MADV_DONTFORK);
+    }
     NES_TRACE(
         "Allocated {} bytes with alignment {} buffer size {} num buffer {} controlBlockSize {} {}",
         allocatedAreaSize,

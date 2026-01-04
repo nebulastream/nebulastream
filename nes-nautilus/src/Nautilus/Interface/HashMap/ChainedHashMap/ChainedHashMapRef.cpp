@@ -302,6 +302,8 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
 {
     const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
     const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
+
+    nautilus::tracing::suggestInvertedBranch();
     if (numberOfTuples == 0)
     {
         return nullptr;
@@ -330,14 +332,12 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
 
 nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const
 {
+    nautilus::val<bool> allEqual = true;
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
     {
-        if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier))
-        {
-            return false;
-        }
+        allEqual = allEqual && (keys.read(fieldIdentifier) == entryRef.getKey(fieldIdentifier)).cast<nautilus::val<bool>>();
     }
-    return true;
+    return allEqual;
 }
 
 ChainedHashMapRef::ChainedHashMapRef(

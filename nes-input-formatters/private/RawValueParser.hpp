@@ -24,6 +24,7 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
+#include <nautilus/select.hpp>
 #include <std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -164,7 +165,7 @@ void parseRawValueIntoRecord(
             {
                 case QuotationType::NONE: {
                     const auto nullableEnum = dataType.isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE;
-                    const auto varSizedSized = isNull ? 0 : fieldSize;
+                    const auto varSizedSized = nautilus::select(isNull, nautilus::val<uint64_t>(0), fieldSize);
                     const auto varSized = arenaRef.allocateVariableSizedData(varSizedSized);
                     nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
                     record.write(fieldName, VarVal{varSized, nullableEnum, isNull});
@@ -173,7 +174,7 @@ void parseRawValueIntoRecord(
                 case QuotationType::DOUBLE_QUOTE: {
                     const auto nullableEnum = dataType.isNullable ? VarVal::NULLABLE_ENUM::NULLABLE : VarVal::NULLABLE_ENUM::NOT_NULLABLE;
                     const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
-                    const auto fieldSizeWithoutClosingQuote = isNull ? 0 : fieldSize - nautilus::val<uint32_t>(2);
+                    const auto fieldSizeWithoutClosingQuote = nautilus::select(isNull, nautilus::val<uint64_t>(0), fieldSize - 2);
                     const auto varSized = arenaRef.allocateVariableSizedData(fieldSizeWithoutClosingQuote);
                     nautilus::memcpy(varSized.getContent(), fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
                     record.write(fieldName, VarVal{varSized, nullableEnum, isNull});

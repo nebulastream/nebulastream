@@ -127,12 +127,8 @@ public:
             nautilus::val<const InputFormatter*>(this),
             arenaRef.getArena()));
 
-        if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
-        {
-            return {false};
-        }
-
-        return {true};
+        return !static_cast<nautilus::val<bool>>(
+            *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)));
     }
 
     /// Executes the second phase, which iterates over a (raw) buffer, reading specific records and fields from a (raw) buffer
@@ -152,6 +148,7 @@ public:
 
         /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
         /// such a buffer can only form one (leading) spanning tuple, so returning is safe
+        nautilus::tracing::suggestInvertedBranch();
         if (not(nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter)))))
         {
             return;

@@ -160,6 +160,8 @@ public:
     [[nodiscard]] bool isNullable() const;
 
 protected:
+    friend VarVal varValSelect(const nautilus::val<bool>& condition, const VarVal& trueValue, const VarVal& falseValue);
+
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     explicit VarVal(const detail::var_val_t t, const NULLABLE_ENUM nullable = NULLABLE_ENUM::NOT_NULLABLE, nautilus::val<bool> null = false)
         : value(t), null(std::move(null)), nullable(nullable)
@@ -191,4 +193,5 @@ static_assert(std::is_convertible_v<VariableSizedData, VarVal>, "Should allow co
 static_assert(!std::is_convertible_v<int32_t, VarVal>, "Should not allow conversion from underlying to VarVal");
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal);
+VarVal varValSelect(const nautilus::val<bool>& condition, const VarVal& trueValue, const VarVal& falseValue);
 }

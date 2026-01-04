@@ -22,6 +22,7 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -41,11 +42,7 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     /// We need to built a zero and negativeOne via castToType, as we can not make any assumptions on the input type.
     const auto zero = VarVal{0}.castToType(inputType.type);
     const auto negativeOne = VarVal{-1}.castToType(inputType.type);
-    if (value < zero)
-    {
-        return value * negativeOne;
-    }
-    return value;
+    return varValSelect((value < zero).cast<nautilus::val<bool>>(), (value * negativeOne).castToType(inputType.type), value);
 }
 
 PhysicalFunctionRegistryReturnType

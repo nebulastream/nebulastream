@@ -50,23 +50,26 @@ void AvgAggregationPhysicalFunction::lift(
     /// If the value is null and we are taking null values into account
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
-    /// We use a multiplication factor instead of a branch to reduce the tracing time spent in nautilus
-    const nautilus::val<int8_t> multiplicationFactor = 0 * ((inputType.isNullable && not includeNullValues) & value.isNull())
-        + 1 * not((static_cast<int>(inputType.isNullable) & static_cast<int>(not includeNullValues)) & value.isNull());
-
     /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>(inputType.getSizeInBytes());
-    const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, false);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, countType);
+    auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, false);
+    auto count = VarVal::readVarValFromMemory(memAreaCount, countType);
 
-    /// Updating the sum and count with the new value
-    const auto newSum = sum + (value * multiplicationFactor);
-    const auto newCount = count + multiplicationFactor;
+    if (inputType.isNullable)
+    {
+        sum = varValSelect(value.isNull(), sum, sum + value);
+        count = varValSelect(value.isNull(), count, count + nautilus::val<size_t>(1));
+    }
+    else
+    {
+        sum = sum + value;
+        count = count + nautilus::val<size_t>(1);
+    }
 
     /// Writing the new sum and count back to the aggregation state
-    newSum.writeToMemory(memAreaSum);
-    newCount.writeToMemory(memAreaCount);
+    sum.writeToMemory(memAreaSum);
+    count.writeToMemory(memAreaCount);
 }
 
 void AvgAggregationPhysicalFunction::combine(

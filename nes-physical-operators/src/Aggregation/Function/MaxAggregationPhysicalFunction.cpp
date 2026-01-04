@@ -44,19 +44,20 @@ void MaxAggregationPhysicalFunction::lift(
     /// If the value is null and we are taking null values into account
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
-    /// We use a multiplication factor instead of a branch to reduce the tracing time spent in nautilus
-    const nautilus::val<int8_t> multiplicationFactor
-        = 0 * (inputType.isNullable & value.isNull()) + 1 * not(inputType.isNullable & value.isNull());
-
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, false);
+    auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, false);
 
-    /// Updating the max value with the new value, if the new value is larger
-    if ((value * multiplicationFactor) > max)
+    if (inputType.isNullable)
     {
-        value.writeToMemory(memAreaMax);
+        max = varValSelect(value.isNull(), max, varValSelect((max > value).cast<nautilus::val<bool>>(), max, value));
     }
+    else
+    {
+        max = varValSelect((max > value).cast<nautilus::val<bool>>(), max, value);
+    }
+
+    max.writeToMemory(memAreaMax);
 }
 
 void MaxAggregationPhysicalFunction::combine(
@@ -72,11 +73,7 @@ void MaxAggregationPhysicalFunction::combine(
     const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
     const auto max2 = VarVal::readVarValFromMemory(memAreaMax2, inputType, false);
 
-    /// Updating the max value with the new value, if the new value is larger
-    if (max2 > max1)
-    {
-        max2.writeToMemory(memAreaMax1);
-    }
+    varValSelect((max1 > max2).cast<nautilus::val<bool>>(), max1, max2).writeToMemory(memAreaMax1);
 }
 
 Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)

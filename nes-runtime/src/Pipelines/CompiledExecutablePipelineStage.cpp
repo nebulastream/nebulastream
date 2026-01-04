@@ -23,6 +23,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
 #include <CompilationContext.hpp>
@@ -119,7 +120,13 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     CompilationContext compilationCtx{engine};
     pipeline->getRootOperator().setup(ctx, compilationCtx);
+    std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+    fmt::println("Compiling {}", pipeline->getPipelineId());
     compiledPipelineFunction = this->compilePipeline();
+    fmt::println(
+        "Done Compiling {} in {}",
+        pipeline->getPipelineId(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start));
 }
 
 }

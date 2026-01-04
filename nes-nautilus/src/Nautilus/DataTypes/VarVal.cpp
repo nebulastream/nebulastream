@@ -28,6 +28,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
+#include <select.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -94,16 +95,12 @@ bool VarVal::isNullable() const
 
 VarVal::operator bool() const
 {
-    /// We use an val<int> to use bitwise operators to reduce the number of branches created in the nautilus trace.
-    const nautilus::val<int> valueInt = std::visit(
-        []<typename T>(T& val) -> nautilus::val<int>
+    const nautilus::val<bool> valueBool = std::visit(
+        []<typename T>(T& val) -> nautilus::val<bool>
         {
             if constexpr (requires(T t) { t == nautilus::val<bool>(true); })
             {
-                /// We have to do it like this. The reason is that during the comparison of the two values, @val is NOT converted to a bool
-                /// but rather the val<bool>(false) is converted to std::common_type<T, bool>. This is a problem for any val that is not set to 1.
-                /// As we will then compare val == 1, which will always be false.
-                return nautilus::val<int>{!(val == nautilus::val<bool>(false))};
+                return val == nautilus::val<bool>(true);
             }
             else
             {
@@ -111,7 +108,12 @@ VarVal::operator bool() const
             }
         },
         value);
-    return (static_cast<nautilus::val<int>>(not(isNullable() & isNull())) & valueInt) == 1;
+
+    if (isNullable())
+    {
+        return !isNull() && valueBool;
+    }
+    return valueBool;
 }
 
 VarVal VarVal::castToType(const DataType::Type type) const
@@ -257,6 +259,29 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
         varVal.value);
 }
 
+VarVal varValSelect(const nautilus::val<bool>& condition, const VarVal& trueValue, const VarVal& falseValue)
+{
+    return std::visit(
+        [&]<typename LHS, typename RHS>(const LHS& trueUnderlying, const RHS& falseUnderlying) -> VarVal
+        {
+            if constexpr (std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData>)
+            {
+                return VarVal(nautilus::select(condition, trueUnderlying, falseUnderlying));
+            }
+
+            if constexpr (std::same_as<LHS, RHS> && std::same_as<LHS, VariableSizedData>)
+            {
+                return VarVal(VariableSizedData(
+                    nautilus::select(condition, trueUnderlying.getReference(), falseUnderlying.getReference()),
+                    nautilus::select(condition, trueUnderlying.getContentSize(), falseUnderlying.getContentSize())));
+            }
+            throw UnknownOperation("select with different types! True: {} vs. False: {}", NAMEOF_TYPE(LHS), NAMEOF_TYPE(RHS));
+            std::unreachable();
+        },
+        trueValue.value,
+        falseValue.value);
+}
+
 #define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
     VarVal VarVal::operatorName(const VarVal& other) const \
     { \
@@ -268,14 +293,13 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
             { \
                 if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
                 { \
-                    auto newIsNullable = VarVal::NULLABLE_ENUM::NOT_NULLABLE; \
                     if (leftIsNullable or rightIsNullable) \
                     { \
-                        newIsNullable = VarVal::NULLABLE_ENUM::NULLABLE; \
+                        const nautilus::val<bool> newNullValue = static_cast<nautilus::val<int>>(leftIsNullable & leftIsNull) \
+                            | static_cast<nautilus::val<int>>(rightIsNullable & rightIsNull); \
+                        return VarVal{lhsVal op rhsVal, VarVal::NULLABLE_ENUM::NULLABLE, newNullValue}; \
                     } \
-                    const nautilus::val<bool> newNullValue = static_cast<nautilus::val<int>>(leftIsNullable & leftIsNull) \
-                        | static_cast<nautilus::val<int>>(rightIsNullable & rightIsNull); \
-                    return VarVal{lhsVal op rhsVal, newIsNullable, newNullValue}; \
+                    return VarVal{lhsVal op rhsVal, VarVal::NULLABLE_ENUM::NOT_NULLABLE, nautilus::val<bool>(false)}; \
                 } \
                 else \
                 { \
@@ -299,14 +323,11 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
                 } \
                 else \
                 { \
-                    auto newIsNullable = VarVal::NULLABLE_ENUM::NOT_NULLABLE; \
                     if (isNullable) \
                     { \
-                        newIsNullable = VarVal::NULLABLE_ENUM::NULLABLE; \
+                        return VarVal{detail::var_val_t(op rhsVal), VarVal::NULLABLE_ENUM::NULLABLE, isNull}; \
                     } \
-                    nautilus::val<bool> newNullValue = isNullable & isNull; \
-                    detail::var_val_t result = op rhsVal; \
-                    return VarVal{detail::var_val_t(result), newIsNullable, newNullValue}; \
+                    return VarVal{detail::var_val_t(op rhsVal), VarVal::NULLABLE_ENUM::NOT_NULLABLE, nautilus::val<bool>(false)}; \
                 } \
             }, \
             this->value); \
@@ -324,21 +345,13 @@ VarVal VarVal::operator/(const VarVal& other) const
         {
             if constexpr (requires(LHS l, RHS r) { l / r; })
             {
-                auto newIsNullable = VarVal::NULLABLE_ENUM::NOT_NULLABLE;
                 if (leftIsNullable or rightIsNullable)
                 {
-                    newIsNullable = VarVal::NULLABLE_ENUM::NULLABLE;
+                    auto isNull = leftIsNull || rightIsNull;
+                    auto result = nautilus::select(isNull, static_cast<decltype(lhsVal / rhsVal)>(lhsVal), lhsVal / rhsVal);
+                    return VarVal{result, NULLABLE_ENUM::NULLABLE, isNull};
                 }
-                /// We use an val<int> to use bitwise operators to reduce the number of branches created in the nautilus trace.
-                const auto leftIsNullableInt = static_cast<int>(leftIsNullable);
-                const auto rightIsNullableInt = static_cast<int>(rightIsNull);
-                const auto leftIsNullInt = static_cast<nautilus::val<int>>(leftIsNull);
-                const auto rightIsNullInt = static_cast<nautilus::val<int>>(rightIsNull);
-                const nautilus::val<bool> newNullValue = leftIsNullableInt & leftIsNullInt | rightIsNullableInt & rightIsNullInt;
-                const nautilus::val<bool> isZeroDenominator
-                    = static_cast<nautilus::val<int>>(rhsVal == 0) & (rightIsNullableInt & rightIsNullInt);
-                /// Using safe denominator if it is zero and rhs is null
-                return VarVal{lhsVal / (rhsVal + isZeroDenominator), newIsNullable, newNullValue};
+                return VarVal{lhsVal / rhsVal, NULLABLE_ENUM::NULLABLE, nautilus::val<bool>(false)};
             }
             else
             {

@@ -45,19 +45,20 @@ void SumAggregationPhysicalFunction::lift(
     /// If the value is null and we are taking null values into account
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
-    /// We use a multiplication factor instead of a branch to reduce the tracing time spent in nautilus
-    const nautilus::val<int8_t> multiplicationFactor
-        = 0 * (inputType.isNullable & value.isNull()) + 1 * not(inputType.isNullable & value.isNull());
-
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, false);
+    auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, false);
 
-    /// Updating the sum and count with the new value
-    const auto newSum = sum + (value * multiplicationFactor).castToType(inputType.type);
-
+    if (inputType.isNullable)
+    {
+        sum = varValSelect(value.isNull(), sum, (sum + value).castToType(inputType.type));
+    }
+    else
+    {
+        sum = (sum + value).castToType(inputType.type);
+    }
     /// Writing the new sum and count back to the aggregation state
-    newSum.writeToMemory(memAreaSum);
+    sum.writeToMemory(memAreaSum);
 }
 
 void SumAggregationPhysicalFunction::combine(
