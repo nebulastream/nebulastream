@@ -78,7 +78,7 @@ class RestApiSource final : public Source
 public:
     static const std::string& name()
     {
-        static const std::string Instance = "HTTP";
+        static const std::string Instance = "RestApi";
         return Instance;
     }
 
