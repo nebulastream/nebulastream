@@ -59,7 +59,7 @@ public:
     nautilus::val<bool> operator!() const;
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
-private:
+protected:
     nautilus::val<uint64_t> size;
     nautilus::val<int8_t*> ptrToVarSized;
 };
