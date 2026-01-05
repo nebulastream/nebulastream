@@ -44,10 +44,6 @@ namespace NES
 
 FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
-}
-
-void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
-{
     const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
     if (not this->inputFile)
@@ -72,6 +68,16 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
         return FillTupleBufferResult::eos();
     }
     return FillTupleBufferResult::withBytes(numBytesRead);
+}
+
+void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
+{
+    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
+    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
+    if (not this->inputFile)
+    {
+        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
+    }
 }
 
 DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
