@@ -62,6 +62,9 @@ private:
     std::ifstream inputFile;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
+    bool hasTimestampColumn;
+    int32_t timestampColunmIdx;
+    std::chrono::time_point<std::chrono::system_clock> openTime;
 };
 
 struct ConfigParametersCSV

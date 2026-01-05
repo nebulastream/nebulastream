@@ -42,8 +42,63 @@
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor)
+    : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH)), hasTimestampColumn(false), timestampColunmIdx(-1)
 {
+    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
+    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
+    if (not this->inputFile)
+    {
+        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
+    }
+
+    const auto logicalSourceFieldNames = sourceDescriptor.getLogicalSource().getSchema()->getFieldNames();
+    const auto it = std::ranges::find_if(logicalSourceFieldNames, [](const std::string& name)
+    {
+        return name.ends_with("TIMESTAMP_SEC");
+    });
+    if (it != logicalSourceFieldNames.end())
+    {
+        this->timestampColunmIdx = std::distance(logicalSourceFieldNames.begin(), it);
+        this->hasTimestampColumn = true;
+    }
+
+    this->openTime = std::chrono::system_clock::now();
+}
+
+void FileSource::close()
+{
+    this->inputFile.close();
+}
+
+Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+{
+    if (not hasTimestampColumn)
+    {
+        this->inputFile.read(
+            tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
+        const auto numBytesRead = this->inputFile.gcount();
+        this->totalNumBytesRead += numBytesRead;
+        if (numBytesRead == 0)
+        {
+            return FillTupleBufferResult::eos();
+        }
+        return FillTupleBufferResult::withBytes(numBytesRead);
+    }
+    const auto getTimestamp = [&](const std::string& row) -> std::chrono::time_point<std::chrono::system_clock>
+    {
+        INVARIANT(this->timestampColunmIdx >= 0, "Invalid timestampIdx {}", this->timestampColunmIdx);
+        const auto fields = splitWithStringDelimiter<std::string_view>(row, ",");
+        const auto timestamp = from_chars<long long>(fields[this->timestampColunmIdx]);
+        if (not timestamp.has_value())
+        {
+            throw InvalidConfigParameter("Cannot parse a timestamp from the row {}", row);
+        }
+
+        return std::chrono::system_clock::time_point{
+            std::chrono::seconds{*timestamp}
+        };
+    };
 }
 
 void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
@@ -54,24 +109,7 @@ void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
     {
         throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
     }
-}
 
-void FileSource::close()
-{
-    this->inputFile.close();
-}
-
-Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
-{
-    this->inputFile.read(
-        tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
-    const auto numBytesRead = this->inputFile.gcount();
-    this->totalNumBytesRead += numBytesRead;
-    if (numBytesRead == 0)
-    {
-        return FillTupleBufferResult::eos();
-    }
-    return FillTupleBufferResult::withBytes(numBytesRead);
 }
 
 DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
