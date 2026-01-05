@@ -28,6 +28,8 @@
 
 namespace NES
 {
+class VariableSizedData;
+
 /// The arena is a memory management system that provides memory to the operators during a pipeline invocation.
 /// As the memory is destroyed / returned to the arena after the pipeline invocation, the memory is not persistent and thus, it is not
 /// suitable for storing state across pipeline invocations. For storing state across pipeline invocations, the operator handler should be used.
