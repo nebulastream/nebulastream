@@ -52,7 +52,7 @@ SIMDJSONFIF::applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SI
 
 struct VarSizedResult
 {
-    std::span<std::byte> varSizedPointer{};
+    std::span<std::byte> varSizedPointer;
     uint64_t size{};
 };
 
