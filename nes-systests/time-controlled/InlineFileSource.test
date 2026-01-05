@@ -1,0 +1,32 @@
+# name: time-controlled/InlineFileSource.test
+# description: Simple test for time controlled emission on the inline file source
+# groups: [time-controlled]
+
+CREATE SINK sinkStreamWithText(streamWithText.timestamp_sec UINT64, streamWithText.value UINT64, streamWithText.text1 VARSIZED, streamWithText.text2 VARSIZED)  TYPE File;
+
+CREATE LOGICAL SOURCE streamWithText(timestamp_sec UINT64, value UINT64, text1 VARSIZED, text2 VARSIZED);
+CREATE PHYSICAL SOURCE FOR streamWithText TYPE TimeControlled SET(
+    '0' as `SOURCE`.TIMESTAMP_COLUMN_IDX,
+    'MILLISECOND' as `SOURCE`.TIMESTAMP_METRIC
+
+);
+ATTACH INLINE
+1,1,test1,test1
+2,1,test1,test2
+2,1,test2,test2
+2,2,test1,test1
+4,2,test3,test2
+5,2,test1,test1
+5,3,test1,test2
+10,3,test3,test1
+
+SELECT * FROM streamWithText INTO sinkStreamWithText;
+----
+1,1,test1,test1
+2,1,test1,test2
+2,1,test2,test2
+2,2,test1,test1
+4,2,test3,test2
+5,2,test1,test1
+5,3,test1,test2
+10,3,test3,test1
