@@ -22,47 +22,95 @@
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
-#include <ErrorHandling.hpp>
+#include <Arena.hpp>
 
 namespace NES
 {
 
+namespace detail
+{
+
+RegularContent::RegularContent(const nautilus::val<int8_t*>& content, nautilus::val<uint64_t> size) : ptr(content), contentSize(size)
+{
+}
+
+nautilus::val<bool> RegularContent::operator==(const RegularContent& rhs) const
+{
+    if (contentSize != rhs.contentSize)
+    {
+        return false;
+    }
+    return nautilus::memcmp(ptr, rhs.ptr, contentSize) == 0;
+}
+
+nautilus::val<bool> RegularContent::operator==(const CompoundContent& rhs) const
+{
+    // Use operator definition in CompoundContent
+    return rhs == *this;
+}
+
+CompoundContent::CompoundContent(
+    ArenaRef* arena,
+    const nautilus::val<int8_t*>& first,
+    nautilus::val<uint64_t> firstSize,
+    const nautilus::val<int8_t*>& second,
+    nautilus::val<uint64_t> secondSize)
+    : arenaRef(arena), firstPtr(first), secondPtr(second), firstSize(firstSize), secondSize(secondSize)
+{
+}
+
+nautilus::val<int8_t*> CompoundContent::getContent() const
+{
+    if (materializedPtr == nullptr)
+    {
+        auto ptr = arenaRef->allocateMemory(firstSize + secondSize);
+        nautilus::memcpy(ptr, firstPtr, firstSize);
+        nautilus::memcpy(ptr + firstSize, secondPtr, secondSize);
+        materializedPtr = ptr;
+    }
+    return materializedPtr;
+}
+
+nautilus::val<bool> CompoundContent::operator==(const RegularContent& rhs) const
+{
+    if (firstSize + secondSize != rhs.contentSize)
+    {
+        return false;
+    }
+    if (const auto compareFirst = nautilus::memcmp(rhs.ptr, firstPtr, firstSize) == 0)
+    {
+        const auto compareSecond = nautilus::memcmp(rhs.ptr + firstSize, secondPtr, secondSize) == 0;
+        return compareSecond;
+    }
+    return false;
+}
+
+nautilus::val<bool> CompoundContent::operator==(const CompoundContent& rhs) const
+{
+    if (firstSize + secondSize != rhs.firstSize + rhs.secondSize)
+    {
+        return false;
+    }
+
+    if (const auto compareFirstPart = nautilus::memcmp(firstPtr, rhs.firstPtr, firstSize) == 0)
+    {
+        const auto compareSecondPart = nautilus::memcmp(secondPtr, rhs.secondPtr, secondSize) == 0;
+        return compareSecondPart;
+    }
+    return false;
+}
+
+} // namespace detail
+
 VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size)
-    : size(size), ptrToVarSized(reference)
+    : size(size), content(detail::RegularContent(reference, size))
 {
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
+VariableSizedData::VariableSizedData(const VariableSizedData& first, const VariableSizedData& second, ArenaRef& arena)
+    : size(first.getSize() + second.getSize())
+    , content(detail::CompoundContent(&arena, first.getContent(), first.getSize(), second.getContent(), second.getSize()))
 {
-}
-
-VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) noexcept
-{
-    if (this == &other)
-    {
-        return *this;
-    }
-
-    size = other.size;
-    ptrToVarSized = other.ptrToVarSized;
-    return *this;
-}
-
-VariableSizedData::VariableSizedData(VariableSizedData&& other) noexcept
-    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized))
-{
-}
-
-VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexcept
-{
-    if (this == &other)
-    {
-        return *this;
-    }
-
-    size = std::move(other.size);
-    ptrToVarSized = std::move(other.ptrToVarSized);
-    return *this;
 }
 
 nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other)
@@ -77,9 +125,7 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableS
 
 nautilus::val<bool> VariableSizedData::isValid() const
 {
-    PRECONDITION(size > 0 && ptrToVarSized != nullptr, "VariableSizedData has a size of 0 but  a nullptr pointer to the data.");
-    PRECONDITION(size == 0 && ptrToVarSized == nullptr, "VariableSizedData has a size of 0 so there should be no pointer to the data.");
-    return size > 0 && ptrToVarSized != nullptr;
+    return std::visit([](const auto& content) { return content.isValid(); }, content);
 }
 
 nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
@@ -88,10 +134,8 @@ nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) 
     {
         return {false};
     }
-    const auto varSizedData = getContent();
-    const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
-    return {compareResult};
+
+    return std::visit([](const auto& lhs, const auto& rhs) { return lhs == rhs; }, content, rhs.content);
 }
 
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
@@ -111,7 +155,7 @@ nautilus::val<bool> VariableSizedData::operator!() const
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
-    return ptrToVarSized;
+    return std::visit([](const auto& content) { return content.getContent(); }, content);
 }
 
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)
@@ -126,4 +170,5 @@ nautilus::val<bool> VariableSizedData::operator!() const
     }
     return oss;
 }
+
 }
