@@ -20,6 +20,8 @@
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 
 namespace NES
 {
@@ -33,10 +35,23 @@ LogicalPlan DecideMemoryLayout::apply(const LogicalPlan& queryPlan)
 LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator)
 {
     /// Iterating over all operators and setting the memory layout trait to row
+    auto traitSet = logicalOperator.getTraitSet();
+    auto targetMemoryLayoutType = MemoryLayoutType::COLUMNAR_LAYOUT;
+    if (logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>())///add swap after source
+    {
+        /// source currently only in row layout
+        tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    }
+    else if (logicalOperator.tryGetAs<SinkLogicalOperator>()) {///add swap before sink
+        /// sink currently only in row layout
+        tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    }else {
+        tryInsert(traitSet, MemoryLayoutTypeTrait{targetMemoryLayoutType});
+    }
     const auto children = logicalOperator.getChildren()
         | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
-    auto traitSet = logicalOperator.getTraitSet();
-    tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+
+    tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::COLUMNAR_LAYOUT});
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }
 }
