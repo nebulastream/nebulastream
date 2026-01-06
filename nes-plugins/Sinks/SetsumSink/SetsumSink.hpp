@@ -38,7 +38,7 @@
 namespace NES
 {
 
-/// A sink that counts the number of tuples and accumulates a setsum, which is written to file once the query is stopped.
+/// A sink that counts the number of tuples that corresponds to the number of items and accumulates into the eight columns of a setsum, which is written to file once the query is stopped.
 /// Example output of the sink:
 /// S$Count:UINT64,S$Col0:UINT32,S$Col1:UINT32,S$Col2:UINT32,S$Col3:UINT32,S$Col4:UINT32,S$Col5:UINT32,S$Col6:UINT32,S$Col7:UINT32
 /// 1042,12345678,23456789,34567890,45678901,56789012,67890123,78901234,89012345
