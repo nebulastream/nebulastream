@@ -61,11 +61,11 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     std::string inlineSourceType,
-    const Schema& schema,
+    UnboundOrderedSchema schema,
     std::unordered_map<std::string, std::string> sourceConfig,
     std::unordered_map<std::string, std::string> parserConfig)
 {
-    return LogicalPlan(InlineSourceLogicalOperator{std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)});
+    return LogicalPlan(TypedLogicalOperator<InlineSourceLogicalOperator>{std::move(inlineSourceType), std::move(schema), std::move(sourceConfig), std::move(parserConfig)});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
@@ -185,9 +185,9 @@ LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& 
 }
 
 LogicalPlan LogicalPlanBuilder::addInlineSink(
-    std::string type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan)
+    std::string type, UnboundOrderedSchema schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan)
 {
-    return promoteOperatorToRoot(queryPlan, InlineSinkLogicalOperator(std::move(type), schema, std::move(sinkConfig)));
+    return promoteOperatorToRoot(queryPlan, TypedLogicalOperator<InlineSinkLogicalOperator>{std::move(type), std::move(schema), std::move(sinkConfig)});
 }
 
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)

@@ -48,9 +48,9 @@ namespace NES
 // }
 // }
 
-IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self): self(std::move(self))
+IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self)
+    : self(std::move(self))
 {
-
 }
 
 IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(
@@ -152,6 +152,12 @@ LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogical
     }
     return TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>{
         std::move(arguments.children.at(0)), DescriptorConfig::Config{}};
+}
+
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 }

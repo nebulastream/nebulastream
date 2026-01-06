@@ -128,7 +128,7 @@ std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalS
 
 std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     const std::string& sourceType,
-    const Schema& schema,
+    const UnboundOrderedSchema& schema,
     std::unordered_map<std::string, std::string> parserConfigMap,
     std::unordered_map<std::string, std::string> sourceConfigMap) const
 {
@@ -141,7 +141,7 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     auto parserConfig = ParserConfig::create(std::move(parserConfigMap));
 
     auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto name = physicalId.toString();
+    auto name = Identifier::parse(physicalId.toString());
 
     const auto logicalSource = LogicalSource{name, schema};
     SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, descriptorConfig.value(), parserConfig};

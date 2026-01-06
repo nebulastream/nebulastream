@@ -131,7 +131,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
-        unbind(leftInputSchema),
+        UnboundOrderedSchema{unbind(leftInputSchema)},
         unbind(outputSchema),
         memoryLayoutType,
         memoryLayoutType,

@@ -18,6 +18,7 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -27,6 +28,9 @@
 #include <RewriteRuleRegistry.hpp>
 #include <UnionPhysicalOperator.hpp>
 #include <UnionRenamePhysicalOperator.hpp>
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
@@ -35,12 +39,22 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
 {
     PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
 
-    const auto source = logicalOperator.getAs<UnionLogicalOperator>();
-    auto outputSchema = logicalOperator.getOutputSchema();
+    const auto unionOp = logicalOperator.getAs<UnionLogicalOperator>();
+
+    const auto traitSet = unionOp->getTraitSet();
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
-    auto renames = source.getChildren()
+
+    const auto outputFieldMappingOpt = traitSet.tryGet<FieldMappingTrait>();
+    PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
+
+    const auto fieldOrderingOpt = traitSet.tryGet<FieldOrderingTrait>();
+    PRECONDITION(fieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait");
+
+    const auto outputSchema = createSchemaFromTraits(outputFieldMappingOpt->getUnderlying(), fieldOrderingOpt->getOrderedFields());
+
+    auto renames = unionOp.getChildren()
         | std::views::transform(
                        [&](const auto& childOperator)
                        {
@@ -52,7 +66,7 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
                            return std::make_shared<PhysicalOperatorWrapper>(
                                UnionRenamePhysicalOperator(getFieldNames(childOperator.getOutputSchema()), getFieldNames(outputSchema)),
                                childOperator.getOutputSchema().template unbind<std::dynamic_extent>(),
-                               outputSchema.unbind<std::dynamic_extent>(),
+                               outputSchema,
                                memoryLayoutType,
                                memoryLayoutType,
                                PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
@@ -61,7 +75,7 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         UnionPhysicalOperator(),
-        unbind(source.getOutputSchema()),
+        unbind(unionOp.getOutputSchema()),
         unbind(logicalOperator.getOutputSchema()),
         memoryLayoutType,
         memoryLayoutType,

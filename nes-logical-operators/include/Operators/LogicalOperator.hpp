@@ -186,7 +186,7 @@ struct TypedLogicalOperator
         }
     }
 
-    TypedLogicalOperator() = delete;
+    // TypedLogicalOperator() = delete;
 
     /// Attempts to get the underlying operator as type T.
     /// @tparam T The type to try to get the operator as.

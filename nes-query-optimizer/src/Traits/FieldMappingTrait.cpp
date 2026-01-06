@@ -25,11 +25,11 @@ inline constexpr auto CONFIG_KEY = "fieldMapping";
 
 }
 
-FieldMappingTrait::FieldMappingTrait(std::unordered_map<Field, IdentifierList> mapping) : mapping(std::move(mapping))
+FieldMappingTrait::FieldMappingTrait(std::unordered_map<UnboundFieldBase<1>, IdentifierList> mapping) : mapping(std::move(mapping))
 {
 }
 
-std::optional<IdentifierList> FieldMappingTrait::getMapping(const Field& identifier) const
+std::optional<IdentifierList> FieldMappingTrait::getMapping(const UnboundFieldBase<1>& identifier) const
 {
     const auto iter = mapping.find(identifier);
     if (iter == mapping.end())
@@ -39,7 +39,7 @@ std::optional<IdentifierList> FieldMappingTrait::getMapping(const Field& identif
     return iter->second;
 }
 
-const std::unordered_map<Field, IdentifierList>& FieldMappingTrait::getUnderlying() const
+const std::unordered_map<UnboundFieldBase<1>, IdentifierList>& FieldMappingTrait::getUnderlying() const
 {
     return mapping;
 }
@@ -62,7 +62,7 @@ SerializableTrait FieldMappingTrait::serialize() const
     for (const auto& [field, physicalIdentifier] : mapping)
     {
         auto* entry = variantValue.mutable_fieldmapping()->add_fieldmappings();
-        IdentifierSerializationUtil::serializeIdentifier(field.getLastName(), entry->mutable_logicalfield());
+        IdentifierSerializationUtil::serializeIdentifier(field.getFullyQualifiedName(), entry->mutable_logicalfield());
         IdentifierSerializationUtil::serializeIdentifierList(physicalIdentifier, entry->mutable_physicalfield());
     }
     return serializedTrait;
@@ -83,7 +83,7 @@ std::string FieldMappingTrait::explain(ExplainVerbosity) const
     return fmt::format(
         "FieldMappingTrait({})",
         fmt::join(
-            mapping | std::views::transform([](const auto& pair) { return fmt::format("{} -> {}", pair.first.getLastName(), pair.second); }), ", "));
+            mapping | std::views::transform([](const auto& pair) { return fmt::format("{} -> {}", pair.first.getFullyQualifiedName(), pair.second); }), ", "));
 }
 
 size_t FieldMappingTrait::hash() const
@@ -104,7 +104,7 @@ TraitRegistryReturnType TraitGeneratedRegistrar::RegisterFieldMappingTrait(Trait
     }
     const auto serializedFieldMapping = std::get<SerializableFieldMapping>(iter->second);
     const auto schema = arguments.logicalOperator.getOutputSchema();
-    std::unordered_map<Field, IdentifierList> mapping;
+    std::unordered_map<UnboundFieldBase<1>, IdentifierList> mapping;
     for (const auto& pair : serializedFieldMapping.fieldmappings())
     {
         const auto logicalFieldIdentifier = IdentifierSerializationUtil::deserializeIdentifier(pair.logicalfield());
@@ -114,7 +114,7 @@ TraitRegistryReturnType TraitGeneratedRegistrar::RegisterFieldMappingTrait(Trait
             throw CannotDeserialize("FieldMappingTrait, unknown field {}", logicalFieldIdentifier);
         }
         const auto physicalFieldIdentifier = IdentifierSerializationUtil::deserializeIdentifierList(pair.physicalfield());
-        if (const auto [_, success] = mapping.try_emplace(fieldOpt.value(), physicalFieldIdentifier); !success)
+        if (const auto [_, success] = mapping.try_emplace(fieldOpt.value().unbound(), physicalFieldIdentifier); !success)
         {
             throw CannotDeserialize("FieldMappingTrait, duplicate field mapping");
         }

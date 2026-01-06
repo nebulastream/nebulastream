@@ -270,9 +270,10 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
 
 WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema() const
 {
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.child = copy.child.withInferredSchema();
-    const Schema& inputSchema = copy.child.getOutputSchema();
+    copy.child = copy.child->withInferredSchema();
+    const Schema& inputSchema = copy.child->getOutputSchema();
 
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
     {
@@ -350,12 +351,17 @@ Schema WindowedAggregationLogicalOperator::getOutputSchema() const
 
 std::vector<LogicalOperator> WindowedAggregationLogicalOperator::getChildren() const
 {
-    return {child};
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
 LogicalOperator WindowedAggregationLogicalOperator::getChild() const
 {
-    return child;
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 bool WindowedAggregationLogicalOperator::isKeyed() const
@@ -373,13 +379,13 @@ std::shared_ptr<Windowing::WindowType> WindowedAggregationLogicalOperator::getWi
     return windowType;
 }
 
-Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>
+VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>
 WindowedAggregationLogicalOperator::getGroupingKeys() const
 {
     return std::visit(
         [](const auto& keys)
         {
-            return Util::VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>{
+            return VariantContainer<std::vector, UnboundFieldAccessLogicalFunction, FieldAccessLogicalFunction>{
                 keys | std::views::transform([](const auto& key) { return key.first; }) | std::ranges::to<std::vector>()};
         },
         groupingKeys);

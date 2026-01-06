@@ -15,6 +15,7 @@
 #pragma once
 
 
+#include "DataTypes/UnboundSchema.hpp"
 #include "Schema/Field.hpp"
 
 
@@ -28,9 +29,9 @@ class FieldOrderingTrait : public TraitConcept
 public:
     static constexpr std::string_view NAME = "FieldOrdering";
 
-    explicit FieldOrderingTrait(std::vector<Field> orderedFields);
+    explicit FieldOrderingTrait(SchemaBase<1, UnboundFieldBase<1>, true> orderedFields);
 
-    const std::vector<Field>& getOrderedFields() const;
+    const SchemaBase<1, UnboundFieldBase<1>, true>& getOrderedFields() const;
 
     [[nodiscard]] const std::type_info& getType() const override;
     [[nodiscard]] std::string_view getName() const override;
@@ -40,6 +41,7 @@ public:
     [[nodiscard]] size_t hash() const override;
 
 private:
-    std::vector<Field> orderedFields;
+    SchemaBase<1, UnboundFieldBase<1>, true> orderedFields;
 };
+
 }

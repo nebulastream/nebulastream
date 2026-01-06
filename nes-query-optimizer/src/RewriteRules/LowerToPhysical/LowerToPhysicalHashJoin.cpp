@@ -155,7 +155,9 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
 
 /// Creates for each field a map operator that has as its function a cast to the correct data type
 std::pair<UnboundOrderedSchema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
-    const LogicalOperator& inputOperator, const std::vector<FieldNamesExtension>& fieldNameExtensions, const MemoryLayoutType& memoryLayoutType)
+    const LogicalOperator& inputOperator,
+    const std::vector<FieldNamesExtension>& fieldNameExtensions,
+    const MemoryLayoutType& memoryLayoutType)
 {
     auto currentFields = unbind(inputOperator.getOutputSchema()) | std::ranges::to<std::vector<UnboundField>>();
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> mapPhysicalOperators;
@@ -179,7 +181,11 @@ std::pair<UnboundOrderedSchema, std::vector<std::shared_ptr<PhysicalOperatorWrap
         /// Create a new map operator with the cast as its function
         mapPhysicalOperators.emplace_back(
             std::make_shared<PhysicalOperatorWrapper>(
-                MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction), inputSchema, outputSchema));
+                MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction),
+                inputSchema,
+                outputSchema,
+                memoryLayoutType,
+                memoryLayoutType));
         // mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
         //     MapPhysicalOperator(newName, castedPhysicalFunction),
         //     copyOfInputSchemaOfMap,
@@ -270,8 +276,8 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.
     /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
     auto [leftJoinFields, rightJoinFields] = getJoinFieldExtensionsLeftRight(leftOperator, rightOperator, logicalJoinFunction);
-    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields);
-    auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields);
+    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields, memoryLayoutType);
+    auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType);
     auto sizeOfSchema = [](const UnboundOrderedSchema& schema)
     {
         return std::ranges::fold_left(

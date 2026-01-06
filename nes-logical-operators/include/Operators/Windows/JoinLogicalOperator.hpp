@@ -150,7 +150,7 @@ private:
 
     std::shared_ptr<Windowing::WindowType> windowType;
     JoinType joinType;
-    std::array<LogicalOperator, 2> children;
+    std::optional<std::array<LogicalOperator, 2>> children;
     LogicalFunction joinFunction;
 
     WeakLogicalOperator self;

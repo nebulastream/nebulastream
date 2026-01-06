@@ -45,6 +45,7 @@ public:
 
     [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
     [[nodiscard]] Schema getOutputSchema() const;
 

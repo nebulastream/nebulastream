@@ -225,7 +225,7 @@ JoinLogicalOperator::JoinLogicalOperator(WeakLogicalOperator self, std::array<Lo
         this->joinFunction = joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
 
         this->children = std::move(children);
-        this->outputSchema = inferOutputSchema(this->children, this->startEndFields.value());
+        this->outputSchema = inferOutputSchema(*this->children, this->startEndFields.value());
         return;
     }
     throw UnknownLogicalOperator();
@@ -260,10 +260,11 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
 
 JoinLogicalOperator JoinLogicalOperator::withInferredSchema() const
 {
+    PRECONDITION(children.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.children = {copy.children[0].withInferredSchema(), copy.children[1].withInferredSchema()};
+    copy.children = {(*copy.children)[0].withInferredSchema(), (*copy.children)[1].withInferredSchema()};
 
-    const std::vector<Field> inputFields = copy.children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
+    const std::vector<Field> inputFields = *copy.children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
         | std::views::join | std::ranges::to<std::vector>();
 
     auto inputSchemaOrCollisions = Schema::tryCreateCollisionFree(inputFields);
@@ -291,7 +292,7 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema() const
         UnboundFieldBase{IdentifierListBase<1>{startIdentifier}, DataType::Type::UINT64},
         UnboundFieldBase{IdentifierListBase<1>{endIdentifier}, DataType::Type::UINT64}};
 
-    copy.outputSchema = inferOutputSchema(copy.children, copy.startEndFields.value());
+    copy.outputSchema = inferOutputSchema(*copy.children, copy.startEndFields.value());
 
     return copy;
 }
@@ -324,7 +325,11 @@ Schema JoinLogicalOperator::getOutputSchema() const
 
 std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
 {
-    return children | std::ranges::to<std::vector>();
+    if (children.has_value())
+    {
+        return *children | std::ranges::to<std::vector>();
+    }
+    return {};
 }
 
 std::shared_ptr<Windowing::WindowType> JoinLogicalOperator::getWindowType() const

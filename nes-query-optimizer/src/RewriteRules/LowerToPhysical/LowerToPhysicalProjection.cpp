@@ -37,11 +37,16 @@
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace
 {
-NES::ScanPhysicalOperator
-createScanOperator(const NES::LogicalOperator& projectionOp, const size_t bufferSize, const NES::Schema& inputSchema)
+NES::ScanPhysicalOperator createScanOperator(
+    const NES::TypedLogicalOperator<NES::ProjectionLogicalOperator>& projectionOp,
+    const size_t bufferSize,
+    const NES::UnboundOrderedSchema& inputSchema,
+    NES::MemoryLayoutType memoryLayoutType)
 {
     const auto sourceOperators
         = projectionOp.getChildren()
@@ -53,20 +58,19 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
         | std::ranges::to<std::vector>();
     PRECONDITION(sourceOperators.size() < 2, "We expect a projection to have at most one source operator as a child.");
 
-    const auto memoryLayoutTypeTrait = projectionOp.getTraitSet().tryGet<NES::MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
+    const auto inputFieldNames = inputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+        | std::ranges::to<std::vector>();
     if (sourceOperators.size() == 1)
     {
         const auto inputFormatterConfig = sourceOperators.front().getParserConfig();
         if (NES::toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return NES::ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema.getFieldNames());
+                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), std::move(inputFieldNames));
         }
     }
-    return NES::ScanPhysicalOperator(memoryProvider, inputSchema.getFieldNames());
+    return NES::ScanPhysicalOperator(memoryProvider, std::move(inputFieldNames));
 }
 
 }
@@ -83,35 +87,30 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
     const auto& outputFieldMapping = outputFieldMappingOpt.value();
 
+    const auto fieldOrderingOpt = projection->getTraitSet().tryGet<FieldOrderingTrait>();
+    PRECONDITION(fieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait");
+    const UnboundOrderedSchema outputSchema
+        = createSchemaFromTraits(outputFieldMapping.getUnderlying(), fieldOrderingOpt->getOrderedFields());
+
     const auto inputFieldMappingOpt = projection->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
     PRECONDITION(inputFieldMappingOpt.has_value(), "Expected FieldMappingTrait of child to be set");
-    const auto& inputFieldMapping = outputFieldMappingOpt.value();
+    const auto& inputFieldMapping = inputFieldMappingOpt.value();
 
-    auto inputSchema = projection->getChild()->getOutputSchema();
-    auto outputSchema = projection->getOutputSchema();
-    auto bufferSize = conf.pageSize.getValue();
-
-    auto scanLayout = std::make_shared<RowLayout>(bufferSize, inputSchema.unbind<std::dynamic_extent>());
-    auto scanBufferRef = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(scanLayout);
-    auto accessedFields = projection->getAccessedFields();
-    auto scan = ScanPhysicalOperator(
-        scanBufferRef,
-        accessedFields
-            | std::views::transform(
-                [&inputFieldMapping](const auto& field)
-                {
-                    const auto foundMapping = inputFieldMapping.getMapping(field);
-                    PRECONDITION(foundMapping.has_value(), "Expected there to be a mapping for field {}", field);
-                    return foundMapping.value();
-                })
-            | std::ranges::to<std::vector>());
+    const auto childFieldOrderingOpt = projection->getChild().getTraitSet().tryGet<FieldOrderingTrait>();
+    PRECONDITION(childFieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait on child");
+    const UnboundOrderedSchema inputSchema
+        = createSchemaFromTraits(inputFieldMapping.getUnderlying(), childFieldOrderingOpt->getOrderedFields());
 
     const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
-    auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema);
+
+    auto bufferSize = conf.pageSize.getValue();
+    auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan, unbind(inputSchema), unbind(outputSchema),
+        scan,
+        inputSchema,
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType,
         std::nullopt,
@@ -126,8 +125,8 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         auto physicalOperator = MapPhysicalOperator(fieldName.getLastName(), physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,
-            inputSchema.unbind<std::dynamic_extent>(),
-            outputSchema.unbind<std::dynamic_extent>(),
+            inputSchema,
+            outputSchema,
             memoryLayoutType,
             memoryLayoutType,
             std::nullopt,

@@ -15,6 +15,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 
 #include <memory>
+
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
@@ -24,6 +25,10 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SelectionPhysicalOperator.hpp>
+#include "DataTypes/UnboundSchema.hpp"
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
@@ -34,14 +39,36 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     const auto selection = logicalOperator.getAs<SelectionLogicalOperator>();
     const auto function = selection->getPredicate();
     const auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
-    auto physicalOperator = SelectionPhysicalOperator(func);
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto memoryLayoutTypeTrait = traitSet.tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+
+    const auto outputFieldMappingOpt = traitSet.tryGet<FieldMappingTrait>();
+    PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
+    const auto& outputFieldMapping = outputFieldMappingOpt.value();
+
+    const auto fieldOrderingOpt = traitSet.tryGet<FieldOrderingTrait>();
+    PRECONDITION(fieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait");
+    const UnboundOrderedSchema outputSchema
+        = createSchemaFromTraits(outputFieldMapping.getUnderlying(), fieldOrderingOpt->getOrderedFields());
+
+    const auto inputFieldMappingOpt = selection->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
+    PRECONDITION(inputFieldMappingOpt.has_value(), "Expected FieldMappingTrait of child to be set");
+    const auto& inputFieldMapping = inputFieldMappingOpt.value();
+
+    const auto childFieldOrderingOpt = selection->getChild().getTraitSet().tryGet<FieldOrderingTrait>();
+    PRECONDITION(childFieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait on child");
+
+    const UnboundOrderedSchema inputSchema
+        = createSchemaFromTraits(inputFieldMapping.getUnderlying(), childFieldOrderingOpt->getOrderedFields());
+
+    auto physicalOperator = SelectionPhysicalOperator(func);
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        selection->getChild().getOutputSchema().unbind<std::dynamic_extent>(),
-        logicalOperator.getOutputSchema().unbind<std::dynamic_extent>(),
+        inputSchema,
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

@@ -28,6 +28,7 @@
 #include <Schema/Schema.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Hash.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -129,4 +130,10 @@ void InlineSourceLogicalOperator::serialize(SerializableOperator&)
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
 }
 
+}
+
+
+uint64_t std::hash<NES::InlineSourceLogicalOperator>::operator()(const NES::InlineSourceLogicalOperator& op) const noexcept
+{
+    return folly::hash::hash_combine(op.getSourceType(), op.getSourceSchema(), op.getSourceConfig(), op.getParserConfig());
 }

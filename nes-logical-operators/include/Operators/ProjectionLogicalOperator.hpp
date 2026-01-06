@@ -101,7 +101,7 @@ public:
 private:
     static constexpr std::string_view NAME = "Projection";
 
-    LogicalOperator child;
+    std::optional<LogicalOperator> child;
     bool asterisk = false;
     ProjectionVariant projections;
 

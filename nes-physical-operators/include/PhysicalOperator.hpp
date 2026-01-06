@@ -221,9 +221,9 @@ public:
         INTERMEDIATE, /// neither of them, intermediate operator
     };
 
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema, PipelineLocation pipelineLocation);
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema, std::optional<UnboundOrderedSchema> outputSchema);
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema, std::optional<UnboundOrderedSchema> outputSchema, PipelineLocation pipelineLocation);
+    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema, MemoryLayoutType inputMemoryLayoutType, PipelineLocation pipelineLocation);
+    // PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema, std::optional<UnboundOrderedSchema> outputSchema);
+    // PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<UnboundOrderedSchema> inputSchema, std::optional<UnboundOrderedSchema> outputSchema, PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
         std::optional<UnboundOrderedSchema> inputSchema,

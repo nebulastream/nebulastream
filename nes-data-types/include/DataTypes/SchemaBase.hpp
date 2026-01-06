@@ -32,6 +32,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/ranges.h>
+#include <folly/Hash.h>
 
 namespace NES
 {
@@ -271,6 +272,24 @@ private:
 
 
 }
+
+template <size_t Extent, typename FieldType, bool Ordered>
+struct std::hash<NES::SchemaBase<Extent, FieldType, Ordered>>
+{
+    using SchemaAlias = NES::SchemaBase<Extent, FieldType, Ordered>;
+
+    size_t operator()(const SchemaAlias& schema)
+    {
+        if constexpr (Ordered)
+        {
+            return folly::hash::hash_range(schema.begin(), schema.end());
+        }
+        else
+        {
+            return folly::hash::commutative_hash_combine_range(schema.begin(), schema.end());
+        }
+    }
+};
 
 template <size_t IdListExtent, typename FieldType, bool Ordered>
 struct fmt::formatter<NES::SchemaBase<IdListExtent, FieldType, Ordered>> : fmt::ostream_formatter

@@ -28,6 +28,10 @@
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SourcePhysicalOperator.hpp>
+#include "DataTypes/UnboundSchema.hpp"
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
@@ -36,20 +40,30 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
 {
     PRECONDITION(logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
     const auto source = logicalOperator.getAs<SourceDescriptorLogicalOperator>();
+    const auto traitSet = source->getTraitSet();
 
-    const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(source.getTraitSet());
+    const auto outputOriginIdsOpt = traitSet.tryGet<OutputOriginIdsTrait>();
     auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
 
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutTypeTrait = traitSet.tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+
+    const auto fieldOrderingOpt = traitSet.tryGet<FieldOrderingTrait>();
+    PRECONDITION(fieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait");
+
+    const auto outputFieldMappingOpt = traitSet.tryGet<FieldMappingTrait>();
+    PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
+
+    for (const auto& [field, mappedTo] : outputFieldMappingOpt->getUnderlying())
+    {
+        PRECONDITION(field.getFullyQualifiedName() == mappedTo, "Field mapping is not allowed to rename source attributes");
+    }
+    const UnboundOrderedSchema outputSchema
+        = createSchemaFromTraits(outputFieldMappingOpt->getUnderlying(), fieldOrderingOpt->getOrderedFields());
+
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator,
-        std::nullopt,
-        logicalOperator.getOutputSchema().unbind<std::dynamic_extent>(),
-        memoryLayoutType,
-        memoryLayoutType,
-        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator, outputSchema, memoryLayoutType, PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {}};
 }
 

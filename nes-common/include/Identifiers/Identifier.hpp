@@ -46,8 +46,8 @@ class IdentifierListBase;
 
 /// Reopresenting a SQL compliant identifier.
 /// Automatically uppercases non-quoted identifiers but stores the original version so that we can emulate the behavior of non-SQL-compliant systems (e.g., Postgres) when interacting with them.
-/// The template allows this class to be used with constexpr string, where we can only store a string_view.
-/// For the most part, we should just use the "owning" version because it can't contain a dangling reference.
+/// The template parameter makes this class behave like std::span, where it is either static with a length that is known at compile time, or its std::dynamic_extent, where it is only guaranteed to be not empty.
+/// The template allows this class to be used with constexpr string, where we infer at compile time the length of the identifier.
 /// Should you use the non-owning version for non-constexpr strings, make sure that they don't get mutated while Identifiers wrapping them are alive.
 /// The behaviour in that case is not well-defined and will sometimes produce correct results, sometimes exceptions and sometimes incorrect results.
 template <size_t Extent>
@@ -78,14 +78,14 @@ class IdentifierBase
 
     static constexpr bool isQuoted(std::string_view value)
     {
-        PRECONDITION(value.find('.') == std::string_view::npos, "Invalid Identifier, cannot contain dot: {}", value);
+        PRECONDITION(value.find('.') == std::string_view::npos, "Invalid identifier, cannot contain dot: {}", value);
         if (*std::ranges::begin(value) == '"')
         {
-            PRECONDITION(*std::ranges::rbegin(value) == '"', "Invalid Identifier, must end with quote: {}", value);
+            PRECONDITION(*std::ranges::rbegin(value) == '"', "Invalid identifier, must end with quote: {}", value);
             return true;
         }
         PRECONDITION(
-            *std::ranges::rbegin(value) != '"', "Invalid Identifier, cannot end with quote if it doesn't start with one: {}", value);
+            *std::ranges::rbegin(value) != '"', "Invalid identifier, cannot end with quote if it doesn't start with one: {}", value);
         return false;
     }
 
@@ -186,7 +186,7 @@ public:
     static constexpr IdentifierBase<ReturnedExtent - 1> parse(const char (&value)[ReturnedExtent])
     requires(Extent == std::dynamic_extent && ReturnedExtent > 1)
     {
-        PRECONDITION(value[ReturnedExtent - 1] == '\0', "Invalid Identifier, must end with null terminator: {}", value);
+        PRECONDITION(value[ReturnedExtent - 1] == '\0', "Invalid identifier, must end with null terminator: {}", value);
         IdentifierBase<ReturnedExtent - 1> identifier{};
         /// While string view can deal with a null byte, isQuoted expects the last character to be a quote if the first one is one
         identifier.caseSensitive = isQuoted(std::string_view{value, ReturnedExtent - 1});

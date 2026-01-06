@@ -107,9 +107,10 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, Operat
 
 SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema() const
 {
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.child = copy.child.withInferredSchema();
-    const auto inputSchema = copy.child.getOutputSchema();
+    copy.child = copy.child->withInferredSchema();
+    const auto inputSchema = copy.child->getOutputSchema();
     copy.predicate = predicate.withInferredDataType(inputSchema);
     if (not copy.predicate.getDataType().isType(DataType::Type::BOOLEAN))
     {
@@ -147,12 +148,17 @@ Schema SelectionLogicalOperator::getOutputSchema() const
 
 std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
 {
-    return {child};
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
 LogicalOperator SelectionLogicalOperator::getChild() const
 {
-    return child;
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const

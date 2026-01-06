@@ -15,6 +15,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalIngestionTimeWatermarkAssigner.hpp>
 
 #include <memory>
+
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
@@ -24,22 +25,48 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
 
 RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>(), "Expected a IngestionTimeWatermarkAssigner");
-    auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
+    const auto assignOpOpt = logicalOperator.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>();
+    PRECONDITION(assignOpOpt.has_value(), "Expected a IngestionTimeWatermarkAssigner");
     PRECONDITION(logicalOperator.getChildren().size() == 1, "Expected exactly one child for IngestionTimeWatermarkAssigner");
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto memoryLayoutTypeTrait = traitSet.tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+
+    const auto outputFieldMappingOpt = traitSet.tryGet<FieldMappingTrait>();
+    PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
+    const auto& outputFieldMapping = outputFieldMappingOpt.value();
+
+    const auto fieldOrderingOpt = traitSet.tryGet<FieldOrderingTrait>();
+    PRECONDITION(fieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait");
+    const UnboundOrderedSchema outputSchema
+        = createSchemaFromTraits(outputFieldMapping.getUnderlying(), fieldOrderingOpt->getOrderedFields());
+
+    const auto inputFieldMappingOpt = assignOpOpt.value()->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
+    PRECONDITION(inputFieldMappingOpt.has_value(), "Expected FieldMappingTrait of child to be set");
+    const auto& inputFieldMapping = inputFieldMappingOpt.value();
+
+    const auto childFieldOrderingOpt = assignOpOpt.value()->getChild().getTraitSet().tryGet<FieldOrderingTrait>();
+    PRECONDITION(childFieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait on child");
+    const UnboundOrderedSchema inputSchema
+        = createSchemaFromTraits(inputFieldMapping.getUnderlying(), childFieldOrderingOpt->getOrderedFields());
+
+    auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        unbind(logicalOperator.getChildren().at(0).getOutputSchema()),
-        UnboundOrderedSchema{unbind(logicalOperator.getOutputSchema())},
+        inputSchema
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType);
 

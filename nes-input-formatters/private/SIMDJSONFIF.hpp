@@ -49,7 +49,9 @@ namespace NES
 struct SIMDJSONMetaData
 {
     explicit SIMDJSONMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
-        : fieldNamesOutput(tupleBufferRef.getAllFieldNames())
+        : fieldNamesOutput(
+              tupleBufferRef.getAllFieldNames() | std::views::transform([](const auto& idList) { return *std::ranges::rbegin(idList); })
+              | std::ranges::to<std::vector>())
         , fieldDataTypes(tupleBufferRef.getAllDataTypes())
         , tupleDelimiter(config.tupleDelimiter)
 
@@ -74,15 +76,9 @@ struct SIMDJSONMetaData
 
     static QuotationType getQuotationType() { return QuotationType::DOUBLE_QUOTE; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
-    {
-        return fieldNamesOutput[i];
-    }
+    [[nodiscard]] const Identifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesOutput[i]; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const
-    {
-        return fieldNamesInJson[i];
-    }
+    [[nodiscard]] const Identifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesInJson[i]; }
 
     [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
@@ -93,8 +89,8 @@ struct SIMDJSONMetaData
     }
 
 private:
-    std::vector<Record::RecordFieldIdentifier> fieldNamesInJson;
-    std::vector<Record::RecordFieldIdentifier> fieldNamesOutput;
+    std::vector<Identifier> fieldNamesInJson;
+    std::vector<Identifier> fieldNamesOutput;
     std::vector<DataType> fieldDataTypes;
     std::string tupleDelimiter;
 };
@@ -165,7 +161,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                 }
                 else if constexpr (std::same_as<T, char>)
                 {
-                    const std::string_view valueSV = currentDoc[fieldName];
+                    const std::string_view valueSV = currentDoc[fieldName.asCanonicalString()];
                     PRECONDITION(valueSV.size() == 1, "Cannot take {} as character, because size is not 1", valueSV);
                     const T value = parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName)[0];
                     return value;
@@ -209,7 +205,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     void writeValueToRecord(
         DataType::Type physicalType,
         Record& record,
-        const std::string& fieldName,
+        const IdentifierList& fieldName,
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
         const nautilus::val<const SIMDJSONMetaData*>& metaData,

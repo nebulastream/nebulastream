@@ -111,6 +111,35 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
     }
     else if (const auto sinkOpOpt = logicalOperator.tryGetAs<SinkLogicalOperator>())
     {
+        /// If the child of a sink redefines a field name,
+        /// we need to project it back to the original name,
+        /// since otherwise the assigned name might get leaked to the outside world via the output formatter of the sink
+        // auto childFieldMapOpt = sinkOpOpt.value()->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
+        // PRECONDITION(childFieldMapOpt.has_value(), "Field mapping trait not set in field mapping recursion");
+        // const auto& chieldFieldMapping = childFieldMapOpt.value();
+        //
+        // /// We still iterate over the output schema and not the field mapping trait to "self-validate" the behavior of this function
+        // /// First we find out whether we need to add an additional projection
+        // std::vector<ProjectionLogicalOperator::UnboundProjection> projections{};
+        // bool additionalProjection = false;
+        // for (const auto& childOutputField : sinkOpOpt.value()->getChild()->getOutputSchema())
+        // {
+        //     const auto foundMapping = chieldFieldMapping.getMapping(childOutputField.unbound());
+        //     INVARIANT(foundMapping.has_value(), "Field mapping trait was not set for child of sink");
+        //     if (childOutputField.getFullyQualifiedName() != *foundMapping)
+        //     {
+        //         additionalProjection = true;
+        //         projections.emplace_back(*std::ranges::rbegin(foundMapping.value()), FieldAccessLogicalFunction{childOutputField});
+        //     }
+        // }
+        //
+        // if (additionalProjection)
+        // {
+        //     const auto newProjection
+        //         = TypedLogicalOperator<ProjectionLogicalOperator>{projections, ProjectionLogicalOperator::Asterisk{false}}.withChildren(
+        //             {sinkOpOpt.value()->getChild()});
+        //
+        // }
     }
     else
     {
@@ -126,13 +155,13 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
                 return std::optional<Field>{};
             }();
             /// If field name exists in child operators, choose the same mapping. If it is a new field name, keep it.
-            /// If an operator redefines a field name, then propagating the physical name is not neccessary, but it doesn't break anything and keeps it simple.
+            /// If an operator redefines a field name, then propagating the physical name is not neccessary, but it doesn't break anything and keeps this code simple.
             if (fieldInChild.has_value())
             {
                 auto childFieldMapOpt = newChildIter->second->getTraitSet().tryGet<FieldMappingTrait>();
-                PRECONDITION(childFieldMapOpt.has_value(), "Field mapping trait not set in field mapping recursion");
-                auto mappingInChildOpt = childFieldMapOpt->getMapping(field);
-                PRECONDITION(mappingInChildOpt.has_value(), "Field mapping trait does not contain mapping for field");
+                INVARIANT(childFieldMapOpt.has_value(), "Field mapping trait not set in field mapping recursion");
+                auto mappingInChildOpt = childFieldMapOpt->getMapping(field.unbound());
+                INVARIANT(mappingInChildOpt.has_value(), "Field mapping trait does not contain mapping for field");
                 auto [_, success] = mapping.try_emplace(field, mappingInChildOpt.value());
                 PRECONDITION(success, "Duplicate field name in output schema");
             }
@@ -144,7 +173,9 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
         }
     }
 
-    FieldMappingTrait fieldMappingTrait{std::move(mapping)};
+    FieldMappingTrait fieldMappingTrait{
+        mapping | std::views::transform([](const auto& pair) { return std::pair{pair.first.unbound(), pair.second}; })
+        | std::ranges::to<std::unordered_map<UnboundFieldBase<1>, IdentifierList>>()};
     auto traitSet = logicalOperator->getTraitSet();
     const auto success = tryInsert(traitSet, std::move(fieldMappingTrait));
     /// If there is a good reason why we would want to run this multiple times we can also disable this check and replace the trait instance.

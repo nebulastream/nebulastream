@@ -27,10 +27,10 @@ struct WindowMetaData
 {
     /// I'd prefer to use Fields or at least UnboundFields, but common cannot have a dependency on them
     /// and nes-phyiscal-operators depend on a lot of transitive dependencies at the moment.
-    UnboundField startField;
-    UnboundField endField;
+    UnboundFieldBase<1> startField;
+    UnboundFieldBase<1> endField;
 
-    WindowMetaData(UnboundField startField, UnboundField endField);
+    WindowMetaData(UnboundFieldBase<1> startField, UnboundFieldBase<1> endField);
     bool operator==(const WindowMetaData& other) const;
     friend std::ostream& operator<<(std::ostream& os, const WindowMetaData& obj);
 };

@@ -20,11 +20,11 @@
 
 namespace NES
 {
-FieldOrderingTrait::FieldOrderingTrait(std::vector<Field> orderedFields) : orderedFields(std::move(orderedFields))
+FieldOrderingTrait::FieldOrderingTrait(SchemaBase<1, UnboundFieldBase<1>, true> orderedFields) : orderedFields(std::move(orderedFields))
 {
 }
 
-const std::vector<Field>& FieldOrderingTrait::getOrderedFields() const
+const SchemaBase<1, UnboundFieldBase<1>, true>& FieldOrderingTrait::getOrderedFields() const
 {
     return orderedFields;
 }
@@ -48,7 +48,7 @@ SerializableTrait FieldOrderingTrait::serialize() const
     for (const auto& field : orderedFields)
     {
         auto* serializedField = serializedOrderedFields->add_fields();
-        IdentifierSerializationUtil::serializeIdentifier(field.getLastName(), serializedField);
+        IdentifierSerializationUtil::serializeIdentifier(*std::ranges::rbegin(field.getFullyQualifiedName()), serializedField);
     }
     return trait;
 }
@@ -67,7 +67,7 @@ std::string FieldOrderingTrait::explain(ExplainVerbosity) const
 {
     return fmt::format(
         "FieldOrderingTrait({})",
-        fmt::join(orderedFields | std::views::transform([](const auto& field) { return field.getLastName(); }), ", "));
+        fmt::join(orderedFields | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); }), ", "));
 }
 
 size_t FieldOrderingTrait::hash() const
@@ -93,7 +93,7 @@ TraitRegistryReturnType TraitGeneratedRegistrar::RegisterFieldOrderingTrait(Trai
     {
         throw CannotDeserialize("FieldOrderingTrait, orderedFields does not match outputSchema");
     }
-    std::vector<Field> orderedFields;
+    std::vector<UnboundFieldBase<1>> orderedFields;
     orderedFields.reserve(serializedOrderedFields.fields_size());
     for (const auto& serializedField : serializedOrderedFields.fields())
     {
@@ -103,8 +103,8 @@ TraitRegistryReturnType TraitGeneratedRegistrar::RegisterFieldOrderingTrait(Trai
         {
             throw CannotDeserialize("FieldOrderingTrait, field {} not found in outputSchema", name);
         }
-        orderedFields.push_back(fieldOpt.value());
+        orderedFields.push_back(fieldOpt.value().unbound());
     }
-    return FieldOrderingTrait{std::move(orderedFields)};
+    return FieldOrderingTrait{SchemaBase<1, UnboundFieldBase<1>, true>{std::move(orderedFields)}};
 }
 }

@@ -14,6 +14,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalEventTimeWatermarkAssigner.hpp>
 
 #include <memory>
+
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -24,22 +25,47 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include "Traits/FieldMappingTrait.hpp"
+#include "Traits/FieldOrderingTrait.hpp"
+#include "Util/SchemaFactory.hpp"
 
 namespace NES
 {
 
 RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
-    const auto assigner = logicalOperator.getAs<EventTimeWatermarkAssignerLogicalOperator>();
-    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->getOnField());
-    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->getUnit()));
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    const auto assignerOpOpt = logicalOperator.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>();
+    PRECONDITION(assignerOpOpt.has_value(), "Expected a EventTimeWatermarkAssigner");
+    const auto& assignerOp = assignerOpOpt.value();
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto memoryLayoutTypeTrait = traitSet.tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    PRECONDITION(logicalOperator.getChildren().size() == 1, "Expected exactly one child for EventTimeWatermarkAssigner");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
-    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, unbind(logicalOperator.getChildren().at(0).getOutputSchema()), unbind(logicalOperator.getOutputSchema()), memoryLayoutType, memoryLayoutType);
+
+    const auto outputFieldMappingOpt = traitSet.tryGet<FieldMappingTrait>();
+    PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
+    const auto& outputFieldMapping = outputFieldMappingOpt.value();
+
+    const auto fieldOrderingOpt = traitSet.tryGet<FieldOrderingTrait>();
+    PRECONDITION(fieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait");
+    const UnboundOrderedSchema outputSchema
+        = createSchemaFromTraits(outputFieldMapping.getUnderlying(), fieldOrderingOpt->getOrderedFields());
+
+    const auto inputFieldMappingOpt = assignerOp->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
+    PRECONDITION(inputFieldMappingOpt.has_value(), "Expected FieldMappingTrait of child to be set");
+    const auto& inputFieldMapping = inputFieldMappingOpt.value();
+
+    const auto childFieldOrderingOpt = assignerOp->getChild().getTraitSet().tryGet<FieldOrderingTrait>();
+    PRECONDITION(childFieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait on child");
+    const UnboundOrderedSchema inputSchema
+        = createSchemaFromTraits(inputFieldMapping.getUnderlying(), childFieldOrderingOpt->getOrderedFields());
+
+    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assignerOp->getOnField());
+    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assignerOp->getUnit()));
+
+    const auto wrapper
+        = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchema, outputSchema, memoryLayoutType, memoryLayoutType);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);

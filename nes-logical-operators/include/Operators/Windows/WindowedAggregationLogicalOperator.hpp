@@ -154,7 +154,7 @@ public:
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
 
-    LogicalOperator child;
+    std::optional<LogicalOperator> child;
     std::shared_ptr<Windowing::WindowType> windowType;
     GroupingKeyType groupingKeys;
     std::vector<ProjectedAggregation> aggregationFunctions;

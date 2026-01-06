@@ -29,10 +29,10 @@ class FieldMappingTrait final : public TraitConcept
 public:
     static constexpr std::string_view NAME = "FieldMapping";
 
-    explicit FieldMappingTrait(std::unordered_map<Field, IdentifierList> mapping);
+    explicit FieldMappingTrait(std::unordered_map<UnboundFieldBase<1>, IdentifierList> mapping);
 
-    [[nodiscard]] std::optional<IdentifierList> getMapping(const Field& field) const;
-    [[nodiscard]] const std::unordered_map<Field, IdentifierList>& getUnderlying() const;
+    [[nodiscard]] std::optional<IdentifierList> getMapping(const UnboundFieldBase<1>& field) const;
+    [[nodiscard]] const std::unordered_map<UnboundFieldBase<1>, IdentifierList>& getUnderlying() const;
 
     [[nodiscard]] const std::type_info& getType() const override;
     [[nodiscard]] std::string_view getName() const override;
@@ -42,7 +42,8 @@ public:
     [[nodiscard]] size_t hash() const override;
 
 private:
-    std::unordered_map<Field, IdentifierList> mapping;
+    ///TODO change this to UnboundFields once we support aliased relations or compound types
+    std::unordered_map<UnboundFieldBase<1>, IdentifierList> mapping;
 };
 
 }

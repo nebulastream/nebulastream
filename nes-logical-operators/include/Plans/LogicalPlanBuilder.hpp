@@ -27,6 +27,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include "DataTypes/UnboundSchema.hpp"
 #include "Functions/UnboundFieldAccessLogicalFunction.hpp"
 #include "Operators/Windows/WindowedAggregationLogicalOperator.hpp"
 
@@ -43,7 +44,7 @@ public:
 
     static LogicalPlan createLogicalPlan(
         std::string inlineSourceType,
-        const Schema& schema,
+        UnboundOrderedSchema schema,
         std::unordered_map<std::string, std::string> sourceConfig,
         std::unordered_map<std::string, std::string> parserConfig);
 
@@ -91,7 +92,7 @@ public:
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addInlineSink(
-        Identifier type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan);
+        std::string type, UnboundOrderedSchema schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.

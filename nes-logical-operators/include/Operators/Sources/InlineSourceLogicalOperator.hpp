@@ -51,7 +51,6 @@ public:
     [[nodiscard]] InlineSourceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
@@ -85,3 +84,9 @@ private:
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::InlineSourceLogicalOperator>
+{
+    uint64_t operator()(const NES::InlineSourceLogicalOperator& op) const noexcept;
+};

@@ -30,7 +30,6 @@
 #include <SerializableOperator.pb.h>
 #include "LogicalOperatorFwd.hpp"
 
-
 namespace NES
 {
 
@@ -75,7 +74,7 @@ public:
 private:
     /// TODO remove when moving inference to constructor, only needed for deserialization
     static constexpr std::string_view NAME = "Selection";
-    LogicalOperator child;
+    std::optional<LogicalOperator> child;
     LogicalFunction predicate;
     WeakLogicalOperator self;
 

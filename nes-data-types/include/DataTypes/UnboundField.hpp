@@ -33,7 +33,7 @@ struct UnboundFieldBase
     template <size_t OtherIdListExtent>
     UnboundFieldBase(const UnboundFieldBase<OtherIdListExtent>& other)
     requires(IdListExtent == std::dynamic_extent || IdListExtent != OtherIdListExtent)
-        : name(other.getName()), dataType(other.getDataType())
+        : name(other.getFullyQualifiedName()), dataType(other.getDataType())
     {
     }
 

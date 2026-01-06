@@ -197,6 +197,12 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
     return TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>{
         std::move(arguments.children.at(0)), std::move(arguments.config)};
 }
+
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
+}
 }
 
 uint64_t std::hash<NES::EventTimeWatermarkAssignerLogicalOperator>::operator()(

@@ -15,7 +15,7 @@
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <folly/Hash.h>
 
-NES::WindowMetaData::WindowMetaData(UnboundField startField, UnboundField endField) : startField(std::move(startField)), endField(std::move(endField))
+NES::WindowMetaData::WindowMetaData(UnboundFieldBase<1> startField, UnboundFieldBase<1> endField) : startField(std::move(startField)), endField(std::move(endField))
 {
 }
 

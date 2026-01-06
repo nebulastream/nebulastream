@@ -14,22 +14,32 @@
 
 #pragma once
 
+#include <ranges>
 #include <folly/hash/Hash.h>
+#include <unordered_map>
 
 template <typename T>
 struct std::hash<std::vector<T>>
 {
-    size_t operator()(const std::vector<T>& vector) const noexcept
-    {
-        return folly::hash::hash_range(vector.begin(), vector.end());
-    }
+    size_t operator()(const std::vector<T>& vector) const noexcept { return folly::hash::hash_range(vector.begin(), vector.end()); }
 };
 
 template <typename T, size_t N>
 struct std::hash<std::array<T, N>>
 {
-    size_t operator()(const std::array<T, N>& array) const noexcept
-    {
-        return folly::hash::hash_range(array.begin(), array.end());
+    size_t operator()(const std::array<T, N>& array) const noexcept { return folly::hash::hash_range(array.begin(), array.end()); }
+};
+
+// template <typename T, typename R>
+// struct std::hash<std::pair<T, R>> {
+//     si
+// };
+
+template <typename T, typename R>
+struct std::hash<std::unordered_map<T, R>>
+{
+    size_t operator()(const std::unordered_map<T, R>& map) const noexcept {
+        return folly::hash::commutative_hash_combine_range(map.begin(), map.end());
+        // map | std::ranges::to<std::vector>();
     }
 };

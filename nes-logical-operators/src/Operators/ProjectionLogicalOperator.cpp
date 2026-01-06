@@ -56,9 +56,9 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
 {
     std::stringstream builder;
     builder << projection.second.explain(verbosity);
-    if (projection.first && projection.first->getFieldName() != projection.second.explain(verbosity))
+    if (fmt::format("{}", projection.first.getFullyQualifiedName()) != projection.second.explain(verbosity))
     {
-        builder << " as " << projection.first->getFieldName();
+        builder << " as " << projection.first.getFullyQualifiedName();
     }
     return builder.str();
 }
@@ -109,7 +109,7 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(WeakLogicalOperator self, L
         this->asterisk = asteriskValue;
         this->child = std::move(child);
 
-        const auto& childOutputSchema = this->child.getOutputSchema();
+        const auto& childOutputSchema = this->child->getOutputSchema();
 
         auto projections = serializedProjections->projections()
             | std::views::transform(
@@ -153,11 +153,12 @@ std::vector<Field> ProjectionLogicalOperator::getAccessedFields() const
 {
     /// TODO we might want to move this to the inferSchema/constructor as well
 
+    PRECONDITION(child.has_value(), "Child not set when accessing accessed fields");
     auto asteriskFields = [&]
     {
         if (asterisk)
         {
-            return child.getOutputSchema() | std::ranges::to<std::vector>();
+            return child->getOutputSchema() | std::ranges::to<std::vector>();
         }
         return std::vector<Field>();
     }();
@@ -244,10 +245,11 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
 
 ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema() const
 {
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.child = copy.child.withInferredSchema();
+    copy.child = copy.child->withInferredSchema();
 
-    auto inputSchema = copy.child.getOutputSchema();
+    auto inputSchema = copy.child->getOutputSchema();
 
     /// Propagate the type inference to all projection functions and resolve projection names.
     auto newProjections = std::visit(
@@ -316,12 +318,17 @@ Schema ProjectionLogicalOperator::getOutputSchema() const
 
 std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
 {
-    return {child};
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
 }
 
 LogicalOperator ProjectionLogicalOperator::getChild() const
 {
-    return child;
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
