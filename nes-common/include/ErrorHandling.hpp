@@ -109,7 +109,6 @@ private:
     /// This documents (and checks) requirements for calling a function. If violated, the function was called incorrectly.
     /// @param condition must be true to correctly call function guarded by precondition
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional reference like `{0}`.
-    /// TODO #1035: remove namespace NES::Logger
     #define PRECONDITION(condition, formatString, ...) \
         do \
         { \
@@ -128,7 +127,6 @@ private:
     /// This documents what is assumed to be true at this particular point in a program. If violated, there is a misunderstanding and maybe a bug.
     /// @param condition is assumed to be true
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
-    /// TODO #1035: remove namespace NES::Logger
     #define INVARIANT(condition, formatString, ...) \
         do \
         { \
