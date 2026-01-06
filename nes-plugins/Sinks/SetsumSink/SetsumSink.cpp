@@ -37,6 +37,8 @@
 namespace NES
 {
 
+constexpr size_t NUM_COLUMNS = 8;
+
 SetsumSink::SetsumSink(const SinkDescriptor& sinkDescriptor)
     : isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
@@ -78,7 +80,7 @@ void SetsumSink::stop(PipelineExecutionContext&)
 
     // CSV Header: Count, followed by 8 columns
     outputFileStream << "S$Count:UINT64";
-    for (size_t i = 0; i < 8; ++i) {
+    for (size_t i = 0; i < NUM_COLUMNS; ++i) {
         outputFileStream << ",S$Col" << i << ":UINT32";
     }
     outputFileStream << '\n';
@@ -132,4 +134,11 @@ SinkRegistryReturnType SetsumSink::RegisterSetsumSink(SinkRegistryArguments sink
     return std::make_unique<SetsumSink>(sinkRegistryArguments.sinkDescriptor);
 }
 
+
+// TupleBuffer AddToBuffer (std::string_view string)
+// {
+//     TupleBuffer buffer;
+//
+//     return buffer;
+// }
 }
