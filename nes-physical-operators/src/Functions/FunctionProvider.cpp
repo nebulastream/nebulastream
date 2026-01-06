@@ -70,7 +70,7 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 namespace
 {
 template <typename T>
-requires requires(std::string_view input) { from_chars<T>(input); } /// TODO #1035: check if two Util namespaces are needed
+requires requires(std::string_view input) { from_chars<T>(input); }
 T parseConstantValue(std::string_view input)
 {
     if (auto value = from_chars<T>(input))

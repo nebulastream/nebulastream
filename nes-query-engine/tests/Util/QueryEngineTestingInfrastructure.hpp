@@ -64,7 +64,7 @@
 #include <Task.hpp>
 #include <TestSource.hpp>
 
-namespace NES::Testing
+namespace NES
 {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
 static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
@@ -108,7 +108,7 @@ struct ExpectStats
     void apply(Name v) \
     { \
         EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
-    } /// TODO #1035: remove namespace testing
+    }
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
     STAT_TYPE(QueryStopRequest);
