@@ -38,59 +38,75 @@ Queries can be submitted as YAML specifications or SQL statements. Below is a co
 ```yaml
 query: |
   SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
-  FROM (SELECT creationTS, highway, direction, position / INT32(5280) AS positionDiv5280, speed FROM lrb)
+  FROM (SELECT creationTS, highway, direction, position / INT32(5280) AS positionDiv5280, speed FROM LRB)
   GROUP BY (highway, direction, positionDiv5280)
   WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
   HAVING avgSpeed < FLOAT32(40)
-  INTO csv_sink;
-  
-sink:
-  name: csv_sink
-  type: File
-  config:
-    inputFormat: CSV
-    filePath: "<path>"
-    append: false
+  INTO CSV_SINK;
 
-logicalSources:
-  - name: lrb
+sinks:
+  - name: CSV_SINK
+    type: File
     schema:
-      - name: creationTS
-        dataType: UINT64
-      - name: vehicle 
-        dataType: INT16
-      - name: speed
-        dataType: FLOAT32
-      - name: highway
-        dataType: INT16
-      - name: lane
-        dataType: INT16
-      - name: direction
-        dataType: INT16
-      - name: position
-        dataType: INT32
-        
-physicalSources:
-  - logicalSource: lrb
-    parserConfig:
+      - name: LRB$START
+        type: UINT64
+      - name: LRB$END
+        type: UINT64
+      - name: LRB$HIGHWAY
+        type: INT16
+      - name: LRB$DIRECTION
+        type: INT16
+      - name: POSITIONDIV5280
+        type: INT32
+      - name: LRB$AVGSPEED
+        type: FLOAT64
+    config:
+      input_format: CSV
+      file_path: "<path>"
+      append: false
+
+logical:
+  - name: LRB
+    schema:
+      - name: CREATIONTS
+        type: UINT64
+      - name: VEHICLE
+        type: INT16
+      - name: SPEED
+        type: FLOAT32
+      - name: HIGHWAY
+        type: INT16
+      - name: LANE
+        type: INT16
+      - name: DIRECTION
+        type: INT16
+      - name: POSITION
+        type: INT32
+
+physical:
+  - logical: LRB
+    type: TCP
+    parser_config:
       type: CSV
-      tupleDelimiter: "\n"
-      fieldDelimiter: ","
-    sourceConfig:
-      type: TCP
-      socketHost: localhost
-      socketPort: 50501
-      socketBufferSize: 65536
-      flushIntervalMS: 100
-      connectTimeoutSeconds: 60
-  - logicalSource: lrb
-    parserConfig:
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+    source_config:
+      socket_host: localhost
+      socket_port: 50501
+      socket_buffer_size: 65536
+      flush_interval_ms: 100
+      connect_timeout_seconds: 60
+  - logical: LRB
+    type: File
+    parser_config:
       type: JSON
-    sourceConfig:
-      type: File
-      filePath: LRB.json
+    source_config:
+      file_path: lrb.json
 ```
-This YAML can be sent to `nebuli` to register or run the query. 
+This YAML can be sent to `nebuli` to register or run the query.
+
+For the YAML specifications, the field, source and sink names in the schema definition have to be written in all caps.
+
 Here's the equivalent SQL syntax:
 
 ```sql
@@ -116,21 +132,21 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
-  'LRB.json' as `SOURCE`.FILE_PATH,
+  'lrb.json' as `SOURCE`.FILE_PATH,
   'JSON' as PARSER.`TYPE`
 );
 
 CREATE SINK csv_sink(
-  start UINT64,
-  end UINT64,
-  highway INT16,
-  direction INT16,
-  positionDiv5280 INT32,
-  avgSpeed FLOAT32
+  LRB.start UINT64,
+  LRB.end UINT64,
+  LRB.HIGHWAY INT16,
+  LRB.DIRECTION INT16,
+  POSITIONDIV5280 INT32,
+  LRB.AVGSPEED FLOAT64
 ) TYPE File SET(
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
-  false as `SINK`.APPEND
+   FALSE as `SINK`.APPEND
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -140,7 +156,6 @@ WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
 HAVING avgSpeed < FLOAT32(40)
 INTO csv_sink;
 ```
-
 ---
 
 ### Anatomy of a Query
@@ -200,7 +215,7 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
-  'LRB.json' as `SOURCE`.FILE_PATH,
+  'lrb.json' as `SOURCE`.FILE_PATH,
   'JSON' as PARSER.`TYPE`
 );
 ```
@@ -232,16 +247,16 @@ Currently, a query must have exactly one sink.
 
 ```sql
 CREATE SINK csv_sink(
-  start UINT64,
-  end UINT64,
-  highway INT16,
-  direction INT16,
-  positionDiv5280 INT32,
-  avgSpeed FLOAT32
+  LRB.start UINT64,
+  LRB.end UINT64,
+  LRB.HIGHWAY INT16,
+  LRB.DIRECTION INT16,
+  POSITIONDIV5280 INT32,
+  LRB.AVGSPEED FLOAT64
 ) TYPE File SET(
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
-  false as `SINK`.APPEND
+   FALSE as `SINK`.APPEND
 );
 ```
 The sink name (`csv_sink`) must match the name used in the query's `INTO` clause.
