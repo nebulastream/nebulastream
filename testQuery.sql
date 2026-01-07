@@ -1,7 +1,7 @@
 CREATE LOGICAL SOURCE heartRates(creationTS UINT64, patientId UINT32, heartRate FLOAT32);
 
 CREATE PHYSICAL SOURCE FOR heartRates TYPE FILE SET(
-       '/home/leo/Dokumente/Work/nebulastream-public/nes-systests/testdata/small/matrix/heartrates.csv' AS `SOURCE`.`FILE_PATH`,
+       'nes-systests/testdata/small/matrix/heartrates.csv' AS `SOURCE`.`FILE_PATH`,
        'CSV' as `PARSER`.`TYPE`
 );
 
