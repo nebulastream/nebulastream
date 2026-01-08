@@ -209,4 +209,16 @@ void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) 
 
     serializableOperator.mutable_sink()->CopyFrom(proto);
 }
+
+Reflected Reflector<SinkLogicalOperator>::operator()(const SinkLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
 }

@@ -155,6 +155,18 @@ void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+Reflected Reflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const EventTimeWatermarkAssignerLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+EventTimeWatermarkAssignerLogicalOperator Unreflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

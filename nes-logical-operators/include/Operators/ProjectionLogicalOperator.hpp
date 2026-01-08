@@ -98,6 +98,18 @@ private:
     Schema inputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<ProjectionLogicalOperator>
+{
+    Reflected operator()(const ProjectionLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<ProjectionLogicalOperator>
+{
+    ProjectionLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
 
 }

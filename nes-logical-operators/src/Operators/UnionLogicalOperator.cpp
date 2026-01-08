@@ -171,6 +171,18 @@ UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputS
     return copy;
 }
 
+Reflected Reflector<UnionLogicalOperator>::operator()(const UnionLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+UnionLogicalOperator Unreflector<UnionLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

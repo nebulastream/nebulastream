@@ -128,4 +128,16 @@ void InlineSourceLogicalOperator::serialize(SerializableOperator&)
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
 }
 
+Reflected Reflector<InlineSourceLogicalOperator>::operator()(const InlineSourceLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+InlineSourceLogicalOperator Unreflector<InlineSourceLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 }

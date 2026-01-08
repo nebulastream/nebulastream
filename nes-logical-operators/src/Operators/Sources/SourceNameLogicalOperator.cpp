@@ -133,4 +133,16 @@ void SourceNameLogicalOperator::serialize(SerializableOperator&) const
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
 }
 
+Reflected Reflector<SourceNameLogicalOperator>::operator()(const SourceNameLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+SourceNameLogicalOperator Unreflector<SourceNameLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 }

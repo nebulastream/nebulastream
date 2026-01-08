@@ -89,6 +89,9 @@ concept LogicalOperatorConcept = requires(
     /// Serializes the operator to a protobuf message
     thisOperator.serialize(serializableOperator);
 
+    /// Serialize the operator to a Reflected object
+    { NES::reflect(thisOperator) } -> std::same_as<Reflected>;
+
     /// Returns the trait set of the operator
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
 
@@ -142,6 +145,7 @@ struct ErasedLogicalOperator
     [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet traitSet) const = 0;
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
     virtual void serialize(SerializableOperator& sOp) const = 0;
+    [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
     [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
     [[nodiscard]] virtual Schema getOutputSchema() const = 0;
@@ -371,6 +375,11 @@ struct OperatorModel : ErasedLogicalOperator
         impl.serialize(sOp);
         PRECONDITION(sOp.operator_id() == OperatorId::INVALID, "Operator id should not be serialized in operator implementation");
         sOp.set_operator_id(id.getRawValue());
+    }
+
+    [[nodiscard]] Reflected reflect() const override
+    {
+        return NES::reflect(impl);
     }
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }

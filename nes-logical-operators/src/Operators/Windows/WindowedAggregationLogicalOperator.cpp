@@ -323,6 +323,18 @@ void WindowedAggregationLogicalOperator::serialize(SerializableOperator& seriali
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+Reflected Reflector<WindowedAggregationLogicalOperator>::operator()(const WindowedAggregationLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

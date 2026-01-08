@@ -182,15 +182,22 @@ void SelectionLogicalOperator::serialized(SerializedOperator& serialized) const
     }
 }
 
-void SelectionLogicalOperator::reflected(ReflectedOperator& reflected) const
+Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
 {
-    if (getPredicate().getType() == "Equals")
+    if (op.getPredicate().getType() == "Equals")
     {
-        auto predicate = getPredicate().tryGet<EqualsLogicalFunction>()->serialized();
+        auto predicate = op.getPredicate().tryGet<EqualsLogicalFunction>()->serialized();
         const auto config = SerializedSelectionLogicalOperator{.predicate = rfl::make_box<SerializedFunction>(predicate)};
-        reflected.config = Reflected{rfl::to_generic(config)};
+        return Reflected{rfl::to_generic(config)};
     }
+    throw NotImplemented("Missing Reflection for LogicalFunction");
 }
+
+SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& _) const
+{
+    throw NotImplemented("Unreflector");
+}
+
 
 
 LogicalOperatorRegistryReturnType

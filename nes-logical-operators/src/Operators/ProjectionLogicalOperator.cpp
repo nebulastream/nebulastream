@@ -257,6 +257,18 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+ProjectionLogicalOperator Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

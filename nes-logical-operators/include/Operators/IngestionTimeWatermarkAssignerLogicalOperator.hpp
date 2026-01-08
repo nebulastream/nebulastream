@@ -61,6 +61,18 @@ protected:
     Schema outputSchema;
 };
 
+template <>
+struct Reflector<IngestionTimeWatermarkAssignerLogicalOperator>
+{
+    Reflected operator()(const IngestionTimeWatermarkAssignerLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>
+{
+    IngestionTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);
 
 }

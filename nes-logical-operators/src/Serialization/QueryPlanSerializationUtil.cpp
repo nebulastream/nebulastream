@@ -81,7 +81,9 @@ void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
     if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
     {
         selectOp.value()->serialized(serializedOperator);
-        selectOp.value()->reflected(reflectedOperator);
+
+
+        // serializedOperator.config = op->reflect();
     }
     else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
     {

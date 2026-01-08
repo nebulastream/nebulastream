@@ -82,5 +82,17 @@ private:
     Schema inputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<SelectionLogicalOperator>
+{
+    Reflected operator()(const SelectionLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SelectionLogicalOperator>
+{
+    SelectionLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
 }

@@ -88,5 +88,17 @@ private:
     friend class OperatorSerializationUtil;
 };
 
+template <>
+struct Reflector<SinkLogicalOperator>
+{
+    Reflected operator()(const SinkLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SinkLogicalOperator>
+{
+    SinkLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);
 }

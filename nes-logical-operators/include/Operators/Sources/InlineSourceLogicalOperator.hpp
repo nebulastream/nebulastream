@@ -75,6 +75,18 @@ private:
     std::unordered_map<std::string, std::string> parserConfig;
 };
 
+template <>
+struct Reflector<InlineSourceLogicalOperator>
+{
+    Reflected operator()(const InlineSourceLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<InlineSourceLogicalOperator>
+{
+    InlineSourceLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);
 
 }

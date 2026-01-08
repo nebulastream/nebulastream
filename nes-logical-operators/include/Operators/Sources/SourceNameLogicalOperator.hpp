@@ -73,6 +73,18 @@ private:
     Schema schema, inputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<SourceNameLogicalOperator>
+{
+    Reflected operator()(const SourceNameLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SourceNameLogicalOperator>
+{
+    SourceNameLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<SourceNameLogicalOperator>);
 
 }

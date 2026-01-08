@@ -83,6 +83,17 @@ private:
     Schema inputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<EventTimeWatermarkAssignerLogicalOperator>
+{
+    Reflected operator()(const EventTimeWatermarkAssignerLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<EventTimeWatermarkAssignerLogicalOperator>
+{
+    EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
+};
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
 
 }
