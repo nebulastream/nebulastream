@@ -15,15 +15,15 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMemorySwap.hpp>
 
 #include <memory>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Functions/FunctionProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/MemorySwapLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Util/Strings.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>

@@ -16,13 +16,13 @@
 #include <ranges>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/MemorySwapLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
-#include <Operators/MemorySwapLogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 
 namespace NES
 {
@@ -33,45 +33,68 @@ LogicalPlan DecideMemoryLayout::apply(const LogicalPlan& queryPlan)
     return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
 }
 
-LogicalOperator DecideMemoryLayout::apply(LogicalOperator logicalOperator)
+LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator)
 {
     /// Iterating over all operators and setting the memory layout trait to row
     auto traitSet = logicalOperator.getTraitSet();
     auto targetMemoryLayoutType = MemoryLayoutType::COLUMNAR_LAYOUT;
     auto swaps = true;
-    if (logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>())///add swap after source
+    if (logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>()) ///add swap after source
     {
         /// source currently only in row layout
         tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
     }
-    else if (logicalOperator.tryGetAs<SinkLogicalOperator>()) {///add swap before sink
+    else if (logicalOperator.tryGetAs<SinkLogicalOperator>())
+    { ///add swap before sink
         /// sink currently only in row layout
         tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
-    }else {
+        if (logicalOperator.getChildren()[0].getName() == "Sink")
+        {
+            return logicalOperator.withChildren({logicalOperator.getChildren()[0].withTraitSet(traitSet)}).withTraitSet(traitSet);
+        }
+    }
+    else
+    {
         tryInsert(traitSet, MemoryLayoutTypeTrait{targetMemoryLayoutType});
     }
 
-    auto children = logicalOperator.getChildren()
-            | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
+    auto children = logicalOperator.getChildren() | std::views::transform([this](const LogicalOperator& child) { return apply(child); })
+        | std::ranges::to<std::vector>();
 
-    if (swaps) {
-        if (logicalOperator.getName() == "Sink") {
-            //insert memory swap before sink
-            //children = logicalOperator.getChildren();
+    if (swaps)
+    {
+        if (logicalOperator.getName() == "Sink")
+        {
             PRECONDITION(!children.empty(), "Sink operator must have at least one child");
-            if (children[0].getName() != "Source") {/// no swap needed if empty query
+            if (children[0].getName() != "Source")
+            { /// no swap needed if empty query
                 auto childLayoutType = children[0].getTraitSet().get<MemoryLayoutTypeTrait>().memoryLayout;
                 auto memorySwap = MemorySwapLogicalOperator(children[0].getOutputSchema(), childLayoutType, MemoryLayoutType::ROW_LAYOUT);
                 return logicalOperator.withChildren({memorySwap.withChildren(children)}).withTraitSet(traitSet);
             }
-        }else if (!children.empty() && children[0].getName() == "Source") {
-            //insert memory swap before source
-            //auto source = logicalOperator.getChildren()[0];
+        }
+        else if (!children.empty() && children[0].getName() == "Source")
+        {
+            ///insert memory swap before source
             auto operatorLayoutType = traitSet.get<MemoryLayoutTypeTrait>().memoryLayout;
+            auto memorySwaps = std::vector<LogicalOperator>{};
+            /// create one swap for each source
+            for (const auto& child : children)
+            {
+                if (child.getName() != "Source")
+                {
+                    memorySwaps.push_back(child);
+                    continue;
+                }
+                auto memorySwap = MemorySwapLogicalOperator(
+                    child.getOutputSchema(),
+                    MemoryLayoutType::ROW_LAYOUT,
+                    operatorLayoutType,
+                    child.getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor().getParserConfig());
+                memorySwaps.emplace_back(memorySwap.withChildren({child}).withTraitSet(traitSet));
+            }
 
-            auto memorySwap = MemorySwapLogicalOperator(logicalOperator.getOutputSchema(), MemoryLayoutType::ROW_LAYOUT,operatorLayoutType, children[0].getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor().getParserConfig());
-            return logicalOperator.withChildren({memorySwap.withChildren({children})}).withTraitSet(traitSet);
-
+            return logicalOperator.withChildren(memorySwaps).withTraitSet(traitSet);
         }
     }
 

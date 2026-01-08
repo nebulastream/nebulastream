@@ -85,7 +85,9 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     /// We apply the rule and receive a subgraph
     const auto [root, leafs] = rule->apply(logicalOperator);
     INVARIANT(
-        leafs.size() == logicalOperator.getChildren().size(),
+        leafs.size() == logicalOperator.getChildren().size()
+            || (logicalOperator.getChildren().size() == 1 && logicalOperator.getChildren()[0].getName() == "MemorySwap"
+                && leafs.size() == logicalOperator.getChildren()[0].getChildren().size()),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
         logicalOperator,
         logicalOperator.getChildren().size(),
@@ -106,7 +108,8 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
     INVARIANT(
-        children.size() == leafs.size(),
+        children.size() == leafs.size()
+            || (children.size() == 1 && children[0].getName() == "MemorySwap" && leafs.size() == children[0].getChildren().size()),
         "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
         children.size(),
         leafs.size(),
