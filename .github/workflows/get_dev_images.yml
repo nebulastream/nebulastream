@@ -187,6 +187,7 @@ jobs:
       - name: Build Dependency Image
         uses: Wandalen/wretry.action@v3.8.0
         with:
+          
           action: docker/build-push-action@v6
           with: |
             push: true
@@ -203,6 +204,10 @@ jobs:
               VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
             context: .
             file: docker/dependency/Dependency.dockerfile
+          secrets: |
+            R2_KEY=${{secrets.R2_KEY}}
+            R2_SECRET=${{secrets.R2_SECRET}}
+            R2_ACCOUNT_ID=${{secrets.R2_ACCOUNT_ID}}
       - name: Build Development Image
         uses: Wandalen/wretry.action@v3.8.0
         with:
