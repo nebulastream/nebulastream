@@ -187,6 +187,7 @@ jobs:
       - name: Build Dependency Image
         uses: Wandalen/wretry.action@v3.8.0
         with:
+          
           action: docker/build-push-action@v6
           with: |
             push: true
@@ -203,6 +204,12 @@ jobs:
               VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
             context: .
             file: docker/dependency/Dependency.dockerfile
+            secrets: |
+              VCPKG_CACHE_ACCESS_KEY=${{secrets.VCPKG_CACHE_ACCESS_KEY}}
+              VCPKG_CACHE_SECRET_KEY=${{secrets.VCPKG_CACHE_SECRET_KEY}}
+              VCPKG_CACHE_ENDPOINT=${{secrets.VCPKG_CACHE_ENDPOINT}}
+              VCPKG_CACHE_BUCKET=${{secrets.VCPKG_CACHE_BUCKET}}
+              VCPKG_CACHE_REGION=${{secrets.VCPKG_CACHE_REGION}}
       - name: Build Development Image
         uses: Wandalen/wretry.action@v3.8.0
         with:

@@ -18,7 +18,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined] [--name]"
+    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined] [--name] [--no-vcpkg-cache]"
     echo "Options:"
     echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx)"
     echo "  -l, --local          Build all Docker images locally"
@@ -29,6 +29,15 @@ usage() {
     echo "  --thread             Enable Thread Sanitizer"
     echo "  --undefined          Enable Undefined Behavior Sanitizer"
     echo "  --name               Add a name suffix to the tag (nes-development:local-<name>)"
+    echo "  --no-vcpkg-cache     Disable vcpkg binary caching (by default uses public read-only cache)"
+    echo ""
+    echo "Environment variables for S3-compatible vcpkg binary caching (local builds only):"
+    echo "  VCPKG_CACHE_ACCESS_KEY   S3 access key (enables authenticated readwrite cache)"
+    echo "  VCPKG_CACHE_SECRET_KEY   S3 secret key"
+    echo "  VCPKG_CACHE_ENDPOINT     S3 endpoint URL (e.g. https://<id>.r2.cloudflarestorage.com)"
+    echo "  VCPKG_CACHE_BUCKET       S3 bucket name (default: nes-vcpkg-cache)"
+    echo "  VCPKG_CACHE_REGION       S3 region (default: auto)"
+    echo "  VCPKG_CACHE_PUBLIC_URL   Public read-only cache URL (set automatically if no credentials provided)"
     exit 1
 }
 
@@ -39,6 +48,7 @@ FORCE_ROOTLESS=0
 STDLIB=""
 SANITIZER="none"
 NAME_SUFFIX=""
+DISABLE_VCPKG_CACHE=0
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -77,6 +87,10 @@ while [[ "$#" -gt 0 ]]; do
         --undefined)
             echo "Enabling Undefined Behavior Sanitizer"
             SANITIZER="undefined"
+            shift
+            ;;
+        --no-vcpkg-cache)
+            DISABLE_VCPKG_CACHE=1
             shift
             ;;
         --name)
@@ -164,7 +178,16 @@ fi
 
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
-TAG=${HASH}-${STDLIB}-${SANITIZER}
+ARCH=$(uname -m)
+if [ "$ARCH" == "x86_64" ]; then
+   ARCH="x64"
+elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+   ARCH="arm64"
+else
+  echo -e "${RED}Arch: $ARCH is not supported. Only x86_64 and aarch64|arm64 are handled. Arch is determined using 'uname -m'${NC}"
+  exit 1
+fi
+TAG=${HASH}-${ARCH}-${STDLIB}-${SANITIZER}
 
 # Docker on macOS appears to always enable the mapping from the container root user to the hosts current
 # user
@@ -189,14 +212,15 @@ if docker info -f "{{println .SecurityOptions}}" | grep -q rootless || [ "$FORCE
   USE_USERNAME=root
 fi
 
-ARCH=$(uname -m)
-if [ "$ARCH" == "x86_64" ]; then
-   ARCH="x64"
-elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-   ARCH="arm64"
-else
-  echo -e "${RED}Arch: $ARCH is not supported. Only x86_64 and aarch64|arm64 are handled. Arch is determined using 'uname -m'${NC}"
-  exit 1
+
+# Set default public vcpkg cache URL if no S3 credentials are set and caching is not disabled
+VCPKG_CACHE_DEFAULT_PUBLIC_URL="https://pub-5953001ad2a543df8a2121726cf1908b.r2.dev"
+if [[ "$DISABLE_VCPKG_CACHE" -eq 0 && -z "$VCPKG_CACHE_ACCESS_KEY" && -z "$VCPKG_CACHE_PUBLIC_URL" ]]; then
+  export VCPKG_CACHE_PUBLIC_URL="$VCPKG_CACHE_DEFAULT_PUBLIC_URL"
+fi
+if [[ "$DISABLE_VCPKG_CACHE" -eq 1 ]]; then
+  unset VCPKG_CACHE_PUBLIC_URL
+  unset VCPKG_CACHE_ACCESS_KEY
 fi
 
 if [ $BUILD_LOCAL -eq 1 ]; then
@@ -204,12 +228,30 @@ if [ $BUILD_LOCAL -eq 1 ]; then
   echo "This might take a while..."
   docker build -f docker/dependency/Base.dockerfile -t nebulastream/nes-development-base:local .
 
+  CACHE_ARGS=""
+  export VCPKG_CACHE_BUCKET="${VCPKG_CACHE_BUCKET:-nes-vcpkg-cache}"
+  export VCPKG_CACHE_REGION="${VCPKG_CACHE_REGION:-auto}"
+  if [[ -n "$VCPKG_CACHE_ACCESS_KEY" && -n "$VCPKG_CACHE_SECRET_KEY" && -n "$VCPKG_CACHE_ENDPOINT" ]]; then
+      echo "S3 credentials found. Building with authenticated readwrite cache (bucket: ${VCPKG_CACHE_BUCKET})..."
+      CACHE_ARGS="--secret id=VCPKG_CACHE_ACCESS_KEY,env=VCPKG_CACHE_ACCESS_KEY"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_SECRET_KEY,env=VCPKG_CACHE_SECRET_KEY"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_ENDPOINT,env=VCPKG_CACHE_ENDPOINT"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_BUCKET,env=VCPKG_CACHE_BUCKET"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_REGION,env=VCPKG_CACHE_REGION"
+  elif [[ -n "$VCPKG_CACHE_PUBLIC_URL" ]]; then
+      echo "Using public read-only cache: ${VCPKG_CACHE_PUBLIC_URL}"
+      CACHE_ARGS="--build-arg VCPKG_CACHE_PUBLIC_URL=${VCPKG_CACHE_PUBLIC_URL}"
+  else
+      echo "No cache configured. Building without cloud cache..."
+  fi
+
   docker build -f docker/dependency/Dependency.dockerfile \
-          --build-arg VCPKG_DEPENDENCY_HASH=${HASH} \
+          --build-arg VCPKG_DEPENDENCY_HASH="${HASH}" \
           --build-arg TAG=local \
-          --build-arg STDLIB=${STDLIB} \
-          --build-arg ARCH=${ARCH} \
-          --build-arg SANITIZER=${SANITIZER} \
+          --build-arg STDLIB="${STDLIB}" \
+          --build-arg ARCH="${ARCH}" \
+          --build-arg SANITIZER="${SANITIZER}" \
+          $CACHE_ARGS \
           -t nebulastream/nes-development-dependency:local .
 
   docker build -f docker/dependency/Development.dockerfile \
