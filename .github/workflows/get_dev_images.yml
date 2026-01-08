@@ -192,6 +192,10 @@ jobs:
             STDLIB=${{matrix.stdlib}}
             SANITIZER=${{matrix.sanitizer}}
             VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
+          secrets: |
+            R2_KEY=${{secrets.R2_KEY}}
+            R2_SECRET=${{secrets.R2_SECRET}}
+            R2_ACCOUNT_ID=${{secrets.R2_ACCOUNT_ID}}
           context: .
           file: docker/dependency/Dependency.dockerfile
       - name: Build Development Image
