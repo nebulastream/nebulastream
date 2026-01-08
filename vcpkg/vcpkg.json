@@ -45,6 +45,7 @@
     "nameof",
     "scope-guard",
     "boost-url",
+    "rapidcheck",
     "simdjson"
   ],
   "overrides": [

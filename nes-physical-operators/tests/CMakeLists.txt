@@ -18,3 +18,7 @@ endfunction()
 
 add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)
+
+add_nes_physical_operator_test(HashMapTest HashMapTest.cpp)
+find_package(rapidcheck CONFIG REQUIRED)
+target_link_libraries(HashMapTest rapidcheck rapidcheck_gtest)

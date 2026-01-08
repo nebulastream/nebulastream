@@ -25,7 +25,9 @@ add_source_files(nes-physical-operators
         SinkPhysicalOperator.cpp
         WindowBasedOperatorHandler.cpp
         WindowBuildPhysicalOperator.cpp
-        WindowProbePhysicalOperator.cpp)
+        WindowProbePhysicalOperator.cpp
+        DataStructures/HashMap.cpp
+)
 
 add_subdirectory(Aggregation)
 add_subdirectory(Watermark)
