@@ -12,7 +12,15 @@ RUN apt-get update -y && apt-get install -y \
         gdb \
         python3-venv \
         python3-bs4 \
-        openjdk-21-jre-headless
+        openjdk-21-jre-headless \
+        python3-bs4
+
+ENV PIPX_HOME=/opt/pipx \
+    PIPX_BIN_DIR=/usr/local/bin \
+    PATH=$PIPX_BIN_DIR:$PATH
+
+RUN pipx ensurepath
+RUN pipx install iree-base-compiler==3.9.0 && pipx inject iree-base-compiler onnx
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \

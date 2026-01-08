@@ -44,8 +44,13 @@
     "boost-url",
     "nameof",
     "scope-guard",
-    "boost-url",
-    "simdjson"
+    "simdjson",
+    "openssl",
+    "boost-system",
+    "boost-filesystem",
+    "boost-process",
+    "boost-graph",
+    "ireeruntime"
   ],
   "overrides": [
     {

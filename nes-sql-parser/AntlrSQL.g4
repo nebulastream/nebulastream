@@ -61,7 +61,7 @@ multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: query | createStatement | dropStatement | showStatement;
 
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -70,9 +70,15 @@ createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier (SET '(' options=namedConfigExpressionSeq ')')?;
 
+createModelDefinition: MODEL modelName=identifier '('
+                             PATH modelPath=constant
+                             INPUTS typeChain
+                             OUTPUTS schemaDefinition
+                       ')';
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition;
+typeChain: '(' typeDefinition (',' typeDefinition)* ')';
 
 typeDefinition: DATA_TYPE;
 
@@ -262,17 +268,12 @@ watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE 
 /// Adding Threshold Windows
 windowSpec:
     timeWindow #timeBasedWindow
-    | countWindow #countBasedWindow
     | conditionWindow #thresholdBasedWindow
     ;
 
 timeWindow
     : TUMBLING '(' (timestampParameter ',')?  sizeParameter ')'                       #tumblingWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
-    ;
-
-countWindow:
-    TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
     ;
 
 conditionWindow
@@ -339,6 +340,7 @@ valueExpression
     | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
     | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
     | left=valueExpression comparisonOperator right=valueExpression                          #comparison
+    | INFER_MODEL '(' IDENTIFIER ',' inferModelInputFields ')'       #inference
     | primaryExpression                                                                      #valueExpressionDefault
     ;
 
@@ -365,6 +367,8 @@ primaryExpression
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
     ;
+
+inferModelInputFields: primaryExpression;
 
 qualifiedName
     : identifier ('.' identifier)*
@@ -421,6 +425,7 @@ GROUPING: 'GROUPING';
 HAVING: 'HAVING' | 'having';
 IF: 'IF';
 IN: 'IN' | 'in';
+INFER_MODEL: 'INFER_MODEL' | 'infer_model';
 INNER: 'INNER' | 'inner';
 INSERT: 'INSERT' | 'insert';
 INTO: 'INTO' | 'into';
@@ -431,7 +436,6 @@ LEFT: 'LEFT';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT' | 'limit';
 LIST: 'LIST';
-MERGE: 'MERGE' | 'merge';
 NATURAL: 'NATURAL';
 NOT: 'NOT' | 'not' | '!';
 NULLTOKEN:'NULL';
@@ -583,6 +587,10 @@ SOURCE : 'SOURCE';
 LOGICAL: 'LOGICAL';
 PHYSICAL: 'PHYSICAL';
 SINK : 'SINK';
+MODEL: 'MODEL';
+PATH: 'PATH';
+INPUTS: 'INPUTS';
+OUTPUTS: 'OUTPUTS';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
