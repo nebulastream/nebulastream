@@ -20,9 +20,11 @@
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
+
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
+#include "Util/Serialization.hpp"
 #include <nameof.hpp>
 
 namespace NES
@@ -119,5 +121,17 @@ bool tryInsert(TraitSet& traitset, TraitType trait)
 {
     return traitset.tryInsert(std::move(trait));
 }
+
+template <>
+struct Reflector<TraitSet>
+{
+    Reflected operator()(const TraitSet& schema) const;
+};
+
+template <>
+struct Unreflector<TraitSet>
+{
+    TraitSet operator()(const Reflected& rfl) const;
+};
 
 }

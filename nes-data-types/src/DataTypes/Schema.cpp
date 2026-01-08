@@ -259,12 +259,12 @@ Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl) const
 
 Reflected Reflector<Schema>::operator()(const Schema& schema) const
 {
-    return reflect(detail::SerializedSchema{.memoryLayout=schema.memoryLayoutType, .fields=schema.getFields()});
+    return reflect(detail::ReflectedSchema{.memoryLayout=schema.memoryLayoutType, .fields=schema.getFields()});
 }
 
 Schema Unreflector<Schema>::operator()(const Reflected& rfl) const
 {
-    auto [layout, fields] = unreflect<detail::SerializedSchema>(rfl);
+    auto [layout, fields] = unreflect<detail::ReflectedSchema>(rfl);
     Schema schema{layout};
     schema.fields = std::move(fields);
     return schema;

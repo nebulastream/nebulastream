@@ -26,6 +26,7 @@ namespace NES
 
 struct Reflected
 {
+    Reflected():value(std::nullopt) {}
     ///NOLINTNEXTLINE
     Reflected(rfl::Generic value) : value(std::move(value)) { }
 
@@ -99,6 +100,17 @@ requires requires(Reflected data) {
 T unreflect(const Reflected& data)
 {
     return Unreflector<T>{}(data);
+}
+
+template <>
+struct Reflector<Reflected>
+{
+    Reflected operator()(const Reflected& field) const;
+};
+
+inline Reflected Reflector<Reflected>::operator()(const Reflected& field) const
+{
+    return field;
 }
 
 static auto test = rfl::to_generic<>("hi");

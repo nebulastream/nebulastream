@@ -68,6 +68,8 @@ SerializedSchema SerializedUtils::serializeSchema(const Schema& schema)
 {
     SerializedSchema serializer;
 
+    auto test = reflect(schema);
+
     serializer.memoryLayout = schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT ? SerializedMemoryLayout::ROW_LAYOUT
                                                                                               : SerializedMemoryLayout::COL_LAYOUT;
     for (const Schema::Field& field : schema.getFields())

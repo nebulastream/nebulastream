@@ -128,7 +128,7 @@ struct ReflectedField
     DataType::Type type;
 };
 
-struct SerializedSchema
+struct ReflectedSchema
 {
     Schema::MemoryLayoutType memoryLayout;
     std::vector<Schema::Field> fields;

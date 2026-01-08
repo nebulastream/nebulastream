@@ -182,6 +182,17 @@ void SelectionLogicalOperator::serialized(SerializedOperator& serialized) const
     }
 }
 
+void SelectionLogicalOperator::reflected(ReflectedOperator& reflected) const
+{
+    if (getPredicate().getType() == "Equals")
+    {
+        auto predicate = getPredicate().tryGet<EqualsLogicalFunction>()->serialized();
+        const auto config = SerializedSelectionLogicalOperator{.predicate = rfl::make_box<SerializedFunction>(predicate)};
+        reflected.config = Reflected{rfl::to_generic(config)};
+    }
+}
+
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

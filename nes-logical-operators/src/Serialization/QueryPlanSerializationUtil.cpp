@@ -61,11 +61,27 @@ void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
     }
     serializedOperator.childrenIds = std::move(childrenIds);
 
+
+    ReflectedOperator reflectedOperator;
+    reflectedOperator.operatorId = op.getId().getRawValue();
+    reflectedOperator.type = op.getName();
+    reflectedOperator.inputSchemas = op.getInputSchemas();
+
+    reflectedOperator.outputSchema = op.getOutputSchema();
+
+    childrenIds = std::vector<uint64_t>{};
+    for (const auto& child : op.getChildren())
+    {
+        childrenIds.emplace_back(child.getId().getRawValue());
+    }
+    reflectedOperator.childrenIds = std::move(childrenIds);
+
     /// TODO: Add support for traits
     /// TODO: No need for if-clause, once all Operators support `.serialized` function
     if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
     {
         selectOp.value()->serialized(serializedOperator);
+        selectOp.value()->reflected(reflectedOperator);
     }
     else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
     {
@@ -73,6 +89,7 @@ void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
     }
 
     const auto serializedString = rfl::json::write(serializedOperator);
+    const auto test = rfl::json::write(reflectedOperator);
     serialized.set_reflect(serializedString);
 }
 
