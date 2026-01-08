@@ -133,12 +133,4 @@ SinkRegistryReturnType SetsumSink::RegisterSetsumSink(SinkRegistryArguments sink
 {
     return std::make_unique<SetsumSink>(sinkRegistryArguments.sinkDescriptor);
 }
-
-
-// TupleBuffer AddToBuffer (std::string_view string)
-// {
-//     TupleBuffer buffer;
-//
-//     return buffer;
-// }
 }

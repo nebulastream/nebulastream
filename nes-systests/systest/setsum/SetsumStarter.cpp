@@ -72,21 +72,5 @@ int main(int argc, char* argv[])
         setsum.add(line);
     }
 
-    std::cout << "==========================================\n";
-    std::cout << " Setsum Calculation Complete\n";
-    std::cout << "==========================================\n";
-    std::cout << " Input Source: " << (filePath.empty() ? "stdin" : filePath) << "\n";
-    std::cout << "------------------------------------------\n";
-    std::cout << " Setsum State (8 x 32-bit fragments):\n";
-    
-    // Manually print columns since default operator<< is concise
-    auto& cols = setsum.columns;
-    std::cout << "  [ ";
-    for (size_t i = 0; i < 8; ++i) {
-        // basic formatting
-        std::cout << cols[i].load() << (i < 7 ? ", " : " ");
-    }
-    std::cout << "]\n";
-    std::cout << "==========================================\n";
-    return 0;
+    std::cout << setsum << '\n';
 }
