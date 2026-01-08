@@ -73,5 +73,4 @@ int main(int argc, char* argv[])
     }
 
     std::cout << setsum << '\n';
-    return 0;
 }
