@@ -39,15 +39,33 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
-      - name: Build Nebuli Image
+      - name: Build CLI Image
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nebuli:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          tags: nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
           context: .
-          file: ${{ github.workspace }}/docker/nebuli/Nebuli.dockerfile
+          file: ${{ github.workspace }}/docker/frontend/cli.dockerfile
+      - name: Build REPL Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          build-args: |
+            TAG=${{ needs.get-dev-images.outputs.image-tag }}
+          context: .
+          file: ${{ github.workspace }}/docker/frontend/repl.dockerfile
+      - name: Build Embedded REPL Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          build-args: |
+            TAG=${{ needs.get-dev-images.outputs.image-tag }}
+          context: .
+          file: ${{ github.workspace }}/docker/frontend/repl-embedded.dockerfile
       - name: Build single-node worker
         uses: docker/build-push-action@v6
         with:
