@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.head_sha }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
@@ -39,15 +39,33 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
-      - name: Build Nebuli Image
+      - name: Build CLI Image
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nebuli:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          tags: nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
           context: .
-          file: ${{ github.workspace }}/docker/nebuli/Nebuli.dockerfile
+          file: ${{ github.workspace }}/docker/frontend/cli.dockerfile
+      - name: Build REPL Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          build-args: |
+            TAG=${{ needs.get-dev-images.outputs.image-tag }}
+          context: .
+          file: ${{ github.workspace }}/docker/frontend/repl.dockerfile
+      - name: Build Embedded REPL Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          build-args: |
+            TAG=${{ needs.get-dev-images.outputs.image-tag }}
+          context: .
+          file: ${{ github.workspace }}/docker/frontend/repl-embedded.dockerfile
       - name: Build single-node worker
         uses: docker/build-push-action@v6
         with:
@@ -73,9 +91,17 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Combine Manifests
         run: |
-          docker buildx imagetools create -t nebulastream/nebuli:${{ inputs.dockerhub-tag }} \
-            nebulastream/nebuli:${{ inputs.dockerhub-tag }}-x64 \
-            nebulastream/nebuli:${{ inputs.dockerhub-tag }}-arm64
+          docker buildx imagetools create -t nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }} \
+            nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-x64 \
+            nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-arm64
+          
+          docker buildx imagetools create -t nebulastream/nes-cli:${{ inputs.dockerhub-tag }} \
+            nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-x64 \
+            nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-arm64
+          
+          docker buildx imagetools create -t nebulastream/nes-repl:${{ inputs.dockerhub-tag }} \
+            nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-x64 \
+            nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-arm64
 
           docker buildx imagetools create -t nebulastream/worker:${{ inputs.dockerhub-tag }} \
             nebulastream/worker:${{ inputs.dockerhub-tag }}-x64 \
