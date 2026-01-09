@@ -28,15 +28,6 @@ description: |
       - Branch-specific tags: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME]-[STDLIB]-[SANITIZER]
       - Shortcuts: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME] (defaults to libstdcxx-none)
   
-   5. BUILD CACHE SYSTEM:
-      - Each image build utilizes Docker's BuildKit cache to speed up builds
-      - Cache images are stored in the registry with the following naming pattern:
-        nebulastream/nes-[IMAGE_TYPE]-cache:[BRANCH_NAME]-[ARCH]-[STDLIB]-[SANITIZER]
-      - Cache hierarchy:
-        1. Branch-specific cache: Used for PR and feature branch builds
-        2. Latest cache: Fallback when branch-specific cache isn't available
-      - Cache is exported in "max" mode to include all intermediate layers
-  
    The workflow creates multi-architecture manifests that combine x64 and arm64 images
    where available, and adds convenience tags for common configurations.
    This enables developers to easily select the appropriate image for their
@@ -134,8 +125,6 @@ jobs:
   build-dev-images:
     # We run the docker image build on separate machines and combine them into a single
     # multi-arch docker image in the docker-development-images job.
-    # The Docker build uses a cache based on previous branch-specific images or the
-    # main branch
     # This job builds a Base image which contains the llvm based toolchain and a recent
     # CMake version
     # The Dependency Image contains a pre-built sdk based on the vcpkg manifest
@@ -171,10 +160,6 @@ jobs:
         with:
           push: true
           tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}}
-            type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
           context: .
           file: docker/dependency/Base.dockerfile
       - name: Build Dependency Image
@@ -182,10 +167,6 @@ jobs:
         with:
           push: true
           tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
           build-args: |
             TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
             ARCH=${{matrix.arch}}
@@ -203,10 +184,6 @@ jobs:
         with:
           push: true
           tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
           build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
           context: .
           file: docker/dependency/Development.dockerfile
