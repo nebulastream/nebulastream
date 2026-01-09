@@ -4,11 +4,13 @@ FROM nebulastream/nes-development:${TAG} AS build
 
 USER root
 ADD . /home/ubuntu/src
-RUN cd /home/ubuntu/src \
+RUN --mount=type=cache,id=ccache,target=/ccache \
+    export CCACHE_DIR=/ccache && \
+    cd /home/ubuntu/src \
     && cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 \
-    && cmake --build build --target nes-nebuli -j \
+    && cmake --build build --target nes-repl-embedded -j \
     && mkdir /tmp/bin \
-    && find build -name 'nes-nebuli' -type f -exec mv --target-directory=/tmp/bin {} +
+    && find build -name 'nes-repl-embedded' -type f -exec mv --target-directory=/tmp/bin {} +
 
 # the binary is linked against libc++, thus we install it
 FROM ubuntu:24.04 AS app
@@ -26,4 +28,4 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.40 && \
     chmod +x /bin/grpc_health_probe
 
 COPY --from=build /tmp/bin /usr/bin
-ENTRYPOINT ["nes-nebuli"]
+ENTRYPOINT ["nes-repl-embedded"]
