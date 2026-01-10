@@ -47,7 +47,7 @@ resolveRewriteRule(const LogicalOperator& logicalOperator, const RewriteRuleRegi
         const auto traitSet = logicalOperator.getTraitSet();
         const auto implementationTraitOpt = getTrait<JoinImplementationTypeTrait>(traitSet);
         PRECONDITION(implementationTraitOpt.has_value(), "Join operator must have an implementation type trait");
-        switch (const auto& implementationTrait = implementationTraitOpt.value(); implementationTrait.implementationType)
+        switch (const auto& implementationTrait = implementationTraitOpt.value(); implementationTrait->implementationType)
         {
             case JoinImplementation::HASH_JOIN: {
                 if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string("HashJoin"), registryArgument))
