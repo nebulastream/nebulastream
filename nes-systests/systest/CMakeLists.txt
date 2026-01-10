@@ -58,82 +58,87 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
+set (layoutStrategies ALL_ROW SWAP_ALL_COL SWAP_ALL_ROW)
+foreach (layoutStrategy IN LISTS layoutStrategies)
+
 # Add code coverage if enabled
 if (CODE_COVERAGE)
-    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --enable_event_trace=true)
-    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage_Hash_Join PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.default_query_execution.join_strategy=HASH_JOIN --enable_event_trace=true)
+    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage_${layoutStrategy} PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --enable_event_trace=true)
+    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage_Hash_Join_${layoutStrategy} PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.default_query_execution.join_strategy=HASH_JOIN --enable_event_trace=true)
     # Make sure to fetch ExternalData before running the ccov targets
-    add_dependencies(ccov-run-systest_interpreter_coverage test-data)
-    add_dependencies(ccov-run-systest_interpreter_coverage_Hash_Join test-data)
+    add_dependencies(ccov-run-systest_interpreter_coverage_${layoutStrategy} test-data)
+    add_dependencies(ccov-run-systest_interpreter_coverage_Hash_Join_${layoutStrategy} test-data)
 endif (CODE_COVERAGE)
 
-# If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
-foreach (joinStrategy IN LISTS joinStrategies)
-    ExternalData_Add_Test(test-data
-            NAME systest_interpreter_${joinStrategy}
-            COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_${joinStrategy} --exclude-groups large --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.default_query_execution.join_strategy=${joinStrategy})
-endforeach ()
-if (NOT CODE_COVERAGE)
-    ExternalData_Add_Test(test-data
-            NAME systest_compiler
-            COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large CompilationIntensive --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true)
-endif (NOT CODE_COVERAGE)
 
-
-if (ENABLE_LARGE_TESTS)
-    message(STATUS "Large scale tests enabled")
-
-    set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
-    ExternalData_Add_Test(test-data
-            # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
-            NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.join_strategy=${joinStrategy})
-
-    ExternalData_Add_Test(test-data
-            # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
-            NAME systest_large_benchmark_${joinStrategy}
-            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.join_strategy=${joinStrategy})
-
-
-    # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
-    # is still small enough to finish the test in minutes.
-    set(joinStrategy NESTED_LOOP_JOIN)
-    ExternalData_Add_Test(TEST_DATA_LARGE
-            NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.join_strategy=${joinStrategy})
-endif ()
-
-
-if (NOT CODE_COVERAGE)
-    ## We run all join and aggregation tests with different no. worker threads and different join strategies
-    set(workerThreads 1 2 4)
+    # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
     set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
-    foreach (workerThreads IN LISTS workerThreads)
-        foreach (joinStrategy IN LISTS joinStrategies)
-            ExternalData_Add_Test(test-data
-                    NAME systest_join_${workerThreads}_${joinStrategy}_interpreter
-                    COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_interpreter_join --data ${EXPANDED_TEST_DATA_PATH}
-                    --
-                    --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.join_strategy=${joinStrategy})
-            ExternalData_Add_Test(test-data
-                    NAME systest_join_${workerThreads}_${joinStrategy}_compiler
-                    COMMAND systest -n 6 --groups Join --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
-                    --
-                    --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.join_strategy=${joinStrategy})
-        endforeach ()
+    foreach (joinStrategy IN LISTS joinStrategies)
         ExternalData_Add_Test(test-data
-                NAME systest_agg_${workerThreads}_interpreter
-                COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
-                --
-                --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000)
-        ExternalData_Add_Test(test-data
-                NAME systest_agg_${workerThreads}_compiler
-                COMMAND systest -n 6 --groups Aggregation --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
-                --
-                --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000)
+                NAME systest_interpreter_${layoutStrategy}_${joinStrategy}
+                COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_${layoutStrategy}_${joinStrategy} --exclude-groups large --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.default_query_execution.join_strategy=${joinStrategy})
     endforeach ()
-endif (NOT CODE_COVERAGE)
+    if (NOT CODE_COVERAGE)
+        ExternalData_Add_Test(test-data
+                NAME systest_compiler_${layoutStrategy}
+                COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_${layoutStrategy} --exclude-groups large CompilationIntensive --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=COMPILER --worker.default_query_execution.layout_strategy=${layoutStrategy} --enable_event_trace=true)
+    endif (NOT CODE_COVERAGE)
+
+
+    if (ENABLE_LARGE_TESTS)
+        message(STATUS "Large scale tests enabled")
+
+        set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
+        ExternalData_Add_Test(test-data
+                # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
+                NAME systest_large_${layoutStrategy}_${joinStrategy}
+                COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${layoutStrategy}_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large -- --worker.default_query_execution.execution_mode=COMPILER --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.join_strategy=${joinStrategy})
+
+        ExternalData_Add_Test(test-data
+                # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
+                NAME systest_large_benchmark_${layoutStrategy}_${joinStrategy}
+                COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${layoutStrategy}_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large -- --worker.default_query_execution.execution_mode=COMPILER --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.query_engine.number_of_worker_threads=16 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.join_strategy=${joinStrategy})
+
+
+        # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
+        # is still small enough to finish the test in minutes.
+        set(joinStrategy NESTED_LOOP_JOIN)
+        ExternalData_Add_Test(TEST_DATA_LARGE
+                NAME systest_large_${layoutStrategy}_${joinStrategy}
+                COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${layoutStrategy}_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 -- --worker.default_query_execution.execution_mode=COMPILER --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.join_strategy=${joinStrategy})
+    endif ()
+
+
+    if (NOT CODE_COVERAGE)
+        ## We run all join and aggregation tests with different no. worker threads and different join strategies
+        set(workerThreads 1 2 4)
+        set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
+        foreach (workerThreads IN LISTS workerThreads)
+            foreach (joinStrategy IN LISTS joinStrategies)
+                ExternalData_Add_Test(test-data
+                        NAME systest_join_${layoutStrategy}_${workerThreads}_${joinStrategy}_interpreter
+                        COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${layoutStrategy}_${workerThreads}_${joinStrategy}_interpreter_join --data ${EXPANDED_TEST_DATA_PATH}
+                        --
+                        --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.join_strategy=${joinStrategy})
+                ExternalData_Add_Test(test-data
+                        NAME systest_join_${layoutStrategy}_${workerThreads}_${joinStrategy}_compiler
+                        COMMAND systest -n 6 --groups Join --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${layoutStrategy}_${workerThreads}_${joinStrategy}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
+                        --
+                        --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.join_strategy=${joinStrategy})
+            endforeach ()
+            ExternalData_Add_Test(test-data
+                    NAME systest_agg_${layoutStrategy}_${workerThreads}_interpreter
+                    COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${layoutStrategy}_${workerThreads}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
+                    --
+                    --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000)
+            ExternalData_Add_Test(test-data
+                    NAME systest_agg_${layoutStrategy}_${workerThreads}_compiler
+                    COMMAND systest -n 6 --groups Aggregation --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${layoutStrategy}_${workerThreads}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
+                    --
+                    --worker.default_query_execution.layout_strategy=${layoutStrategy} --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000)
+        endforeach ()
+    endif (NOT CODE_COVERAGE)
+endforeach ()
 
 # Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run
 ExternalData_Add_Target(test-data)
