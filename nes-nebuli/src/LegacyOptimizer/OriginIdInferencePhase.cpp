@@ -46,7 +46,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
         newChildren.push_back(newChild);
         const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(newChild.getTraitSet());
         INVARIANT(childOriginIdsOpt.has_value(), "Child operator must have origin ids trait");
-        childOriginIds.push_back(childOriginIdsOpt.value());
+        childOriginIds.push_back(childOriginIdsOpt.value().get());
     }
 
     auto traitSet = visitingOperator.getTraitSet();

@@ -40,7 +40,7 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
     auto outputSchema = logicalOperator.getOutputSchema();
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     auto renames = inputSchemas
         | std::views::transform(
                        [&](const auto& schema)

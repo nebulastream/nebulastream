@@ -34,24 +34,26 @@ enum class JoinImplementation : uint8_t
 };
 
 /// Struct that stores the join implementation type as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
-struct JoinImplementationTypeTrait final : public TraitConcept
+struct JoinImplementationTypeTrait final
 {
     static constexpr std::string_view NAME = "JoinImplementationType";
     JoinImplementation implementationType;
 
     explicit JoinImplementationTypeTrait(JoinImplementation implementationType);
 
-    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] const std::type_info& getType() const;
 
-    [[nodiscard]] SerializableTrait serialize() const override;
+    [[nodiscard]] SerializableTrait serialize() const;
 
-    bool operator==(const TraitConcept& other) const override;
+    bool operator==(const JoinImplementationTypeTrait& other) const;
 
-    [[nodiscard]] size_t hash() const override;
+    [[nodiscard]] size_t hash() const;
 
-    [[nodiscard]] std::string explain(ExplainVerbosity) const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity) const;
 
-    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::string_view getName() const;
 };
+
+static_assert(TraitConcept<JoinImplementationTypeTrait>);
 
 }

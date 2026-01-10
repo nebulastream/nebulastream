@@ -121,7 +121,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
         const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
         PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-        const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+        const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
         auto bufferRef
             = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0], memoryLayoutType);
 
@@ -154,19 +154,19 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto inputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getChildren().at(0).getTraitSet());
     PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
     PRECONDITION(inputOriginIdsOpt.has_value(), "Expected the inputOriginIds trait to be set");
-    auto& outputOriginIds = outputOriginIdsOpt.value();
+    const auto& outputOriginIds = outputOriginIdsOpt.value().get();
     PRECONDITION(std::ranges::size(outputOriginIds) == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
 
     auto aggregation = logicalOperator.getAs<WindowedAggregationLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
     auto outputSchema = aggregation.getOutputSchema();
     auto outputOriginId = outputOriginIds[0];
-    auto inputOriginIds = inputOriginIdsOpt.value();
+    auto inputOriginIds = inputOriginIdsOpt.value().get();
     auto timeFunction = getTimeFunction(*aggregation);
     auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation->getWindowType());
     INVARIANT(windowType != nullptr, "Window type must be a time-based window type");

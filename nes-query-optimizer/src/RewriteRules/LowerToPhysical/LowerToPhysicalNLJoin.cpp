@@ -72,12 +72,12 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 2, "Expected two children");
     auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
     PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
-    auto& outputOriginIds = outputOriginIdsOpt.value();
-    PRECONDITION(std::ranges::size(outputOriginIdsOpt.value()) == 1, "Expected one output origin id");
+    const auto& outputOriginIds = outputOriginIdsOpt.value().get();
+    PRECONDITION(std::ranges::size(outputOriginIdsOpt.value().get()) == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
@@ -97,7 +97,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
               {
                   auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
                   PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
-                  return childOutputOriginIds.value();
+                  return childOutputOriginIds.value().get();
               })
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 

@@ -27,23 +27,26 @@ namespace NES
 {
 
 /// Struct that stores the memory layout type as traits. For now, we simply choose a row layout all the time
-struct MemoryLayoutTypeTrait final : public TraitConcept
+struct MemoryLayoutTypeTrait final
 {
     static constexpr std::string_view NAME = "MemoryLayoutType";
     MemoryLayoutType memoryLayout;
 
     explicit MemoryLayoutTypeTrait(MemoryLayoutType memoryLayout);
 
-    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] const std::type_info& getType() const;
 
-    [[nodiscard]] SerializableTrait serialize() const override;
+    [[nodiscard]] SerializableTrait serialize() const;
 
-    bool operator==(const TraitConcept& other) const override;
+    bool operator==(const MemoryLayoutTypeTrait& other) const;
 
-    [[nodiscard]] size_t hash() const override;
+    [[nodiscard]] size_t hash() const;
 
-    [[nodiscard]] std::string explain(ExplainVerbosity) const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity) const;
 
-    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::string_view getName() const;
 };
+
+static_assert(TraitConcept<MemoryLayoutTypeTrait>);
+
 }

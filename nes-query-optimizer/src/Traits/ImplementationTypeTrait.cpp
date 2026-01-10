@@ -69,7 +69,7 @@ SerializableTrait JoinImplementationTypeTrait::serialize() const
     return trait;
 }
 
-bool JoinImplementationTypeTrait::operator==(const TraitConcept& other) const
+bool JoinImplementationTypeTrait::operator==(const JoinImplementationTypeTrait& other) const
 {
     const auto* const casted = dynamic_cast<const JoinImplementationTypeTrait*>(&other);
     if (casted == nullptr)

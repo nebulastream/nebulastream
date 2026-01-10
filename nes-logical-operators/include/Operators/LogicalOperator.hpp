@@ -30,6 +30,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -100,33 +101,6 @@ concept LogicalOperatorConcept = requires(
 
     /// Creates a new operator with inferred schema based on input schemas
     { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
-};
-
-namespace detail
-{
-struct DynamicBase
-{
-    virtual ~DynamicBase() = default;
-};
-}
-
-/// If your operator inherits from some type T,
-/// you will also need to inherit from Castable<T> if you want to be able to cast with <tt>TypedLogicalOperator<Checked>::getAs<T>()</tt>.
-/// If you control T, you can also use it as a CRTP and inherit it directly @code class T : Castable<T> @endcode
-/// This class is only there to add a commonly accessible VTable so that we can cast the pointer to the operator.
-/// @tparam T the type to be able to cast to from LogicalOperator
-template <typename T>
-struct Castable : NES::detail::DynamicBase
-{
-    const T& get() const { return *dynamic_cast<const T*>(this); }
-
-    const T* operator->() const { return dynamic_cast<const T*>(this); }
-
-    const T& operator*() const { return *dynamic_cast<const T*>(this); }
-
-private:
-    Castable() = default;
-    friend T;
 };
 
 namespace detail

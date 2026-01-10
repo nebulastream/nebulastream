@@ -242,15 +242,15 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     auto& outputOriginIds = outputOriginIdsOpt.value();
-    PRECONDITION(std::ranges::size(outputOriginIdsOpt.value()) == 1, "Expected one output origin id");
+    PRECONDITION(std::ranges::size(outputOriginIdsOpt.value().get()) == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
 
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
 
     auto outputSchema = join.getOutputSchema();
-    auto outputOriginId = outputOriginIds[0];
+    auto outputOriginId = outputOriginIds.get()[0];
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join.get(), windowType);
@@ -262,7 +262,7 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
               {
                   auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
                   PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
-                  return childOutputOriginIds.value();
+                  return childOutputOriginIds.value().get();
               })
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
