@@ -42,6 +42,13 @@ enum class StreamJoinStrategy : uint8_t
     OPTIMIZER_CHOOSES
 };
 
+enum class MemoryLayoutStrategy : uint8_t
+{
+    ALL_ROW,
+    SWAP_ALL_COL,
+    SWAP_ALL_ROW
+};
+
 class QueryExecutionConfiguration : public BaseConfiguration
 {
 public:
@@ -83,6 +90,11 @@ public:
            StreamJoinStrategy::OPTIMIZER_CHOOSES,
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
+    EnumOption<MemoryLayoutStrategy> layoutStrategy
+        = {"layout_strategy",
+           MemoryLayoutStrategy::ALL_ROW,
+           "Memory Layout Strategy"
+           "[ALL_ROW|ALL_COLUMN]."};
 
 private:
     std::vector<BaseOption*> getOptions() override
@@ -94,7 +106,8 @@ private:
             &joinStrategy,
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
-            &operatorBufferSize};
+            &operatorBufferSize,
+            &layoutStrategy};
     }
 };
 

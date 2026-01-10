@@ -17,51 +17,55 @@
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/MemorySwapLogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
-LogicalPlan DecideMemoryLayout::apply(const LogicalPlan& queryPlan)
+LogicalPlan DecideMemoryLayout::apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf)
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
+    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0], conf)}};
 }
 
-LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator)
+LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator, const QueryExecutionConfiguration& conf)
 {
     /// Iterating over all operators and setting the memory layout trait to row
     auto traitSet = logicalOperator.getTraitSet();
-    auto targetMemoryLayoutType = MemoryLayoutType::COLUMNAR_LAYOUT;
-    auto swaps = true;
-    if (logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>()) ///add swap after source
+
+    if (logicalOperator.getName() == "Source") /// add swap after source
     {
         /// source currently only in row layout
         tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
     }
-    else if (logicalOperator.tryGetAs<SinkLogicalOperator>())
-    { ///add swap before sink
+    else if (logicalOperator.getName() == "Sink")
+    { /// add swap before sink
         /// sink currently only in row layout
         tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
-        if (logicalOperator.getChildren()[0].getName() == "Sink")
-        {
-            return logicalOperator.withChildren({logicalOperator.getChildren()[0].withTraitSet(traitSet)}).withTraitSet(traitSet);
-        }
     }
     else
     {
-        tryInsert(traitSet, MemoryLayoutTypeTrait{targetMemoryLayoutType});
+        if (conf.layoutStrategy == MemoryLayoutStrategy::SWAP_ALL_COL)
+        {
+            tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::COLUMNAR_LAYOUT});
+        }
+        else
+        {
+            tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+        }
     }
 
-    auto children = logicalOperator.getChildren() | std::views::transform([this](const LogicalOperator& child) { return apply(child); })
+    auto children = logicalOperator.getChildren()
+        | std::views::transform([this, &conf](const LogicalOperator& child) { return apply(child, conf); })
         | std::ranges::to<std::vector>();
 
-    if (swaps)
+    /// insert memory swaps where needed
+    if (conf.layoutStrategy == MemoryLayoutStrategy::SWAP_ALL_COL || conf.layoutStrategy == MemoryLayoutStrategy::SWAP_ALL_ROW)
     {
         if (logicalOperator.getName() == "Sink")
         {
@@ -97,8 +101,6 @@ LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator
             return logicalOperator.withChildren(memorySwaps).withTraitSet(traitSet);
         }
     }
-
-    auto name = logicalOperator.getName();
 
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }

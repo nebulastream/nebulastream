@@ -34,7 +34,7 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecut
     DecideJoinTypes joinTypeDecider(defaultQueryExecution.joinStrategy);
     DecideMemoryLayout memoryLayoutDecider;
     auto optimizedPlan = joinTypeDecider.apply(plan);
-    optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
+    optimizedPlan = memoryLayoutDecider.apply(optimizedPlan, defaultQueryExecution);
     return LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
 }
 

@@ -15,18 +15,19 @@
 #pragma once
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-/// Decides what memory layout should be used per operator. For now, we use row-layout across all operators.
+/// Decides what memory layout should be used per operator. For now, we use the same layout across all operators except for sources and sinks.
 class DecideMemoryLayout
 {
 public:
-    LogicalPlan apply(const LogicalPlan& queryPlan);
+    LogicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf);
 
 private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
+    LogicalOperator apply(const LogicalOperator& logicalOperator, const QueryExecutionConfiguration& conf);
 };
 
 }
