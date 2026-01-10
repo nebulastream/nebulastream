@@ -61,7 +61,7 @@ SerializableTrait OutputOriginIdsTrait::serialize() const
     return trait;
 }
 
-bool OutputOriginIdsTrait::operator==(const TraitConcept& other) const
+bool OutputOriginIdsTrait::operator==(const OutputOriginIdsTrait& other) const
 {
     const auto* const casted = dynamic_cast<const OutputOriginIdsTrait*>(&other);
     if (casted == nullptr)

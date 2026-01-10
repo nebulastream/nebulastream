@@ -54,7 +54,7 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
 
     const auto memoryLayoutTypeTrait = projectionOp.getTraitSet().tryGet<NES::MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
     if (sourceOperators.size() == 1)
     {
@@ -82,7 +82,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
 
     const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan,

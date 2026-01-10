@@ -34,7 +34,7 @@ RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(L
     auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema(), memoryLayoutType, memoryLayoutType);
 
