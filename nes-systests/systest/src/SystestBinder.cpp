@@ -120,6 +120,17 @@ public:
         return checksumSinkSchema;
     }();
 
+    static inline const Schema setsumSchema = []
+    {
+        auto setsumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        setsumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        for (int i = 0; i < 8; ++i)
+        {
+            setsumSinkSchema.addField("S$Col" + std::to_string(i), DataTypeProvider::provideDataType(DataType::Type::UINT32));
+        }
+        return setsumSinkSchema;
+    }();
+
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
     std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
@@ -212,6 +223,12 @@ public:
             == "CHECKSUM")
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
+        }
+        else if (Util::toUpperCase(
+                     sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
+                 == "SETSUM")
+        {
+            sinkOutputSchema = SLTSinkFactory::setsumSchema;
         }
         else
         {
