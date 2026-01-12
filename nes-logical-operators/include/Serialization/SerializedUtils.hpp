@@ -33,8 +33,6 @@ public:
     static Schema deserializeSchema(const SerializedSchema& schema);
     static std::vector<Schema> deserializeSchemas(const std::vector<SerializedSchema>& schemas);
 
-    static Schema::MemoryLayoutType deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout);
-
     static LogicalFunction deserializeFunction(const SerializedFunction& serializedFunction);
 
     static SourceDescriptor deserializeSourceDescriptor(const SerializedSourceDescriptor& serialized);

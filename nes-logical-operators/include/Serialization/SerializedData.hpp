@@ -47,15 +47,8 @@ struct SerializedField
     rfl::Box<SerializedDataType> type;
 };
 
-enum class SerializedMemoryLayout
-{
-    ROW_LAYOUT,
-    COL_LAYOUT
-};
-
 struct SerializedSchema
 {
-    SerializedMemoryLayout memoryLayout;
     std::vector<SerializedField> fields;
 };
 

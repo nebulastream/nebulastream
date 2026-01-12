@@ -22,7 +22,6 @@
 #include <Serialization/SerializedData.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include "MemoryLayout/MemoryLayout.hpp"
 #include "Util/Serialization.hpp"
 
 namespace NES
@@ -70,8 +69,6 @@ SerializedSchema SerializedUtils::serializeSchema(const Schema& schema)
 
     auto test = reflect(schema);
 
-    serializer.memoryLayout = schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT ? SerializedMemoryLayout::ROW_LAYOUT
-                                                                                              : SerializedMemoryLayout::COL_LAYOUT;
     for (const Schema::Field& field : schema.getFields())
     {
         serializer.fields.emplace_back(field.name, rfl::make_box<SerializedDataType>(serializeDataType(field.dataType)));
@@ -116,22 +113,10 @@ DataType SerializedUtils::deserializeDataType(const SerializedDataType& serializ
     }
 }
 
-Schema::MemoryLayoutType SerializedUtils::deserializeMemoryLayout(const SerializedMemoryLayout& serializedMemoryLayout)
-{
-    switch (serializedMemoryLayout)
-    {
-        case SerializedMemoryLayout::ROW_LAYOUT:
-            return Schema::MemoryLayoutType::ROW_LAYOUT;
-        case SerializedMemoryLayout::COL_LAYOUT:
-            return Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
-        default:
-            throw Exception{"Oh No", 9999}; /// TODO: Improve error handling
-    }
-}
 
 Schema SerializedUtils::deserializeSchema(const SerializedSchema& serialized)
 {
-    auto schema = Schema{deserializeMemoryLayout(serialized.memoryLayout)};
+    auto schema = Schema{};
     for (auto& field : serialized.fields)
     {
         schema.addField(field.name, deserializeDataType(*field.type));
@@ -243,19 +228,19 @@ ConfigValue SerializedUtils::serializeDescriptorConfigValue(DescriptorConfig::Co
                 for (auto function : arg.functions())
                 {
                     LogicalFunction logicalFunction = FunctionSerializationUtil::deserializeFunction(function);
-                    ;
-                    if (logicalFunction.getType() == "Equals")
-                    {
-                        serializedFunctions.emplace_back(logicalFunction.get<EqualsLogicalFunction>().serialized());
-                    }
-                    else if (logicalFunction.getType() == "ConstantValue")
-                    {
-                        serializedFunctions.emplace_back(logicalFunction.get<ConstantValueLogicalFunction>().serialized());
-                    }
-                    else if (logicalFunction.getType() == "FieldAccess")
-                    {
-                        serializedFunctions.emplace_back(logicalFunction.get<FieldAccessLogicalFunction>().serialized());
-                    }
+                    // ;
+                    // if (logicalFunction.getType() == "Equals")
+                    // {
+                    //     serializedFunctions.emplace_back(logicalFunction.getAs<EqualsLogicalFunction>().serialized());
+                    // }
+                    // else if (logicalFunction.getType() == "ConstantValue")
+                    // {
+                    //     serializedFunctions.emplace_back(logicalFunction.getAs<ConstantValueLogicalFunction>().serialized());
+                    // }
+                    // else if (logicalFunction.getType() == "FieldAccess")
+                    // {
+                    //     serializedFunctions.emplace_back(logicalFunction.getAs<FieldAccessLogicalFunction>().serialized());
+                    // }
                 }
                 serialized.type = "functionList";
                 serialized.generic = rfl::to_generic(serializedFunctions);

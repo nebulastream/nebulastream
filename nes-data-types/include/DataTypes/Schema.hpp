@@ -130,7 +130,6 @@ struct ReflectedField
 
 struct ReflectedSchema
 {
-    Schema::MemoryLayoutType memoryLayout;
     std::vector<Schema::Field> fields;
 };
 
