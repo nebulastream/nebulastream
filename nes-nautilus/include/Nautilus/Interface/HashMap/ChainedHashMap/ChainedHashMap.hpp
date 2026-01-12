@@ -64,16 +64,6 @@ public:
 class ChainedHashMap final : public HashMap
 {
 public:
-    struct Page
-    {
-        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
-
-        std::span<std::byte> getMemArea() { return buffer.getAvailableMemoryArea(); }
-
-        TupleBuffer buffer;
-        uint64_t numberOfEntries{0};
-    };
-
     ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
     ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     // ~ChainedHashMap() override;
@@ -82,8 +72,10 @@ public:
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t numberOfTuples() const override;
     [[nodiscard]] const TupleBuffer getPage(uint64_t pageIndex) const;
+    [[nodiscard]] const TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
     [[nodiscard]] static uint64_t calculateMainBufferSize(uint64_t numberOfChains);
     [[nodiscard]] uint64_t getNumberOfPages() const;
+    [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
     [[nodiscard]] uint64_t numberOfChains() const;
     [[nodiscard]] uint64_t entrySize() const;
     [[nodiscard]] uint64_t entriesPerPage() const;
@@ -91,12 +83,7 @@ public:
     [[nodiscard]] uint64_t mask() const;
     [[nodiscard]] VariableSizedAccess::Index storageSpaceChildBufferIndex() const;
     [[nodiscard]] VariableSizedAccess::Index varSizedSpaceChildBufferIndex() const;
-    [[nodiscard]] VariableSizedAccess::Index storageSpaceLastPageIndex() const;
-    [[nodiscard]] VariableSizedAccess::Index varSizedSpaceLastPageIndex() const;
-    void setStorageSpaceLastPageIndex(VariableSizedAccess::Index childBufferIndex);
-    void setVarSizedSpaceLastPageIndex(VariableSizedAccess::Index childBufferIndex);
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos) const;
-
 
     /// Clears and deletes all entries in the hash map. It also releases the memory of any allocated buffers or other memory.
     // void clear() noexcept;
@@ -108,13 +95,13 @@ private:
     friend class ChainedHashMapRef;
 
     /// Metadata for accessing the main buffer
-    struct Metadata
+    struct Offsets
     {
         /// Specifies the number of pre-allocated var sized
         static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
         // for main buffer size calculation and code clarity
-        static constexpr auto MAIN_BUFFER_UINT64_FIELDS_NUM = 7;
-        static constexpr auto MAIN_BUFFER_UINT32_FIELDS_NUM = 4;
+        static constexpr auto MAIN_BUFFER_UINT64_FIELDS_NUM = 8;
+        static constexpr auto MAIN_BUFFER_UINT32_FIELDS_NUM = 2;
         /// main buffer metadata field position indices (uint64 fields)
         /// always cast to uint64_t when using the offsets below
         static constexpr auto NUM_CHAINS_POS = 0;
@@ -124,13 +111,16 @@ private:
         static constexpr auto NUM_TUPLES_POS = 4;
         static constexpr auto MASK_POS = 5;
         static constexpr auto NUM_PAGES_POS = 6;           // actively maintained as pages are inserted
+        static constexpr auto NUM_VARSIZED_PAGES_POS = 7;           // actively maintained as varsized pages are inserted
         /// always cast to VariableSizedAccess::Index when using the offsets below
-        static constexpr uint32_t STORAGE_SPACE_INDEX_POS = (NUM_PAGES_POS + 1) * sizeof(uint64_t) / sizeof(VariableSizedAccess::Index);
+        static constexpr uint32_t STORAGE_SPACE_INDEX_POS = (NUM_VARSIZED_PAGES_POS + 1) * sizeof(uint64_t) / sizeof(VariableSizedAccess::Index);
         static constexpr uint32_t VARSIZED_SPACE_INDEX_POS = STORAGE_SPACE_INDEX_POS + 1; // points to the first varsized space page
-        static constexpr uint32_t STORAGE_SPACE_LAST_PAGE_INDEX_POS = VARSIZED_SPACE_INDEX_POS + 1;
-        static constexpr uint32_t VARSIZED_SPACE_LAST_PAGE_INDEX_POS = STORAGE_SPACE_LAST_PAGE_INDEX_POS + 1;
         /// always cast to uint64_t when using the offset below
-        static constexpr auto CHAINS_BEGIN_POS = (VARSIZED_SPACE_LAST_PAGE_INDEX_POS + 1) * sizeof(VariableSizedAccess::Index) / sizeof(uint64_t);
+        static constexpr auto CHAINS_BEGIN_POS = (VARSIZED_SPACE_INDEX_POS + 1) * sizeof(VariableSizedAccess::Index) / sizeof(uint64_t);
+    };
+
+    inline static const VariableSizedAccess::Index NEXT_PAGE_CHILD_BUFFER_INDEX {
+        0
     };
 
     /// the main tuple buffer containing everything

@@ -27,29 +27,38 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
 #include <antlr4-runtime/antlr4-common.h>
+#include <google/protobuf/stubs/port.h>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-HashMapSlice::HashMapSlice(
-    AbstractBufferProvider* bufferProvider,
-    const SliceStart sliceStart,
-    const SliceEnd sliceEnd,
-    const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
+HashMapSlice::HashMapDirectory::HashMapDirectory(AbstractBufferProvider* bufferProvider,
     const uint64_t numHashMaps,
-    const uint64_t numInputStreams)
-    : Slice(sliceStart, sliceEnd)
-    , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
-    , workerAddressMap(numHashMaps, numInputStreams)
+    const uint64_t numInputStreams,
+    const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs)
 {
-    if (auto buffer = bufferProvider->getUnpooledBuffer(workerAddressMap.calculateHeaderSize()))
+    if (auto buffer = bufferProvider->getUnpooledBuffer(calculateMainBufferSize(numHashMaps, numInputStreams)))
     {
-        workerAddressMap.mainBuffer = std::move(buffer.value());
-        auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-        for (uint32_t i = 0; i < numberOfHashMaps(); i++)
+        mainBuffer = std::move(buffer.value());
+        auto metadataPointer = mainBuffer.getAvailableMemoryArea<uint64_t>();
+        metadataPointer[Offsets::NUM_HASH_MAPS_POS] = numHashMaps * numInputStreams;
+        metadataPointer[Offsets::NUM_INPUT_STREAMS_POS] = numInputStreams;
+        metadataPointer[Offsets::NUM_HASH_MAPS_PER_INPUT_STREAM_POS] = numHashMaps;
+
+        auto hashMapsPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+        for (uint32_t i = 0; i < metadataPointer[Offsets::NUM_HASH_MAPS_POS]; i++)
         {
-            basePointer[i] = TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE;
+            // create child buffer for each hashmap and an empty hash map in each
+            auto childBuffer = bufferProvider->getBufferBlocking();
+            new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
+                createNewHashMapSliceArgs.keySize,
+                createNewHashMapSliceArgs.valueSize,
+                createNewHashMapSliceArgs.numberOfBuckets,
+                createNewHashMapSliceArgs.pageSize);
+            auto childBufferIndex = mainBuffer.storeChildBuffer(childBuffer);
+            hashMapsPointer[Offsets::HASH_MAPS_BEGIN_POS + i] = childBufferIndex;
         }
     }
     else
@@ -58,33 +67,52 @@ HashMapSlice::HashMapSlice(
     }
 }
 
-size_t HashMapSlice::WorkerAddressMap::calculateHeaderSize() const
+size_t HashMapSlice::HashMapDirectory::calculateMainBufferSize(const uint64_t numHashMaps, const uint64_t numInputStreams) const
 {
-    return numHashMaps * sizeof(VariableSizedAccess::Index);
+    return 3 * sizeof(uint64_t) + (1 + numHashMaps * numInputStreams) * sizeof(VariableSizedAccess::Index);
+}
+
+VariableSizedAccess::Index HashMapSlice::getHashMapChildBufferIndex(const uint64_t pos) const
+{
+    return hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[HashMapDirectory::Offsets::HASH_MAPS_BEGIN_POS + pos];
+}
+
+TupleBuffer HashMapSlice::loadHashMapBuffer(const VariableSizedAccess::Index childBufferIndex) const
+{
+    TupleBuffer childBuffer = hashMapDirectory.mainBuffer.loadChildBuffer(childBufferIndex);
+    return childBuffer;
+}
+
+VariableSizedAccess::Index HashMapSlice::setHashMapBuffer(TupleBuffer hashMapBuffer, const uint64_t pos)
+{
+    auto childBufferIndex = hashMapDirectory.mainBuffer.storeChildBuffer(hashMapBuffer);
+    auto hashMapsPointer = hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    hashMapsPointer[HashMapDirectory::Offsets::HASH_MAPS_BEGIN_POS + pos] = childBufferIndex;
+    return childBufferIndex;
 }
 
 uint64_t HashMapSlice::numberOfHashMaps() const
 {
-    return workerAddressMap.numHashMaps;
+    return hashMapDirectory.mainBuffer.getAvailableMemoryArea<uint64_t>()[HashMapDirectory::Offsets::NUM_HASH_MAPS_POS];
 }
 
 uint64_t HashMapSlice::numInputStreams() const
 {
-    return workerAddressMap.numInputStreams;
+    return hashMapDirectory.mainBuffer.getAvailableMemoryArea<uint64_t>()[HashMapDirectory::Offsets::NUM_INPUT_STREAMS_POS];
 }
 
 uint64_t HashMapSlice::numHashMapsPerInputStream() const
 {
-    return workerAddressMap.numHashMapsPerInputStream;
+    return hashMapDirectory.mainBuffer.getAvailableMemoryArea<uint64_t>()[HashMapDirectory::Offsets::NUM_HASH_MAPS_PER_INPUT_STREAM_POS];
 }
 
 uint64_t HashMapSlice::getNumberOfTuples() const
 {
     uint64_t runningSum = 0;
-    auto bufferMemoryArea = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    for (uint64_t i = 0; i < workerAddressMap.numHashMaps; i++)
+    auto bufferMemoryArea = hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
+    for (uint64_t i = 0; i < numberOfHashMaps(); i++)
     {
-        auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(bufferMemoryArea[i]);
+        auto childBuffer = hashMapDirectory.mainBuffer.loadChildBuffer(bufferMemoryArea[i]);
         runningSum += childBuffer.getNumberOfTuples();
     }
     return runningSum;

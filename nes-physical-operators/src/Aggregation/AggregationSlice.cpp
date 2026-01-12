@@ -41,38 +41,39 @@ HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) co
 {
     const auto pos = workerThreadId % numberOfHashMaps();
     INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
-    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    auto childBufferIndex = getHashMapChildBufferIndex(pos);
+    if (childBufferIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         return nullptr;
     }
-    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
+    auto childBuffer = loadHashMapBuffer(childBufferIndex);
     return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
-HashMap* AggregationSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
-{
-    const auto pos = workerThreadId % numberOfHashMaps();
-    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
-
-    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
-    {
-        // create child buffer for this worker
-        auto childBuffer = bufferProvider->getBufferBlocking();
-        new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
-            createNewHashMapSliceArgs.keySize,
-            createNewHashMapSliceArgs.valueSize,
-            createNewHashMapSliceArgs.numberOfBuckets,
-            createNewHashMapSliceArgs.pageSize);
-        // store child buffer into the main buffer
-        const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
-        // store the childbufferindex into the mainBuffer header file
-        basePointer[pos] = childBufferIndex;
-    }
-    // return pointer to the hash map object
-    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
-    return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
-}
+// AggregationSliceHashMap* AggregationSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
+// {
+//     const auto pos = workerThreadId % numberOfHashMaps();
+//     INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+//
+//     auto childBufferIndex = getHashMapChildBufferIndex(pos);
+//     // if (childBufferIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+//     // {
+//     //     // create child buffer for this worker
+//     //     auto childBuffer = bufferProvider->getBufferBlocking();
+//     //     new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
+//     //         createNewHashMapSliceArgs.keySize,
+//     //         createNewHashMapSliceArgs.valueSize,
+//     //         createNewHashMapSliceArgs.numberOfBuckets,
+//     //         createNewHashMapSliceArgs.pageSize);
+//     //     // store child buffer into the main buffer
+//     //     // todo: there is a problem here because this is not thread safe.
+//     //     // multiple threads are storing child buffers at the same time.
+//     //     // todo: fix
+//     //     childBufferIndex = setHashMapBuffer(childBuffer, pos);
+//     // }
+//     // return pointer to the hash map object
+//     auto childBuffer = loadHashMapBuffer(childBufferIndex);
+//     return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
+// }
 
 }

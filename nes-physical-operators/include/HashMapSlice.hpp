@@ -69,17 +69,23 @@ public:
     /// | threadHashMapAddress0 | threadHashMapAddress1 | ... | threadHashMapAddressN-1 |
     /// |        64 bits        |        64 bits        |     |          64 bits        |
     /// |           0           |           1           |     |            N-1          |
-    struct WorkerAddressMap
+    struct HashMapDirectory
     {
-        explicit WorkerAddressMap(const uint64_t numHashMaps, const uint64_t numInputStreams) :
-        numHashMaps(numHashMaps * numInputStreams) ,
-        numInputStreams(numInputStreams),
-        numHashMapsPerInputStream(numHashMaps){}
-        uint64_t numHashMaps{0};   /// todo: move this inside the mainBuffer
-        uint64_t numInputStreams{0};   /// todo: move this inside the mainBuffer
-        uint64_t numHashMapsPerInputStream{0}; /// todo: move this inside the mainBuffer
+        /// Offsets for accessing the main buffer
+        struct Offsets
+        {
+            /// always use after casting the main buffer to uint64_t
+            static constexpr auto NUM_HASH_MAPS_POS = 0;
+            static constexpr auto NUM_INPUT_STREAMS_POS = 1;
+            static constexpr auto NUM_HASH_MAPS_PER_INPUT_STREAM_POS = 2;
+            /// always use after casting the main  buffer to VariableSizedAccess::Index
+            static constexpr uint32_t HASH_MAPS_BEGIN_POS = (NUM_HASH_MAPS_PER_INPUT_STREAM_POS + 1) * sizeof(uint64_t) / sizeof(VariableSizedAccess::Index);
+        };
+
+        explicit HashMapDirectory(AbstractBufferProvider* bufferProvider, uint64_t numHashMaps, uint64_t numInputStreams,
+            const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs);
+        [[nodiscard]] size_t calculateMainBufferSize(uint64_t numHashMaps, uint64_t numInputStreams) const;
         TupleBuffer mainBuffer;
-        [[nodiscard]] size_t calculateHeaderSize() const;
     };
 
     explicit HashMapSlice(
@@ -88,23 +94,23 @@ public:
         SliceEnd sliceEnd,
         const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
         uint64_t numHashMaps,
-        uint64_t numInputStreams);
-
-    // ~HashMapSlice() override;
+        uint64_t numInputStreams)
+    : Slice(sliceStart, sliceEnd)
+    , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
+    , hashMapDirectory(bufferProvider, numHashMaps, numInputStreams, createNewHashMapSliceArgs) {}
 
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
     [[nodiscard]] uint64_t numberOfHashMaps() const;
     [[nodiscard]] uint64_t numInputStreams() const;
     [[nodiscard]] uint64_t numHashMapsPerInputStream() const;
-
+    [[nodiscard]] VariableSizedAccess::Index getHashMapChildBufferIndex(uint64_t pos) const;
+    [[nodiscard]] TupleBuffer loadHashMapBuffer(VariableSizedAccess::Index childBufferIndex) const;
+    [[nodiscard]] VariableSizedAccess::Index setHashMapBuffer(TupleBuffer hashMapBuffer, uint64_t pos);
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
 protected:
-    // std::vector<std::unique_ptr<HashMap>> hashMaps;
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
-    // uint64_t numberOfHashMapsPerInputStream;
-    // uint64_t numberOfInputStreams;
-
-    WorkerAddressMap workerAddressMap;
+private:
+    HashMapDirectory hashMapDirectory;
 };
 }

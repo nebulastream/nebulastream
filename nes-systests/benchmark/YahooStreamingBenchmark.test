@@ -1,6 +1,8 @@
 # name: milestone/YahooStreamingBenchmark.test
 # description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks) with changed data types
 # groups: [milestone, benchmark, large, Aggregation]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+
 
 # Source definitions
 CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);

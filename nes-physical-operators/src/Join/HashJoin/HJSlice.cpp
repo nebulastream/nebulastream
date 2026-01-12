@@ -45,47 +45,45 @@ HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinB
         workerThreadId,
         pos,
         numberOfHashMaps());
-    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    auto childBufferIndex = getHashMapChildBufferIndex(pos);
+    if (childBufferIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         return nullptr;
     }
-    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
+    auto childBuffer = loadHashMapBuffer(childBufferIndex);
     return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
-HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
-{
-    /// Hashmaps of the left build side come before right
-    auto pos = (workerThreadId % numHashMapsPerInputStream())
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numHashMapsPerInputStream()));
-
-    INVARIANT(
-        numberOfHashMaps() > 0 and pos < numberOfHashMaps(),
-        "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
-        workerThreadId,
-        pos,
-        numberOfHashMaps());
-
-    auto basePointer = workerAddressMap.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    if (basePointer[pos] == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
-    {
-        // create child buffer for this worker
-        auto childBuffer = bufferProvider->getBufferBlocking();
-        new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
-            createNewHashMapSliceArgs.keySize,
-            createNewHashMapSliceArgs.valueSize,
-            createNewHashMapSliceArgs.numberOfBuckets,
-            createNewHashMapSliceArgs.pageSize);
-        // store child buffer into the main buffer
-        const auto childBufferIndex = workerAddressMap.mainBuffer.storeChildBuffer(childBuffer);
-        // store the childbufferindex into the mainBuffer header file
-        basePointer[pos] = childBufferIndex;
-    }
-    // return pointer to the hash map object
-    auto childBuffer = workerAddressMap.mainBuffer.loadChildBuffer(basePointer[pos]);
-    return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
-}
+// HashMap* HJSlice::getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
+// {
+//     /// Hashmaps of the left build side come before right
+//     auto pos = (workerThreadId % numHashMapsPerInputStream())
+//         + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numHashMapsPerInputStream()));
+//
+//     INVARIANT(
+//         numberOfHashMaps() > 0 and pos < numberOfHashMaps(),
+//         "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
+//         workerThreadId,
+//         pos,
+//         numberOfHashMaps());
+//
+//     auto childBufferIndex = getHashMapChildBufferIndex(pos);
+//     if (childBufferIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+//     {
+//         // create child buffer for this worker
+//         auto childBuffer = bufferProvider->getBufferBlocking();
+//         new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
+//             createNewHashMapSliceArgs.keySize,
+//             createNewHashMapSliceArgs.valueSize,
+//             createNewHashMapSliceArgs.numberOfBuckets,
+//             createNewHashMapSliceArgs.pageSize);
+//         // store child buffer into the main buffer
+//         childBufferIndex = setHashMapBuffer(childBuffer, pos);
+//     }
+//     // return pointer to the hash map object
+//     auto childBuffer = loadHashMapBuffer(childBufferIndex);
+//     return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
+// }
 
 uint64_t HJSlice::getNumberOfHashMapsForSide() const
 {

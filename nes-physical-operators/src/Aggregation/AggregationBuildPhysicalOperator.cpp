@@ -75,7 +75,8 @@ HashMap* getAggHashMapProxy(
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    return aggregationSlice->getHashMapPtrOrCreate(bufferProvider, workerThreadId);
+    // return aggregationSlice->getHashMapPtrOrCreate(bufferProvider, workerThreadId);
+    return aggregationSlice->getHashMapPtr(workerThreadId);
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const

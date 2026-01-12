@@ -33,7 +33,7 @@ public:
         AbstractBufferProvider* bufferProvider, SliceStart sliceStart, SliceEnd sliceEnd,
         const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
     [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
-    [[nodiscard]] HashMap* getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide);
+    // [[nodiscard]] HashMap* getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide);
     [[nodiscard]] uint64_t getNumberOfHashMapsForSide() const;
 };
 

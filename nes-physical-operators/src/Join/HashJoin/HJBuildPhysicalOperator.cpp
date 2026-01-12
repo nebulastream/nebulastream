@@ -71,7 +71,8 @@ HashMap* getHashJoinHashMapProxy(
     /// Converting the slice to an HJSlice and returning the pointer to the hashmap
     const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
-    return hjSlice->getHashMapPtrOrCreate(bufferProvider, workerThreadId, buildSide);
+    // return hjSlice->getHashMapPtrOrCreate(bufferProvider, workerThreadId, buildSide);
+    return hjSlice->getHashMapPtr(workerThreadId, buildSide);
 }
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
