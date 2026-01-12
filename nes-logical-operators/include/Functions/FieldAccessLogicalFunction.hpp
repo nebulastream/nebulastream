@@ -77,6 +77,18 @@ private:
     DataType dataType;
 };
 
+template <>
+struct Reflector<FieldAccessLogicalFunction>
+{
+    Reflected operator()(const FieldAccessLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<FieldAccessLogicalFunction>
+{
+    FieldAccessLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<FieldAccessLogicalFunction>);
 
 }

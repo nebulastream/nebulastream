@@ -98,6 +98,18 @@ SerializableFunction RoundLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<RoundLogicalFunction>::operator()(const RoundLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

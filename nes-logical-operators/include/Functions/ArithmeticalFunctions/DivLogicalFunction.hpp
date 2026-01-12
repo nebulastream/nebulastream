@@ -53,6 +53,18 @@ private:
     LogicalFunction right;
 };
 
+template <>
+struct Reflector<DivLogicalFunction>
+{
+    Reflected operator()(const DivLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<DivLogicalFunction>
+{
+    DivLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<DivLogicalFunction>);
 
 }

@@ -135,6 +135,18 @@ SerializableFunction RenameLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<RenameLogicalFunction>::operator()(const RenameLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+RenameLogicalFunction Unreflector<RenameLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRenameLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

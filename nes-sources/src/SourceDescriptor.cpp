@@ -196,7 +196,7 @@ struct ReflectedSourceDescriptor
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
 {
-    Schema schema(sourceDescriptor.getLogicalSource().getSchema()->memoryLayoutType);
+    Schema schema;
     for (auto field: sourceDescriptor.getLogicalSource().getSchema()->getFields())
     {
         schema.addField(field.name, field.dataType);

@@ -104,6 +104,18 @@ SerializableFunction LessEqualsLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<LessEqualsLogicalFunction>::operator()(const LessEqualsLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+LessEqualsLogicalFunction Unreflector<LessEqualsLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

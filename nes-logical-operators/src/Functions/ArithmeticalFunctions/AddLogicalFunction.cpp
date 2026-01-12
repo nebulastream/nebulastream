@@ -109,6 +109,18 @@ SerializableFunction AddLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<AddLogicalFunction>::operator()(const AddLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+AddLogicalFunction Unreflector<AddLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAddLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)

@@ -74,6 +74,18 @@ private:
     DataType dataType;
 };
 
+template <>
+struct Reflector<ConstantValueLogicalFunction>
+{
+    Reflected operator()(const ConstantValueLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<ConstantValueLogicalFunction>
+{
+    ConstantValueLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<ConstantValueLogicalFunction>);
 
 }

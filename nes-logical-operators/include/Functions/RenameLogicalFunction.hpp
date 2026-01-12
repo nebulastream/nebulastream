@@ -72,6 +72,18 @@ private:
     std::string newFieldName;
 };
 
+template <>
+struct Reflector<RenameLogicalFunction>
+{
+    Reflected operator()(const RenameLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<RenameLogicalFunction>
+{
+    RenameLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<RenameLogicalFunction>);
 
 }

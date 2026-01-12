@@ -51,6 +51,18 @@ private:
     LogicalFunction child;
 };
 
+template <>
+struct Reflector<CeilLogicalFunction>
+{
+    Reflected operator()(const CeilLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<CeilLogicalFunction>
+{
+    CeilLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<CeilLogicalFunction>);
 
 }

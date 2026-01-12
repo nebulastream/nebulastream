@@ -56,6 +56,18 @@ private:
     DataType dataType;
 };
 
+template <>
+struct Reflector<EqualsLogicalFunction>
+{
+    Reflected operator()(const EqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<EqualsLogicalFunction>
+{
+    EqualsLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<EqualsLogicalFunction>);
 
 }

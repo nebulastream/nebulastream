@@ -120,14 +120,26 @@ SerializedFunction EqualsLogicalFunction::serialized() const
         /// TODO: Will be generalized when `serialized` function is added to concept
         if (child.getType() == "FieldAccess")
         {
-            serializedFunction.children.emplace_back(child.tryGet<FieldAccessLogicalFunction>()->serialized());
+            serializedFunction.children.emplace_back(child.getAs<FieldAccessLogicalFunction>()->serialized());
         }
         else if (child.getType() == "ConstantValue")
         {
-            serializedFunction.children.emplace_back(child.tryGet<ConstantValueLogicalFunction>()->serialized());
+            serializedFunction.children.emplace_back(child.getAs<ConstantValueLogicalFunction>()->serialized());
         }
     }
     return serializedFunction;
+}
+
+Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
 }
 
 LogicalFunctionRegistryReturnType

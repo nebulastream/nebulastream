@@ -60,6 +60,18 @@ private:
     LogicalFunction logicalFunction;
 };
 
+template <>
+struct Reflector<FieldAssignmentLogicalFunction>
+{
+    Reflected operator()(const FieldAssignmentLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<FieldAssignmentLogicalFunction>
+{
+    FieldAssignmentLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<FieldAssignmentLogicalFunction>);
 
 }

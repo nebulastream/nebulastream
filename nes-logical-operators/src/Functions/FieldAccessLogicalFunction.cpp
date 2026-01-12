@@ -137,6 +137,18 @@ SerializedFunction FieldAccessLogicalFunction::serialized() const
     return serializedFunction;
 }
 
+Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

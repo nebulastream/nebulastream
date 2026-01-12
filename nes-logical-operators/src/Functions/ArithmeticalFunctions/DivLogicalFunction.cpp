@@ -105,6 +105,18 @@ SerializableFunction DivLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<DivLogicalFunction>::operator()(const DivLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+DivLogicalFunction Unreflector<DivLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDivLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)

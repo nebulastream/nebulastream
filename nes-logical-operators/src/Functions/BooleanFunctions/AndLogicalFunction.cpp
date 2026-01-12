@@ -113,6 +113,18 @@ SerializableFunction AndLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
