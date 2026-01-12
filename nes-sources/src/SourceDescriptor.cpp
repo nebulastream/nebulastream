@@ -184,10 +184,33 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     return serializableSourceDescriptor;
 }
 
+struct ReflectedSourceDescriptor
+{
+    uint64_t physicalSourceId = 0;
+    std::string logicalSource;
+    std::string type;
+    Schema schema;
+    ParserConfig parserConfig;
+    DescriptorConfig::Config config;
+};
+
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
 {
-    const std::pair descriptorAndConfig{sourceDescriptor, sourceDescriptor.getConfig()};
-    return reflect(descriptorAndConfig);
+    Schema schema(sourceDescriptor.getLogicalSource().getSchema()->memoryLayoutType);
+    for (auto field: sourceDescriptor.getLogicalSource().getSchema()->getFields())
+    {
+        schema.addField(field.name, field.dataType);
+    }
+    ReflectedSourceDescriptor descriptor{
+        .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
+        .logicalSource = sourceDescriptor.logicalSource.getLogicalSourceName(),
+        .type = sourceDescriptor.sourceType,
+        .schema = schema,
+        .parserConfig = sourceDescriptor.parserConfig,
+        .config = sourceDescriptor.getConfig()
+    };
+
+    return reflect(descriptor);
 }
 
 SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const

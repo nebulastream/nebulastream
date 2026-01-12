@@ -77,7 +77,7 @@ static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
 template <>
 struct Reflector<SourceDescriptorLogicalOperator>
 {
-    Reflected operator()(const SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const;
+    Reflected operator()(const SourceDescriptorLogicalOperator& op) const;
 };
 
 template <>

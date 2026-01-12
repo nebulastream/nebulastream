@@ -44,8 +44,6 @@ public:
 
     [[nodiscard]] bool operator==(const SelectionLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
-    void serialized(SerializedOperator& serialized) const;
-    void reflected(ReflectedOperator& reflected) const;
 
     [[nodiscard]] SelectionLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;

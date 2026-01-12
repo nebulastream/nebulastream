@@ -96,6 +96,7 @@ private:
     friend OperatorSerializationUtil;
     friend SerializedUtils;
     friend struct Unreflector<SourceDescriptor>;
+    friend struct Reflector<SourceDescriptor>;
 
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
@@ -126,18 +127,6 @@ public:
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
 };
-
-namespace detail
-{
-struct ReflectedSourceDescriptor
-{
-    PhysicalSourceId physicalSourceId;
-    LogicalSource logicalSource;
-    std::string type;
-    ParserConfig parserConfig;
-    DescriptorConfig::Config config;
-};
-}
 
 template <>
 struct Reflector<SourceDescriptor>

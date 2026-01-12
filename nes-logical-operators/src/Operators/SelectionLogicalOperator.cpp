@@ -137,9 +137,9 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-struct SerializedSelectionLogicalOperator
+struct ReflectedSelectionLogicalOperator
 {
-    rfl::Box<SerializedFunction> predicate;
+    SerializedFunction predicate;
 };
 
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
@@ -171,30 +171,25 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-void SelectionLogicalOperator::serialized(SerializedOperator& serialized) const
-{
-    /// TODO: If all functions support the serialized function, the if-clause and tryGet call can be dropped
-    if (getPredicate().getType() == "Equals")
-    {
-        auto predicate = getPredicate().tryGet<EqualsLogicalFunction>()->serialized();
-        const auto config = SerializedSelectionLogicalOperator{.predicate = rfl::make_box<SerializedFunction>(predicate)};
-        serialized.config = rfl::to_generic(config);
-    }
-}
-
 Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
 {
     if (op.getPredicate().getType() == "Equals")
     {
         auto predicate = op.getPredicate().tryGet<EqualsLogicalFunction>()->serialized();
-        const auto config = SerializedSelectionLogicalOperator{.predicate = rfl::make_box<SerializedFunction>(predicate)};
+        const auto config = ReflectedSelectionLogicalOperator{.predicate = predicate};
         return Reflected{rfl::to_generic(config)};
     }
     throw NotImplemented("Missing Reflection for LogicalFunction");
 }
 
-SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& _) const
+SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& reflected) const
 {
+    auto reflectedOperator = unreflect<ReflectedSelectionLogicalOperator>(reflected);
+
+    // reflectedOperator.predicates
+    // Schema schema{layout};
+    // schema.fields = std::move(fields);
+    // return schema;
     throw NotImplemented("Unreflector");
 }
 
@@ -204,9 +199,9 @@ LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     const auto data = rfl::json::read<SerializedOperator>(arguments.reflec).value();
-    if (auto serializedOperator = rfl::from_generic<SerializedSelectionLogicalOperator>(data.config); serializedOperator.has_value())
+    if (auto serializedOperator = rfl::from_generic<ReflectedSelectionLogicalOperator>(data.config); serializedOperator.has_value())
     {
-        const auto predicate = SerializedUtils::deserializeFunction(*serializedOperator.value().predicate);
+        const auto predicate = SerializedUtils::deserializeFunction(serializedOperator.value().predicate);
         const auto logicalOperator = SelectionLogicalOperator(predicate);
 
         const auto inputSchemas = SerializedUtils::deserializeSchemas(data.inputSchemas);

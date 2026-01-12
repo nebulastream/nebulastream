@@ -119,13 +119,14 @@ void SourceDescriptorLogicalOperator::serialized(SerializedOperator& serialized)
 }
 
 Reflected
-Reflector<SourceDescriptorLogicalOperator>::operator()(const SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const
+Reflector<SourceDescriptorLogicalOperator>::operator()(const SourceDescriptorLogicalOperator& op) const
 {
-    return reflect(sourceDescriptorLogicalOperator.getSourceDescriptor());
+    return reflect(op.getSourceDescriptor());
 }
 
-SourceDescriptorLogicalOperator Unreflector<SourceDescriptorLogicalOperator>::operator()(const Reflected& rfl) const
+SourceDescriptorLogicalOperator Unreflector<SourceDescriptorLogicalOperator>::operator()(const Reflected& _) const
 {
-    return SourceDescriptorLogicalOperator{Unreflector<SourceDescriptor>{}(rfl)};
+    // TODO to implement
+    throw NotImplemented("Unreflector");
 }
 }

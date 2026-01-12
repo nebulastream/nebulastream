@@ -39,29 +39,19 @@
 namespace NES
 {
 
-void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
+struct ReflectedOperator
 {
-    SerializedOperator serializedOperator;
-    serializedOperator.operatorId = op.getId().getRawValue();
-    serializedOperator.type = op.getName();
-    auto inputSchemas = std::vector<SerializedSchema>();
-    for (const auto& inputSchema : op.getInputSchemas())
-    {
-        inputSchemas.emplace_back(SerializedUtils::serializeSchema(inputSchema));
-    }
-    serializedOperator.inputSchemas = std::move(inputSchemas);
+    std::string type;
+    uint64_t operatorId;
+    std::vector<uint64_t> childrenIds;
+    Reflected config;
+    TraitSet traitSet;
+    std::vector<Schema> inputSchemas;
+    std::optional<Schema> outputSchema;
+};
 
-    auto outputSchema = SerializedUtils::serializeSchema(op.getOutputSchema());
-    serializedOperator.outputSchema = std::move(outputSchema);
-
-    auto childrenIds = std::vector<uint64_t>{};
-    for (const auto& child : op.getChildren())
-    {
-        childrenIds.emplace_back(child.getId().getRawValue());
-    }
-    serializedOperator.childrenIds = std::move(childrenIds);
-
-
+void serialize(TypedLogicalOperator<> op, SerializableOperator& serialized)
+{
     ReflectedOperator reflectedOperator;
     reflectedOperator.operatorId = op.getId().getRawValue();
     reflectedOperator.type = op.getName();
@@ -69,7 +59,7 @@ void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
 
     reflectedOperator.outputSchema = op.getOutputSchema();
 
-    childrenIds = std::vector<uint64_t>{};
+    auto childrenIds = std::vector<uint64_t>{};
     for (const auto& child : op.getChildren())
     {
         childrenIds.emplace_back(child.getId().getRawValue());
@@ -80,18 +70,14 @@ void serialized(TypedLogicalOperator<> op, SerializableOperator& serialized)
     /// TODO: No need for if-clause, once all Operators support `.serialized` function
     if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
     {
-        selectOp.value()->serialized(serializedOperator);
-
-
-        // serializedOperator.config = op->reflect();
+        reflectedOperator.config = op->reflect();
     }
     else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
     {
-        sourceOp.value()->serialized(serializedOperator);
+        reflectedOperator.config = op->reflect();
     }
 
-    const auto serializedString = rfl::json::write(serializedOperator);
-    const auto test = rfl::json::write(reflectedOperator);
+    const auto serializedString = rfl::json::write(reflectedOperator);
     serialized.set_reflect(serializedString);
 }
 
@@ -114,7 +100,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         auto* sOp = serializableQueryPlan.add_operators();
         itr.serialize(*sOp);
-        serialized(itr, *sOp);
+        serialize(itr, *sOp);
         TraitSetSerializationUtil::serialize(itr.getTraitSet(), sOp->mutable_trait_set());
     }
 
