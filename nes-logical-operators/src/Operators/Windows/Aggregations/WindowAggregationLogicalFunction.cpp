@@ -32,11 +32,6 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
 {
 }
 
-bool WindowAggregationLogicalFunction::requiresSequentialAggregation() const
-{
-    return false;
-}
-
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     DataType inputStamp,
     DataType partialAggregateStamp,
