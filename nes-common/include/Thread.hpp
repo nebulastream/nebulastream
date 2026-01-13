@@ -100,6 +100,8 @@ public:
 
     [[nodiscard]] bool isCurrentThread() const { return std::this_thread::get_id() == thread.get_id(); }
 
+    [[nodiscard]] bool joinable() const { return thread.joinable(); }
+
     bool requestStop() { return thread.request_stop(); }
 
     static void initializeThread(WorkerId worker_id, std::string name)
