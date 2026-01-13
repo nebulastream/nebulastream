@@ -62,6 +62,7 @@ private:
     std::ifstream inputFile;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
+    std::string orphanedLine; /// stores read line that did not fit into buffer
     bool hasTimestampColumn;
     int32_t timestampColunmIdx;
     std::chrono::time_point<std::chrono::system_clock> openTime;

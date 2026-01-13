@@ -71,7 +71,7 @@ void FileSource::close()
     this->inputFile.close();
 }
 
-Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     if (not hasTimestampColumn)
     {
@@ -85,20 +85,93 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
         }
         return FillTupleBufferResult::withBytes(numBytesRead);
     }
-    const auto getTimestamp = [&](const std::string& row) -> std::chrono::time_point<std::chrono::system_clock>
+
+    const auto getScheduledTime = [&](const std::string& row) -> std::chrono::system_clock::time_point
     {
         INVARIANT(this->timestampColunmIdx >= 0, "Invalid timestampIdx {}", this->timestampColunmIdx);
         const auto fields = splitWithStringDelimiter<std::string_view>(row, ",");
         const auto timestamp = from_chars<long long>(fields[this->timestampColunmIdx]);
-        if (not timestamp.has_value())
+        if (!timestamp)
         {
             throw InvalidConfigParameter("Cannot parse a timestamp from the row {}", row);
         }
 
-        return std::chrono::system_clock::time_point{
-            std::chrono::seconds{*timestamp}
-        };
+        return openTime + std::chrono::seconds{*timestamp};
     };
+
+    const auto writeLineToTupleBuffer = [&tupleBuffer](const std::string& line, const size_t offset) -> bool
+    {
+        if (tupleBuffer.getAvailableMemoryArea<char>().size() < offset + line.size() + 1)
+        {
+            return false;
+        }
+        std::memcpy(tupleBuffer.getAvailableMemoryArea<char>().data() + offset, line.data(), line.size());
+        tupleBuffer.getAvailableMemoryArea<char>()[offset + line.size()] = '\n';
+        return true;
+    };
+
+    const auto sleepUntilScheduled = [&stopToken](std::chrono::system_clock::time_point scheduledTime) -> bool
+    {
+        const auto now = std::chrono::system_clock::now();
+        if (scheduledTime <= now)
+        {
+            return true;
+        }
+        const auto sleepDuration = std::chrono::duration_cast<std::chrono::milliseconds>(scheduledTime - now);
+        NES_INFO("Sleeping for  {} ms until scheduled time {}", sleepDuration.count(), scheduledTime);
+        constexpr auto checkIntervall = std::chrono::milliseconds(100);
+        auto remaingTime = sleepDuration;
+        while (remaingTime > std::chrono::milliseconds(0) && !stopToken.stop_requested())
+        {
+            auto sleepTime = std::min(remaingTime, checkIntervall);
+            std::this_thread::sleep_for(sleepTime);
+            remaingTime -= sleepTime;
+        }
+        return !stopToken.stop_requested();
+    };
+
+    auto totalBytesWritten = 0;
+    if (not orphanedLine.empty())
+    {
+        NES_INFO("Orphaned line is not empty!")
+        const auto scheduledTime = getScheduledTime(orphanedLine);
+        if (!sleepUntilScheduled(scheduledTime))
+        {
+            return FillTupleBufferResult::withBytes(0);
+        }
+        if (!writeLineToTupleBuffer(orphanedLine, 0))
+        {
+            throw InvalidConfigParameter(
+                "Can not write a wellformed tuple with size {} into a tuple buffer of size {}",
+                orphanedLine.size(), tupleBuffer.getBufferSize()
+                );
+        }
+        totalBytesWritten += orphanedLine.size() + 1;
+        orphanedLine.clear();
+        NES_INFO("Wrote orphaned line with size {} into tuplebuffer.", totalBytesWritten);
+    }
+
+    std::string line;
+    while (not stopToken.stop_requested() && std::getline(this->inputFile, line))
+    {
+        const auto scheduledTime = getScheduledTime(line);
+        if (!sleepUntilScheduled(scheduledTime))
+        {
+            this->orphanedLine = line;
+            break;
+        }
+        if (!writeLineToTupleBuffer(line, totalBytesWritten))
+        {
+            this->orphanedLine = line;
+            return FillTupleBufferResult::withBytes(totalBytesWritten);
+        }
+        totalBytesWritten += line.size() + 1;
+    }
+    if (inputFile.eof() && totalBytesWritten == 0)
+    {
+        return FillTupleBufferResult::eos();
+    }
+    return FillTupleBufferResult::withBytes(totalBytesWritten);
 }
 
 void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
