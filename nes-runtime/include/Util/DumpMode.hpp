@@ -30,9 +30,9 @@ public:
 
     DumpMode(Options option, bool dumpGraph) : option(option), dumpGraph(dumpGraph) { }
 
-    Options getDumpOption() const { return option; }
+    [[nodiscard]] Options getDumpOption() const { return option; }
 
-    bool isDumpGraphEnabled() const { return option != Options::NONE && dumpGraph; }
+    [[nodiscard]] bool isDumpGraphEnabled() const { return option != Options::NONE && dumpGraph; }
 
 private:
     Options option = Options::NONE;
