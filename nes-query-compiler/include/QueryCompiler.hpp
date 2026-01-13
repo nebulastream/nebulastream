@@ -18,7 +18,6 @@
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <PhysicalPlan.hpp>
-#include "Util/DumpMode.hpp"
 
 namespace NES::QueryCompilation
 {
