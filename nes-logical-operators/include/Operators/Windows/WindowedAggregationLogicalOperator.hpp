@@ -81,8 +81,6 @@ public:
 
     [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
-    [[nodiscard]] bool requiresSequentialAggregation() const;
-
     struct ConfigParameters
     {
         static inline const DescriptorConfig::ConfigParameter<AggregationFunctionList> WINDOW_AGGREGATIONS{
