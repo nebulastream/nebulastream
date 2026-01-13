@@ -50,55 +50,83 @@ LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator
     }
     else
     {
-        if (conf.layoutStrategy == MemoryLayoutStrategy::SWAP_ALL_COL)
-        {
-            tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::COLUMNAR_LAYOUT});
-        }
-        else
-        {
-            tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+        /// row_layout_ratio likelihood of the layout being row
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        if (!traitSet.contains<MemoryLayoutTypeTrait>())
+        { /// check if not already set
+            if (std::uniform_real_distribution<> dis(0.0, 1.0); dis(gen) <= conf.rowLayoutRatio.getValue())
+            {
+                tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+            }
+            else
+            {
+                tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::COLUMNAR_LAYOUT});
+            }
         }
     }
 
-    auto children = logicalOperator.getChildren()
-        | std::views::transform([this, &conf](const LogicalOperator& child) { return apply(child, conf); })
+    auto childs = logicalOperator.getChildren();
+
+    if (conf.rowLayoutRatio.getValue() > 0 && conf.rowLayoutRatio.getValue() < 1.0)
+    {
+        if (logicalOperator.getName() == "Join" || logicalOperator.getName() == "WindowedAggregation")
+        {
+            auto newChilds = std::vector<LogicalOperator>{};
+            /// Keep watermark assigner in same layout as join. Currently not working with random otherwise
+            for (auto& child : logicalOperator.getChildren())
+            {
+                if (child.getName() == "EventTimeWatermarkAssigner")
+                {
+                    auto watermarkTraitSet = child.getTraitSet();
+                    tryInsert(watermarkTraitSet, traitSet.tryGet<MemoryLayoutTypeTrait>().value());
+                    newChilds.emplace_back(child.withTraitSet(watermarkTraitSet));
+                }
+                else
+                {
+                    newChilds.emplace_back(child);
+                }
+            }
+            childs = newChilds;
+        }
+    }
+    auto children = childs | std::views::transform([this, &conf](const LogicalOperator& child) { return apply(child, conf); })
         | std::ranges::to<std::vector>();
 
-    /// insert memory swaps where needed
-    if (conf.layoutStrategy == MemoryLayoutStrategy::SWAP_ALL_COL || conf.layoutStrategy == MemoryLayoutStrategy::SWAP_ALL_ROW)
+    /// insert memory swaps where needed (not for all row)
+    if (conf.rowLayoutRatio.getValue() < 1.0)
     {
-        if (logicalOperator.getName() == "Sink")
+        if (logicalOperator.getName() != "Source")
         {
-            PRECONDITION(!children.empty(), "Sink operator must have at least one child");
-            if (children[0].getName() != "Source")
-            { /// no swap needed if empty query
-                auto childLayoutType = children[0].getTraitSet().get<MemoryLayoutTypeTrait>().memoryLayout;
-                auto memorySwap = MemorySwapLogicalOperator(children[0].getOutputSchema(), childLayoutType, MemoryLayoutType::ROW_LAYOUT);
-                return logicalOperator.withChildren({memorySwap.withChildren(children)}).withTraitSet(traitSet);
-            }
-        }
-        else if (!children.empty() && children[0].getName() == "Source")
-        {
-            ///insert memory swap before source
-            auto operatorLayoutType = traitSet.get<MemoryLayoutTypeTrait>().memoryLayout;
-            auto memorySwaps = std::vector<LogicalOperator>{};
-            /// create one swap for each source
+            auto newChilds = std::vector<LogicalOperator>{};
             for (const auto& child : children)
             {
-                if (child.getName() != "Source")
+                auto childLayout = child.getTraitSet().get<MemoryLayoutTypeTrait>().memoryLayout;
+                auto operatorLayout = traitSet.get<MemoryLayoutTypeTrait>().memoryLayout;
+                if (childLayout != operatorLayout)
                 {
-                    memorySwaps.push_back(child);
-                    continue;
+                    if (child.getName() == "Source")
+                    { /// insert swap using rawScan
+                        auto memorySwap = MemorySwapLogicalOperator(
+                            child.getOutputSchema(),
+                            MemoryLayoutType::ROW_LAYOUT,
+                            operatorLayout,
+                            child.getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor().getParserConfig());
+                        newChilds.emplace_back(memorySwap.withChildren({child}).withTraitSet(child.getTraitSet()));
+                    }
+                    else
+                    {
+                        auto memorySwap = MemorySwapLogicalOperator(child.getOutputSchema(), childLayout, operatorLayout);
+                        newChilds.emplace_back(memorySwap.withChildren({child}).withTraitSet(child.getTraitSet()));
+                    }
                 }
-                auto memorySwap = MemorySwapLogicalOperator(
-                    child.getOutputSchema(),
-                    MemoryLayoutType::ROW_LAYOUT,
-                    operatorLayoutType,
-                    child.getAs<SourceDescriptorLogicalOperator>()->getSourceDescriptor().getParserConfig());
-                memorySwaps.emplace_back(memorySwap.withChildren({child}).withTraitSet(traitSet));
+                else
+                {
+                    newChilds.emplace_back(child);
+                }
             }
-
-            return logicalOperator.withChildren(memorySwaps).withTraitSet(traitSet);
+            return logicalOperator.withChildren(newChilds).withTraitSet(traitSet);
         }
     }
 
