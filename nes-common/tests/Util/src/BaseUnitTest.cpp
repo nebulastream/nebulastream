@@ -81,7 +81,7 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
         [this, testName = std::move(testName)]() mutable
         {
             auto future = testCompletion->get_future();
-            switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP)))
+            switch (future.wait_for(WAIT_TIME_SETUP))
             {
                 case std::future_status::ready: {
                     CPPTRACE_TRY
