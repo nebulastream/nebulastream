@@ -23,9 +23,16 @@ namespace NES
 {
 
 /// Forward declaring the class here, so that we can declare the operator==(const VariableSizedData, const nautilus::val<bool>) for it
+struct ArenaRef;
 class VariableSizedData;
 nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other);
 nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableSizedData& varSizedData);
+
+enum class VariableSizedType : uint8_t
+{
+    REGULAR,
+    COMPOUND
+};
 
 /// We assume that the first 4 bytes of a int8_t* to any var sized data contains the length of the var sized data
 /// This class should not be used as standalone. Rather it should be used via the VarVal class
@@ -39,6 +46,8 @@ public:
     VariableSizedData(VariableSizedData&& other) noexcept;
     VariableSizedData& operator=(VariableSizedData&& other) noexcept;
 
+    VariableSizedData(const VariableSizedData& first, const VariableSizedData& second, ArenaRef& arena);
+
     [[nodiscard]] nautilus::val<uint32_t> getSize() const;
     /// Returns the content of the variable sized data, this means the pointer to the actual variable sized data.
     /// In other words, this returns the pointer to the actual data, not the pointer to the size + data
@@ -46,6 +55,7 @@ public:
 
     /// Returns the pointer to the variable sized data, this means the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getReference() const;
+
 
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);
@@ -60,8 +70,18 @@ public:
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
 protected:
+    void materialize() const;
+
     nautilus::val<uint64_t> size;
-    nautilus::val<int8_t*> ptrToVarSized;
+    mutable nautilus::val<int8_t*> ptrToVarSized;
+
+    ArenaRef* arenaRef = nullptr;
+    std::optional<nautilus::val<int8_t*>> firstText;
+    std::optional<nautilus::val<int8_t*>> secondText;
+    std::optional<nautilus::val<uint64_t>> firstSize;
+    std::optional<nautilus::val<uint64_t>> secondSize;
+
+    VariableSizedType type = VariableSizedType::REGULAR;
 };
 
 

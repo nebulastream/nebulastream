@@ -22,6 +22,7 @@
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -32,7 +33,26 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 {
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
+VariableSizedData::VariableSizedData(const VariableSizedData& other)
+    : size(other.size)
+    , ptrToVarSized(other.ptrToVarSized)
+    , arenaRef(other.arenaRef)
+    , firstText(other.firstText)
+    , secondText(other.secondText)
+    , firstSize(other.firstSize)
+    , secondSize(other.secondSize)
+    , type(other.type)
+{
+}
+
+VariableSizedData::VariableSizedData(const VariableSizedData& first, const VariableSizedData& second, ArenaRef& arena)
+    : size(first.getSize() + second.getSize())
+    , arenaRef(&arena)
+    , firstText(first.getContent())
+    , secondText(second.getContent())
+    , firstSize(first.getSize())
+    , secondSize(second.getSize())
+    , type(VariableSizedType::COMPOUND)
 {
 }
 
@@ -45,11 +65,25 @@ VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) 
 
     size = other.size;
     ptrToVarSized = other.ptrToVarSized;
+    arenaRef = other.arenaRef;
+    firstText = other.firstText;
+    secondText = other.secondText;
+    firstSize = other.firstSize;
+    secondSize = other.secondSize;
+    type = other.type;
+
     return *this;
 }
 
 VariableSizedData::VariableSizedData(VariableSizedData&& other) noexcept
-    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized))
+    : size(std::move(other.size))
+    , ptrToVarSized(std::move(other.ptrToVarSized))
+    , arenaRef(other.arenaRef)
+    , firstText(other.firstText)
+    , secondText(other.secondText)
+    , firstSize(other.firstSize)
+    , secondSize(other.secondSize)
+    , type(other.type)
 {
 }
 
@@ -62,6 +96,13 @@ VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexc
 
     size = std::move(other.size);
     ptrToVarSized = std::move(other.ptrToVarSized);
+    arenaRef = other.arenaRef;
+    firstText = std::move(other.firstText);
+    secondText = std::move(other.secondText);
+    firstSize = std::move(other.firstSize);
+    secondSize = std::move(other.secondSize);
+    type = other.type;
+
     return *this;
 }
 
@@ -88,10 +129,28 @@ nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) 
     {
         return {false};
     }
-    const auto varSizedData = getContent();
+
     const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
-    return {compareResult};
+    if (type == VariableSizedType::REGULAR)
+    {
+        const auto varSizedData = getContent();
+        const auto compareResult = nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0;
+        return {compareResult};
+    }
+    const auto first = firstText;
+    const auto second = secondText;
+    const auto compareResult1 = (nautilus::memcmp(rhsVarSizedData, first.value(), firstSize.value()) == 0);
+    const auto compareResult2 = (nautilus::memcmp(rhsVarSizedData + firstSize.value(), second.value(), secondSize.value()) == 0);
+    return {compareResult1 && compareResult2};
+}
+
+void VariableSizedData::materialize() const
+{
+    ptrToVarSized = arenaRef->allocateMemory(size);
+
+    /// Writing the left value and then the right value to the new variable sized data
+    nautilus::memcpy(ptrToVarSized, firstText.value(), firstSize.value());
+    nautilus::memcpy(ptrToVarSized + firstSize.value(), secondText.value(), secondSize.value());
 }
 
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
@@ -111,6 +170,10 @@ nautilus::val<bool> VariableSizedData::operator!() const
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
+    if (type == VariableSizedType::COMPOUND)
+    {
+        materialize();
+    }
     return ptrToVarSized;
 }
 

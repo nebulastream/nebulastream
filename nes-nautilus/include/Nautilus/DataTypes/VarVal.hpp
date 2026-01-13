@@ -27,8 +27,6 @@
 #include <ErrorHandling.hpp>
 #include <val_concepts.hpp>
 
-#include "ConcatVariableSizedData.h"
-
 namespace NES
 {
 

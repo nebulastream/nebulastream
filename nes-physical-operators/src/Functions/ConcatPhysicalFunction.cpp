@@ -26,7 +26,6 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <val.hpp>
-#include "Nautilus/DataTypes/ConcatVariableSizedData.h"
 
 namespace NES
 {
@@ -41,7 +40,7 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     const auto leftValue = leftPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
     const auto rightValue = rightPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
 
-    VariableSizedData concatValue = static_cast<VariableSizedData>(ConcatVariableSizedData(leftValue, rightValue, arena));
+    VariableSizedData concatValue(leftValue, rightValue, arena);
     return concatValue;
 }
 
