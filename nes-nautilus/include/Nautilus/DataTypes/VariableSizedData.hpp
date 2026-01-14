@@ -39,7 +39,7 @@ public:
     VariableSizedData(VariableSizedData&& other) noexcept;
     VariableSizedData& operator=(VariableSizedData&& other) noexcept;
 
-    [[nodiscard]] nautilus::val<uint32_t> getSize() const;
+    [[nodiscard]] nautilus::val<uint64_t> getSize() const;
     /// Returns the content of the variable sized data, this means the pointer to the actual variable sized data.
     /// In other words, this returns the pointer to the actual data, not the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
