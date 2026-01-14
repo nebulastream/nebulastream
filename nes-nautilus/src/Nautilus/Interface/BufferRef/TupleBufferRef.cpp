@@ -47,7 +47,7 @@ namespace NES
 
 namespace
 {
-TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint32_t newBufferSize)
+TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
     if (tupleBufferProvider.getBufferSize() > newBufferSize)
@@ -126,11 +126,7 @@ TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, cons
     /// lower bound but not the upper bound.
     const auto varSized = childBuffer.getAvailableMemoryArea().subspan(variableSizedAccess.getOffset().getRawOffset());
 
-    /// Reading the first 32-bit (size of var sized) and then cutting the span to only contain the required var sized
-    alignas(uint32_t) std::array<std::byte, sizeof(uint32_t)> varSizedLengthBuffer{};
-    std::ranges::copy(varSized.first<sizeof(uint32_t)>(), varSizedLengthBuffer.begin());
-    const auto varSizedLength = std::bit_cast<uint32_t>(varSizedLengthBuffer);
-    return varSized.subspan(0, varSizedLength + sizeof(uint32_t));
+    return varSized.subspan(0, variableSizedAccess.getSize().getRawSize());
 }
 
 VarVal
@@ -183,14 +179,13 @@ VarVal TupleBufferRef::storeValue(
         +[](TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
             const int8_t* varSizedPtr,
-            const uint32_t varSizedValueLength,
+            const uint64_t varSizedValueLength,
             VariableSizedAccess::IndexOffsetSize* refToIndex)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
             const std::span varSizedValueSpan{varSizedPtr, varSizedPtr + varSizedValueLength};
-            const VariableSizedAccess writtenAccess
-                = writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
+            const VariableSizedAccess writtenAccess = writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
             *refToIndex = writtenAccess.getCombinedIdxOffset();
         },
         recordBuffer.getReference(),

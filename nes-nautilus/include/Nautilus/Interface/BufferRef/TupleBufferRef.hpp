@@ -48,15 +48,7 @@ public:
     TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
     virtual ~TupleBufferRef();
 
-    /// Used in letting the TupleBufferRef know, if the size of the variable sized data should be prepended or not.
-    enum PrependMode : uint8_t
-    {
-        PREPEND_NONE,
-        PREPEND_LENGTH_AS_UINT32
-    };
-
     /// @brief Writes the variable sized data to the buffer
-    template <PrependMode PrependMode>
     static VariableSizedAccess
     writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 
