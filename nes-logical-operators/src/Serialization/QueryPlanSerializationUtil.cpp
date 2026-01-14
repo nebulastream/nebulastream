@@ -65,19 +65,13 @@ void serialize(TypedLogicalOperator<> op, SerializableOperator& serialized)
         childrenIds.emplace_back(child.getId().getRawValue());
     }
     reflectedOperator.childrenIds = std::move(childrenIds);
-
-    /// TODO: Add support for traits
-    /// TODO: No need for if-clause, once all Operators support `.serialized` function
-    if (auto selectOp = op.tryGetAs<SelectionLogicalOperator>(); selectOp.has_value())
-    {
-        reflectedOperator.config = op->reflect();
-    }
-    else if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp.has_value())
-    {
-        reflectedOperator.config = op->reflect();
-    }
+    reflectedOperator.config = op->reflect();
 
     const auto serializedString = rfl::json::write(reflectedOperator);
+
+    const auto deserializedOpt = rfl::json::read<ReflectedOperator>(serializedString);
+    const auto deserialized = deserializedOpt.value();
+    // const auto error = deserialized.error();
     serialized.set_reflect(serializedString);
 }
 
@@ -99,7 +93,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         alreadySerialized.insert(itr.getId());
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         auto* sOp = serializableQueryPlan.add_operators();
-        itr.serialize(*sOp);
+        // itr.serialize(*sOp);
         serialize(itr, *sOp);
         TraitSetSerializationUtil::serialize(itr.getTraitSet(), sOp->mutable_trait_set());
     }

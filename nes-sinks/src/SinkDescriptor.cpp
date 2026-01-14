@@ -113,4 +113,27 @@ SerializableSinkDescriptor SinkDescriptor::serialize() const
     return serializedSinkDescriptor;
 }
 
+struct ReflectedSinkDescriptor
+{
+    std::variant<std::string, uint64_t> sinkName;
+    Schema schema;
+    std::string sinkType;
+
+};
+
+Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
+{
+    return reflect(ReflectedSinkDescriptor{
+        .sinkName = descriptor.getSinkName(),
+        .schema = *descriptor.getSchema(),
+        .sinkType = descriptor.getSinkType(),
+    });
+}
+
+SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 }

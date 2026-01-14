@@ -26,7 +26,7 @@ namespace NES
 
 struct Reflected
 {
-    Reflected():value(std::nullopt) {}
+    Reflected(): value(std::nullopt) {}
     ///NOLINTNEXTLINE
     Reflected(rfl::Generic value) : value(std::move(value)) { }
 
@@ -105,13 +105,20 @@ T unreflect(const Reflected& data)
 template <>
 struct Reflector<Reflected>
 {
-    Reflected operator()(const Reflected& field) const;
+    Reflected operator()(const Reflected& field) const
+    {
+        return field;
+    }
 };
 
-inline Reflected Reflector<Reflected>::operator()(const Reflected& field) const
+template <>
+struct Unreflector<Reflected>
 {
-    return field;
-}
+    Reflected operator()(const Reflected& field) const
+    {
+        return field;
+    }
+};
 
 static auto test = rfl::to_generic<>("hi");
 

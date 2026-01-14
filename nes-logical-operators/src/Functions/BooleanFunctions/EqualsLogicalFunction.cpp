@@ -35,7 +35,6 @@
 
 namespace NES
 {
-
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
@@ -130,10 +129,14 @@ SerializedFunction EqualsLogicalFunction::serialized() const
     return serializedFunction;
 }
 
-Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& _) const
+struct ReflectedEqualsLogicalFunction
 {
-    // TODO to implement
-    throw NotImplemented("Reflector");
+    DataType::Type datatype;
+};
+
+Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
+{
+    return reflect(ReflectedEqualsLogicalFunction{function.dataType.type});
 }
 
 EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& _) const

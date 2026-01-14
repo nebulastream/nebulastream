@@ -137,10 +137,6 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-struct ReflectedSelectionLogicalOperator
-{
-    Reflected predicate;
-};
 
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
@@ -171,10 +167,17 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& _) const
+struct ReflectedSelectionLogicalOperator
 {
-    // TODO to implement
-    throw NotImplemented("Reflector");
+    std::string function;
+    Reflected predicate;
+};
+
+
+
+Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
+{
+    return reflect(rfl::to_generic(op.getPredicate()));
 }
 
 SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& _) const

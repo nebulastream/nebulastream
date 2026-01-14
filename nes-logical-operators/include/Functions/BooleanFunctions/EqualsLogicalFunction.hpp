@@ -54,6 +54,8 @@ public:
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend struct Reflector<EqualsLogicalFunction>;
 };
 
 template <>

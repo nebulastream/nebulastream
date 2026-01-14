@@ -104,6 +104,20 @@ public:
 
     friend struct SinkLogicalOperator;
 };
+
+template <>
+struct Reflector<SinkDescriptor>
+{
+    Reflected operator()(const SinkDescriptor& op) const;
+};
+
+template <>
+struct Unreflector<SinkDescriptor>
+{
+    SinkDescriptor operator()(const Reflected& reflected) const;
+};
+
+
 }
 
 template <>

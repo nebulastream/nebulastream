@@ -281,9 +281,28 @@ private:
     std::shared_ptr<const NES::detail::ErasedLogicalFunction> self;
 };
 
+template <>
+struct Reflector<detail::ErasedLogicalFunction>
+{
+    Reflected operator()(const detail::ErasedLogicalFunction& function) const
+    {
+        return function.reflect();
+    }
+};
+
+
+template <typename Checked>
+struct Reflector<TypedLogicalFunction<Checked>>
+{
+    Reflected operator()(const TypedLogicalFunction<Checked>& function) const
+    {
+        return reflect(*function);
+    }
+};
+
+
 namespace detail
 {
-
 /// @brief Wrapper type that acts as a bridge between a type satisfying LogicalFunctionConcept and TypedLogicalFunction
 template <LogicalFunctionConcept FunctionType>
 struct FunctionModel : ErasedLogicalFunction
