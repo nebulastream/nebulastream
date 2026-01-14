@@ -18,7 +18,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined]"
+    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined] [--name]"
     echo "Options:"
     echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx)"
     echo "  -l, --local          Build all Docker images locally"
@@ -28,6 +28,7 @@ usage() {
     echo "  --address            Enable Address Sanitizer"
     echo "  --thread             Enable Thread Sanitizer"
     echo "  --undefined          Enable Undefined Behavior Sanitizer"
+    echo "  --name               Add a name suffix to the tag (nes-development:local-<name>)"
     exit 1
 }
 
@@ -37,6 +38,7 @@ BUILD_LOCAL=0
 FORCE_ROOTLESS=0
 STDLIB=""
 SANITIZER="none"
+NAME_SUFFIX=""
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -77,6 +79,16 @@ while [[ "$#" -gt 0 ]]; do
             SANITIZER="undefined"
             shift
             ;;
+        --name)
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                NAME_SUFFIX="$2"
+                echo "Using name suffix: ${NAME_SUFFIX}"
+                shift 2
+            else
+                echo "Error: --name requires a name argument"
+                usage
+            fi
+            ;;
         -h|--help)
             usage
             ;;
@@ -110,10 +122,34 @@ if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
     esac
 fi
 
+# If name suffix not set via command line, ask the user
+if [[ -z "$NAME_SUFFIX" ]]; then
+  if [ "$NON_INTERACTIVE" = 0 ]; then
+    read -p "Do you want to specify a name for the Docker image? [y/N] " -r
+    if [[ $REPLY =~ ^([yY][eE][sS]|[yY])$ ]]; then
+      read -p "Enter the name suffix for the tax (image will be nes-development:local-<suffix>): " -r NAME_SUFFIX
+      if [[ -z "$NAME_SUFFIX" ]]; then
+        echo "No name provided, using default image name"
+      else
+        echo "Using name suffix: ${NAME_SUFFIX}"
+      fi
+    fi
+  fi
+fi
+
+# Construct the final image name
+if [[ -n "$NAME_SUFFIX" ]]; then
+  FINAL_IMAGE_NAME="nebulastream/nes-development:local-${NAME_SUFFIX}"
+else
+  FINAL_IMAGE_NAME="nebulastream/nes-development:local"
+fi
+
 # Ask for confirmation of settings
+echo # Move to a new line after input
 echo "Build configuration:"
 echo "- Standard library: ${STDLIB}"
 echo "- Sanitizer: ${SANITIZER}"
+echo "- Image name: ${FINAL_IMAGE_NAME}"
 if [ "$NON_INTERACTIVE" = 0 ]; then
   read -p "Is this configuration correct? [Y/n] " -r
   echo # Move to a new line after input
@@ -181,7 +217,7 @@ if [ $BUILD_LOCAL -eq 1 ]; then
             -t nebulastream/nes-development:default .
 
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
-               -t nebulastream/nes-development:local \
+               -t ${FINAL_IMAGE_NAME} \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
@@ -196,7 +232,7 @@ Either build locally with the -l option, or open a PR (draft) and let the CI bui
 
   echo "Basing local development image on remote on nebulastream/nes-development:${TAG}"
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
-               -t nebulastream/nes-development:local \
+               -t ${FINAL_IMAGE_NAME} \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
