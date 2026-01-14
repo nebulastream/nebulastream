@@ -18,19 +18,21 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--asan|--tsan|--ubsan|--no-sanitizer]"
+    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined]"
     echo "Options:"
+    echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx)"
     echo "  -l, --local          Build all Docker images locally"
     echo "  -r, --rootless       Force rootless Docker mode"
     echo "  --libstdcxx          Use libstdcxx standard library"
     echo "  --libcxx             Use libcxx standard library"
-    echo "  --address               Enable Address Sanitizer"
-    echo "  --thread               Enable Thread Sanitizer"
-    echo "  --undefined              Enable Undefined Behavior Sanitizer"
+    echo "  --address            Enable Address Sanitizer"
+    echo "  --thread             Enable Thread Sanitizer"
+    echo "  --undefined          Enable Undefined Behavior Sanitizer"
     exit 1
 }
 
 # If set we built rebuilt all docker images locally
+NON_INTERACTIVE=0
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
 STDLIB=""
@@ -38,6 +40,10 @@ SANITIZER="none"
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
+        -y|--yes)
+            NON_INTERACTIVE=1
+            shift
+            ;;
         -l|--local)
             BUILD_LOCAL=1
             shift
@@ -86,6 +92,10 @@ done
 
 # Check if the standard library is set, otherwise prompt the user
 if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
+  if [ "$NON_INTERACTIVE" = 1 ]; then
+    echo -e "${RED}Error: Non-interactive mode requires either --libstdcxx or --libcxx to be specified${NC}"
+    usage
+  fi
   echo "Please choose a standard library implementation:"
     echo "1. llvm libc++ "
     echo "2. gcc libstdc++ "
@@ -104,12 +114,16 @@ fi
 echo "Build configuration:"
 echo "- Standard library: ${STDLIB}"
 echo "- Sanitizer: ${SANITIZER}"
-read -p "Is this configuration correct? [Y/n] " -r
-echo # Move to a new line after input
-input=${REPLY:-Y}
-if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
-  echo "Please re-run the script with the correct options."
-  exit 1
+if [ "$NON_INTERACTIVE" = 0 ]; then
+  read -p "Is this configuration correct? [Y/n] " -r
+  echo # Move to a new line after input
+  input=${REPLY:-Y}
+  if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo "Please re-run the script with the correct options."
+    exit 1
+  fi
+else
+  echo "Running in non-interactive mode, proceeding with configuration..."
 fi
 
 cd "$(git rev-parse --show-toplevel)"
