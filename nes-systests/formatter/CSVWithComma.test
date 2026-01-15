@@ -1,3 +1,7 @@
+# name: formatter/CSVWithComma.test
+# description: successful handling should ignore delimiters in double quotes
+# groups: [Formatter]
+
 CREATE LOGICAL SOURCE stream(text VARSIZED);
 CREATE PHYSICAL SOURCE FOR stream TYPE FILE;
 ATTACH FILE small/comma.csv
