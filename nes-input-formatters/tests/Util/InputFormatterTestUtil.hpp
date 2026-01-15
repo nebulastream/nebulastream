@@ -351,10 +351,8 @@ void writeFieldToBuffer(
     /// Creating a Nautilus::Record containing the current field
     if constexpr (std::is_same_v<T, std::string>)
     {
-        const auto varSizedAccess
-            = TupleBufferRef::writeVarSized<TupleBufferRef::PREPEND_LENGTH_AS_UINT32>(tupleBufferRef, bufferProvider, fieldValue);
-        const nautilus::val<NES::VariableSizedAccess> access{varSizedAccess};
-        record.write(fieldName, access.convertToValue());
+        VariableSizedData value{fieldValue, fieldValue.size()};
+        record.write(fieldName, value);
     }
     else
     {
