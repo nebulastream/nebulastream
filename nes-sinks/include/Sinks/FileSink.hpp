@@ -30,6 +30,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <SinksParsing/Format.hpp>
+#include <SinksParsing/SchemaFormatter.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -61,8 +62,8 @@ private:
     std::string outputFilePath;
     bool isAppend;
     bool isOpen;
-    std::unique_ptr<Format> formatter;
     folly::Synchronized<std::ofstream> outputFileStream;
+    SchemaFormatter schemaFormatter;
 };
 
 struct ConfigParametersFile

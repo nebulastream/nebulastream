@@ -53,7 +53,7 @@ std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
     return schema;
 }
 
-std::optional<std::string_view> SinkDescriptor::getFormatType() const
+std::string_view SinkDescriptor::getFormatType() const
 {
     try
     {
@@ -61,8 +61,8 @@ std::optional<std::string_view> SinkDescriptor::getFormatType() const
     }
     catch (std::out_of_range& e)
     {
-        NES_WARNING("Sinks of the type {} do not have an INPUT_FORMAT parameter.", getSinkType());
-        return std::nullopt;
+        /// If no output format is set, then the format will be native
+        return "Native";
     }
 }
 

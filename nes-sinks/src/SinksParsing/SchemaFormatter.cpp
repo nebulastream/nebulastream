@@ -12,39 +12,24 @@
     limitations under the License.
 */
 
-#pragma once
+#include <SinksParsing/SchemaFormatter.hpp>
 
-#include <ostream>
 #include <ranges>
 #include <sstream>
 #include <string>
-#include <DataTypes/Schema.hpp>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
-#include <BackpressureChannel.hpp>
-#include <ExecutablePipelineStage.hpp>
 
 namespace NES
 {
-
-class Sink : public ExecutablePipelineStage
+std::string SchemaFormatter::getFormattedSchema()
 {
-public:
-    explicit Sink(BackpressureController backpressureController) : backpressureController(std::move(backpressureController)) { }
-
-    ~Sink() override = default;
-    friend std::ostream& operator<<(std::ostream& out, const Sink& sink);
-
-    BackpressureController backpressureController;
-};
-
+    PRECONDITION(schema.hasFields(), "Encountered schema without fields.");
+    std::stringstream ss;
+    ss << schema->getFields().front().name << ":" << magic_enum::enum_name(schema->getFields().front().dataType.type);
+    for (const auto& field : schema->getFields() | std::views::drop(1))
+    {
+        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type);
+    }
+    return fmt::format("{}\n", ss.str());
 }
-
-namespace fmt
-{
-template <>
-struct formatter<NES::Sink> : ostream_formatter
-{
-};
 }

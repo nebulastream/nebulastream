@@ -70,12 +70,18 @@ Record ColumnTupleBufferRef::readRecord(
     return record;
 }
 
-void ColumnTupleBufferRef::writeRecord(
+nautilus::val<size_t> ColumnTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    nautilus::val<bool> checkSpaceBeforeWriting) const
 {
+    if (checkSpaceBeforeWriting && (recordIndex >= capacity))
+    {
+        return std::string::npos;
+    }
+
     const auto bufferAddress = recordBuffer.getMemArea();
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
@@ -89,6 +95,7 @@ void ColumnTupleBufferRef::writeRecord(
         const auto& value = rec.read(name);
         storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
     }
+    return 1;
 }
 
 std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const

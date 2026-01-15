@@ -14,6 +14,7 @@
 
 #include <Sinks/FileSink.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -33,6 +34,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <SinksParsing/JSONFormat.hpp>
+#include <SinksParsing/SchemaFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
@@ -48,18 +50,8 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
+    , schemaFormatter(SchemaFormatter(sinkDescriptor.getSchema()))
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
-    {
-        case InputFormat::CSV:
-            formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
-            break;
-        case InputFormat::JSON:
-            formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
-            break;
-        default:
-            throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
-    }
 }
 
 std::ostream& FileSink::toString(std::ostream& str) const
@@ -100,7 +92,7 @@ void FileSink::start(PipelineExecutionContext&)
     /// Write the schema to the file, if it is empty.
     if (stream->tellp() == 0)
     {
-        const auto schemaStr = formatter->getFormattedSchema();
+        const auto schemaStr = schemaFormatter.getFormattedSchema();
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
@@ -111,11 +103,17 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     PRECONDITION(isOpen, "Sink was not opened");
 
     {
-        auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-        NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
             const auto wlocked = outputFileStream.wlock();
-            wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
+            /// Number of tuples corrsponds to the amount of written bytes overall, some might be in child buffers
+            const uint64_t tupleBufferBytes = std::min(inputTupleBuffer.getBufferSize(), inputTupleBuffer.getNumberOfTuples());
+            wlocked->write(inputTupleBuffer.getAvailableMemoryArea<char>().data(), tupleBufferBytes);
+            /// Write the contents of all the child buffers
+            for (size_t index = 0; index < inputTupleBuffer.getNumberOfChildBuffers(); index++)
+            {
+                auto childBuffer = inputTupleBuffer.loadChildBuffer(VariableSizedAccess::Index(index));
+                wlocked->write(childBuffer.getAvailableMemoryArea<char>().data(), static_cast<int64_t>(childBuffer.getNumberOfTuples()));
+            }
             wlocked->flush();
         }
     }

@@ -14,12 +14,18 @@
 
 #pragma once
 
-
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <OutputFormatters/OutputFormatter.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES
 {
@@ -28,9 +34,7 @@ class LowerSchemaProvider;
 
 namespace NES
 {
-
-/// Implements BufferRef. Provides row-wise memory access.
-class RowTupleBufferRef final : public TupleBufferRef
+class OutputFormatterBufferRef final : public TupleBufferRef
 {
     struct Field
     {
@@ -40,18 +44,17 @@ class RowTupleBufferRef final : public TupleBufferRef
     };
 
     std::vector<Field> fields;
+    std::shared_ptr<OutputFormatter> formatter;
 
-    /// Private constructor to prevent direct instantiation
-    explicit RowTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
+    explicit OutputFormatterBufferRef(std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, uint64_t tupleSize, uint64_t bufferSize);
 
-    /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
 
 public:
-    RowTupleBufferRef(const RowTupleBufferRef&) = default;
-    RowTupleBufferRef(RowTupleBufferRef&&) = default;
+    OutputFormatterBufferRef(const OutputFormatterBufferRef&) = default;
+    OutputFormatterBufferRef(OutputFormatterBufferRef&&) = default;
 
-    ~RowTupleBufferRef() override = default;
+    ~OutputFormatterBufferRef() override = default;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 
@@ -63,11 +66,10 @@ public:
         nautilus::val<uint64_t>& recordIndex) const override;
 
     nautilus::val<size_t> writeRecord(
-        nautilus::val<uint64_t>& recordIndex,
+        nautilus::val<uint64_t>& bytesWritten,
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         nautilus::val<bool> checkSpaceBeforeWriting = nautilus::val<bool>(false)) const override;
 };
-
 }

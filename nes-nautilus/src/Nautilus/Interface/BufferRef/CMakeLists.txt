@@ -15,4 +15,5 @@ add_source_files(nes-nautilus
         ColumnTupleBufferRef.cpp
         RowTupleBufferRef.cpp
         LowerSchemaProvider.cpp
+        OutputFormatterBufferRef.cpp
         )

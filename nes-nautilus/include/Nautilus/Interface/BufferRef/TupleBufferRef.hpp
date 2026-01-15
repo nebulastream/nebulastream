@@ -70,11 +70,15 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getMemArea()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
-    virtual void writeRecord(
+    /// @param checkSpaceBeforeWriting: If true, the function will evaluate if the record index fits into the buffer based on the capacity member. Should remain false if the capacity does not matter.
+    /// Returns the number of records (or bytes in the case of OutputFormatter) that were written into the buffer
+    /// std::string::npos is returned, the buffer must be emitted first
+    virtual nautilus::val<size_t> writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        nautilus::val<bool> checkSpaceBeforeWriting = nautilus::val<bool>(false)) const
         = 0;
 
     [[nodiscard]] uint64_t getCapacity() const;

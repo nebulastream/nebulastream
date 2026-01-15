@@ -118,6 +118,26 @@ void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, bufferRef));
 }
 
+/// Helper functions to add an emit operator that also performs output formatting. A sink should follow such emit operators at all times, since
+/// our physical operators cannot handle data that is not column / row formatted.
+void addOutputFormattingEmit(
+    const std::shared_ptr<Pipeline>& pipeline,
+    const PhysicalOperatorWrapper& wrappedOp,
+    uint64_t configuredBufferSize,
+    const std::string& outputFormat)
+{
+    PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
+    const auto& schema = wrappedOp.getOutputSchema();
+    INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
+
+    const auto bufferRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormat);
+
+    /// Create an operator handler for the emit
+    const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
+    pipeline->getOperatorHandlers().emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
+    pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, bufferRef));
+}
+
 enum class PipelinePolicy : uint8_t
 {
     Continue, /// Uses the current pipeline for the next operator
@@ -138,7 +158,23 @@ void buildPipelineRecursively(
     {
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
-            addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+            /// If the operator is a sink we might have to create an output formatter
+            if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+            {
+                auto outputFormat = toUpperCase(sink->getDescriptor().getFormatType());
+                if (outputFormat != "NATIVE")
+                {
+                    addOutputFormattingEmit(currentPipeline, *prevOpWrapper, configuredBufferSize, std::string(outputFormat));
+                }
+                else
+                {
+                    addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+                }
+            }
+            else
+            {
+                addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+            }
         }
         currentPipeline->addSuccessor(it->second, currentPipeline);
         return;
@@ -206,12 +242,12 @@ void buildPipelineRecursively(
     /// Case 3: Sink Operator – treat sinks as pipeline breakers
     if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
     {
+        const auto sinkFormat = toUpperCase(sink->getDescriptor().getFormatType());
         if (currentPipeline->isSourcePipeline())
         {
             const auto sourceFormat = toUpperCase(
                 currentPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig().parserType);
 
-            const auto sinkFormat = sink->getDescriptor().getFormatType() ? sink->getDescriptor().getFormatType().value() : "";
             /// Add a formatting pipeline if the source-sink pipelines do not simply forward natively formatted data
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers
             /// may start and end with a cut-off tuples (rows in the CSV case)
@@ -222,7 +258,17 @@ void buildPipelineRecursively(
                     *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
-                addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
+                if (sinkFormat == "NATIVE")
+                {
+                    addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
+                }
+                else
+                {
+                    /// The output format is treated in a case sensitive manner, since it serves as a key to the output formatter registry.
+                    /// That's why we cannot pass the upper case sinkFormat.
+                    addOutputFormattingEmit(
+                        sourcePipeline, *opWrapper, configuredBufferSize, std::string(sink->getDescriptor().getFormatType()));
+                }
 
                 INVARIANT(sourcePipeline->getRootOperator().getChild().has_value(), "Scan operator requires at least an emit as child.");
                 const auto emitOperatorId = sourcePipeline->getRootOperator().getChild().value().getId();
@@ -238,7 +284,15 @@ void buildPipelineRecursively(
         /// Add emit first if there is one needed
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
-            addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+            if (sinkFormat == "NATIVE")
+            {
+                addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+            }
+            else
+            {
+                addOutputFormattingEmit(
+                    currentPipeline, *prevOpWrapper, configuredBufferSize, std::string(sink->getDescriptor().getFormatType()));
+            }
         }
         const auto newPipeline = std::make_shared<Pipeline>(*sink);
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
