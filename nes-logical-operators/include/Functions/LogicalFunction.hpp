@@ -290,13 +290,28 @@ struct Reflector<detail::ErasedLogicalFunction>
     }
 };
 
+struct ReflectedLogicalFunction
+{
+    std::string functionType;
+    Reflected functionConfig;
+};
+
 
 template <typename Checked>
 struct Reflector<TypedLogicalFunction<Checked>>
 {
     Reflected operator()(const TypedLogicalFunction<Checked>& function) const
     {
-        return reflect(*function);
+        return reflect(ReflectedLogicalFunction{std::string{function.getType()}, reflect(*function)});
+    }
+};
+
+template <typename Checked>
+struct Unreflector<TypedLogicalFunction<Checked>>
+{
+    TypedLogicalFunction<Checked> operator()(const Reflected& _) const
+    {
+        throw NotImplemented("Unreflector");
     }
 };
 

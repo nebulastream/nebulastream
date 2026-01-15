@@ -118,10 +118,15 @@ SerializedFunction ConstantValueLogicalFunction::serialized() const
     return serialized;
 }
 
-Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& _) const
+struct ReflectedConstantValueLogicalFunction
 {
-    // TODO to implement
-    throw NotImplemented("Reflector");
+    std::string value;
+    DataType::Type type;
+};
+
+Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function) const
+{
+    return reflect(ReflectedConstantValueLogicalFunction{function.getConstantValue(), function.getDataType().type});
 }
 
 ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& _) const
