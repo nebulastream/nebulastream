@@ -183,6 +183,26 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType));
             }
+            case DataType::Type::FLOAT32: {
+                const nautilus::val<float> castedVal = value.cast<nautilus::val<float>>();
+                return nautilus::invoke(
+                    formatValToString<float>,
+                    castedVal,
+                    fieldPointer,
+                    remainingSize,
+                    isLastField,
+                    nautilus::val<const DataType*>(&fieldType));
+            }
+            case DataType::Type::FLOAT64: {
+                const nautilus::val<double> castedVal = value.cast<nautilus::val<double>>();
+                return nautilus::invoke(
+                    formatValToString<double>,
+                    castedVal,
+                    fieldPointer,
+                    remainingSize,
+                    isLastField,
+                    nautilus::val<const DataType*>(&fieldType));
+            }
             default: {
                 return std::string::npos;
             }

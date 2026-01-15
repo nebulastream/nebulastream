@@ -85,7 +85,7 @@ ERROR 2004
 
 SELECT * FROM MissingKeyFronJSONStream INTO Checksum();
 ----
-ERROR 2004
+ERROR 9999
 
 SELECT * FROM ExtraKeyJson INTO File();
 ----
