@@ -428,7 +428,7 @@ async fn connection_handler<C: Communication + 'static>(
     while let Ok(control_message) = listener.recv().await {
         match control_message {
             NetworkingConnectionControlCommand::RegisterChannel(channel, response) => {
-                let (sender, queue) = async_channel::bounded(100);
+                let (sender, queue) = async_channel::bounded(10);
                 let channel_cancellation = CancellationToken::new();
 
                 let pending_channel = PendingChannel {

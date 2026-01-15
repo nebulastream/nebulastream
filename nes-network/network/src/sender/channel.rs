@@ -357,31 +357,42 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     ///
     /// The event loop has two modes based on the current state:
     ///
-    /// **Mode 1: Backpressure Active** (when `pending_writes` is empty OR `wait_for_ack` is full)
-    /// - Only listens to: software commands and network responses
+    /// **Mode 1: Backpressure Limit Reached** (when total inflight buffers >= `MAX_PENDING_ACKS`)
+    /// - Only listens to: network responses
+    /// - Does NOT read software commands (applies backpressure to sender)
     /// - Does NOT attempt to send new buffers
-    /// - This prevents exceeding the `MAX_PENDING_ACKS` limit
+    /// - This prevents exceeding the `MAX_PENDING_ACKS` limit and forces acknowledgment processing
     ///
-    /// **Mode 2: Normal Operation** (when buffers are pending AND window has space)
-    /// - Listens to: software commands, network responses, AND attempts to send pending buffers
-    /// - Actively transmits data while managing flow control
+    /// **Mode 2: Normal Operation** (when under backpressure limit)
+    /// - Listens to: software commands and network responses
+    /// - Additionally attempts to send from `pending_writes` if not empty
+    /// - This mode handles both active transmission (when buffers pending) and idle waiting (when no buffers pending)
     ///
     /// This two-mode approach ensures the sliding window is respected while maximizing
     /// throughput when possible.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
-            // Mode 1: Backpressure Active - no pending data or window is full
-            if self.pending_writes.is_empty() || self.wait_for_ack.len() >= MAX_PENDING_ACKS {
-                select! {
-                    response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader) => self.handle_response(response?)?,
-                    request = Self::read_from_software(&self.cancellation_token, &mut self.queue) => self.handle_request(request?).await?,
-                }
-            } else {
-                // Mode 2: Normal Operation - actively send pending buffers
+            let number_of_inflight_buffers = self.pending_writes.len() + self.wait_for_ack.len();
+
+            // reached the backpressure limit. We will only read from the other side, to either
+            // acknowledge inflight packets or react to the other side closing the channel
+            if number_of_inflight_buffers >= MAX_PENDING_ACKS {
+                let response =
+                    Self::read_from_other_side(&self.cancellation_token, &mut self.reader).await?;
+                self.handle_response(response)?;
+                continue;
+            }
+
+            if !self.pending_writes.is_empty() {
                 select! {
                     response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader) => self.handle_response(response?)?,
                     request = Self::read_from_software(&self.cancellation_token, &mut self.queue) => self.handle_request(request?).await?,
                     send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack) => send_result?,
+                }
+            } else {
+                select! {
+                    response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader) => self.handle_response(response?)?,
+                    request = Self::read_from_software(&self.cancellation_token, &mut self.queue) => self.handle_request(request?).await?,
                 }
             }
         }
