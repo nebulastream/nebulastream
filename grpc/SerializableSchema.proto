@@ -18,17 +18,11 @@ package NES;
 
 message SerializableSchema{
 
-  enum MemoryLayoutType {
-    ROW_LAYOUT = 0;
-    COL_LAYOUT = 1;
-  }
-
   message SerializableField{
     string name = 1;
     SerializableDataType type = 2;
   }
 
   repeated SerializableField fields = 1;
-  MemoryLayoutType layoutType = 2;
 }
 
