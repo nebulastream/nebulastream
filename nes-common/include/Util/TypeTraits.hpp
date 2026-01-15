@@ -15,6 +15,7 @@
 #pragma once
 #include <optional>
 #include <type_traits>
+#include <variant>
 
 namespace NES
 {
@@ -40,4 +41,16 @@ struct IsOptional<std::optional<T>> : std::true_type
 
 template <typename T>
 concept Optional = IsOptional<T>::value;
+
+template <typename T, typename Variant>
+struct IsVariantMember;
+
+template <typename T, typename... Ts>
+struct IsVariantMember<T, std::variant<Ts...>> : std::disjunction<std::is_same<T, Ts>...>
+{
+};
+
+template <typename T, typename Variant>
+concept VariantMember = IsVariantMember<T, Variant>::value;
+
 }
