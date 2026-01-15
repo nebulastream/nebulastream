@@ -15,16 +15,22 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <iterator>
 #include <optional>
 #include <span>
+#include <vector>
 #include <sys/types.h>
-
+#include <val.hpp>
+#include "DataTypes/Schema.hpp"
 #include "ErrorHandling.hpp"
+#include "Nautilus/DataTypes/VarVal.hpp"
 #include "Runtime/AbstractBufferProvider.hpp"
 #include "Runtime/TupleBuffer.hpp"
+#include "Util/Ranges.hpp"
 
 class HashMap
 {
+public:
     struct StoragePageHeader
     {
         uint32_t magic = 0xABADBABE;
@@ -39,17 +45,44 @@ class HashMap
         std::span<std::byte> value;
     };
 
+    struct ConstEntry
+    {
+        ConstEntry(Entry e) : key(e.key), value(e.value) { }
+
+        std::span<const std::byte> key;
+        std::span<const std::byte> value;
+    };
+
     struct Page
     {
-        NES::TupleBuffer storagePage;
+        StoragePageHeader* storagePage;
 
-        StoragePageHeader& header() { return storagePage.getAvailableMemoryArea<StoragePageHeader>()[0]; }
+        [[nodiscard]] const StoragePageHeader& header() const { return *storagePage; }
+
+        StoragePageHeader& header() { return *storagePage; }
+
+        std::span<std::byte> entries(const HashMap& map)
+        {
+            auto entry_size = map.header().key_size + map.header().value_size;
+            return std::span(
+                reinterpret_cast<std::byte*>(storagePage) + sizeof(StoragePageHeader), map.header().numberOfEntriesPerPage * entry_size);
+        }
+
+        ConstEntry at(const HashMap& map, size_t index) const { return const_cast<Page*>(this)->at(map, index); }
+
+        std::optional<Page> nextPage(HashMap& map)
+        {
+            if (!header().hasNext)
+            {
+                return {};
+            }
+            return Page{map.buffer.loadChildBuffer(header().nextPage).getAvailableMemoryArea<StoragePageHeader>().data()};
+        }
 
         Entry at(const HashMap& map, size_t index)
         {
             auto entry_size = map.header().key_size + map.header().value_size;
-            auto entries = storagePage.getAvailableMemoryArea<std::byte>().subspan(sizeof(StoragePageHeader));
-            auto entry = entries.subspan(index * entry_size, entry_size);
+            auto entry = entries(map).subspan(index * entry_size, entry_size);
             return Entry{entry.subspan(0, map.header().key_size), entry.subspan(map.header().key_size)};
         }
 
@@ -60,7 +93,12 @@ class HashMap
             std::ranges::copy(value, entry.value.begin());
         }
 
-        std::optional<std::span<const std::byte>> get(std::span<const std::byte> key, const HashMap& map)
+        [[nodiscard]] std::optional<const std::span<std::byte>> get(std::span<const std::byte> key, const HashMap& map) const
+        {
+            return const_cast<Page*>(this)->get(key, map);
+        }
+
+        std::optional<std::span<std::byte>> get(std::span<const std::byte> key, const HashMap& map)
         {
             for (ssize_t i = header().numEntries - 1; i >= 0; i--)
             {
@@ -79,17 +117,20 @@ class HashMap
         uint32_t numberOfEntries = 0;
         NES::VariableSizedAccess::Index childIndex = NES::VariableSizedAccess::Index(0);
 
-        NES::TupleBuffer prependBuffer(HashMap& map, NES::AbstractBufferProvider& bufferProvider)
+        StoragePageHeader* prependBuffer(HashMap& map, NES::AbstractBufferProvider& bufferProvider)
         {
             auto pageBuffer = bufferProvider.getBufferBlocking();
             auto storagePage = new (static_cast<void*>(pageBuffer.getAvailableMemoryArea<std::byte>().data())) StoragePageHeader();
             storagePage->hasNext = numberOfEntries != 0;
             storagePage->nextPage = childIndex;
             childIndex = map.buffer.storeChildBuffer(pageBuffer);
-            return map.buffer.loadChildBuffer(childIndex);
+            return storagePage;
         }
 
-        Page currentPage(const HashMap& map) const { return Page{map.buffer.loadChildBuffer(childIndex)}; }
+        Page currentPage(const HashMap& map) const
+        {
+            return Page{map.buffer.loadChildBuffer(childIndex).getAvailableMemoryArea<StoragePageHeader>().data()};
+        }
 
         Page availablePage(HashMap& map, NES::AbstractBufferProvider& bufferProvider)
         {
@@ -100,14 +141,26 @@ class HashMap
             return currentPage(map);
         }
 
-        void
+        bool
         insert(std::span<const std::byte> key, std::span<const std::byte> value, HashMap& map, NES::AbstractBufferProvider& bufferProvider)
         {
+            if (auto entry = get(key, map))
+            {
+                std::ranges::copy(value, entry->begin());
+                return false;
+            }
+
             availablePage(map, bufferProvider).insert(key, value, map);
             numberOfEntries++;
+            return true;
         }
 
-        std::optional<std::span<const std::byte>> get(std::span<const std::byte> key, const HashMap& map) const
+        [[nodiscard]] std::optional<std::span<const std::byte>> get(std::span<const std::byte> key, const HashMap& map) const
+        {
+            return const_cast<Bucket*>(this)->get(key, map);
+        }
+
+        std::optional<std::span<std::byte>> get(std::span<const std::byte> key, const HashMap& map)
         {
             if (numberOfEntries == 0)
             {
@@ -126,7 +179,7 @@ class HashMap
                 {
                     return std::nullopt;
                 }
-                page = Page{map.buffer.loadChildBuffer(page.header().nextPage)};
+                page = Page{map.buffer.loadChildBuffer(page.header().nextPage).getAvailableMemoryArea<StoragePageHeader>().data()};
             }
         }
     };
@@ -165,7 +218,6 @@ class HashMap
         return {buckets, header().numberOfBuckets};
     }
 
-public:
     struct Options
     {
         uint32_t keySize;
@@ -180,6 +232,14 @@ public:
             = (buffer.getBufferSize() - sizeof(StoragePageHeader)) / (options.keySize + options.valueSize);
         new (static_cast<void*>(buffer.getAvailableMemoryArea<std::byte>().data()))
             HashMapHeader{numberOfBuckets, options.keySize, options.valueSize, numberOfEntriesPerPage};
+
+        auto* buckets = reinterpret_cast<Bucket*>(buffer.getAvailableMemoryArea<std::byte>().data() + sizeof(HashMapHeader));
+        for (size_t i = 0; i < numberOfBuckets; i++)
+        {
+            new (buckets) Bucket{};
+            buckets++;
+        }
+
         return buffer;
     }
 
@@ -195,8 +255,14 @@ public:
         NES::AbstractBufferProvider& bufferProvider,
         std::function<size_t(std::span<const std::byte>)> hash)
     {
-        header().numberOfEntries++;
-        return buckets()[hash(key) % header().numberOfBuckets].insert(key, value, *this, bufferProvider);
+        auto inserted = buckets()[hash(key) % header().numberOfBuckets].insert(key, value, *this, bufferProvider);
+
+        if (inserted)
+        {
+            header().numberOfEntries++;
+        }
+
+        return inserted;
     }
 
     std::optional<std::span<const std::byte>>
@@ -206,4 +272,194 @@ public:
     }
 
     [[nodiscard]] size_t size() const { return header().numberOfEntries; }
+
+    struct Iterator
+    {
+        // 1. Required Type Aliases for iterator_traits
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = ConstEntry;
+        using pointer = ConstEntry;
+        using reference = ConstEntry;
+
+        HashMap* map = nullptr;
+        size_t bucketIndex = 0;
+        Page page{};
+        size_t entryIndex = 0;
+
+        Iterator(HashMap* map, size_t bucket_index, Page page, size_t entry_index)
+            : map(map), bucketIndex(bucket_index), page(std::move(page)), entryIndex(entry_index)
+        {
+        }
+
+        Iterator(HashMap* map) : map(map)
+        {
+            if (map)
+            {
+                for (auto [index, bucket] : NES::views::enumerate(map->buckets()))
+                {
+                    if (bucket.numberOfEntries > 0)
+                    {
+                        bucketIndex = index;
+                        page = bucket.currentPage(*map);
+                        entryIndex = 0;
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 2. Dereference operators
+        reference operator*() const { return page.at(*map, entryIndex); }
+
+        pointer operator->() { return page.at(*map, entryIndex); }
+
+        // 3. Prefix increment
+        Iterator& operator++()
+        {
+            if (map == nullptr)
+            {
+                return *this;
+            }
+
+            if (entryIndex + 1 < page.header().numEntries)
+            {
+                entryIndex++;
+                return *this;
+            }
+
+            if (auto nextPage = page.nextPage(*map))
+            {
+                entryIndex = 0;
+                page = *nextPage;
+                return *this;
+            }
+
+            for (auto [index, bucket] : NES::views::enumerate(map->buckets().subspan(bucketIndex + 1)))
+            {
+                if (bucket.numberOfEntries > 0)
+                {
+                    bucketIndex += index + 1;
+                    page = bucket.currentPage(*map);
+                    entryIndex = 0;
+                    return *this;
+                }
+            }
+
+            bucketIndex = 0;
+            page = {};
+            entryIndex = 0;
+            map = nullptr;
+            return *this;
+        }
+
+        // 4. Postfix increment
+        Iterator operator++(int)
+        {
+            Iterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        // 5. Comparison operators
+        friend bool operator==(const Iterator& a, const Iterator& b)
+        {
+            return a.map == b.map && a.bucketIndex == b.bucketIndex && a.entryIndex == b.entryIndex
+                && a.page.storagePage == b.page.storagePage;
+        };
+
+        friend bool operator!=(const Iterator& a, const Iterator& b)
+        {
+            return a.map != b.map || a.bucketIndex != b.bucketIndex || a.entryIndex != b.entryIndex
+                || a.page.storagePage != b.page.storagePage;
+        };
+    };
+
+    Iterator begin() { return Iterator{this}; }
+
+    Iterator end() { return Iterator{nullptr}; }
+};
+
+struct HashMapRef
+{
+    nautilus::val<NES::TupleBuffer*> buffer;
+
+    struct Key
+    {
+        NES::Schema types;
+        std::vector<NES::VarVal> keys;
+    };
+
+    struct Value
+    {
+        NES::Schema types;
+        std::vector<NES::VarVal> values;
+    };
+
+    struct Entry
+    {
+        std::vector<NES::VarVal> keys;
+        std::vector<NES::VarVal> values;
+    };
+
+    HashMapRef(const nautilus::val<NES::TupleBuffer*>& buffer, const NES::Schema& key_types, const NES::Schema& value_types)
+        : buffer(buffer), keyTypes(key_types), valueTypes(value_types)
+    {
+    }
+
+    NES::Schema keyTypes;
+    NES::Schema valueTypes;
+
+    nautilus::val<bool> insert(const Key& key, const Value& value, nautilus::val<NES::AbstractBufferProvider*> bufferProvider);
+    nautilus::val<bool> get(const Key& key, Value& value);
+
+    struct Iterator
+    {
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = Entry;
+        using pointer = Entry;
+        using reference = Entry;
+
+        NES::Schema keyTypes;
+        NES::Schema valueTypes;
+
+        nautilus::val<NES::TupleBuffer*> map;
+        nautilus::val<uint32_t> bucketIndex;
+        nautilus::val<uint32_t> entryIndex;
+        nautilus::val<HashMap::StoragePageHeader*> page;
+
+        Iterator(nautilus::val<NES::TupleBuffer*> map, NES::Schema keyTypes, NES::Schema valueTypes);
+
+        // 2. Dereference operators
+        reference operator*() const;
+
+        pointer operator->() { return this->operator*(); }
+
+        // 3. Prefix increment
+        Iterator& operator++();
+
+        // 4. Postfix increment
+        Iterator operator++(int)
+        {
+            Iterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        // 5. Comparison operators
+        friend nautilus::val<bool> operator==(const Iterator& a, const Iterator& b)
+        {
+            return a.map == b.map && a.bucketIndex == b.bucketIndex && a.entryIndex == b.entryIndex && a.page == b.page;
+        };
+
+        friend nautilus::val<bool> operator!=(const Iterator& a, const Iterator& b)
+        {
+            return a.map != b.map || a.bucketIndex != b.bucketIndex || a.entryIndex != b.entryIndex || a.page != b.page;
+        };
+    };
+
+    Iterator begin() { return Iterator{buffer, keyTypes, valueTypes}; }
+
+    Iterator end() { return Iterator{nullptr, NES::Schema{}, NES::Schema{}}; }
 };
