@@ -76,7 +76,7 @@ nautilus::val<size_t> ColumnTupleBufferRef::writeRecord(
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    if (recordIndex > capacity)
+    if (recordIndex >= capacity)
     {
         return std::string::npos;
     }

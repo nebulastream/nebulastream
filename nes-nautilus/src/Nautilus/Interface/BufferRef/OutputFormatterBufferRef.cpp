@@ -46,29 +46,28 @@ OutputFormatterBufferRef::readRecord(const std::vector<Record::RecordFieldIdenti
 }
 
 nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
-    nautilus::val<uint64_t>& recordIndex,
+    nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>&) const
 {
-    /// If we work with the output formatter, record index will always be the amount of bytes written to the current buffer.
-    /// Therefore, we need to compare the record index to the buffer size.
-    if (recordIndex > bufferSize)
+    /// If there is no space left in this buffer, we emit
+    if (bytesWritten >= bufferSize)
     {
         return std::string::npos;
     }
     const auto bufferAddress = recordBuffer.getMemArea();
     /// Calculating the field offset is therefore straight forward
-    auto recordAddress = bufferAddress + recordIndex;
+    auto recordAddress = bufferAddress + bytesWritten;
     /// This will be incremented by the amount of bytes written for each field to calculate the field address
-    nautilus::val<size_t> writtenBytes(0);
+    nautilus::val<size_t> writtenForThisRecord(0);
     /// This value counts the amount of actual fields of the sink schema that we visited already.
     /// Iterate through the vals of the record and pass them to the output formatter for formatting
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
         const auto& [name, type, fieldOffset] = fields.at(i);
-        const auto fieldAddress = recordAddress + writtenBytes;
-        const auto remainingBytes = bufferSize - recordIndex - writtenBytes;
+        const auto fieldAddress = recordAddress + writtenForThisRecord;
+        const auto remainingBytes = bufferSize - bytesWritten - writtenForThisRecord;
         const auto& value = rec.read(name);
         const auto amountWritten = formatter->getFormattedValue(value, type, i, fieldAddress, remainingBytes);
         /// This signalizes that the buffer did not have enough remaining space to capture the formatted value.
@@ -77,9 +76,9 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
         {
             return std::string::npos;
         }
-        writtenBytes += amountWritten;
+        writtenForThisRecord += amountWritten;
     }
-    return writtenBytes;
+    return writtenForThisRecord;
 }
 
 std::vector<Record::RecordFieldIdentifier> OutputFormatterBufferRef::getAllFieldNames() const
