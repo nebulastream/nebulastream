@@ -69,6 +69,7 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     /// Apply backpressure now on the backpressureController, leading to blocked ingestion threads until pressure is released again onSuccess.
     const auto wstate = rstate.moveFromUpgradeToWrite();
     backpressureController.applyPressure();
+    NES_DEBUG("Backpressure: {}", wstate->buffered.size());
     wstate->hasBackpressure = true;
     wstate->pendingSequenceNumber = buffer.getSequenceNumber();
     wstate->pendingChunkNumber = buffer.getChunkNumber();
@@ -135,6 +136,7 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
         }
     }
 
+    NES_DEBUG("Closing Sender channel {}", channelId);
     close_sender_channel(*std::move(this->channel));
     NES_DEBUG("Sender channel {} closed", channelId);
 }
@@ -173,7 +175,6 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
     /// Set data and send over the network
     const auto sendResult
         = send_buffer(**channel, metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children));
-
     switch (sendResult)
     {
         case SendResult::Closed: {
@@ -186,14 +187,11 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             throw CannotOpenSink("NetworkSink was closed by other side");
         }
         case SendResult::Ok: {
+            NES_TRACE("Sending buffer {}", inputBuffer.getSequenceNumber());
             /// Sent a buffer, check the backpressure handler to send another one
             if (const auto nextBuffer = backpressureHandler.onSuccess(backpressureController))
             {
                 execute(*nextBuffer, pec);
-            }
-            else
-            {
-                flush_sender_channel(**channel);
             }
             break;
         }
