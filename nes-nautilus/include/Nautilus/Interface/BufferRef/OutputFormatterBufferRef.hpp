@@ -69,6 +69,7 @@ public:
         nautilus::val<uint64_t>& bytesWritten,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        nautilus::val<bool> checkSpaceBeforeWriting = nautilus::val<bool>(false)) const override;
 };
 }

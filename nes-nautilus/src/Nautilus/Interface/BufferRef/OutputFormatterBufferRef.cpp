@@ -49,10 +49,11 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>&) const
+    const nautilus::val<AbstractBufferProvider*>&,
+    nautilus::val<bool> checkSpaceBeforeWriting) const
 {
     /// If there is no space left in this buffer, we emit
-    if (bytesWritten >= bufferSize)
+    if (checkSpaceBeforeWriting && (bytesWritten >= bufferSize))
     {
         return std::string::npos;
     }

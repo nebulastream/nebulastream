@@ -72,9 +72,10 @@ nautilus::val<size_t> RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    nautilus::val<bool> checkSpaceBeforeWriting) const
 {
-    if (recordIndex >= capacity)
+    if (checkSpaceBeforeWriting && (recordIndex >= capacity))
     {
         return std::string::npos;
     }
