@@ -403,3 +403,92 @@ EOF
   # Expect to find the local query in the worker status
   assert_json_contains "[{\"local_query_id\":\"$local_query_id\", \"query_status\":\"Running\", \"started\": {}}]" "$output"
 }
+
+@test "back pressure" {
+  setup_distributed tests/good/backpressure.yaml
+
+  run DOCKER_NES_CLI start
+  [ $status -eq 0 ]
+  query_id=$output
+
+  sleep 5
+
+  run DOCKER_NES_CLI stop $query_id
+
+  grep "Backpressure" worker-2/singleNodeWorker.log
+  [ $status -eq 0 ]
+}
+
+@test "order of worker termination when backpressure is applied. terminate sink" {
+  setup_distributed tests/good/backpressure.yaml
+
+  run DOCKER_NES_CLI start
+  [ $status -eq 0 ]
+  query_id=$output
+
+  sleep 5
+
+  docker compose stop worker-1
+  grep "Backpressure" worker-2/singleNodeWorker.log
+  grep "Channel Closed by other side." worker-2/singleNodeWorker.log
+  grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
+  sleep 2
+
+  run DOCKER_NES_CLI status $query_id
+  [ $status -eq 0 ]
+
+  expected_json=$(cat <<EOF
+  [
+    {
+      "query_status": "Failed"
+    },
+    {
+      "query_status": "ConnectionError",
+      "grpc_addr": "worker-1:8080"
+    },
+    {
+      "query_status": "Failed",
+      "grpc_addr": "worker-2:8080"
+    }
+  ]
+EOF
+  )
+
+  assert_json_contains "$expected_json" "$output"
+}
+
+@test "order of worker termination when backpressure is applied. terminate source" {
+  setup_distributed tests/good/backpressure.yaml
+
+  run DOCKER_NES_CLI start
+  [ $status -eq 0 ]
+  query_id=$output
+
+  sleep 5
+
+  docker compose stop worker-2
+  grep "Backpressure" worker-2/singleNodeWorker.log
+  sleep 2
+
+  run DOCKER_NES_CLI status $query_id
+  [ $status -eq 0 ]
+
+  expected_json=$(cat <<EOF
+  [
+    {
+      "query_status": "Unreachable"
+    },
+    {
+      "query_status": "Running",
+      "grpc_addr": "worker-1:8080"
+    },
+    {
+      "query_status": "ConnectionError",
+      "grpc_addr": "worker-2:8080"
+    }
+  ]
+EOF
+  )
+
+  assert_json_contains "$expected_json" "$output"
+}

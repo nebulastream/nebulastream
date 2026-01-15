@@ -119,9 +119,9 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
         Highs_destroy(highs);
     };
 
-    checkError(Highs_setBoolOptionValue(highs, "output_flag", 1));
+    checkError(Highs_setBoolOptionValue(highs, "output_flag", 0));
     checkError(Highs_changeObjectiveSense(highs, kHighsObjSenseMinimize)); /// minimize
-    checkError(Highs_setBoolOptionValue(highs, "log_to_console", 1));
+    checkError(Highs_setBoolOptionValue(highs, "log_to_console", 0));
     checkError(Highs_setDoubleOptionValue(highs, "time_limit", 1.0)); /// 1 second
     checkError(Highs_setDoubleOptionValue(highs, "mip_rel_gap", 0.01)); /// 1% optimality gap
 
