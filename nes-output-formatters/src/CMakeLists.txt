@@ -10,10 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-nautilus
-        TupleBufferRef.cpp
-        ColumnTupleBufferRef.cpp
-        RowTupleBufferRef.cpp
-        LowerSchemaProvider.cpp
-        OutputFormatterBufferRef.cpp
-        )
+add_source_files(nes-output-formatters
+            OutputFormatter.cpp
+        OutputFormatterProvider.cpp
+)
+add_plugin(CSV OutputFormatter nes-output-formatters CSVOutputFormatter.cpp)

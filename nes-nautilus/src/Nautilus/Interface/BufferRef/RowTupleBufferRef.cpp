@@ -13,9 +13,11 @@
 */
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <ranges>
+#include <string>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -66,12 +68,17 @@ Record RowTupleBufferRef::readRecord(
     return record;
 }
 
-void RowTupleBufferRef::writeRecord(
+nautilus::val<size_t> RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
+    if (recordIndex > capacity)
+    {
+        return std::string::npos;
+    }
+
     const auto bufferAddress = recordBuffer.getMemArea();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
@@ -86,6 +93,7 @@ void RowTupleBufferRef::writeRecord(
         const auto& value = rec.read(name);
         storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
     }
+    return 1;
 }
 
 std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames() const

@@ -44,22 +44,11 @@ namespace NES
 {
 
 FileSink::FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), *sinkDescriptor.getSchema())
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
-    {
-        case InputFormat::CSV:
-            formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
-            break;
-        case InputFormat::JSON:
-            formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
-            break;
-        default:
-            throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
-    }
 }
 
 std::ostream& FileSink::toString(std::ostream& str) const
@@ -100,7 +89,7 @@ void FileSink::start(PipelineExecutionContext&)
     /// Write the schema to the file, if it is empty.
     if (stream->tellp() == 0)
     {
-        const auto schemaStr = formatter->getFormattedSchema();
+        const auto schemaStr = getFormattedSchema();
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
@@ -111,11 +100,9 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     PRECONDITION(isOpen, "Sink was not opened");
 
     {
-        auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-        NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
             const auto wlocked = outputFileStream.wlock();
-            wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
+            wlocked->write(reinterpret_cast<const char*>(inputTupleBuffer.getAvailableMemoryArea().data()), static_cast<int64_t>(inputTupleBuffer.getNumberOfTuples()));
             wlocked->flush();
         }
     }

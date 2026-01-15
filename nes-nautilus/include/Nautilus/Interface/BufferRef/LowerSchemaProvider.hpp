@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
@@ -30,10 +31,16 @@ enum class MemoryLayoutType : uint8_t
 };
 
 /// Lowers a schema and its memory layout type to a specific TupleBufferRef
+/// In case we provide the ref for an emit operator right before a sink, output formatting might be neccessary (CSV, JSON).
+/// For these cases we provide the name of the output format so that the corresponding formatter can be provided.
 class LowerSchemaProvider
 {
 public:
-    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
+    static std::shared_ptr<TupleBufferRef>
+    lowerSchemaWithOutputFormat(uint64_t bufferSize, const Schema& schema, const std::string& outputFormatterType);
+
+    static std::shared_ptr<TupleBufferRef>
+    lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
 };
 
 }

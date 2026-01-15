@@ -39,7 +39,7 @@ namespace NES
 {
 
 PrintSink::PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), *sinkDescriptor.getSchema())
     , outputStream(&std::cout)
     , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
 {

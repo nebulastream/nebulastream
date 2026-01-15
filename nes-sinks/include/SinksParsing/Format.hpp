@@ -16,7 +16,6 @@
 #include <concepts>
 #include <cstdint>
 #include <ostream>
-#include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,7 +26,6 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -54,19 +52,6 @@ public:
             stringSize,
             strWithSize.size());
         return std::string{strPtrContent, stringSize};
-    }
-
-    /// Returns the schema of formatted according to the specific SinkFormat represented as string.
-    [[nodiscard]] std::string getFormattedSchema() const
-    {
-        PRECONDITION(schema.hasFields(), "Encountered schema without fields.");
-        std::stringstream ss;
-        ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);
-        for (const auto& field : schema.getFields() | std::views::drop(1))
-        {
-            ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type);
-        }
-        return fmt::format("{}\n", ss.str());
     }
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.

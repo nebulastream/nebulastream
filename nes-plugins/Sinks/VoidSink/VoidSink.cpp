@@ -28,7 +28,7 @@
 
 namespace NES
 {
-VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor&) : Sink(std::move(backpressureController))
+VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor) : Sink(std::move(backpressureController), *sinkDescriptor.getSchema())
 {
 }
 

@@ -15,7 +15,13 @@
 #pragma once
 
 #include <ostream>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <DataTypes/Schema.hpp>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
 
@@ -25,12 +31,26 @@ namespace NES
 class Sink : public ExecutablePipelineStage
 {
 public:
-    explicit Sink(BackpressureController backpressureController) : backpressureController(std::move(backpressureController)) { }
+    explicit Sink(BackpressureController backpressureController, const Schema& schema) : backpressureController(std::move(backpressureController)), schema(schema) { }
+
+    /// Returns the schema represented as string.
+    std::string getFormattedSchema()
+    {
+        PRECONDITION(schema.hasFields(), "Encountered schema without fields.");
+        std::stringstream ss;
+        ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);
+        for (const auto& field : schema.getFields() | std::views::drop(1))
+        {
+            ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type);
+        }
+        return fmt::format("{}\n", ss.str());
+    }
 
     ~Sink() override = default;
     friend std::ostream& operator<<(std::ostream& out, const Sink& sink);
 
     BackpressureController backpressureController;
+    Schema schema;
 };
 
 }

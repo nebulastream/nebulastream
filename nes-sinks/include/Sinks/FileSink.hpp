@@ -61,7 +61,6 @@ private:
     std::string outputFilePath;
     bool isAppend;
     bool isOpen;
-    std::unique_ptr<Format> formatter;
     folly::Synchronized<std::ofstream> outputFileStream;
 };
 
