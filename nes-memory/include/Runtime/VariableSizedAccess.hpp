@@ -33,8 +33,8 @@ class BufferControlBlock;
 ///
 /// We use 64 bits to store the child index and offset for accessing the correct variable sized data.
 /// We use the upper 32 bits for the childIndex and the lower 32 bits for the childBufferOffset
-/// This allows us to have 4 million child buffer and having a maximum child buffer size of 4 GB
-/// (unless we have only one var sized object per child)
+/// This allows us to have 4 million child buffer (unless we have only one var sized object per child)
+/// The maximum child buffer size is 8 GB due to 64-bit size, which is stored separately
 class VariableSizedAccess
 {
 public:
@@ -43,7 +43,7 @@ public:
     /// This structure is stored in the VARSIZED field and is used to store and load the VariableSizedData (See @TupleBufferRef)
     struct IndexOffsetSize
     {
-        uint64_t combinedIndexOffset;
+        CombinedIndexType combinedIndexOffset;
         uint64_t size;
     };
 

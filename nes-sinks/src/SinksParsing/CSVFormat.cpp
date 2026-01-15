@@ -80,7 +80,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
                                   const VariableSizedAccess variableSizedAccess{
                                       VariableSizedAccess::IndexOffsetSize{.combinedIndexOffset = idxPacked, .size = size}};
 
-                                  auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                                  auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
                                   if (copyOfEscapeStrings)
                                   {
                                       return "\"" + varSizedData + "\"";

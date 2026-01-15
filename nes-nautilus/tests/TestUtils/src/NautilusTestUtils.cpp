@@ -215,8 +215,10 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::string randomString(size, 0);
                             std::generate_n(randomString.begin(), size, randchar);
 
-                            // Adding the random string to the buffer and returning the pointer to the data
-                            const auto combinedIdxOffset = TupleBufferRef::loadAssociatedVarSizedValue(*inputBuffer, combinedIdxOffset).data();
+                            /// Adding the random string to the buffer and returning the pointer to the data
+                            const auto varSizedAccess
+                                = TupleBufferRef::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
+                            return TupleBufferRef::loadAssociatedVarSizedValue(*inputBuffer, varSizedAccess).data();
                         },
                         recordBuffer.getReference(),
                         bufferProvider,
