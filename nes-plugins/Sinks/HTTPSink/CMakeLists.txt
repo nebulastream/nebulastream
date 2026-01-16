@@ -13,16 +13,16 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 find_package(CURL REQUIRED)
 
-add_plugin_as_library(Matrix Sink nes-sinks-registry matrix_sink_plugin MatrixSink.cpp)
-add_plugin_as_library(Matrix SinkValidation nes-sinks-registry matrix_sink_validation_plugin MatrixSink.cpp)
+add_plugin_as_library(HTTP Sink nes-sinks-registry http_sink_plugin HTTPSink.cpp)
+add_plugin_as_library(HTTP SinkValidation nes-sinks-registry http_sink_validation_plugin HTTPSink.cpp)
 
-target_include_directories(matrix_sink_plugin
+target_include_directories(http_sink_plugin
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(matrix_sink_validation_plugin
+target_include_directories(http_sink_validation_plugin
         PUBLIC include
         PRIVATE .
 )
 
-target_link_libraries(matrix_sink_plugin PRIVATE CURL::libcurl)
+target_link_libraries(http_sink_plugin PRIVATE CURL::libcurl)
