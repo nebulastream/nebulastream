@@ -65,7 +65,6 @@
 
 namespace NES::Systest
 {
-constexpr int NUM_SETSUM_COLUMNS = 8;
 /// Helper class to model the two-step process of creating sinks in systest. We cannot create sink descriptors directly from sink definitions, because
 /// every query should write to a separate file sink, while being able to share the sink definitions with other queries.
 class SLTSinkFactory
@@ -124,7 +123,8 @@ public:
     {
         auto setsumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
         setsumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        for (int i = 0; i < NUM_SETSUM_COLUMNS; ++i)
+        const int setsumNumColumns = 8;
+        for (int i = 0; i < setsumNumColumns; ++i)
         {
             setsumSinkSchema.addField("S$Col" + std::to_string(i), DataTypeProvider::provideDataType(DataType::Type::UINT32));
         }
