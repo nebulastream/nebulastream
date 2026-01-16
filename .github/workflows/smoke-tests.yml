@@ -52,6 +52,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
+      - name: Debug sccache configuration
+        shell: bash
+        run: |
+          echo "=== sccache version ==="
+          sccache --version
+          echo ""
+          echo "=== sccache stats (before build) ==="
+          sccache --show-stats
+          echo ""
+          echo "=== sccache configuration ==="
+          sccache --show-config || true
       - name: Choose a number of concurrent jobs
         id: number-of-jobs
         shell: bash
