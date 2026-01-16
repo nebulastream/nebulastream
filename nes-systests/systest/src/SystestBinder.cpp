@@ -627,9 +627,8 @@ struct SystestBinder::Impl
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
 
-        if (sinkOperator->getSinkType() == "FILE")
+        if (not(sinkConfig.contains("input_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
-            sinkConfig.erase("input_format");
             sinkConfig.emplace("input_format", "CSV");
         }
 
