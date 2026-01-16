@@ -19,6 +19,7 @@ runs:
       run: |
         docker run \
              -v $(pwd):$(pwd) \
+             -e SCCACHE_DIR=$(pwd)/.sccache \
              -e SCCACHE_BUCKET=${{ secrets.SCCACHE_BUCKET }} \
              -e SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }} \
              -e SCCACHE_REGION=auto \

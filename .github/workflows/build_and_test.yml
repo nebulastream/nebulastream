@@ -136,6 +136,7 @@ jobs:
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       env:
+        SCCACHE_DIR: ${{ github.workspace }}/.sccache
         SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
         SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
         SCCACHE_REGION: auto

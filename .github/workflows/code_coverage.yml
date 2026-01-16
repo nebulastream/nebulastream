@@ -27,6 +27,7 @@ jobs:
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
       env:
+        SCCACHE_DIR: ${{ github.workspace }}/.sccache
         SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
         SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
         SCCACHE_REGION: auto
