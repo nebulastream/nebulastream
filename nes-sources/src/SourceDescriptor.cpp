@@ -20,6 +20,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -84,12 +85,14 @@ SourceDescriptor::SourceDescriptor(
     const PhysicalSourceId physicalSourceId,
     LogicalSource logicalSource,
     std::string_view sourceType,
+    std::string workerId,
     DescriptorConfig::Config config,
     ParserConfig parserConfig)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
+    , workerId(std::move(workerId))
     , parserConfig(std::move(parserConfig))
 {
 }
@@ -107,6 +110,11 @@ std::string SourceDescriptor::getSourceType() const
 ParserConfig SourceDescriptor::getParserConfig() const
 {
     return parserConfig;
+}
+
+std::string SourceDescriptor::getWorkerId() const
+{
+    return workerId;
 }
 
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
@@ -136,11 +144,13 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(
-               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, parserConfig: {{type: {}, tupleDelimiter: {}, "
+               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, workerId: {}, parserConfig: {{type: {}, tupleDelimiter: "
+               "{}, "
                "stringDelimiter: {} }})",
                descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
+               descriptor.getWorkerId(),
                descriptor.getParserConfig().parserType,
                escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
                escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
@@ -152,7 +162,7 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
     serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
     serializableSourceDescriptor.set_sourcetype(sourceType);
-
+    serializableSourceDescriptor.set_workerid(workerId);
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
 
     /// Serialize parser config.
