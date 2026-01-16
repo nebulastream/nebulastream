@@ -16,15 +16,8 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
-#include <vector>
-#include <QueryManager/QueryManager.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <replxx.hxx>
-
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <StatementHandler.hpp>
+#include <Statements/StatementHandler.hpp>
 
 namespace NES
 {
@@ -45,6 +38,7 @@ public:
     explicit Repl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        TopologyStatementHandler topologyStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         ErrorBehaviour errorBehaviour,
