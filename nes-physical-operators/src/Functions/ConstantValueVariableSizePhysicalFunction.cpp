@@ -25,22 +25,17 @@
 
 namespace NES
 {
-ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size)
-    : data(size + sizeof(uint32_t))
+ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size) : data(size)
 {
     /// We copy the value into the data vector owned by the function
     /// since the value might be destroyed during the lifetime of the function.
     /// In the constructor, we have allocated the memory for the value via the std::vector ctor.
-    ///
-    /// The first four bytes of the VariableSizedData contain the size...
-    *std::bit_cast<uint32_t*>(data.data()) = size;
-    /// ...followed by the value
-    std::memcpy(data.data() + sizeof(uint32_t), value, size);
+    std::memcpy(data.data(), value, size);
 }
 
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
 {
-    VariableSizedData result(const_cast<int8_t*>(data.data()));
+    VariableSizedData result(const_cast<int8_t*>(data.data()), data.size());
     return result;
 }
 
