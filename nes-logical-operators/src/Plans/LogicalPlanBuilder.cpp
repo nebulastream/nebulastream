@@ -22,12 +22,12 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -55,7 +55,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
     const DescriptorConfig::Config sourceDescriptorConfig{};
-    return LogicalPlan(SourceNameLogicalOperator(logicalSourceName));
+    return LogicalPlan(INVALID_LOCAL_QUERY_ID, {SourceNameLogicalOperator(logicalSourceName)});
 }
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
@@ -64,7 +64,9 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     std::unordered_map<std::string, std::string> sourceConfig,
     std::unordered_map<std::string, std::string> parserConfig)
 {
-    return LogicalPlan(InlineSourceLogicalOperator{std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)});
+    return LogicalPlan(
+        INVALID_LOCAL_QUERY_ID,
+        {InlineSourceLogicalOperator{std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)}});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
