@@ -53,8 +53,6 @@ public:
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-    static SinkValidationRegistryReturnType RegisterSetsumSinkValidation(SinkValidationRegistryArguments sinkConfig);
-    static SinkRegistryReturnType RegisterSetsumSink(SinkRegistryArguments sinkRegistryArguments);
     const Setsum& getCurrentSetsum() const { return setsum; }
 
 protected:
@@ -74,6 +72,9 @@ struct ConfigParametersSetsum
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::FILE_PATH);
 };
+
+SinkValidationRegistryReturnType RegisterSetsumSinkValidation(SinkValidationRegistryArguments sinkConfig);
+SinkRegistryReturnType RegisterSetsumSink(SinkRegistryArguments sinkRegistryArguments);
 
 }
 

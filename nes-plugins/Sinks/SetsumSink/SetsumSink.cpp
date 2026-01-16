@@ -124,12 +124,12 @@ DescriptorConfig::Config SetsumSink::validateAndFormat(std::unordered_map<std::s
     return DescriptorConfig::validateAndFormat<ConfigParametersSetsum>(std::move(config), NAME);
 }
 
-SinkValidationRegistryReturnType SetsumSink::RegisterSetsumSinkValidation(SinkValidationRegistryArguments sinkConfig)
+SinkValidationRegistryReturnType RegisterSetsumSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
     return SetsumSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
-SinkRegistryReturnType SetsumSink::RegisterSetsumSink(SinkRegistryArguments sinkRegistryArguments)
+SinkRegistryReturnType RegisterSetsumSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<SetsumSink>(sinkRegistryArguments.sinkDescriptor);
 }

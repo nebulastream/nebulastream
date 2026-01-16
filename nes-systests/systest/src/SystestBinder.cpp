@@ -65,7 +65,6 @@
 
 namespace NES::Systest
 {
-
 /// Helper class to model the two-step process of creating sinks in systest. We cannot create sink descriptors directly from sink definitions, because
 /// every query should write to a separate file sink, while being able to share the sink definitions with other queries.
 class SLTSinkFactory
@@ -118,6 +117,18 @@ public:
         checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         return checksumSinkSchema;
+    }();
+
+    static inline const Schema setsumSchema = []
+    {
+        auto setsumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        setsumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        const int setsumNumColumns = 8;
+        for (int i = 0; i < setsumNumColumns; ++i)
+        {
+            setsumSinkSchema.addField("S$Col" + std::to_string(i), DataTypeProvider::provideDataType(DataType::Type::UINT32));
+        }
+        return setsumSinkSchema;
     }();
 
 private:
@@ -212,6 +223,12 @@ public:
             == "CHECKSUM")
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
+        }
+        else if (Util::toUpperCase(
+                     sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
+                 == "SETSUM")
+        {
+            sinkOutputSchema = SLTSinkFactory::setsumSchema;
         }
         else
         {
