@@ -89,8 +89,8 @@ private:
     std::unordered_map<TaskId, std::chrono::system_clock::time_point> activeTasks;
 
     /// Track active queries and pipelines for cleanup
-    std::unordered_map<QueryId, std::pair<std::chrono::system_clock::time_point, WorkerThreadId>> activeQueries;
-    std::unordered_map<PipelineId, std::tuple<QueryId, std::chrono::system_clock::time_point, WorkerThreadId>> activePipelines;
+    std::unordered_map<LocalQueryId, std::pair<std::chrono::system_clock::time_point, WorkerThreadId>> activeQueries;
+    std::unordered_map<PipelineId, std::tuple<LocalQueryId, std::chrono::system_clock::time_point, WorkerThreadId>> activePipelines;
 
     /// Must be declared last so it's destroyed first, ensuring the thread stops before maps are destroyed
     Thread traceThread;

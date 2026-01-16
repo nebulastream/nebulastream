@@ -24,6 +24,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Util/Ranges.hpp>
+#include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
 
 using namespace std::chrono_literals;
@@ -37,7 +39,7 @@ protected:
     void SetUp() override { queryLog = std::make_unique<QueryLog>(); }
 
     std::unique_ptr<QueryLog> queryLog;
-    const QueryId testQueryId{42};
+    const LocalQueryId testQueryId{NES::LocalQueryId(NES::UUIDToString(NES::generateUUID()))};
     const std::chrono::system_clock::time_point testTime = std::chrono::system_clock::now();
 };
 
@@ -66,7 +68,7 @@ TEST_F(QueryLogTest, GetLogForQuery)
 
 TEST_F(QueryLogTest, GetLogForNonExistentQuery)
 {
-    const auto log = queryLog->getLogForQuery(QueryId{999});
+    const auto log = queryLog->getLogForQuery(LocalQueryId(generateUUID()));
     EXPECT_FALSE(log.has_value());
 }
 
@@ -134,14 +136,14 @@ TEST_F(QueryLogTest, GetQuerySummaryPartialExecution)
 
 TEST_F(QueryLogTest, GetQuerySummaryForNonExistentQuery)
 {
-    const auto status = queryLog->getQueryStatus(QueryId{999});
+    const auto status = queryLog->getQueryStatus(LocalQueryId(generateUUID()));
     EXPECT_FALSE(status.has_value());
 }
 
 TEST_F(QueryLogTest, MultipleQueriesIndependentLogs)
 {
-    constexpr QueryId query1{1};
-    constexpr QueryId query2{2};
+    const LocalQueryId query1(generateUUID());
+    const LocalQueryId query2(generateUUID());
 
     queryLog->logQueryStatusChange(query1, QueryState::Started, testTime);
     queryLog->logQueryStatusChange(query2, QueryState::Started, testTime + 50ms);
@@ -259,21 +261,27 @@ TEST_F(QueryLogTest, MultiThreadedLogging)
     const auto baseTime = testTime;
 
     std::barrier barrier{numThreads};
+    std::vector<LocalQueryId> queryIds(numQueries, INVALID_LOCAL_QUERY_ID);
+    for (auto& id : queryIds)
+    {
+        id = LocalQueryId{generateUUID()};
+    }
 
-    const auto logSubmission = [this, baseTime, &barrier]
+    const auto logSubmission = [this, baseTime, &barrier, &queryIds]
     {
         barrier.arrive_and_wait();
         /// Each thread logs the same sequence of state changes for all queries
-        for (uint64_t queryId = 0; queryId < numQueries; ++queryId)
+        for (const auto& [index, queryId] : queryIds | views::enumerate)
         {
-            const auto timestamp = baseTime + std::chrono::milliseconds{queryId * 10};
+            const auto timestamp = baseTime + std::chrono::milliseconds{index * 10};
+            const auto qid = LocalQueryId{queryId};
 
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Registered, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Started, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Running, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Stopped, timestamp);
-            queryLog->logQueryFailure(QueryId{queryId}, Exception{"Test failure", 404}, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Running, timestamp);
+            queryLog->logQueryStatusChange(qid, QueryState::Registered, timestamp);
+            queryLog->logQueryStatusChange(qid, QueryState::Started, timestamp);
+            queryLog->logQueryStatusChange(qid, QueryState::Running, timestamp);
+            queryLog->logQueryStatusChange(qid, QueryState::Stopped, timestamp);
+            queryLog->logQueryFailure(qid, Exception{"Test failure", 404}, timestamp);
+            queryLog->logQueryStatusChange(qid, QueryState::Running, timestamp);
         }
     };
 
@@ -291,11 +299,12 @@ TEST_F(QueryLogTest, MultiThreadedLogging)
     constexpr uint64_t eventsPerQuery = numThreads * 6;
     for (uint64_t queryId = 0; queryId < numThreads; ++queryId)
     {
-        const auto log = queryLog->getLogForQuery(QueryId{queryId});
+        const auto qid = LocalQueryId{queryIds[queryId]};
+        const auto log = queryLog->getLogForQuery(qid);
         ASSERT_TRUE(log.has_value()) << "Query " << queryId << " events not found";
         EXPECT_EQ(log->size(), eventsPerQuery) << "Query " << queryId << " wrong event count";
 
-        const auto status = queryLog->getQueryStatus(QueryId{queryId});
+        const auto status = queryLog->getQueryStatus(qid);
         ASSERT_TRUE(status.has_value());
         EXPECT_EQ(status->state, QueryState::Failed);
         EXPECT_TRUE(status->metrics.start.has_value());
