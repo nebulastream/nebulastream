@@ -14,10 +14,11 @@
 
 #pragma once
 
+
 #include <cstdint>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES
@@ -28,30 +29,32 @@ class LowerSchemaProvider;
 namespace NES
 {
 
-/// Implements BufferRef. Provides columnar memory access.
-class ColumnTupleBufferRef final : public TupleBufferRef
+/// Implements BufferRef. Provides row-wise memory access.
+class RowTupleBufferRef final : public TupleBufferRef
 {
     struct Field
     {
         Record::RecordFieldIdentifier name;
         DataType type;
-        uint64_t columnOffset;
+        uint64_t fieldOffset;
     };
 
     std::vector<Field> fields;
 
     /// Private constructor to prevent direct instantiation
-    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t capacity, uint64_t bufferSize);
+    explicit RowTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
 
     /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
 
 public:
-    ColumnTupleBufferRef(const ColumnTupleBufferRef&) = default;
-    ColumnTupleBufferRef(ColumnTupleBufferRef&&) = default;
-    ~ColumnTupleBufferRef() override = default;
+    RowTupleBufferRef(const RowTupleBufferRef&) = default;
+    RowTupleBufferRef(RowTupleBufferRef&&) = default;
+
+    ~RowTupleBufferRef() override = default;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
+
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(

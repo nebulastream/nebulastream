@@ -13,14 +13,14 @@
 include(ExternalProject)
 include(GoogleTest)
 
-add_library(nes-input-formatters-test-utils ${CMAKE_CURRENT_SOURCE_DIR}/Util/InputFormatterTestUtil.cpp)
-target_link_libraries(nes-input-formatters-test-utils PUBLIC nes-input-formatters nes-executable-test-utils nes-nautilus)
-target_include_directories(nes-input-formatters-test-utils PUBLIC ${CMAKE_SOURCE_DIR}/nes-input-formatters/private ${CMAKE_CURRENT_SOURCE_DIR}/Util/)
+add_library(nes-tuple-buffer-refs-test-utils ${CMAKE_CURRENT_SOURCE_DIR}/Util/InputFormatterTestUtil.cpp)
+target_link_libraries(nes-tuple-buffer-refs-test-utils PUBLIC nes-tuple-buffer-refs nes-executable-test-utils nes-nautilus)
+target_include_directories(nes-tuple-buffer-refs-test-utils PUBLIC ${CMAKE_SOURCE_DIR}/nes-tuple-buffer-refs/private ${CMAKE_CURRENT_SOURCE_DIR}/Util/)
 
 function(add_nes_input_formatter_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-input-formatters-test-utils)
+    target_link_libraries(${TARGET_NAME} nes-tuple-buffer-refs-test-utils)
 endfunction()
 
 add_subdirectory(UnitTests)

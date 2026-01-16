@@ -38,7 +38,7 @@
 /nes-executable/ @nebulastream/QueryEngine
 /nes-query-engine/ @nebulastream/QueryEngine
 
-/nes-input-formatters/ @nebulastream/InputOutput
+/nes-tuple-buffer-refs/ @nebulastream/InputOutput
 /nes-sinks/ @nebulastream/InputOutput
 /nes-sources/ @nebulastream/InputOutput
 

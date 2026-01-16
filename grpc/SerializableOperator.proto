@@ -18,18 +18,28 @@ import "SerializableSchema.proto";
 import "SerializableTrait.proto";
 package NES;
 
-message SerializableParserConfig {
-  string type = 1;
-  string tupleDelimiter = 2;
-  string fieldDelimiter = 3;
-};
-
 message SerializableSinkDescriptor
 {
   string sinkName = 1;
   SerializableSchema sinkSchema = 2;
   string sinkType = 3;
   map<string, SerializableVariantDescriptor> config = 4;
+}
+
+enum NativeLayoutType {
+  ROW = 0;
+  COLUMN = 1;
+}
+
+message SerializableInputFormatterDescriptor {
+  string inputFormatterType = 1;
+  map<string, SerializableVariantDescriptor> config = 2;
+}
+
+message SerializableBufferRefDescriptor
+{
+  string bufferRefType = 1;
+  map<string, SerializableVariantDescriptor> config = 2;
 }
 
 message SerializableSourceDescriptor
@@ -40,7 +50,7 @@ message SerializableSourceDescriptor
   uint64 workerId = 4;
   string sourceType = 5;
   int32 maxInflightBuffers = 6;
-  SerializableParserConfig parserConfig = 7;
+  SerializableBufferRefDescriptor bufferRefDescriptor = 7;
   map<string, SerializableVariantDescriptor> config = 8;
 }
 

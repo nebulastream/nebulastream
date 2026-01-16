@@ -35,21 +35,12 @@
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <SerializableOperator.pb.h>
+#include <Nautilus/Interface/BufferRef/BufferRefDescriptor.hpp>
 
 namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
-
-struct ParserConfig
-{
-    std::string parserType;
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
-    friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
-    friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
-    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
-};
 
 class SourceDescriptor final : public Descriptor
 {
@@ -69,7 +60,7 @@ public:
 
     [[nodiscard]] LogicalSource getLogicalSource() const;
     [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] ParserConfig getParserConfig() const;
+    [[nodiscard]] BufferRefDescriptor getBufferRefDescriptor() const;
 
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
@@ -83,7 +74,7 @@ private:
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
-    ParserConfig parserConfig;
+    BufferRefDescriptor bufferRefDescriptor;
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -91,7 +82,7 @@ private:
         LogicalSource logicalSource,
         std::string_view sourceType,
         DescriptorConfig::Config config,
-        ParserConfig parserConfig);
+        BufferRefDescriptor bufferRefDescriptor);
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
@@ -121,4 +112,3 @@ struct std::hash<NES::SourceDescriptor>
 };
 
 FMT_OSTREAM(NES::SourceDescriptor);
-FMT_OSTREAM(NES::ParserConfig);

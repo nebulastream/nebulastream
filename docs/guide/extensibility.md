@@ -69,7 +69,7 @@ While `add_plugin_as_library` creates a standalone library that is then linked i
 
 # Registries
 Registries are libraries that act as factories for creating registered plugins.
-They are linked with the component libraries (e.g., `nes-sources`, `nes-input-formatters`, etc.) and vice versa, so that they:
+They are linked with the component libraries (e.g., `nes-sources`, `nes-tuple-buffer-refs`, etc.) and vice versa, so that they:
 - Have access to the appropriate header files defined in the component
 - Can be used by the corresponding component to access the registered plugins
 

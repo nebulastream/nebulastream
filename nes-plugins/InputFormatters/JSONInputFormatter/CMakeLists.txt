@@ -11,7 +11,7 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(JSON InputFormatIndexer nes-input-formatters-registry json_input_format_indexer_plugin_library SIMDJSONInputFormatIndexer.cpp SIMDJSONFIF.cpp)
+add_plugin_as_library(JSON InputFormatIndexer nes-tuple-buffer-refs-registry json_input_format_indexer_plugin_library SIMDJSONInputFormatIndexer.cpp SIMDJSONFIF.cpp)
 target_include_directories(json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 find_package(simdjson CONFIG REQUIRED)

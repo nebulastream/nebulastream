@@ -51,7 +51,7 @@ target_include_directories(nes-sql-parser PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>
         ${ANTLR4_INCLUDE_DIR_NES_SQL_PARSER} ${ANTLR4_INCLUDE_DIR}
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
-target_link_libraries(nes-sql-parser PRIVATE nes-input-formatters PUBLIC antlr4_static nes-common nes-sinks nes-sources nes-logical-operators)
+target_link_libraries(nes-sql-parser PRIVATE nes-tuple-buffer-refs PUBLIC antlr4_static nes-common nes-sinks nes-sources nes-logical-operators)
 
 add_tests_if_enabled(tests)
 

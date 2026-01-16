@@ -10,13 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-input-formatters
-        SequenceShredder.cpp
-        SpanningTupleBuffer.cpp
-        SpanningTupleBufferState.cpp
-        RawValueParser.cpp
-        InputFormatterTupleBufferRef.cpp
-)
-
-# Register plugins
-add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp)
+add_source_files(nes-tuple-buffer-refs
+        TupleBufferRef.cpp
+        ColumnTupleBufferRef.cpp
+        RowTupleBufferRef.cpp
+        TupleBufferRefDescriptor.cpp
+        )

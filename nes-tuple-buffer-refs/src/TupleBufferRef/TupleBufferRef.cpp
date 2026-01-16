@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <TupleBufferRef.hpp>
 
 #include <algorithm>
 #include <array>

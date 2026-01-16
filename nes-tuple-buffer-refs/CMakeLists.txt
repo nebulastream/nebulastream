@@ -16,32 +16,35 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 # Set Sources and Headers
 
 add_subdirectory(src)
-get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
-add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
+get_source(nes-tuple-buffer-refs NES_SOURCE_PARSERS_SOURCE_FILES)
+add_library(nes-tuple-buffer-refs ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
 # Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
-target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
+target_link_libraries(nes-tuple-buffer-refs PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
 
 
-# 'Private' nes-input-formatters library that exposes internal headers
-target_include_directories(nes-input-formatters PUBLIC
+# 'Private' nes-tuple-buffer-refs library that exposes internal headers
+target_include_directories(nes-tuple-buffer-refs PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatters>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/TupleBufferRef>
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # 'Public' provider library, only exposing the provider and the TupleBufferRef
 add_library(nes-input-formatter-provider src/InputFormatterTupleBufferRefProvider.cpp)
-target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-input-formatters nes-input-formatters-registry)
+target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-tuple-buffer-refs nes-tuple-buffer-refs-registry)
 target_include_directories(nes-input-formatter-provider PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider>
+#        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider>
+#        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/TupleBufferRef>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/TupleBufferRefProvider>
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
+    target_precompile_headers(nes-tuple-buffer-refs REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(InputFormatIndexer)
+create_registries_for_component(InputFormatIndexer TupleBufferRef TupleBufferRefValidation)
 
 add_tests_if_enabled(tests)

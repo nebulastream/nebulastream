@@ -12,7 +12,7 @@
 
 add_library(nes-sources-test-utils Util/TestSource.cpp)
 target_include_directories(nes-sources-test-utils PUBLIC ../private Util)
-target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-memory-test-utils nes-input-formatters)
+target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-memory-test-utils nes-tuple-buffer-refs)
 
 function(add_nes_source_test)
     add_nes_test(${ARGN})

@@ -35,57 +35,17 @@
 namespace NES
 {
 
-ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> configMap)
-{
-    ParserConfig created{};
-    if (const auto parserType = configMap.find("type"); parserType != configMap.end())
-    {
-        created.parserType = parserType->second;
-    }
-    else
-    {
-        throw InvalidConfigParameter("Parser configuration must contain: type");
-    }
-    if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
-    {
-        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
-        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        created.tupleDelimiter = tupleDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: tuple_delimiter, using default: \\n");
-        created.tupleDelimiter = '\n';
-    }
-    if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
-    {
-        created.fieldDelimiter = fieldDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: field_delimiter, using default: ,");
-        created.fieldDelimiter = ",";
-    }
-    return created;
-}
-
-std::ostream& operator<<(std::ostream& os, const ParserConfig& obj)
-{
-    return os << fmt::format(
-               "ParserConfig(type: {}, tupleDelimiter: {}, fieldDelimiter: {})", obj.parserType, obj.tupleDelimiter, obj.fieldDelimiter);
-}
-
 SourceDescriptor::SourceDescriptor(
     const PhysicalSourceId physicalSourceId,
     LogicalSource logicalSource,
     std::string_view sourceType,
     DescriptorConfig::Config config,
-    ParserConfig parserConfig)
+    BufferRefDescriptor bufferRefDescriptor)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
-    , parserConfig(std::move(parserConfig))
+    , bufferRefDescriptor(std::move(bufferRefDescriptor))
 {
 }
 
@@ -99,9 +59,9 @@ std::string SourceDescriptor::getSourceType() const
     return sourceType;
 }
 
-ParserConfig SourceDescriptor::getParserConfig() const
+BufferRefDescriptor SourceDescriptor::getBufferRefDescriptor() const
 {
-    return parserConfig;
+    return bufferRefDescriptor;
 }
 
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
@@ -131,14 +91,11 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(
-               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, parserConfig: {{type: {}, tupleDelimiter: {}, "
-               "stringDelimiter: {} }})",
+               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, bufferRefDescriptor: {})",
                descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
-               descriptor.getParserConfig().parserType,
-               escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
-               escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
+               descriptor.getBufferRefDescriptor());
 }
 
 SerializableSourceDescriptor SourceDescriptor::serialize() const
@@ -151,11 +108,9 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
 
     /// Serialize parser config.
-    auto* const serializedParserConfig = SerializableParserConfig().New();
-    serializedParserConfig->set_type(parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
-    serializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
+    auto* const serializedParserConfig = SerializableBufferRefDescriptor().New();
+    serializedParserConfig->set_bufferreftype(bufferRefDescriptor.getBufferRefType());
+    serializedParserConfig->set_allocated_config(bufferRefDescriptor.getConfig());
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : getConfig())

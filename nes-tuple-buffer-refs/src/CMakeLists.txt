@@ -10,9 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-nautilus
-        TupleBufferRef.cpp
-        ColumnTupleBufferRef.cpp
-        RowTupleBufferRef.cpp
+add_subdirectory(TupleBufferRef)
+
+add_source_files(nes-tuple-buffer-refs
+        SequenceShredder.cpp
+        SpanningTupleBuffer.cpp
+        SpanningTupleBufferState.cpp
+        RawValueParser.cpp
+        InputFormatterTupleBufferRef.cpp
         LowerSchemaProvider.cpp
-        )
+)
+
+# Register plugins
+add_plugin(CSV InputFormatIndexer nes-tuple-buffer-refs CSVInputFormatIndexer.cpp)

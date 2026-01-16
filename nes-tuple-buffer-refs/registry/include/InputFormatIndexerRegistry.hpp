@@ -21,12 +21,14 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 #include <Concepts.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
+
+#include "TupleBufferRefDescriptor.hpp"
 
 namespace NES
 {
@@ -38,8 +40,8 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTuple
 /// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(ParserConfig config, std::shared_ptr<TupleBufferRef> memoryProvider)
-        : inputFormatIndexerConfig(std::move(config)), memoryProvider(std::move(memoryProvider))
+    InputFormatIndexerRegistryArguments(TupleBufferRefDescriptor descriptor, Schema schema, const size_t bufferSize)
+        : inputFormatIndexerConfig(std::move(descriptor)), schema(std::move(schema)), bufferSize(bufferSize)
     {
     }
 
@@ -47,8 +49,9 @@ struct InputFormatIndexerRegistryArguments
     template <InputFormatIndexerType IndexerType>
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
     {
+        // Todo: refactor InputFormatter
         auto inputFormatter
-            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
+            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), schema, bufferSize, inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));
     }
 
@@ -57,8 +60,9 @@ private:
     /// As a result, we don't hand the config and memory provider to the indexer in its registry-constructor
     /// Instead, an indexer receives it as a const meta-data object in its main 'indexRawBuffer' function
     /// While this does not prevent an indexer implementation from accessing the state of the meta-data object it helps to discourage it
-    ParserConfig inputFormatIndexerConfig;
-    std::shared_ptr<TupleBufferRef> memoryProvider;
+    TupleBufferRefDescriptor inputFormatIndexerConfig;
+    Schema schema;
+    size_t bufferSize;
 };
 
 class InputFormatIndexerRegistry : public BaseRegistry<

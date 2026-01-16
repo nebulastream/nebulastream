@@ -44,6 +44,8 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 
+#include "TupleBufferRefDescriptor.hpp"
+
 namespace NES
 {
 /// The type that all formatters use to represent indexes to fields.
@@ -98,13 +100,14 @@ template <InputFormatIndexerType FormatterType>
 class InputFormatter
 {
 public:
+    // Todo: may need to template on DescriptorType too <-- include in FormatterType
     explicit InputFormatter(
-        FormatterType inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider, const ParserConfig& parserConfig)
+        FormatterType inputFormatIndexer, const TupleBufferRefDescriptor& descriptor, const Schema& schema, size_t bufferSize)
         : inputFormatIndexer(std::move(inputFormatIndexer))
-        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider})
+        , indexerMetaData(typename FormatterType::IndexerMetaData{descriptor, schema, bufferSize, *memoryProvider})
         , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
-        , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
+        , sequenceShredder(std::make_unique<SequenceShredder>(indexerMetaData.getTupleDelimitingBytes().size()))
     {
     }
 
