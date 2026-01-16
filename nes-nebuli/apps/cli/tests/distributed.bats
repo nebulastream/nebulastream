@@ -176,7 +176,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  [ -f "$output" ]
+  # Output should be a query ID (numeric)
+  [[ "$output" =~ ^[0-9]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -190,7 +191,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  [ -f "$output" ]
+  # Output should be a query ID (numeric)
+  [[ "$output" =~ ^[0-9]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -207,7 +209,8 @@ assert_json_contains() {
 
   run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
-  [ -f "$output" ]
+  # Output should be a query ID (numeric)
+  [[ "$output" =~ ^[0-9]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -225,7 +228,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/crazy-join.yaml start
   echo $output
   [ "$status" -eq 0 ]
-  [ -f "$output" ]
+  # Output should be a query ID (numeric)
+  [[ "$output" =~ ^[0-9]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -246,7 +250,8 @@ assert_json_contains() {
   echo $output
   cat nes-cli.log
   [ "$status" -eq 0 ]
-  [ -f "$output" ]
+  # Output should be a query ID (numeric)
+  [[ "$output" =~ ^[0-9]+$ ]]
   QUERY_ID=$output
 
   sleep 1

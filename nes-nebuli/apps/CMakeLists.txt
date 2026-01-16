@@ -32,7 +32,7 @@ target_include_directories(nes-repl
 # and control queries based on a topology specification which contains all state required to perform placement and
 # optimizations.
 
-add_executable(nes-cli cli/CLIStarter.cpp)
+add_executable(nes-cli cli/CLIStarter.cpp cli/QueryStateBackend.cpp)
 target_link_libraries(nes-cli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp)
 
 target_include_directories(nes-cli

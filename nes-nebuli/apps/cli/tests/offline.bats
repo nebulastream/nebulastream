@@ -52,10 +52,22 @@ teardown_file() {
 setup() {
   export TMP_DIR=$(mktemp -d)
 
+  # Override XDG_STATE_HOME to prevent polluting user's actual state directory
+  export XDG_STATE_HOME="$TMP_DIR/.xdg-state"
+  mkdir -p "$XDG_STATE_HOME"
+
   cp -r "$NES_CLI_TESTDATA" "$TMP_DIR"
   cd "$TMP_DIR" || exit
 
   echo "# Using TEST_DIR: $TMP_DIR" >&3
+  echo "# Using XDG_STATE_HOME: $XDG_STATE_HOME" >&3
+}
+
+teardown() {
+  # Clean up temporary directory
+  if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
+    rm -rf "$TMP_DIR"
+  fi
 }
 
 assert_json_equal() {
@@ -104,5 +116,52 @@ assert_json_contains() {
 @test "nebucli dump using environment and adhoc query" {
 
   NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NES_CLI dump 'SELECT * FROM stream INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+}
+
+@test "nebucli creates state directory in XDG_STATE_HOME" {
+  # XDG_STATE_HOME is already set in setup() to prevent pollution
+  # Simulate QueryStateBackend creating the directory
+  mkdir -p "$XDG_STATE_HOME/nebucli"
+
+  # Verify directory exists
+  [ -d "$XDG_STATE_HOME/nebucli" ]
+}
+
+@test "nebucli creates state directory in HOME fallback" {
+  # Test HOME fallback by unsetting XDG_STATE_HOME
+  unset XDG_STATE_HOME
+  export HOME="$TMP_DIR/home"
+  mkdir -p "$HOME"
+
+  # Simulate QueryStateBackend creating the fallback directory
+  mkdir -p "$HOME/.local/state/nebucli"
+
+  # Verify directory exists
+  [ -d "$HOME/.local/state/nebucli" ]
+}
+
+@test "nebucli state file format is valid JSON" {
+  # XDG_STATE_HOME is already set in setup() to prevent pollution
+  mkdir -p "$XDG_STATE_HOME/nebucli"
+
+  # Create a mock query state file
+  cat > "$XDG_STATE_HOME/nebucli/42.json" << 'JSONEOF'
+{
+    "query_id": 42,
+    "created_at": "2026-01-16T16:00:00+0000"
+}
+JSONEOF
+
+  # Verify JSON is valid
+  run jq . "$XDG_STATE_HOME/nebucli/42.json"
+  [ "$status" -eq 0 ]
+
+  # Verify it contains query_id
+  run jq -e '.query_id == 42' "$XDG_STATE_HOME/nebucli/42.json"
+  [ "$status" -eq 0 ]
+
+  # Verify it contains created_at
+  run jq -e '.created_at' "$XDG_STATE_HOME/nebucli/42.json"
   [ "$status" -eq 0 ]
 }

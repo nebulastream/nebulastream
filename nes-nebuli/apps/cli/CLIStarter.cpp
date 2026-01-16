@@ -55,6 +55,7 @@
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
+#include <QueryStateBackend.hpp>
 
 namespace
 {
@@ -209,40 +210,6 @@ struct convert<NES::CLI::QueryConfig>
             }
         }
         return true;
-    }
-};
-}
-
-namespace NES
-{
-
-struct PersistentQueryId
-{
-    QueryId query;
-
-    std::string store()
-    {
-        auto [file, filename] = createTemporaryFile("query-");
-        nlohmann::json jsonObject;
-        jsonObject["query_id"] = query;
-        file << jsonObject.dump(4);
-        return filename;
-    }
-
-    static PersistentQueryId load(std::string_view persistentId)
-    {
-        std::filesystem::path path(persistentId);
-        if (!exists(path))
-        {
-            throw InvalidConfigParameter(fmt::format("Could not find query with id {}", persistentId));
-        }
-        std::ifstream file(path);
-        if (!file)
-        {
-            throw InvalidConfigParameter(fmt::format("Could not open file: {}", path));
-        }
-        PersistentQueryId result(nlohmann::json::parse(file)["query_id"].get<QueryId>());
-        return result;
     }
 };
 }
@@ -436,11 +403,16 @@ NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(const argparse
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
+    NES::CLI::QueryStateBackend stateBackend;
 
     const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
         | std::views::transform(
-                             [](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
-                             { return {NES::PersistentQueryId::load(persistentIdString).query, persistentIdString}; })
+                             [&stateBackend](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
+                             {
+                                 auto persistedId = NES::CLI::PersistedQueryId::fromString(persistentIdString);
+                                 auto queryId = stateBackend.load(persistedId);
+                                 return {queryId, persistentIdString};
+                             })
         | std::ranges::to<std::unordered_map>();
     const auto state = mapping | std::views::keys | std::ranges::to<std::unordered_set>();
 
@@ -493,6 +465,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
 
     if (program.is_subcommand_used("start"))
     {
+        NES::CLI::QueryStateBackend stateBackend;
         NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
         for (const auto& query : queries)
         {
@@ -501,8 +474,8 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
                 INVARIANT(queryDescriptor.has_value(), "Query should exist in the query manager if statement handler succeed");
-                NES::PersistentQueryId persistentId(*queryDescriptor);
-                std::cout << persistentId.store() << '\n';
+                auto persistedId = stateBackend.store(*queryDescriptor);
+                std::cout << persistedId.toString() << '\n';
             }
             else
             {
