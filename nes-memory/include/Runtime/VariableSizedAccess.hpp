@@ -43,7 +43,7 @@ public:
     /// This structure is stored in the VARSIZED field and is used to store and load the VariableSizedData (See @TupleBufferRef)
     struct IndexOffsetSize
     {
-        uint64_t combinedIndexOffset;
+        CombinedIndexType combinedIndexOffset;
         uint64_t size;
     };
 
