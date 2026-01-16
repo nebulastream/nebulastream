@@ -41,7 +41,7 @@ public:
 
 private:
     Roots sinks;
-    ExecutionMode executionMode;
+    ExecutionMode executionMode = ExecutionMode::COMPILER;
     uint64_t operatorBufferSize{};
     LocalQueryId localQueryId = INVALID_LOCAL_QUERY_ID;
 
