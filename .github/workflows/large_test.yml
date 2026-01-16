@@ -34,10 +34,13 @@ jobs:
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
-        - ccache:/ccache
         - test-file-cache:/test-file-cache
       env:
-        CCACHE_DIR: /ccache
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        SCCACHE_S3_KEY_SECRET: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root

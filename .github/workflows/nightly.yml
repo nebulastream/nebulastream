@@ -97,10 +97,12 @@ jobs:
     name: "Build and tests: ${{matrix.cmake_args.name}}"
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
-      volumes:
-        - ccache:/ccache
       env:
-        CCACHE_DIR: /ccache
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        SCCACHE_S3_KEY_SECRET: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root

@@ -52,7 +52,6 @@ jobs:
         name: Preparing Github Runners
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
@@ -111,7 +110,6 @@ jobs:
       - uses: ./.github/steps/prepare-github
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: Run Log Level Test
         with:
@@ -138,6 +136,11 @@ jobs:
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       env:
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        SCCACHE_S3_KEY_SECRET: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
       options: --user root
     timeout-minutes: 40
@@ -201,7 +204,6 @@ jobs:
       - uses: ./.github/steps/prepare-github
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
@@ -234,7 +236,6 @@ jobs:
       - uses: ./.github/steps/prepare-github
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:

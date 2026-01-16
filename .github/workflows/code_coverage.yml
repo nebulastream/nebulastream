@@ -26,10 +26,12 @@ jobs:
   build-code-coverage-pr-branch:
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-      volumes:
-        - ccache:/ccache
       env:
-        CCACHE_DIR: /ccache
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        SCCACHE_S3_KEY_SECRET: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 90

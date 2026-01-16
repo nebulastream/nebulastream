@@ -25,6 +25,7 @@ RUN apt update -y && apt install \
     libssl-dev \
     openssl \
     ccache \
+    sccache \
     ninja-build \
     pkg-config \
     -y
