@@ -37,9 +37,6 @@ class LogicalPlan
 {
 public:
     LogicalPlan() = delete;
-    explicit LogicalPlan(LogicalOperator rootOperator);
-    explicit LogicalPlan(std::vector<LogicalOperator> rootOperators);
-    explicit LogicalPlan(std::vector<LogicalOperator> rootOperators, std::string originalSql);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql);
 
