@@ -34,6 +34,7 @@ jobs:
         SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
         SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
         SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: true
         AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
@@ -57,6 +58,9 @@ jobs:
         run: |
           echo "=== sccache version ==="
           sccache --version
+          echo ""
+          echo "=== Testing S3 endpoint connectivity ==="
+          curl -v -I "$SCCACHE_ENDPOINT" || echo "Endpoint not reachable or returns error"
           echo ""
           echo "=== sccache stats (before build) ==="
           sccache --show-stats
