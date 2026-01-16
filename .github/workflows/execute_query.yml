@@ -50,10 +50,15 @@ jobs:
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
-        - ccache:/ccache
         - test-file-cache:/test-file-cache
       env:
-        CCACHE_DIR: /ccache
+        SCCACHE_DIR: ${{ github.workspace }}/.sccache
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: true
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
@@ -77,11 +82,17 @@ jobs:
           EOF
         
           cat query.sql
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: Build and Test
         run: |
             cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
             cmake --build build -j -- -k 0
-            
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
+      - name: Run Query Test
+        run: |
             build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
             WORKER_PID=$!
             
