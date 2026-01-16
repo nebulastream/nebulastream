@@ -21,10 +21,15 @@ jobs:
     container:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
-        - ccache:/ccache
         - test-file-cache:/test-file-cache
       env:
-        CCACHE_DIR: /ccache
+        SCCACHE_DIR: ${{ github.workspace }}/.sccache
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: true
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
         CONBENCH_PROJECT_COMMIT: ${{ inputs.head_sha }}
         CONBENCH_URL: "https://bench.nebula.stream"
@@ -39,10 +44,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: build systest
         run: |
           cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache
           cmake --build build -j
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
       - name: run Benchmarks
         run: |
           ./build/nes-systests/systest/systest -b -g benchmark -- --worker.number_of_buffers_in_global_buffer_manager=20000 

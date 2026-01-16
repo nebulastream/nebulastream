@@ -1,0 +1,12 @@
+name: Print sccache Statistics
+description: |
+  Prints sccache compilation statistics showing cache hits, misses, and other metrics.
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Print sccache statistics
+      shell: bash
+      run: |
+        echo "=== sccache Statistics ==="
+        sccache --show-stats || echo "sccache stats not available"

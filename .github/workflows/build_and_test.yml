@@ -17,6 +17,11 @@ jobs:
   build-and-test-linux:
     name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }} Test"
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:
@@ -52,19 +57,30 @@ jobs:
         name: Preparing Github Runners
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
             cmake --build build -j  -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
       - uses: ./.github/steps/run-in-container
         name: Run Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
@@ -92,6 +108,11 @@ jobs:
     name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}} Log Test"
     timeout-minutes: 40
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:
@@ -111,12 +132,17 @@ jobs:
       - uses: ./.github/steps/prepare-github
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: Run Log Level Test
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
               echo "Running tests with log level: $LOG_LEVEL"
               cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
@@ -124,6 +150,8 @@ jobs:
               ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600 -R "testLogLevel"
               cmake --build build --target clean
             done
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && !github.event.act }}
         uses: codecov/test-results-action@v1
@@ -138,6 +166,13 @@ jobs:
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       env:
+        SCCACHE_DIR: ${{ github.workspace }}/.sccache
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: true
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
       options: --user root
     timeout-minutes: 40
@@ -157,11 +192,16 @@ jobs:
         run: |
           rm -rf build || true
           cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: Build NebulaStream
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
           cmake --build build -j -- -k 0
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
       - name: Run Tests
         # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
@@ -179,6 +219,11 @@ jobs:
     name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}} No Test"
     timeout-minutes: 40
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:
@@ -201,19 +246,31 @@ jobs:
       - uses: ./.github/steps/prepare-github
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DNES_ENABLES_TESTS=0
             cmake --build build -j -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
 
   build-test-with-flags:
     name: "Test with ${{ matrix.additional_build_flags.name }}"
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:
@@ -234,19 +291,30 @@ jobs:
       - uses: ./.github/steps/prepare-github
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.additional_build_flags.flags }}
             cmake --build build -j  -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
       - uses: ./.github/steps/run-in-container
         name: Run Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.

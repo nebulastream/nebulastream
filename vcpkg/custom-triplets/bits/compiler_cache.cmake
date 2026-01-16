@@ -10,57 +10,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(NES_USE_COMPILER_CACHE "auto" CACHE STRING "Compiler cache to use: auto, ccache, sccache, or none")
-set_property(CACHE NES_USE_COMPILER_CACHE PROPERTY STRINGS "auto" "ccache" "sccache" "none")
+# Compiler cache configuration - try sccache first, then ccache
+# Can be overridden with NES_USE_COMPILER_CACHE environment variable
+set(USE_COMPILER_CACHE "$ENV{NES_USE_COMPILER_CACHE}")
+if (NOT USE_COMPILER_CACHE)
+    set(USE_COMPILER_CACHE "auto")
+endif ()
 
 set(COMPILER_CACHE_EXECUTABLE "")
-set(COMPILER_CACHE_NAME "")
 
-if (NES_USE_COMPILER_CACHE STREQUAL "auto")
-    # Try sccache first, then ccache
+if (USE_COMPILER_CACHE STREQUAL "auto")
     find_program(SCCACHE_EXECUTABLE sccache)
     if (SCCACHE_EXECUTABLE)
         set(COMPILER_CACHE_EXECUTABLE "${SCCACHE_EXECUTABLE}")
-        set(COMPILER_CACHE_NAME "sccache")
     else ()
         find_program(CCACHE_EXECUTABLE ccache)
         if (CCACHE_EXECUTABLE)
             set(COMPILER_CACHE_EXECUTABLE "${CCACHE_EXECUTABLE}")
-            set(COMPILER_CACHE_NAME "ccache")
         endif ()
     endif ()
-elseif (NES_USE_COMPILER_CACHE STREQUAL "sccache")
+elseif (USE_COMPILER_CACHE STREQUAL "sccache")
     find_program(SCCACHE_EXECUTABLE sccache)
     if (NOT SCCACHE_EXECUTABLE)
         message(FATAL_ERROR "sccache was requested but not found on the system")
     endif ()
     set(COMPILER_CACHE_EXECUTABLE "${SCCACHE_EXECUTABLE}")
-    set(COMPILER_CACHE_NAME "sccache")
-elseif (NES_USE_COMPILER_CACHE STREQUAL "ccache")
+elseif (USE_COMPILER_CACHE STREQUAL "ccache")
     find_program(CCACHE_EXECUTABLE ccache)
     if (NOT CCACHE_EXECUTABLE)
         message(FATAL_ERROR "ccache was requested but not found on the system")
     endif ()
     set(COMPILER_CACHE_EXECUTABLE "${CCACHE_EXECUTABLE}")
-    set(COMPILER_CACHE_NAME "ccache")
-elseif (NES_USE_COMPILER_CACHE STREQUAL "none")
-    # Explicitly disabled
-    message(STATUS "Compiler cache explicitly disabled")
 endif ()
 
 if (COMPILER_CACHE_EXECUTABLE)
-    message(STATUS "Using ${COMPILER_CACHE_NAME}: ${COMPILER_CACHE_EXECUTABLE}")
     set(CMAKE_CXX_COMPILER_LAUNCHER "${COMPILER_CACHE_EXECUTABLE}")
-
-    # Special handling for ccache with precompiled headers
-    if (COMPILER_CACHE_NAME STREQUAL "ccache" AND NES_ENABLE_PRECOMPILED_HEADERS)
-        set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
-        # Need to set these to enable interplay between ccache and precompiled headers
-        # https://ccache.dev/manual/4.8.html#_precompiled_headers
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xclang -fno-pch-timestamp")
-        set(ENV{CCACHE_SLOPPINESS} "pch_defines,time_macros,include_file_ctime,include_file_mtime")
-        message("CCACHE_SLOPPINESS: $ENV{CCACHE_SLOPPINESS}")
-    endif ()
-else ()
-    message(STATUS "Not using any compiler cache")
 endif ()

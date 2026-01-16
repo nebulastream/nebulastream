@@ -29,8 +29,13 @@ jobs:
           ref: ${{ inputs.head_sha }}
       - name: Configure CMake
         run: cmake -B build
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: Build to generate required code (e.g. grpc, ANTLR headers)
         run: cmake --build build
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
       - name: Run clang-tidy
         id: run-clang-tidy
         # we explicitely set bash to have pipefail

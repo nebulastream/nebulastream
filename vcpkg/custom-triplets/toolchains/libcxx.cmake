@@ -32,10 +32,7 @@ if (NOT _NES_TOOLCHAIN_FILE)
         set(LINK_WITH_MOLD "-fuse-ld=mold")
     endif ()
 
-    find_program(CCACHE_EXECUTABLE ccache)
-    if (CCACHE_EXECUTABLE)
-        set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}")
-    endif ()
+    include(${CMAKE_CURRENT_LIST_DIR}/../bits/compiler_cache.cmake)
 
     # If clang is available we use clang and look for libc++
     find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
