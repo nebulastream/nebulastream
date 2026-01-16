@@ -47,7 +47,7 @@ public:
         /// Getting the pointer to the @class VariableSizedData with the first 32-bit storing the size.
         const auto varSizedSpan = TupleBufferRef::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
         const auto* const strPtrContent = reinterpret_cast<const char*>(varSizedSpan.data());
-        return std::string{strPtrContent, strPtrContent};
+        return std::string{strPtrContent, variableSizedAccess.getSize().getRawSize()};
     }
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
