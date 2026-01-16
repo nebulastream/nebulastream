@@ -31,6 +31,7 @@ jobs:
         SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
         SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
         SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: true
         AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
       # TODO #401 Investigate rootless docker containers

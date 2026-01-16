@@ -61,6 +61,10 @@ jobs:
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
@@ -69,6 +73,10 @@ jobs:
         name: Run Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
@@ -124,6 +132,10 @@ jobs:
         name: Run Log Level Test
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
               echo "Running tests with log level: $LOG_LEVEL"
@@ -150,6 +162,7 @@ jobs:
         SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
         SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
         SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: true
         AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
@@ -224,6 +237,10 @@ jobs:
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             cmake -GNinja -B build -DNES_ENABLES_TESTS=0
@@ -261,6 +278,10 @@ jobs:
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.additional_build_flags.flags }}
@@ -269,6 +290,10 @@ jobs:
         name: Run Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
+          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
+          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
