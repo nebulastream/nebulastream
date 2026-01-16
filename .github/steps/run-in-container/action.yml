@@ -23,8 +23,8 @@ runs:
              -e SCCACHE_BUCKET=${{ secrets.SCCACHE_BUCKET }} \
              -e SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }} \
              -e SCCACHE_REGION=auto \
-             -e SCCACHE_S3_KEY_ID=${{ secrets.SCCACHE_S3_KEY_ID }} \
-             -e SCCACHE_S3_KEY_SECRET=${{ secrets.SCCACHE_S3_KEY_SECRET }} \
+             -e AWS_ACCESS_KEY_ID=${{ secrets.SCCACHE_S3_KEY_ID }} \
+             -e AWS_SECRET_ACCESS_KEY=${{ secrets.SCCACHE_S3_KEY_SECRET }} \
              --workdir $(pwd) -u $(id -u):$(id -g) \
              ${{inputs.image_name}} \
               /usr/bin/bash -c '${{inputs.run}}'
