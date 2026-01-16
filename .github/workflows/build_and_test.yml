@@ -17,6 +17,11 @@ jobs:
   build-and-test-linux:
     name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }} Test"
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:
@@ -91,6 +96,11 @@ jobs:
     name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}} Log Test"
     timeout-minutes: 40
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:
@@ -183,6 +193,11 @@ jobs:
     name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}} No Test"
     timeout-minutes: 40
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:
@@ -217,6 +232,11 @@ jobs:
   build-test-with-flags:
     name: "Test with ${{ matrix.additional_build_flags.name }}"
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       fail-fast: false
       matrix:

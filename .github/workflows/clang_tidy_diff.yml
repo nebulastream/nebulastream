@@ -33,6 +33,11 @@ jobs:
     timeout-minutes: 90
     name: Clang-Tidy Diff
     runs-on: ${{ matrix.runner }}
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
       matrix:
         arch: [ x64 ]

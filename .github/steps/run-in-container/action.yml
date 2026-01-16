@@ -16,15 +16,20 @@ runs:
   steps:
     - name: run in container
       shell: bash
+      env:
+        SCCACHE_BUCKET: ${{ env.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ env.SCCACHE_ENDPOINT }}
+        AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
       run: |
         docker run \
              -v $(pwd):$(pwd) \
              -e SCCACHE_DIR=$(pwd)/.sccache \
-             -e SCCACHE_BUCKET=${{ secrets.SCCACHE_BUCKET }} \
-             -e SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }} \
+             -e SCCACHE_BUCKET="${SCCACHE_BUCKET}" \
+             -e SCCACHE_ENDPOINT="${SCCACHE_ENDPOINT}" \
              -e SCCACHE_REGION=auto \
-             -e AWS_ACCESS_KEY_ID=${{ secrets.SCCACHE_S3_KEY_ID }} \
-             -e AWS_SECRET_ACCESS_KEY=${{ secrets.SCCACHE_S3_KEY_SECRET }} \
+             -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+             -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
              --workdir $(pwd) -u $(id -u):$(id -g) \
              ${{inputs.image_name}} \
               /usr/bin/bash -c '${{inputs.run}}'
