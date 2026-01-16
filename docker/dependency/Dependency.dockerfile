@@ -71,8 +71,13 @@ RUN --mount=type=secret,id=R2_KEY \
         --overlay-triplets=custom-triplets \
         --overlay-ports=vcpkg-registry/ports \
         --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" \
-        --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}"; \
+        --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}"'
+
+RUN bash -c ' \
+    set -e; \
+    if [ "$STDLIB" = "libcxx" ]; then VCPKG_STDLIB="libcxx"; else VCPKG_STDLIB="local"; fi; \
     \
+    cd /vcpkg_input; \
     ./vcpkg_repository/vcpkg export \
         --overlay-triplets=custom-triplets \
         --overlay-ports=vcpkg-registry/ports \
