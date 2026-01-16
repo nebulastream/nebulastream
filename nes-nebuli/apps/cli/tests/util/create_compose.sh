@@ -47,6 +47,7 @@ services:
     pull_policy: never
     environment:
       NES_WORKER_GRPC_ADDR: worker-node:8080
+      XDG_STATE_HOME: $(pwd)/.xdg-state
     stop_grace_period: 0s
     command: ["sleep", "infinity"]
     working_dir: $(pwd)
