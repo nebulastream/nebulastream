@@ -24,6 +24,7 @@
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -79,7 +80,7 @@ void PagedVector::copyFrom(const PagedVector& other)
     pages.addPages(other.pages);
 }
 
-const TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
+NAUTILUS_INLINE const TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
 {
     /// We need to find the index / page that the entryPos belongs to.
     /// If an index exists for this, we get the tuple buffer
@@ -91,7 +92,7 @@ const TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) 
     return nullptr;
 }
 
-std::optional<uint64_t> PagedVector::getBufferPosForEntry(const uint64_t entryPos) const
+NAUTILUS_INLINE std::optional<uint64_t> PagedVector::getBufferPosForEntry(const uint64_t entryPos) const
 {
     /// We need to find the index / page that the entryPos belongs to.
     return pages.findIdx(entryPos).and_then(
@@ -130,7 +131,7 @@ void PagedVector::PagesWrapper::clearPages()
     pages.clear();
 }
 
-std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos) const
+NAUTILUS_INLINE std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos) const
 {
     if (entryPos >= getTotalNumberOfEntries())
     {
@@ -161,7 +162,7 @@ std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos
     return {};
 }
 
-uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
+NAUTILUS_INLINE uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
 {
     /// We can not ensure that the last cumulative sum is up-to-date. Therefore, we need to add the penultimate sum + no. tuples of last page
     const auto penultimateCumulativeSum = (pages.size() > 1) ? pages.rbegin()[1].cumulativeSum : 0;
@@ -169,19 +170,19 @@ uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
     return penultimateCumulativeSum + lastNumberOfTuples;
 }
 
-const TupleBuffer& PagedVector::PagesWrapper::getLastPage() const
+NAUTILUS_INLINE const TupleBuffer& PagedVector::PagesWrapper::getLastPage() const
 {
     PRECONDITION(not pages.empty(), "getLastPage() should be called after a page has been inserted!");
     return pages.back().buffer;
 }
 
-const TupleBuffer& PagedVector::PagesWrapper::getFirstPage() const
+NAUTILUS_INLINE const TupleBuffer& PagedVector::PagesWrapper::getFirstPage() const
 {
     PRECONDITION(not pages.empty(), "getFirstPage() should be called after a page has been inserted!");
     return pages.front().buffer;
 }
 
-uint64_t PagedVector::PagesWrapper::getNumberOfPages() const
+NAUTILUS_INLINE uint64_t PagedVector::PagesWrapper::getNumberOfPages() const
 {
     return pages.size();
 }
