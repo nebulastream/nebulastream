@@ -78,7 +78,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto projection = projectionLogicalOperator.getAs<ProjectionLogicalOperator>();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
-    auto bufferSize = conf.pageSize.getValue();
+    auto bufferSize = conf.operatorBufferSize.getValue();
 
     const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");

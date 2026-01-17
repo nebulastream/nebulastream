@@ -34,6 +34,7 @@ static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
 static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
 static constexpr auto DEFAULT_MAX_NUMBER_OF_BUCKETS = 10'000.0;
+static constexpr auto DEFAULT_ROW_LAYOUT_RATIO = 1.0;
 
 enum class StreamJoinStrategy : uint8_t
 {
@@ -83,6 +84,11 @@ public:
            StreamJoinStrategy::OPTIMIZER_CHOOSES,
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
+    FloatOption rowLayoutRatio
+        = {"row_layout_ratio",
+           std::to_string(DEFAULT_ROW_LAYOUT_RATIO),
+           "Percentage of how many operators are in row layout"
+           "[0|0.5|1]."};
 
 private:
     std::vector<BaseOption*> getOptions() override
@@ -94,7 +100,8 @@ private:
             &joinStrategy,
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
-            &operatorBufferSize};
+            &operatorBufferSize,
+            &rowLayoutRatio};
     }
 };
 

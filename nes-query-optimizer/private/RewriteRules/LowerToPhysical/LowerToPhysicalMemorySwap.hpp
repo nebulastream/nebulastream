@@ -13,21 +13,23 @@
 */
 
 #pragma once
+
+#include <utility>
 #include <Operators/LogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-/// Decides what memory layout should be used per operator. For now, we use the same layout across all operators except for sources and sinks.
-class DecideMemoryLayout
+struct LowerToPhysicalMemorySwap : AbstractRewriteRule
 {
-public:
-    LogicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf);
+    explicit LowerToPhysicalMemorySwap(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator, const QueryExecutionConfiguration& conf);
+    QueryExecutionConfiguration conf;
 };
 
 }

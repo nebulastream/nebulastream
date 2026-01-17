@@ -23,3 +23,4 @@ add_plugin(Projection LogicalOperator nes-logical-operators ProjectionLogicalOpe
 add_plugin(Union LogicalOperator nes-logical-operators UnionLogicalOperator.cpp)
 add_plugin(IngestionTimeWatermarkAssigner LogicalOperator nes-logical-operators IngestionTimeWatermarkAssignerLogicalOperator.cpp)
 add_plugin(EventTimeWatermarkAssigner LogicalOperator nes-logical-operators EventTimeWatermarkAssignerLogicalOperator.cpp)
+add_plugin(MemorySwap LogicalOperator nes-logical-operators MemorySwapLogicalOperator.cpp)
