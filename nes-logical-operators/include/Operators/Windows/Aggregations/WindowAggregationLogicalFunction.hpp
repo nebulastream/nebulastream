@@ -52,7 +52,6 @@ public:
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
-
 protected:
     explicit WindowAggregationLogicalFunction(
         DataType inputStamp,

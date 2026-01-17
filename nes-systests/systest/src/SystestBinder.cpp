@@ -82,7 +82,7 @@ public:
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
-                if (sinkType == "File")
+                if (sinkType == "File" || sinkType == "Discard")
                 {
                     config["input_format"] = "CSV";
                 }
@@ -412,10 +412,10 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider, *testfile.modelCatalog);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog, testfile.modelCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -529,10 +529,23 @@ struct SystestBinder::Impl
         sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
     }
 
+    static void createModel(Nebuli::Inference::ModelCatalog& modelCatalog, const CreateModelStatement& statement)
+    {
+        Nebuli::Inference::ModelDescriptor model;
+
+        model.name = statement.modelName;
+        model.path = statement.modelPath;
+        model.inputs = std::move(statement.inputTypes);
+        model.outputs = std::move(statement.outputs);
+
+        modelCatalog.registerModel(std::move(model));
+    }
+
     void createCallback(
         const StatementBinder& binder,
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         SLTSinkFactory& sltSinkProvider,
+        Nebuli::Inference::ModelCatalog& modelCatalog,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
@@ -561,6 +574,10 @@ struct SystestBinder::Impl
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
             createSink(sltSinkProvider, std::get<CreateSinkStatement>(statement));
+        }
+        else if (std::holds_alternative<CreateModelStatement>(statement))
+        {
+            createModel(modelCatalog, std::get<CreateModelStatement>(statement));
         }
         else
         {
@@ -784,7 +801,8 @@ struct SystestBinder::Impl
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
-        SLTSinkFactory& sltSinkProvider)
+        SLTSinkFactory& sltSinkProvider,
+        Nebuli::Inference::ModelCatalog& modelCatalog)
     {
         uint64_t sourceIndex = 0;
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
@@ -877,7 +895,7 @@ struct SystestBinder::Impl
 
         parser.registerOnCreateCallback(
             [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+            { createCallback(binder, sourceCatalog, sltSinkProvider, modelCatalog, sourceThreads, query, std::move(input)); });
 
         try
         {

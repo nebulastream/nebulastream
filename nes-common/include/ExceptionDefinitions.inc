@@ -71,6 +71,8 @@ EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
+EXCEPTION(UnknownModelName, 2129, "unknown model name")
+EXCEPTION(ModelAlreadyExists, 2130, "model already exists")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
@@ -90,6 +92,7 @@ EXCEPTION(CannotStartQueryEngine, 3003, "cannot start query engine")
 EXCEPTION(CannotStopQQueryEngine, 3004, "cannot stop query engine")
 EXCEPTION(QueryNotRegistered, 3005, "query not registered")
 EXCEPTION(CannotStartQuery, 3006, "cannot start query")
+EXCEPTION(InferenceRuntime, 3007, "Inference Runtime Error")
 /// Todo #500: place holder until we can cleanly handle malformed string values (NULL/Undefined or similar)
 /// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")

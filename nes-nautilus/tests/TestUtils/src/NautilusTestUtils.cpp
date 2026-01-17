@@ -13,6 +13,8 @@
 */
 #include <NautilusTestUtils.hpp>
 
+#include <NautilusTestUtils.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>

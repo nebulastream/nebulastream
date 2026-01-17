@@ -1,0 +1,187 @@
+# name: InferenceDifferentDataTypes.test
+# description: Invokes a model for different data types
+# groups: [Inference]
+
+# This test validates basic inference queries with different models wrt to different data types
+# Models in these queries simply compute y = x * W, where x is [1, input_dim], and W is [input_dim, output_dim]
+# There are however 2 caveats:
+# 1. IREE currently doesn't have matmul support for 8-bit integers, so we can't test for this data type
+# 2. Tests for 64-bit integers and floats are flakey most likely due to the way IREE initializes its "call" objects
+#    Using the high-level API is however fine for all data types of inputs and outputs, but the 64-bit ones
+
+CREATE LOGICAL SOURCE streamI16(f1 INT16, f2 INT16, f3 INT16, f4 INT16);
+CREATE PHYSICAL SOURCE FOR streamI16 TYPE File;
+ATTACH INLINE
+1,2,3,4
+5,6,7,8
+
+CREATE LOGICAL SOURCE streamI32(f1 INT32, f2 INT32, f3 INT32, f4 INT32);
+CREATE PHYSICAL SOURCE FOR streamI32 TYPE File;
+ATTACH INLINE
+1,2,3,4
+5,6,7,8
+
+CREATE LOGICAL SOURCE streamUI16(f1 UINT16, f2 UINT16, f3 UINT16, f4 UINT16);
+CREATE PHYSICAL SOURCE FOR streamUI16 TYPE File;
+ATTACH INLINE
+1,2,3,4
+5,6,7,8
+
+CREATE LOGICAL SOURCE streamUI32(f1 UINT32, f2 UINT32, f3 UINT32, f4 UINT32);
+CREATE PHYSICAL SOURCE FOR streamUI32 TYPE File;
+ATTACH INLINE
+1,2,3,4
+5,6,7,8
+
+CREATE LOGICAL SOURCE streamFloat32(f1 FLOAT32, f2 FLOAT32, f3 FLOAT32, f4 FLOAT32);
+CREATE PHYSICAL SOURCE FOR streamFloat32 TYPE File;
+ATTACH INLINE
+1.0,2.0,3.0,4.0
+5.0,6.0,7.0,8.0
+
+CREATE LOGICAL SOURCE streamVarsized(f VARSIZED);
+CREATE PHYSICAL SOURCE FOR streamVarsized TYPE File;
+ATTACH INLINE
+AAAABBBBCCCCDDDD
+EEEEFFFFGGGGHHHH
+
+CREATE SINK sinkStreamI16(p1 INT16, p2 INT16, p3 INT16) TYPE File;
+CREATE SINK sinkStreamI32(p1 INT32, p2 INT32, p3 INT32) TYPE File;
+CREATE SINK sinkStreamI64(p1 INT64, p2 INT64, p3 INT64) TYPE File;
+CREATE SINK sinkStreamUI16(p1 UINT16, p2 UINT16, p3 UINT16) TYPE File;
+CREATE SINK sinkStreamUI32(p1 UINT32, p2 UINT32, p3 UINT32) TYPE File;
+CREATE SINK sinkStreamUI64(p1 UINT64, p2 UINT64, p3 UINT64) TYPE File;
+CREATE SINK sinkStreamFloat32(p1 FLOAT32, p2 FLOAT32, p3 FLOAT32) TYPE File;
+CREATE SINK sinkStreamFloat64(p1 FLOAT64, p2 FLOAT64, p3 FLOAT64) TYPE File;
+CREATE SINK sinkStreamVarsized(p VARSIZED) TYPE Checksum;
+
+# To register a model, one should provide the path, data type of input fields, and output fields schema
+# Input type is required, since inference operator supports variable sized data
+# If the input is varsized, we need to parse the input tensor type during model compilation (see ModelLoader.cpp)
+# Otherwise, for consistency, data types for every input field should be provided
+CREATE MODEL linearI16(
+    PATH "TESTDATA/model/linear_i16.onnx"
+    INPUTS (INT16, INT16, INT16, INT16)
+    OUTPUTS (p1 INT16, p2 INT16, p3 INT16)
+);
+
+CREATE MODEL linearI32(
+    PATH "TESTDATA/model/linear_i32.onnx"
+    INPUTS (INT32, INT32, INT32, INT32)
+    OUTPUTS (p1 INT32, p2 INT32, p3 INT32)
+);
+
+CREATE MODEL linearUI16(
+    PATH "TESTDATA/model/linear_ui16.onnx"
+    INPUTS (UINT16, UINT16, UINT16, UINT16)
+    OUTPUTS (p1 UINT16, p2 UINT16, p3 UINT16)
+);
+
+CREATE MODEL linearUI32(
+    PATH "TESTDATA/model/linear_ui32.onnx"
+    INPUTS (UINT32, UINT32, UINT32, UINT32)
+    OUTPUTS (p1 UINT32, p2 UINT32, p3 UINT32)
+);
+
+CREATE MODEL linearFloat32(
+    PATH "TESTDATA/model/linear_f32.onnx"
+    INPUTS (FLOAT32, FLOAT32, FLOAT32, FLOAT32)
+    OUTPUTS (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32)
+);
+
+CREATE MODEL linearVarsized(
+    PATH "TESTDATA/model/linear_f32.onnx"
+    INPUTS (VARSIZED)
+    OUTPUTS (p VARSIZED)
+);
+
+CREATE MODEL linearVarsizedInput(
+    PATH "TESTDATA/model/linear_f32.onnx"
+    INPUTS (VARSIZED)
+    OUTPUTS (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32)
+);
+
+CREATE MODEL linearVarsizedOutput(
+    PATH "TESTDATA/model/linear_f32.onnx"
+    INPUTS (FLOAT32, FLOAT32, FLOAT32, FLOAT32)
+    OUTPUTS (p VARSIZED)
+);
+
+# The syntax for inference operator is INFER_MODEL(<model_name>, (<input_field1>, <input_field2>, ...))
+SELECT p1, p2, p3
+FROM (
+    SELECT INFER_MODEL(linearI16, (f1, f2, f3, f4))
+    FROM streamI16
+)
+INTO sinkStreamI16;
+----
+60,70,80
+132,158,184
+
+SELECT p1, p2, p3
+FROM (
+    SELECT INFER_MODEL(linearI32, (f1, f2, f3, f4))
+    FROM streamI32
+)
+INTO sinkStreamI32;
+----
+60,70,80
+132,158,184
+
+SELECT p1, p2, p3
+FROM (
+    SELECT INFER_MODEL(linearUI16, (f1, f2, f3, f4))
+    FROM streamUI16
+)
+INTO sinkStreamUI16;
+----
+60,70,80
+132,158,184
+
+SELECT p1, p2, p3
+FROM (
+    SELECT INFER_MODEL(linearUI32, (f1, f2, f3, f4))
+    FROM streamUI32
+)
+INTO sinkStreamUI32;
+----
+60,70,80
+132,158,184
+
+SELECT p1, p2, p3
+FROM (
+    SELECT INFER_MODEL(linearFloat32, (f1, f2, f3, f4))
+    FROM streamFloat32
+)
+INTO sinkStreamFloat32;
+----
+60.0,70.0,80.0
+132.0,158.0,184.0
+
+SELECT p
+FROM (
+    SELECT INFER_MODEL(linearVarsized, (f))
+    FROM streamVarsized
+)
+INTO sinkStreamVarsized;
+----
+2,913
+
+SELECT p1, p2, p3
+FROM (
+    SELECT INFER_MODEL(linearVarsizedInput, (f))
+    FROM streamVarsized
+)
+INTO sinkStreamFloat32;
+----
+8382.870117,9423.842773,10464.81543
+2189962.5,2461912.75,2733863.0
+
+SELECT p
+FROM (
+    SELECT INFER_MODEL(linearVarsizedOutput, (f1, f2, f3, f4))
+    FROM streamFloat32
+)
+INTO sinkStreamVarsized;
+----
+2,545

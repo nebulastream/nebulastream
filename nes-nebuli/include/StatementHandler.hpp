@@ -51,6 +51,11 @@ struct CreateSinkStatementResult
     SinkDescriptor created;
 };
 
+struct CreateModelStatementResult
+{
+    Nebuli::Inference::ModelDescriptor created;
+};
+
 struct ShowLogicalSourcesStatementResult
 {
     std::vector<LogicalSource> sources;
@@ -66,6 +71,11 @@ struct ShowSinksStatementResult
     std::vector<SinkDescriptor> sinks;
 };
 
+struct ShowModelsStatementResult
+{
+    std::vector<Nebuli::Inference::ModelDescriptor> models;
+};
+
 struct DropLogicalSourceStatementResult
 {
     LogicalSource dropped;
@@ -79,6 +89,11 @@ struct DropPhysicalSourceStatementResult
 struct DropSinkStatementResult
 {
     SinkDescriptor dropped;
+};
+
+struct DropModelStatementResult
+{
+    Nebuli::Inference::ModelDescriptor dropped;
 };
 
 struct QueryStatementResult
@@ -100,12 +115,15 @@ using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
     CreateSinkStatementResult,
+    CreateModelStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
+    ShowModelsStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
+    DropModelStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     DropQueryStatementResult>;
@@ -157,6 +175,17 @@ public:
     std::expected<CreateSinkStatementResult, Exception> operator()(const CreateSinkStatement& statement);
     std::expected<ShowSinksStatementResult, Exception> operator()(const ShowSinksStatement& statement) const;
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
+};
+
+class ModelStatementHandler final : public StatementHandler<ModelStatementHandler>
+{
+    std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog;
+
+public:
+    explicit ModelStatementHandler(const std::shared_ptr<Nebuli::Inference::ModelCatalog>& modelCatalog);
+    std::expected<CreateModelStatementResult, Exception> operator()(const CreateModelStatement& statement);
+    std::expected<ShowModelsStatementResult, Exception> operator()(const ShowModelsStatement& statement) const;
+    std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
 };
 
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>

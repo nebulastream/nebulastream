@@ -73,6 +73,14 @@ struct CreateSinkStatement
     std::unordered_map<std::string, std::string> sinkConfig;
 };
 
+struct CreateModelStatement
+{
+    std::string modelName;
+    std::string modelPath;
+    std::vector<DataType> inputTypes;
+    Schema outputs;
+};
+
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
 /// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
 struct ShowLogicalSourcesStatement
@@ -96,6 +104,12 @@ struct ShowSinksStatement
     std::optional<StatementOutputFormat> format;
 };
 
+struct ShowModelsStatement
+{
+    std::optional<std::string> name;
+    std::optional<StatementOutputFormat> format;
+};
+
 struct DropLogicalSourceStatement
 {
     LogicalSource source;
@@ -107,6 +121,11 @@ struct DropPhysicalSourceStatement
 };
 
 struct DropSinkStatement
+{
+    std::string name;
+};
+
+struct DropModelStatement
 {
     std::string name;
 };
@@ -128,14 +147,17 @@ using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
+    CreateModelStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
+    DropModelStatement,
     QueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
+    ShowModelsStatement,
     DropQueryStatement>;
 
 inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)

@@ -158,6 +158,7 @@ public:
     using CreateCallback = std::function<void(std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>)>;
     using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
+    using ModelCallback = std::function<void(Nebuli::Inference::ModelDescriptor&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
@@ -193,6 +194,7 @@ private:
     [[nodiscard]] ErrorExpectation expectError() const;
     [[nodiscard]] std::vector<ConfigurationOverride> expectConfiguration();
     [[nodiscard]] std::vector<ConfigurationOverride> expectGlobalConfiguration();
+    [[nodiscard]] Nebuli::Inference::ModelDescriptor expectModel();
 
     std::vector<SubstitutionRule> substitutionRules;
     QueryCallback onQueryCallback;
