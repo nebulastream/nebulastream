@@ -61,11 +61,13 @@ jobs:
           ref: ${{ inputs.head_sha }}
       - name: Configure NebulaStream
         run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: Build NebulaStream
-        run: |
-          export SCCACHE_IDLE_TIMEOUT=0
-          sccache --start-server
-          cmake --build build --target systest -j
+        run: cmake --build build --target systest -j
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
       - name: Run large System Level Tests
         run: |
           echo "Running all large tests with: "

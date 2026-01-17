@@ -44,12 +44,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: build systest
         run: |
-          export SCCACHE_IDLE_TIMEOUT=0
-          sccache --start-server
           cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache
           cmake --build build -j
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
       - name: run Benchmarks
         run: |
           ./build/nes-systests/systest/systest -b -g benchmark -- --worker.number_of_buffers_in_global_buffer_manager=20000 

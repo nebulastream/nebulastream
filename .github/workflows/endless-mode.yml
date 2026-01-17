@@ -70,6 +70,8 @@ jobs:
             export SCCACHE_IDLE_TIMEOUT=0
             sccache --start-server
             cmake --build build --target systest -j -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
 
       - uses: ./.github/steps/run-in-container
         name: Run Endless Mode

@@ -76,6 +76,8 @@ jobs:
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
             # We need to build the project, as some headers are only created during the build.
             cmake --build build -j  -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
       - name: Create results directory
         run: mkdir clang-tidy-result
       - uses: ./.github/steps/run-in-container

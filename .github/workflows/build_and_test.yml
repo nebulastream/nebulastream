@@ -71,6 +71,8 @@ jobs:
             sccache --start-server
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
             cmake --build build -j  -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
       - uses: ./.github/steps/run-in-container
         name: Run Tests
         with:
@@ -148,6 +150,8 @@ jobs:
               ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600 -R "testLogLevel"
               cmake --build build --target clean
             done
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && !github.event.act }}
         uses: codecov/test-results-action@v1
@@ -188,13 +192,16 @@ jobs:
         run: |
           rm -rf build || true
           cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: Build NebulaStream
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          export SCCACHE_IDLE_TIMEOUT=0
-          sccache --start-server
           cmake --build build -j -- -k 0
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
       - name: Run Tests
         # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
@@ -253,6 +260,8 @@ jobs:
             sccache --start-server
             cmake -GNinja -B build -DNES_ENABLES_TESTS=0
             cmake --build build -j -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
 
   build-test-with-flags:
     name: "Test with ${{ matrix.additional_build_flags.name }}"
@@ -296,6 +305,8 @@ jobs:
             sccache --start-server
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.additional_build_flags.flags }}
             cmake --build build -j  -- -k 0
+            echo "=== sccache Statistics ==="
+            sccache --show-stats || echo "sccache stats not available"
       - uses: ./.github/steps/run-in-container
         name: Run Tests
         with:
