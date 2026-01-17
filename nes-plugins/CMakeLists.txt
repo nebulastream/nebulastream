@@ -20,7 +20,7 @@ activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
-activate_optional_plugin("Sources/AudioSource" ON)
+activate_optional_plugin("Sources/AudioSource" OFF)
 activate_optional_plugin("Inference/IREE" ON)
 
 if (NES_ENABLES_TESTS)
