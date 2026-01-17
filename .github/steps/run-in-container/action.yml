@@ -10,22 +10,6 @@ inputs:
   run:
     description: 'bash command(s) to run within the container'
     required: true
-  sccache_bucket:
-    description: 'S3 bucket for sccache'
-    required: false
-    default: ''
-  sccache_endpoint:
-    description: 'S3 endpoint for sccache'
-    required: false
-    default: ''
-  aws_access_key_id:
-    description: 'AWS access key ID for sccache'
-    required: false
-    default: ''
-  aws_secret_access_key:
-    description: 'AWS secret access key for sccache'
-    required: false
-    default: ''
 
 runs:
   using: 'composite'
@@ -36,12 +20,12 @@ runs:
         docker run \
              -v $(pwd):$(pwd) \
              -e SCCACHE_DIR=$(pwd)/.sccache \
-             -e SCCACHE_BUCKET="${{ inputs.sccache_bucket }}" \
-             -e SCCACHE_ENDPOINT="${{ inputs.sccache_endpoint }}" \
-             -e SCCACHE_REGION=auto \
-             -e SCCACHE_S3_USE_SSL=true \
-             -e AWS_ACCESS_KEY_ID="${{ inputs.aws_access_key_id }}" \
-             -e AWS_SECRET_ACCESS_KEY="${{ inputs.aws_secret_access_key }}" \
+             -e SCCACHE_BUCKET \
+             -e SCCACHE_ENDPOINT \
+             -e SCCACHE_REGION \
+             -e SCCACHE_S3_USE_SSL \
+             -e AWS_ACCESS_KEY_ID \
+             -e AWS_SECRET_ACCESS_KEY \
              --workdir $(pwd) -u $(id -u):$(id -g) \
              ${{inputs.image_name}} \
               /usr/bin/bash -c '${{inputs.run}}'
