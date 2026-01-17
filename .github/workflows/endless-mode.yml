@@ -51,10 +51,6 @@ jobs:
       - uses: ./.github/steps/run-in-container
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
 
@@ -62,10 +58,6 @@ jobs:
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             export SCCACHE_IDLE_TIMEOUT=0
             sccache --start-server
@@ -77,10 +69,6 @@ jobs:
         name: Run Endless Mode
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             printenv

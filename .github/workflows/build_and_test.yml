@@ -20,6 +20,8 @@ jobs:
     env:
       SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
       SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      SCCACHE_REGION: auto
+      SCCACHE_S3_USE_SSL: true
       AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
@@ -61,10 +63,6 @@ jobs:
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             export SCCACHE_IDLE_TIMEOUT=0
@@ -77,10 +75,6 @@ jobs:
         name: Run Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
@@ -111,6 +105,8 @@ jobs:
     env:
       SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
       SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      SCCACHE_REGION: auto
+      SCCACHE_S3_USE_SSL: true
       AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
@@ -136,10 +132,6 @@ jobs:
         name: Run Log Level Test
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             export SCCACHE_IDLE_TIMEOUT=0
             sccache --start-server
@@ -222,6 +214,8 @@ jobs:
     env:
       SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
       SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      SCCACHE_REGION: auto
+      SCCACHE_S3_USE_SSL: true
       AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
@@ -250,10 +244,6 @@ jobs:
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             export SCCACHE_IDLE_TIMEOUT=0
@@ -269,6 +259,8 @@ jobs:
     env:
       SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
       SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      SCCACHE_REGION: auto
+      SCCACHE_S3_USE_SSL: true
       AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
     strategy:
@@ -295,10 +287,6 @@ jobs:
         name: CMake Build
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             export SCCACHE_IDLE_TIMEOUT=0
@@ -311,10 +299,6 @@ jobs:
         name: Run Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          sccache_bucket: ${{ secrets.SCCACHE_BUCKET }}
-          sccache_endpoint: ${{ secrets.SCCACHE_ENDPOINT }}
-          aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
