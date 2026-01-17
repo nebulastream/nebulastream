@@ -1,12 +1,8 @@
 name: Prepare GitHub CI Server Instance
 description: |
-  Prepares a github ci server instance by removing unnecessary pre-installed software pulling the docker image and 
-  preparing ccache.
+  Prepares a github ci server instance by removing unnecessary pre-installed software and pulling the docker image.
 
 inputs:
-  ccache_key:
-    description: 'key of the ccache github cache'
-    required: true
   image_name:
     description: 'name of the docker image to prepare'
     required: true
@@ -21,9 +17,8 @@ runs:
       # the docker image
       shell: bash
       run: |
-        $(which sudo) apt-get install -y ccache &
         docker pull ${{inputs.image_name}} &
-        
+
         df -h
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /usr/local/lib/android
@@ -31,7 +26,3 @@ runs:
         sudo rm -rf /opt/hostedtoolcache/CodeQL
         df -h
         wait
-    - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2.18
-      with:
-        key: ${{inputs.ccache_key}}

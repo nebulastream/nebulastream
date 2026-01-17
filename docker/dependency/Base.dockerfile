@@ -6,6 +6,7 @@ FROM ubuntu:24.04
 ARG LLVM_TOOLCHAIN_VERSION=19
 ARG MOLD_VERSION=2.37.1
 ARG CMAKE_VERSION=3.31.6
+ARG SCCACHE_VERSION=0.12.0
 ENV LLVM_TOOLCHAIN_VERSION=${LLVM_TOOLCHAIN_VERSION}
 ENV CMAKE_VERSION=${CMAKE_VERSION}
 
@@ -43,14 +44,20 @@ RUN wget https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-
     && rm -rf mold-${MOLD_VERSION}-$(uname -m)-linux mold-${MOLD_VERSION}-$(uname -m)-linux.tar.gz \
     && mold --version
 
-# install recent version of cmake
-RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
-    && tar -xf cmake-${CMAKE_VERSION}.tar.gz \
-    && cd cmake-${CMAKE_VERSION} \
-    && ./configure --parallel=$(nproc) --prefix=/usr \
-    && make install -j $(nproc)\
-    && cd .. \
-    && rm -rf cmake-${CMAKE_VERSION}.tar.gz cmake-${CMAKE_VERSION} \
+# install sccache from GitHub releases
+RUN wget https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl.tar.gz \
+    && tar -xf sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl.tar.gz \
+    && cp sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl/sccache /usr/bin/ \
+    && chmod +x /usr/bin/sccache \
+    && rm -rf sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl.tar.gz \
+    && sccache --version
+
+# install cmake from Kitware APT repository
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/keyrings/kitware-archive-keyring.gpg >/dev/null \
+    && echo "deb [signed-by=/etc/apt/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ "$(. /etc/os-release && echo "$VERSION_CODENAME")" main" > /etc/apt/sources.list.d/kitware.list \
+    && apt update -y \
+    && CMAKE_PKG_VERSION=$(apt-cache madison cmake | grep ${CMAKE_VERSION%.*} | head -n1 | awk '{print $3}') \
+    && apt install -y cmake=${CMAKE_PKG_VERSION} cmake-data=${CMAKE_PKG_VERSION} \
     && cmake --version
 
 # default cmake generator is ninja
