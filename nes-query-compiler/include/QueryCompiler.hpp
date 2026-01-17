@@ -14,6 +14,7 @@
 #pragma once
 
 #include <memory>
+
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <PhysicalPlan.hpp>
@@ -28,7 +29,7 @@ struct QueryCompilationRequest
 
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
-    DumpMode dumpCompilationResult = DumpMode::NONE;
+    DumpMode dumpCompilationResult = DumpMode{DumpMode::Options::NONE, false};
 };
 
 /// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan
