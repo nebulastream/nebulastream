@@ -102,6 +102,18 @@ SerializableFunction ExpLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<ExpLogicalFunction>::operator()(const ExpLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+ExpLogicalFunction Unreflector<ExpLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)

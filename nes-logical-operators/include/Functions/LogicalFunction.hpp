@@ -81,6 +81,9 @@ concept LogicalFunctionConcept = requires(
     /// Serializes the function to a protobuf message
     { thisFunction.serialize() } -> std::convertible_to<SerializableFunction>;
 
+    /// Serialize the function to a Reflected object
+    { NES::reflect(thisFunction) } -> std::same_as<Reflected>;
+
     /// Compares this function with another for equality
     { thisFunction == rhs } -> std::convertible_to<bool>;
 };
@@ -100,6 +103,7 @@ struct ErasedLogicalFunction
     [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
     [[nodiscard]] virtual std::string_view getType() const = 0;
     [[nodiscard]] virtual SerializableFunction serialize() const = 0;
+    [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedLogicalFunction& other) const = 0;
 
     friend bool operator==(const ErasedLogicalFunction& lhs, const ErasedLogicalFunction& rhs) { return lhs.equals(rhs); }
@@ -277,9 +281,43 @@ private:
     std::shared_ptr<const NES::detail::ErasedLogicalFunction> self;
 };
 
+template <>
+struct Reflector<detail::ErasedLogicalFunction>
+{
+    Reflected operator()(const detail::ErasedLogicalFunction& function) const
+    {
+        return function.reflect();
+    }
+};
+
+struct ReflectedLogicalFunction
+{
+    std::string functionType;
+    Reflected functionConfig;
+};
+
+
+template <typename Checked>
+struct Reflector<TypedLogicalFunction<Checked>>
+{
+    Reflected operator()(const TypedLogicalFunction<Checked>& function) const
+    {
+        return reflect(ReflectedLogicalFunction{std::string{function.getType()}, reflect(*function)});
+    }
+};
+
+template <typename Checked>
+struct Unreflector<TypedLogicalFunction<Checked>>
+{
+    TypedLogicalFunction<Checked> operator()(const Reflected& _) const
+    {
+        throw NotImplemented("Unreflector");
+    }
+};
+
+
 namespace detail
 {
-
 /// @brief Wrapper type that acts as a bridge between a type satisfying LogicalFunctionConcept and TypedLogicalFunction
 template <LogicalFunctionConcept FunctionType>
 struct FunctionModel : ErasedLogicalFunction
@@ -298,6 +336,11 @@ struct FunctionModel : ErasedLogicalFunction
     }
 
     [[nodiscard]] SerializableFunction serialize() const override { return impl.serialize(); }
+
+    [[nodiscard]] Reflected reflect() const override
+    {
+        return NES::reflect(impl);
+    }
 
     [[nodiscard]] std::string_view getType() const override { return impl.getType(); }
 

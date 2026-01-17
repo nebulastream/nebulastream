@@ -20,9 +20,13 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
+#include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/SerializedUtils.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -141,6 +145,20 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
 }
 
+SerializedSourceDescriptor SourceDescriptor::serialized() const
+{
+    SerializedSourceDescriptor serialized;
+    serialized.physicalSourceId = physicalSourceId.getRawValue();
+    serialized.name = logicalSource.getLogicalSourceName();
+    serialized.type = sourceType;
+    serialized.schema = SerializedUtils::serializeSchema(*logicalSource.getSchema());
+    serialized.parserConfig = rfl::make_box<ParserConfig>(parserConfig);
+
+    serialized.config = rfl::to_generic(SerializedUtils::serializeDescriptorConfig(getConfig()));
+
+    return serialized;
+}
+
 SerializableSourceDescriptor SourceDescriptor::serialize() const
 {
     SerializableSourceDescriptor serializableSourceDescriptor;
@@ -164,5 +182,45 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
         kv->emplace(key, descriptorConfigTypeToProto(value));
     }
     return serializableSourceDescriptor;
+}
+
+struct ReflectedSourceDescriptor
+{
+    uint64_t physicalSourceId = 0;
+    std::string logicalSource;
+    std::string type;
+    Schema schema;
+    ParserConfig parserConfig;
+    DescriptorConfig::Config config;
+};
+
+Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
+{
+    Schema schema;
+    for (auto field: sourceDescriptor.getLogicalSource().getSchema()->getFields())
+    {
+        schema.addField(field.name, field.dataType);
+    }
+    ReflectedSourceDescriptor descriptor{
+        .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
+        .logicalSource = sourceDescriptor.logicalSource.getLogicalSourceName(),
+        .type = sourceDescriptor.sourceType,
+        .schema = schema,
+        .parserConfig = sourceDescriptor.parserConfig,
+        .config = sourceDescriptor.getConfig()
+    };
+
+    return reflect(descriptor);
+}
+
+SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
+{
+    auto [descriptorAndConfig, config] = unreflect<std::pair<SourceDescriptor, DescriptorConfig::Config>>(rfl);
+    return SourceDescriptor{
+        descriptorAndConfig.physicalSourceId,
+        std::move(descriptorAndConfig.logicalSource),
+        descriptorAndConfig.sourceType,
+        config,
+        std::move(descriptorAndConfig.parserConfig)};
 }
 }

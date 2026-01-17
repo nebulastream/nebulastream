@@ -51,6 +51,18 @@ private:
     DataType dataType;
 };
 
+template <>
+struct Reflector<GreaterEqualsLogicalFunction>
+{
+    Reflected operator()(const GreaterEqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<GreaterEqualsLogicalFunction>
+{
+    GreaterEqualsLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<GreaterEqualsLogicalFunction>);
 
 }

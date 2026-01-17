@@ -67,5 +67,17 @@ private:
     std::unordered_map<std::string, std::string> sinkConfig;
 };
 
+template <>
+struct Reflector<InlineSinkLogicalOperator>
+{
+    Reflected operator()(const InlineSinkLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<InlineSinkLogicalOperator>
+{
+    InlineSinkLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);
 }

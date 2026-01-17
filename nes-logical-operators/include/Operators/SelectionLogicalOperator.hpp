@@ -19,11 +19,13 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -76,6 +78,18 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+};
+
+template <>
+struct Reflector<SelectionLogicalOperator>
+{
+    Reflected operator()(const SelectionLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SelectionLogicalOperator>
+{
+    SelectionLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);

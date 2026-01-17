@@ -103,6 +103,18 @@ SerializableFunction ConcatLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<ConcatLogicalFunction>::operator()(const ConcatLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

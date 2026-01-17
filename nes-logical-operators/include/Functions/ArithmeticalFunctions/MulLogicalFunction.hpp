@@ -52,6 +52,18 @@ private:
     LogicalFunction left, right;
 };
 
+template <>
+struct Reflector<MulLogicalFunction>
+{
+    Reflected operator()(const MulLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<MulLogicalFunction>
+{
+    MulLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<MulLogicalFunction>);
 
 }

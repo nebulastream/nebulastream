@@ -252,6 +252,18 @@ void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+Reflected Reflector<JoinLogicalOperator>::operator()(const JoinLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+JoinLogicalOperator Unreflector<JoinLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     if (arguments.inputSchemas.size() != 2)

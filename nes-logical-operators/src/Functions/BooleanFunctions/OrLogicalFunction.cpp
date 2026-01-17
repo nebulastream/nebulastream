@@ -111,6 +111,18 @@ SerializableFunction OrLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+OrLogicalFunction Unreflector<OrLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)

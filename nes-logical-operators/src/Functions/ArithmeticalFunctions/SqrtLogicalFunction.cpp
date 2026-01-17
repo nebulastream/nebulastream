@@ -98,6 +98,18 @@ SerializableFunction SqrtLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<SqrtLogicalFunction>::operator()(const SqrtLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)

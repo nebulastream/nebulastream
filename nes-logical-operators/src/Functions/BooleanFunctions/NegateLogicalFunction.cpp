@@ -100,6 +100,18 @@ SerializableFunction NegateLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

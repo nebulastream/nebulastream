@@ -53,6 +53,18 @@ private:
     LogicalFunction child;
 };
 
+template <>
+struct Reflector<CastToTypeLogicalFunction>
+{
+    Reflected operator()(const CastToTypeLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<CastToTypeLogicalFunction>
+{
+    CastToTypeLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<CastToTypeLogicalFunction>);
 
 }

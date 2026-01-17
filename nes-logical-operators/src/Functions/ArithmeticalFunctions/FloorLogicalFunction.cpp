@@ -98,6 +98,18 @@ SerializableFunction FloorLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<FloorLogicalFunction>::operator()(const FloorLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+FloorLogicalFunction Unreflector<FloorLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFloorLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

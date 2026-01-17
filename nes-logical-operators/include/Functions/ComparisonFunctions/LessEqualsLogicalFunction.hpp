@@ -53,6 +53,18 @@ private:
     DataType dataType;
 };
 
+template <>
+struct Reflector<LessEqualsLogicalFunction>
+{
+    Reflected operator()(const LessEqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<LessEqualsLogicalFunction>
+{
+    LessEqualsLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<LessEqualsLogicalFunction>);
 
 }

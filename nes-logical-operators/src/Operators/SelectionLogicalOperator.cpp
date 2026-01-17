@@ -22,6 +22,9 @@
 #include <variant>
 #include <vector>
 
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Serialization/SerializedData.hpp>
+#include <Serialization/SerializedUtils.hpp>
 #include <fmt/format.h>
 
 #include <Configurations/Descriptor.hpp>
@@ -36,6 +39,9 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+
+#include <rfl/json.hpp>
+#include <rfl.hpp>
 
 namespace NES
 {
@@ -131,6 +137,7 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
+
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
@@ -144,7 +151,7 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     }
 
     auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
     for (auto& child : getChildren())
     {
@@ -156,25 +163,43 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializedFunction->CopyFrom(getPredicate().serialize());
     (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
 
+
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
+struct ReflectedSelectionLogicalOperator
 {
-    auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
-    if (std::holds_alternative<FunctionList>(functionVariant))
-    {
-        const auto functions = std::get<FunctionList>(functionVariant).functions();
+    std::string function;
+    Reflected predicate;
+};
 
-        if (functions.size() != 1)
-        {
-            throw CannotDeserialize("Expected exactly one function but got {}", functions.size());
-        }
-        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        auto logicalOperator = SelectionLogicalOperator(function);
-        return logicalOperator.withInferredSchema(arguments.inputSchemas);
-    }
+
+
+Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
+{
+    return reflect(rfl::to_generic(op.getPredicate()));
+}
+
+SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
+
+
+LogicalOperatorRegistryReturnType
+LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments _)
+{
+    // const auto data = rfl::json::read<SerializedOperator>(arguments.reflec).value();
+    // if (auto serializedOperator = rfl::from_generic<ReflectedSelectionLogicalOperator>(data.config); serializedOperator.has_value())
+    // {
+    //     // const auto predicate = SerializedUtils::deserializeFunction(serializedOperator.value().predicate);
+    //     // const auto logicalOperator = SelectionLogicalOperator(predicate);
+    //     //
+    //     // const auto inputSchemas = SerializedUtils::deserializeSchemas(data.inputSchemas);
+    //     // return logicalOperator.withInferredSchema(inputSchemas);
+    // }
     throw UnknownLogicalOperator();
 }
 }

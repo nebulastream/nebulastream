@@ -113,4 +113,20 @@ void SourceDescriptorLogicalOperator::serialize(SerializableOperator& serializab
     serializableOperator.mutable_source()->CopyFrom(proto);
 }
 
+void SourceDescriptorLogicalOperator::serialized(SerializedOperator& serialized) const
+{
+    serialized.config = rfl::to_generic(sourceDescriptor.serialized());
+}
+
+Reflected
+Reflector<SourceDescriptorLogicalOperator>::operator()(const SourceDescriptorLogicalOperator& op) const
+{
+    return reflect(op.getSourceDescriptor());
+}
+
+SourceDescriptorLogicalOperator Unreflector<SourceDescriptorLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
 }

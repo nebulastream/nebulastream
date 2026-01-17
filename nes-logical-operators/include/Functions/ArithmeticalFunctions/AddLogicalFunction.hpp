@@ -52,6 +52,18 @@ private:
     LogicalFunction left, right;
 };
 
+template <>
+struct Reflector<AddLogicalFunction>
+{
+    Reflected operator()(const AddLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<AddLogicalFunction>
+{
+    AddLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<AddLogicalFunction>);
 }
 

@@ -104,6 +104,18 @@ SerializableFunction SubLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<SubLogicalFunction>::operator()(const SubLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+SubLogicalFunction Unreflector<SubLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)

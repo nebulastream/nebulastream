@@ -23,6 +23,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -44,6 +45,7 @@ public:
     [[nodiscard]] bool operator==(const ConstantValueLogicalFunction& rhs) const;
 
     [[nodiscard]] SerializableFunction serialize() const;
+    [[nodiscard]] SerializedFunction serialized() const;
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ConstantValueLogicalFunction withDataType(const DataType& dataType) const;
@@ -70,6 +72,18 @@ public:
 private:
     const std::string constantValue;
     DataType dataType;
+};
+
+template <>
+struct Reflector<ConstantValueLogicalFunction>
+{
+    Reflected operator()(const ConstantValueLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<ConstantValueLogicalFunction>
+{
+    ConstantValueLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<ConstantValueLogicalFunction>);

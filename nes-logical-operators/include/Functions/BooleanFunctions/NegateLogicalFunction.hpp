@@ -53,6 +53,18 @@ private:
     LogicalFunction child;
 };
 
+template <>
+struct Reflector<NegateLogicalFunction>
+{
+    Reflected operator()(const NegateLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<NegateLogicalFunction>
+{
+    NegateLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<NegateLogicalFunction>);
 
 }

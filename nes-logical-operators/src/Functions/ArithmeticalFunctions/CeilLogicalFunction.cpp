@@ -98,6 +98,18 @@ SerializableFunction CeilLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<CeilLogicalFunction>::operator()(const CeilLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)

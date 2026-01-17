@@ -117,4 +117,16 @@ void InlineSinkLogicalOperator::serialize(SerializableOperator&)
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
 }
 
+Reflected Reflector<InlineSinkLogicalOperator>::operator()(const InlineSinkLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+InlineSinkLogicalOperator Unreflector<InlineSinkLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 }

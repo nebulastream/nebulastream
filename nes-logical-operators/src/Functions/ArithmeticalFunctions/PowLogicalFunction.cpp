@@ -98,6 +98,18 @@ SerializableFunction PowLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<PowLogicalFunction>::operator()(const PowLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+PowLogicalFunction Unreflector<PowLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterPowLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)

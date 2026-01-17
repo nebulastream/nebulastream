@@ -18,11 +18,13 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/SerializedUtils.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -105,6 +107,32 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
     (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
 
     return serializedFunction;
+}
+
+SerializedFunction ConstantValueLogicalFunction::serialized() const
+{
+    SerializedFunction serialized;
+    serialized.functionType = NAME;
+    serialized.dataType = SerializedUtils::serializeDataType(getDataType());
+    serialized.config.emplace("constantValueAsString", getConstantValue());
+    return serialized;
+}
+
+struct ReflectedConstantValueLogicalFunction
+{
+    std::string value;
+    DataType::Type type;
+};
+
+Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function) const
+{
+    return reflect(ReflectedConstantValueLogicalFunction{function.getConstantValue(), function.getDataType().type});
+}
+
+ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
 }
 
 LogicalFunctionRegistryReturnType

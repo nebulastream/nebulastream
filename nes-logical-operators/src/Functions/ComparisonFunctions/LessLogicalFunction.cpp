@@ -102,6 +102,18 @@ SerializableFunction LessLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<LessLogicalFunction>::operator()(const LessLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)

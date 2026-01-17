@@ -56,6 +56,17 @@ private:
 
 static_assert(LogicalFunctionConcept<ConcatLogicalFunction>);
 
+template <>
+struct Reflector<ConcatLogicalFunction>
+{
+    Reflected operator()(const ConcatLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<ConcatLogicalFunction>
+{
+    ConcatLogicalFunction operator()(const Reflected& reflected) const;
+};
 }
 
 FMT_OSTREAM(NES::ConcatLogicalFunction);

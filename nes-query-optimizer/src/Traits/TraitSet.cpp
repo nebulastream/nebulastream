@@ -48,4 +48,16 @@ std::string TraitSet::explain(ExplainVerbosity verbosity) const
             ", "));
 }
 
+Reflected Reflector<TraitSet>::operator()(const TraitSet& _) const
+{
+    // TODO Proper Implementation
+    return reflect(0);
+}
+
+TraitSet Unreflector<TraitSet>::operator()(const Reflected& _) const
+{
+    // TODO Proper Implementation
+    return TraitSet{};
+}
+
 }

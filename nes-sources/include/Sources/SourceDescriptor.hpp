@@ -28,6 +28,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -35,9 +36,11 @@
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <SerializableOperator.pb.h>
+#include "Util/Serialization.hpp"
 
 namespace NES
 {
+class SerializedUtils;
 class SourceCatalog;
 class OperatorSerializationUtil;
 
@@ -49,6 +52,16 @@ struct ParserConfig
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
+};
+
+struct SerializedSourceDescriptor
+{
+    uint64_t physicalSourceId;
+    std::string name;
+    std::string type;
+    SerializedSchema schema;
+    rfl::Box<ParserConfig> parserConfig;
+    rfl::Generic config;
 };
 
 class SourceDescriptor final : public Descriptor
@@ -74,16 +87,22 @@ public:
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
     [[nodiscard]] SerializableSourceDescriptor serialize() const;
+    SerializedSourceDescriptor serialized() const;
+
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     friend class SourceCatalog;
     friend OperatorSerializationUtil;
+    friend SerializedUtils;
+    friend struct Unreflector<SourceDescriptor>;
+    friend struct Reflector<SourceDescriptor>;
 
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
     ParserConfig parserConfig;
+
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -107,6 +126,18 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+};
+
+template <>
+struct Reflector<SourceDescriptor>
+{
+    Reflected operator()(const SourceDescriptor& sourceDescriptor) const;
+};
+
+template <>
+struct Unreflector<SourceDescriptor>
+{
+    SourceDescriptor operator()(const Reflected& rfl) const;
 };
 
 }
