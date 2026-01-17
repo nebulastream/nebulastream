@@ -67,6 +67,8 @@ jobs:
           aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
             cmake --build build -j  -- -k 0
       - uses: ./.github/steps/run-in-container
@@ -137,6 +139,8 @@ jobs:
           aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
           aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
               echo "Running tests with log level: $LOG_LEVEL"
               cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
@@ -188,6 +192,8 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
+          export SCCACHE_IDLE_TIMEOUT=0
+          sccache --start-server
           cmake --build build -j -- -k 0
       - name: Run Tests
         # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
@@ -243,6 +249,8 @@ jobs:
           aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DNES_ENABLES_TESTS=0
             cmake --build build -j -- -k 0
 
@@ -284,6 +292,8 @@ jobs:
           aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.additional_build_flags.flags }}
             cmake --build build -j  -- -k 0
       - uses: ./.github/steps/run-in-container

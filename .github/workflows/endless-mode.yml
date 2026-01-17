@@ -67,6 +67,8 @@ jobs:
           aws_access_key_id: ${{ secrets.SCCACHE_S3_KEY_ID }}
           aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake --build build --target systest -j -- -k 0
 
       - uses: ./.github/steps/run-in-container

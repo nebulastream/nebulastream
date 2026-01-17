@@ -47,6 +47,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Build coverage and export as lcov
         run: |
+          export SCCACHE_IDLE_TIMEOUT=0
+          sccache --start-server
           cmake -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export

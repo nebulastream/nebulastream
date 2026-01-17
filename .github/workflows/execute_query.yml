@@ -84,6 +84,8 @@ jobs:
           cat query.sql
       - name: Build and Test
         run: |
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
             cmake --build build -j -- -k 0
             

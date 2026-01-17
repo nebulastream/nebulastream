@@ -46,6 +46,8 @@ jobs:
           ref: ${{ inputs.head_sha }}
       - name: build systest
         run: |
+          export SCCACHE_IDLE_TIMEOUT=0
+          sccache --start-server
           cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache
           cmake --build build -j
       - name: run Benchmarks

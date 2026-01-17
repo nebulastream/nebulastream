@@ -30,7 +30,10 @@ jobs:
       - name: Configure CMake
         run: cmake -B build
       - name: Build to generate required code (e.g. grpc, ANTLR headers)
-        run: cmake --build build
+        run: |
+          export SCCACHE_IDLE_TIMEOUT=0
+          sccache --start-server
+          cmake --build build
       - name: Run clang-tidy
         id: run-clang-tidy
         # we explicitely set bash to have pipefail

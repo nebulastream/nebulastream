@@ -71,6 +71,8 @@ jobs:
           aws_secret_access_key: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            export SCCACHE_IDLE_TIMEOUT=0
+            sccache --start-server
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
             # We need to build the project, as some headers are only created during the build.
             cmake --build build -j  -- -k 0
