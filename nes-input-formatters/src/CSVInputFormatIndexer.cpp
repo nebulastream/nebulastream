@@ -37,17 +37,37 @@ void initializeIndexFunctionForTuple(
     const NES::FieldIndex startIdxOfTuple,
     const NES::CSVMetaData& metaData)
 {
+    static constexpr char DOUBLE_QUOTE = '"';
+
     /// The start of the tuple is the offset of the first field of the tuple
     fieldOffsets.emplaceFieldOffset(startIdxOfTuple);
     size_t fieldIdx = 1;
+
+    bool insideQuotedField = false;
     /// Find field delimiters, until reaching the end of the tuple
-    /// The position of the field delimiter (+ size of field delimiter) is the beginning of the next field
-    for (size_t nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), 0); nextFieldOffset != std::string_view::npos;
-         nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), nextFieldOffset))
+    /// Ignore delimiters that are part of a quoted field
+    for (size_t currentIdx = 0; currentIdx < tuple.size(); ++currentIdx)
     {
-        nextFieldOffset += NES::CSVMetaData::SIZE_OF_FIELD_DELIMITER;
-        fieldOffsets.emplaceFieldOffset(startIdxOfTuple + nextFieldOffset);
+        const auto currentChar = tuple[currentIdx];
+        if (currentChar == DOUBLE_QUOTE)
+        {
+            insideQuotedField = !insideQuotedField;
+            continue;
+        }
+
+        if (insideQuotedField or currentChar != metaData.getFieldDelimiter())
+        {
+            continue;
+        }
+
+        const auto nextFieldOffset = startIdxOfTuple + currentIdx + NES::CSVMetaData::SIZE_OF_FIELD_DELIMITER;
+        fieldOffsets.emplaceFieldOffset(nextFieldOffset);
         ++fieldIdx;
+    }
+
+    if (insideQuotedField)
+    {
+        throw NES::CannotFormatSourceData("Number of double quotes (\") in CSV tuple is uneven.");
     }
     /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
     fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
