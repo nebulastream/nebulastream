@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <utility>
 
@@ -208,7 +210,8 @@ void buildPipelineRecursively(
         {
             const auto sourceFormat = toUpperCase(
                 currentPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig().parserType);
-            const auto sinkFormat = toUpperCase(sink->getDescriptor().getSinkType());
+
+            const auto sinkFormat = sink->getDescriptor().getFormatType() ? sink->getDescriptor().getFormatType().value() : "";
             /// Add a formatting pipeline if the source-sink pipelines do not simply forward natively formatted data
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers
             /// may start and end with a cut-off tuples (rows in the CSV case)

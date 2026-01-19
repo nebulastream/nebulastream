@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -32,6 +33,7 @@
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
@@ -51,9 +53,17 @@ std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
     return schema;
 }
 
-std::string_view SinkDescriptor::getFormatType() const
+std::optional<std::string_view> SinkDescriptor::getFormatType() const
 {
-    return magic_enum::enum_name(getFromConfig(INPUT_FORMAT));
+    try
+    {
+        return magic_enum::enum_name(getFromConfig(INPUT_FORMAT));
+    }
+    catch (std::out_of_range& e)
+    {
+        NES_WARNING("Sinks of the type {} do not have an INPUT_FORMAT parameter.", getSinkType());
+        return std::nullopt;
+    }
 }
 
 std::string SinkDescriptor::getSinkType() const
