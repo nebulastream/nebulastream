@@ -19,6 +19,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <gtest/gtest.h>
+
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>

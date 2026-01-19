@@ -9,7 +9,7 @@ ENV USERNAME="runner"
 USER root
 RUN groupadd --gid ${GID} runner && useradd $USERNAME --gid ${GID} --uid ${UID}
 RUN mkdir -p /home/${USERNAME} \
-    && chown -R $USERNAME:$GID /home/runner
+    && chown -R $USERNAME:$GID /home/${USERNAME}
 
 WORKDIR /home/runner
 ENV HOME=/home/${USERNAME}
