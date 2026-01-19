@@ -281,7 +281,7 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
 
 std::chrono::duration<double> RunningQuery::getElapsedTime() const
 {
-    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+    INVARIANT(queryId != INVALID_LOCAL_QUERY_ID, "QueryId should not be invalid");
 
     const auto stop = queryStatus.metrics.stop;
     const auto running = queryStatus.metrics.running;
@@ -291,7 +291,7 @@ std::chrono::duration<double> RunningQuery::getElapsedTime() const
 
 std::string RunningQuery::getThroughput() const
 {
-    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+    INVARIANT(queryId != INVALID_LOCAL_QUERY_ID, "QueryId should not be invalid");
 
     const auto stop = queryStatus.metrics.stop;
     const auto running = queryStatus.metrics.running;

@@ -46,7 +46,7 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
 {
 }
 
-std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(LogicalPlan localPlan)
+std::expected<LocalQueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(LogicalPlan localPlan)
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
@@ -55,14 +55,14 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
     const auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {
-        NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), workerConfig.grpc);
-        return QueryId{reply.queryid()};
+        NES_DEBUG("Registration to node {} was successful.", workerConfig.grpc);
+        return LocalQueryId{reply.queryid()};
     }
     return std::unexpected{QueryRegistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::start(LocalQueryId queryId)
 {
     grpc::ClientContext context;
     StartQueryRequest request;
@@ -79,7 +79,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
-std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(QueryId queryId) const
+std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(LocalQueryId queryId) const
 {
     grpc::ClientContext context;
     QueryStatusRequest request;
@@ -135,7 +135,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
         return std::unexpected{
             QueryStatusFailed("Unknown query state `{}` for query: {}", magic_enum::enum_name(response.state()), queryId)};
     }
-    return LocalQueryStatus(QueryId{response.queryid()}, *state, metrics);
+    return LocalQueryStatus(LocalQueryId{response.queryid()}, *state, metrics);
 }
 
 std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
@@ -153,7 +153,7 @@ std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(
     return deserializeWorkerStatus(&response);
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(LocalQueryId queryId)
 {
     grpc::ClientContext context;
     StopQueryRequest request;
@@ -172,7 +172,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(QueryId queryId)
+std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(LocalQueryId queryId)
 {
     grpc::ClientContext context;
     UnregisterQueryRequest request;

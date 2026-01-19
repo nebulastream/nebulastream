@@ -109,7 +109,7 @@ class BaseTask
 public:
     BaseTask() = default;
 
-    BaseTask(QueryId queryId, TaskCallback callback);
+    BaseTask(LocalQueryId queryId, TaskCallback callback);
 
     void complete();
 
@@ -117,7 +117,7 @@ public:
 
     void fail(Exception exception);
 
-    QueryId queryId = INVALID<QueryId>;
+    LocalQueryId queryId = INVALID_LOCAL_QUERY_ID;
     TaskCallback callback;
 
 private:
@@ -126,7 +126,8 @@ private:
 
 struct WorkTask : BaseTask
 {
-    WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback);
+    WorkTask(
+        LocalQueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback);
 
     WorkTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
@@ -136,7 +137,7 @@ struct WorkTask : BaseTask
 
 struct StartPipelineTask : BaseTask
 {
-    StartPipelineTask(QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline);
+    StartPipelineTask(LocalQueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline);
 
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
@@ -144,7 +145,7 @@ struct StartPipelineTask : BaseTask
 
 struct StopPipelineTask : BaseTask
 {
-    explicit StopPipelineTask(QueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept;
+    explicit StopPipelineTask(LocalQueryId queryId, std::unique_ptr<RunningQueryPlanNode> pipeline, TaskCallback callback) noexcept;
     std::unique_ptr<RunningQueryPlanNode> pipeline;
 };
 
@@ -152,7 +153,7 @@ struct StopSourceTask : BaseTask
 {
     StopSourceTask() = default;
 
-    StopSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, size_t attempts, TaskCallback callback);
+    StopSourceTask(LocalQueryId queryId, std::weak_ptr<RunningSource> target, size_t attempts, TaskCallback callback);
 
     size_t attempts;
     std::weak_ptr<RunningSource> target;
@@ -162,7 +163,7 @@ struct FailSourceTask : BaseTask
 {
     FailSourceTask();
 
-    FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback);
+    FailSourceTask(LocalQueryId queryId, std::weak_ptr<RunningSource> target, Exception exception, TaskCallback callback);
 
     std::weak_ptr<RunningSource> target;
     std::unique_ptr<Exception> exception;
@@ -170,7 +171,7 @@ struct FailSourceTask : BaseTask
 
 struct StopQueryTask : BaseTask
 {
-    StopQueryTask(QueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
+    StopQueryTask(LocalQueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
 
     std::weak_ptr<QueryCatalog> catalog;
 };
@@ -178,7 +179,7 @@ struct StopQueryTask : BaseTask
 struct StartQueryTask : BaseTask
 {
     StartQueryTask(
-        QueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
+        LocalQueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
 
     std::unique_ptr<ExecutableQueryPlan> queryPlan;
     std::weak_ptr<QueryCatalog> catalog;
@@ -186,7 +187,7 @@ struct StartQueryTask : BaseTask
 
 struct PendingPipelineStopTask : BaseTask
 {
-    PendingPipelineStopTask(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback);
+    PendingPipelineStopTask(LocalQueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback);
 
     size_t attempts;
     std::shared_ptr<RunningQueryPlanNode> pipeline;
