@@ -35,13 +35,9 @@ namespace NES
 RenameLogicalFunction::RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName)
     : dataType(originalField.getDataType()), child(originalField), newFieldName(std::move(newFieldName)) { };
 
-bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool RenameLogicalFunction::operator==(const RenameLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const RenameLogicalFunction*>(&rhs))
-    {
-        return other->child.operator==(getOriginalField()) && this->newFieldName == other->getNewFieldName();
-    }
-    return false;
+    return rhs.child.operator==(getOriginalField()) && this->newFieldName == rhs.getNewFieldName();
 }
 
 DataType RenameLogicalFunction::getDataType() const
@@ -49,7 +45,7 @@ DataType RenameLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction RenameLogicalFunction::withDataType(const DataType& dataType) const
+RenameLogicalFunction RenameLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -61,10 +57,10 @@ std::vector<LogicalFunction> RenameLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction RenameLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+RenameLogicalFunction RenameLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
-    copy.child = children[0].get<FieldAccessLogicalFunction>();
+    copy.child = children[0].getAs<FieldAccessLogicalFunction>().get();
     return copy;
 };
 
@@ -94,7 +90,7 @@ std::string RenameLogicalFunction::explain(ExplainVerbosity verbosity) const
 
 LogicalFunction RenameLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    auto fieldName = child.withInferredDataType(schema).get<FieldAccessLogicalFunction>().getFieldName();
+    auto fieldName = child.withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get().getFieldName();
     auto fieldAttribute = schema.getFieldByName(fieldName);
     ///Detect if user has added attribute name separator
     if (!fieldAttribute)
@@ -150,7 +146,7 @@ LogicalFunctionGeneratedRegistrar::RegisterRenameLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("RenameLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    if (arguments.children[0].tryGet<FieldAccessLogicalFunction>())
+    if (arguments.children[0].tryGetAs<FieldAccessLogicalFunction>())
     {
         throw CannotDeserialize(
             "Child must be a FieldAccessLogicalFunction but got {}", arguments.children[0].explain(ExplainVerbosity::Short));
@@ -160,7 +156,7 @@ LogicalFunctionGeneratedRegistrar::RegisterRenameLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("NewFieldName cannot be empty");
     }
-    return RenameLogicalFunction(arguments.children[0].get<FieldAccessLogicalFunction>(), newFieldName);
+    return RenameLogicalFunction(arguments.children[0].getAs<FieldAccessLogicalFunction>().get(), newFieldName);
 }
 
 }

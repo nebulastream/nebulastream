@@ -95,8 +95,10 @@ protected:
     std::atomic_bool started;
     BackpressureListener backpressureListener;
 
-    Thread thread;
+    /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
+    /// uses the terminationFuture), then the terminationFuture.
     std::future<SourceImplementationTermination> terminationFuture;
+    Thread thread;
 
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.

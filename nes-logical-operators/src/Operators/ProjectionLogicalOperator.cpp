@@ -83,9 +83,9 @@ std::vector<std::string> ProjectionLogicalOperator::getAccessedFields() const
                {
                    return BFSRange(function)
                        | std::views::filter([](const LogicalFunction& function)
-                                            { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
+                                            { return function.tryGetAs<FieldAccessLogicalFunction>().has_value(); })
                        | std::views::transform([](const LogicalFunction& function)
-                                               { return function.get<FieldAccessLogicalFunction>().getFieldName(); });
+                                               { return function.getAs<FieldAccessLogicalFunction>()->getFieldName(); });
                })
         | std::views::join | std::ranges::to<std::vector>();
 }
@@ -172,7 +172,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     copy.inputSchema = firstSchema;
 
     /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
-    auto initial = Schema{copy.outputSchema.memoryLayoutType};
+    auto initial = Schema{};
     if (asterisk)
     {
         initial.appendFieldsFromOtherSchema(copy.inputSchema);

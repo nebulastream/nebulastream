@@ -47,13 +47,13 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessFunction = logicalFunction.tryGet<FieldAccessLogicalFunction>())
+    if (const auto fieldAccessFunction = logicalFunction.tryGetAs<FieldAccessLogicalFunction>())
     {
-        return FieldAccessPhysicalFunction(fieldAccessFunction->getFieldName());
+        return FieldAccessPhysicalFunction(fieldAccessFunction->get().getFieldName());
     }
-    if (const auto constantValueFunction = logicalFunction.tryGet<ConstantValueLogicalFunction>())
+    if (const auto constantValueFunction = logicalFunction.tryGetAs<ConstantValueLogicalFunction>())
     {
-        return lowerConstantFunction(*constantValueFunction);
+        return lowerConstantFunction(constantValueFunction->get());
     }
 
     /// 3. Calling the registry to create an executable function.
@@ -70,7 +70,7 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 namespace
 {
 template <typename T>
-requires requires(std::string_view input) { from_chars<T>(input); } /// TODO #1035: check if two Util namespaces are needed
+requires requires(std::string_view input) { from_chars<T>(input); }
 T parseConstantValue(std::string_view input)
 {
     if (auto value = from_chars<T>(input))

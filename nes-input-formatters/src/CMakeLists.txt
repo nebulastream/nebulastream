@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
-        InputFormatterTupleBufferRefProvider.cpp
         SequenceShredder.cpp
         SpanningTupleBuffer.cpp
         SpanningTupleBufferState.cpp
@@ -21,4 +20,3 @@ add_source_files(nes-input-formatters
 
 # Register plugins
 add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp)
-add_plugin(JSON InputFormatIndexer nes-input-formatters SIMDJSONInputFormatIndexer.cpp SIMDJSONFIF.cpp)

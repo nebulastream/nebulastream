@@ -15,7 +15,6 @@ add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
 
 add_source_files(nes-logical-operators
-        LogicalFunction.cpp
         LogicalFunctionProvider.cpp
 )
 

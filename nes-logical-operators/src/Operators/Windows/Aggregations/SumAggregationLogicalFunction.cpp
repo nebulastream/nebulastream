@@ -46,7 +46,7 @@ std::string_view SumAggregationLogicalFunction::getName() const noexcept
 void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
+    this->setOnField(this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get());
     if (not this->getOnField().getDataType().isNumeric())
     {
         throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", this->getOnField().getDataType());
@@ -60,16 +60,16 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName));
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     this->setInputStamp(this->getOnField().getDataType());
     this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(this->getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
+    this->setAsField(this->getAsField().withDataType(this->getFinalAggregateStamp()));
 }
 
 SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const

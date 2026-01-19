@@ -416,7 +416,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         aggFunc->setAsField(FieldAccessLogicalFunction(bindIdentifier(context)));
         helpers.top().windowAggs.push_back(aggFunc);
         INVARIANT(
-            std::nullopt != helpers.top().functionBuilder.back().tryGet<FieldAccessLogicalFunction>(),
+            std::nullopt != helpers.top().functionBuilder.back().tryGetAs<FieldAccessLogicalFunction>(),
             "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
         helpers.top().functionBuilder.pop_back();
         helpers.top().addProjection(std::nullopt, aggFunc->getAsField());
@@ -604,7 +604,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 {
     AntlrSQLHelper& helper = helpers.top();
     if (context->name == nullptr and helper.functionBuilder.size() == 1
-        and helper.functionBuilder.back().tryGet<FieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
+        and helper.functionBuilder.back().tryGetAs<FieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
     {
         /// Project onto the specified field and remove the field access from the active functions.
         helpers.top().addProjection(std::nullopt, std::move(helpers.top().functionBuilder.back()));
@@ -619,9 +619,9 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     {
         const auto accessFunction = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
-        const auto fieldAccessNode = accessFunction.get<FieldAccessLogicalFunction>();
+        const auto fieldAccessNode = accessFunction.getAs<FieldAccessLogicalFunction>();
         const auto lastAggregation = helpers.top().windowAggs.back();
-        const auto newName = fmt::format("{}_{}", fieldAccessNode.getFieldName(), toUpperCase(lastAggregation->getName()));
+        const auto newName = fmt::format("{}_{}", fieldAccessNode.get().getFieldName(), toUpperCase(lastAggregation->getName()));
         const auto asField = FieldAccessLogicalFunction(newName);
         lastAggregation->setAsField(asField);
         helpers.top().windowAggs.pop_back();
@@ -833,48 +833,48 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             {
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
-            helpers.top().windowAggs.push_back(
-                std::make_shared<CountAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            helpers.top().windowAggs.push_back(std::make_shared<CountAggregationLogicalFunction>(
+                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::AVG:
             if (helpers.top().functionBuilder.empty())
             {
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
-            helpers.top().windowAggs.push_back(
-                std::make_shared<AvgAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            helpers.top().windowAggs.push_back(std::make_shared<AvgAggregationLogicalFunction>(
+                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::MAX:
             if (helpers.top().functionBuilder.empty())
             {
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
-            helpers.top().windowAggs.push_back(
-                std::make_shared<MaxAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            helpers.top().windowAggs.push_back(std::make_shared<MaxAggregationLogicalFunction>(
+                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::MIN:
             if (helpers.top().functionBuilder.empty())
             {
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
-            helpers.top().windowAggs.push_back(
-                std::make_shared<MinAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            helpers.top().windowAggs.push_back(std::make_shared<MinAggregationLogicalFunction>(
+                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::SUM:
             if (helpers.top().functionBuilder.empty())
             {
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
-            helpers.top().windowAggs.push_back(
-                std::make_shared<SumAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            helpers.top().windowAggs.push_back(std::make_shared<SumAggregationLogicalFunction>(
+                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::MEDIAN:
             if (helpers.top().functionBuilder.empty())
             {
                 throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
             }
-            helpers.top().windowAggs.push_back(
-                std::make_shared<MedianAggregationLogicalFunction>(helpers.top().functionBuilder.back().get<FieldAccessLogicalFunction>()));
+            helpers.top().windowAggs.push_back(std::make_shared<MedianAggregationLogicalFunction>(
+                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         default:
             /// Check if the function is a constructor for a datatype

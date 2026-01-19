@@ -143,7 +143,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
     copy.windowType->inferStamp(firstSchema);
     copy.inputSchema = firstSchema;
-    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
+    copy.outputSchema = Schema{};
 
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
     {
@@ -165,9 +165,9 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
         auto newKeys = std::vector<FieldAccessLogicalFunction>();
         for (auto& key : keys)
         {
-            auto newKey = key.withInferredDataType(firstSchema).get<FieldAccessLogicalFunction>();
-            newKeys.push_back(newKey);
-            copy.outputSchema.addField(newKey.getFieldName(), newKey.getDataType());
+            auto newKey = key.withInferredDataType(firstSchema);
+            newKeys.push_back(newKey.getAs<FieldAccessLogicalFunction>().get());
+            copy.outputSchema.addField(newKey.getAs<FieldAccessLogicalFunction>().get().getFieldName(), newKey.getDataType());
         }
         copy.groupingKey = newKeys;
     }
@@ -349,9 +349,9 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
         for (const auto& key : keyFunctions)
         {
             auto function = FunctionSerializationUtil::deserializeFunction(key);
-            if (auto fieldAccess = function.tryGet<FieldAccessLogicalFunction>())
+            if (auto fieldAccess = function.tryGetAs<FieldAccessLogicalFunction>())
             {
-                keys.push_back(fieldAccess.value());
+                keys.push_back(fieldAccess.value().get());
             }
             else
             {

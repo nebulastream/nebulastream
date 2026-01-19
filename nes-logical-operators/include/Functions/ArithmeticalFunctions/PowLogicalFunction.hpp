@@ -26,31 +26,34 @@
 
 namespace NES
 {
-class PowLogicalFunction final : public LogicalFunctionConcept
+class PowLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Pow";
 
     PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] SerializableFunction serialize() const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] bool operator==(const PowLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] PowLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] PowLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     DataType dataType;
     LogicalFunction left, right;
 };
+
+static_assert(LogicalFunctionConcept<PowLogicalFunction>);
+
 }
 
 FMT_OSTREAM(NES::PowLogicalFunction);

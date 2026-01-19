@@ -28,6 +28,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -42,6 +43,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
+
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
@@ -83,7 +85,6 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey.getNumberOfFields());
     const auto fieldNamesKey = inputSchemaKey.getFieldNames();
     const auto fieldNamesValue = inputSchemaValue.getFieldNames();
-    inputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     inputSchema = inputSchemaKey;
     inputSchema.appendFieldsFromOtherSchema(inputSchemaValue);
 
@@ -105,7 +106,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
-    inputBufferRef = TupleBufferRef::create(bufferManager->getBufferSize(), inputSchema);
+    inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
@@ -115,7 +116,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     projectionValues = inputSchemaValue.getFieldNames();
 
     /// Creating the buffers with the values for the keys and values with a specific seed
-    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, params.numberOfItems, *bufferManager);
+    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
 }
 
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(

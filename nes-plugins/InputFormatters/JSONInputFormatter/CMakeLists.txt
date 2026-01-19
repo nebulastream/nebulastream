@@ -10,11 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-### Row Layout Tests ###
-add_nes_runtime_test(row-memory-layout-tests "RowMemoryLayoutTest.cpp")
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(JSON InputFormatIndexer nes-input-formatters-registry json_input_format_indexer_plugin_library SIMDJSONInputFormatIndexer.cpp SIMDJSONFIF.cpp)
+target_include_directories(json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
-### Row Layout Tests ###
-add_nes_runtime_test(columnar-memory-layout-tests "ColumnarMemoryLayoutTest.cpp")
-
-### Dynamic Memory Layout Tests ###
-add_nes_runtime_test(dynamic-memory-layout-tests "DynamicMemoryLayoutTest.cpp")
+find_package(simdjson CONFIG REQUIRED)
+target_link_libraries(json_input_format_indexer_plugin_library PRIVATE simdjson::simdjson)

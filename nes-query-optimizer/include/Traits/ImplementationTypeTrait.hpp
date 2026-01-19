@@ -21,7 +21,6 @@
 #include <typeinfo>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <SerializableTrait.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
@@ -34,13 +33,13 @@ enum class JoinImplementation : uint8_t
     CHOICELESS
 };
 
-/// Struct that stores implementation types as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
-struct ImplementationTypeTrait final : public TraitConcept
+/// Struct that stores the join implementation type as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
+struct JoinImplementationTypeTrait final : public TraitConcept
 {
-    static constexpr std::string_view NAME = "ImplementationType";
+    static constexpr std::string_view NAME = "JoinImplementationType";
     JoinImplementation implementationType;
 
-    explicit ImplementationTypeTrait(JoinImplementation implementationType);
+    explicit JoinImplementationTypeTrait(JoinImplementation implementationType);
 
     [[nodiscard]] const std::type_info& getType() const override;
 

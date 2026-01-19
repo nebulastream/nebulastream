@@ -10,16 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(MemoryLayout)
-
 add_library(nes-memory
         BufferManager.cpp
         TupleBufferImpl.cpp
         TupleBuffer.cpp
         NesDefaultMemoryAllocator.cpp
         TaggedPointer.cpp
-        TestTupleBuffer.cpp
         UnpooledChunksManager.cpp
+        VariableSizedAccess.cpp
         ${MEMORY_LAYOUT_SOURCES}
 )
 

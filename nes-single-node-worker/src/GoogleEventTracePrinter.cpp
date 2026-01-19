@@ -14,6 +14,7 @@
 
 #include <GoogleEventTracePrinter.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
@@ -25,115 +26,84 @@
 #include <tuple>
 #include <utility>
 #include <variant>
+#include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
-#include <fmt/format.h>
+#include <Util/Strings.hpp>
+#include <fmt/ostream.h>
 #include <folly/MPMCQueue.h>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <QueryEngineStatisticListener.hpp>
+#include <scope_guard.hpp>
 
 namespace NES
 {
 
 constexpr uint64_t READ_RETRY_MS = 100;
+constexpr uint64_t SYSTEM_THREAD = 0;
+/// Log every nth dropped event to avoid clogging the log when the queue is full
+constexpr uint64_t DROP_LOG_INTERVAL = 100;
+
+namespace
+{
+/// Escape a string for JSON output (handles quotes in addition to special chars)
+std::string escapeForJson(std::string_view str)
+{
+    const std::string result = escapeSpecialCharacters(str);
+    /// Also escape double quotes for JSON
+    std::string final;
+    final.reserve(result.size());
+    for (const char character : result)
+    {
+        if (character == '"')
+        {
+            final += "\\\"";
+        }
+        else
+        {
+            final += character;
+        }
+    }
+    return final;
+}
+}
 
 uint64_t GoogleEventTracePrinter::timestampToMicroseconds(const std::chrono::system_clock::time_point& timestamp)
 {
     return std::chrono::duration_cast<std::chrono::microseconds>(timestamp.time_since_epoch()).count();
 }
 
-nlohmann::json GoogleEventTracePrinter::createTraceEvent(
-    const std::string& name, Category cat, Phase phase, uint64_t timestamp, uint64_t dur, const nlohmann::json& args)
-{
-    nlohmann::json event;
-    event["name"] = name;
-
-    /// Convert category enum to string
-    switch (cat)
-    {
-        case Category::Query:
-            event["cat"] = "query";
-            break;
-        case Category::Pipeline:
-            event["cat"] = "pipeline";
-            break;
-        case Category::Task:
-            event["cat"] = "task";
-            break;
-        case Category::System:
-            event["cat"] = "system";
-            break;
-    }
-
-    /// Convert phase enum to string
-    switch (phase)
-    {
-        case Phase::Begin:
-            event["ph"] = "B";
-            break;
-        case Phase::End:
-            event["ph"] = "E";
-            break;
-        case Phase::Instant:
-            event["ph"] = "i";
-            break;
-    }
-
-    event["ts"] = timestamp;
-    event["pid"] = 1; /// Process ID
-    event["tid"] = 1; /// Thread ID (will be overridden for specific events)
-
-    if (dur > 0)
-    {
-        event["dur"] = dur;
-    }
-
-    if (!args.empty())
-    {
-        event["args"] = args;
-    }
-
-    return event;
-}
-
-void GoogleEventTracePrinter::writeTraceHeader()
-{
-    bool expected = false;
-    if (headerWritten.compare_exchange_strong(expected, true))
-    {
-        file << "{\n";
-        file << "  \"traceEvents\": [\n";
-    }
-}
-
-void GoogleEventTracePrinter::writeTraceFooter()
-{
-    bool expected = false;
-    if (footerWritten.compare_exchange_strong(expected, true))
-    {
-        file << "\n  ]\n";
-        file << "}\n";
-    }
-}
-
 void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
 {
-    writeTraceHeader();
+    const auto pid = getpid();
+    std::ofstream file(outputPath, std::ios::out | std::ios::trunc);
+    if (!file.is_open())
+    {
+        NES_ERROR("Failed to open trace file: {}", outputPath);
+        return;
+    }
 
-    bool firstEvent = true;
+    /// Write the trace header
+    fmt::println(file, R"({{)");
+    fmt::println(file, R"(  "traceEvents": [)");
+    SCOPE_EXIT
+    {
+        /// Write the footer when the thread stops
+        fmt::println(file, "");
+        fmt::println(file, R"(  ])");
+        fmt::println(file, R"(}})");
+        file.close();
+    };
 
-    /// Helper function to emit events with proper comma handling
-    auto emit = [&](const nlohmann::json& evt)
+    /// Helper to print comma before event (except first)
+    auto printComma = [&file, firstEvent = true]() mutable
     {
         if (!firstEvent)
         {
-            file << ",\n";
+            fmt::print(file, ",\n");
         }
         firstEvent = false;
-        file << "    " << evt.dump();
     };
 
     while (!token.stop_requested())
@@ -149,56 +119,51 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
             Overloaded{
                 [&](const SubmitQuerySystemEvent& submitEvent)
                 {
-                    auto args = nlohmann::json::object();
-                    args["query"] = submitEvent.query;
-
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Submit Query {}", submitEvent.queryId),
-                        Category::System,
-                        Phase::Instant,
-                        timestampToMicroseconds(submitEvent.timestamp),
-                        0,
-                        args);
-                    traceEvent["tid"] = 0; /// System thread
-
-                    emit(traceEvent);
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"(    {{"args":{{"query":"{}"}},"cat":"system","name":"Submit Query {}","ph":"i","pid":{},"tid":{},"ts":{}}})",
+                        escapeForJson(submitEvent.query),
+                        submitEvent.queryId,
+                        pid,
+                        SYSTEM_THREAD,
+                        timestampToMicroseconds(submitEvent.timestamp));
                 },
                 [&](const StartQuerySystemEvent& startEvent)
                 {
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Start Query {}", startEvent.queryId),
-                        Category::System,
-                        Phase::Instant,
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"(    {{"cat":"system","name":"Start Query {}","ph":"i","pid":{},"tid":{},"ts":{}}})",
+                        startEvent.queryId,
+                        pid,
+                        SYSTEM_THREAD,
                         timestampToMicroseconds(startEvent.timestamp));
-                    traceEvent["tid"] = 0; /// System thread
-
-                    emit(traceEvent);
                 },
                 [&](const StopQuerySystemEvent& stopEvent)
                 {
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Stop Query {}", stopEvent.queryId),
-                        Category::System,
-                        Phase::Instant,
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"(    {{"cat":"system","name":"Stop Query {}","ph":"i","pid":{},"tid":{},"ts":{}}})",
+                        stopEvent.queryId,
+                        pid,
+                        SYSTEM_THREAD,
                         timestampToMicroseconds(stopEvent.timestamp));
-                    traceEvent["tid"] = 0; /// System thread
-
-                    emit(traceEvent);
                 },
                 [&](const QueryStart& queryStart)
                 {
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Query {}", queryStart.queryId),
-                        Category::Query,
-                        Phase::Begin,
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"(    {{"cat":"query","name":"Query {}","ph":"B","pid":{},"tid":{},"ts":{}}})",
+                        queryStart.queryId,
+                        pid,
+                        queryStart.threadId.getRawValue(),
                         timestampToMicroseconds(queryStart.timestamp));
-                    traceEvent["tid"] = queryStart.threadId.getRawValue();
-
-                    emit(traceEvent);
 
                     /// Track active query with thread ID
                     activeQueries.emplace(queryStart.queryId, std::make_pair(queryStart.timestamp, queryStart.threadId));
-                    NES_DEBUG("Tracking query start: {} on thread {}", queryStart.queryId, queryStart.threadId.getRawValue());
                 },
                 [&](const QueryFail& queryFail)
                 {
@@ -207,29 +172,28 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                     uint64_t originalTid
                         = (it != activeQueries.end()) ? it->second.second.getRawValue() : queryFail.threadId.getRawValue(); /// fallback
 
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Query {}", queryFail.queryId),
-                        Category::Query,
-                        Phase::End,
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"(    {{"cat":"query","name":"Query {}","ph":"E","pid":{},"tid":{},"ts":{}}})",
+                        queryFail.queryId,
+                        pid,
+                        originalTid,
                         timestampToMicroseconds(queryFail.timestamp));
-                    traceEvent["tid"] = originalTid;
-
-                    emit(traceEvent);
 
                     /// Remove from active queries
                     activeQueries.erase(queryFail.queryId);
-                    NES_DEBUG("Query completed with a failure: {} on thread {}", queryFail.queryId, originalTid);
                 },
                 [&](const QueryStopRequest& queryStopRequest)
                 {
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("QueryStopRequest {}", queryStopRequest.queryId),
-                        Category::Query,
-                        Phase::Instant,
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"(    {{"cat":"query","name":"QueryStopRequest {}","ph":"i","pid":{},"tid":{},"ts":{}}})",
+                        queryStopRequest.queryId,
+                        pid,
+                        queryStopRequest.threadId.getRawValue(),
                         timestampToMicroseconds(queryStopRequest.timestamp));
-                    traceEvent["tid"] = queryStopRequest.threadId.getRawValue();
-                    emit(traceEvent);
-                    NES_DEBUG("Query stop request: {} on thread {}", queryStopRequest.queryId, queryStopRequest.threadId);
                 },
                 [&](const QueryStop& queryStop)
                 {
@@ -238,34 +202,30 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                     uint64_t originalTid
                         = (it != activeQueries.end()) ? it->second.second.getRawValue() : queryStop.threadId.getRawValue(); /// fallback
 
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Query {}", queryStop.queryId),
-                        Category::Query,
-                        Phase::End,
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"(    {{"cat":"query","name":"Query {}","ph":"E","pid":{},"tid":{},"ts":{}}})",
+                        queryStop.queryId,
+                        pid,
+                        originalTid,
                         timestampToMicroseconds(queryStop.timestamp));
-                    traceEvent["tid"] = originalTid;
-
-                    emit(traceEvent);
 
                     /// Remove from active queries
                     activeQueries.erase(queryStop.queryId);
-                    NES_DEBUG("Query completed: {} on thread {}", queryStop.queryId, originalTid);
                 },
                 [&](const PipelineStart& pipelineStart)
                 {
-                    auto args = nlohmann::json::object();
-                    args["pipeline_id"] = pipelineStart.pipelineId.getRawValue();
-
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Pipeline {} (Query {})", pipelineStart.pipelineId, pipelineStart.queryId),
-                        Category::Pipeline,
-                        Phase::Begin,
-                        timestampToMicroseconds(pipelineStart.timestamp),
-                        0,
-                        args);
-                    traceEvent["tid"] = pipelineStart.threadId.getRawValue();
-
-                    emit(traceEvent);
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{}}},"cat":"pipeline","name":"Pipeline {} (Query {})","ph":"B","pid":{},"tid":{},"ts":{}}})x",
+                        pipelineStart.pipelineId.getRawValue(),
+                        pipelineStart.pipelineId,
+                        pipelineStart.queryId,
+                        pid,
+                        pipelineStart.threadId.getRawValue(),
+                        timestampToMicroseconds(pipelineStart.timestamp));
 
                     /// Track active pipeline with thread ID
                     activePipelines.emplace(
@@ -273,45 +233,40 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                 },
                 [&](const PipelineStop& pipelineStop)
                 {
-                    auto args = nlohmann::json::object();
-                    args["pipeline_id"] = pipelineStop.pipelineId.getRawValue();
-
                     /// Use the thread ID from the PipelineStart event to ensure matching begin/end pairs
                     auto it = activePipelines.find(pipelineStop.pipelineId);
                     uint64_t originalTid = (it != activePipelines.end()) ? std::get<2>(it->second).getRawValue()
                                                                          : pipelineStop.threadId.getRawValue(); /// fallback
 
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Pipeline {} (Query {})", pipelineStop.pipelineId, pipelineStop.queryId),
-                        Category::Pipeline,
-                        Phase::End,
-                        timestampToMicroseconds(pipelineStop.timestamp),
-                        0,
-                        args);
-                    traceEvent["tid"] = originalTid;
-
-                    emit(traceEvent);
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{}}},"cat":"pipeline","name":"Pipeline {} (Query {})","ph":"E","pid":{},"tid":{},"ts":{}}})x",
+                        pipelineStop.pipelineId.getRawValue(),
+                        pipelineStop.pipelineId,
+                        pipelineStop.queryId,
+                        pid,
+                        originalTid,
+                        timestampToMicroseconds(pipelineStop.timestamp));
 
                     /// Remove from active pipelines
                     activePipelines.erase(pipelineStop.pipelineId);
                 },
                 [&](const TaskExecutionStart& taskStart)
                 {
-                    auto args = nlohmann::json::object();
-                    args["pipeline_id"] = taskStart.pipelineId.getRawValue();
-                    args["task_id"] = taskStart.taskId.getRawValue();
-                    args["tuples"] = taskStart.numberOfTuples;
-
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Task {} (Pipeline {}, Query {})", taskStart.taskId, taskStart.pipelineId, taskStart.queryId),
-                        Category::Task,
-                        Phase::Begin,
-                        timestampToMicroseconds(taskStart.timestamp),
-                        0,
-                        args);
-                    traceEvent["tid"] = taskStart.threadId.getRawValue();
-
-                    emit(traceEvent);
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{},"task_id":{},"tuples":{}}},"cat":"task","name":"Task {} (Pipeline {}, Query {})","ph":"B","pid":{},"tid":{},"ts":{}}})x",
+                        taskStart.pipelineId.getRawValue(),
+                        taskStart.taskId.getRawValue(),
+                        taskStart.numberOfTuples,
+                        taskStart.taskId,
+                        taskStart.pipelineId,
+                        taskStart.queryId,
+                        pid,
+                        taskStart.threadId.getRawValue(),
+                        timestampToMicroseconds(taskStart.timestamp));
 
                     /// Track this task for duration calculation
                     activeTasks.emplace(taskStart.taskId, taskStart.timestamp);
@@ -326,109 +281,96 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                         activeTasks.erase(it);
                     }
 
-                    auto args = nlohmann::json::object();
-                    args["pipeline_id"] = taskComplete.pipelineId.getRawValue();
-                    args["task_id"] = taskComplete.taskId.getRawValue();
-
-                    auto traceEvent = createTraceEvent(
-                        fmt::format("Task {} (Pipeline {}, Query {})", taskComplete.taskId, taskComplete.pipelineId, taskComplete.queryId),
-                        Category::Task,
-                        Phase::End,
-                        timestampToMicroseconds(taskComplete.timestamp),
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{},"task_id":{}}},"cat":"task","dur":{},"name":"Task {} (Pipeline {}, Query {})","ph":"E","pid":{},"tid":{},"ts":{}}})x",
+                        taskComplete.pipelineId.getRawValue(),
+                        taskComplete.taskId.getRawValue(),
                         duration,
-                        args);
-                    traceEvent["tid"] = taskComplete.threadId.getRawValue();
-
-                    emit(traceEvent);
+                        taskComplete.taskId,
+                        taskComplete.pipelineId,
+                        taskComplete.queryId,
+                        pid,
+                        taskComplete.threadId.getRawValue(),
+                        timestampToMicroseconds(taskComplete.timestamp));
                 },
                 [&](const TaskEmit& taskEmit)
                 {
-                    auto args = nlohmann::json::object();
-                    args["from_pipeline"] = taskEmit.fromPipeline.getRawValue();
-                    args["to_pipeline"] = taskEmit.toPipeline.getRawValue();
-                    args["task_id"] = taskEmit.taskId.getRawValue();
-                    args["tuples"] = taskEmit.numberOfTuples;
-
-                    auto traceEvent = createTraceEvent(
-                        fmt::format(
-                            "Emit {}->{} (Task {}, Query {})",
-                            taskEmit.fromPipeline,
-                            taskEmit.toPipeline,
-                            taskEmit.taskId,
-                            taskEmit.queryId),
-                        Category::Task,
-                        Phase::Instant,
-                        timestampToMicroseconds(taskEmit.timestamp),
-                        0,
-                        args);
-                    traceEvent["tid"] = taskEmit.threadId.getRawValue();
-
-                    emit(traceEvent);
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"from_pipeline":{},"task_id":{},"to_pipeline":{},"tuples":{}}},"cat":"task","name":"Emit {}->{} (Task {}, Query {})","ph":"i","pid":{},"tid":{},"ts":{}}})x",
+                        taskEmit.fromPipeline.getRawValue(),
+                        taskEmit.taskId.getRawValue(),
+                        taskEmit.toPipeline.getRawValue(),
+                        taskEmit.numberOfTuples,
+                        taskEmit.fromPipeline,
+                        taskEmit.toPipeline,
+                        taskEmit.taskId,
+                        taskEmit.queryId,
+                        pid,
+                        taskEmit.threadId.getRawValue(),
+                        timestampToMicroseconds(taskEmit.timestamp));
                 },
                 [&](const TaskExpired& taskExpired)
                 {
-                    auto args = nlohmann::json::object();
-                    args["pipeline_id"] = taskExpired.pipelineId.getRawValue();
-                    args["task_id"] = taskExpired.taskId.getRawValue();
-
-                    auto traceEvent = createTraceEvent(
-                        fmt::format(
-                            "Task Expired {} (Pipeline {}, Query {})", taskExpired.taskId, taskExpired.pipelineId, taskExpired.queryId),
-                        Category::Task,
-                        Phase::Instant,
-                        timestampToMicroseconds(taskExpired.timestamp),
-                        0,
-                        args);
-                    traceEvent["tid"] = taskExpired.threadId.getRawValue();
-
-                    emit(traceEvent);
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{},"task_id":{}}},"cat":"task","name":"Task Expired {} (Pipeline {}, Query {})","ph":"i","pid":{},"tid":{},"ts":{}}})x",
+                        taskExpired.pipelineId.getRawValue(),
+                        taskExpired.taskId.getRawValue(),
+                        taskExpired.taskId,
+                        taskExpired.pipelineId,
+                        taskExpired.queryId,
+                        pid,
+                        taskExpired.threadId.getRawValue(),
+                        timestampToMicroseconds(taskExpired.timestamp));
 
                     /// Remove from active tasks if present
                     activeTasks.erase(taskExpired.taskId);
                 }},
             event);
     }
+}
 
-    /// Write the footer when the thread stops
-    writeTraceFooter();
+namespace
+{
+void warnOnOverflow(bool writeFailed)
+{
+    if (writeFailed) [[unlikely]]
+    {
+        static std::atomic<uint64_t> droppedCount{0};
+        /// Log first drop immediately, then every DROP_LOG_INTERVAL
+        if (uint64_t dropped = droppedCount.fetch_add(1, std::memory_order_relaxed) + 1; dropped == 1 || dropped % DROP_LOG_INTERVAL == 0)
+        {
+            NES_WARNING("Event queue full, {} events dropped so far", dropped);
+        }
+    }
+}
 }
 
 void GoogleEventTracePrinter::onEvent(Event event)
 {
-    events.writeIfNotFull(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event)));
+    warnOnOverflow(
+        !events.writeIfNotFull(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event))));
 }
 
 void GoogleEventTracePrinter::onEvent(SystemEvent event)
 {
-    events.writeIfNotFull(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event)));
+    warnOnOverflow(
+        !events.writeIfNotFull(std::visit([]<typename T>(T&& arg) { return CombinedEventType(std::forward<T>(arg)); }, std::move(event))));
 }
 
-GoogleEventTracePrinter::GoogleEventTracePrinter(const std::filesystem::path& path) : file(path, std::ios::out | std::ios::trunc)
+GoogleEventTracePrinter::GoogleEventTracePrinter(const std::filesystem::path& path) : outputPath(path)
 {
-    NES_INFO("Writing Google Event Trace to: {}", path);
+    NES_INFO("Will write Google Event Trace to: {}", path);
 }
 
 void GoogleEventTracePrinter::start()
 {
     traceThread = Thread("event-trace", [this](const std::stop_token& stopToken) { threadRoutine(stopToken); });
-}
-
-GoogleEventTracePrinter::~GoogleEventTracePrinter()
-{
-    if (file.is_open())
-    {
-        file.flush();
-        file.close();
-    }
-}
-
-void GoogleEventTracePrinter::flush()
-{
-    if (file.is_open())
-    {
-        file.flush();
-        file.close();
-    }
 }
 
 }

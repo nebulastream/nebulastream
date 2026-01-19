@@ -22,17 +22,16 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -53,16 +52,20 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
         | std::ranges::to<std::vector>();
     PRECONDITION(sourceOperators.size() < 2, "We expect a projection to have at most one source operator as a child.");
 
-    const auto memoryProvider = NES::TupleBufferRef::create(bufferSize, inputSchema);
+    const auto memoryLayoutTypeTrait = projectionOp.getTraitSet().tryGet<NES::MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
     if (sourceOperators.size() == 1)
     {
         const auto inputFormatterConfig = sourceOperators.front().getParserConfig();
         if (NES::toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
-            return NES::ScanPhysicalOperator(provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider));
+            return NES::ScanPhysicalOperator(
+                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema.getFieldNames());
         }
     }
-    return NES::ScanPhysicalOperator(memoryProvider);
+    return NES::ScanPhysicalOperator(memoryProvider, inputSchema.getFieldNames());
 }
 
 }
@@ -77,9 +80,19 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
     auto bufferSize = conf.pageSize.getValue();
 
+    const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
     auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineLocation::SCAN);
+        scan,
+        outputSchema,
+        outputSchema,
+        memoryLayoutType,
+        memoryLayoutType,
+        std::nullopt,
+        std::nullopt,
+        PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
     auto child = scanWrapper;
 
@@ -94,6 +107,8 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
             physicalOperator,
             outputSchema,
             outputSchema,
+            memoryLayoutType,
+            memoryLayoutType,
             std::nullopt,
             std::nullopt,
             PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,

@@ -47,8 +47,9 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
     /// Checks if the logical function is allowed to be in our join function for a hash join
     auto allowedLogicalFunction = [](const LogicalFunction& logicalFunction)
     {
-        return logicalFunction.tryGet<AndLogicalFunction>().has_value() or logicalFunction.tryGet<EqualsLogicalFunction>().has_value()
-            or logicalFunction.tryGet<OrLogicalFunction>().has_value() or logicalFunction.tryGet<FieldAccessLogicalFunction>().has_value();
+        return logicalFunction.tryGetAs<AndLogicalFunction>().has_value() or logicalFunction.tryGetAs<EqualsLogicalFunction>().has_value()
+            or logicalFunction.tryGetAs<OrLogicalFunction>().has_value()
+            or logicalFunction.tryGetAs<FieldAccessLogicalFunction>().has_value();
     };
 
     std::unordered_set<LogicalFunction> parentsOfJoinComparisons;
@@ -65,7 +66,7 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
         {
             for (const auto& child : logicalFunction.getChildren())
             {
-                if (not child.tryGet<FieldAccessLogicalFunction>().has_value())
+                if (not child.tryGetAs<FieldAccessLogicalFunction>().has_value())
                 {
                     /// If the leaf is not a FieldAccessLogicalFunction, we need to use a NLJ
                     return false;
@@ -94,15 +95,15 @@ LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
     {
         if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
         {
-            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }
         else if (shallUseHashJoin(joinOperator.value()->getJoinFunction()))
         {
-            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
         }
         else
         {
-            tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
             if (this->joinStrategy == StreamJoinStrategy::HASH_JOIN)
             {
                 NES_WARNING(
@@ -114,7 +115,7 @@ LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
     }
     else
     {
-        tryInsert(traitSet, ImplementationTypeTrait{JoinImplementation::CHOICELESS});
+        tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
     }
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }

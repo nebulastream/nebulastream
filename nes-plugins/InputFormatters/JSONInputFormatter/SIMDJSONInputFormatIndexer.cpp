@@ -18,10 +18,9 @@
 #include <string>
 #include <string_view>
 
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <fmt/format.h>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatter.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 #include <SIMDJSONFIF.hpp>
 
 namespace NES

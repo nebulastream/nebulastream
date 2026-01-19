@@ -35,7 +35,7 @@ ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const 
 {
 }
 
-bool ModuloLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool ModuloLogicalFunction::operator==(const ModuloLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const ModuloLogicalFunction*>(&rhs))
     {
@@ -49,7 +49,7 @@ DataType ModuloLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ModuloLogicalFunction::withDataType(const DataType& dataType) const
+ModuloLogicalFunction ModuloLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -71,7 +71,7 @@ std::vector<LogicalFunction> ModuloLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction ModuloLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+ModuloLogicalFunction ModuloLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "ModuloLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;

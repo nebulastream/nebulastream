@@ -30,7 +30,7 @@ namespace NES
 {
 
 /// @brief A FieldAssignmentLogicalFunction represents the assignment of a function result to a specific field.
-class FieldAssignmentLogicalFunction final : public LogicalFunctionConcept
+class FieldAssignmentLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "FieldAssignment";
@@ -40,28 +40,28 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getField() const;
     [[nodiscard]] LogicalFunction getAssignment() const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] bool operator==(const FieldAssignmentLogicalFunction& rhs) const;
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] SerializableFunction serialize() const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] FieldAssignmentLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] FieldAssignmentLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-
-    friend bool operator==(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs);
-    friend bool operator!=(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs);
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     DataType dataType;
     FieldAccessLogicalFunction fieldAccess;
     LogicalFunction logicalFunction;
 };
+
+static_assert(LogicalFunctionConcept<FieldAssignmentLogicalFunction>);
+
 }
 
 FMT_OSTREAM(NES::FieldAssignmentLogicalFunction);

@@ -36,13 +36,6 @@ namespace NES
 class Schema
 {
 public:
-    /// Enum to identify the memory layout in which we want to represent the schema physically.
-    enum class MemoryLayoutType : uint8_t
-    {
-        ROW_LAYOUT = 0,
-        COLUMNAR_LAYOUT = 1
-    };
-
     struct Field
     {
         Field() = default;
@@ -74,7 +67,6 @@ public:
     constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
 
     explicit Schema() = default;
-    explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;
 
     [[nodiscard]] bool operator==(const Schema& other) const = default;
@@ -111,9 +103,6 @@ public:
     [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
-
-    /// Public members that we get and set.
-    MemoryLayoutType memoryLayoutType{MemoryLayoutType::ROW_LAYOUT};
 
     [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<Field>>().cbegin());
     [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<Field>>().cend());

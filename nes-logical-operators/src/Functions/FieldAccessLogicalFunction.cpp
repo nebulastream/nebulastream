@@ -38,19 +38,10 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(DataType dataType, std::string fieldName)
     : fieldName(std::move(fieldName)), dataType(std::move(dataType)) { };
 
-bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool FieldAccessLogicalFunction::operator==(const FieldAccessLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs))
-    {
-        return *this == *other;
-    }
-    return false;
-}
-
-bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
-{
-    const bool fieldNamesMatch = rhs.fieldName == lhs.fieldName;
-    const bool dataTypesMatch = rhs.dataType == lhs.dataType;
+    const bool fieldNamesMatch = rhs.fieldName == this->fieldName;
+    const bool dataTypesMatch = rhs.dataType == this->dataType;
     return fieldNamesMatch and dataTypesMatch;
 }
 
@@ -64,7 +55,7 @@ std::string FieldAccessLogicalFunction::getFieldName() const
     return fieldName;
 }
 
-LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
 {
     auto copy = *this;
     copy.fieldName = std::move(fieldName);
@@ -99,7 +90,7 @@ DataType FieldAccessLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& dataType) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -111,7 +102,7 @@ std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
     return {};
 };
 
-LogicalFunction FieldAccessLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
 };

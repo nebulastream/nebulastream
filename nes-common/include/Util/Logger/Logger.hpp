@@ -127,7 +127,6 @@ struct LogCaller<LogLevel::LOG_WARNING>
 
 
 /// @brief this is the new logging macro that is the entry point for logging calls
-/// TODO #1035: remove namespace NES::Logger
 #define NES_LOG(LEVEL, ...) \
     do \
     { \
@@ -144,7 +143,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
     } while (0)
 
 /// Creates a log message with log level trace.
-#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__); /// TODO #1035: remove namespace LogLevel
+#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
 /// Creates a log message with log level info.
 #define NES_INFO(...) NES_LOG(NES::LogLevel::LOG_INFO, __VA_ARGS__);
 /// Creates a log message with log level debug.

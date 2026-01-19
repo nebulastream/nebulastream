@@ -21,21 +21,22 @@
 #include <utility>
 #include <vector>
 
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
 
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef)
+ScanPhysicalOperator::ScanPhysicalOperator(
+    std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
     : bufferRef(std::move(bufferRef))
-    , projections(this->bufferRef->getMemoryLayout()->getSchema().getFieldNames())
+    , projections(std::move(projections))
     , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr)
 {
 }

@@ -93,7 +93,13 @@ private:
     std::unique_ptr<std::thread> waitThread;
     std::shared_ptr<std::promise<bool>> testCompletion;
     std::atomic<bool> testCompletionSet{false};
-    static constexpr uint64_t WAIT_TIME_SETUP = 5;
+
+#if defined(__has_feature) && __has_feature(thread_sanitizer)
+    /// We double the timeout for tests when running with the thread sanitizer, as it significantly slows down execution for some tests
+    static constexpr std::chrono::minutes WAIT_TIME_SETUP{10};
+#else
+    static constexpr std::chrono::minutes WAIT_TIME_SETUP{5};
+#endif
 };
 
 /**

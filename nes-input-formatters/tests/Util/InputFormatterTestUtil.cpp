@@ -36,7 +36,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -53,6 +53,7 @@
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
@@ -202,20 +203,25 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const std::unordered_map<std::string, std::string>& parserConfiguration,
     const Schema& schema,
+    const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)
 {
     const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
-    return createInputFormatter(validatedParserConfiguration, schema, sizeOfFormattedBuffers, isCompiled);
+    return createInputFormatter(validatedParserConfiguration, schema, memoryLayoutType, sizeOfFormattedBuffers, isCompiled);
 }
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const ParserConfig& parserConfiguration, const Schema& schema, const size_t sizeOfFormattedBuffers, const bool isCompiled)
+    const ParserConfig& parserConfiguration,
+    const Schema& schema,
+    const MemoryLayoutType memoryLayoutType,
+    const size_t sizeOfFormattedBuffers,
+    const bool isCompiled)
 {
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
-    auto memoryProvider = TupleBufferRef::create(sizeOfFormattedBuffers, schema);
-    auto scanOp = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(parserConfiguration, memoryProvider));
+    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
+    auto scanOp = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(parserConfiguration, memoryProvider), schema.getFieldNames());
     scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
 
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));

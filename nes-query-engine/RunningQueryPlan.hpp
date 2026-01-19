@@ -16,15 +16,12 @@
 #include <atomic>
 #include <functional>
 #include <memory>
-#include <mutex>
-#include <optional>
-#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <absl/functional/any_invocable.h>
 #include <folly/Synchronized.h>
+#include <Callback.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
@@ -33,65 +30,6 @@
 
 namespace NES
 {
-
-/// The Implementation of the RunningQueryPlan is based on the DesignDocument covering the redesign of the QueryEngine
-/// https://github.com/nebulastream/nebulastream-public/pull/464/files
-struct CallbackRef;
-struct CallbackOwner;
-
-struct Callback
-{
-    static std::pair<CallbackOwner, CallbackRef> create(std::string context);
-
-private:
-    friend CallbackOwner;
-    std::mutex mutex;
-    std::vector<absl::AnyInvocable<void()>> callbacks;
-};
-
-struct CallbackRef
-{
-    CallbackRef() = default;
-
-    explicit CallbackRef(std::shared_ptr<Callback> ref) : ref(std::move(ref)) { }
-
-private:
-    friend CallbackOwner;
-    std::shared_ptr<Callback> ref = nullptr;
-};
-
-/// Dropping the callback owner will clear all pending callbacks
-struct CallbackOwner
-{
-    CallbackOwner() = default;
-
-    explicit CallbackOwner(std::string context, std::weak_ptr<Callback> owner) : context(std::move(context)), owner(std::move(owner)) { }
-
-    CallbackOwner(const CallbackOwner& other) = delete;
-    CallbackOwner& operator=(const CallbackOwner& other) = delete;
-
-    CallbackOwner(CallbackOwner&& other) = default;
-
-    /// Destructor and move assignment will erase all pending callbacks
-    ~CallbackOwner();
-    CallbackOwner& operator=(CallbackOwner&& other) noexcept;
-
-    explicit operator bool() const { return !owner.expired(); }
-
-    void addCallback(absl::AnyInvocable<void()> callbackFunction) const;
-
-    /// Only call this function if you can guarantee that:
-    /// 1. no other thread can add a callback concurrently (e.g. there should only be a single owner)
-    /// 2. you have at least one reference which prevents the callback from triggering
-    void addCallbackUnsafe(const CallbackRef& ref, absl::AnyInvocable<void()> callbackFunction) const;
-
-    CallbackRef addCallbackAssumeNonShared(CallbackRef&&, absl::AnyInvocable<void()> callbackFunction);
-    [[nodiscard]] std::optional<CallbackRef> getRef() const;
-
-private:
-    std::string context;
-    std::weak_ptr<Callback> owner;
-};
 
 /// Running Query Plan represents a ExecutableQueryPlan which is currently running.
 /// The lifetime of the RunningQueryPlan is tied to the lifetime of the query. As long as the RunningQueryPlan object
@@ -185,10 +123,12 @@ struct RunningQueryPlan final
         WorkEmitter&,
         std::shared_ptr<QueryLifetimeListener>);
 
-    /// Stopping a RunningQueryPlan will:
-    /// 1. Initialize pipeline termination asynchronously.
-    /// 2. Block until all sources are terminated.
-    static std::unique_ptr<StoppingQueryPlan> stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
+    /// Stopping a RunningQueryPlan will return:
+    /// The stopped query plan which keeps the pipelines alive until the soft stop was propagated.
+    /// The callback to initialize the soft stop, by destroying sources. This callback must be called outside the AtomicState transition,
+    /// otherwise destroying the sources (if stop fails) or their successor pipelines might try to acquire the AtomicState lock again, causing a deadlock.
+    static std::pair<std::unique_ptr<StoppingQueryPlan>, absl::AnyInvocable<void()>>
+    stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
 
     /// Disposing a RunningQueryPlan will:
     /// 1. Not notify any listeners. `onDestruction` will not be called.

@@ -37,7 +37,7 @@ GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunc
 {
 }
 
-bool GreaterLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool GreaterLogicalFunction::operator==(const GreaterLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const GreaterLogicalFunction*>(&rhs))
     {
@@ -58,7 +58,7 @@ DataType GreaterLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction GreaterLogicalFunction::withDataType(const DataType& dataType) const
+GreaterLogicalFunction GreaterLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -80,7 +80,7 @@ std::vector<LogicalFunction> GreaterLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction GreaterLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+GreaterLogicalFunction GreaterLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "GreaterLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;

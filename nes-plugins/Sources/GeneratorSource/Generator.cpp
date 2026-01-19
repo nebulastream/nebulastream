@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Strings.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <GeneratorFields.hpp>
 
@@ -74,17 +75,28 @@ void Generator::parseRawSchemaLine(std::string_view line)
 {
     PRECONDITION(!line.empty(), "Line to parse cannot be empty!");
     std::string_view firstWord = line.substr(0, line.find_first_of(' '));
-    if (firstWord == GeneratorFields::SEQUENCE_IDENTIFIER)
+    switch (auto fieldType = magic_enum::enum_cast<GeneratorFields::FieldIdentifier>(NES::toUpperCase(firstWord))
+                                 .value_or(GeneratorFields::FieldIdentifier::INVALID))
     {
-        this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::SequenceField(line)));
-    }
-    else if (firstWord == GeneratorFields::NORMAL_DISTRIBUTION_IDENTIFIER)
-    {
-        this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::NormalDistributionField(line)));
-    }
-    else
-    {
-        throw InvalidConfigParameter("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);
+        case GeneratorFields::FieldIdentifier::SEQUENCE: {
+            this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::SequenceField(line)));
+            break;
+        }
+        case GeneratorFields::FieldIdentifier::NORMAL_DISTRIBUTION: {
+            this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::NormalDistributionField(line)));
+            break;
+        }
+        case GeneratorFields::FieldIdentifier::WORDLIST: {
+            this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::WordListField(line)));
+            break;
+        }
+        case GeneratorFields::FieldIdentifier::RANDOMSTR: {
+            this->addField(std::make_unique<GeneratorFields::GeneratorFieldType>(GeneratorFields::RandomStrField(line)));
+            break;
+        }
+        default: {
+            throw InvalidConfigParameter("Invalid line, {} is not a recognized generatorType: {}", firstWord, line);
+        }
     }
 }
 

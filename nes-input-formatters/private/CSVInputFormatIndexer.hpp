@@ -15,17 +15,22 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string_view>
+#include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRef.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 #include <RawValueParser.hpp>
+#include <static.hpp>
 
 namespace NES
 {
@@ -37,8 +42,11 @@ struct CSVMetaData
     static constexpr size_t SIZE_OF_TUPLE_DELIMITER = 1;
     static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
-    explicit CSVMetaData(const ParserConfig& config, const MemoryLayout& memoryLayout)
-        : tupleDelimiter(config.tupleDelimiter.front()), fieldDelimiter(config.fieldDelimiter.front()), schema(memoryLayout.getSchema())
+    explicit CSVMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
+        : tupleDelimiter(config.tupleDelimiter.front())
+        , fieldDelimiter(config.fieldDelimiter.front())
+        , fieldNames(tupleBufferRef.getAllFieldNames())
+        , fieldDataTypes(tupleBufferRef.getAllDataTypes())
     {
         PRECONDITION(
             config.tupleDelimiter.size() == SIZE_OF_TUPLE_DELIMITER,
@@ -62,12 +70,24 @@ struct CSVMetaData
 
     static QuotationType getQuotationType() { return QuotationType::NONE; }
 
-    [[nodiscard]] const Schema& getSchema() const { return this->schema; }
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
+    {
+        return fieldNames[i];
+    }
+
+    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
+
+    [[nodiscard]] uint64_t getNumberOfFields() const
+    {
+        INVARIANT(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
+        return fieldNames.size();
+    }
 
 private:
     char tupleDelimiter;
     char fieldDelimiter;
-    Schema schema;
+    std::vector<Record::RecordFieldIdentifier> fieldNames;
+    std::vector<DataType> fieldDataTypes;
 };
 
 class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>

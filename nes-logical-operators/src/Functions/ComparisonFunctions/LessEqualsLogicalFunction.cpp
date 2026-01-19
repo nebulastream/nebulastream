@@ -37,7 +37,7 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(LogicalFunction left, Logic
 {
 }
 
-bool LessEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool LessEqualsLogicalFunction::operator==(const LessEqualsLogicalFunction& rhs) const
 {
     if (const auto* other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs))
     {
@@ -58,7 +58,7 @@ DataType LessEqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction LessEqualsLogicalFunction::withDataType(const DataType& dataType) const
+LessEqualsLogicalFunction LessEqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -80,7 +80,7 @@ std::vector<LogicalFunction> LessEqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction LessEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+LessEqualsLogicalFunction LessEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "LessEqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;

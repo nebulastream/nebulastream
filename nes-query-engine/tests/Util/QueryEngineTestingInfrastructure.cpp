@@ -53,7 +53,7 @@
 #include <QueryEngineConfiguration.hpp>
 #include <TestSource.hpp>
 
-namespace NES::Testing
+namespace NES
 {
 
 std::vector<std::byte> identifiableData(size_t identifier)

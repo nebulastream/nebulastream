@@ -41,7 +41,6 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <InputFormatters/InputFormatterTupleBufferRefProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -60,6 +59,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -115,7 +115,7 @@ public:
 
     static inline const Schema checksumSchema = []
     {
-        auto checksumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        Schema checksumSinkSchema;
         checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         return checksumSinkSchema;
@@ -521,7 +521,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        Schema schema;
         for (const auto& field : statement.schema.getFields())
         {
             schema.addField(field.name, field.dataType);
