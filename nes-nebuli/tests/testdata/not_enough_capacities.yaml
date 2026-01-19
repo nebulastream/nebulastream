@@ -1,0 +1,25 @@
+query: |
+  SELECT * FROM (SELECT * FROM mock_source WHERE a > b) WHERE b > a INTO mock_sink
+
+sinks:
+  - name: mock_sink
+    schema: [ mock_source$a, mock_source$b ]
+    host: "sink-node-host:9090"
+
+logical:
+  - name: mock_source
+    schema: [ a, b ]
+
+physical:
+  - logical: mock_source
+    host: "source-node-host:9090"
+
+workers:
+  - host: "sink-node-host:9090"
+    grpc: "sink-node:8080"
+    capacity: 1
+  - host: "source-node-host:9090"
+    grpc: "source-node:8080"
+    capacity: 0
+    downstream:
+      - "sink-node-host:9090"

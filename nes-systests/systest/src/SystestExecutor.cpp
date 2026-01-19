@@ -35,6 +35,8 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+#include <Configurations/Util.hpp>
+#include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -42,12 +44,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/URI.hpp>
+#include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
+#include <nlohmann/json_fwd.hpp>
+#include <yaml-cpp/node/parse.h>
+#include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -56,8 +60,13 @@
 #include <SystestProgressTracker.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
+#include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
 #include <from_current.hpp>
 
+/// If systest is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
+/// via an in-memory channel.
+extern void enable_memcom();
 
 using namespace std::literals;
 
@@ -89,11 +98,16 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const OverrideQueriesMap& queriesByOverride,
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
-    const URI& grpcURI,
+    const SystestClusterConfiguration& clusterConfig,
     Systest::SystestProgressTracker& progressTracker)
 {
-    Systest::QuerySubmitter querySubmitter(
-        std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(grpcURI.toString())})));
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+    {
+        workerCatalog->addWorker(host, grpc, capacity, downstream);
+    }
+
+    Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createGRPCBackend()));
 
     while (true)
     {
@@ -119,6 +133,7 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const OverrideQueriesMap& queriesByOverride,
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
+    const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& baseConfiguration,
     Systest::SystestProgressTracker& progressTracker)
 {
@@ -139,10 +154,14 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
 
-            auto queryManager = std::make_unique<QueryManager>(
-                std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configCopy));
+            auto workerCatalog = std::make_shared<WorkerCatalog>();
+            for (const auto& [host, grpc, capacity, downstream] : clusterConfig.workers)
+            {
+                workerCatalog->addWorker(host, grpc, capacity, downstream);
+            }
 
-            Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+            Systest::QuerySubmitter querySubmitter(
+                std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
 
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);
@@ -180,16 +199,15 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
     }
 
     std::mt19937 rng(std::random_device{}());
-    const auto grpcURI = config.grpcAddressUri.getValue();
-    const bool runRemote = not grpcURI.empty();
 
-    if (runRemote)
+    if (config.remoteWorker.getValue())
     {
-        runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, grpcURI, progressTracker);
+        runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, progressTracker);
     }
     else
     {
-        runEndlessLocal(queriesByOverride, rng, numberConcurrentQueries, singleNodeWorkerConfiguration, progressTracker);
+        runEndlessLocal(
+            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, singleNodeWorkerConfiguration, progressTracker);
     }
 }
 
@@ -272,7 +290,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
-        Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
+        Systest::SystestBinder binder{
+            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(), config.clusterConfig};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
@@ -280,6 +299,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
                 .outputMessage = "Could not load all test files. Terminating.",
                 .errorCode = ErrorCode::TestException};
+        }
+
+        if (!config.remoteWorker.getValue())
+        {
+            enable_memcom();
         }
 
         if (queries.empty())
@@ -308,11 +332,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
-        if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
+        if (config.remoteWorker.getValue())
         {
             progressTracker.reset();
             progressTracker.setTotalQueries(queries.size());
-            auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, progressTracker);
+            auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig, progressTracker);
             failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
         }
         else
@@ -353,8 +377,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
                 progressTracker.reset();
                 progressTracker.setTotalQueries(benchmarkQueries.size());
-                auto failed = runQueriesAndBenchmark(benchmarkQueries, singleNodeWorkerConfiguration, benchmarkResults, progressTracker);
-
+                auto failed = runQueriesAndBenchmark(
+                    benchmarkQueries, singleNodeWorkerConfiguration, benchmarkResults, config.clusterConfig, progressTracker);
                 failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
@@ -380,7 +404,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
 
-                    auto failed = runQueriesAtLocalWorker(queriesForConfig, numberConcurrentQueries, configCopy, progressTracker);
+                    auto failed = runQueriesAtLocalWorker(
+                        queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }
