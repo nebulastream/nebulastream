@@ -137,8 +137,15 @@ SerializedFunction FieldAccessLogicalFunction::serialized() const
     return serializedFunction;
 }
 
-Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& _) const
+struct ReflectedFieldAccessLogicalFunction
 {
+    std::string fieldName;
+    DataType::Type dataType;
+};
+
+Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
+{
+    return reflect(ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType().type});
     // TODO to implement
     throw NotImplemented("Reflector");
 }

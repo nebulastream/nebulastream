@@ -33,6 +33,8 @@
 #include <SerializableVariantDescriptor.pb.h>
 #include <nameof.hpp>
 
+#include "LogicalFunction.hpp"
+
 namespace NES
 {
 
@@ -297,7 +299,7 @@ struct ReflectedLogicalFunction
 };
 
 
-template <typename Checked>
+template <LogicalFunctionConcept Checked>
 struct Reflector<TypedLogicalFunction<Checked>>
 {
     Reflected operator()(const TypedLogicalFunction<Checked>& function) const
@@ -306,7 +308,7 @@ struct Reflector<TypedLogicalFunction<Checked>>
     }
 };
 
-template <typename Checked>
+template <LogicalFunctionConcept Checked>
 struct Unreflector<TypedLogicalFunction<Checked>>
 {
     TypedLogicalFunction<Checked> operator()(const Reflected& _) const
@@ -314,6 +316,24 @@ struct Unreflector<TypedLogicalFunction<Checked>>
         throw NotImplemented("Unreflector");
     }
 };
+
+template <>
+struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
+{
+    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function) const
+    {
+        return reflect(ReflectedLogicalFunction{std::string{function.getType()}, function->reflect()});
+    }
+};
+template <>
+struct Unreflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
+{
+    TypedLogicalFunction<detail::ErasedLogicalFunction> operator()(const Reflected& _) const
+    {
+        throw NotImplemented("Unreflector");
+    }
+};
+static_assert(requires(LogicalFunction logicalFunction){ {reflect(logicalFunction)} -> std::same_as<Reflected>;});
 
 
 namespace detail

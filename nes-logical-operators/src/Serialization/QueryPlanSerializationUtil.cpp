@@ -70,14 +70,7 @@ void serialize(TypedLogicalOperator<> op, SerializableOperator& serialized)
     const auto serializedString = rfl::json::write(reflectedOperator);
 
     const auto deserializedOpt = rfl::json::read<ReflectedOperator>(serializedString);
-    const auto deserialized = deserializedOpt.value();
 
-    if (deserialized.type == "Selection")
-    {
-        auto test = unreflect<ReflectedLogicalFunction>(deserialized.config);
-        std::cout << "ha";
-    }
-    // const auto error = deserialized.error();
     serialized.set_reflect(serializedString);
 }
 

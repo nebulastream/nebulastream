@@ -167,17 +167,12 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-struct ReflectedSelectionLogicalOperator
-{
-    std::string function;
-    Reflected predicate;
-};
 
 
 
 Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
 {
-    return reflect(rfl::to_generic(op.getPredicate()));
+    return reflect(ReflectedSelectionLogicalOperator{std::make_optional(op.getPredicate())});
 }
 
 SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& _) const

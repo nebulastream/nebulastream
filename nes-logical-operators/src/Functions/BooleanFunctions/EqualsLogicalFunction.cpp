@@ -132,16 +132,16 @@ SerializedFunction EqualsLogicalFunction::serialized() const
 struct ReflectedEqualsLogicalFunction
 {
     DataType::Type datatype;
-    std::string left;
-    LogicalFunction right;
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
 };
 
 Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
 {
     return reflect(ReflectedEqualsLogicalFunction{
-        .datatype = function.dataType.type,
-        .left =  "Hello World",
-        .right = function.right
+        function.dataType.type,
+        std::make_optional<LogicalFunction>(function.left),
+        std::make_optional<LogicalFunction>(function.right)
     });
 }
 
