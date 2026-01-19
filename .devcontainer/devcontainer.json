@@ -1,0 +1,42 @@
+{
+    "name": "NebulaStream Development",
+    // Image tag is the hash of dependencies. Update by running: ./docker/dependency/hash_dependencies.sh
+    "image": "nebulastream/nes-development:25598dd77351a71a2c9c525f457bfd79a8ae9e5d63cbc878d02c73d19744c0af",
+    "containerUser": "root",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-vscode.cmake-tools",
+                "twxs.cmake",
+                "vadimcn.vscode-lldb",
+                "jeff-hykin.better-cpp-syntax",
+                "xaver.clang-format"
+            ],
+            "settings": {
+                "cmake.generator": "Ninja",
+                "cmake.buildDirectory": "${workspaceFolder}/build",
+                "cmake.configureOnOpen": false,
+                "clangd.arguments": [
+                    "--background-index",
+                    "--compile-commands-dir=${workspaceFolder}/build",
+                    "--clang-tidy",
+                    "--header-insertion=iwyu"
+                ],
+                "editor.formatOnSave": true,
+                "[cpp]": {
+                    "editor.defaultFormatter": "xaver.clang-format"
+                }
+            }
+        }
+    },
+    "mounts": [
+        "source=nebulastream-build-cache,target=/workspaces/${localWorkspaceFolderBasename}/build,type=volume"
+    ],
+    "postCreateCommand": "echo 'Container ready. Run: cmake -B build -S . && cmake --build build' to build the project.",
+    "remoteEnv": {
+        "CMAKE_BUILD_TYPE": "Debug"
+    }
+}
