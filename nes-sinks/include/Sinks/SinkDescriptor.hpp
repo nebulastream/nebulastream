@@ -60,7 +60,8 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
-    [[nodiscard]] std::string_view getFormatType() const;
+    /// Optional, since not every sink type uses an INPUT_FORMAT parameter.
+    [[nodiscard]] std::optional<std::string_view> getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
