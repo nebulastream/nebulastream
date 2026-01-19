@@ -46,7 +46,8 @@
     "scope-guard",
     "boost-url",
     "simdjson",
-    "highs"
+    "highs",
+    "etcd-cpp-apiv3"
   ],
   "overrides": [
     {

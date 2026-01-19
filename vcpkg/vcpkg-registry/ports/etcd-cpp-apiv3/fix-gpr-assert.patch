@@ -1,0 +1,33 @@
+diff --git a/src/v3/Action.cpp b/src/v3/Action.cpp
+index 1234567..abcdefg 100644
+--- a/src/v3/Action.cpp
++++ b/src/v3/Action.cpp
+@@ -1,5 +1,5 @@
+ #include "etcd/v3/Action.hpp"
+-#include <grpc/support/log.h>
++#include <absl/log/check.h>
+ #include <grpcpp/support/status.h>
+ #include "etcd/v3/action_constants.hpp"
+
+@@ -98,7 +98,7 @@
+     }
+   } else {
+     cq_.Next(&got_tag, &ok);
+-    GPR_ASSERT(got_tag == (void*) this);
++    CHECK(got_tag == (void*) this);
+   }
+ }
+
+diff --git a/etcd-cpp-api-config.in.cmake b/etcd-cpp-api-config.in.cmake
+index 1234567..abcdefg 100644
+--- a/etcd-cpp-api-config.in.cmake
++++ b/etcd-cpp-api-config.in.cmake
+@@ -15,7 +15,7 @@ if(NOT gRPC_FOUND)
+     find_dependency(GRPC)
+ endif()
+
+-find_dependency(cpprestsdk)
++find_package(cpprestsdk QUIET)
+ if(cpprestsdk_FOUND)
+     set(CPPREST_LIB cpprestsdk::cpprest)
+ endif()
