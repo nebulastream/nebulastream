@@ -23,25 +23,25 @@ on:
         required: false
         type: string
         default: |
-            CREATE LOGICAL SOURCE endless(val_1 UINT32, ts UINT64);
-            CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
-                'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-                'CSV' as PARSER.`TYPE`,
-                1 AS `SOURCE`.SEED,
-                -1 AS `SOURCE`.MAX_RUNTIME_MS,
-                'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
-                'EMIT_RATE 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-                'SEQUENCE UINT32 0 200000000 1, SEQUENCE UINT64 0 200000000 1' AS `SOURCE`.GENERATOR_SCHEMA);
-            CREATE SINK someSink1(ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink2(ENDLESS.val_1 UINT32, ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink3(val_plus_1 UINT32) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink4(ENDLESS.agg_val_1 FLOAT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            SHOW QUERIES;
-            SELECT TS FROM ENDLESS INTO SOMESINK1;
-            SELECT * FROM ENDLESS INTO SOMESINK2;
-            SELECT val_1 + UINT32(1) AS val_plus_1 FROM ENDLESS INTO SOMESINK3;
-            SELECT AVG(val_1) AS agg_val_1 FROM ENDLESS WINDOW TUMBLING(ts, SIZE 1 SEC) INTO SOMESINK4;
-            
+          CREATE LOGICAL SOURCE endless(val_1 UINT32, ts UINT64);
+          CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
+              'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+              'CSV' as PARSER.`TYPE`,
+              1 AS `SOURCE`.SEED,
+              -1 AS `SOURCE`.MAX_RUNTIME_MS,
+              'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+              'EMIT_RATE 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+              'SEQUENCE UINT32 0 200000000 1, SEQUENCE UINT64 0 200000000 1' AS `SOURCE`.GENERATOR_SCHEMA);
+          CREATE SINK someSink1(ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          CREATE SINK someSink2(ENDLESS.val_1 UINT32, ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          CREATE SINK someSink3(val_plus_1 UINT32) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          CREATE SINK someSink4(ENDLESS.agg_val_1 FLOAT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          SHOW QUERIES;
+          SELECT TS FROM ENDLESS INTO SOMESINK1;
+          SELECT * FROM ENDLESS INTO SOMESINK2;
+          SELECT val_1 + UINT32(1) AS val_plus_1 FROM ENDLESS INTO SOMESINK3;
+          SELECT AVG(val_1) AS agg_val_1 FROM ENDLESS WINDOW TUMBLING(ts, SIZE 1 SEC) INTO SOMESINK4;
+
 
 jobs:
   execute-query:
@@ -80,11 +80,12 @@ jobs:
           cat << 'EOF' > query.sql
           ${{ inputs.query_config }}
           EOF
-        
+          
           cat query.sql
       - uses: ./.github/steps/start-sccache
         name: Start sccache
       - name: Build and Test
+        shell: bash
         run: |
             cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
             cmake --build build -j -- -k 0
@@ -129,15 +130,15 @@ jobs:
       - name: Output Logs on failure
         if: failure()
         run: |
-          cat nebuli.log
+          cat nes-repl.log
           cat worker.log
 
       - name: Upload nebuli.log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: nebuli-log-${{ matrix.arch }}
-          path: nebuli.log
+          name: repl-log-${{ matrix.arch }}
+          path: nes-repl.log
 
       - name: Upload worker.log on failure
         if: failure()
