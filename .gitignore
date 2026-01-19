@@ -53,3 +53,6 @@ scripts/__pycache__
 .nix/ctest
 .nix/ninja
 .nix/gdb
+
+# Gas Town beads redirect
+.beads/
