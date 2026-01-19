@@ -1,3 +1,6 @@
+# Gas Town beads (local state)
+.beads/
+
 # IDE specific Files
 .idea
 .settings
