@@ -496,7 +496,7 @@ struct SystestBinder::Impl
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
         PhysicalSourceConfig physicalSourceConfig{
-            .logical = statement.attachedTo.getLogicalSourceName(),
+            .logical = statement.attachedTo.getRawValue(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
             .sourceConfig = statement.sourceConfig};
@@ -509,9 +509,14 @@ struct SystestBinder::Impl
             physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
         }
 
+        const auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
+        if (not logicalSource.has_value())
+        {
+            throw UnknownSourceName("{}", statement.attachedTo.getRawValue());
+        }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                statement.attachedTo, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
+                *logicalSource, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
         {
             return;
         }
