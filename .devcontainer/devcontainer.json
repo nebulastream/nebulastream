@@ -1,0 +1,35 @@
+{
+    "name": "NebulaStream Development",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "BASE_IMAGE": "nebulastream/nes-development:main-libcxx-none"
+        }
+    },
+    "remoteUser": "vscode",
+    "containerUser": "vscode",
+    "workspaceFolder": "/workspaces/nebulastream",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/nebulastream,type=bind,consistency=cached",
+    "postCreateCommand": "cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "twxs.cmake"
+            ],
+            "settings": {
+                "cmake.configureOnOpen": false,
+                "cmake.buildDirectory": "${workspaceFolder}/build",
+                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+            }
+        }
+    },
+    "mounts": [
+        "source=nes-ccache,target=/ccache,type=volume"
+    ],
+    "containerEnv": {
+        "CCACHE_DIR": "/ccache"
+    }
+}

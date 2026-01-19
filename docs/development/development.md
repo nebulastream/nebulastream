@@ -8,6 +8,38 @@ non-containerized environment.
 
 ## Development Container
 
+### VS Code Dev Containers (Recommended for Quick Start)
+
+The fastest way to get started is using VS Code with the Dev Containers extension.
+This provides a zero-config development environment with everything pre-configured.
+
+**Prerequisites:**
+- [Docker](https://www.docker.com/) installed and running
+- [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+**Getting Started:**
+1. Clone the repository
+2. Open the folder in VS Code
+3. When prompted, click "Reopen in Container" (or use Command Palette: "Dev Containers: Reopen in Container")
+4. Wait for the container to build and CMake to configure automatically
+
+Once the container is ready, you can build and run system tests:
+
+```shell
+# Build the systest target
+cmake --build build -j --target systest
+
+# Run a specific system test
+build/systest/systest -t nes-systests/function/arithmetical/FunctionAdd.test:1
+```
+
+> [!NOTE]
+> The Dev Container uses the `main` branch development image with libc++ and no sanitizers.
+> If you've modified files in `docker/` or `vcpkg/`, the image may not include your changes.
+> In that case, run the installation script first (see below) and update `.devcontainer/devcontainer.json` to use `nebulastream/nes-development:local` as the base image.
+
+### Manual Container Setup
+
 To set up a development container, always use the provided installation script:
 
 ```shell
