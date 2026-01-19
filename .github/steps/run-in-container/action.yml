@@ -18,6 +18,14 @@ runs:
       shell: bash
       run: |
         docker run \
-             -v $(pwd):$(pwd) -e CCACHE_DIR=$(pwd)/.ccache --workdir $(pwd) -u $(id -u):$(id -g) \
+             -v $(pwd):$(pwd) \
+             -e SCCACHE_DIR=$(pwd)/.sccache \
+             -e SCCACHE_BUCKET \
+             -e SCCACHE_ENDPOINT \
+             -e SCCACHE_REGION \
+             -e SCCACHE_S3_USE_SSL \
+             -e AWS_ACCESS_KEY_ID \
+             -e AWS_SECRET_ACCESS_KEY \
+             --workdir $(pwd) -u $(id -u):$(id -g) \
              ${{inputs.image_name}} \
               /usr/bin/bash -c '${{inputs.run}}'

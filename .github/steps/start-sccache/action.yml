@@ -1,0 +1,12 @@
+name: Start sccache Server
+description: |
+  Starts the sccache server with SCCACHE_IDLE_TIMEOUT=0 to prevent the server from shutting down during builds.
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Start sccache server
+      shell: bash
+      run: |
+        export SCCACHE_IDLE_TIMEOUT=0
+        sccache --start-server

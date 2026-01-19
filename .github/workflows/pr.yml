@@ -60,6 +60,7 @@ jobs:
     needs: [ get-dev-images, smoke-tests ]
     name: "Run Endless Mode"
     uses: ./.github/workflows/endless-mode.yml
+    secrets: inherit
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       head_sha: ${{ github.event.pull_request.head.sha }}

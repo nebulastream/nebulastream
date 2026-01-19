@@ -97,10 +97,14 @@ jobs:
     name: "Build and tests: ${{matrix.cmake_args.name}}"
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
-      volumes:
-        - ccache:/ccache
       env:
-        CCACHE_DIR: /ccache
+        SCCACHE_DIR: ${{ github.workspace }}/.sccache
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: true
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY_SECRET }}
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
@@ -124,11 +128,16 @@ jobs:
           ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
       - name: Configure NebulaStream
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_args.arg }}
+      - uses: ./.github/steps/start-sccache
+        name: Start sccache
       - name: Build NebulaStream
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
           cmake --build build -j -- -k 0
+      - uses: ./.github/steps/print-sccache-stats
+        name: Print sccache statistics
+        if: always()
       - name: Run Tests
         # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         shell: bash
