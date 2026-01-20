@@ -48,27 +48,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
-      - uses: ./.github/steps/prepare-github
-        name: Preparing Github Runners
-        with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
-      - uses: ./.github/steps/run-in-container
-        name: CMake Build
-        with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          run: |
-            source .github/.env/test-${{matrix.sanitizer}}.env
-            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
-            cmake --build build -j  -- -k 0
-      - uses: ./.github/steps/run-in-container
-        name: Run Tests
-        with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          run: |
-            source .github/.env/test-${{matrix.sanitizer}}.env
-            # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
-            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 2400 ${ADDTIONAL_CTEST_ARGS}
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: CMake Build
+        run: |
+          # We pass the matrix variables to the Nix wrapper
+          ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+          ./.nix/nix-cmake.sh --build build -j"$(nproc)" -- -k 0
+
+      - name: Run Tests
+        run: |
+          # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
+          ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 2400 ${ADDTIONAL_CTEST_ARGS}
+
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
