@@ -140,6 +140,7 @@ struct TypedLogicalFunction
     /// @tparam T The type of the function. Must satisfy LogicalFunctionConcept concept.
     /// @param op The function to wrap.
     template <typename T>
+    requires (!std::same_as<T, rfl::Error>)
     TypedLogicalFunction(const T& op) : self(std::make_shared<NES::detail::FunctionModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
