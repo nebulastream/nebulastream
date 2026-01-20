@@ -333,6 +333,7 @@ struct Unreflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
         throw NotImplemented("Unreflector");
     }
 };
+
 static_assert(requires(LogicalFunction logicalFunction){ {reflect(logicalFunction)} -> std::same_as<Reflected>;});
 
 

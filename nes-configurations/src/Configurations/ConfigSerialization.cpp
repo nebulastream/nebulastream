@@ -18,14 +18,14 @@
 namespace NES
 {
 
-Reflected Reflector<EnumWrapper>::operator()(const EnumWrapper&) const
+Reflected Reflector<EnumWrapper>::operator()(const EnumWrapper& value) const
 {
-    throw NotImplemented("Reflector");
+    return reflect(value.getValue());
 }
 
-EnumWrapper Unreflector<EnumWrapper>::operator()(const Reflected&) const
+EnumWrapper Unreflector<EnumWrapper>::operator()(const Reflected& rfl) const
 {
-    throw NotImplemented("Reflector");
+    return EnumWrapper{unreflect<std::string>(rfl)};
 }
 
 Reflected Reflector<FunctionList>::operator()(const FunctionList&) const

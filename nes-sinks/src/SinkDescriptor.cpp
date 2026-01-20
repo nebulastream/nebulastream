@@ -24,6 +24,7 @@
 #include <utility>
 #include <variant>
 
+#include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -118,7 +119,7 @@ struct ReflectedSinkDescriptor
     std::variant<std::string, uint64_t> sinkName;
     Schema schema;
     std::string sinkType;
-
+    DescriptorConfig::Config config;
 };
 
 Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
@@ -127,13 +128,14 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
         .sinkName = descriptor.getSinkName(),
         .schema = *descriptor.getSchema(),
         .sinkType = descriptor.getSinkType(),
+        .config = descriptor.getConfig()
     });
 }
 
-SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& _) const
+SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& rfl) const
 {
-    // TODO to implement
-    throw NotImplemented("Unreflector");
+    auto [name, schema, type, config] = unreflect<ReflectedSinkDescriptor>(rfl);
+    return SinkDescriptor{name, schema, type, config};
 }
 
 }

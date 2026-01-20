@@ -222,9 +222,13 @@ Reflected Reflector<SinkLogicalOperator>::operator()(const SinkLogicalOperator& 
     return reflect(ReflectedSinkLogicalOperator{.sinkDescriptor=op.getSinkDescriptor(), .sinkName=op.getSinkName()});
 }
 
-SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& _) const
+SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& rfl) const
 {
-    // TODO to implement
-    throw NotImplemented("Unreflector");
+    auto [descriptor, name] = unreflect<ReflectedSinkLogicalOperator>(rfl);
+    if (descriptor.has_value())
+    {
+        return SinkLogicalOperator{descriptor.value()};
+    }
+    return SinkLogicalOperator{name};
 }
 }

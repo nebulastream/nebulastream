@@ -51,34 +51,51 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
     {
         auto serializedOpt = rfl::json::read<SerializedOperator>(serializedOperator.reflect());
-        if (serializedOpt.has_value() && serializedOpt.value().type == "Source")
+        if (!serializedOpt.has_value())
         {
-            auto serialized = std::move(serializedOpt.value());
-            auto serializedSourceDescriptor = rfl::from_generic<SerializedSourceDescriptor>(serialized.config).value();
-            auto sourceDescriptor = SerializedUtils::deserializeSourceDescriptor(serializedSourceDescriptor);
-            auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-            return sourceOperator;
+            throw CannotDeserialize(serializedOpt.error().what());
         }
-        if (serializedOpt.has_value() && serializedOpt.value().type == "Equal")
+
+        auto serialized = std::move(serializedOpt.value());
+
+        if (serialized.type == "Source")
         {
-            auto serialized = std::move(serializedOpt.value());
-            auto registryArgument
-                = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .reflec = ""};
-
-
-            if (!serializedOperator.reflect().empty())
-            {
-                registryArgument.reflec = serializedOperator.reflect();
-            }
-
-            registryArgument.inputSchemas = SerializedUtils::deserializeSchemas(serialized.inputSchemas);
-            if (serialized.outputSchema.has_value())
-            {
-                registryArgument.outputSchema = SerializedUtils::deserializeSchema(serialized.outputSchema.value());
-            }
-
-            return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
+            return unreflect<SourceDescriptorLogicalOperator>(serialized.config);
         }
+
+        if (serialized.type == "Sink")
+        {
+            return unreflect<SinkLogicalOperator>(serialized.config);
+        }
+
+        auto registryArgument
+            = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .configNew = serialized.config};
+
+
+        return LogicalOperatorRegistry::instance().create(serialized.type, registryArgument);
+
+
+
+        // if (serializedOpt.has_value() && serializedOpt.value().type == "Equal")
+        // {
+        //     auto serialized = std::move(serializedOpt.value());
+        //     auto registryArgument
+        //         = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .reflec = ""};
+        //
+        //
+        //     if (!serializedOperator.reflect().empty())
+        //     {
+        //         registryArgument.reflec = serializedOperator.reflect();
+        //     }
+        //
+        //     registryArgument.inputSchemas = SerializedUtils::deserializeSchemas(serialized.inputSchemas);
+        //     if (serialized.outputSchema.has_value())
+        //     {
+        //         registryArgument.outputSchema = SerializedUtils::deserializeSchema(serialized.outputSchema.value());
+        //     }
+        //
+        //     return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
+        // }
 
         if (serializedOperator.has_sink())
         {
@@ -104,38 +121,38 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
             return sinkOperator;
         }
 
-        if (serializedOperator.has_operator_())
-        {
-            DescriptorConfig::Config config;
-            for (const auto& [key, value] : serializedOperator.config())
-            {
-                config[key] = protoToDescriptorConfigType(value);
-            }
-
-            auto registryArgument = LogicalOperatorRegistryArguments{
-                .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
-                .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
-                .config = config,
-                .reflec = ""};
-
-            if (!serializedOperator.reflect().empty())
-            {
-                registryArgument.reflec = serializedOperator.reflect();
-            }
-
-
-            for (const auto& schema : serializedOperator.operator_().input_schemas())
-            {
-                registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
-            }
-
-            if (serializedOperator.operator_().has_output_schema())
-            {
-                registryArgument.outputSchema = SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().output_schema());
-            }
-            return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
-        }
-        return std::nullopt;
+        // if (serializedOperator.has_operator_())
+        // {
+        //     DescriptorConfig::Config config;
+        //     for (const auto& [key, value] : serializedOperator.config())
+        //     {
+        //         config[key] = protoToDescriptorConfigType(value);
+        //     }
+        //
+        //     auto registryArgument = LogicalOperatorRegistryArguments{
+        //         .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
+        //         .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
+        //         .config = config,
+        //         .reflec = ""};
+        //
+        //     if (!serializedOperator.reflect().empty())
+        //     {
+        //         registryArgument.reflec = serializedOperator.reflect();
+        //     }
+        //
+        //
+        //     for (const auto& schema : serializedOperator.operator_().input_schemas())
+        //     {
+        //         registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
+        //     }
+        //
+        //     if (serializedOperator.operator_().has_output_schema())
+        //     {
+        //         registryArgument.outputSchema = SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().output_schema());
+        //     }
+        //     return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
+        // }
+        // return std::nullopt;
     }();
 
     if (result.has_value())

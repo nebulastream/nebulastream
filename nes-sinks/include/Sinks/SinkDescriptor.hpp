@@ -51,6 +51,7 @@ class SinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
     friend OperatorSerializationUtil;
+    friend Unreflector<SinkDescriptor>;
 
 public:
     ~SinkDescriptor() = default;

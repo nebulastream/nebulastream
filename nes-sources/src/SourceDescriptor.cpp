@@ -187,25 +187,18 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
 struct ReflectedSourceDescriptor
 {
     uint64_t physicalSourceId = 0;
-    std::string logicalSource;
+    LogicalSource logicalSource;
     std::string type;
-    Schema schema;
     ParserConfig parserConfig;
     DescriptorConfig::Config config;
 };
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
 {
-    Schema schema;
-    for (auto field: sourceDescriptor.getLogicalSource().getSchema()->getFields())
-    {
-        schema.addField(field.name, field.dataType);
-    }
     ReflectedSourceDescriptor descriptor{
         .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
-        .logicalSource = sourceDescriptor.logicalSource.getLogicalSourceName(),
+        .logicalSource = sourceDescriptor.logicalSource,
         .type = sourceDescriptor.sourceType,
-        .schema = schema,
         .parserConfig = sourceDescriptor.parserConfig,
         .config = sourceDescriptor.getConfig()
     };
@@ -215,12 +208,12 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
 
 SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
 {
-    auto [descriptorAndConfig, config] = unreflect<std::pair<SourceDescriptor, DescriptorConfig::Config>>(rfl);
+    auto reflectedSourceDescriptor = unreflect<ReflectedSourceDescriptor>(rfl);
     return SourceDescriptor{
-        descriptorAndConfig.physicalSourceId,
-        std::move(descriptorAndConfig.logicalSource),
-        descriptorAndConfig.sourceType,
-        config,
-        std::move(descriptorAndConfig.parserConfig)};
+        PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
+        LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
+        reflectedSourceDescriptor.type,
+        reflectedSourceDescriptor.config,
+        std::move(reflectedSourceDescriptor.parserConfig)};
 }
 }

@@ -47,7 +47,6 @@ public:
 
     [[nodiscard]] bool operator==(const SourceDescriptorLogicalOperator& rhs) const;
     void serialize(SerializableOperator&) const;
-    void serialized(SerializedOperator& serialized) const;
 
     [[nodiscard]] SourceDescriptorLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;

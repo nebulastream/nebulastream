@@ -34,7 +34,7 @@ struct LogicalOperatorRegistryArguments
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     DescriptorConfig::Config config;
-    std::string reflec;
+    Reflected configNew;
 };
 
 class LogicalOperatorRegistry
