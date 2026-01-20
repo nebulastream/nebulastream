@@ -56,10 +56,12 @@ jobs:
       - name: Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
-      - name: CMake Build
+      - name: Configure via devShell
         run: |
-          # We pass the matrix variables to the Nix wrapper
-          ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+            ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+
+      - name: Build via devShell
+        run: |
           ./.nix/nix-cmake.sh --build build -j"$(nproc)" -- -k 0
 
       - name: Run Tests
