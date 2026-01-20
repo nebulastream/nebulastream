@@ -15,10 +15,7 @@
 #pragma once
 
 #include <filesystem>
-#include <fstream>
 #include <string>
-#include <string_view>
-#include <utility>
 
 namespace NES
 {
@@ -27,9 +24,4 @@ namespace NES
 std::string getErrorMessageFromERRNO();
 std::string getErrorMessage(int errorNumber);
 
-/// Creates a temporary file in the current working directory with a unique name.
-/// The generated name will be 'prefix######suffix', where # is randomly generated
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix, std::string_view suffix);
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix);
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile();
 }

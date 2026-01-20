@@ -27,43 +27,18 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
-std::string NES::getErrorMessageFromERRNO()
+namespace NES
+{
+std::string getErrorMessageFromERRNO()
 {
     return getErrorMessage(errno);
 }
 
-std::string NES::getErrorMessage(int errorNumber)
+std::string getErrorMessage(int errorNumber)
 {
     std::array<char, 1024> backupBuffer{};
     const char* errorMessage = strerror_r(errorNumber, backupBuffer.data(), backupBuffer.size());
     INVARIANT(errorMessage != nullptr, "strerror_r does not behave as expected");
     return errorMessage;
 }
-
-std::pair<std::ofstream, std::filesystem::path> NES::createTemporaryFile(std::string_view prefix, std::string_view suffix)
-{
-    std::string fileTemplate = fmt::format("{}XXXXXX{}", prefix, suffix);
-    const auto file = mkstemps(fileTemplate.data(), static_cast<int>(suffix.size()));
-
-    if (file == -1)
-    {
-        throw UnknownException("Failed to create temporary file: {}", getErrorMessageFromERRNO());
-    }
-
-    if (close(file) == -1)
-    {
-        throw UnknownException("Failed to close temporary file: {}", getErrorMessageFromERRNO());
-    }
-
-    return {std::ofstream{fileTemplate}, fileTemplate};
-}
-
-std::pair<std::ofstream, std::filesystem::path> NES::createTemporaryFile(std::string_view prefix)
-{
-    return createTemporaryFile(prefix, "");
-}
-
-std::pair<std::ofstream, std::filesystem::path> NES::createTemporaryFile()
-{
-    return createTemporaryFile("", "");
 }
