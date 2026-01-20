@@ -33,8 +33,7 @@ class BufferControlBlock;
 ///
 /// We use 64 bits to store the child index and offset for accessing the correct variable sized data.
 /// We use the upper 32 bits for the childIndex and the lower 32 bits for the childBufferOffset
-/// This allows us to have 4 million child buffer (unless we have only one var sized object per child)
-/// The maximum child buffer size is 8 GB due to 64-bit size, which is stored separately
+/// This allows us to have 4 billion child buffer (unless we have only one var sized object per child)
 class VariableSizedAccess
 {
 public:
@@ -159,6 +158,11 @@ public:
         return os << "VariableSizedAccess(index: " << obj.index << " offset: " << obj.offset << ")";
     }
 };
+
+static_assert(sizeof(VariableSizedAccess) == 16, "VariableSizedAccess must be 16 bytes");
+static_assert(sizeof(VariableSizedAccess::Size) == 8, "VariableSizedAccess::Size must be 8 bytes");
+static_assert(sizeof(VariableSizedAccess::Offset) == 4, "VariableSizedAccess::Offset must be 4 bytes");
+static_assert(sizeof(VariableSizedAccess::Index) == 4, "VariableSizedAccess::Index must be 4 bytes");
 
 }
 
