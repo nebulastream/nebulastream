@@ -27,6 +27,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/SerializedUtils.hpp>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -131,7 +132,6 @@ SerializedFunction EqualsLogicalFunction::serialized() const
 
 struct ReflectedEqualsLogicalFunction
 {
-    DataType::Type datatype;
     std::optional<LogicalFunction> left;
     std::optional<LogicalFunction> right;
 };
@@ -139,16 +139,21 @@ struct ReflectedEqualsLogicalFunction
 Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
 {
     return reflect(ReflectedEqualsLogicalFunction{
-        function.dataType.type,
         std::make_optional<LogicalFunction>(function.left),
         std::make_optional<LogicalFunction>(function.right)
     });
 }
 
-EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& _) const
+EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& rfl) const
 {
-    // TODO to implement
-    throw NotImplemented("Unreflector");
+    auto [left, right] = unreflect<ReflectedEqualsLogicalFunction>(rfl);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("EqualsLogicalFunction doesn't have a child operator");
+    }
+
+    return EqualsLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
