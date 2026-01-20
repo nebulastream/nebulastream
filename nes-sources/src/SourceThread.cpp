@@ -31,7 +31,6 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>

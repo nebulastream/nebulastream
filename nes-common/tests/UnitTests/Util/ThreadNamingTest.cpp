@@ -19,9 +19,9 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <Thread.hpp>
 
 namespace NES
 {
@@ -37,7 +37,7 @@ public:
 
 TEST_F(ThreadNamingTest, testThreadNaming)
 {
-    setThreadName("NES-0");
+    Thread::setThreadName("NES-0");
 
     std::array<char, detail::PTHREAD_NAME_LENGTH + 1> pthreadName{};
     pthread_getname_np(pthread_self(), pthreadName.data(), pthreadName.size());
@@ -47,7 +47,7 @@ TEST_F(ThreadNamingTest, testThreadNaming)
 
 TEST_F(ThreadNamingTest, testThreadNamingWithTruncation)
 {
-    setThreadName("NES_LONG-123456789");
+    Thread::setThreadName("NES_LONG-123456789");
     std::array<char, detail::PTHREAD_NAME_LENGTH + 1> pthreadName{};
     pthread_getname_np(pthread_self(), pthreadName.data(), pthreadName.size());
 
