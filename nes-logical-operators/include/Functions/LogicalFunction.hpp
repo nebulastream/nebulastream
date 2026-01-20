@@ -296,7 +296,7 @@ struct Reflector<detail::ErasedLogicalFunction>
 struct ReflectedLogicalFunction
 {
     std::string functionType;
-    rfl::Generic functionConfig;
+    Reflected functionConfig;
 };
 
 

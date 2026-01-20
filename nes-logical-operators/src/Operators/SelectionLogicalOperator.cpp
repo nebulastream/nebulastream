@@ -179,7 +179,7 @@ SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const
 {
 
 
-    auto predicate = unreflect<TypedLogicalFunction<EqualsLogicalFunction>>(rfl);
+    auto predicate = unreflect<TypedLogicalFunction<>>(rfl);
 
 
     throw NotImplemented();
