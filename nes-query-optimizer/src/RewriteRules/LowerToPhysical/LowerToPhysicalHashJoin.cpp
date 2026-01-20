@@ -269,7 +269,6 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
 
     /// Our current hash join implementation uses a hash table that requires each key to be 100% identical in terms of no. fields and data types.
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.
-    /// TODO #976 we need to have the wrong order of the join input schemas. Inputschema[0] is the left and inputSchema[1] is the right one
     auto [leftJoinFields, rightJoinFields]
         = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields, memoryLayoutType);
