@@ -15,7 +15,6 @@
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 
 #include <algorithm>
-#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
@@ -28,7 +27,6 @@
 #include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Locks.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
