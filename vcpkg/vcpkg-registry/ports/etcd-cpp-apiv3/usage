@@ -1,0 +1,7 @@
+etcd-cpp-apiv3 provides CMake targets:
+
+    find_package(etcd-cpp-api CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE etcd-cpp-api)
+
+Note: This port is built with BUILD_ETCD_CORE_ONLY=ON, which provides only
+the synchronous client (etcd::SyncClient). Use etcd/SyncClient.hpp in your code.
