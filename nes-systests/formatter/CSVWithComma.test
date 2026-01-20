@@ -2,13 +2,33 @@
 # description: successful handling should ignore delimiters in double quotes
 # groups: [Formatter]
 
-CREATE LOGICAL SOURCE stream(text VARSIZED);
+CREATE LOGICAL SOURCE stream(text VARSIZED, text2 VARSIZED);
 CREATE PHYSICAL SOURCE FOR stream TYPE FILE;
 ATTACH FILE small/comma.csv
 
-CREATE SINK file_sink(stream.text VARSIZED) TYPE File;
+CREATE SINK file_sink(stream.text VARSIZED, stream.text2 VARSIZED) TYPE File;
 
 SELECT * FROM stream INTO file_sink;
 ----
-"a"
-","
+"a","1,2,3"
+",","4,5,6"
+b,"7,,8"
+c,""
+d,","
+"e","18,,19"
+"f","20,21,22,23,24"
+g,"27,,28,29"
+
+SELECT * FROM stream INTO file_sink WHERE text2 == VARSIZED(",");
+----
+d,","
+
+SELECT * FROM stream INTO file_sink WHERE text2 != VARSIZED(",");
+----
+"a","1,2,3"
+",","4,5,6"
+b,"7,,8"
+c,""
+"e","18,,19"
+"f","20,21,22,23,24"
+g,"27,,28,29"
