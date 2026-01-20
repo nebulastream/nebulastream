@@ -82,7 +82,6 @@ private:
     std::vector<Record::RecordFieldIdentifier> projections;
     nautilus::val<uint64_t> pos;
     nautilus::val<uint64_t> numberOfTuplesInPagedVector;
-    /// TODO #1152 create a custom class for these indices
     nautilus::val<uint64_t> posOnPage;
     nautilus::val<TupleBuffer*> curPage;
     std::shared_ptr<TupleBufferRef> bufferRef;
