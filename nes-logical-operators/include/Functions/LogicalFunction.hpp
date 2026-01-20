@@ -285,62 +285,6 @@ private:
     std::shared_ptr<const NES::detail::ErasedLogicalFunction> self;
 };
 
-template <>
-struct Reflector<detail::ErasedLogicalFunction>
-{
-    Reflected operator()(const detail::ErasedLogicalFunction& function) const
-    {
-        return function.reflect();
-    }
-};
-
-struct ReflectedLogicalFunction
-{
-    std::string functionType;
-    Reflected functionConfig;
-};
-
-
-template <LogicalFunctionConcept Checked>
-struct Reflector<TypedLogicalFunction<Checked>>
-{
-    Reflected operator()(const TypedLogicalFunction<Checked>& function) const
-    {
-        return reflect(ReflectedLogicalFunction{std::string{function.getType()}, reflect(*function)});
-    }
-};
-
-template <LogicalFunctionConcept Checked>
-struct Unreflector<TypedLogicalFunction<Checked>>
-{
-    TypedLogicalFunction<Checked> operator()(const Reflected& _) const
-    {
-        throw NotImplemented("Unreflector");
-    }
-};
-
-template <>
-struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
-{
-    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function) const
-    {
-        return reflect(ReflectedLogicalFunction{std::string{function.getType()}, function->reflect()});
-    }
-};
-
-template <>
-struct Unreflector<TypedLogicalFunction<>>
-{
-    TypedLogicalFunction<> operator()(const Reflected& _) const
-    {
-        //throw NotImplemented("Unreflector");
-        INVARIANT(false, "");
-        std::unreachable();
-    }
-};
-
-static_assert(requires(LogicalFunction logicalFunction){ {reflect(logicalFunction)} -> std::same_as<Reflected>;});
-
 
 namespace detail
 {

@@ -39,6 +39,7 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 #include <rfl/json.hpp>
 #include <rfl.hpp>
