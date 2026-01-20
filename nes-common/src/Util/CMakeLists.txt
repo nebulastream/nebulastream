@@ -12,7 +12,6 @@
 
 add_source_files(nes-common
         Common.cpp
-        DumpHelper.cpp
         Strings.cpp
         Files.cpp
         UUID.cpp
