@@ -18,12 +18,18 @@
 
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <spdlog/spdlog.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
+namespace detail
+{
+///POSIX limits the thread name to 16 bytes which includes null termination:
+///https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html
+constexpr size_t PTHREAD_NAME_LENGTH = 15;
+}
+
 /// `NES::Thread` is a wrapper around `std::jthread`. The main purpose is that it is a standardized way
 /// to add additional information to a thread. Currently, it contains:
 /// 1. ThreadName which is used during debugging and is attached to logs.
@@ -109,6 +115,16 @@ public:
         WorkerNodeId = std::move(worker_id);
         ThreadName = std::move(name);
         setThreadName(ThreadName);
+    }
+
+    ///Sets the currents thread's name.
+    ///threadName has to be non-empty and will be truncated to PTHREAD_NAME_LENGTH character
+    static void setThreadName(const std::string_view threadName)
+    {
+        PRECONDITION(!threadName.empty(), "Thread name cannot be empty");
+        std::array<char, detail::PTHREAD_NAME_LENGTH + 1> truncatedStringName{};
+        std::copy_n(threadName.begin(), std::min(detail::PTHREAD_NAME_LENGTH, threadName.size()), truncatedStringName.begin());
+        pthread_setname_np(pthread_self(), truncatedStringName.data());
     }
 };
 }
