@@ -75,11 +75,6 @@ VariableSizedAccess::Size::Size(uint64_t size) : size(size)
 {
 }
 
-VariableSizedAccess::Size VariableSizedAccess::Size::convertToSize(IndexOffsetSize combinedIdx)
-{
-    return Size(combinedIdx.size);
-}
-
 VariableSizedAccess::Size::Underlying VariableSizedAccess::Size::getRawSize() const
 {
     return size;

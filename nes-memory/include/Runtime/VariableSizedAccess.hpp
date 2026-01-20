@@ -159,6 +159,11 @@ public:
     }
 };
 
+static_assert(sizeof(VariableSizedAccess) == 16, "VariableSizedAccess must be 16 bytes");
+static_assert(sizeof(VariableSizedAccess::Size) == 8, "VariableSizedAccess::Size must be 8 bytes");
+static_assert(sizeof(VariableSizedAccess::Offset) == 4, "VariableSizedAccess::Offset must be 4 bytes");
+static_assert(sizeof(VariableSizedAccess::Index) == 4, "VariableSizedAccess::Index must be 4 bytes");
+
 }
 
 FMT_OSTREAM(NES::VariableSizedAccess::Index);
