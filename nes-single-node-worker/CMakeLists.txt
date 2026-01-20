@@ -24,12 +24,14 @@ add_library(nes-single-node-worker-lib ${NES_WORKER_SOURCE_FILES})
 
 target_include_directories(nes-single-node-worker-lib PUBLIC include)
 
+find_package(etcd-cpp-api CONFIG REQUIRED)
+
 target_link_libraries(nes-single-node-worker-lib
         PUBLIC
         nes-grpc
         nes-query-compiler
         nes-query-optimizer
-        nes-single-node-worker-interface
+        nes-single-node-worker-interface etcd-cpp-api
 )
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
