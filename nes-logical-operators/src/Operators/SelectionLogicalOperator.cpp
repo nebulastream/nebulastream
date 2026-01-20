@@ -175,11 +175,11 @@ Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogical
     return reflect(ReflectedSelectionLogicalOperator{std::make_optional(op.getPredicate())});
 }
 
-SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& _) const
+SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl) const
 {
 
 
-    // auto [predicate] = unreflect<ReflectedSelectionLogicalOperator>(rfl);
+    auto predicate = unreflect<TypedLogicalFunction<EqualsLogicalFunction>>(rfl);
 
 
     throw NotImplemented();

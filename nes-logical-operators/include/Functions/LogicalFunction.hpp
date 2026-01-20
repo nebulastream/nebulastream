@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Serialization.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 #include <nameof.hpp>
@@ -295,7 +296,7 @@ struct Reflector<detail::ErasedLogicalFunction>
 struct ReflectedLogicalFunction
 {
     std::string functionType;
-    Reflected functionConfig;
+    rfl::Generic functionConfig;
 };
 
 
@@ -325,12 +326,15 @@ struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
         return reflect(ReflectedLogicalFunction{std::string{function.getType()}, function->reflect()});
     }
 };
+
 template <>
-struct Unreflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
+struct Unreflector<TypedLogicalFunction<>>
 {
-    TypedLogicalFunction<detail::ErasedLogicalFunction> operator()(const Reflected& _) const
+    TypedLogicalFunction<> operator()(const Reflected& _) const
     {
-        throw NotImplemented("Unreflector");
+        //throw NotImplemented("Unreflector");
+        INVARIANT(false, "");
+        std::unreachable();
     }
 };
 
