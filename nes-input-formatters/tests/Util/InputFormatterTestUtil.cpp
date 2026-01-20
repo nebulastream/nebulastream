@@ -48,6 +48,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <BackpressureChannel.hpp>
 #include <EmitOperatorHandler.hpp>
