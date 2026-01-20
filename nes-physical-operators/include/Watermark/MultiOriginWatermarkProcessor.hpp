@@ -20,7 +20,6 @@
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Common.hpp>
 
 namespace NES
 {

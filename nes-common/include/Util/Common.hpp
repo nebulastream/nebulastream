@@ -13,60 +13,13 @@
 */
 
 #pragma once
-#include <cstdint>
 #include <memory>
-#include <ostream>
-#include <string>
-#include <vector>
-#include <experimental/propagate_const>
 #include <nameof.hpp>
 
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-/// Used by all `Node`s to control the verbosity of their `operator<<` method.
-enum class VerbosityLevel : uint8_t
-{
-    /// Print everything.
-    Debug = 0,
-    /// Print only the name of the Node/Function, to make the queryplan printing easier to read.
-    QueryPlan = 1,
-};
-/// Check the iword array of the passed stream for the set `VerbosityLevel` using the allocated index.
-VerbosityLevel getVerbosityLevel(std::ostream& os);
-/// Set the iword array of the passed stream to the passed `VerbosityLevel` using the allocated index.
-void setVerbosityLevel(std::ostream& os, const VerbosityLevel& level);
-/// The index for the `VerbosityLevel` into any stream's iword array.
-/// The index may only be allocated once, otherwise it will change and we won't be able to set and retrieve it correctly.
-int getIwordIndex();
-
-inline std::ostream& operator<<(std::ostream& os, const VerbosityLevel& level)
-{
-    setVerbosityLevel(os, level);
-    return os;
-}
-
-/// check if the given object is an instance of the specified type.
-template <typename Out, typename In>
-bool instanceOf(const std::shared_ptr<In>& obj)
-{
-    return std::dynamic_pointer_cast<Out>(obj).get() != nullptr;
-}
-
-/// check if the given object is an instance of the specified type.
-template <typename Out, typename In>
-bool instanceOf(const In& obj)
-{
-    return dynamic_cast<Out*>(&obj);
-}
-
-template <typename Derived, typename Base>
-bool instanceOf(const std::unique_ptr<Base>& ptr)
-{
-    return dynamic_cast<const Derived*>(ptr.get()) != nullptr;
-}
-
 /// cast the given object to the specified type.
 template <typename Out, typename In>
 std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
@@ -84,24 +37,5 @@ Out as(const In& obj)
 {
     return *dynamic_cast<Out*>(&obj);
 }
-
-/// cast the given object to the specified type.
-template <typename Out, typename In>
-std::shared_ptr<Out> as_if(const std::shared_ptr<In>& obj)
-{
-    return std::dynamic_pointer_cast<Out>(obj);
-}
-
-template <typename T, typename S>
-std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
-{
-    if (auto* converted = dynamic_cast<T*>(ptr.get()))
-    {
-        ptr.release();
-        return std::unique_ptr<T>(converted);
-    }
-    return nullptr;
-}
-
 
 }

@@ -20,11 +20,8 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Common.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
-#include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
