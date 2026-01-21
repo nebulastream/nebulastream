@@ -191,7 +191,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
             INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", nodeFunctionKey.getFieldName(), newInputSchema);
         }
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
-        keySize += loweredFunctionType.getSizeInBytes();
+        keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();

@@ -106,10 +106,10 @@ struct DataType final
     friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);
 
     /// Provides the size needed for storing this data type containing any additional space, e.g., for null-handling
-    [[nodiscard]] uint32_t getSizeInBytes() const;
+    [[nodiscard]] uint32_t getSizeInBytesWithNull() const;
 
     /// Provides the raw underlying size. This means the raw data type without any additional space, e.g., for null-handling
-    [[nodiscard]] uint32_t getRawSizeInBytes() const;
+    [[nodiscard]] uint32_t getSizeInBytesWithoutNull() const;
 
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'

@@ -59,7 +59,7 @@ Schema Schema::addField(std::string name, const DataType& dataType)
 Schema Schema::addField(std::string name, const DataType::Type type, const bool isNullable)
 {
     DataType dataType{.type = type, .isNullable = isNullable};
-    sizeOfSchemaInBytes += dataType.getSizeInBytes();
+    sizeOfSchemaInBytes += dataType.getSizeInBytesWithNull();
     fields.emplace_back(std::move(name), std::move(dataType));
     nameToField.emplace(fields.back().name, fields.size() - 1);
     return *this;
@@ -70,8 +70,8 @@ bool Schema::replaceTypeOfField(const std::string& name, DataType type)
 {
     if (const auto fieldIdx = nameToField.find(name); fieldIdx != nameToField.end())
     {
-        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).dataType.getSizeInBytes();
-        sizeOfSchemaInBytes += type.getSizeInBytes();
+        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).dataType.getSizeInBytesWithNull();
+        sizeOfSchemaInBytes += type.getSizeInBytesWithNull();
         fields.at(fieldIdx->second).dataType = std::move(type);
         return true;
     }

@@ -42,21 +42,21 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
     /// If left is a float, the result is a float or double depending on the bits of the left float
     if (left.isFloat() and right.isInteger())
     {
-        return (left.getRawSizeInBytes() == sizeOfIntInBytes)
+        return (left.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
             ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32, isNullable)
             : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64, isNullable);
     }
 
     if (left.isInteger() and right.isFloat())
     {
-        return (right.getRawSizeInBytes() == sizeOfIntInBytes)
+        return (right.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
             ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32, isNullable)
             : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64, isNullable);
     }
 
     if (right.isFloat() && left.isFloat())
     {
-        return (left.getRawSizeInBytes() == sizeOfLongInBytes or right.getRawSizeInBytes() == sizeOfLongInBytes)
+        return (left.getSizeInBytesWithoutNull() == sizeOfLongInBytes or right.getSizeInBytesWithoutNull() == sizeOfLongInBytes)
             ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64, isNullable)
             : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32, isNullable);
     }
@@ -64,26 +64,26 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
     if (right.isInteger() and left.isInteger())
     {
         /// We need to still cast here to an integer, as the lowerBound is a member of Integer and not of Numeric
-        if (left.getRawSizeInBytes() < sizeOfIntInBytes and right.getRawSizeInBytes() < sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() < sizeOfIntInBytes and right.getSizeInBytesWithoutNull() < sizeOfIntInBytes)
         {
             return NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32, isNullable);
         }
 
-        if (left.getRawSizeInBytes() == sizeOfIntInBytes and right.getRawSizeInBytes() < sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfIntInBytes and right.getSizeInBytesWithoutNull() < sizeOfIntInBytes)
         {
             return (
                 left.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32, isNullable)
                                        : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32, isNullable));
         }
 
-        if (left.getRawSizeInBytes() < sizeOfIntInBytes and right.getRawSizeInBytes() == sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() < sizeOfIntInBytes and right.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
         {
             return (
                 right.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32, isNullable)
                                         : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32, isNullable));
         }
 
-        if (left.getRawSizeInBytes() == sizeOfIntInBytes and right.getRawSizeInBytes() == sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfIntInBytes and right.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
         {
             return (
                 (left.isSignedInteger() and right.isSignedInteger())
@@ -91,21 +91,21 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
                     : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32, isNullable));
         }
 
-        if (left.getRawSizeInBytes() == sizeOfLongInBytes and right.getRawSizeInBytes() < sizeOfLongInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfLongInBytes and right.getSizeInBytesWithoutNull() < sizeOfLongInBytes)
         {
             return (
                 left.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64, isNullable)
                                        : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64, isNullable));
         }
 
-        if (left.getRawSizeInBytes() < sizeOfLongInBytes and right.getRawSizeInBytes() == sizeOfLongInBytes)
+        if (left.getSizeInBytesWithoutNull() < sizeOfLongInBytes and right.getSizeInBytesWithoutNull() == sizeOfLongInBytes)
         {
             return (
                 right.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64, isNullable)
                                         : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64, isNullable));
         }
 
-        if (left.getRawSizeInBytes() == sizeOfLongInBytes and right.getRawSizeInBytes() == sizeOfLongInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfLongInBytes and right.getSizeInBytesWithoutNull() == sizeOfLongInBytes)
         {
             return (
                 (left.isSignedInteger() and right.isSignedInteger())
@@ -122,7 +122,7 @@ namespace NES
 {
 
 /// NOLINTBEGIN(readability-magic-numbers)
-uint32_t DataType::getRawSizeInBytes() const
+uint32_t DataType::getSizeInBytesWithoutNull() const
 {
     switch (this->type)
     {
@@ -153,7 +153,7 @@ uint32_t DataType::getRawSizeInBytes() const
     std::unreachable();
 }
 
-uint32_t DataType::getSizeInBytes() const
+uint32_t DataType::getSizeInBytesWithNull() const
 {
     const auto extraByte = isNullable ? 1 : 0;
     switch (this->type)
@@ -215,7 +215,7 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::BOOLEAN:
             return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case Type::CHAR: {
-            if (getSizeInBytes() != 1)
+            if (getSizeInBytesWithNull() != 1)
             {
                 return "invalid char type";
             }

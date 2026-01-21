@@ -256,7 +256,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, true));
-            ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), DataTypeProvider::provideDataType(basicTypeVal, true).getSizeInBytes());
+            ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), DataTypeProvider::provideDataType(basicTypeVal, true).getSizeInBytesWithNull());
         }
 
         /// Calculating the schema size for each data type that can not be null
@@ -266,7 +266,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, false));
-            ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), DataTypeProvider::provideDataType(basicTypeVal, false).getSizeInBytes());
+            ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), DataTypeProvider::provideDataType(basicTypeVal, false).getSizeInBytesWithNull());
         }
     }
 

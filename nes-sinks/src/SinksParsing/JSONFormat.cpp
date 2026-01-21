@@ -41,7 +41,7 @@ JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
     {
         const auto physicalType = field.dataType;
         formattingContext.offsets.push_back(offset);
-        offset += physicalType.getSizeInBytes();
+        offset += physicalType.getSizeInBytesWithNull();
         formattingContext.physicalTypes.emplace_back(physicalType);
         formattingContext.names.emplace_back(field.name);
     }
