@@ -3,7 +3,7 @@
 # groups: [Aggregation]
 
 
-CREATE LOGICAL SOURCE input(a UINT64, b UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE input(a UINT64 NOT NULL, b UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR input TYPE File;
 ATTACH INLINE
 1,10,100
@@ -85,7 +85,7 @@ SELECT AVG(b - a) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO
 # Using an AS alias avoids auto-generated names entirely.
 
 # Output schema: single plain-field aggregation auto-names as input.a_SUM.
-CREATE SINK sinkPlainSingle(input.a_SUM UINT64) TYPE File;
+CREATE SINK sinkPlainSingle(input.a_SUM UINT64 NOT NULL) TYPE File;
 SELECT SUM(a) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkPlainSingle;
 ----
 3
@@ -93,7 +93,7 @@ SELECT SUM(a) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkPlainS
 11
 
 # Output schema: multiple plain-field aggregations auto-name as input.field_AGG.
-CREATE SINK sinkPlainMulti(input.a_SUM UINT64, input.b_MIN UINT64) TYPE File;
+CREATE SINK sinkPlainMulti(input.a_SUM UINT64 NOT NULL, input.b_MIN UINT64 NOT NULL) TYPE File;
 SELECT SUM(a), MIN(b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkPlainMulti;
 ----
 3, 10
@@ -101,7 +101,7 @@ SELECT SUM(a), MIN(b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO si
 11, 50
 
 # Output schema: multiple plain-field aggregations with start/end.
-CREATE SINK sinkPlainMultiStartEnd(input.start UINT64, input.end UINT64, input.a_SUM UINT64, input.b_MIN UINT64) TYPE File;
+CREATE SINK sinkPlainMultiStartEnd(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, input.a_SUM UINT64 NOT NULL, input.b_MIN UINT64 NOT NULL) TYPE File;
 SELECT start, end, SUM(a), MIN(b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkPlainMultiStartEnd;
 ----
 100, 200, 3, 10
@@ -109,7 +109,7 @@ SELECT start, end, SUM(a), MIN(b) FROM input WINDOW TUMBLING(timestamp, size 100
 300, 400, 11, 50
 
 # Output schema: single expression-aggregation auto-names as _AGG_INPUT_0_AVG.
-CREATE SINK sinkExprSingle(_AGG_INPUT_0_AVG FLOAT64) TYPE File;
+CREATE SINK sinkExprSingle(_AGG_INPUT_0_AVG FLOAT64 NOT NULL) TYPE File;
 SELECT AVG(a + b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprSingle;
 ----
 16.5
@@ -117,7 +117,7 @@ SELECT AVG(a + b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkEx
 60.5
 
 # Output schema: multiple expression-aggregations auto-name as _AGG_INPUT_N_AGG.
-CREATE SINK sinkExprMulti(_AGG_INPUT_0_SUM UINT64, _AGG_INPUT_1_MIN UINT64) TYPE File;
+CREATE SINK sinkExprMulti(_AGG_INPUT_0_SUM UINT64 NOT NULL, _AGG_INPUT_1_MIN UINT64 NOT NULL) TYPE File;
 SELECT SUM(a + b), MIN(a * b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprMulti;
 ----
 33, 10
@@ -126,7 +126,7 @@ SELECT SUM(a + b), MIN(a * b) FROM input WINDOW TUMBLING(timestamp, size 100 ms)
 
 # Output schema: mixed expression + plain-field aggregation.
 # Expression-agg gets _AGG_INPUT_0_MEDIAN, plain-field gets input.a_MAX.
-CREATE SINK sinkMixed(input.start UINT64, input.end UINT64, _AGG_INPUT_0_MEDIAN FLOAT64, input.a_MAX UINT64) TYPE File;
+CREATE SINK sinkMixed(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, _AGG_INPUT_0_MEDIAN FLOAT64 NOT NULL, input.a_MAX UINT64 NOT NULL) TYPE File;
 SELECT start, end, MEDIAN(a * b), MAX(a) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkMixed;
 ----
 100, 200, 25, 2
@@ -134,7 +134,7 @@ SELECT start, end, MEDIAN(a * b), MAX(a) FROM input WINDOW TUMBLING(timestamp, s
 300, 400, 305, 6
 
 # Output schema: plain COUNT auto-names as input.a_COUNT.
-CREATE SINK sinkCount(input.a_COUNT UINT64) TYPE File;
+CREATE SINK sinkCount(input.a_COUNT UINT64 NOT NULL) TYPE File;
 SELECT COUNT(a) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkCount;
 ----
 2

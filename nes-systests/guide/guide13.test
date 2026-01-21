@@ -3,7 +3,7 @@
 # groups: [Projection, Expression, Arithmetic]
 
 CREATE LOGICAL SOURCE s(
-    x INT32
+    x INT32 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR s TYPE File;
@@ -13,7 +13,7 @@ ATTACH INLINE
 10
 
 CREATE SINK sink(
-    `X_PLUS_10` INT32
+    `X_PLUS_10` INT32 NOT NULL
 ) TYPE File;
 
 SELECT
