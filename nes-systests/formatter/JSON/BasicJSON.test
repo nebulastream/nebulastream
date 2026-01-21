@@ -73,11 +73,11 @@ SELECT * FROM jsonStream INTO allFieldsSink;
 
 SELECT * FROM jsonStreamWrongDataTypes INTO allFieldsWrongDataTypeSink;
 ----
-ERROR 4003
+ERROR 3002
 
 SELECT * FROM jsonStreamWrongDataTypesWithObject INTO File();
 ----
-ERROR 4003
+ERROR 3002
 
 SELECT * FROM jsonStreamWrongFieldName INTO allFieldsWrongFieldNameSink;
 ----
