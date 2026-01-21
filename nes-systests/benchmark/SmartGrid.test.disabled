@@ -7,7 +7,7 @@
 # The problem is that the queries perform a floating point average aggregation. Due to our out-of-order processing, the results may differ slightly.
 
 # Source definitions
-CREATE LOGICAL SOURCE smartGrid(creationTS UINT64, value FLOAT32, property FLOAT32, plugId INT16, householdId INT16, houseId INT16);
+CREATE LOGICAL SOURCE smartGrid(creationTS UINT64 NOT NULL, value FLOAT32 NOT NULL, property FLOAT32 NOT NULL, plugId INT16 NOT NULL, householdId INT16 NOT NULL, houseId INT16 NOT NULL);
 CREATE PHYSICAL SOURCE FOR smartGrid TYPE File;
 ATTACH FILE smartgrid/smartgrid-data_974K.csv
 

@@ -2,54 +2,54 @@
 # description: tests general input formatter behavior
 # groups: [Formatter, JSON]
 
-CREATE LOGICAL SOURCE jsonStream(KEY UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE jsonStream(KEY UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR jsonStream TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME":"max"}
 
-CREATE LOGICAL SOURCE jsonStreamWrongDataTypes(key UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE jsonStreamWrongDataTypes(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR jsonStreamWrongDataTypes TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"KEY":1.0, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME":"max"}
 
-CREATE LOGICAL SOURCE jsonStreamWrongDataTypesWithObject(key UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE jsonStreamWrongDataTypesWithObject(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR jsonStreamWrongDataTypesWithObject TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"KEY":{"value": 1}, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME":"max"}
 
-CREATE LOGICAL SOURCE jsonStreamWrongFieldName(key UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE jsonStreamWrongFieldName(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR jsonStreamWrongFieldName TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"WRONG_NAME":1, "VALUE":1, "NAME":"john"}
 {"WRONG_NAME":1, "VALUE":2, "NAME":"max"}
 
-CREATE LOGICAL SOURCE MissingKeyFronJSONStream(key UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE MissingKeyFronJSONStream(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR MissingKeyFronJSONStream TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2 }
 
-CREATE LOGICAL SOURCE ExtraKeyJson(key UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE ExtraKeyJson(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR ExtraKeyJson TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME": "max", "EXTRA_KEY": 1 }
 
-CREATE LOGICAL SOURCE ExtraKeyObjectJson(key UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE ExtraKeyObjectJson(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR ExtraKeyObjectJson TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"KEY":1, "VALUE":1, "NAME":"john"}
 {"KEY":1, "VALUE":2, "NAME": "max", "EXTRA_KEY": {"KEY": 2}}
 
-CREATE SINK keySink(jsonStream.key UINT64) TYPE File;
-CREATE SINK valueSink(jsonStream.value UINT64) TYPE File;
-CREATE SINK nameSink(jsonStream.name VARSIZED) TYPE File;
-CREATE SINK allFieldsSink(jsonStream.key UINT64, jsonStream.value UINT64, jsonStream.name VARSIZED) TYPE File;
-CREATE SINK allFieldsWrongFieldNameSink(jsonStreamWrongFieldName.key UINT64, jsonStreamWrongFieldName.value UINT64, jsonStreamWrongFieldName.name VARSIZED) TYPE File;
-CREATE SINK allFieldsWrongDataTypeSink(jsonStreamWrongDataTypes.key UINT64, jsonStreamWrongDataTypes.value UINT64, jsonStreamWrongDataTypes.name VARSIZED) TYPE File;
+CREATE SINK keySink(jsonStream.key UINT64 NOT NULL) TYPE File;
+CREATE SINK valueSink(jsonStream.value UINT64 NOT NULL) TYPE File;
+CREATE SINK nameSink(jsonStream.name VARSIZED NOT NULL) TYPE File;
+CREATE SINK allFieldsSink(jsonStream.key UINT64 NOT NULL, jsonStream.value UINT64 NOT NULL, jsonStream.name VARSIZED NOT NULL) TYPE File;
+CREATE SINK allFieldsWrongFieldNameSink(jsonStreamWrongFieldName.key UINT64 NOT NULL, jsonStreamWrongFieldName.value UINT64 NOT NULL, jsonStreamWrongFieldName.name VARSIZED NOT NULL) TYPE File;
+CREATE SINK allFieldsWrongDataTypeSink(jsonStreamWrongDataTypes.key UINT64 NOT NULL, jsonStreamWrongDataTypes.value UINT64 NOT NULL, jsonStreamWrongDataTypes.name VARSIZED NOT NULL) TYPE File;
 
 SELECT KEY FROM jsonStream INTO keySink;
 ----

@@ -2,7 +2,7 @@
 # description: Simple union tests
 # groups: [Union, CompilationIntensive]
 
-CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1,1,1000
@@ -10,7 +10,7 @@ ATTACH INLINE
 1,1,1002
 1,1,1003
 
-CREATE LOGICAL SOURCE stream2(id UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream2(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
 ATTACH INLINE
 2,2,2000
@@ -18,7 +18,7 @@ ATTACH INLINE
 2,2,2002
 2,2,2003
 
-CREATE LOGICAL SOURCE stream3(id UINT64, id2 UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream3(id UINT64 NOT NULL, id2 UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
 ATTACH INLINE
 1,2,2,3000
@@ -26,7 +26,7 @@ ATTACH INLINE
 1,2,2,3002
 1,2,2,3003
 
-CREATE LOGICAL SOURCE stream3_1(id2 UINT64, value2 UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream3_1(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream3_1 TYPE File;
 ATTACH INLINE
 1,1,1005
@@ -34,7 +34,7 @@ ATTACH INLINE
 2,2,2005
 2,2,2006
 
-CREATE SINK sink(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 
 # Simple Union
 SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink;
@@ -60,7 +60,7 @@ SELECT * FROM stream UNION SELECT id2 as id, value, timestamp FROM stream3 INTO 
 2,2,3002
 2,2,3003
 
-CREATE SINK sink2(stream.timestamp UINT64, origin UINT8)  TYPE File;
+CREATE SINK sink2(stream.timestamp UINT64 NOT NULL, origin UINT8 NOT NULL)  TYPE File;
 # Union with selection to fixup the schema and projection of constant into the schema
 SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2) as origin FROM stream WHERE timestamp < UINT64(1002) INTO sink2;
 ----
@@ -87,7 +87,7 @@ SELECT * FROM stream UNION SELECT * FROM stream2 UNION SELECT id2 as id, value, 
 2,2,3002
 2,2,3003
 
-CREATE SINK sink3(stream.timestamp UINT64)  TYPE File;
+CREATE SINK sink3(stream.timestamp UINT64 NOT NULL)  TYPE File;
 
 # nested union with projection to fixup the schema
 SELECT timestamp
@@ -107,7 +107,7 @@ INTO sink3;
 
 # CURRENTLY WindowAggregation and Unions are broken in the sense that an EoS will not flush the window state!
 
-CREATE LOGICAL SOURCE stream4(value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream4(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
 ATTACH INLINE
 1,1000
@@ -115,7 +115,7 @@ ATTACH INLINE
 32,1002
 1,2001
 
-CREATE LOGICAL SOURCE stream5(value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream5(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream5 TYPE File;
 ATTACH INLINE
 65,1000
@@ -123,7 +123,7 @@ ATTACH INLINE
 3,1002
 2,2001
 
-CREATE SINK sink4(max_value UINT64)  TYPE File;
+CREATE SINK sink4(max_value UINT64 NOT NULL)  TYPE File;
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM stream4 UNION SELECT * FROM stream5
@@ -134,7 +134,7 @@ INTO sink4;
 65
 2
 
-CREATE SINK sink5(idstream3_1.start UINT64, idstream3_1.end UINT64, id UINT64, value UINT64, timestamp UINT64, stream3_1.id2 UINT64, stream3_1.value2 UINT64, stream3_1.timestamp UINT64) TYPE File;
+CREATE SINK sink5(idstream3_1.start UINT64 NOT NULL, idstream3_1.end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, stream3_1.id2 UINT64 NOT NULL, stream3_1.value2 UINT64 NOT NULL, stream3_1.timestamp UINT64 NOT NULL) TYPE File;
 
 SELECT *
 FROM (SELECT * FROM (SELECT * FROM stream UNION SELECT * FROM stream2))
@@ -163,7 +163,7 @@ INTO sink5;
 
 
 # This demonstrates that all pending windows are triggered at the end of the execution
-CREATE LOGICAL SOURCE stream6(value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream6(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream6 TYPE File;
 ATTACH INLINE
 1,1000
@@ -171,7 +171,7 @@ ATTACH INLINE
 32,1002
 1,1003
 
-CREATE LOGICAL SOURCE stream7(value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream7(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream7 TYPE File;
 ATTACH INLINE
 65,1000
@@ -179,7 +179,7 @@ ATTACH INLINE
 3,1002
 2,2003
 
-CREATE SINK sink5(max_value UINT64)  TYPE File;
+CREATE SINK sink5(max_value UINT64 NOT NULL)  TYPE File;
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM stream6 UNION SELECT * FROM stream7
@@ -191,7 +191,7 @@ INTO sink4;
 2
 
 # This demonstrates that the previous test still works when a union is nested in a projection
-CREATE LOGICAL SOURCE stream8(value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream8(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream8 TYPE File;
 ATTACH INLINE
 1,1000
@@ -199,7 +199,7 @@ ATTACH INLINE
 32,1002
 1,1003
 
-CREATE LOGICAL SOURCE stream9(value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream9(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream9 TYPE File;
 ATTACH INLINE
 65,1000
@@ -207,7 +207,7 @@ ATTACH INLINE
 3,1002
 2,2003
 
-CREATE SINK sink6(max_value UINT64)  TYPE File;
+CREATE SINK sink6(max_value UINT64 NOT NULL)  TYPE File;
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM (SELECT * FROM stream8 UNION SELECT * FROM stream9)
@@ -218,7 +218,7 @@ INTO sink6;
 65
 2
 
-CREATE SINK subquery_sink(stream.timestamp UINT64)  TYPE File;
+CREATE SINK subquery_sink(stream.timestamp UINT64 NOT NULL)  TYPE File;
 # triple union query as a subquery as a nested query.
 SELECT timestamp
 FROM (

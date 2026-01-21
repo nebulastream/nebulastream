@@ -2,7 +2,7 @@
 # description: Simple map tests with an add function
 # groups: [Projection, Filter, Map]
 
-CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1,1,1000
@@ -13,9 +13,9 @@ ATTACH INLINE
 6,20,20000
 7,21,21000
 
-CREATE SINK sinkId(stream.id UINT64)  TYPE File;
-CREATE SINK sinkId2(id UINT64)  TYPE File;
-CREATE SINK sinkNewId(new_id UINT64)  TYPE File;
+CREATE SINK sinkId(stream.id UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkId2(id UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkNewId(new_id UINT64 NOT NULL)  TYPE File;
 
 
 # 0: first filter on 'timestamp', then project on 'id'

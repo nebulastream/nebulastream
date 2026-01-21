@@ -2,18 +2,18 @@
 # description: #503: Two sources do not work. Is this a special case that is different from 'TwoSources.test'?
 # groups: [Sources]
 
-CREATE LOGICAL SOURCE noTuple(field_1 UINT64);
+CREATE LOGICAL SOURCE noTuple(field_1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR noTuple TYPE File;
 ATTACH INLINE
 
 # Probably triggers a parser bug (parser still looks for tuples)
-CREATE LOGICAL SOURCE oneTuple(field_1 UINT64);
+CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;
 ATTACH INLINE
 1
 
-CREATE SINK noTupleSink(noTuple.field_1 UINT64)  TYPE File;
-CREATE SINK oneTupleSink(oneTuple.field_1 UINT64)  TYPE File;
+CREATE SINK noTupleSink(noTuple.field_1 UINT64 NOT NULL)  TYPE File;
+CREATE SINK oneTupleSink(oneTuple.field_1 UINT64 NOT NULL)  TYPE File;
 
 # Description: check if we run into an error if we process a single tuple.
 SELECT field_1 FROM noTuple INTO noTupleSink;

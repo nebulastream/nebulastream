@@ -3,15 +3,15 @@
 # groups: [Window, Join, InnerJoin, Tumbling]
 
 CREATE LOGICAL SOURCE s(
-    sid INT64,
-    sval INT64,
-    ts   INT64
+    sid INT64 NOT NULL,
+    sval INT64 NOT NULL,
+    ts   INT64 NOT NULL
 );
 
 CREATE LOGICAL SOURCE t(
-    tid INT64,
-    tval INT64,
-    ts   INT64
+    tid INT64 NOT NULL,
+    tval INT64 NOT NULL,
+    ts   INT64 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR s TYPE File;
@@ -27,16 +27,14 @@ ATTACH INLINE
 4,400,20
 
 CREATE SINK sink(
-    `ST$START` UINT64,
-    `ST$END`   UINT64,
-
-    `S$SID`  INT64,
-    `S$SVAL` INT64,
-    `S$TS`   INT64,
-
-    `T$TID`  INT64,
-    `T$TVAL` INT64,
-    `T$TS`   INT64
+    `ST$START` UINT64 NOT NULL,
+    `ST$END`   UINT64 NOT NULL,
+    `S$SID`  INT64 NOT NULL,
+    `S$SVAL` INT64 NOT NULL,
+    `S$TS`   INT64 NOT NULL,
+    `T$TID`  INT64 NOT NULL,
+    `T$TVAL` INT64 NOT NULL,
+    `T$TS`   INT64 NOT NULL
 ) TYPE File;
 
 SELECT *

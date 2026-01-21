@@ -2,11 +2,11 @@
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
-CREATE LOGICAL SOURCE multiBuffer(field_1 UINT64, field_2 UINT64, field_3 UINT64, field_4 UINT64, field_5 UINT64, field_6 UINT64, field_7 UINT64, field_8 UINT64);
+CREATE LOGICAL SOURCE multiBuffer(field_1 UINT64 NOT NULL, field_2 UINT64 NOT NULL, field_3 UINT64 NOT NULL, field_4 UINT64 NOT NULL, field_5 UINT64 NOT NULL, field_6 UINT64 NOT NULL, field_7 UINT64 NOT NULL, field_8 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR multiBuffer TYPE File;
 ATTACH FILE small/200x8-rows-fields.csv
 
-CREATE SINK sinkMultiBuffer(multiBuffer.field_1 UINT64, multiBuffer.field_2 UINT64, multiBuffer.field_3 UINT64, multiBuffer.field_4 UINT64, multiBuffer.field_5 UINT64, multiBuffer.field_6 UINT64, multiBuffer.field_7 UINT64, multiBuffer.field_8 UINT64)  TYPE File;
+CREATE SINK sinkMultiBuffer(multiBuffer.field_1 UINT64 NOT NULL, multiBuffer.field_2 UINT64 NOT NULL, multiBuffer.field_3 UINT64 NOT NULL, multiBuffer.field_4 UINT64 NOT NULL, multiBuffer.field_5 UINT64 NOT NULL, multiBuffer.field_6 UINT64 NOT NULL, multiBuffer.field_7 UINT64 NOT NULL, multiBuffer.field_8 UINT64 NOT NULL)  TYPE File;
 
 # Description: Read 200 tuples (rows). Each row contains 8 UINT8 fields. Size of a tuple: 64 byte. Size of all tuples: (64 * 200 = 12800) bytes
 #   our default buffer size is (2^12 = 4096) bytes. Since 12800 / 4096 = 3.125, we use four buffers in this test.

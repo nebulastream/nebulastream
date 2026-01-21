@@ -3,7 +3,7 @@
 # groups: [Function, FunctionFloat]
 
 # Simple source providing one FLOAT64 column r
-CREATE LOGICAL SOURCE stream(r FLOAT64);
+CREATE LOGICAL SOURCE stream(r FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1
@@ -18,7 +18,7 @@ ATTACH INLINE
 10
 
 # Sink for the result of the multiplication
-CREATE SINK sink(result FLOAT64) TYPE File;
+CREATE SINK sink(result FLOAT64 NOT NULL) TYPE File;
 
 # Test: SELECT FLOAT64(3.141) * r FROM stream INTO sink
 SELECT

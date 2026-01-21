@@ -3,16 +3,16 @@
 # groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
-CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
+CREATE LOGICAL SOURCE ysb1k(user_id UINT64 NOT NULL, page_id UINT64 NOT NULL, campaign_id UINT64 NOT NULL, ad_type UINT64 NOT NULL, event_type UINT64 NOT NULL, current_ms UINT64 NOT NULL, ip UINT64 NOT NULL, d1 UINT64 NOT NULL, d2 UINT64 NOT NULL, d3 UINT32 NOT NULL, d4 UINT16 NOT NULL);
 CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
 ATTACH FILE large/ysb/ysb_1k_data_474M.csv
 
-CREATE LOGICAL SOURCE ysb10k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
+CREATE LOGICAL SOURCE ysb10k(user_id UINT64 NOT NULL, page_id UINT64 NOT NULL, campaign_id UINT64 NOT NULL, ad_type UINT64 NOT NULL, event_type UINT64 NOT NULL, current_ms UINT64 NOT NULL, ip UINT64 NOT NULL, d1 UINT64 NOT NULL, d2 UINT64 NOT NULL, d3 UINT32 NOT NULL, d4 UINT16 NOT NULL);
 CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
 ATTACH FILE large/ysb/ysb_10k_data_479M.csv
 
-CREATE SINK ysb1kChecksum(ysb1k.start UINT64, ysb1k.end UINT64, ysb1k.campaign_id UINT64, ysb1k.sum_user_id UINT64)  TYPE Checksum;
-CREATE SINK ysb10kChecksum(ysb10k.start UINT64, ysb10k.end UINT64, ysb10k.campaign_id UINT64, ysb10k.sum_user_id UINT64)  TYPE Checksum;
+CREATE SINK ysb1kChecksum(ysb1k.start UINT64 NOT NULL, ysb1k.end UINT64 NOT NULL, ysb1k.campaign_id UINT64 NOT NULL, ysb1k.sum_user_id UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK ysb10kChecksum(ysb10k.start UINT64 NOT NULL, ysb10k.end UINT64 NOT NULL, ysb10k.campaign_id UINT64 NOT NULL, ysb10k.sum_user_id UINT64 NOT NULL)  TYPE Checksum;
 
 # Query 1 YSB with 1k campaign_ids
 SELECT
