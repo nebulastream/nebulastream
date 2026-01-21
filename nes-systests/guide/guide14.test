@@ -3,8 +3,8 @@
 # groups: [Projection, Expression, Arithmetic]
 
 CREATE LOGICAL SOURCE s(
-    x INT32,
-    y INT32
+    x INT32 NOT NULL,
+    y INT32 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR s TYPE File;
@@ -14,7 +14,7 @@ ATTACH INLINE
 10,10
 
 CREATE SINK sink(
-    `SQUARED_ERROR` INT32
+    `SQUARED_ERROR` INT32 NOT NULL
 ) TYPE File;
 
 SELECT

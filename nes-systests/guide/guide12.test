@@ -3,15 +3,15 @@
 # groups: [Window, Join, InnerJoin, Sliding]
 
 CREATE LOGICAL SOURCE orders(
-    order_id    INT64,
-    customer_id INT64,
-    ts          INT64
+    order_id    INT64 NOT NULL,
+    customer_id INT64 NOT NULL,
+    ts          INT64 NOT NULL
 );
 
 CREATE LOGICAL SOURCE payments(
-    payments_order_id INT64,
-    amount            FLOAT64,
-    ts                INT64
+    payments_order_id INT64 NOT NULL,
+    amount            FLOAT64 NOT NULL,
+    ts                INT64 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR orders TYPE File;
@@ -23,9 +23,9 @@ ATTACH INLINE
 1,99.99,12000
 
 CREATE SINK sink(
-    `ORDERS$ORDER_ID`    INT64,
-    `ORDERS$CUSTOMER_ID` INT64,
-    `PAYMENTS$AMOUNT`    FLOAT64
+    `ORDERS$ORDER_ID`    INT64 NOT NULL,
+    `ORDERS$CUSTOMER_ID` INT64 NOT NULL,
+    `PAYMENTS$AMOUNT`    FLOAT64 NOT NULL
 ) TYPE File;
 
 SELECT
