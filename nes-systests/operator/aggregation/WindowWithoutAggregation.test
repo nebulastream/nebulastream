@@ -2,7 +2,7 @@
 # description: Window clause without aggregation functions should collect tuples and emit start/end
 # groups: [Aggregation, Window]
 
-CREATE LOGICAL SOURCE integers(i UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE integers(i UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR integers TYPE File;
 ATTACH INLINE
 1,100
@@ -12,7 +12,7 @@ ATTACH INLINE
 1,300
 2,325
 
-CREATE LOGICAL SOURCE strings(name VARSIZED, category VARSIZED, timestamp UINT64);
+CREATE LOGICAL SOURCE strings(name VARSIZED NOT NULL, category VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR strings TYPE File;
 ATTACH INLINE
 alice,catA,100
@@ -22,8 +22,8 @@ dave,catB,225
 eve,catA,300
 frank,catB,325
 
-CREATE SINK sinkStartEnd(integers.start UINT64, integers.end UINT64) TYPE File;
-CREATE SINK sinkStrStartEnd(strings.start UINT64, strings.end UINT64) TYPE File;
+CREATE SINK sinkStartEnd(integers.start UINT64 NOT NULL, integers.end UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStrStartEnd(strings.start UINT64 NOT NULL, strings.end UINT64 NOT NULL) TYPE File;
 
 # Window-only with integer source: should produce start/end columns.
 SELECT start, end FROM integers WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStartEnd;
