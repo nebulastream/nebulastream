@@ -4,13 +4,13 @@
 
 
 # We define a source that has for all signed data types the 1, for all unsigned data types the 2, and for all float data types the 3.
-CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE LOGICAL SOURCE stream(i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1,1,1,1,2,2,2,2,3,3
 
-CREATE SINK sink4Booleans(a BOOLEAN, b BOOLEAN, c BOOLEAN, d BOOLEAN)  TYPE File;
-CREATE SINK sink5Booleans(a BOOLEAN, b BOOLEAN, c BOOLEAN, d BOOLEAN, e BOOLEAN)  TYPE File;
+CREATE SINK sink4Booleans(a BOOLEAN NOT NULL, b BOOLEAN NOT NULL, c BOOLEAN NOT NULL, d BOOLEAN NOT NULL)  TYPE File;
+CREATE SINK sink5Booleans(a BOOLEAN NOT NULL, b BOOLEAN NOT NULL, c BOOLEAN NOT NULL, d BOOLEAN NOT NULL, e BOOLEAN NOT NULL)  TYPE File;
 
 
 # Check if the or operator works for no nested functions
@@ -60,7 +60,7 @@ FROM stream INTO sink5Booleans;
 0,1,1,1,1
 
 # Check that OR works with raw boolean fields (regression test for withInferredDataType checking pre-inference types)
-CREATE LOGICAL SOURCE boolStream(flag1 BOOLEAN, flag2 BOOLEAN, value INT32);
+CREATE LOGICAL SOURCE boolStream(flag1 BOOLEAN NOT NULL, flag2 BOOLEAN NOT NULL, value INT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR boolStream TYPE File;
 ATTACH INLINE
 true,true,1
@@ -68,7 +68,7 @@ true,false,2
 false,true,3
 false,false,4
 
-CREATE SINK sinkBoolOr(a BOOLEAN, b BOOLEAN, c BOOLEAN) TYPE File;
+CREATE SINK sinkBoolOr(a BOOLEAN NOT NULL, b BOOLEAN NOT NULL, c BOOLEAN NOT NULL) TYPE File;
 
 SELECT
     flag1 OR flag2 AS a,
