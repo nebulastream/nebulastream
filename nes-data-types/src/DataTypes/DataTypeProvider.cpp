@@ -24,7 +24,7 @@
 namespace NES::DataTypeProvider
 {
 
-std::optional<DataType> tryProvideDataType(const std::string& type, const bool isNullable)
+std::optional<DataType> tryProvideDataType(const std::string& type, const DataType::NULLABLE isNullable)
 {
     const DataTypeRegistryArguments args{isNullable};
     if (const auto dataType = DataTypeRegistry::instance().create(type, args))
@@ -34,7 +34,7 @@ std::optional<DataType> tryProvideDataType(const std::string& type, const bool i
     return std::nullopt;
 }
 
-DataType provideDataType(const std::string& type, const bool isNullable)
+DataType provideDataType(const std::string& type, const DataType::NULLABLE isNullable)
 {
     /// However, we provide the empty struct to be consistent with the design of our registries.
     const DataTypeRegistryArguments args{isNullable};
@@ -45,7 +45,7 @@ DataType provideDataType(const std::string& type, const bool isNullable)
     throw UnknownPluginType("Unknown data type: {}", type);
 }
 
-DataType provideDataType(const DataType::Type type, const bool isNullable)
+DataType provideDataType(const DataType::Type type, const DataType::NULLABLE isNullable)
 {
     const auto typeAsString = std::string(magic_enum::enum_name(type));
     return provideDataType(typeAsString, isNullable);

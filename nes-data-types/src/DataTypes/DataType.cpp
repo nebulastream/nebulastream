@@ -37,7 +37,9 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
     /// For a playground, please take a look at the godbolt link: https://godbolt.org/z/j1cTfczbh
     constexpr int8_t sizeOfIntInBytes = sizeof(int32_t);
     constexpr int8_t sizeOfLongInBytes = sizeof(int64_t);
-    const auto isNullable = left.isNullable or right.isNullable;
+    const auto isNullableBool
+        = (left.isNullable == NES::DataType::NULLABLE::IS_NULLABLE) or (right.isNullable == NES::DataType::NULLABLE::IS_NULLABLE);
+    const auto isNullable = isNullableBool ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
 
     /// If left is a float, the result is a float or double depending on the bits of the left float
     if (left.isFloat() and right.isInteger())
@@ -155,7 +157,7 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
 
 uint32_t DataType::getSizeInBytesWithNull() const
 {
-    const auto extraByte = isNullable ? 1 : 0;
+    const auto extraByte = (isNullable == NES::DataType::NULLABLE::IS_NULLABLE) ? 1 : 0;
     switch (this->type)
     {
         case Type::INT8:
@@ -337,16 +339,24 @@ bool DataType::isNumeric() const
     return isInteger() or isFloat();
 }
 
+DataType::NULLABLE DataType::joinNullable(const DataType& otherDataType) const
+{
+    const auto isNullableBool
+        = (this->isNullable == NES::DataType::NULLABLE::IS_NULLABLE) or (otherDataType.isNullable == NES::DataType::NULLABLE::IS_NULLABLE);
+    const auto isNullableResult = isNullableBool ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
+    return isNullableResult;
+}
+
 std::optional<DataType> DataType::join(const DataType& otherDataType) const
 {
-    const auto isNullable = this->isNullable or otherDataType.isNullable;
+    const auto isNullableResult = joinNullable(otherDataType);
     if (this->type == Type::UNDEFINED)
     {
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullable)};
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
     }
     if (this->type == Type::VARSIZED)
     {
-        return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullable)}
+        return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullableResult)}
                                                       : std::nullopt;
     }
 
@@ -374,17 +384,17 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     {
         if (otherDataType.type == Type::CHAR)
         {
-            return {DataTypeProvider::provideDataType(Type::CHAR, isNullable)};
+            return {DataTypeProvider::provideDataType(Type::CHAR, isNullableResult)};
         }
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullable)};
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
     }
     if (this->type == Type::BOOLEAN)
     {
         if (otherDataType.type == Type::BOOLEAN)
         {
-            return {DataTypeProvider::provideDataType(Type::BOOLEAN, isNullable)};
+            return {DataTypeProvider::provideDataType(Type::BOOLEAN, isNullableResult)};
         }
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullable)};
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
     }
     NES_WARNING("Cannot join {} and {}", *this, otherDataType);
     return std::nullopt;
@@ -392,7 +402,8 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)
 {
-    return os << fmt::format("DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), dataType.isNullable);
+    return os << fmt::format(
+               "DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), magic_enum::enum_name(dataType.isNullable));
 }
 
 }

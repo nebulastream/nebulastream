@@ -56,7 +56,7 @@ Schema Schema::addField(std::string name, const DataType& dataType)
     return addField(std::move(name), dataType.type, dataType.isNullable);
 }
 
-Schema Schema::addField(std::string name, const DataType::Type type, const bool isNullable)
+Schema Schema::addField(std::string name, const DataType::Type type, const DataType::NULLABLE isNullable)
 {
     DataType dataType{.type = type, .isNullable = isNullable};
     sizeOfSchemaInBytes += dataType.getSizeInBytesWithNull();

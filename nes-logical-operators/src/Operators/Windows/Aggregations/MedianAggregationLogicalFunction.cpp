@@ -80,7 +80,7 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     /// The output of an aggregation is never NULL
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64, false);
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE);
     this->setFinalAggregateStamp(newFinalAggregateStamp);
     this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp));
 }

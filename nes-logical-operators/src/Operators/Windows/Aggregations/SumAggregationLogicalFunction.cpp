@@ -70,7 +70,7 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->setInputStamp(this->getOnField().getDataType());
     /// The output of an aggregation is never NULL
     auto newFinalAggregationStamp = this->getOnField().getDataType();
-    newFinalAggregationStamp.isNullable = false;
+    newFinalAggregationStamp.isNullable = DataType::NULLABLE::NOT_NULLABLE;
     this->setFinalAggregateStamp(newFinalAggregationStamp);
     this->setAsField(this->getAsField().withDataType(newFinalAggregationStamp));
 }

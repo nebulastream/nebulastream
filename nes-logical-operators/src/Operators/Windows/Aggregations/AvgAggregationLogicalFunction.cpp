@@ -98,7 +98,7 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     /// The output of an aggregation is never NULL
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(finalAggregateStampType, false);
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(finalAggregateStampType, DataType::NULLABLE::NOT_NULLABLE);
     this->setFinalAggregateStamp(newFinalAggregateStamp);
     this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp));
     this->setOnField(newOnField.getAs<FieldAccessLogicalFunction>().get());

@@ -52,7 +52,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const std::vector<std::vector<std::string>> expectedResults = {{"1,1,1", "1,1,1", "1,1,1"}, {"2,2,2", "2,2,2", "2,2,2"}};
 
     const SystestParser::SystestLogicalSource expectedLogicalSource
-        = {.name = "e124", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8, false), .name = "i"}}};
+        = {.name = "e124", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"}}};
 
     bool queryCallbackCalled = false;
     bool createCallbackCalled = false;
@@ -87,9 +87,9 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
     SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "window",
         .fields
-        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, true), .name = "id"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, true), .name = "value"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, true), .name = "timestamp"}}};
+        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "value"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "timestamp"}}};
 
     const std::vector<std::string> expectedInlineData
         = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
@@ -201,9 +201,9 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "window",
         .fields
-        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "id"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "value"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "timestamp"}}};
+        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}}};
 
     const std::vector<std::string> expectedInlineData
         = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
@@ -315,9 +315,9 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "window",
         .fields
-        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "id"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "value"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "timestamp"}}};
+        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}}};
 
     const auto expectedQueries = std::to_array<std::string>(
         {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)",
@@ -469,11 +469,11 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
 {
     const auto* const filename = SYSTEST_DATA_DIR "create_statement_format.dummy";
     const SystestParser::SystestLogicalSource input1{
-        .name = "input1", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "id"}}};
+        .name = "input1", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
     const SystestParser::SystestLogicalSource input2{
-        .name = "input2", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "id"}}};
+        .name = "input2", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
     const SystestParser::SystestLogicalSource input3{
-        .name = "input3", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, false), .name = "id"}}};
+        .name = "input3", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
 
     const auto expectedQueries = std::to_array<std::string>(
         {R"(SELECT id AS id FROM input1 INTO output;)",

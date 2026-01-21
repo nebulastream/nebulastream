@@ -31,10 +31,10 @@ namespace NES
 {
 
 ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType()
-                   .join(right.getDataType())
-                   .value_or(DataType{
-                       .type = DataType::Type::UNDEFINED, .isNullable = left.getDataType().isNullable or right.getDataType().isNullable}))
+    : dataType(
+          left.getDataType()
+              .join(right.getDataType())
+              .value_or(DataType{.type = DataType::Type::UNDEFINED, .isNullable = left.getDataType().joinNullable(right.getDataType())}))
     , left(left)
     , right(right)
 {
@@ -82,12 +82,12 @@ ModuloLogicalFunction ModuloLogicalFunction::withChildren(const std::vector<Logi
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0]
-                        .getDataType()
-                        .join(children[1].getDataType())
-                        .value_or(DataType{
-                            .type = DataType::Type::UNDEFINED,
-                            .isNullable = copy.left.getDataType().isNullable or copy.right.getDataType().isNullable});
+    copy.dataType
+        = children[0]
+              .getDataType()
+              .join(children[1].getDataType())
+              .value_or(DataType{
+                  .type = DataType::Type::UNDEFINED, .isNullable = copy.left.getDataType().joinNullable(copy.right.getDataType())});
     return copy;
 };
 

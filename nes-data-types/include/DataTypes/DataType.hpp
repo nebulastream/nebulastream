@@ -47,6 +47,12 @@ struct DataType final
         VARSIZED_POINTER_REP,
     };
 
+    enum class NULLABLE : uint8_t
+    {
+        IS_NULLABLE,
+        NOT_NULLABLE
+    };
+
     template <class T>
     [[nodiscard]] bool isSameDataType() const
     {
@@ -114,6 +120,7 @@ struct DataType final
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
     [[nodiscard]] std::optional<DataType> join(const DataType& otherDataType) const;
+    [[nodiscard]] NULLABLE joinNullable(const DataType& otherDataType) const;
     [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;
@@ -123,7 +130,7 @@ struct DataType final
     [[nodiscard]] bool isNumeric() const;
 
     Type type{Type::UNDEFINED};
-    bool isNullable;
+    NULLABLE isNullable;
 };
 
 }

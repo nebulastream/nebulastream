@@ -57,7 +57,8 @@ public:
         {
             const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
-            rndFields.emplace_back(Schema::Field{fieldName, DataTypeProvider::provideDataType(basicType, rand() % 2)});
+            const auto isNullable = (rand() % 2) ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
+            rndFields.emplace_back(Schema::Field{fieldName, DataTypeProvider::provideDataType(basicType, isNullable)});
         }
 
         return rndFields;
@@ -70,21 +71,21 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding one field that is nullable
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal, true);
+            const auto testSchema = Schema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
             NES_DEBUG("{}", testSchema);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
-            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, true));
+            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, DataType::NULLABLE::IS_NULLABLE));
         }
 
         /// Adding one field that is not nullable
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal, false);
+            const auto testSchema = Schema{}.addField("field", basicTypeVal);
             NES_DEBUG("{}", testSchema);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
-            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, false));
+            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, DataType::NULLABLE::NOT_NULLABLE));
         }
     }
 
@@ -112,18 +113,24 @@ TEST_F(SchemaTest, addFieldTest)
 /// Test for the method getFieldByName that calling getFieldByName(bid$start) and getFieldByName(bidbid$start) return two different fields
 TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
 {
-    const auto field1 = Schema::Field{"bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, true)};
-    const auto field2 = Schema::Field{"bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64, true)};
-    const auto field3 = Schema::Field{"bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, true)};
-    const auto field4 = Schema::Field{"auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64, true)};
-    const auto field5 = Schema::Field{"auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64, true)};
+    const auto field1
+        = Schema::Field{"bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+    const auto field2
+        = Schema::Field{"bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+    const auto field3
+        = Schema::Field{"bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+    const auto field4
+        = Schema::Field{"auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+    const auto field5
+        = Schema::Field{"auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
 
-    const auto schemaUnderTest = Schema{}
-                                     .addField("bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, true))
-                                     .addField("bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64, true))
-                                     .addField("bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, true))
-                                     .addField("auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64, true))
-                                     .addField("auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64, true));
+    const auto schemaUnderTest
+        = Schema{}
+              .addField("bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE))
+              .addField("bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE))
+              .addField("bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE))
+              .addField("auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE))
+              .addField("auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE));
 
     const auto fieldByName1 = schemaUnderTest.getFieldByName("bidbid$start");
     const auto fieldByName2 = schemaUnderTest.getFieldByName("end");
@@ -151,12 +158,12 @@ TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
 
 TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
 {
-    const auto field1 = Schema::Field{"stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64, false)};
-    const auto field2 = Schema::Field{"stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64, false)};
+    const auto field1 = Schema::Field{"stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field2 = Schema::Field{"stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
 
     const auto schemaUnderTest = Schema{}
-                                     .addField("stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
-                                     .addField("stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
+                                     .addField("stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
     const auto fieldByName1 = schemaUnderTest.getFieldByName("PREFIXabc");
     const auto fieldByName2 = schemaUnderTest.getFieldByName("abc");
@@ -172,11 +179,11 @@ TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
 
 TEST_F(SchemaTest, getFieldByNameWithSameName)
 {
-    const auto field = Schema::Field{"stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64, false)};
+    const auto field = Schema::Field{"stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
 
     const auto schemaUnderTest = Schema{}
-                                     .addField("stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64, false))
-                                     .addField("stream2$name", DataTypeProvider::provideDataType(DataType::Type::UINT64, false));
+                                     .addField("stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("stream2$name", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
     const auto fieldByAmbiguousName = schemaUnderTest.getFieldByName("name");
     EXPECT_TRUE(fieldByAmbiguousName.has_value());
@@ -185,8 +192,8 @@ TEST_F(SchemaTest, getFieldByNameWithSameName)
 
 TEST_F(SchemaTest, getUnqualifiedNameFromField)
 {
-    const auto field1 = Schema::Field{"stream$field1", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, false)};
-    const auto field2 = Schema::Field{"field2", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, false)};
+    const auto field1 = Schema::Field{"stream$field1", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
+    const auto field2 = Schema::Field{"field2", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
 
     EXPECT_EQ("field1", field1.getUnqualifiedName());
     EXPECT_EQ("field2", field2.getUnqualifiedName());
@@ -198,10 +205,10 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Replacing one field with a random one
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            auto testSchema = Schema{}.addField("field", basicTypeVal, true);
+            auto testSchema = Schema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
             EXPECT_EQ(testSchema.getNumberOfFields(), 1);
             EXPECT_EQ(testSchema.getFieldAt(0).name, "field");
-            EXPECT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, true));
+            EXPECT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, DataType::NULLABLE::IS_NULLABLE));
 
             /// Replacing field
             const auto newDataType = getRandomFields(1_u64)[0].dataType;
@@ -252,21 +259,23 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         /// Calculating the schema size for each data type that can be null
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal, true);
+            const auto testSchema = Schema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
-            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, true));
-            ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), DataTypeProvider::provideDataType(basicTypeVal, true).getSizeInBytesWithNull());
+            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, DataType::NULLABLE::IS_NULLABLE));
+            ASSERT_EQ(
+                testSchema.getSizeOfSchemaInBytes(),
+                DataTypeProvider::provideDataType(basicTypeVal, DataType::NULLABLE::IS_NULLABLE).getSizeInBytesWithNull());
         }
 
         /// Calculating the schema size for each data type that can not be null
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal, false);
+            const auto testSchema = Schema{}.addField("field", basicTypeVal);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
-            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, false));
-            ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), DataTypeProvider::provideDataType(basicTypeVal, false).getSizeInBytesWithNull());
+            ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal));
+            ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), DataTypeProvider::provideDataType(basicTypeVal).getSizeInBytesWithNull());
         }
     }
 
@@ -274,11 +283,11 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         using enum DataType::Type;
         /// Calculating the schema size for multiple fields
         const auto testSchema = Schema{}
-                                    .addField("field1", UINT8, false)
-                                    .addField("field2", UINT16, false)
-                                    .addField("field3", INT32, false)
-                                    .addField("field4", FLOAT32, false)
-                                    .addField("field5", FLOAT64, false);
+                                    .addField("field1", UINT8)
+                                    .addField("field2", UINT16)
+                                    .addField("field3", INT32)
+                                    .addField("field4", FLOAT32)
+                                    .addField("field5", FLOAT64);
         EXPECT_EQ(testSchema.getSizeOfSchemaInBytes(), 1 + 2 + 4 + 4 + 8);
     }
 }
@@ -288,7 +297,7 @@ TEST_F(SchemaTest, containsTest)
     using enum DataType::Type;
     {
         /// Checking contains for one fieldName
-        const auto testSchema = Schema{}.addField("field1", UINT8, false);
+        const auto testSchema = Schema{}.addField("field1", UINT8);
         EXPECT_TRUE(testSchema.contains("field1"));
         EXPECT_FALSE(testSchema.contains("notExistingField1"));
     }
@@ -296,11 +305,11 @@ TEST_F(SchemaTest, containsTest)
     {
         /// Checking contains with multiple fields
         const auto testSchema = Schema{}
-                                    .addField("field1", UINT8, false)
-                                    .addField("field2", UINT16, false)
-                                    .addField("field3", INT32, false)
-                                    .addField("field4", FLOAT32, false)
-                                    .addField("field5", FLOAT64, false);
+                                    .addField("field1", UINT8)
+                                    .addField("field2", UINT16)
+                                    .addField("field3", INT32)
+                                    .addField("field4", FLOAT32)
+                                    .addField("field5", FLOAT64);
 
         /// Existing fields
         EXPECT_TRUE(testSchema.contains("field3"));
@@ -316,14 +325,14 @@ TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
 
     /// Checking contains for one fieldName but with fields containing already a source name, e.g., after a join
     const auto testSchema = Schema{}
-                                .addField("streamstream2$start", UINT64, false)
-                                .addField("streamstream2$end", UINT64, false)
-                                .addField("stream$id", UINT64, false)
-                                .addField("stream$value", UINT64, false)
-                                .addField("stream$timestamp", UINT64, false)
-                                .addField("stream2$id2", UINT64, false)
-                                .addField("stream2$value2", UINT64, false)
-                                .addField("stream2$timestamp", UINT64, false);
+                                .addField("streamstream2$start", UINT64)
+                                .addField("streamstream2$end", UINT64)
+                                .addField("stream$id", UINT64)
+                                .addField("stream$value", UINT64)
+                                .addField("stream$timestamp", UINT64)
+                                .addField("stream2$id2", UINT64)
+                                .addField("stream2$value2", UINT64)
+                                .addField("stream2$timestamp", UINT64);
     EXPECT_TRUE(testSchema.getFieldByName("id"));
     EXPECT_FALSE(testSchema.getFieldByName("notExistingField1"));
 }
@@ -334,11 +343,11 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
     /// TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
     const auto testSchema = Schema{}
-                                .addField(sourceName + "$field1", UINT8, false)
-                                .addField(sourceName + "$field2", UINT16, false)
-                                .addField(sourceName + "$field3", INT32, false)
-                                .addField(sourceName + "$field4", FLOAT32, false)
-                                .addField(sourceName + "$field5", FLOAT64, false);
+                                .addField(sourceName + "$field1", UINT8)
+                                .addField(sourceName + "$field2", UINT16)
+                                .addField(sourceName + "$field3", INT32)
+                                .addField(sourceName + "$field4", FLOAT32)
+                                .addField(sourceName + "$field5", FLOAT64);
 
     EXPECT_TRUE(testSchema.getSourceNameQualifier().has_value());
     EXPECT_EQ(testSchema.getSourceNameQualifier(), sourceName);
@@ -346,7 +355,7 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
 
 TEST_F(SchemaTest, copyTest)
 {
-    const auto testSchema = Schema{}.addField("field1", DataType::Type::UINT8, false).addField("field2", DataType::Type::UINT16, false);
+    const auto testSchema = Schema{}.addField("field1", DataType::Type::UINT8).addField("field2", DataType::Type::UINT16);
     const auto& testSchemaCopy = testSchema;
 
     ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), testSchemaCopy.getSizeOfSchemaInBytes());
@@ -365,24 +374,26 @@ TEST_F(SchemaTest, copyTest)
 TEST_F(SchemaTest, withoutSourceQualifierTest)
 {
     {
-        const auto schema
-            = Schema{}.addField("source1$id", DataType::Type::INT64, false).addField("source1$source2$test", DataType::Type::INT32, false);
-        const auto expected = Schema{}.addField("id", DataType::Type::INT64, false).addField("test", DataType::Type::INT32, false);
+        const auto schema = Schema{}.addField("source1$id", DataType::Type::INT64).addField("source1$source2$test", DataType::Type::INT32);
+        const auto expected = Schema{}.addField("id", DataType::Type::INT64).addField("test", DataType::Type::INT32);
         EXPECT_NE(schema, expected);
         EXPECT_EQ(withoutSourceQualifier(schema), expected);
     }
     {
-        const auto schema1 = Schema{}.addField("source1$id", DataType::Type::INT64, true).addField("test", DataType::Type::INT32, false);
-        const auto schema2
-            = Schema{}.addField("source2$id", DataType::Type::INT64, true).addField("source2$test", DataType::Type::INT32, false);
+        const auto schema1 = Schema{}
+                                 .addField("source1$id", DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)
+                                 .addField("test", DataType::Type::INT32);
+        const auto schema2 = Schema{}
+                                 .addField("source2$id", DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)
+                                 .addField("source2$test", DataType::Type::INT32);
         EXPECT_NE(schema1, schema2);
         EXPECT_EQ(withoutSourceQualifier(schema1), withoutSourceQualifier(schema2));
     }
     {
         const auto schema = Schema{}
-                                .addField("source1$id", DataType::Type::INT64, false)
-                                .addField("source2$id", DataType::Type::INT64, false)
-                                .addField("source1$source2$test", DataType::Type::INT32, false);
+                                .addField("source1$id", DataType::Type::INT64)
+                                .addField("source2$id", DataType::Type::INT64)
+                                .addField("source1$source2$test", DataType::Type::INT32);
         EXPECT_ANY_THROW(auto _ = withoutSourceQualifier(schema));
     }
 }

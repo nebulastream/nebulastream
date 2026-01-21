@@ -77,12 +77,12 @@ DivLogicalFunction DivLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0]
-                        .getDataType()
-                        .join(children[1].getDataType())
-                        .value_or(DataType{
-                            .type = DataType::Type::UNDEFINED,
-                            .isNullable = copy.left.getDataType().isNullable or copy.right.getDataType().isNullable});
+    copy.dataType
+        = children[0]
+              .getDataType()
+              .join(children[1].getDataType())
+              .value_or(DataType{
+                  .type = DataType::Type::UNDEFINED, .isNullable = copy.left.getDataType().joinNullable(copy.right.getDataType())});
     return copy;
 };
 

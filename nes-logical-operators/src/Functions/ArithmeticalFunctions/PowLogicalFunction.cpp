@@ -36,9 +36,7 @@ PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const Logica
     : dataType(
           left.getDataType()
               .join(right.getDataType())
-              .value_or(
-                  DataType{
-                      .type = DataType::Type::UNDEFINED, .isNullable = left.getDataType().isNullable or right.getDataType().isNullable}))
+              .value_or(DataType{.type = DataType::Type::UNDEFINED, .isNullable = left.getDataType().joinNullable(right.getDataType())}))
     , left(left)
     , right(right) { };
 
@@ -88,8 +86,7 @@ PowLogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType
-        = DataType{.type = copy.dataType.type, .isNullable = copy.left.getDataType().isNullable or copy.right.getDataType().isNullable};
+    copy.dataType = DataType{.type = copy.dataType.type, .isNullable = copy.left.getDataType().joinNullable(copy.right.getDataType())};
     return copy;
 };
 

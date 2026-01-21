@@ -238,7 +238,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         /// After that, we can trim the field name and type and store it in the fields vector.
         /// "window$val_i8_i8:INT32:True " -> ["window$val_i8_i8", "INT32 ", " True"] -> {"window$val_i8_i8", INT32, false}
         const auto [nameTrimmed, typeTrimmed, isNullable]
-            = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, bool>
+            = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, NES::DataType::NULLABLE>
         {
             std::vector<std::string_view> fieldAndTypeVector;
             for (const auto subrange : std::ranges::split_view(field, ':'))
@@ -248,21 +248,12 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
             INVARIANT(fieldAndTypeVector.size() == 3, "Field and type pairs should always be pairs of a key, a value and isNullable");
 
             const auto isNullableString = fieldAndTypeVector.at(2);
-            bool isNullableParsed = false;
-            if (NES::toLowerCase(isNullableString) == "nullable")
-            {
-                isNullableParsed = true;
-            }
-            else if (NES::toLowerCase(isNullableString) == "notnullable")
-            {
-                isNullableParsed = false;
-            }
-            else
+            const auto isNullable = magic_enum::enum_cast<NES::DataType::NULLABLE>(isNullableString);
+            if (not isNullable)
             {
                 throw NES::SLTUnexpectedToken("Unknown nullable: {}", isNullableString);
             }
-
-            return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullableParsed);
+            return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullable.value());
         }(field);
         NES::DataType dataType;
         if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())

@@ -27,8 +27,10 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
 {
     auto serializedPhysicalTypeEnum = SerializableDataType_Type();
     SerializableDataType_Type_Parse(magic_enum::enum_name(dataType.type), &serializedPhysicalTypeEnum);
+    auto serializedIsNullableEnum = SerializableDataType_Nullable();
+    SerializableDataType_Nullable_Parse(magic_enum::enum_name(dataType.isNullable), &serializedIsNullableEnum);
     serializedDataType->set_type(serializedPhysicalTypeEnum);
-    serializedDataType->set_isnullable(dataType.isNullable);
+    serializedDataType->set_isnullable(serializedIsNullableEnum);
     return serializedDataType;
 }
 
@@ -47,7 +49,21 @@ DataType DataTypeSerializationUtil::deserializeDataType(const SerializableDataTy
             static_cast<std::underlying_type_t<DataType::Type>>(serializedDataType.type()),
             magic_enum::enum_values<DataType::Type>().size());
     }
-    const DataType deserializedDataType = DataType{.type = *type, .isNullable = serializedDataType.isnullable()};
+    auto isNullable = magic_enum::enum_cast<DataType::NULLABLE>(serializedDataType.isnullable());
+    if (!isNullable)
+    {
+        /// from https://protobuf.dev/programming-guides/proto3/#enum:
+        ///
+        /// During deserialization, unrecognized enum values will be preserved in the message [...]
+        /// In [...] C++ and Go, the unknown enum value is simply stored as its underlying integer representation.
+        throw CannotDeserialize(
+            "Encountered illegal enum value for {}! Got {} but enum only goes up to {}",
+            magic_enum::enum_type_name<DataType::NULLABLE>(),
+            static_cast<std::underlying_type_t<DataType::NULLABLE>>(serializedDataType.isnullable()),
+            magic_enum::enum_values<DataType::NULLABLE>().size());
+    }
+
+    const DataType deserializedDataType = DataType{.type = *type, .isNullable = *isNullable};
     return deserializedDataType;
 }
 
