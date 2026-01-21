@@ -4,9 +4,9 @@
 
 # Web events source
 CREATE LOGICAL SOURCE web_events(
-    user_id INT64,
-    action VARSIZED,
-    timestamp INT64
+    user_id INT64 NOT NULL,
+    action VARSIZED NOT NULL,
+    timestamp INT64 NOT NULL
 );
 CREATE PHYSICAL SOURCE FOR web_events TYPE File;
 ATTACH INLINE
@@ -17,9 +17,9 @@ ATTACH INLINE
 
 # Mobile events source
 CREATE LOGICAL SOURCE mobile_events(
-    user_id INT64,
-    action VARSIZED,
-    timestamp INT64
+    user_id INT64 NOT NULL,
+    action VARSIZED NOT NULL,
+    timestamp INT64 NOT NULL
 );
 CREATE PHYSICAL SOURCE FOR mobile_events TYPE File;
 ATTACH INLINE
@@ -29,7 +29,7 @@ ATTACH INLINE
 6,purchase,1050
 
 # Sink schema must match projected output
-CREATE SINK sink(`USER_ID` INT64, `ACTION` VARSIZED, `TIMESTAMP` INT64) TYPE File;
+CREATE SINK sink(`USER_ID` INT64 NOT NULL, `ACTION` VARSIZED NOT NULL, `TIMESTAMP` INT64 NOT NULL) TYPE File;
 
 # Query under test
 SELECT user_id, action, timestamp FROM web_events
