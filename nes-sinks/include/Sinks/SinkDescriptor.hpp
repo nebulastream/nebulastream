@@ -63,6 +63,7 @@ public:
 
     [[nodiscard]] std::string_view getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
+    [[nodiscard]] std::optional<std::string> getEncoderType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
@@ -94,6 +95,11 @@ public:
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
 
+    /// Name of the codec which should encode any data that the sink emits
+    static inline const DescriptorConfig::ConfigParameter<std::string> CODEC{
+        "codec",
+        "None",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CODEC, config); }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap

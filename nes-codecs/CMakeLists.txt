@@ -49,4 +49,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-codecs REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(Decoder)
+create_registries_for_component(Decoder Encoder)

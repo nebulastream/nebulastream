@@ -19,10 +19,12 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <span>
 #include <string>
 #include <system_error>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -43,11 +45,13 @@
 namespace NES
 {
 
-FileSink::FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+FileSink::FileSink(
+    BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder)
     : Sink(std::move(backpressureController))
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
+    , encoder(std::move(encoder))
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
     {
@@ -112,6 +116,16 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
 
     {
         auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
+        /// If an encoder was given, encode the data here
+        if (encoder)
+        {
+            const auto stringSpan = std::as_bytes(std::span(fBuffer));
+            std::vector<char> encodedData{};
+            auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+            PRECONDITION(
+                encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
+            fBuffer = std::string(encodedData.begin(), encodedData.end());
+        }
         NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
             const auto wlocked = outputFileStream.wlock();
@@ -141,7 +155,10 @@ SinkValidationRegistryReturnType RegisterFileSinkValidation(SinkValidationRegist
 
 SinkRegistryReturnType RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<FileSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<FileSink>(
+        std::move(sinkRegistryArguments.backpressureController),
+        sinkRegistryArguments.sinkDescriptor,
+        std::move(sinkRegistryArguments.encoder));
 }
 
 }

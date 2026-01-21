@@ -73,6 +73,7 @@ EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
 EXCEPTION(UnknownDecoderType, 2129, "unknown decoder type")
+EXCEPTION(UnknownEncoderType, 2130, "unknown encoder type")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "could not place all operators")

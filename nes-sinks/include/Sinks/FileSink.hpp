@@ -25,6 +25,7 @@
 #include <folly/Synchronized.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <Encoders/Encoder.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -39,7 +40,10 @@ class FileSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "File";
-    explicit FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit FileSink(
+        BackpressureController backpressureController,
+        const SinkDescriptor& sinkDescriptor,
+        std::optional<std::unique_ptr<Encoder>> encoder);
     ~FileSink() override = default;
 
     FileSink(const FileSink&) = delete;
@@ -63,6 +67,7 @@ private:
     bool isOpen;
     std::unique_ptr<Format> formatter;
     folly::Synchronized<std::ofstream> outputFileStream;
+    std::optional<std::unique_ptr<Encoder>> encoder;
 };
 
 struct ConfigParametersFile
@@ -73,7 +78,8 @@ struct ConfigParametersFile
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, SinkDescriptor::FILE_PATH, APPEND);
+        = DescriptorConfig::createConfigParameterContainerMap(
+            SinkDescriptor::parameterMap, SinkDescriptor::FILE_PATH, APPEND, SinkDescriptor::CODEC);
 };
 
 }

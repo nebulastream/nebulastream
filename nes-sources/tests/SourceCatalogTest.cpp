@@ -98,7 +98,8 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 
     ASSERT_TRUE(sourceCatalog.removePhysicalSource(physical1));
 
-    const auto physical3Opt = sourceCatalog.addPhysicalSource(*sourceOpt, "File", "localhost", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
+    const auto physical3Opt
+        = sourceCatalog.addPhysicalSource(*sourceOpt, "File", "localhost", {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
     ASSERT_TRUE(physical3Opt.has_value());
     const auto& physical3 = physical3Opt.value();
 

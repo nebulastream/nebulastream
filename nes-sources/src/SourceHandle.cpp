@@ -38,7 +38,11 @@ SourceHandle::SourceHandle(
     : configuration(std::move(configuration))
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation), std::move(decoderImplementation));
+        std::move(backpressureListener),
+        std::move(originId),
+        std::move(bufferPool),
+        std::move(sourceImplementation),
+        std::move(decoderImplementation));
 }
 
 SourceHandle::~SourceHandle() = default;

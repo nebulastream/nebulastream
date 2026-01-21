@@ -129,9 +129,9 @@ SourceImplementationTermination dataSourceThreadRoutine(
             if (decoder.has_value())
             {
                 /// Lambda function to emit a decoded buffer and optionally provide an empty, new one.
-                auto emitAndProvide = [&emit, &bufferProvider](
-                                          TupleBuffer& filledDecodedBuffer,
-                                          const Decoder::DecodeStatusType decodeStatus) -> std::optional<TupleBuffer>
+                auto emitAndProvide
+                    = [&emit, &bufferProvider](
+                          TupleBuffer& filledDecodedBuffer, const Decoder::DecodeStatusType decodeStatus) -> std::optional<TupleBuffer>
                 {
                     /// Emit the filled buffer.
                     emit(std::move(filledDecodedBuffer), true);
@@ -186,7 +186,8 @@ void dataSourceThread(
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit, decoder));
+        result.set_value_at_thread_exit(
+            dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit, decoder));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{}, stopToken);
@@ -217,7 +218,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::optional<Decoder*> optionalDecoderPtr = decoderImplementation ? std::optional(decoderImplementation->get()) : std::nullopt;
 
     Thread sourceThread(
-    fmt::format("DataSrc-{}", originId),
+        fmt::format("DataSrc-{}", originId),
         dataSourceThread,
         backpressureListener,
         std::move(terminationPromise),

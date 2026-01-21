@@ -15,7 +15,10 @@
 #include <Sinks/SinkProvider.hpp>
 
 #include <memory>
+#include <optional>
 #include <utility>
+#include <Encoders/Encoder.hpp>
+#include <Encoders/EncoderProvider.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -28,7 +31,13 @@ namespace NES
 std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
 {
     NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
-    auto sinkArguments = SinkRegistryArguments(std::move(backpressureController), sinkDescriptor);
+    /// Create the encoder, if encoding is desired
+    const auto encoderType = sinkDescriptor.getEncoderType();
+    std::optional<std::unique_ptr<Encoder>> encoder = (!encoderType || encoderType.value() == "None")
+        ? std::nullopt
+        : std::optional(EncoderProvider::provideEncoder(encoderType.value()));
+
+    auto sinkArguments = SinkRegistryArguments(std::move(backpressureController), sinkDescriptor, std::move(encoder));
     if (auto sink = SinkRegistry::instance().create(sinkDescriptor.getSinkType(), std::move(sinkArguments)); sink.has_value())
     {
         return std::move(sink.value());

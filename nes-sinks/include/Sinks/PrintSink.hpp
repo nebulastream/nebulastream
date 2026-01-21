@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -24,6 +25,7 @@
 #include <folly/Synchronized.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <Encoders/Encoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
@@ -41,7 +43,10 @@ class PrintSink final : public Sink
 public:
     static constexpr std::string_view NAME = "Print";
 
-    explicit PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit PrintSink(
+        BackpressureController backpressureController,
+        const SinkDescriptor& sinkDescriptor,
+        std::optional<std::unique_ptr<Encoder>> encoder);
     ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;
@@ -60,6 +65,7 @@ protected:
 private:
     folly::Synchronized<std::ostream*> outputStream;
     std::unique_ptr<Format> outputParser;
+    std::optional<std::unique_ptr<Encoder>> encoder;
 
     uint32_t ingestion = 0;
 };
@@ -77,7 +83,7 @@ struct ConfigParametersPrint
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, INPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, INPUT_FORMAT, SinkDescriptor::CODEC);
 };
 
 }

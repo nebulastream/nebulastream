@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -62,6 +63,18 @@ std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
 std::string_view SinkDescriptor::getFormatType() const
 {
     return magic_enum::enum_name(getFromConfig(INPUT_FORMAT));
+}
+
+std::optional<std::string> SinkDescriptor::getEncoderType() const
+{
+    try
+    {
+        return getFromConfig(CODEC);
+    }
+    catch (std::out_of_range& e)
+    {
+        return std::nullopt;
+    }
 }
 
 std::string SinkDescriptor::getSinkType() const

@@ -18,9 +18,11 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -38,9 +40,11 @@
 namespace NES
 {
 
-PrintSink::PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+PrintSink::PrintSink(
+    BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder)
     : Sink(std::move(backpressureController))
     , outputStream(&std::cout)
+    , encoder(std::move(encoder))
     , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
@@ -68,7 +72,17 @@ void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
 
-    const auto bufferAsString = outputParser->getFormattedBuffer(inputBuffer);
+    auto bufferAsString = outputParser->getFormattedBuffer(inputBuffer);
+    /// Encode data if encoder was provided
+    if (encoder)
+    {
+        const auto stringSpan = std::as_bytes(std::span(bufferAsString));
+        std::vector<char> encodedData{};
+        auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+        PRECONDITION(encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
+        bufferAsString = std::string(encodedData.begin(), encodedData.end());
+    }
+
     *(*outputStream.wlock()) << bufferAsString << '\n';
     std::this_thread::sleep_for(std::chrono::milliseconds{ingestion});
 }
@@ -91,7 +105,10 @@ SinkValidationRegistryReturnType RegisterPrintSinkValidation(SinkValidationRegis
 
 SinkRegistryReturnType RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<PrintSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<PrintSink>(
+        std::move(sinkRegistryArguments.backpressureController),
+        sinkRegistryArguments.sinkDescriptor,
+        std::move(sinkRegistryArguments.encoder));
 }
 
 }

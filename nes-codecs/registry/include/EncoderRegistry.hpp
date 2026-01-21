@@ -14,32 +14,27 @@
 
 #pragma once
 
-#include <optional>
+#include <memory>
 #include <string>
+
 #include <Encoders/Encoder.hpp>
-#include <Sinks/Sink.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 #include <Util/Registry.hpp>
-#include <BackpressureChannel.hpp>
 
 namespace NES
 {
 
-using SinkRegistryReturnType = std::unique_ptr<Sink>;
+using EncoderRegistryReturnType = std::unique_ptr<Encoder>;
 
-struct SinkRegistryArguments
+struct EncoderRegistryArguments
 {
-    BackpressureController backpressureController;
-    SinkDescriptor sinkDescriptor;
-    std::optional<std::unique_ptr<Encoder>> encoder;
 };
 
-class SinkRegistry : public BaseRegistry<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>
+class EncoderRegistry : public BaseRegistry<EncoderRegistry, std::string, EncoderRegistryReturnType, EncoderRegistryArguments>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SINK_REGISTRY
-#include <SinkGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SINK_REGISTRY
+#define INCLUDED_FROM_ENCODER_REGISTRY
+#include <EncoderGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_ENCODER_REGISTRY

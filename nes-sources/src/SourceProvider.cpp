@@ -23,8 +23,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <BackpressureChannel.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -55,11 +55,21 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         {
             std::unique_ptr<Decoder> decoder = DecoderProvider::provideDecoder(usedCodec);
             return std::make_unique<SourceHandle>(
-                 std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()), std::move(decoder));
+                std::move(backpressureListener),
+                std::move(originId),
+                std::move(runtimeConfig),
+                bufferPool,
+                std::move(source.value()),
+                std::move(decoder));
         }
 
         return std::make_unique<SourceHandle>(
-             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()), std::nullopt);
+            std::move(backpressureListener),
+            std::move(originId),
+            std::move(runtimeConfig),
+            bufferPool,
+            std::move(source.value()),
+            std::nullopt);
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
