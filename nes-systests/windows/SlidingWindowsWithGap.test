@@ -3,16 +3,16 @@
 # groups: [WindowOperators, Join, Aggregation, CompilationIntensive]
 
 # Source definitions
-CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH FILE small/stream.csv
 
-CREATE LOGICAL SOURCE stream2(id2 UINT64, value2 UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
 ATTACH FILE small/stream2.csv
 
-CREATE SINK sinkStreamStream2(streamstream2.start UINT64, streamstream2.end UINT64, stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, stream2.id2 UINT64, stream2.value2 UINT64, stream2.timestamp UINT64)  TYPE File;
-CREATE SINK sinkStreamAgg(stream.start UINT64, stream.end UINT64, stream.value UINT64, stream.id_count UINT64, stream.id_sum UINT64, stream.id_min UINT64)  TYPE File;
+CREATE SINK sinkStreamStream2(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64 NOT NULL, stream2.value2 UINT64 NOT NULL, stream2.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStreamAgg(stream.start UINT64 NOT NULL, stream.end UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.id_count UINT64 NOT NULL, stream.id_sum UINT64 NOT NULL, stream.id_min UINT64 NOT NULL)  TYPE File;
 
 
 # Query 1 - Sliding Window Aggregation with a gap
