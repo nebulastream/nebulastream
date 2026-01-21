@@ -2,7 +2,7 @@
 # description: Simple tests that contain map and filter
 # groups: [Filter, Map]
 
-CREATE LOGICAL SOURCE stream(id INT64, value INT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream(id INT64 NOT NULL, value INT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1,1,1000
@@ -12,8 +12,8 @@ ATTACH INLINE
 5,312,2012
 6,22,2021
 
-CREATE SINK sinkIdx3ValueTimeStamp(id_x_3 INT64, stream.value INT64, stream.timestamp UINT64)  TYPE File;
-CREATE SINK sinkIdNewValueNewTimeStamp(id_new INT64, value_new INT64, stream.timestamp UINT64)  TYPE File;
+CREATE SINK sinkIdx3ValueTimeStamp(id_x_3 INT64 NOT NULL, stream.value INT64 NOT NULL, stream.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkIdNewValueNewTimeStamp(id_new INT64 NOT NULL, value_new INT64 NOT NULL, stream.timestamp UINT64 NOT NULL)  TYPE File;
 
 # Filter and then map
 SELECT id * UINT32(3) AS id_x_3, value, timestamp FROM stream WHERE value != UINT32(1) INTO sinkIdx3ValueTimeStamp;
