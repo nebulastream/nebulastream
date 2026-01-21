@@ -2,16 +2,16 @@
 # description: tests that the json input formatter supports padded keys and values
 # groups: [Formatter, JSON]
 
-CREATE LOGICAL SOURCE paddedValuesStream(key UINT64, value UINT64, name VARSIZED);
+CREATE LOGICAL SOURCE paddedValuesStream(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR paddedValuesStream TYPE File SET("JSON" AS PARSER.`TYPE`);
 ATTACH INLINE
 {"KEY":  1,"VALUE":1      ,"NAME":  "john"  }
 {"KEY":1   ,"VALUE":   2,"NAME":   "max"   }
 
-CREATE SINK keySink(paddedValuesStream.key UINT64)  TYPE File;
-CREATE SINK valueSink(paddedValuesStream.value UINT64)  TYPE File;
-CREATE SINK nameSink(paddedValuesStream.name VARSIZED)  TYPE File;
-CREATE SINK allFieldsSink(paddedValuesStream.key UINT64, paddedValuesStream.value UINT64, paddedValuesStream.name VARSIZED) TYPE File;
+CREATE SINK keySink(paddedValuesStream.key UINT64 NOT NULL)  TYPE File;
+CREATE SINK valueSink(paddedValuesStream.value UINT64 NOT NULL)  TYPE File;
+CREATE SINK nameSink(paddedValuesStream.name VARSIZED NOT NULL)  TYPE File;
+CREATE SINK allFieldsSink(paddedValuesStream.key UINT64 NOT NULL, paddedValuesStream.value UINT64 NOT NULL, paddedValuesStream.name VARSIZED NOT NULL) TYPE File;
 
 SELECT key FROM paddedValuesStream INTO keySink;
 ----
