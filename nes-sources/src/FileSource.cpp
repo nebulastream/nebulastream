@@ -14,6 +14,7 @@
 
 #include <FileSource.hpp>
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -27,6 +28,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <zstd.h>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -42,7 +44,25 @@
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+namespace
+{
+CompressionType parseCompressionType(const std::string& compressionStr)
+{
+    if (compressionStr.empty() || compressionStr == "none")
+    {
+        return CompressionType::NONE;
+    }
+    if (compressionStr == "zstd")
+    {
+        return CompressionType::ZSTD;
+    }
+    throw InvalidConfigParameter("Unknown compression type: {}. Supported values: none, zstd", compressionStr);
+}
+}
+
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor)
+    : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+    , compressionType(parseCompressionType(sourceDescriptor.getFromConfig(ConfigParametersCSV::COMPRESSION)))
 {
 }
 
@@ -54,24 +74,110 @@ void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
     {
         throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
     }
+
+    if (this->compressionType == CompressionType::ZSTD)
+    {
+        this->zstdContext = ZSTD_createDCtx();
+        if (this->zstdContext == nullptr)
+        {
+            throw CannotOpenSource("Failed to create zstd decompression context");
+        }
+        /// Allocate compressed buffer with size equal to zstd recommended input buffer size
+        this->compressedBuffer.resize(ZSTD_DStreamInSize());
+        this->compressedBufferPos = 0;
+        this->compressedBufferSize = 0;
+        this->reachedEof = false;
+    }
 }
 
 void FileSource::close()
 {
     this->inputFile.close();
+    if (this->zstdContext != nullptr)
+    {
+        ZSTD_freeDCtx(this->zstdContext);
+        this->zstdContext = nullptr;
+    }
+}
+
+void FileSource::refillCompressedBuffer()
+{
+    if (this->reachedEof)
+    {
+        return;
+    }
+    this->inputFile.read(this->compressedBuffer.data(), static_cast<std::streamsize>(this->compressedBuffer.size()));
+    this->compressedBufferSize = static_cast<size_t>(this->inputFile.gcount());
+    this->compressedBufferPos = 0;
+    if (this->compressedBufferSize == 0)
+    {
+        this->reachedEof = true;
+    }
 }
 
 Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
-    this->inputFile.read(
-        tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
-    const auto numBytesRead = this->inputFile.gcount();
-    this->totalNumBytesRead += numBytesRead;
-    if (numBytesRead == 0)
+    if (this->compressionType == CompressionType::NONE)
+    {
+        /// Original uncompressed path
+        this->inputFile.read(
+            tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(),
+            static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
+        const auto numBytesRead = this->inputFile.gcount();
+        this->totalNumBytesRead += numBytesRead;
+        if (numBytesRead == 0)
+        {
+            return FillTupleBufferResult::eos();
+        }
+        return FillTupleBufferResult::withBytes(numBytesRead);
+    }
+
+    /// Zstd decompression path
+    auto outputBuffer = tupleBuffer.getAvailableMemoryArea<char>();
+    size_t totalDecompressed = 0;
+
+    while (totalDecompressed < outputBuffer.size())
+    {
+        /// Refill compressed buffer if empty
+        if (this->compressedBufferPos >= this->compressedBufferSize)
+        {
+            refillCompressedBuffer();
+            if (this->compressedBufferSize == 0)
+            {
+                /// No more compressed data available
+                break;
+            }
+        }
+
+        ZSTD_inBuffer input = {
+            this->compressedBuffer.data() + this->compressedBufferPos,
+            this->compressedBufferSize - this->compressedBufferPos,
+            0};
+
+        ZSTD_outBuffer output = {outputBuffer.data() + totalDecompressed, outputBuffer.size() - totalDecompressed, 0};
+
+        const size_t ret = ZSTD_decompressStream(this->zstdContext, &output, &input);
+        if (ZSTD_isError(ret))
+        {
+            throw CannotFormatSourceData("Zstd decompression error: {}", ZSTD_getErrorName(ret));
+        }
+
+        this->compressedBufferPos += input.pos;
+        totalDecompressed += output.pos;
+
+        /// If output buffer is full or no progress was made (need more input), break
+        if (output.pos == 0 && input.pos == 0 && this->reachedEof)
+        {
+            break;
+        }
+    }
+
+    this->totalNumBytesRead += totalDecompressed;
+    if (totalDecompressed == 0)
     {
         return FillTupleBufferResult::eos();
     }
-    return FillTupleBufferResult::withBytes(numBytesRead);
+    return FillTupleBufferResult::withBytes(totalDecompressed);
 }
 
 DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
@@ -81,7 +187,9 @@ DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::s
 
 std::ostream& FileSource::toString(std::ostream& str) const
 {
-    str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
+    const char* compressionStr = this->compressionType == CompressionType::ZSTD ? "zstd" : "none";
+    str << std::format(
+        "\nFileSource(filepath: {}, compression: {}, totalNumBytesRead: {})", this->filePath, compressionStr, this->totalNumBytesRead.load());
     return str;
 }
 
