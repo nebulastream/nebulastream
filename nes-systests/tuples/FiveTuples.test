@@ -2,7 +2,7 @@
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
-CREATE LOGICAL SOURCE fiveTuples(field_1 UINT64);
+CREATE LOGICAL SOURCE fiveTuples(field_1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR fiveTuples TYPE File;
 ATTACH INLINE
 1
@@ -11,7 +11,7 @@ ATTACH INLINE
 4
 5
 
-CREATE SINK sinkFiveTuples(fiveTuples.field_1 UINT64)  TYPE File;
+CREATE SINK sinkFiveTuples(fiveTuples.field_1 UINT64 NOT NULL)  TYPE File;
 
 # Description: simply reads in five tuples with a single value and produces the same tuples
 SELECT field_1 FROM fiveTuples INTO sinkFiveTuples;
