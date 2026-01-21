@@ -82,14 +82,11 @@ T from_chars_with_exception(std::string_view input)
 requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + input.size(), value); })
 {
     T value;
-    auto base = 10;
-    if (input.size() > 2 and input[0] == '0' and (input[1] == 'x' or input[1] == 'X'))
-    {
-        /// If the string starts with 0x, we need to increment the input and set the base to 16
-        base = 16;
-        input = input.substr(2);
-    }
-    auto [parsedTillPtr, errorCode] = std::from_chars<T>(input.data(), input.data() + input.size(), value, base);
+    const bool isBase16 = input.size() > 2 and input[0] == '0' and (input[1] == 'x' or input[1] == 'X');
+    const int base = isBase16 ? 16 : 10;
+    input = isBase16 ? input.substr(2) : input;
+    const auto [parsedTillPtr, errorCode] = std::from_chars<T>(input.data(), input.data() + input.size(), value, base);
+
     if (errorCode == std::errc::invalid_argument)
     {
         throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, NAMEOF_TYPE(T));
