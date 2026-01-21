@@ -22,7 +22,7 @@ namespace NES
 {
 /// Decoder for Snappy encoded data.
 /// The buffers of encoded data must arrive sequentially in the right order.
-/// The data must have been decompressed in the framed snappy format! Otherwise, we cannot tell the length of the compressed block!
+/// The data must have been compressed in the framed snappy format! Otherwise, we cannot tell the length of the compressed block!
 
 class SnappyDecoder final : public Decoder
 {
