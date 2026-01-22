@@ -168,7 +168,7 @@ VarVal VarVal::castToType(const DataType::Type type) const
     std::unreachable();
 }
 
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const DataType type)
+VarVal VarVal::readNonNullableVarValFromMemory(const nautilus::val<int8_t*>& memRef, const DataType type)
 {
     PRECONDITION(
         not type.nullable,
