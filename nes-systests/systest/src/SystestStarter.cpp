@@ -26,6 +26,7 @@
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -347,6 +348,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
 int main(int argc, const char** argv)
 {
+    NES::setupSignalHandlers();
     const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::WorkerId("systest"), "main");
 
