@@ -73,12 +73,51 @@ LogicalOperator addPlacementTrait(const LogicalOperator& op, const std::unordere
             | std::ranges::to<std::vector>());
 }
 
-constexpr void checkError(HighsInt status)
+constexpr auto MODEL_STATUS_STRINGS = std::to_array<std::string_view>({
+    "Not Set", // 0
+    "Load Error", // 1
+    "Model Error", // 2
+    "Presolve Error", // 3
+    "Solve Error", // 4
+    "Postsolve Error", // 5
+    "Model Empty", // 6
+    "Optimal", // 7
+    "Infeasible", // 8
+    "Primal Infeasible or Unbounded", // 9
+    "Unbounded", // 10
+    "Bound on Objective Reached", // 11
+    "Target for Objective Reached", // 12
+    "Time Limit Reached", // 13
+    "Iteration Limit Reached", // 14
+    "Solution Limit Reached", // 15
+    "Interrupt", // 16
+    "Unknown" // 17
+});
+
+constexpr void checkError(HighsInt status, void* highs)
 {
-    if (status != kHighsStatusOk)
+    if (status == kHighsStatusError)
     {
-        throw UnknownException("Highs returned bad status: {}", status);
+        if (highs != nullptr)
+        {
+            auto status = Highs_getModelStatus(highs);
+            throw UnknownException("Highs Failed with an error: {}", MODEL_STATUS_STRINGS.at(status));
+        }
+        throw UnknownException("Highs Failed with an unknown error: {}");
     }
+
+    if (status == kHighsStatusWarning)
+    {
+        if (highs)
+        {
+            auto status = Highs_getModelStatus(highs);
+            NES_WARNING("Highs Warning: {}", MODEL_STATUS_STRINGS.at(status));
+            return;
+        }
+        NES_WARNING("Highs produced a warning without context");
+        return;
+    }
+    INVARIANT(status == kHighsStatusOk, "Highs returned an unexpected status: {}", status);
 }
 
 void validatePlan(const Topology& topology, const LogicalPlan& plan)
@@ -119,11 +158,11 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
         Highs_destroy(highs);
     };
 
-    checkError(Highs_setBoolOptionValue(highs, "output_flag", 0));
-    checkError(Highs_changeObjectiveSense(highs, kHighsObjSenseMinimize)); /// minimize
-    checkError(Highs_setBoolOptionValue(highs, "log_to_console", 0));
-    checkError(Highs_setDoubleOptionValue(highs, "time_limit", 1.0)); /// 1 second
-    checkError(Highs_setDoubleOptionValue(highs, "mip_rel_gap", 0.01)); /// 1% optimality gap
+    checkError(Highs_setBoolOptionValue(highs, "output_flag", 0), highs);
+    checkError(Highs_changeObjectiveSense(highs, kHighsObjSenseMinimize), highs); /// minimize
+    checkError(Highs_setBoolOptionValue(highs, "log_to_console", 0), highs);
+    checkError(Highs_setDoubleOptionValue(highs, "time_limit", 5.0), highs); /// 1 second
+    checkError(Highs_setDoubleOptionValue(highs, "mip_rel_gap", 0.01), highs); /// 1% optimality gap
 
     std::map<std::pair<OperatorId, Topology::NodeId>, int> operatorPlacementMatrix;
     std::vector<std::pair<OperatorId, Topology::NodeId>> reverseIndex;
@@ -154,8 +193,8 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
             operatorPlacementMatrix[{op.getId(), node}] = index;
             /// By default we allow placemnet on every node. we allow values from (0,1) and limit the solution to integers which gives us
             /// exactly {0,1}. Thus if a variable is set to 0 `op` is not placed on `node` and vice versa.
-            checkError(Highs_addCol(highs, index, 0, 1, 0, nullptr, nullptr));
-            checkError(Highs_changeColIntegrality(highs, index, kHighsVarTypeInteger));
+            checkError(Highs_addCol(highs, index, 0, 1, 0, nullptr, nullptr), highs);
+            checkError(Highs_changeColIntegrality(highs, index, kHighsVarTypeInteger), highs);
             reverseIndex.emplace_back(op.getId(), node);
         }
     }
@@ -173,7 +212,7 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
             index.push_back(operatorPlacementMatrix.at({op.getId(), nodeId}));
             value.push_back(1.0);
         }
-        checkError(Highs_addRow(highs, 1.0, 1.0, static_cast<HighsInt>(index.size()), index.data(), value.data()));
+        checkError(Highs_addRow(highs, 1.0, 1.0, static_cast<HighsInt>(index.size()), index.data(), value.data()), highs);
     }
 
     /// Constraint 2: Capacity constraints
@@ -187,7 +226,7 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
             value.push_back(static_cast<double>(operatorCapacityDemand(op)));
         }
         checkError(Highs_addRow(
-            highs, 0, static_cast<double>(capacity.at(nodeId)), static_cast<HighsInt>(index.size()), index.data(), value.data()));
+            highs, 0, static_cast<double>(capacity.at(nodeId)), static_cast<HighsInt>(index.size()), index.data(), value.data()), highs);
     }
 
     /// Constraint 3: Fixed source placements. Adds constraint to the placement matrix for source operators.
@@ -198,7 +237,7 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
             auto placement = HostAddr(sourceOperator->get().getSourceDescriptor().getWorkerId());
             /// Fix placement of source on source host node.
             const size_t var = operatorPlacementMatrix.at({op.getId(), placement});
-            checkError(Highs_changeColBounds(highs, static_cast<HighsInt>(var), 1.0, 1.0));
+            checkError(Highs_changeColBounds(highs, static_cast<HighsInt>(var), 1.0, 1.0), highs);
         }
     }
 
@@ -211,7 +250,7 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
 
     /// Fix placement of sink on sink host node
     const auto sinkVar = operatorPlacementMatrix.at({rootOperatorId, sinkPlacement});
-    checkError(Highs_changeColBounds(highs, sinkVar, 1.0, 1.0));
+    checkError(Highs_changeColBounds(highs, sinkVar, 1.0, 1.0), highs);
 
     /// Constraint 5: Parent-child placement must respect network connectivity
     for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
@@ -230,7 +269,7 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
                         std::array<int, 2> index{
                             operatorPlacementMatrix.at({op.getId(), nodeId1}), operatorPlacementMatrix.at({child.getId(), nodeId2})};
                         std::array values{1.0, 1.0};
-                        checkError(Highs_addRow(highs, 0, 1.0, index.size(), index.data(), values.data()));
+                        checkError(Highs_addRow(highs, 0, 1.0, index.size(), index.data(), values.data()), highs);
                     }
                 }
             }
@@ -262,19 +301,23 @@ solvePlacement(const LogicalPlan& logicalPlan, const Topology& topology, const s
             }
 
             const auto var = operatorPlacementMatrix.at({op.getId(), nodeId});
-            checkError(Highs_changeColCost(highs, var, static_cast<double>(distanceFromSource)));
+            checkError(Highs_changeColCost(highs, var, static_cast<double>(distanceFromSource)), highs);
         }
     }
 
 
     /// Solve
-    checkError(Highs_run(highs));
+    checkError(Highs_run(highs), highs);
+
+    HighsInt model_status = Highs_getModelStatus(highs);
+    HighsInt primal_status;
+    checkError(Highs_getIntInfoValue(highs, "primal_solution_status", &primal_status), highs);
 
     const auto modelStatus = Highs_getModelStatus(highs);
     if (modelStatus == kHighsModelStatusOptimal || modelStatus == kHighsModelStatusTimeLimit || modelStatus == kHighsModelStatusInterrupt)
     {
         std::vector<double> solution(reverseIndex.size());
-        checkError(Highs_getSolution(highs, solution.data(), nullptr, nullptr, nullptr));
+        checkError(Highs_getSolution(highs, solution.data(), nullptr, nullptr, nullptr), highs);
         /// extract all chosen placement variables with 1
         auto placement = std::views::zip(reverseIndex, solution)
             | std::views::filter([](const auto& placementAndSolution) { return std::get<1>(placementAndSolution) == 1.0; })

@@ -18,6 +18,7 @@ vcpkg_from_github(
         HEAD_REF master
         PATCHES
         0001-override-cxx-standard.patch
+        0002-fix-primal-dual-integral-offset-inconsistency.patch
 )
 
 vcpkg_cmake_configure(
