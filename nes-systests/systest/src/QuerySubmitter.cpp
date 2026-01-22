@@ -107,8 +107,7 @@ DistributedQueryStatus QuerySubmitter::waitForQueryTermination(const Distributed
                 fmt::join(queryStatus.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
         }
         if (queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped
-            || queryStatus->getGlobalQueryState() == DistributedQueryState::Failed
-            || queryStatus->getGlobalQueryState() == DistributedQueryState::PartiallyStopped)
+            || queryStatus->getGlobalQueryState() == DistributedQueryState::Failed)
         {
             return *queryStatus;
         }
@@ -130,8 +129,7 @@ std::vector<DistributedQueryStatus> QuerySubmitter::finishedQueries()
                     fmt::join(queryStatus.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
             }
             if (queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped
-                || queryStatus->getGlobalQueryState() == DistributedQueryState::Failed
-                || queryStatus->getGlobalQueryState() == DistributedQueryState::PartiallyStopped)
+                || queryStatus->getGlobalQueryState() == DistributedQueryState::Failed)
             {
                 results.emplace_back(id, std::move(*queryStatus));
             }
