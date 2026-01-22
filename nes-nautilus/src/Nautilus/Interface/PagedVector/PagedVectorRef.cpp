@@ -22,35 +22,36 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/function.hpp>
+#include <nautilus/inline.hpp>
 #include <nautilus/val.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
 
-uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
+NAUTILUS_INLINE uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
 {
     return pagedVector->getTotalNumberOfEntries();
 }
 
-const static TupleBuffer*
+NAUTILUS_INLINE const static TupleBuffer*
 createNewEntryProxy(PagedVector* pagedVector, AbstractBufferProvider* bufferProvider, const uint64_t capacity, const uint64_t bufferSize)
 {
     pagedVector->appendPageIfFull(bufferProvider, capacity, bufferSize);
     return std::addressof(pagedVector->getLastPage());
 }
 
-const TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
+NAUTILUS_INLINE const TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
 {
     return std::addressof(pagedVector->getFirstPage());
 }
 
-const TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
+NAUTILUS_INLINE const TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
 {
     return pagedVector->getTupleBufferForEntry(entryPos);
 }
 
-uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
+NAUTILUS_INLINE uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
 {
     return pagedVector->getBufferPosForEntry(entryPos).value_or(0);
 }
