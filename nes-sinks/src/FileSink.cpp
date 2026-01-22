@@ -104,7 +104,19 @@ void FileSink::start(PipelineExecutionContext&)
     /// Write the schema to the file, if it is empty.
     if (stream->tellp() == 0)
     {
-        const auto schemaStr = formatter->getFormattedSchema();
+        auto schemaStr = formatter->getFormattedSchema();
+
+        /// Encode schema string if encoder was provided
+        if (encoder)
+        {
+            const auto stringSpan = std::as_bytes(std::span(schemaStr));
+            std::vector<char> encodedData{};
+            auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+            PRECONDITION(
+                encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED,
+                "Error occured during encoding process of schema string.");
+            schemaStr = std::string(encodedData.data(), encodingResult.compressedSize);
+        }
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
@@ -124,7 +136,7 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
             auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
             PRECONDITION(
                 encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
-            fBuffer = std::string(encodedData.begin(), encodedData.end());
+            fBuffer = std::string(encodedData.data(), encodingResult.compressedSize);
         }
         NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
