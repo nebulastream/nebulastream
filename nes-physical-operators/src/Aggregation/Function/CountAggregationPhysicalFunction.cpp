@@ -56,7 +56,7 @@ void CountAggregationPhysicalFunction::lift(
 
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, resultType);
+    const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
 
     /// Updating the count with the new value
     const auto newCount = count + multiplicationFactor;
@@ -72,11 +72,11 @@ void CountAggregationPhysicalFunction::combine(
 {
     /// Reading the count from the first aggregation state
     const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto count1 = VarVal::readVarValFromMemory(memAreaCount1, resultType);
+    const auto count1 = VarVal::readNonNullableVarValFromMemory(memAreaCount1, resultType);
 
     /// Reading the count from the second aggregation state
     const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto count2 = VarVal::readVarValFromMemory(memAreaCount2, resultType);
+    const auto count2 = VarVal::readNonNullableVarValFromMemory(memAreaCount2, resultType);
 
     /// Adding the counts together
     const auto newCount = count1 + count2;
@@ -89,7 +89,7 @@ Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, resultType);
+    const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
 
     /// Creating a record with the count
     Record record;
