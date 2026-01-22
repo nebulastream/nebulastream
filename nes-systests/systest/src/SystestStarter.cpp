@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -23,12 +24,16 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <signal.h>
+#include <unistd.h>
 #include <Configurations/Util.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
@@ -372,8 +377,65 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 }
 }
 
+struct Pipe
+{
+    int fds[2]{};
+
+    int read_end() const { return fds[0]; }
+
+    int write_end() const { return fds[1]; }
+};
+
+void do_signal_safe_trace(cpptrace::frame_ptr* buffer, std::size_t count)
+{
+    // Setup pipe and spawn child
+    Pipe input_pipe;
+    pipe(input_pipe.fds);
+    const pid_t pid = fork();
+    if (pid == -1)
+    {
+        const char* fork_failure_message = "fork() failed\n";
+        write(STDERR_FILENO, fork_failure_message, strlen(fork_failure_message));
+        return;
+    }
+    if (pid == 0)
+    { // child
+        dup2(input_pipe.read_end(), STDIN_FILENO);
+        close(input_pipe.read_end());
+        close(input_pipe.write_end());
+        execl("signal_tracer", "signal_tracer", nullptr);
+        const char* exec_failure_message = "exec(signal_tracer) failed: Make sure the signal_tracer executable is in "
+                                           "the current working directory and the binary's permissions are correct.\n";
+        write(STDERR_FILENO, exec_failure_message, strlen(exec_failure_message));
+        _exit(1);
+    }
+    // Resolve to safe_object_frames and write those to the pipe
+    for (std::size_t i = 0; i < count; i++)
+    {
+        cpptrace::safe_object_frame frame;
+        cpptrace::get_safe_object_frame(buffer[i], &frame);
+        write(input_pipe.write_end(), &frame, sizeof(frame));
+    }
+    close(input_pipe.read_end());
+    close(input_pipe.write_end());
+    // Wait for child
+    waitpid(pid, nullptr, 0);
+}
+
+void safe_handler(int signal)
+{
+    cpptrace::frame_ptr buffer[1024];
+    // safe_generate_raw_trace does not allocate memory
+    auto buffersUsed = cpptrace::safe_generate_raw_trace(buffer, 1024);
+    do_signal_safe_trace(buffer, buffersUsed);
+
+    _exit(signal); // Use _exit to avoid atexit handlers
+}
+
 int main(int argc, const char** argv)
 {
+    cpptrace::register_terminate_handler();
+    signal(SIGSEGV, safe_handler);
     auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::WorkerId("systest"), "main");
 
