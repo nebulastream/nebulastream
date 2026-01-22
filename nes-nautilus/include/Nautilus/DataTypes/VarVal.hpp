@@ -57,7 +57,7 @@ class VarVal
 {
 public:
     /// Construct a VarVal object from memory
-    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type);
+    static VarVal readNonNullableVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type);
     static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type, const nautilus::val<bool>& null);
 
     /// Construct a VarVal object for example via VarVal(32)
