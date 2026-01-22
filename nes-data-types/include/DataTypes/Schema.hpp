@@ -114,7 +114,7 @@ private:
     std::vector<Field> fields;
     size_t sizeOfSchemaInBytes{0};
     std::unordered_map<std::string, size_t> nameToField;
-    friend struct Unreflector<Schema>;
+    // friend struct Unreflector<Schema>;
 };
 
 /// Returns a copy of the input schema without any source qualifier on the schema fields

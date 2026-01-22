@@ -178,20 +178,14 @@ Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogical
 
 SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl) const
 {
+    auto [predicate] = unreflect<ReflectedSelectionLogicalOperator>(rfl);
 
+    if (!predicate.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize selection logical operator");
+    }
 
-    auto predicate = unreflect<TypedLogicalFunction<>>(rfl);
-
-
-    throw NotImplemented();
-    // if (!predicate.has_value())
-    // {
-    //     throw CannotDeserialize("Selection operator is missing a predicate");
-    // }
-    //
-    // auto predicate = std::move(predicate.value());
-    //
-    // return SelectionLogicalOperator(predicate);
+    return SelectionLogicalOperator(predicate.value());
 }
 
 

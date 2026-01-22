@@ -23,6 +23,21 @@
 namespace NES
 {
 
+struct ReflectedOperator
+{
+    std::string type;
+    uint64_t operatorId = 0;
+    std::vector<uint64_t> childrenIds;
+    Reflected config;
+    TraitSet traitSet;
+    std::vector<Schema> inputSchemas;
+    std::optional<Schema> outputSchema;
+};
+
+
+
+/// Everythin Below is outdated and will be deleted
+
 enum class SerializedDataType
 {
     UINT8,

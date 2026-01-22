@@ -129,15 +129,20 @@ Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValu
     return reflect(ReflectedConstantValueLogicalFunction{function.getConstantValue(), function.getDataType().type});
 }
 
-ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& _) const
+ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& rfl) const
 {
-    // TODO to implement
-    throw NotImplemented("Unreflector");
+    auto [value, type] = unreflect<ReflectedConstantValueLogicalFunction>(rfl);
+    return ConstantValueLogicalFunction{DataType{type}, value};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.data.isEmpty())
+    {
+        return unreflect<ConstantValueLogicalFunction>(arguments.data);
+    }
+
     if (not arguments.config.contains("constantValueAsString"))
     {
         throw CannotDeserialize("ConstantValueLogicalFunction requires a constantValueAsString in its config");

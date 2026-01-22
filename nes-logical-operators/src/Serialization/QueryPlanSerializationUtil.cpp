@@ -39,17 +39,6 @@
 namespace NES
 {
 
-struct ReflectedOperator
-{
-    std::string type;
-    uint64_t operatorId;
-    std::vector<uint64_t> childrenIds;
-    Reflected config;
-    TraitSet traitSet;
-    std::vector<Schema> inputSchemas;
-    std::optional<Schema> outputSchema;
-};
-
 void serialize(TypedLogicalOperator<> op, SerializableOperator& serialized)
 {
     ReflectedOperator reflectedOperator;
@@ -70,7 +59,7 @@ void serialize(TypedLogicalOperator<> op, SerializableOperator& serialized)
     const auto serializedString = rfl::json::write(reflectedOperator);
 
     const auto deserializedOpt = rfl::json::read<ReflectedOperator>(serializedString);
-
+    const auto test= deserializedOpt.value().operatorId;
     serialized.set_reflect(serializedString);
 }
 
@@ -114,15 +103,28 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     {
         CPPTRACE_TRY
         {
-            const auto operatorId = serializedOp.operator_id();
-            auto [_, inserted] = baseOps.emplace(operatorId, OperatorSerializationUtil::deserializeOperator(serializedOp));
+            auto serializedOpt = rfl::json::read<ReflectedOperator>(serializedOp.reflect());
+            if (!serializedOpt.has_value())
+            {
+                throw CannotDeserialize(serializedOpt.error().what());
+            }
+            const auto serialized = std::move(serializedOpt.value());
+
+            auto op = OperatorSerializationUtil::deserializeOperator(serialized);
+            const TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOp.trait_set());
+
+            op = op.withTraitSet(traitSet).withOperatorId(OperatorId{serialized.operatorId});;
+
+            const auto operatorId = op->getOperatorId().getRawValue();
+
+            auto [_, inserted] = baseOps.emplace(operatorId, op);
             if (!inserted)
             {
                 throw CannotDeserialize("Duplicate operator id in {}", serializedQueryPlan.DebugString());
             }
             auto& opChildren = baseChildren[operatorId];
-            opChildren.reserve(serializedOp.children_ids_size());
-            for (auto child : serializedOp.children_ids())
+            opChildren.reserve(serialized.childrenIds.size());
+            for (auto child : serialized.childrenIds)
             {
                 opChildren.push_back(child);
             }

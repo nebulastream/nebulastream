@@ -46,17 +46,11 @@ namespace NES
 {
 
 
-LogicalOperator OperatorSerializationUtil::deserializeOperator(const SerializableOperator& serializedOperator)
+LogicalOperator OperatorSerializationUtil::deserializeOperator(const ReflectedOperator& serialized)
 {
-    std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
-    {
-        auto serializedOpt = rfl::json::read<SerializedOperator>(serializedOperator.reflect());
-        if (!serializedOpt.has_value())
-        {
-            throw CannotDeserialize(serializedOpt.error().what());
-        }
 
-        auto serialized = std::move(serializedOpt.value());
+    std::optional<LogicalOperator> const result = [&] -> std::optional<LogicalOperator>
+    {
 
         if (serialized.type == "Source")
         {
@@ -71,97 +65,28 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
         auto registryArgument
             = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .configNew = serialized.config};
 
+        auto logicalOperatorOpt = LogicalOperatorRegistry::instance().create(serialized.type, registryArgument);
 
-        return LogicalOperatorRegistry::instance().create(serialized.type, registryArgument);
-
-
-
-        // if (serializedOpt.has_value() && serializedOpt.value().type == "Equal")
-        // {
-        //     auto serialized = std::move(serializedOpt.value());
-        //     auto registryArgument
-        //         = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .reflec = ""};
-        //
-        //
-        //     if (!serializedOperator.reflect().empty())
-        //     {
-        //         registryArgument.reflec = serializedOperator.reflect();
-        //     }
-        //
-        //     registryArgument.inputSchemas = SerializedUtils::deserializeSchemas(serialized.inputSchemas);
-        //     if (serialized.outputSchema.has_value())
-        //     {
-        //         registryArgument.outputSchema = SerializedUtils::deserializeSchema(serialized.outputSchema.value());
-        //     }
-        //
-        //     return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
-        // }
-
-        if (serializedOperator.has_sink())
+        if (!logicalOperatorOpt.has_value())
         {
-            const auto& sink = serializedOperator.sink();
-            const auto serializedSinkDescriptor = sink.has_sinkdescriptor() ? std::make_optional(sink.sinkdescriptor()) : std::nullopt;
-            DescriptorConfig::Config config;
-            for (const auto& [key, value] : serializedOperator.config())
-            {
-                config[key] = protoToDescriptorConfigType(value);
-            }
-            auto sinkName = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
-            if (not std::holds_alternative<std::string>(sinkName))
-            {
-                throw CannotDeserialize(
-                    "Expected string for sinkName but got {} while deserializing\n{}", sinkName, serializedOperator.DebugString());
-            }
-
-            auto sinkOperator = SinkLogicalOperator();
-            sinkOperator.sinkName = std::get<std::string>(sinkName);
-            sinkOperator.sinkDescriptor
-                = serializedSinkDescriptor.transform([](const auto& serialized) { return deserializeSinkDescriptor(serialized); });
-
-            return sinkOperator;
+            return std::nullopt;
         }
 
-        // if (serializedOperator.has_operator_())
-        // {
-        //     DescriptorConfig::Config config;
-        //     for (const auto& [key, value] : serializedOperator.config())
-        //     {
-        //         config[key] = protoToDescriptorConfigType(value);
-        //     }
-        //
-        //     auto registryArgument = LogicalOperatorRegistryArguments{
-        //         .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
-        //         .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
-        //         .config = config,
-        //         .reflec = ""};
-        //
-        //     if (!serializedOperator.reflect().empty())
-        //     {
-        //         registryArgument.reflec = serializedOperator.reflect();
-        //     }
-        //
-        //
-        //     for (const auto& schema : serializedOperator.operator_().input_schemas())
-        //     {
-        //         registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
-        //     }
-        //
-        //     if (serializedOperator.operator_().has_output_schema())
-        //     {
-        //         registryArgument.outputSchema = SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().output_schema());
-        //     }
-        //     return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
-        // }
-        // return std::nullopt;
+        auto logicalOperator = logicalOperatorOpt.value();
+
+        logicalOperator = logicalOperator
+            .withInferredSchema(serialized.inputSchemas);
+
+        return std::make_optional(logicalOperator);
     }();
 
     if (result.has_value())
     {
-        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set());
-        return result->withTraitSet(std::move(traitSet)).withOperatorId(OperatorId{serializedOperator.operator_id()});
+        return result.value();
     }
 
-    throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());
+    // throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());
+    throw CannotDeserialize("could not de-serialize this serialized operator {}", serialized.operatorId);
 }
 
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)

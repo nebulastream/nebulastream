@@ -266,7 +266,10 @@ Schema Unreflector<Schema>::operator()(const Reflected& rfl) const
 {
     auto [fields] = unreflect<detail::ReflectedSchema>(rfl);
     Schema schema{};
-    schema.fields = std::move(fields);
+    for (auto field: fields)
+    {
+        schema.addField(field.name, field.dataType);
+    }
     return schema;
 }
 

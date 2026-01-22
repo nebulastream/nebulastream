@@ -146,19 +146,23 @@ struct ReflectedFieldAccessLogicalFunction
 Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
 {
     return reflect(ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType().type});
-    // TODO to implement
-    throw NotImplemented("Reflector");
 }
 
-FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& _) const
+FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& rfl) const
 {
-    // TODO to implement
-    throw NotImplemented("Unreflector");
+    auto [name, type] = unreflect<ReflectedFieldAccessLogicalFunction>(rfl);
+
+    return FieldAccessLogicalFunction{DataType{type}, name};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.data.isEmpty())
+    {
+        return unreflect<FieldAccessLogicalFunction>(arguments.data);
+    }
+
     if (not arguments.config.contains("FieldName"))
     {
         throw CannotDeserialize(

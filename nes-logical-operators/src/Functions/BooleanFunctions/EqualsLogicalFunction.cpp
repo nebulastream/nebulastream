@@ -159,6 +159,10 @@ EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Refle
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.data.isEmpty())
+    {
+        return unreflect<EqualsLogicalFunction>(arguments.data);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());

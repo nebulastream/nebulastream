@@ -37,6 +37,10 @@ struct Reflected
 
     const rfl::Generic* operator->() const { return &value; }
 
+    bool isEmpty() const {
+        return this->value.is_null();
+    }
+
 private:
     rfl::Generic value;
 };
