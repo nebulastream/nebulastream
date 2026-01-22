@@ -19,6 +19,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Signal.hpp>
 #include <cpptrace/from_current.hpp>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
@@ -57,6 +58,7 @@ int main(const int argc, const char* argv[])
 {
     CPPTRACE_TRY
     {
+        NES::setupSignalHandlers();
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
         if (std::signal(SIGINT, signalHandler) == SIG_ERR)
         {
