@@ -277,7 +277,7 @@ TEST_F(VarValTest, readFromMemoryTest)
     {
         std::vector<int8_t> memory(sizeof(T));
         std::memcpy(memory.data(), &value, sizeof(T));
-        const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), type);
+        const VarVal varVal = VarVal::readNonNullableVarValFromMemory(memory.data(), type);
         EXPECT_EQ(varVal.cast<nautilus::val<T>>(), value);
         return 0;
     };
