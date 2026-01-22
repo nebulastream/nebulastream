@@ -17,3 +17,4 @@ add_source_files(nes-codecs
         Encoders/EncoderProvider.cpp
 )
 add_plugin(LZ4 Decoder nes-codecs Decoders/LZ4Decoder.cpp)
+add_plugin(LZ4 Encoder nes-codecs Encoders/LZ4Encoder.cpp)
