@@ -27,9 +27,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Serialization.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include "Util/Serialization.hpp"
 
 namespace NES
 {

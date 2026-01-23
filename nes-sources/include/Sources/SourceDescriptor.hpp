@@ -33,10 +33,10 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Serialization.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <SerializableOperator.pb.h>
-#include "Util/Serialization.hpp"
 
 namespace NES
 {

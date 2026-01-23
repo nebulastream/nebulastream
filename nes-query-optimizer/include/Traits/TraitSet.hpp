@@ -23,9 +23,9 @@
 
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Serialization.hpp>
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
-#include "Util/Serialization.hpp"
 
 namespace NES
 {

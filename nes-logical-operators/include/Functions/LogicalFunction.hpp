@@ -34,8 +34,6 @@
 #include <SerializableVariantDescriptor.pb.h>
 #include <nameof.hpp>
 
-#include "LogicalFunction.hpp"
-
 namespace NES
 {
 

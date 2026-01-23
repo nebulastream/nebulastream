@@ -22,7 +22,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include "Util/Serialization.hpp"
+#include <Util/Serialization.hpp>
 
 namespace NES
 {

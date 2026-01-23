@@ -28,6 +28,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Serialization.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -37,7 +38,6 @@
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
 #include <nameof.hpp>
-#include "Util/Serialization.hpp"
 
 namespace NES
 {

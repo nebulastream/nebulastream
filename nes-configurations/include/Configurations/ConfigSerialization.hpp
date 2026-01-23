@@ -13,8 +13,8 @@
 */
 
 #pragma once
-#include "Enums/EnumWrapper.hpp"
-#include "Util/Serialization.hpp"
+#include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Serialization.hpp>
 
 #include <SerializableVariantDescriptor.pb.h>
 

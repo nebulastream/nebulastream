@@ -17,8 +17,8 @@
 #include <string>
 
 #include <Identifiers/NESStrongTypeJson.hpp>
+#include <Traits/TraitSet.hpp>
 #include <rfl.hpp>
-#include "Traits/TraitSet.hpp"
 
 namespace NES
 {

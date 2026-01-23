@@ -24,12 +24,12 @@
 
 #include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "Util/Overloaded.hpp"
 
 namespace NES
 {
