@@ -57,7 +57,7 @@ struct DecompositionContext
 
     void addPlanToNode(LogicalOperator&& op, const Topology::NodeId& nodeId)
     {
-        plansByNode[nodeId].emplace_back(INVALID_LOCAL_QUERY_ID, std::vector{std::move(op)});
+        plansByNode[nodeId].emplace_back(QueryId(INVALID_LOCAL_QUERY_ID), std::vector{std::move(op)});
     }
 };
 

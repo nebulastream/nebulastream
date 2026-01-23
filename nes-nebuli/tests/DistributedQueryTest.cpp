@@ -160,9 +160,9 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateAllRegistered)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Registered, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Registered, .metrics = {}};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2]
-        = LocalQueryStatus{.queryId = qid2, .state = QueryState::Registered, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid2), .state = QueryState::Registered, .metrics = {}};
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Registered);
 }
@@ -174,9 +174,9 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateAllRunning)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Running, .metrics = {}};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2]
-        = LocalQueryStatus{.queryId = qid2, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid2), .state = QueryState::Running, .metrics = {}};
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Running);
 }
@@ -188,9 +188,9 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateAllStopped)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Stopped, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Stopped, .metrics = {}};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2]
-        = LocalQueryStatus{.queryId = qid2, .state = QueryState::Stopped, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid2), .state = QueryState::Stopped, .metrics = {}};
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Stopped);
 }
@@ -202,9 +202,9 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStatePartiallyStopped)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Running, .metrics = {}};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2]
-        = LocalQueryStatus{.queryId = qid2, .state = QueryState::Stopped, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid2), .state = QueryState::Stopped, .metrics = {}};
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::PartiallyStopped);
 }
@@ -216,9 +216,9 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateFailed)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Running, .metrics = {}};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2]
-        = LocalQueryStatus{.queryId = qid2, .state = QueryState::Failed, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid2), .state = QueryState::Failed, .metrics = {}};
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Failed);
 }
@@ -230,7 +230,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateUnreachable)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Running, .metrics = {}};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2] = std::unexpected(QueryStatusFailed("Connection error"));
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Unreachable);
@@ -243,7 +243,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateFailedWithUnreacha
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Failed, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Failed, .metrics = {}};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2] = std::unexpected(QueryStatusFailed("Connection error"));
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Failed);
@@ -255,7 +255,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGetExceptionsEmpty)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Running, .metrics = {}};
 
     auto exceptions = status.getExceptions();
     EXPECT_TRUE(exceptions.empty());
@@ -271,7 +271,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGetExceptionsFromMetrics)
     metrics.error = QueryStartFailed("Test error");
 
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Failed, .metrics = metrics};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Failed, .metrics = metrics};
 
     auto exceptions = status.getExceptions();
     EXPECT_EQ(exceptions.size(), 1);
@@ -298,7 +298,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusCoalesceExceptionEmpty)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Running, .metrics = {}};
 
     auto exception = status.coalesceException();
     EXPECT_FALSE(exception.has_value());
@@ -314,7 +314,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusCoalesceExceptionSingle)
     metrics.error = QueryStartFailed("Test error");
 
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Failed, .metrics = metrics};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Failed, .metrics = metrics};
 
     auto exception = status.coalesceException();
     EXPECT_TRUE(exception.has_value());
@@ -335,11 +335,11 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusCoalesceExceptionMultiple)
     metrics2.error = QueryStopFailed("Error 2");
 
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Failed, .metrics = metrics1};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Failed, .metrics = metrics1};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2]
-        = LocalQueryStatus{.queryId = qid2, .state = QueryState::Failed, .metrics = metrics2};
+        = LocalQueryStatus{.queryId = QueryId(qid2), .state = QueryState::Failed, .metrics = metrics2};
     status.localStatusSnapshots[GrpcAddr("worker-3:8080")][qid3]
-        = LocalQueryStatus{.queryId = qid3, .state = QueryState::Running, .metrics = QueryMetrics{}};
+        = LocalQueryStatus{.queryId = QueryId(qid3), .state = QueryState::Running, .metrics = QueryMetrics{}};
 
     auto exception = status.coalesceException();
     EXPECT_TRUE(exception.has_value());
@@ -356,7 +356,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusCoalesceQueryMetricsEmpty)
     DistributedQueryStatus status;
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Running, .metrics = {}};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Running, .metrics = {}};
 
     auto metrics = status.coalesceQueryMetrics();
     EXPECT_FALSE(metrics.start.has_value());
@@ -385,9 +385,9 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusCoalesceQueryMetricsWithTimes
     metrics2.stop = system_clock::time_point{microseconds(6000)};
 
     status.localStatusSnapshots[GrpcAddr("worker-1:8080")][qid1]
-        = LocalQueryStatus{.queryId = qid1, .state = QueryState::Stopped, .metrics = metrics1};
+        = LocalQueryStatus{.queryId = QueryId(qid1), .state = QueryState::Stopped, .metrics = metrics1};
     status.localStatusSnapshots[GrpcAddr("worker-2:8080")][qid2]
-        = LocalQueryStatus{.queryId = qid2, .state = QueryState::Stopped, .metrics = metrics2};
+        = LocalQueryStatus{.queryId = QueryId(qid2), .state = QueryState::Stopped, .metrics = metrics2};
 
     auto coalescedMetrics = status.coalesceQueryMetrics();
 

@@ -60,7 +60,7 @@ namespace
 NES::LocalQueryStatus makeSummary(const NES::LocalQueryId id, const NES::QueryState currState, const std::shared_ptr<NES::Exception>& err)
 {
     NES::LocalQueryStatus queryStatus;
-    queryStatus.queryId = id;
+    queryStatus.queryId = NES::QueryId(id);
     queryStatus.state = currState;
     if (currState == NES::QueryState::Failed && err)
     {
@@ -175,7 +175,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_LOCAL_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    const LogicalPlan plan{QueryId(INVALID_LOCAL_QUERY_ID), {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
     DecomposedLogicalPlan decomposedPlan{
         std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost:8080"), std::vector{plan}}}};
     const DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), plan};
@@ -208,7 +208,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", "localhost", {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_LOCAL_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    const LogicalPlan plan{QueryId(INVALID_LOCAL_QUERY_ID), {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
     DecomposedLogicalPlan decomposedPlan{
         std::unordered_map<GrpcAddr, std::vector<LogicalPlan>>{{GrpcAddr("localhost:8080"), std::vector{plan}}}};
     const DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), plan};

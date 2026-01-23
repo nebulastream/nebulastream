@@ -49,22 +49,22 @@ std::expected<LocalQueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::reg
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LocalQueryId queryId)
 {
-    return worker.startQuery(queryId);
+    return worker.startQuery(QueryId(queryId));
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(LocalQueryId queryId)
 {
-    return worker.stopQuery(queryId, QueryTerminationType::Graceful);
+    return worker.stopQuery(QueryId(queryId), QueryTerminationType::Graceful);
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::unregister(LocalQueryId queryId)
 {
-    return worker.unregisterQuery(queryId);
+    return worker.unregisterQuery(QueryId(queryId));
 }
 
 std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::status(LocalQueryId queryId) const
 {
-    return worker.getQueryStatus(queryId);
+    return worker.getQueryStatus(QueryId(queryId));
 }
 
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const

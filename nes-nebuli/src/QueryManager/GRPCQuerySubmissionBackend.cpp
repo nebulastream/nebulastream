@@ -135,7 +135,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Lo
         return std::unexpected{
             QueryStatusFailed("Unknown query state `{}` for query: {}", magic_enum::enum_name(response.state()), queryId)};
     }
-    return LocalQueryStatus(LocalQueryId(response.queryid()), *state, metrics);
+    return LocalQueryStatus(QueryId(LocalQueryId(response.queryid())), *state, metrics);
 }
 
 std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
