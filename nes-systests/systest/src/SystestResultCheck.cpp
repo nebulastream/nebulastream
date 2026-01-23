@@ -127,6 +127,27 @@ public:
     explicit ResultTuples(std::vector<std::string> results, const std::vector<size_t>& expectedResultsFieldSortIdxs)
         : results(std::move(results))
     {
+        /// We need to add NULL into each column that has no values to be able to compare it later on
+        for (auto& line : this->results)
+        {
+            auto tokens = line | std::views::split(',')
+                | std::views::transform(
+                              [](auto&& rng)
+                              {
+                                  const std::string token(rng.begin(), rng.end());
+                                  return token.empty() ? "NULL" : token;
+                              });
+            std::ostringstream oss;
+            std::ranges::copy(tokens, std::ostream_iterator<std::string>(oss, ","));
+            std::string s = oss.str();
+            if (not s.empty())
+            {
+                /// Removing trailing comma
+                s.pop_back();
+            }
+            line = s;
+        }
+
         /// We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
         /// Additionally, we remove double spaces, as we expect a single space between the fields
         std::ranges::for_each(this->results, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
