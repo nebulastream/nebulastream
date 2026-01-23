@@ -56,7 +56,7 @@ void SumAggregationPhysicalFunction::lift(
     const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, isNull);
 
     /// Updating the sum and count with the new value
-    const auto newSum = sum + (value * multiplicationFactor).castToType(inputType.type);
+    const auto newSum = (sum + (value * multiplicationFactor)).castToType(inputType.type);
     const auto newIsNull = inputType.isNullableAsBool() & static_cast<nautilus::val<int>>(static_cast<int>(value.isNull()))
         | static_cast<nautilus::val<int>>(static_cast<int>(isNull));
 
@@ -83,7 +83,7 @@ void SumAggregationPhysicalFunction::combine(
     const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType, isNull2);
 
     /// Adding the sums together
-    const auto newSum = sum1 + sum2;
+    const auto newSum = (sum1 + sum2).castToType(inputType.type);
 
     /// Writing the new sum back to the first aggregation state
     newSum.writeToMemory(memAreaSum1);

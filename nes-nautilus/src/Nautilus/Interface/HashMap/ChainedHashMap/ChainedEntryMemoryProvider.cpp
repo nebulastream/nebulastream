@@ -85,7 +85,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             {
                 /// Reading the first byte (null) and then incrementing the castedEntryAddress by 1 byte to read the actual value
                 null = readValueFromMemRef<bool>(memoryAddress);
-                memoryAddress += 1;
+                memoryAddress = memoryAddress + nautilus::val<uint64_t>{1};
             }
 
             if (type.isType(DataType::Type::VARSIZED))
@@ -160,7 +160,7 @@ void writeVarVal(
     {
         /// Writing the null value to the first byte and then incrementing the castedEntryAddress by 1 byte to store the actual value
         VarVal{value.isNull()}.writeToMemory(memoryAddress);
-        memoryAddress += 1;
+        memoryAddress = memoryAddress + nautilus::val<uint64_t>{1};
     }
 
     if (type.isType(DataType::Type::VARSIZED))
