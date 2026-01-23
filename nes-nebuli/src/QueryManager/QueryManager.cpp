@@ -119,10 +119,12 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     for (const auto& [grpcAddr, localPlans] : plan)
     {
         INVARIANT(backends.contains(grpcAddr), "Plan was assigned to a node ({}) that is not part of the cluster", grpcAddr);
-        for (const auto& localPlan : localPlans)
+        for (auto localPlan : localPlans)
         {
             try
             {
+                /// Set the distributed query ID on the local plan before sending to worker
+                localPlan.setQueryId(QueryId::createDistributed(id));
                 const auto result = backends.at(grpcAddr).registerQuery(localPlan);
                 if (result)
                 {
