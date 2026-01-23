@@ -32,6 +32,8 @@
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
