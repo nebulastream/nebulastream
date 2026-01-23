@@ -26,7 +26,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Serialization/SerializedUtils.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -143,20 +142,6 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                descriptor.getParserConfig().parserType,
                escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
                escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
-}
-
-SerializedSourceDescriptor SourceDescriptor::serialized() const
-{
-    SerializedSourceDescriptor serialized;
-    serialized.physicalSourceId = physicalSourceId.getRawValue();
-    serialized.name = logicalSource.getLogicalSourceName();
-    serialized.type = sourceType;
-    serialized.schema = SerializedUtils::serializeSchema(*logicalSource.getSchema());
-    serialized.parserConfig = rfl::make_box<ParserConfig>(parserConfig);
-
-    serialized.config = rfl::to_generic(SerializedUtils::serializeDescriptorConfig(getConfig()));
-
-    return serialized;
 }
 
 SerializableSourceDescriptor SourceDescriptor::serialize() const

@@ -30,7 +30,6 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Serialization/SerializedUtils.hpp>
 #include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>

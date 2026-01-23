@@ -28,13 +28,10 @@ namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
-class SerializedUtils;
-
 class LogicalSource
 {
     friend SourceCatalog;
     friend OperatorSerializationUtil;
-    friend SerializedUtils;
     friend struct Unreflector<LogicalSource>;
     explicit LogicalSource(std::string logicalSourceName, const Schema& schema);
 

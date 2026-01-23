@@ -45,7 +45,6 @@ public:
     [[nodiscard]] bool operator==(const ConstantValueLogicalFunction& rhs) const;
 
     [[nodiscard]] SerializableFunction serialize() const;
-    [[nodiscard]] SerializedFunction serialized() const;
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ConstantValueLogicalFunction withDataType(const DataType& dataType) const;

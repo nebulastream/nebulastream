@@ -47,7 +47,6 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction withFieldName(std::string fieldName) const;
 
     [[nodiscard]] SerializableFunction serialize() const;
-    [[nodiscard]] SerializedFunction serialized() const;
 
     [[nodiscard]] bool operator==(const FieldAccessLogicalFunction& rhs) const;
 

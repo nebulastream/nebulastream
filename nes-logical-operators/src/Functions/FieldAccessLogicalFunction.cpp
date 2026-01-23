@@ -25,7 +25,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Serialization/SerializedUtils.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -125,15 +124,6 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
 
     DataTypeSerializationUtil::serializeDataType(dataType, serializedFunction.mutable_data_type());
 
-    return serializedFunction;
-}
-
-SerializedFunction FieldAccessLogicalFunction::serialized() const
-{
-    SerializedFunction serializedFunction;
-    serializedFunction.functionType = NAME;
-    serializedFunction.config.emplace("FieldName", getFieldName());
-    serializedFunction.dataType = SerializedUtils::serializeDataType(dataType);
     return serializedFunction;
 }
 

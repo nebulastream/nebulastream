@@ -24,7 +24,6 @@
 
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Serialization/SerializedData.hpp>
-#include <Serialization/SerializedUtils.hpp>
 #include <fmt/format.h>
 
 #include <Configurations/Descriptor.hpp>

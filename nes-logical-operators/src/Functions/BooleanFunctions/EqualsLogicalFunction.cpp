@@ -26,7 +26,6 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Serialization/SerializedUtils.hpp>
 #include <Serialization/LogicalFunctionSerialization.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -110,25 +109,6 @@ SerializableFunction EqualsLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-SerializedFunction EqualsLogicalFunction::serialized() const
-{
-    SerializedFunction serializedFunction;
-    serializedFunction.functionType = NAME;
-    serializedFunction.dataType = SerializedUtils::serializeDataType(this->getDataType());
-    for (const auto& child : getChildren())
-    {
-        /// TODO: Will be generalized when `serialized` function is added to concept
-        if (child.getType() == "FieldAccess")
-        {
-            serializedFunction.children.emplace_back(child.getAs<FieldAccessLogicalFunction>()->serialized());
-        }
-        else if (child.getType() == "ConstantValue")
-        {
-            serializedFunction.children.emplace_back(child.getAs<ConstantValueLogicalFunction>()->serialized());
-        }
-    }
-    return serializedFunction;
-}
 
 struct ReflectedEqualsLogicalFunction
 {

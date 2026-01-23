@@ -26,7 +26,6 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
-#include <Serialization/SerializedUtils.hpp>
 #include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <rfl/json.hpp>

@@ -37,7 +37,6 @@ public:
     EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
 
     [[nodiscard]] SerializableFunction serialize() const;
-    [[nodiscard]] SerializedFunction serialized() const;
 
     [[nodiscard]] bool operator==(const EqualsLogicalFunction& rhs) const;
 
