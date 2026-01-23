@@ -119,7 +119,7 @@ struct ReflectedSinkDescriptor
     std::variant<std::string, uint64_t> sinkName;
     Schema schema;
     std::string sinkType;
-    DescriptorConfig::Config config;
+    Reflected config;
 };
 
 Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
@@ -128,14 +128,14 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
         .sinkName = descriptor.getSinkName(),
         .schema = *descriptor.getSchema(),
         .sinkType = descriptor.getSinkType(),
-        .config = descriptor.getConfig()
+        .config = descriptor.getReflectedConfig(),
     });
 }
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& rfl) const
 {
     auto [name, schema, type, config] = unreflect<ReflectedSinkDescriptor>(rfl);
-    return SinkDescriptor{name, schema, type, config};
+    return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config)};
 }
 
 }

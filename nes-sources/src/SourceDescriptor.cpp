@@ -190,7 +190,7 @@ struct ReflectedSourceDescriptor
     LogicalSource logicalSource;
     std::string type;
     ParserConfig parserConfig;
-    DescriptorConfig::Config config;
+    Reflected config;
 };
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
@@ -200,7 +200,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .logicalSource = sourceDescriptor.logicalSource,
         .type = sourceDescriptor.sourceType,
         .parserConfig = sourceDescriptor.parserConfig,
-        .config = sourceDescriptor.getConfig()
+        .config = sourceDescriptor.getReflectedConfig()
     };
 
     return reflect(descriptor);
@@ -209,11 +209,13 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
 SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
 {
     auto reflectedSourceDescriptor = unreflect<ReflectedSourceDescriptor>(rfl);
+
+    DescriptorConfig::Config config;
     return SourceDescriptor{
         PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
         LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
         reflectedSourceDescriptor.type,
-        reflectedSourceDescriptor.config,
+        Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
         std::move(reflectedSourceDescriptor.parserConfig)};
 }
 }

@@ -37,6 +37,7 @@
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
 #include <nameof.hpp>
+#include "Util/Serialization.hpp"
 
 namespace NES
 {
@@ -300,7 +301,23 @@ struct Descriptor
     ~Descriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor);
-    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs) = default;
+    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs) {
+        if (lhs.config.size() != rhs.config.size()) return false;
+        for (auto [key, value]: lhs.config)
+        {
+            auto it = rhs.config.find(key);
+            if (it == rhs.config.end())
+            {
+                return false;
+            }
+            if (it->second != value)
+            {
+                return false;
+            }
+        }
+        return true;
+
+    };
 
     /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
     /// Uses the key to retrieve to lookup the config paramater.
@@ -347,6 +364,8 @@ struct Descriptor
     }
 
     [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
+    Reflected getReflectedConfig() const;
+    static DescriptorConfig::Config unreflectConfig(Reflected rfl);
 
 protected:
     std::string toStringConfig() const;
