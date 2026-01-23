@@ -47,7 +47,7 @@ void SumAggregationPhysicalFunction::lift(
 
     /// Updating the sum and count with the new value
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-    const auto newSum = sum + value;
+    const auto newSum = (sum + value).castToType(inputType.type);
 
     /// Writing the new sum and count back to the aggregation state
     newSum.writeToMemory(memAreaSum);
@@ -67,7 +67,7 @@ void SumAggregationPhysicalFunction::combine(
     const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType.type);
 
     /// Adding the sums together
-    const auto newSum = sum1 + sum2;
+    const auto newSum = (sum1 + sum2).castToType(inputType.type);
 
     /// Writing the new sum back to the first aggregation state
     newSum.writeToMemory(memAreaSum1);
