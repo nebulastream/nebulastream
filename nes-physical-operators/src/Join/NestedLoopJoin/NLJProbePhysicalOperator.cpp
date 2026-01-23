@@ -132,9 +132,9 @@ void NLJProbePhysicalOperator::performNLJ(
                 executeChild(executionCtx, joinedRecord);
             }
 
-            ++innerItemPos;
+            innerItemPos = innerItemPos + nautilus::val<uint64_t>{1};
         }
-        ++outerItemPos;
+        outerItemPos = outerItemPos + nautilus::val<uint64_t>{1};
     }
 }
 

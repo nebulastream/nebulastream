@@ -169,7 +169,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     {
         /// Reading the first byte (null) and then incrementing the memref by 1 byte to read the actual value
         null = readValueFromMemRef<bool>(fieldReference);
-        varValRef += 1;
+        varValRef = varValRef + nautilus::val<uint64_t>{1};
     }
 
     if (physicalType.type != DataType::Type::VARSIZED)
@@ -201,7 +201,7 @@ VarVal TupleBufferRef::storeValue(
     {
         /// Writing the null value to the first byte and then incrementing the memref by 1 byte to store the actual value
         VarVal{value.isNull()}.writeToMemory(varValRef);
-        varValRef += 1;
+        varValRef = varValRef + nautilus::val<uint64_t>{1};
     }
     if (physicalType.type != DataType::Type::VARSIZED)
     {

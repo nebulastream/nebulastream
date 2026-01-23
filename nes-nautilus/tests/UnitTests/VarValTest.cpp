@@ -116,7 +116,7 @@ TEST_F(VarValTest, SimpleMove)
                 const VarVal varVal2 = nautilus::val<T>(value2); \
                 const VarVal varValResult = varVal1 op varVal2; \
                 using ResultType = decltype(nautilus::val<T>(value1) op nautilus::val<T>(value2)); \
-                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<T>(value1 op value2)); \
+                EXPECT_EQ(varValResult.cast<ResultType>(), static_cast<ResultType>(value1 op value2)); \
                 return 0; \
             } \
             else \
