@@ -47,10 +47,8 @@ namespace NES
 
 LogicalOperator OperatorSerializationUtil::deserializeOperator(const ReflectedOperator& serialized)
 {
-
-    std::optional<LogicalOperator> const result = [&] -> std::optional<LogicalOperator>
+    const std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
     {
-
         if (serialized.type == "Source")
         {
             return unreflect<SourceDescriptorLogicalOperator>(serialized.config);
@@ -73,8 +71,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const ReflectedOp
 
         auto logicalOperator = logicalOperatorOpt.value();
 
-        logicalOperator = logicalOperator
-            .withInferredSchema(serialized.inputSchemas);
+        logicalOperator = logicalOperator.withInferredSchema(serialized.inputSchemas);
 
         return std::make_optional(logicalOperator);
     }();

@@ -22,10 +22,7 @@ namespace NES
 template <>
 struct Reflector<detail::ErasedLogicalFunction>
 {
-    Reflected operator()(const detail::ErasedLogicalFunction& function) const
-    {
-        return function.reflect();
-    }
+    Reflected operator()(const detail::ErasedLogicalFunction& function) const { return function.reflect(); }
 };
 
 struct ReflectedLogicalFunction
@@ -33,7 +30,6 @@ struct ReflectedLogicalFunction
     std::string functionType;
     Reflected functionConfig;
 };
-
 
 template <LogicalFunctionConcept Checked>
 struct Reflector<TypedLogicalFunction<Checked>>
@@ -47,10 +43,7 @@ struct Reflector<TypedLogicalFunction<Checked>>
 template <LogicalFunctionConcept Checked>
 struct Unreflector<TypedLogicalFunction<Checked>>
 {
-    TypedLogicalFunction<Checked> operator()(const Reflected& _) const
-    {
-        throw NotImplemented("Unreflector");
-    }
+    TypedLogicalFunction<Checked> operator()(const Reflected& _) const { throw NotImplemented("Unreflector"); }
 };
 
 template <>
@@ -71,7 +64,7 @@ struct Unreflector<TypedLogicalFunction<>>
 
         LogicalFunctionRegistryArguments argument;
         argument.data = data;
-        auto logicalFunction =  LogicalFunctionRegistry::instance().create(name, argument);
+        auto logicalFunction = LogicalFunctionRegistry::instance().create(name, argument);
         if (!logicalFunction.has_value())
         {
             throw CannotDeserialize("Failed to deserialize logical function");
@@ -80,5 +73,7 @@ struct Unreflector<TypedLogicalFunction<>>
     }
 };
 
-static_assert(requires(LogicalFunction logicalFunction){ {reflect(logicalFunction)} -> std::same_as<Reflected>;});
+static_assert(requires(LogicalFunction logicalFunction) {
+    { reflect(logicalFunction) } -> std::same_as<Reflected>;
+});
 }

@@ -26,7 +26,8 @@ namespace NES
 
 struct Reflected
 {
-    Reflected(): value(std::nullopt) {}
+    Reflected() : value(std::nullopt) { }
+
     ///NOLINTNEXTLINE
     Reflected(rfl::Generic value) : value(std::move(value)) { }
 
@@ -37,9 +38,7 @@ struct Reflected
 
     const rfl::Generic* operator->() const { return &value; }
 
-    bool isEmpty() const {
-        return this->value.is_null();
-    }
+    bool isEmpty() const { return this->value.is_null(); }
 
 private:
     rfl::Generic value;
@@ -90,41 +89,25 @@ struct Unreflector;
 template <typename T>
 requires requires(rfl::Generic data) {
     { rfl::from_generic<T>(data) } -> std::same_as<rfl::Result<T>>;
-} && (! requires(T data)
-{
-    { Unreflector<T>{}(data) } -> std::same_as<T>;
-})
+} && (!requires(T data) {
+             { Unreflector<T>{}(data) } -> std::same_as<T>;
+         })
 T unreflect(const Reflected& data)
 {
     ///TODO add exception
     return rfl::from_generic<T>(data).value();
 }
 
-// template <typename T>
-// requires requires(Reflected data) {
-//     { Unreflector<T>{}(data) } -> std::same_as<T>;
-// }
-// T unreflect(const Reflected& data)
-// {
-//     return Unreflector<T>{}(data);
-// }
-
 template <>
 struct Reflector<Reflected>
 {
-    Reflected operator()(const Reflected& field) const
-    {
-        return field;
-    }
+    Reflected operator()(const Reflected& field) const { return field; }
 };
 
 template <>
 struct Unreflector<Reflected>
 {
-    Reflected operator()(const Reflected& field) const
-    {
-        return field;
-    }
+    Reflected operator()(const Reflected& field) const { return field; }
 };
 
 }

@@ -28,6 +28,7 @@ namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
+
 class LogicalSource
 {
     friend SourceCatalog;
@@ -49,7 +50,6 @@ private:
     /// Keep schemas in logical sources dynamically allocated to avoid unnecessary copies
     std::shared_ptr<const Schema> schema;
 };
-
 
 template <>
 struct Reflector<LogicalSource>

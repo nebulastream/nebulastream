@@ -94,6 +94,7 @@ struct Unreflector<EventTimeWatermarkAssignerLogicalOperator>
 {
     EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
 };
+
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
 
 }

@@ -31,6 +31,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -38,7 +39,6 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Serialization/LogicalFunctionSerialization.hpp>
 
 #include <rfl/json.hpp>
 #include <rfl.hpp>
@@ -137,7 +137,6 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-
 void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
 {
     SerializableLogicalOperator proto;
@@ -167,9 +166,6 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-
-
-
 Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
 {
     return reflect(ReflectedSelectionLogicalOperator{std::make_optional(op.getPredicate())});
@@ -186,8 +182,6 @@ SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const
 
     return SelectionLogicalOperator(predicate.value());
 }
-
-
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)

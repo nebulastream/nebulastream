@@ -58,7 +58,7 @@ void serialize(TypedLogicalOperator<> op, SerializableOperator& serialized)
     const auto serializedString = rfl::json::write(reflectedOperator);
 
     const auto deserializedOpt = rfl::json::read<ReflectedOperator>(serializedString);
-    const auto test= deserializedOpt.value().operatorId;
+    const auto test = deserializedOpt.value().operatorId;
     serialized.set_reflect(serializedString);
 }
 
@@ -112,7 +112,8 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             auto op = OperatorSerializationUtil::deserializeOperator(serialized);
             const TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOp.trait_set());
 
-            op = op.withTraitSet(traitSet).withOperatorId(OperatorId{serialized.operatorId});;
+            op = op.withTraitSet(traitSet).withOperatorId(OperatorId{serialized.operatorId});
+            ;
 
             const auto operatorId = op->getOperatorId().getRawValue();
 

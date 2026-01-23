@@ -109,7 +109,6 @@ SerializableFunction EqualsLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-
 struct ReflectedEqualsLogicalFunction
 {
     std::optional<LogicalFunction> left;
@@ -119,9 +118,7 @@ struct ReflectedEqualsLogicalFunction
 Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
 {
     return reflect(ReflectedEqualsLogicalFunction{
-        std::make_optional<LogicalFunction>(function.left),
-        std::make_optional<LogicalFunction>(function.right)
-    });
+        std::make_optional<LogicalFunction>(function.left), std::make_optional<LogicalFunction>(function.right)});
 }
 
 EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& rfl) const

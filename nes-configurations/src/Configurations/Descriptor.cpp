@@ -201,8 +201,6 @@ std::string Descriptor::toStringConfig() const
     return ss.str();
 }
 
-
-
 struct ReflectedDescriptorConfig
 {
     std::unordered_map<std::string, std::pair<std::string, Reflected>> config;
@@ -240,30 +238,75 @@ Reflected Descriptor::getReflectedConfig() const
 
 DescriptorConfig::Config Descriptor::unreflectConfig(Reflected rfl)
 {
-
-    auto reflectedConfig =  unreflect<ReflectedDescriptorConfig>(rfl);
+    auto reflectedConfig = unreflect<ReflectedDescriptorConfig>(rfl);
     DescriptorConfig::Config config;
 
-    for (auto [key, pair]: reflectedConfig.config)
+    for (auto [key, pair] : reflectedConfig.config)
     {
         auto [type, value] = pair;
 
-        if (type == "int32_t") {config[key] = unreflect<int32_t>(value);}
-        else if (type == "uint32_t") {config[key] = unreflect<uint32_t>(value);}
-        else if (type == "int64_t") {config[key] = unreflect<int64_t>(value);}
-        else if (type == "uint64_t") {config[key] = unreflect<uint64_t>(value);}
-        else if (type == "bool") {config[key] = unreflect<bool>(value);}
-        else if (type == "char") {config[key] = unreflect<char>(value);}
-        else if (type == "float") {config[key] = unreflect<float>(value);}
-        else if (type == "double") {config[key] = unreflect<double>(value);}
-        else if (type == "string") {config[key] = unreflect<std::string>(value);}
-        else if (type == "EnumWrapper") {config[key] = unreflect<EnumWrapper>(value);}
-        else if (type == "FunctionList") {config[key] = unreflect<FunctionList>(value);}
-        else if (type == "AggregationFunctionList") {config[key] = unreflect<AggregationFunctionList>(value);}
-        else if (type == "WindowInfos") {config[key] = unreflect<WindowInfos>(value);}
-        else if (type == "ProjectionList") {config[key] = unreflect<ProjectionList>(value);}
-        else if (type == "UInt64List") {config[key] = unreflect<UInt64List>(value);}
-        else throw CannotDeserialize();
+        if (type == "int32_t")
+        {
+            config[key] = unreflect<int32_t>(value);
+        }
+        else if (type == "uint32_t")
+        {
+            config[key] = unreflect<uint32_t>(value);
+        }
+        else if (type == "int64_t")
+        {
+            config[key] = unreflect<int64_t>(value);
+        }
+        else if (type == "uint64_t")
+        {
+            config[key] = unreflect<uint64_t>(value);
+        }
+        else if (type == "bool")
+        {
+            config[key] = unreflect<bool>(value);
+        }
+        else if (type == "char")
+        {
+            config[key] = unreflect<char>(value);
+        }
+        else if (type == "float")
+        {
+            config[key] = unreflect<float>(value);
+        }
+        else if (type == "double")
+        {
+            config[key] = unreflect<double>(value);
+        }
+        else if (type == "string")
+        {
+            config[key] = unreflect<std::string>(value);
+        }
+        else if (type == "EnumWrapper")
+        {
+            config[key] = unreflect<EnumWrapper>(value);
+        }
+        else if (type == "FunctionList")
+        {
+            config[key] = unreflect<FunctionList>(value);
+        }
+        else if (type == "AggregationFunctionList")
+        {
+            config[key] = unreflect<AggregationFunctionList>(value);
+        }
+        else if (type == "WindowInfos")
+        {
+            config[key] = unreflect<WindowInfos>(value);
+        }
+        else if (type == "ProjectionList")
+        {
+            config[key] = unreflect<ProjectionList>(value);
+        }
+        else if (type == "UInt64List")
+        {
+            config[key] = unreflect<UInt64List>(value);
+        }
+        else
+            throw CannotDeserialize();
     }
 
 

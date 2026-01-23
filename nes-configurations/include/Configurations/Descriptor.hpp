@@ -301,9 +301,12 @@ struct Descriptor
     ~Descriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor);
-    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs) {
-        if (lhs.config.size() != rhs.config.size()) return false;
-        for (auto [key, value]: lhs.config)
+
+    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs)
+    {
+        if (lhs.config.size() != rhs.config.size())
+            return false;
+        for (auto [key, value] : lhs.config)
         {
             auto it = rhs.config.find(key);
             if (it == rhs.config.end())
@@ -316,7 +319,6 @@ struct Descriptor
             }
         }
         return true;
-
     };
 
     /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
@@ -364,6 +366,7 @@ struct Descriptor
     }
 
     [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
+
     Reflected getReflectedConfig() const;
     static DescriptorConfig::Config unreflectConfig(Reflected rfl);
 
@@ -377,7 +380,6 @@ private:
 
 SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig::ConfigType& var);
 DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& protoVar);
-
 
 
 }

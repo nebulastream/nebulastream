@@ -85,7 +85,6 @@ struct ReflectedSelectionLogicalOperator
     std::optional<LogicalFunction> predicate;
 };
 
-
 template <>
 struct Reflector<SelectionLogicalOperator>
 {

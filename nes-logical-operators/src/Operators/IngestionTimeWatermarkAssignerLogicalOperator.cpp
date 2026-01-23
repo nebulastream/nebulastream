@@ -131,7 +131,8 @@ Reflected Reflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(c
     throw NotImplemented("Reflector");
 }
 
-IngestionTimeWatermarkAssignerLogicalOperator Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& _) const
+IngestionTimeWatermarkAssignerLogicalOperator
+Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& _) const
 {
     // TODO to implement
     throw NotImplemented("Unreflector");

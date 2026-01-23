@@ -377,10 +377,7 @@ struct OperatorModel : ErasedLogicalOperator
         sOp.set_operator_id(id.getRawValue());
     }
 
-    [[nodiscard]] Reflected reflect() const override
-    {
-        return NES::reflect(impl);
-    }
+    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
 

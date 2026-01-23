@@ -245,10 +245,9 @@ auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
     return fields.cend();
 }
 
-
 Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field) const
 {
-    return reflect(detail::ReflectedField{.name=field.name, .type=field.dataType.type});
+    return reflect(detail::ReflectedField{.name = field.name, .type = field.dataType.type});
 }
 
 Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl) const
@@ -259,14 +258,14 @@ Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl) const
 
 Reflected Reflector<Schema>::operator()(const Schema& schema) const
 {
-    return reflect(detail::ReflectedSchema{.fields=schema.getFields()});
+    return reflect(detail::ReflectedSchema{.fields = schema.getFields()});
 }
 
 Schema Unreflector<Schema>::operator()(const Reflected& rfl) const
 {
     auto [fields] = unreflect<detail::ReflectedSchema>(rfl);
     Schema schema{};
-    for (auto field: fields)
+    for (auto field : fields)
     {
         schema.addField(field.name, field.dataType);
     }

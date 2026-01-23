@@ -23,8 +23,8 @@
 
 #include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -185,8 +185,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .logicalSource = sourceDescriptor.logicalSource,
         .type = sourceDescriptor.sourceType,
         .parserConfig = sourceDescriptor.parserConfig,
-        .config = sourceDescriptor.getReflectedConfig()
-    };
+        .config = sourceDescriptor.getReflectedConfig()};
 
     return reflect(descriptor);
 }
