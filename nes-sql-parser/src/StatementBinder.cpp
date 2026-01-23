@@ -159,6 +159,23 @@ public:
         return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions};
     }
 
+    CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateModelDefinitionContext* modelDefAST) const
+    {
+        const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
+        const auto modelPath = bindStringLiteral(dynamic_cast<AntlrSQLParser::StringLiteralContext*>(modelDefAST->modelPath));
+        const auto outputs = bindSchema(modelDefAST->schemaDefinition());
+
+        const auto inputTypes = modelDefAST->typeChain()->typeDefinition();
+        auto inputs = std::vector<DataType>{};
+        inputs.reserve(inputTypes.size());
+        for (auto* type : inputTypes)
+        {
+            inputs.push_back(bindDataType(type));
+        }
+
+        return CreateModelStatement{.modelName = modelName, .modelPath = modelPath, .inputTypes = inputs, .outputs = outputs};
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -174,6 +191,10 @@ public:
         if (auto* const sinkDefAST = createAST->createDefinition()->createSinkDefinition(); sinkDefAST != nullptr)
         {
             return bindCreateSinkStatement(sinkDefAST);
+        }
+        if (auto* const modelDefAST = createAST->createDefinition()->createModelDefinition(); modelDefAST != nullptr)
+        {
+            return bindCreateModelStatement(modelDefAST);
         }
         throw InvalidStatement("Unrecognized CREATE statement");
     }

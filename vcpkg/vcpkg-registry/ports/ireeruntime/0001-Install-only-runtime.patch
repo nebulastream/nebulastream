@@ -1,0 +1,98 @@
+Subject: [PATCH] 0001-Install-only-runtime
+---
+Index: build_tools/cmake/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build_tools/cmake/CMakeLists.txt b/build_tools/cmake/CMakeLists.txt
+--- a/build_tools/cmake/CMakeLists.txt	(revision 1a6681936a78138f7ae2b0fd9309d28dfe01ac5b)
++++ b/build_tools/cmake/CMakeLists.txt	(date 1764841343273)
+@@ -4,6 +4,7 @@
+ # See https://llvm.org/LICENSE.txt for license information.
+ # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ 
++include(GNUInstallDirs)
+ set(_cmake_installdir "${CMAKE_INSTALL_LIBDIR}/cmake/IREE")
+ 
+ # Generate export sets.
+@@ -12,12 +13,6 @@
+   EXPORT_SET Runtime
+   INSTALL_DESTINATION ${_cmake_installdir}
+ )
+-
+-# See compiler/bindings/c/CMakeLists.txt
+-iree_generate_export_targets(
+-  EXPORT_SET Compiler
+-  INSTALL_DESTINATION ${_cmake_installdir}
+-)
+ 
+ if(IREE_BUILD_COMPILER)
+   configure_file(
+Index: build_tools/cmake/iree_llvm.cmake
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build_tools/cmake/iree_llvm.cmake b/build_tools/cmake/iree_llvm.cmake
+--- a/build_tools/cmake/iree_llvm.cmake	(revision 1a6681936a78138f7ae2b0fd9309d28dfe01ac5b)
++++ b/build_tools/cmake/iree_llvm.cmake	(date 1764841365797)
+@@ -101,14 +101,6 @@
+   list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+   include_directories(${MLIR_INCLUDE_DIRS})
+ 
+-  find_package(LLD REQUIRED)
+-  list(APPEND CMAKE_MODULE_PATH "${LLD_CMAKE_DIR}")
+-  include_directories(${LLD_INCLUDE_DIRS})
+-
+-  find_package(Clang REQUIRED)
+-  list(APPEND CMAKE_MODULE_PATH "${CLANG_CMAKE_DIR}")
+-  include_directories(${CLANG_INCLUDE_DIRS})
+-
+   # Lit never gets installed with LLVM. So we have to reach into our copy
+   # of the monorepo to get it. I'm sorry. If this doesn't work for you,
+   # feel free to -DLLVM_EXTERNAL_LIT to provide your own.
+Index: CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	(revision 1a6681936a78138f7ae2b0fd9309d28dfe01ac5b)
++++ b/CMakeLists.txt	(date 1764841310987)
+@@ -1098,8 +1098,6 @@
+ # Note: tools sub directory is added before compiler/ so that phony targets for
+ # files with the same names from different rules are disambiguated towards
+ # those in tools/.
+-add_subdirectory(tools)
+-add_subdirectory(compiler)
+ add_subdirectory(runtime)
+ 
+ # Note: Test deps are not built as part of all (use the iree-test-deps target).
+
+Index: CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	(revision cebd82d47e254c964e07954054c716454c8fc978)
++++ b/CMakeLists.txt	(date 1764843252183)
+@@ -962,17 +962,6 @@
+   add_subdirectory(third_party/googletest EXCLUDE_FROM_ALL)
+ endif()
+
+-if(IREE_ENABLE_THREADING)
+-  # Benchmark.
+-  iree_set_benchmark_cmake_options()
+-  add_subdirectory(third_party/benchmark EXCLUDE_FROM_ALL)
+-  iree_install_targets(
+-    TARGETS benchmark
+-    COMPONENT IREEBundledLibraries
+-    EXPORT_SET Runtime
+-  )
+-endif()
+-
+ # TODO(#8469): remove the dependency on cpuinfo entirely.
+ if(IREE_ENABLE_CPUINFO)
+   if(IREE_USE_SYSTEM_DEPS)

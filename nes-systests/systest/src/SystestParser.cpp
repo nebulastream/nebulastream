@@ -31,6 +31,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <boost/algorithm/string.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -619,6 +620,42 @@ std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     return parseConfigurationLine(lines[currentLine], "global configuration");
+}
+
+SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
+{
+    SystestParser::SystestSchema schema;
+    if (arguments.size() % 2 != 0)
+    {
+        if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
+        {
+            throw SLTUnexpectedToken(
+                "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
+                fmt::join(arguments, ","),
+                lastArg);
+        }
+        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
+    }
+
+    for (size_t i = 0; i < arguments.size(); i += 2)
+    {
+        DataType dataType;
+        if (auto type = magic_enum::enum_cast<DataType::Type>(arguments[i]); type.has_value())
+        {
+            dataType = DataTypeProvider::provideDataType(type.value());
+        }
+        else if (toLowerCase(arguments[i]) == "varsized")
+        {
+            dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+        }
+        else
+        {
+            throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
+        }
+        schema.emplace_back(dataType, arguments[i + 1]);
+    }
+
+    return schema;
 }
 
 SystestParser::ErrorExpectation SystestParser::expectError() const

@@ -1,0 +1,50 @@
+Subject: [PATCH] 0005-include-check_c_source_compiles
+---
+Index: runtime/src/iree/builtins/ukernel/arch/arm_64/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/runtime/src/iree/builtins/ukernel/arch/arm_64/CMakeLists.txt b/runtime/src/iree/builtins/ukernel/arch/arm_64/CMakeLists.txt
+--- a/runtime/src/iree/builtins/ukernel/arch/arm_64/CMakeLists.txt	(revision 4a884e5c57040c8f9b8505d3a286354eeb59a1fd)
++++ b/runtime/src/iree/builtins/ukernel/arch/arm_64/CMakeLists.txt	(date 1764843128301)
+@@ -8,6 +8,7 @@
+ # To disable autogeneration for this file entirely, delete this header.        #
+ ################################################################################
+ 
++include(CheckCSourceCompiles)
+ iree_add_all_subdirs()
+ 
+ iree_compiler_targeting_iree_arch(_IREE_UKERNEL_BITCODE_BUILD_ARM_64 "arm_64")
+Index: runtime/src/iree/builtins/ukernel/arch/riscv_64/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/runtime/src/iree/builtins/ukernel/arch/riscv_64/CMakeLists.txt b/runtime/src/iree/builtins/ukernel/arch/riscv_64/CMakeLists.txt
+--- a/runtime/src/iree/builtins/ukernel/arch/riscv_64/CMakeLists.txt	(revision 4a884e5c57040c8f9b8505d3a286354eeb59a1fd)
++++ b/runtime/src/iree/builtins/ukernel/arch/riscv_64/CMakeLists.txt	(date 1764843137875)
+@@ -8,6 +8,7 @@
+ # To disable autogeneration for this file entirely, delete this header.        #
+ ################################################################################
+ 
++include(CheckCSourceCompiles)
+ iree_add_all_subdirs()
+ 
+ iree_compiler_targeting_iree_arch(_IREE_UKERNEL_BITCODE_BUILD_RISCV_64 "riscv_64")
+Index: runtime/src/iree/builtins/ukernel/arch/x86_64/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/runtime/src/iree/builtins/ukernel/arch/x86_64/CMakeLists.txt b/runtime/src/iree/builtins/ukernel/arch/x86_64/CMakeLists.txt
+--- a/runtime/src/iree/builtins/ukernel/arch/x86_64/CMakeLists.txt	(revision 4a884e5c57040c8f9b8505d3a286354eeb59a1fd)
++++ b/runtime/src/iree/builtins/ukernel/arch/x86_64/CMakeLists.txt	(date 1764842983483)
+@@ -8,6 +8,7 @@
+ # To disable autogeneration for this file entirely, delete this header.        #
+ ################################################################################
+ 
++include(CheckCSourceCompiles)
+ iree_add_all_subdirs()
+ 
+ iree_compiler_targeting_iree_arch(_IREE_UKERNEL_BITCODE_BUILD_X86_64 "x86_64")

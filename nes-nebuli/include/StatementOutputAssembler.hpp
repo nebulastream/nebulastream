@@ -68,6 +68,9 @@ constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
 using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
 constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
 
+using ModelDescriptorOutputRowType = std::tuple<std::string, std::string, std::vector<DataType>, Schema>;
+constexpr std::array<std::string_view, 4> modelDescriptorOutputColumns{"model_name", "model_path", "input_types", "output_schema"};
+
 using QueryIdOutputRowType = std::tuple<QueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
@@ -117,6 +120,17 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.created.getSinkName(), *result.created.getSchema(), result.created.getSinkType(), result.created.getConfig())});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<CreateModelStatementResult>
+{
+    auto convert(const CreateModelStatementResult& result)
+    {
+        return std::make_pair(
+            modelDescriptorOutputColumns,
+            std::vector{std::make_tuple(result.created.name, result.created.path, result.created.inputs, result.created.outputs)});
     }
 };
 
@@ -178,6 +192,23 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
 };
 
 template <>
+struct StatementOutputAssembler<ShowModelsStatementResult>
+{
+    using OutputRowType = ModelDescriptorOutputRowType;
+
+    auto convert(const ShowModelsStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.models.size());
+        for (const auto& model : result.models)
+        {
+            output.emplace_back(model.name, model.path, model.inputs, model.outputs);
+        }
+        return std::make_pair(modelDescriptorOutputColumns, output);
+    }
+};
+
+template <>
 struct StatementOutputAssembler<DropLogicalSourceStatementResult>
 {
     using OutputRowType = LogicalSourceOutputRowType;
@@ -219,6 +250,19 @@ struct StatementOutputAssembler<DropSinkStatementResult>
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.dropped.getSinkName(), *result.dropped.getSchema(), result.dropped.getSinkType(), result.dropped.getConfig())});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropModelStatementResult>
+{
+    using OutputRowType = ModelDescriptorOutputRowType;
+
+    auto convert(const DropModelStatementResult& result)
+    {
+        return std::make_pair(
+            modelDescriptorOutputColumns,
+            std::vector{std::make_tuple(result.dropped.name, result.dropped.path, result.dropped.inputs, result.dropped.outputs)});
     }
 };
 
