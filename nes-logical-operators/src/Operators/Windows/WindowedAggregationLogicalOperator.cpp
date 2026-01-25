@@ -109,7 +109,7 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
 
     for (uint64_t i = 0; i < aggregationFunctions.size(); i++)
     {
-        if (*aggregationFunctions[i] != rhsWindowAggregation[i])
+        if (*aggregationFunctions[i] != *rhsWindowAggregation[i])
         {
             return false;
         }
@@ -136,8 +136,8 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> newFunctions;
     for (const auto& agg : getWindowAggregation())
     {
-        agg->inferStamp(firstSchema);
-        newFunctions.push_back(agg);
+        auto aggInferStamp = std::make_shared<WindowAggregationLogicalFunction>(agg->withInferredStamp(firstSchema));
+        newFunctions.push_back(aggInferStamp);
     }
     copy.aggregationFunctions = newFunctions;
 
