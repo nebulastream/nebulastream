@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include <memory>
+
+#include <string>
 #include <string_view>
 
 #include <DataTypes/DataType.hpp>
@@ -27,7 +28,7 @@
 namespace NES
 {
 
-class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
+class MedianAggregationLogicalFunction
 {
 public:
     /// Creates a new MedianAggregationLogicalFunction
@@ -35,20 +36,40 @@ public:
     /// @param asField function describing how the aggregated field should be called
     MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
     explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    ~MedianAggregationLogicalFunction() = default;
 
-    void inferStamp(const Schema& schema) override;
+    [[nodiscard]] static std::string_view getName() noexcept;
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] Reflected reflect() const;
+    [[nodiscard]] DataType getInputStamp() const;
+    [[nodiscard]] DataType getPartialAggregateStamp() const;
+    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
+    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    ~MedianAggregationLogicalFunction() override = default;
+    [[nodiscard]] MedianAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
 
-    [[nodiscard]] std::string_view getName() const noexcept override;
-    [[nodiscard]] Reflected reflect() const override;
+    [[nodiscard]] bool operator==(const MedianAggregationLogicalFunction& otherMedianAggregationLogicalFunction) const;
 
 
 private:
     static constexpr std::string_view NAME = "Median";
     static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
+
+    DataType inputStamp;
+    DataType partialAggregateStamp;
+    DataType finalAggregateStamp;
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
 };
+
+static_assert(WindowAggregationFunctionConcept<MedianAggregationLogicalFunction>);
 
 template <>
 struct Reflector<MedianAggregationLogicalFunction>
