@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <memory>
+#include <string>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -26,22 +26,44 @@
 namespace NES
 {
 
-class AvgAggregationLogicalFunction final : public WindowAggregationLogicalFunction
+class AvgAggregationLogicalFunction final
 {
 public:
-    AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
     explicit AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    ~AvgAggregationLogicalFunction() = default;
 
-    void inferStamp(const Schema& schema) override;
-    ~AvgAggregationLogicalFunction() override = default;
-    [[nodiscard]] std::string_view getName() const noexcept override;
-    [[nodiscard]] Reflected reflect() const override;
+    [[nodiscard]] static std::string_view getName() noexcept;
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] DataType getInputStamp() const;
+    [[nodiscard]] DataType getPartialAggregateStamp() const;
+    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
+    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
+
+    [[nodiscard]] Reflected reflect() const;
+    [[nodiscard]] AvgAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
+    [[nodiscard]] AvgAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
+    [[nodiscard]] AvgAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
+    [[nodiscard]] AvgAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
+    [[nodiscard]] AvgAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
+    [[nodiscard]] AvgAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
+
+    [[nodiscard]] bool operator==(const AvgAggregationLogicalFunction& otherAvgAggregationLogicalFunction) const;
 
 private:
     static constexpr std::string_view NAME = "Avg";
     static constexpr DataType::Type partialAggregateStampType = DataType::Type::UNDEFINED;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
+
+    DataType inputStamp;
+    DataType partialAggregateStamp;
+    DataType finalAggregateStamp;
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
 };
+
+static_assert(WindowAggregationFunctionConcept<AvgAggregationLogicalFunction>);
 
 template <>
 struct Reflector<AvgAggregationLogicalFunction>
