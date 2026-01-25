@@ -56,6 +56,7 @@
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
@@ -83,7 +84,7 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     {
         throw InvalidQuerySyntax("Query could not be parsed");
     }
-    /// Todo #421: support multiple sinks
+    /// TODO #421: support multiple sinks
     INVARIANT(!sinks.empty(), "Need at least one sink!");
     return std::visit(
         Overloaded{
@@ -417,11 +418,12 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         if (expression.tryGetAs<FieldAccessLogicalFunction>())
         {
             /// Simple case: MEDIAN(i8) AS out — use the alias as the aggregation output name.
-            auto aggFunc = helpers.top().windowAggs.back();
+            const auto aggFunc = helpers.top().windowAggs.back();
             helpers.top().windowAggs.pop_back();
-            aggFunc->setAsField(FieldAccessLogicalFunction(bindIdentifier(context)));
-            helpers.top().windowAggs.push_back(aggFunc);
-            helpers.top().addProjection(std::nullopt, aggFunc->getAsField());
+            const auto newAggFunc = std::make_shared<WindowAggregationLogicalFunction>(
+                aggFunc->withAsField(FieldAccessLogicalFunction(bindIdentifier(context))));
+            helpers.top().windowAggs.push_back(newAggFunc);
+            helpers.top().addProjection(std::nullopt, newAggFunc->getAsField());
         }
         else
         {
@@ -851,38 +853,38 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     {
         case AntlrSQLLexer::COUNT:
             checkAggregationArgument(funcName);
-            helpers.top().windowAggs.push_back(std::make_shared<CountAggregationLogicalFunction>(
-                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
+                CountAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
             isAggregation = true;
             break;
         case AntlrSQLLexer::AVG:
             checkAggregationArgument(funcName);
-            helpers.top().windowAggs.push_back(std::make_shared<AvgAggregationLogicalFunction>(
-                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
+                AvgAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
             isAggregation = true;
             break;
         case AntlrSQLLexer::MAX:
             checkAggregationArgument(funcName);
-            helpers.top().windowAggs.push_back(std::make_shared<MaxAggregationLogicalFunction>(
-                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
+                MaxAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
             isAggregation = true;
             break;
         case AntlrSQLLexer::MIN:
             checkAggregationArgument(funcName);
-            helpers.top().windowAggs.push_back(std::make_shared<MinAggregationLogicalFunction>(
-                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
+                MinAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
             isAggregation = true;
             break;
         case AntlrSQLLexer::SUM:
             checkAggregationArgument(funcName);
-            helpers.top().windowAggs.push_back(std::make_shared<SumAggregationLogicalFunction>(
-                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
+                SumAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
             isAggregation = true;
             break;
         case AntlrSQLLexer::MEDIAN:
             checkAggregationArgument(funcName);
-            helpers.top().windowAggs.push_back(std::make_shared<MedianAggregationLogicalFunction>(
-                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            helpers.top().windowAggs.push_back(std::make_shared<WindowAggregationLogicalFunction>(
+                MedianAggregationLogicalFunction(helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get())));
             isAggregation = true;
             break;
         default:
@@ -920,7 +922,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         const auto& onField = helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get();
         const auto autoName = fmt::format("{}_{}", onField.getFieldName(), funcName);
         const auto asField = FieldAccessLogicalFunction(autoName);
-        helpers.top().windowAggs.back()->setAsField(asField);
+        const auto aggFunc = helpers.top().windowAggs.back();
+        helpers.top().windowAggs.pop_back();
+        const auto newAggFunc = std::make_shared<WindowAggregationLogicalFunction>(aggFunc->withAsField(asField));
+        helpers.top().windowAggs.push_back(newAggFunc);
         helpers.top().functionBuilder.back() = LogicalFunction(asField);
     }
 }

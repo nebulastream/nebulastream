@@ -346,9 +346,9 @@ private:
 };
 }
 
-inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& lf)
+inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& lfn)
 {
-    return os << lf.explain(ExplainVerbosity::Debug);
+    return os << lfn.explain(ExplainVerbosity::Debug);
 }
 
 }
@@ -358,7 +358,7 @@ namespace std
 template <>
 struct hash<NES::LogicalFunction>
 {
-    std::size_t operator()(const NES::LogicalFunction& lf) const noexcept { return std::hash<std::string_view>{}(lf.getType()); }
+    std::size_t operator()(const NES::LogicalFunction& lfn) const noexcept { return std::hash<std::string_view>{}(lfn.getType()); }
 };
 }
 
