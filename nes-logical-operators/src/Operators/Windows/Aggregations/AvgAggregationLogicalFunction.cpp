@@ -28,8 +28,29 @@
 
 namespace NES
 {
+AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
+    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
+    : AvgAggregationLogicalFunction(
+          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
+{
+}
+
+AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
+    DataType inputStamp,
+    DataType partialAggregateStamp,
+    DataType finalAggregateStamp,
+    FieldAccessLogicalFunction onField,
+    FieldAccessLogicalFunction asField)
+    : inputStamp(std::move(inputStamp))
+    , partialAggregateStamp(std::move(partialAggregateStamp))
+    , finalAggregateStamp(std::move(finalAggregateStamp))
+    , onField(std::move(onField))
+    , asField(std::move(asField))
+{
+}
+
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
+    : AvgAggregationLogicalFunction(
           field.getDataType(),
           DataTypeProvider::provideDataType(partialAggregateStampType),
           DataTypeProvider::provideDataType(finalAggregateStampType),
@@ -39,7 +60,7 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLo
 
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(
+    : AvgAggregationLogicalFunction(
           field.getDataType(),
           DataTypeProvider::provideDataType(partialAggregateStampType),
           DataTypeProvider::provideDataType(finalAggregateStampType),
@@ -123,6 +144,69 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunct
     {
         throw CannotDeserialize("AvgAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return std::make_shared<AvgAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<WindowAggregationLogicalFunction>(AvgAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+}
+
+std::string AvgAggregationLogicalFunction::toString() const
+{
+    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
+}
+
+DataType AvgAggregationLogicalFunction::getInputStamp() const
+{
+    return inputStamp;
+}
+
+DataType AvgAggregationLogicalFunction::getPartialAggregateStamp() const
+{
+    return partialAggregateStamp;
+}
+
+DataType AvgAggregationLogicalFunction::getFinalAggregateStamp() const
+{
+    return finalAggregateStamp;
+}
+
+FieldAccessLogicalFunction AvgAggregationLogicalFunction::getOnField() const
+{
+    return onField;
+}
+
+FieldAccessLogicalFunction AvgAggregationLogicalFunction::getAsField() const
+{
+    return asField;
+}
+
+void AvgAggregationLogicalFunction::setInputStamp(DataType inputStamp)
+{
+    this->inputStamp = std::move(inputStamp);
+}
+
+void AvgAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
+{
+    this->partialAggregateStamp = std::move(partialAggregateStamp);
+}
+
+void AvgAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
+{
+    this->finalAggregateStamp = std::move(finalAggregateStamp);
+}
+
+void AvgAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
+{
+    this->onField = std::move(onField);
+}
+
+void AvgAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
+{
+    this->asField = std::move(asField);
+}
+
+bool AvgAggregationLogicalFunction::operator==(
+    const AvgAggregationLogicalFunction& otherAvgAggregationLogicalFunction) const
+{
+    return this->getName() == otherAvgAggregationLogicalFunction.getName()
+        && this->onField == otherAvgAggregationLogicalFunction.onField
+        && this->asField == otherAvgAggregationLogicalFunction.asField;
 }
 }

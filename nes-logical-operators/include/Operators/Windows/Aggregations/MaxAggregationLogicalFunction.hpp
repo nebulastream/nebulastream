@@ -24,18 +24,54 @@
 namespace NES
 {
 
-class MaxAggregationLogicalFunction : public WindowAggregationLogicalFunction
+class MaxAggregationLogicalFunction
 {
 public:
     MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
     explicit MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    ~MaxAggregationLogicalFunction() = default;
+    
+    [[nodiscard]] std::string_view getName() const noexcept;
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] SerializableAggregationFunction serialize() const;
+    [[nodiscard]] bool equals(const MaxAggregationLogicalFunction& other) const;
+    [[nodiscard]] DataType getInputStamp() const;
+    [[nodiscard]] DataType getPartialAggregateStamp() const;
+    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
+    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    void inferStamp(const Schema& schema) override;
-    ~MaxAggregationLogicalFunction() override = default;
-    [[nodiscard]] SerializableAggregationFunction serialize() const override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
+    void inferStamp(const Schema& schema);
+    void setInputStamp(DataType inputStamp);
+    void setPartialAggregateStamp(DataType partialAggregateStamp);
+    void setFinalAggregateStamp(DataType finalAggregateStamp);
+    void setOnField(FieldAccessLogicalFunction onField);
+    void setAsField(FieldAccessLogicalFunction asField);
+
+    [[nodiscard]] bool operator==(const MaxAggregationLogicalFunction& rhs) const;
+
+protected:
+    explicit MaxAggregationLogicalFunction(
+        DataType inputStamp,
+        DataType partialAggregateStamp,
+        DataType finalAggregateStamp,
+        FieldAccessLogicalFunction onField,
+        FieldAccessLogicalFunction asField);
+
+    explicit MaxAggregationLogicalFunction(
+        DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField);
+
 
 private:
     static constexpr std::string_view NAME = "Max";
+    
+    DataType inputStamp;
+    DataType partialAggregateStamp;
+    DataType finalAggregateStamp;
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
 };
+
+static_assert(WindowAggregationFunctionConcept<MaxAggregationLogicalFunction>);
+
 }

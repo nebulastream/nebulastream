@@ -27,14 +27,35 @@
 
 namespace NES
 {
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(
+    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
+    : SumAggregationLogicalFunction(
+          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
+{
+}
+
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(
+    DataType inputStamp,
+    DataType partialAggregateStamp,
+    DataType finalAggregateStamp,
+    FieldAccessLogicalFunction onField,
+    FieldAccessLogicalFunction asField)
+    : inputStamp(std::move(inputStamp))
+    , partialAggregateStamp(std::move(partialAggregateStamp))
+    , finalAggregateStamp(std::move(finalAggregateStamp))
+    , onField(std::move(onField))
+    , asField(std::move(asField))
+{
+}
+
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : SumAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
 {
 }
 
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
+    : SumAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
 {
 }
 
@@ -95,6 +116,70 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunct
     {
         throw CannotDeserialize("SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return std::make_shared<SumAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<WindowAggregationLogicalFunction>(SumAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+}
+
+std::string SumAggregationLogicalFunction::toString() const
+{
+    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
+}
+
+DataType SumAggregationLogicalFunction::getInputStamp() const
+{
+    return inputStamp;
+}
+
+DataType SumAggregationLogicalFunction::getPartialAggregateStamp() const
+{
+    return partialAggregateStamp;
+}
+
+DataType SumAggregationLogicalFunction::getFinalAggregateStamp() const
+{
+    return finalAggregateStamp;
+}
+
+FieldAccessLogicalFunction SumAggregationLogicalFunction::getOnField() const
+{
+    return onField;
+}
+
+FieldAccessLogicalFunction SumAggregationLogicalFunction::getAsField() const
+{
+    return asField;
+}
+
+void SumAggregationLogicalFunction::setInputStamp(DataType inputStamp)
+{
+    this->inputStamp = std::move(inputStamp);
+}
+
+void SumAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
+{
+    this->partialAggregateStamp = std::move(partialAggregateStamp);
+}
+
+void SumAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
+{
+    this->finalAggregateStamp = std::move(finalAggregateStamp);
+}
+
+void SumAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
+{
+    this->onField = std::move(onField);
+}
+
+void SumAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
+{
+    this->asField = std::move(asField);
+}
+
+bool SumAggregationLogicalFunction::operator==(
+    const SumAggregationLogicalFunction& otherSumAggregationLogicalFunction) const
+{
+    return this->getName() == otherSumAggregationLogicalFunction.getName()
+        && this->onField == otherSumAggregationLogicalFunction.onField
+        && this->asField == otherSumAggregationLogicalFunction.asField;
 }
 }
+

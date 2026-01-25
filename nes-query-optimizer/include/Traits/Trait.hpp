@@ -26,10 +26,11 @@
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_set>
-#include <nameof.hpp>
+#include <../../../nes-common/include/Util/DynamicBase.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableTrait.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -95,7 +96,7 @@ private:
     friend struct NES::TypedTrait;
     ///If the trait inherits from DynamicBase (over Castable), then returns a pointer to the wrapped trait as DynamicBase,
     ///so that we can then safely try to dyncast the DynamicBase* to Castable<T>*
-    ///[[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
+    [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
 };
 
 template <TraitConcept TraitType>
@@ -212,22 +213,22 @@ struct TypedTrait
         return std::nullopt;
     }
 
-    // /// Attempts to get the underlying trait as type T.
-    // /// @tparam T The type to try to get the trait as.
-    // /// @return std::optional<std::shared_ptr<const Castable<T>>> The function if it is of type T and Castable<T>, nullopt otherwise.
-    // template <typename T>
-    // requires(!TraitConcept<T>)
-    // std::optional<std::shared_ptr<const Castable<T>>> tryGetAs() const
-    // {
-    //     if (auto castable = self->getImpl(); castable.has_value())
-    //     {
-    //         if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
-    //         {
-    //             return std::shared_ptr<const Castable<T>>{self, ptr};
-    //         }
-    //     }
-    //     return std::nullopt;
-    // }
+    /// Attempts to get the underlying trait as type T.
+    /// @tparam T The type to try to get the trait as.
+    /// @return std::optional<std::shared_ptr<const Castable<T>>> The function if it is of type T and Castable<T>, nullopt otherwise.
+    template <typename T>
+    requires(!TraitConcept<T>)
+    std::optional<std::shared_ptr<const Castable<T>>> tryGetAs() const
+    {
+        if (auto castable = self->getImpl(); castable.has_value())
+        {
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const Castable<T>>{self, ptr};
+            }
+        }
+        return std::nullopt;
+    }
 
     /// Gets the underlying trait as type T.
     /// @tparam T The type to get the trait as.
@@ -244,24 +245,24 @@ struct TypedTrait
         std::unreachable();
     }
 
-    // /// Gets the underlying trait as type T.
-    // /// @tparam T The type to get the trait as.
-    // /// @return std::shared_ptr<const Castable<T>> The trait.
-    // /// @throw InvalidDynamicCast If the trait is not of type T or does not inherit from Castable<T>.
-    // template <typename T>
-    // requires(!TraitConcept<T>)
-    // std::shared_ptr<const Castable<T>> getAs() const
-    // {
-    //     if (auto castable = self->getImpl(); castable.has_value())
-    //     {
-    //         if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
-    //         {
-    //             return std::shared_ptr<const Castable<T>>{self, ptr};
-    //         }
-    //     }
-    //     PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
-    //     std::unreachable();
-    // }
+    /// Gets the underlying trait as type T.
+    /// @tparam T The type to get the trait as.
+    /// @return std::shared_ptr<const Castable<T>> The trait.
+    /// @throw InvalidDynamicCast If the trait is not of type T or does not inherit from Castable<T>.
+    template <typename T>
+    requires(!TraitConcept<T>)
+    std::shared_ptr<const Castable<T>> getAs() const
+    {
+        if (auto castable = self->getImpl(); castable.has_value())
+        {
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const Castable<T>>{self, ptr};
+            }
+        }
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
+        std::unreachable();
+    }
 
     [[nodiscard]] SerializableTrait serialize() const { return self->serialize(); };
 
@@ -325,17 +326,17 @@ private:
     template <typename T>
     friend struct TypedLogicalFunction;
 
-    // [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
-    // {
-    //     if constexpr (std::is_base_of_v<DynamicBase, TraitType>)
-    //     {
-    //         return static_cast<const DynamicBase*>(&impl);
-    //     }
-    //     else
-    //     {
-    //         return std::nullopt;
-    //     }
-    // }
+    [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
+    {
+        if constexpr (std::is_base_of_v<DynamicBase, TraitType>)
+        {
+            return static_cast<const DynamicBase*>(&impl);
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
 };
 }
 }

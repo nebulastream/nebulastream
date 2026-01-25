@@ -28,13 +28,33 @@
 
 namespace NES
 {
+MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(
+    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
+    : MaxAggregationLogicalFunction(
+          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
+{
+}
+
+MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(
+    DataType inputStamp,
+    DataType partialAggregateStamp,
+    DataType finalAggregateStamp,
+    FieldAccessLogicalFunction onField,
+    FieldAccessLogicalFunction asField)
+    : inputStamp(std::move(inputStamp))
+    , partialAggregateStamp(std::move(partialAggregateStamp))
+    , finalAggregateStamp(std::move(finalAggregateStamp))
+    , onField(std::move(onField))
+    , asField(std::move(asField))
+{
+}
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : MaxAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
 {
 }
 
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
+    : MaxAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
 {
 }
 
@@ -95,6 +115,64 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMaxAggregationLogicalFunct
     {
         throw CannotDeserialize("MaxAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return std::make_shared<MaxAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<WindowAggregationLogicalFunction>(MaxAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+}
+
+DataType MaxAggregationLogicalFunction::getInputStamp() const
+{
+    return inputStamp;
+}
+
+DataType MaxAggregationLogicalFunction::getPartialAggregateStamp() const
+{
+    return partialAggregateStamp;
+}
+
+DataType MaxAggregationLogicalFunction::getFinalAggregateStamp() const
+{
+    return finalAggregateStamp;
+}
+
+FieldAccessLogicalFunction MaxAggregationLogicalFunction::getOnField() const
+{
+    return onField;
+}
+
+FieldAccessLogicalFunction MaxAggregationLogicalFunction::getAsField() const
+{
+    return asField;
+}
+
+void MaxAggregationLogicalFunction::setInputStamp(DataType inputStamp)
+{
+    this->inputStamp = std::move(inputStamp);
+}
+
+void MaxAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
+{
+    this->partialAggregateStamp = std::move(partialAggregateStamp);
+}
+
+void MaxAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
+{
+    this->finalAggregateStamp = std::move(finalAggregateStamp);
+}
+
+void MaxAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
+{
+    this->onField = std::move(onField);
+}
+
+void MaxAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
+{
+    this->asField = std::move(asField);
+}
+
+bool MaxAggregationLogicalFunction::operator==(
+    const MaxAggregationLogicalFunction& otherMaxAggregationLogicalFunction) const
+{
+    return this->getName() == otherMaxAggregationLogicalFunction.getName()
+        && this->onField == otherMaxAggregationLogicalFunction.onField
+        && this->asField == otherMaxAggregationLogicalFunction.asField;
 }
 }

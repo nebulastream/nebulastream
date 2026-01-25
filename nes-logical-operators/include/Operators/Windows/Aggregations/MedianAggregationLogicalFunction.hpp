@@ -26,7 +26,7 @@
 namespace NES
 {
 
-class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
+class MedianAggregationLogicalFunction
 {
 public:
     /// Creates a new MedianAggregationLogicalFunction
@@ -34,18 +34,50 @@ public:
     /// @param asField function describing how the aggregated field should be called
     MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
     explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    ~MedianAggregationLogicalFunction() = default;
+    
+    [[nodiscard]] std::string_view getName() const noexcept;
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] SerializableAggregationFunction serialize() const;
+    [[nodiscard]] bool equals(const MedianAggregationLogicalFunction& other) const;
+    [[nodiscard]] DataType getInputStamp() const;
+    [[nodiscard]] DataType getPartialAggregateStamp() const;
+    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
+    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    void inferStamp(const Schema& schema) override;
+    void inferStamp(const Schema& schema);
+    void setInputStamp(DataType inputStamp);
+    void setPartialAggregateStamp(DataType partialAggregateStamp);
+    void setFinalAggregateStamp(DataType finalAggregateStamp);
+    void setOnField(FieldAccessLogicalFunction onField);
+    void setAsField(FieldAccessLogicalFunction asField);
 
-    ~MedianAggregationLogicalFunction() override = default;
+    [[nodiscard]] bool operator==(const MedianAggregationLogicalFunction& rhs) const;
 
-    [[nodiscard]] SerializableAggregationFunction serialize() const override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
+protected:
+    explicit MedianAggregationLogicalFunction(
+        DataType inputStamp,
+        DataType partialAggregateStamp,
+        DataType finalAggregateStamp,
+        FieldAccessLogicalFunction onField,
+        FieldAccessLogicalFunction asField);
 
+    explicit MedianAggregationLogicalFunction(
+        DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField);
 
 private:
     static constexpr std::string_view NAME = "Median";
     static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
+    
+    DataType inputStamp;
+    DataType partialAggregateStamp;
+    DataType finalAggregateStamp;
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
 };
+
+static_assert(WindowAggregationFunctionConcept<MedianAggregationLogicalFunction>);
+
 }

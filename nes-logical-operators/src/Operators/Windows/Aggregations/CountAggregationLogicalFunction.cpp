@@ -30,8 +30,28 @@
 
 namespace NES
 {
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(
+    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
+    : CountAggregationLogicalFunction(
+          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
+{
+}
+
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(
+    DataType inputStamp,
+    DataType partialAggregateStamp,
+    DataType finalAggregateStamp,
+    FieldAccessLogicalFunction onField,
+    FieldAccessLogicalFunction asField)
+    : inputStamp(std::move(inputStamp))
+    , partialAggregateStamp(std::move(partialAggregateStamp))
+    , finalAggregateStamp(std::move(finalAggregateStamp))
+    , onField(std::move(onField))
+    , asField(std::move(asField))
+{
+}
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(
+    : CountAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType),
           DataTypeProvider::provideDataType(partialAggregateStampType),
           DataTypeProvider::provideDataType(finalAggregateStampType),
@@ -40,7 +60,7 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAcce
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(
+    : CountAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType),
           DataTypeProvider::provideDataType(partialAggregateStampType),
           DataTypeProvider::provideDataType(finalAggregateStampType),
@@ -105,6 +125,70 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFun
     {
         throw CannotDeserialize("CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return std::make_shared<CountAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<WindowAggregationLogicalFunction>(CountAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+}
+
+std::string CountAggregationLogicalFunction::toString() const
+{
+    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
+}
+
+DataType CountAggregationLogicalFunction::getInputStamp() const
+{
+    return inputStamp;
+}
+
+DataType CountAggregationLogicalFunction::getPartialAggregateStamp() const
+{
+    return partialAggregateStamp;
+}
+
+DataType CountAggregationLogicalFunction::getFinalAggregateStamp() const
+{
+    return finalAggregateStamp;
+}
+
+FieldAccessLogicalFunction CountAggregationLogicalFunction::getOnField() const
+{
+    return onField;
+}
+
+FieldAccessLogicalFunction CountAggregationLogicalFunction::getAsField() const
+{
+    return asField;
+}
+
+void CountAggregationLogicalFunction::setInputStamp(DataType inputStamp)
+{
+    this->inputStamp = std::move(inputStamp);
+}
+
+void CountAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
+{
+    this->partialAggregateStamp = std::move(partialAggregateStamp);
+}
+
+void CountAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
+{
+    this->finalAggregateStamp = std::move(finalAggregateStamp);
+}
+
+void CountAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
+{
+    this->onField = std::move(onField);
+}
+
+void CountAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
+{
+    this->asField = std::move(asField);
+}
+
+bool CountAggregationLogicalFunction::operator==(
+    const CountAggregationLogicalFunction& otherCountAggregationLogicalFunction) const
+{
+    return this->getName() == otherCountAggregationLogicalFunction.getName()
+        && this->onField == otherCountAggregationLogicalFunction.onField
+        && this->asField == otherCountAggregationLogicalFunction.asField;
 }
 }
+

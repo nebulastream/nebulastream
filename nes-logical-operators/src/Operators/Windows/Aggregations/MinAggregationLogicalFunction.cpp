@@ -28,13 +28,34 @@
 
 namespace NES
 {
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(
+    DataType inputStamp, DataType partialAggregateStamp, DataType finalAggregateStamp, const FieldAccessLogicalFunction& onField)
+    : MinAggregationLogicalFunction(
+          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
+{
+}
+
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(
+    DataType inputStamp,
+    DataType partialAggregateStamp,
+    DataType finalAggregateStamp,
+    FieldAccessLogicalFunction onField,
+    FieldAccessLogicalFunction asField)
+    : inputStamp(std::move(inputStamp))
+    , partialAggregateStamp(std::move(partialAggregateStamp))
+    , finalAggregateStamp(std::move(finalAggregateStamp))
+    , onField(std::move(onField))
+    , asField(std::move(asField))
+{
+}
+
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : MinAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
 {
 }
 
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
+    : MinAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
 {
 }
 
@@ -95,6 +116,70 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMinAggregationLogicalFunct
     {
         throw CannotDeserialize("MinAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return std::make_shared<MinAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<WindowAggregationLogicalFunction>(MinAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+}
+
+std::string MinAggregationLogicalFunction::toString() const
+{
+    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
+}
+
+DataType MinAggregationLogicalFunction::getInputStamp() const
+{
+    return inputStamp;
+}
+
+DataType MinAggregationLogicalFunction::getPartialAggregateStamp() const
+{
+    return partialAggregateStamp;
+}
+
+DataType MinAggregationLogicalFunction::getFinalAggregateStamp() const
+{
+    return finalAggregateStamp;
+}
+
+FieldAccessLogicalFunction MinAggregationLogicalFunction::getOnField() const
+{
+    return onField;
+}
+
+FieldAccessLogicalFunction MinAggregationLogicalFunction::getAsField() const
+{
+    return asField;
+}
+
+void MinAggregationLogicalFunction::setInputStamp(DataType inputStamp)
+{
+    this->inputStamp = std::move(inputStamp);
+}
+
+void MinAggregationLogicalFunction::setPartialAggregateStamp(DataType partialAggregateStamp)
+{
+    this->partialAggregateStamp = std::move(partialAggregateStamp);
+}
+
+void MinAggregationLogicalFunction::setFinalAggregateStamp(DataType finalAggregateStamp)
+{
+    this->finalAggregateStamp = std::move(finalAggregateStamp);
+}
+
+void MinAggregationLogicalFunction::setOnField(FieldAccessLogicalFunction onField)
+{
+    this->onField = std::move(onField);
+}
+
+void MinAggregationLogicalFunction::setAsField(FieldAccessLogicalFunction asField)
+{
+    this->asField = std::move(asField);
+}
+
+bool MinAggregationLogicalFunction::operator==(
+    const MinAggregationLogicalFunction& otherMinAggregationLogicalFunction) const
+{
+    return this->getName() == otherMinAggregationLogicalFunction.getName()
+        && this->onField == otherMinAggregationLogicalFunction.onField
+        && this->asField == otherMinAggregationLogicalFunction.asField;
 }
 }
+
