@@ -28,6 +28,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 namespace NES
 {
@@ -104,21 +105,30 @@ SerializableFunction GreaterLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-Reflected Reflector<GreaterLogicalFunction>::operator()(const GreaterLogicalFunction& _) const
+
+Reflected Reflector<GreaterLogicalFunction>::operator()(const GreaterLogicalFunction& function) const
 {
-    // TODO to implement
-    throw NotImplemented("Reflector");
+    return reflect(detail::ReflectedGreaterLogicalFunction{.left = function.left, .right = function.right});
 }
 
-GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Reflected& _) const
+GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Reflected& reflected) const
 {
-    // TODO to implement
-    throw NotImplemented("Unreflector");
+    auto [left, right] = unreflect<detail::ReflectedGreaterLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("GreaterLogicalFunction is missing a child");
+    }
+    return GreaterLogicalFunction(left.value(), right.value());
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<GreaterLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
