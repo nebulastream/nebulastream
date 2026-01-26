@@ -129,6 +129,7 @@ pub struct TupleBuffer {
     pub last_chunk: bool,
     pub encoded_data: bool,
     pub encoded_children: Vec<bool>,
+    pub child_buffer_sizes: Vec<u64>,
     pub data: Vec<u8>,
     pub child_buffers: Vec<Vec<u8>>,
 }
@@ -141,7 +142,7 @@ impl TupleBuffer {
 
 impl Debug for TupleBuffer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("TupleBuffer{{ sequence_number: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, encoded_data: {}, bufferSize: {}, encoded_children: {:?}, children: {:?}}}", self.sequence_number, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.encoded_data, self.data.len(), self.encoded_children, self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
+        f.write_fmt(format_args!("TupleBuffer{{ sequence_number: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, encoded_data: {}, bufferSize: {}, encoded_children: {:?}, child_buffer_sizes: {:?}, children: {:?}}}", self.sequence_number, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.encoded_data, self.data.len(), self.encoded_children, self.child_buffer_sizes, self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
     }
 }
 

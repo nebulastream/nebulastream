@@ -76,26 +76,20 @@ void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data, bool encoded)
     }
 }
 
-void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child, bool encoded)
+void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child, bool encoded, uint64_t bufferSize)
 {
     if (encoded)
     {
         /// Decode the child
-        /// Create a vector and allocate as much size as the child buffer might hold.
-        /// Since child buffers could be large than our default buffers, there is not a way for us to currently get the decoded size without
-        /// diving into format specifics. We start naively with the default buffer size and constantly increase the size of the vector until decoding was successfull.
+        /// Create a vector and allocate as much size as the child buffer needs. This size is captured in the bufferSize arg
         std::vector<char> decodedData{};
-        size_t assumedChildSize = buffer.getBufferSize();
-        decodedData.reserve(assumedChildSize);
+        decodedData.reserve(bufferSize);
         /// Create a byte span out of the child slice and decode the data into decodedData
         std::span byteSpan = std::as_bytes(std::span(child));
         NES::Decoder::DecodingResult decodingResult = decoder->decodeBuffer(byteSpan, decodedData);
-        while (decodingResult.status == NES::Decoder::DecodingResultStatus::DECODING_ERROR)
-        {
-            assumedChildSize += 1000;
-            decodedData.reserve(assumedChildSize);
-            decodingResult = decoder->decodeBuffer(byteSpan, decodedData);
-        }
+        INVARIANT(
+            decodingResult.status == NES::Decoder::DecodingResultStatus::SUCCESSFULLY_DECODED,
+            "Decoding of transmitted child buffer caused error");
 
         auto childBuffer = bufferProvider.getUnpooledBuffer(decodingResult.decompressedSize);
 

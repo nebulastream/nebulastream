@@ -176,8 +176,10 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         std::vector<rust::Slice<const uint8_t>> children;
         /// States if the ith child is encoded
         std::vector<uint8_t> encodedChildren{};
+        std::vector<uint64_t> childBufferSizes{};
         children.reserve(inputBuffer.getNumberOfChildBuffers());
         encodedChildren.reserve(inputBuffer.getNumberOfChildBuffers());
+        childBufferSizes.reserve(inputBuffer.getNumberOfChildBuffers());
         for (size_t childIdx = 0; childIdx < inputBuffer.getNumberOfChildBuffers(); ++childIdx)
         {
             /// Encode the child
@@ -204,6 +206,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 const std::span encodedChildSpan(childBuffer.getAvailableMemoryArea<const uint8_t>().data(), encodingResult.compressedSize);
                 children.emplace_back(encodedChildSpan);
             }
+            childBufferSizes.emplace_back(childBuffer.getBufferSize());
         }
         const std::span usedBufferMemory(inputBuffer.getAvailableMemoryArea<>().data(), inputBuffer.getNumberOfTuples() * tupleSize);
         std::vector<char> encodedBuffer{};
@@ -218,6 +221,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 metadata,
                 false,
                 rust::Slice<const uint8_t>(encodedChildren.data(), encodedChildren.size()),
+                rust::Slice<const uint64_t>(childBufferSizes.data(), childBufferSizes.size()),
                 rust::Slice(usedBufferMemoryAsInt8),
                 rust::Slice<const rust::Slice<const uint8_t>>(children));
         }
@@ -230,6 +234,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 metadata,
                 true,
                 rust::Slice<const uint8_t>(encodedChildren.data(), encodedChildren.size()),
+                rust::Slice<const uint64_t>(childBufferSizes.data(), childBufferSizes.size()),
                 rust::Slice(vectorAsSpan),
                 rust::Slice<const rust::Slice<const uint8_t>>(children));
         }
@@ -250,11 +255,15 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         /// Set data and send over the network
         /// Since not any children were encoded, we create a vector purely out of 0's
         const std::vector<uint8_t> encodedChildren(inputBuffer.getNumberOfChildBuffers(), 0);
+        /// We do not need the childBufferSizes for non-encoded children but need to pass them anyway. However, the vector does not hold the actual
+        /// child buffer sizes here.
+        const std::vector<uint64_t> childBufferSizes(inputBuffer.getNumberOfChildBuffers(), 0);
         sendResult = send_buffer(
             **channel,
             metadata,
             false,
             rust::Slice(encodedChildren.data(), encodedChildren.size()),
+            rust::Slice<const uint64_t>(childBufferSizes.data(), childBufferSizes.size()),
             rust::Slice(usedBufferMemory),
             rust::Slice<const rust::Slice<const uint8_t>>(children));
     }

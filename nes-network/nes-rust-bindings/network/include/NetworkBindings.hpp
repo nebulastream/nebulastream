@@ -37,7 +37,7 @@ public:
 
     void setMetadata(const SerializedTupleBufferHeader&);
     void setData(rust::Slice<const uint8_t>, bool encoded);
-    void addChildBuffer(rust::Slice<const uint8_t>, bool encoded);
+    void addChildBuffer(rust::Slice<const uint8_t>, bool encoded, uint64_t bufferSize);
 
 private:
     /// The wrapper is only a temporary object and thus does not store anything by value.
