@@ -50,6 +50,8 @@ public:
 private:
     DataType dataType;
     LogicalFunction left, right;
+
+    friend Reflector<AddLogicalFunction>;
 };
 
 template <>
@@ -65,6 +67,15 @@ struct Unreflector<AddLogicalFunction>
 };
 
 static_assert(LogicalFunctionConcept<AddLogicalFunction>);
+}
+
+namespace NES::detail
+{
+struct ReflectedAddLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::AddLogicalFunction);
