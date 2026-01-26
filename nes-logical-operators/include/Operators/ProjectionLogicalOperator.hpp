@@ -115,3 +115,13 @@ struct Unreflector<ProjectionLogicalOperator>
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
 
 }
+
+namespace NES::detail
+{
+struct ReflectedProjectionLogicalOperator
+{
+    bool asterisk;
+    std::vector<std::pair<std::optional<std::string>, std::optional<LogicalFunction>>> projections;
+};
+
+}

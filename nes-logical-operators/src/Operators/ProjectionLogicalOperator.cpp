@@ -258,15 +258,9 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
-struct ReflectedProjectionLogicalOperator
-{
-    bool asterisk;
-    std::vector<std::pair<std::optional<std::string>, std::optional<LogicalFunction>>> projections;
-};
-
 Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogicalOperator& op) const
 {
-    ReflectedProjectionLogicalOperator reflected;
+    detail::ReflectedProjectionLogicalOperator reflected;
 
     for (auto [identifierOpt, b] : op.getProjections())
     {
@@ -287,7 +281,7 @@ Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogic
 ProjectionLogicalOperator Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& rfl) const
 {
 
-    auto [asterisk, projections] = unreflect<ReflectedProjectionLogicalOperator>(rfl);
+    auto [asterisk, projections] = unreflect<detail::ReflectedProjectionLogicalOperator>(rfl);
 
     std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
 
