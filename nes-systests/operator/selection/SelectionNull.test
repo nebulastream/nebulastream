@@ -102,11 +102,12 @@ SELECT * FROM stream WHERE ISNULL(value2) INTO sink0;
 9,-1,NULL
 10,NULL,NULL
 
+# TODO #1345 it is not possible to use WHERE NOT ISNULL(value1) AND NOT ISNULL(value2) directly
 SELECT id,
        value1 + INT32(5) AS v1_plus,
        value2 - INT32(1) AS v2_minus
-FROM stream2
-WHERE NOT ISNULL(value1) AND NOT ISNULL(value2)
+FROM (SELECT id, value1, value2, NOT ISNULL(value1) AS value1NotNull, NOT ISNULL(value2) AS value2NotNull FROM stream2)
+WHERE value1NotNull AND value2NotNull
 INTO sinkMapped;
 ----
 1,6,1
