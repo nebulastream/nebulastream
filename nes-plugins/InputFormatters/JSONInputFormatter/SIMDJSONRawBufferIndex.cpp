@@ -194,6 +194,7 @@ std::pair<bool, FieldIndex> SIMDJSONRawBufferIndex::indexJSON(const std::string_
 std::pair<bool, FieldIndex> SIMDJSONRawBufferIndex::indexJSON(const std::string_view jsonSV, size_t batchSize)
 {
     const simdjson::padded_string_view paddedJSONSV{jsonSV.data(), jsonSV.size(), jsonSV.size() + simdjson::SIMDJSON_PADDING};
+    this->varSizedValues.clear();
     this->parser = std::make_shared<simdjson::ondemand::parser>();
     this->parser->threaded = false;
     if (jsonSV.size() > batchSize)
