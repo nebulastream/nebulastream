@@ -75,6 +75,8 @@ private:
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
 
+    friend Reflector<SinkDescriptor>;
+
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{

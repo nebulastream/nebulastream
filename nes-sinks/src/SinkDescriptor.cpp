@@ -125,16 +125,16 @@ struct ReflectedSinkDescriptor
 Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
 {
     return reflect(ReflectedSinkDescriptor{
-        .sinkName = descriptor.getSinkName(),
-        .schema = *descriptor.getSchema(),
-        .sinkType = descriptor.getSinkType(),
+        .sinkName = descriptor.sinkName,
+        .schema = *descriptor.schema,
+        .sinkType = descriptor.sinkType,
         .config = descriptor.getReflectedConfig(),
     });
 }
 
-SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& rfl) const
+SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
 {
-    auto [name, schema, type, config] = unreflect<ReflectedSinkDescriptor>(rfl);
+    auto [name, schema, type, config] = unreflect<ReflectedSinkDescriptor>(reflected);
     return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config)};
 }
 
