@@ -39,6 +39,7 @@ public:
     [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) = 0;
     virtual std::expected<void, Exception> start(QueryId queryId) noexcept = 0;
     virtual std::expected<void, Exception> stop(QueryId queryId) noexcept = 0;
+    virtual std::expected<void, Exception> stopAll() noexcept = 0;
     virtual std::expected<void, Exception> unregister(QueryId queryId) noexcept = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept = 0;
 };
