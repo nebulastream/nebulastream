@@ -51,6 +51,8 @@ public:
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend Reflector<LessEqualsLogicalFunction>;
 };
 
 template <>
@@ -67,6 +69,15 @@ struct Unreflector<LessEqualsLogicalFunction>
 
 static_assert(LogicalFunctionConcept<LessEqualsLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedLessEqualsLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::LessEqualsLogicalFunction);
