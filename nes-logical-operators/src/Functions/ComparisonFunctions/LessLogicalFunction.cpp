@@ -28,6 +28,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 namespace NES
 {
@@ -102,20 +103,31 @@ SerializableFunction LessLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-Reflected Reflector<LessLogicalFunction>::operator()(const LessLogicalFunction& _) const
+Reflected Reflector<LessLogicalFunction>::operator()(const LessLogicalFunction& function) const
 {
-    // TODO to implement
-    throw NotImplemented("Reflector");
+    return reflect(detail::ReflectedLessLogicalFunction{.left = function.left, .right = function.right});
 }
 
-LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected& _) const
+
+LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected& reflected) const
 {
-    // TODO to implement
-    throw NotImplemented("Unreflector");
+    auto [left, right] = unreflect<detail::ReflectedLessLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("LessLogicalFunction is missing a child function");
+    }
+
+    return LessLogicalFunction(left.value(), right.value());
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<LessLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
