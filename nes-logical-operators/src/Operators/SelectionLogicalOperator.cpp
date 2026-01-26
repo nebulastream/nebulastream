@@ -186,6 +186,24 @@ SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    return unreflect<SelectionLogicalOperator>(arguments.configNew);
+    if (!arguments.configNew.isEmpty())
+    {
+        return unreflect<SelectionLogicalOperator>(arguments.configNew);
+    }
+
+    auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
+    if (std::holds_alternative<FunctionList>(functionVariant))
+    {
+        const auto functions = std::get<FunctionList>(functionVariant).functions();
+
+        if (functions.size() != 1)
+        {
+            throw CannotDeserialize("Expected exactly one function but got {}", functions.size());
+        }
+        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
+        auto logicalOperator = SelectionLogicalOperator(function);
+        return logicalOperator.withInferredSchema(arguments.inputSchemas);
+    }
+    throw UnknownLogicalOperator();
 }
 }
