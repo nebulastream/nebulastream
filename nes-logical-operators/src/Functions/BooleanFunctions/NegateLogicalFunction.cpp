@@ -101,19 +101,14 @@ SerializableFunction NegateLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-struct ReflectedNegateLogicalFunction
-{
-    std::optional<LogicalFunction> child;
-};
-
 Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFunction& function) const
 {
-    return reflect(ReflectedNegateLogicalFunction{.child = function.child});
+    return reflect(detail::ReflectedNegateLogicalFunction{.child = function.child});
 }
 
 NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& rfl) const
 {
-    auto [function] = unreflect<ReflectedNegateLogicalFunction>(rfl);
+    auto [function] = unreflect<detail::ReflectedNegateLogicalFunction>(rfl);
 
     if (!function.has_value())
     {

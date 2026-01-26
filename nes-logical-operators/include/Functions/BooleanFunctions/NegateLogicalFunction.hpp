@@ -55,6 +55,7 @@ private:
     friend Reflector<NegateLogicalFunction>;
 };
 
+
 template <>
 struct Reflector<NegateLogicalFunction>
 {
@@ -69,6 +70,14 @@ struct Unreflector<NegateLogicalFunction>
 
 static_assert(LogicalFunctionConcept<NegateLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedNegateLogicalFunction
+{
+    std::optional<LogicalFunction> child;
+};
 }
 
 FMT_OSTREAM(NES::NegateLogicalFunction);
