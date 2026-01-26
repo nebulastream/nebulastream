@@ -1,0 +1,21 @@
+# name: NestedJSON.test
+# description: tests support for nested json
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE NestedJSON(key UINT64, value UINT64, `EXTRA_KEY$NAME` VARSIZED);
+CREATE PHYSICAL SOURCE FOR NestedJSON TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":2, "EXTRA_KEY": {"NAME": "max"}}
+
+
+SELECT key, value, `EXTRA_KEY$NAME` FROM NestedJSON INTO File();
+----
+1,2,max
+
+CREATE LOGICAL SOURCE CoffeeJSON(`absoluteCounter` UINT64, `airPumpTime` FLOAT64, `beans$frontOrRightQuantity` FLOAT64, `milk$cycles$left` UINT64);
+CREATE PHYSICAL SOURCE FOR CoffeeJSON TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH FILE small/coffee.json
+
+SELECT `absoluteCounter`, `airPumpTime`, `beans$frontOrRightQuantity`, `milk$cycles$left` FROM CoffeeJSON INTO File();
+----
+0,0.1,0.1,0
