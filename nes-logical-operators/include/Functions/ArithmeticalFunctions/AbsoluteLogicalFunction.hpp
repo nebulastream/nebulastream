@@ -50,6 +50,8 @@ public:
 private:
     DataType dataType;
     LogicalFunction child;
+
+    friend Reflector<AbsoluteLogicalFunction>;
 };
 
 template <>
@@ -66,6 +68,14 @@ struct Unreflector<AbsoluteLogicalFunction>
 
 static_assert(LogicalFunctionConcept<AbsoluteLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedAbsoluteLogicalFunction
+{
+    std::optional<LogicalFunction> child;
+};
 }
 
 FMT_OSTREAM(NES::AbsoluteLogicalFunction);
