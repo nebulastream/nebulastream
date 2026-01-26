@@ -51,6 +51,8 @@ private:
     DataType dataType;
     LogicalFunction left;
     LogicalFunction right;
+
+    friend Reflector<DivLogicalFunction>;
 };
 
 template <>
@@ -67,6 +69,15 @@ struct Unreflector<DivLogicalFunction>
 
 static_assert(LogicalFunctionConcept<DivLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedDivLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::DivLogicalFunction);
