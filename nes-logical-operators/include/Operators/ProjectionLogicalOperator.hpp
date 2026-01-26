@@ -96,6 +96,8 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<ProjectionLogicalOperator>;
 };
 
 template <>

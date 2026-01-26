@@ -60,7 +60,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const ReflectedOp
         }
 
         auto registryArgument
-            = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .configNew = serialized.config};
+            = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .reflected = serialized.config};
 
         auto logicalOperatorOpt = LogicalOperatorRegistry::instance().create(serialized.type, registryArgument);
 

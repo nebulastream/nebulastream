@@ -186,9 +186,9 @@ SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    if (!arguments.configNew.isEmpty())
+    if (!arguments.reflected.isEmpty())
     {
-        return unreflect<SelectionLogicalOperator>(arguments.configNew);
+        return unreflect<SelectionLogicalOperator>(arguments.reflected);
     }
 
     auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
