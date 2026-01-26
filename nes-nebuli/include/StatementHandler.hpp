@@ -93,7 +93,7 @@ struct ShowQueriesStatementResult
 
 struct DropQueryStatementResult
 {
-    QueryId id;
+    std::vector<QueryId> ids;
 };
 
 using StatementResult = std::variant<
