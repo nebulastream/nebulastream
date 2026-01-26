@@ -1,0 +1,137 @@
+# name: NestedJSON.test
+# description: tests support for nested json
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE NestedJSON(key UINT64, value UINT64, `EXTRA_KEY/NAME` VARSIZED);
+CREATE PHYSICAL SOURCE FOR NestedJSON TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":2, "EXTRA_KEY": {"NAME": "max"}}
+
+
+CREATE LOGICAL SOURCE NestedJSON2(`machineId` UINT32, `milk/cycles/left` FLOAT64, `milk/cycles/right` FLOAT64, `milk/totalTime` FLOAT64, `water/totalQuantity` FLOAT64);
+CREATE PHYSICAL SOURCE FOR NestedJSON2 TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"machineId":101,"milk":{"cycles":{"left":0,"right":0},"totalTime":0.0},"water":{"totalQuantity":0.0}}
+
+SELECT key, value, `EXTRA_KEY/NAME` FROM NestedJSON INTO File();
+----
+1,2,max
+
+CREATE LOGICAL SOURCE CoffeeJSON(`absoluteCounter` UINT64, `airPumpTime` FLOAT64, `beans/frontOrRightQuantity` FLOAT64, `milk/cycles/left` UINT64);
+CREATE PHYSICAL SOURCE FOR CoffeeJSON TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"absoluteCounter": 0, "airPumpTime": 0.1, "beans": {"adjustment": 0, "frontOrRightQuantity": 0.1, "powderChuteQuantity": 0.1, "quantityHopper1": 0.1, "quantityHopper2": 0.1, "quantityHopper3": 0.1, "quantityHopper4": 0.1, "rearOrLeftQuantity": 0.1, "totalQuantity": 0.1}, "brewCycles": {"left": 0, "right": 0}, "cleaningCounter": 0, "heatingTimeCoffeeBoiler": {"left": 0.1, "right": 0.1}, "hotWaterTime": 0.1, "lastReset": "2021-12-14T15:05:03", "machineId": 0, "machineTimestamp": "2021-12-14T15:05:03", "milk": {"cycles": {"left": 0, "right": 0}, "steamTime": {"left": 0.1, "right": 0.1}, "totalTime": 0.1}, "powder": {"time": 0, "totalQuantityLeft": 0, "totalQuantityRight": 0}, "rinseOrCleanCycles": {"left": 0, "right": 0}, "serverTimestamp": "2022-01-27T08:36:23Z", "steam": {"heatingTimeSteamBoilers": [0.1], "steamTime": {"left": 0.1, "right": 0.1}}, "water": {"cleaningQuantity": 0.1, "productsQuantity": 0.1, "purgeQuantity": 0.1, "rinseQuantity": 0.1, "totalQuantity": 0.1}}
+
+SELECT `absoluteCounter`, `airPumpTime`, `beans/frontOrRightQuantity`, `milk/cycles/left` FROM CoffeeJSON INTO File();
+----
+0,0.1,0.1,0
+
+
+SELECT `machineId`, `milk/cycles/left`, `milk/cycles/right`, `milk/totalTime` , `water/totalQuantity` FROM NestedJSON2 INTO File();
+----
+101,0,0,0.0,0.0
+
+## Multiple VARSIZED fields from same and different nested parents.
+CREATE LOGICAL SOURCE MultiVarsized(`id` UINT64 NOT NULL, `user/name` VARSIZED NOT NULL, `user/email` VARSIZED NOT NULL, `meta/tag` VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR MultiVarsized TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"id": 1, "user": {"name": "alice", "email": "alice@test.com"}, "meta": {"tag": "admin"}}
+{"id": 2, "user": {"name": "bob", "email": "bob@test.com"}, "meta": {"tag": "user"}}
+
+SELECT `id`, `user/name`, `user/email`, `meta/tag` FROM MultiVarsized INTO File();
+----
+1,alice,alice@test.com,admin
+2,bob,bob@test.com,user
+
+## Schema field order is the reverse of JSON key order.
+CREATE LOGICAL SOURCE ReversedOrder(`c/val` VARSIZED NOT NULL, `b/val` VARSIZED NOT NULL, `a/val` VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR ReversedOrder TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"a": {"val": "first"}, "b": {"val": "middle"}, "c": {"val": "last"}}
+
+SELECT `c/val`, `b/val`, `a/val` FROM ReversedOrder INTO File();
+----
+last,middle,first
+
+## Multiple siblings under the same deeply nested parent.
+CREATE LOGICAL SOURCE DeepSiblings(`root/a/x` UINT64 NOT NULL, `root/a/y` UINT64 NOT NULL, `root/b/x` UINT64 NOT NULL, `root/b/y` UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR DeepSiblings TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"root": {"a": {"x": 10, "y": 20}, "b": {"x": 30, "y": 40}}}
+
+SELECT `root/a/x`, `root/a/y`, `root/b/x`, `root/b/y` FROM DeepSiblings INTO File();
+----
+10,20,30,40
+
+## Multiple VARSIZED fields from sibling nested parents, multiple tuples.
+CREATE LOGICAL SOURCE VarsizedSiblings(`source/name` VARSIZED NOT NULL, `source/location` VARSIZED NOT NULL, `target/name` VARSIZED NOT NULL, `target/location` VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR VarsizedSiblings TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"source": {"name": "sensor-1", "location": "room-a"}, "target": {"name": "actuator-1", "location": "room-b"}}
+{"source": {"name": "sensor-2", "location": "room-c"}, "target": {"name": "actuator-2", "location": "room-d"}}
+
+SELECT `source/name`, `source/location`, `target/name`, `target/location` FROM VarsizedSiblings INTO File();
+----
+sensor-1,room-a,actuator-1,room-b
+sensor-2,room-c,actuator-2,room-d
+
+## Nullable nested fields: explicit null, missing child key, missing parent object.
+CREATE LOGICAL SOURCE NestedNullable(`id` UINT64 NOT NULL, `info/city` VARSIZED, `info/zip` UINT32);
+CREATE PHYSICAL SOURCE FOR NestedNullable TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"id": 1, "info": {"city": "berlin", "zip": 10115}}
+{"id": 2, "info": {"city": null, "zip": 20095}}
+{"id": 3, "info": {"zip": 30159}}
+{"id": 4}
+
+SELECT `id`, `info/city`, `info/zip` FROM NestedNullable INTO File();
+----
+1,berlin,10115
+2,NULL,20095
+3,NULL,30159
+4,NULL,NULL
+
+## Missing nested child key with NOT NULL field.
+## Must produce an error, not silently return a default value.
+CREATE LOGICAL SOURCE NestedMissing(`id` UINT64 NOT NULL, `info/missing` VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR NestedMissing TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"id": 1, "info": {"city": "berlin"}}
+
+SELECT `id`, `info/missing` FROM NestedMissing INTO File();
+----
+ERROR 2004
+
+## Missing parent object with NOT NULL nested field.
+CREATE LOGICAL SOURCE MissingParent(`id` UINT64 NOT NULL, `info/city` VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR MissingParent TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"id": 1}
+
+SELECT `id`, `info/city` FROM MissingParent INTO File();
+----
+ERROR 2004
+
+## Multiple tuples with varying string lengths across records.
+CREATE LOGICAL SOURCE VaryingLengths(`a/x` VARSIZED NOT NULL, `b/y` VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR VaryingLengths TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"a": {"x": "short"}, "b": {"y": "a-very-long-string-value"}}
+{"a": {"x": "another-long-string-here"}, "b": {"y": "s"}}
+{"a": {"x": "mid"}, "b": {"y": "mid"}}
+
+SELECT `a/x`, `b/y` FROM VaryingLengths INTO File();
+----
+short,a-very-long-string-value
+another-long-string-here,s
+mid,mid
+
+## Deeply nested VARSIZED: 3 levels deep, multiple string fields at mixed depths.
+CREATE LOGICAL SOURCE DeepVarsized(`org/team/lead` VARSIZED NOT NULL, `org/team/project` VARSIZED NOT NULL, `org/location` VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR DeepVarsized TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"org": {"team": {"lead": "carol", "project": "nebula"}, "location": "berlin"}}
+
+SELECT `org/team/lead`, `org/team/project`, `org/location` FROM DeepVarsized INTO File();
+----
+carol,nebula,berlin

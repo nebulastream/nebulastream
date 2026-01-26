@@ -70,10 +70,36 @@ requires(
 ParseResultFixed<T>*
 parseJsonFixedSizeIntoVarValProxy(FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer);
 
+/// Navigates to a field using find_field_unordered, splitting the field path
+/// (e.g., "KEY" or "EXTRA_KEY/NAME") on '/' and navigating step by step.
+/// Unlike at_pointer, find_field_unordered does NOT call rewind(), so the parser's
+/// internal string buffer is preserved across calls, allowing VARSIZED string_views
+/// to remain valid until the entire tuple has been processed.
+inline simdjson::simdjson_result<simdjson::ondemand::value>
+navigateToField(simdjson::simdjson_result<simdjson::ondemand::document_reference>& doc, const std::string_view fieldPath)
+{
+    auto slashPos = fieldPath.find('/');
+    if (slashPos == std::string_view::npos)
+    {
+        /// Simple (non-nested) field
+        return doc.find_field_unordered(fieldPath);
+    }
+
+    /// Nested field: navigate step by step through each path segment
+    auto result = doc.find_field_unordered(fieldPath.substr(0, slashPos));
+    auto path = fieldPath.substr(slashPos + 1);
+    for (slashPos = path.find('/'); slashPos != std::string_view::npos; slashPos = path.find('/'))
+    {
+        result = result.find_field_unordered(path.substr(0, slashPos));
+        path = path.substr(slashPos + 1);
+    }
+    return result.find_field_unordered(path);
+}
+
 inline simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
     simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
 {
-    const auto simdJsonResult = simdJsonReference[fieldName];
+    auto simdJsonResult = navigateToField(simdJsonReference, fieldName);
     if (not simdJsonResult.has_value())
     {
         throw FieldNotFound(
@@ -89,18 +115,13 @@ inline bool checkIsNullJsonProxy(
     const std::string_view fieldName = fieldNameStr;
     auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
 
-    /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
-    if (not currentDoc[fieldName].has_value())
+    /// Navigate once: a missing key (no value) or an explicit JSON null both count as NULL.
+    auto simdJsonResult = navigateToField(currentDoc, fieldName);
+    if (not simdJsonResult.has_value())
     {
         return true;
     }
-
-    /// Second, we need to check if the key is equal to one of the null values
-    if (accessSIMDJsonFieldOrThrow(currentDoc, fieldName).is_null())
-    {
-        return true;
-    }
-    return false;
+    return simdJsonResult.is_null();
 }
 
 VarVal parseJsonVarSized(
