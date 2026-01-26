@@ -1,4 +1,4 @@
-# name: join/JoinWithDifferentDataTypes.test
+# name: join/JoinWithVarSized.test
 # description: Test join operator and the join function performs the join operation with variable sized data
 # groups: [WindowOperators, Join, CompilationIntensive]
 
