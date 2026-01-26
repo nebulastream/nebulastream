@@ -148,9 +148,9 @@ FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(c
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.data.isEmpty())
+    if (!arguments.reflected.isEmpty())
     {
-        return unreflect<FieldAccessLogicalFunction>(arguments.data);
+        return unreflect<FieldAccessLogicalFunction>(arguments.reflected);
     }
 
     if (not arguments.config.contains("FieldName"))

@@ -63,7 +63,7 @@ struct Unreflector<TypedLogicalFunction<>>
         auto [name, data] = unreflect<ReflectedLogicalFunction>(rfl);
 
         LogicalFunctionRegistryArguments argument;
-        argument.data = data;
+        argument.reflected = data;
         auto logicalFunction = LogicalFunctionRegistry::instance().create(name, argument);
         if (!logicalFunction.has_value())
         {

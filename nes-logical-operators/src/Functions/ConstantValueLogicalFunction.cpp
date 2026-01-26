@@ -128,9 +128,9 @@ ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.data.isEmpty())
+    if (!arguments.reflected.isEmpty())
     {
-        return unreflect<ConstantValueLogicalFunction>(arguments.data);
+        return unreflect<ConstantValueLogicalFunction>(arguments.reflected);
     }
 
     if (not arguments.config.contains("constantValueAsString"))

@@ -136,9 +136,9 @@ EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Refle
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.data.isEmpty())
+    if (!arguments.reflected.isEmpty())
     {
-        return unreflect<EqualsLogicalFunction>(arguments.data);
+        return unreflect<EqualsLogicalFunction>(arguments.reflected);
     }
     if (arguments.children.size() != 2)
     {

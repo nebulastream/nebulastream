@@ -37,6 +37,6 @@ std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::
 {
     return LogicalFunctionRegistry::instance().create(
         functionName,
-        LogicalFunctionRegistryArguments{.config = {}, .children = std::move(arguments), .dataType = {}, .data = Reflected{}});
+        LogicalFunctionRegistryArguments{.config = {}, .children = std::move(arguments), .dataType = {}, .reflected = Reflected{}});
 }
 }
