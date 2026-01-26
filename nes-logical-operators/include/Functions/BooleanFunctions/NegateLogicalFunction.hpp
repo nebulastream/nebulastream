@@ -51,6 +51,8 @@ public:
 private:
     DataType dataType;
     LogicalFunction child;
+
+    friend Reflector<NegateLogicalFunction>;
 };
 
 template <>
