@@ -77,19 +77,16 @@ VarVal SIMDJSONFIF::parseJsonVarSized(
     return VarVal{VariableSizedData{varSizedString}, nullable, false};
 }
 
-bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData) noexcept
+bool checkIsNullJsonProxy(simdjson::simdjson_result<simdjson::ondemand::value>& simdJsonResult) noexcept
 {
-    const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
-    auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
-
-    /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
-    if (not currentDoc[fieldName].has_value())
+    /// Check if the key is not in the doc. If this is the case, we can return true, as this counts as null
+    if (not simdJsonResult.has_value())
     {
         return true;
     }
 
-    /// Second, we need to check if the key is equal to one of the null values
-    if (SIMDJSONFIF::accessSIMDJsonFieldOrThrow(currentDoc, fieldName).is_null())
+    /// Check if the value is explicitly null
+    if (simdJsonResult.is_null())
     {
         return true;
     }

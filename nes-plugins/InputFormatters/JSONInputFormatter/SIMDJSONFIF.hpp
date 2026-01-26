@@ -32,6 +32,7 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Strings.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -71,7 +72,7 @@ requires(
 ParseResultFixed<T>*
 parseJsonFixedSizeIntoVarValProxy(FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData);
 
-bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData) noexcept;
+bool checkIsNullJsonProxy(simdjson::simdjson_result<simdjson::ondemand::value>& simdJsonResult) noexcept;
 
 struct SIMDJSONMetaData
 {
@@ -92,11 +93,13 @@ struct SIMDJSONMetaData
         {
             if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
             {
-                fieldNamesInJson.emplace_back(fieldName.substr(qualifierPosition + 1));
+                const auto adaptedFiledName = replaceAll(fieldName.substr(qualifierPosition + 1), "$", "/");
+                fieldNamesInJson.emplace_back(std::string("/").append(adaptedFiledName));
             }
             else
             {
-                fieldNamesInJson.emplace_back(fieldName);
+                const auto adaptedFiledName = replaceAll(fieldName, "$", "/");
+                fieldNamesInJson.emplace_back(std::string("/").append(adaptedFiledName));
             }
         }
 
@@ -256,16 +259,45 @@ public:
         return simdJsonValue.value();
     }
 
-    static simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
-        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+    static simdjson::simdjson_result<simdjson::ondemand::value>
+    accessSIMDJsonFieldOrThrow(simdjson::simdjson_result<simdjson::ondemand::value> simdJsonResult, const std::string_view fieldName)
     {
-        const auto simdJsonResult = simdJsonReference[fieldName];
         if (not simdJsonResult.has_value())
         {
             throw FieldNotFound(
                 "SimdJson has not found the fieldName {} with error: {}", fieldName, magic_enum::enum_name(simdJsonResult.error()));
         }
         return simdJsonResult;
+    }
+
+    /// Navigates to a field using find_field_unordered, splitting the JSON Pointer path
+    /// (e.g., "/KEY" or "/EXTRA_KEY/NAME") into segments and navigating step by step.
+    /// Unlike at_pointer, find_field_unordered does NOT call rewind(), so the parser's
+    /// internal string buffer is preserved across calls, allowing VARSIZED string_views
+    /// to remain valid until the entire tuple has been processed.
+    static simdjson::simdjson_result<simdjson::ondemand::value>
+    navigateToField(simdjson::simdjson_result<simdjson::ondemand::document_reference>& doc, const std::string_view jsonPointerPath)
+    {
+        /// Strip leading '/' from the JSON Pointer path
+        auto path = jsonPointerPath.substr(1);
+
+        auto slashPos = path.find('/');
+        if (slashPos == std::string_view::npos)
+        {
+            /// Simple (non-nested) field
+            return doc.find_field_unordered(path);
+        }
+
+        /// Nested field: navigate step by step through each path segment
+        auto result = doc.find_field_unordered(path.substr(0, slashPos));
+        path = path.substr(slashPos + 1);
+
+        for (slashPos = path.find('/'); slashPos != std::string_view::npos; slashPos = path.find('/'))
+        {
+            result = result.find_field_unordered(path.substr(0, slashPos));
+            path = path.substr(slashPos + 1);
+        }
+        return result.find_field_unordered(path);
     }
 
     [[nodiscard]] simdjson::ondemand::document_stream::iterator getDocStreamIterator() const { return docStreamIterator; }
@@ -282,7 +314,7 @@ private:
 
 static_assert(std::is_standard_layout_v<SIMDJSONFIF>, "SIMDJSONFIF must have a standard layout");
 
-/// (Proxy) functions being called via nautius::invoke() can not be member functions. Thus, we need to implement them outside of the class
+/// (Proxy) functions being called via nautius::invoke() can not be member functions. Thus, we need to implement them outside the class
 template <typename T, bool Nullable>
 requires(
     not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
@@ -295,10 +327,14 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
     thread_local static ParseResultFixed<T> result;
     result.isNull = false;
 
-    /// Checking if the field is null but only if the field is nullable
+    /// Navigate to the field once and reuse the result for both the null check and value extraction.
+    const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
+    auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
+
     if constexpr (Nullable)
     {
-        if (checkIsNullJsonProxy(fieldIndex, fieldIndexFunction, metaData))
+        auto simdJsonResult = SIMDJSONFIF::navigateToField(currentDoc, fieldName);
+        if (checkIsNullJsonProxy(simdJsonResult))
         {
             result.isNull = true;
             result.value = T{0};
@@ -306,9 +342,7 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
         }
     }
 
-    const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
-    auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
-    auto simdJsonResult = SIMDJSONFIF::accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
+    auto simdJsonResult = SIMDJSONFIF::accessSIMDJsonFieldOrThrow(SIMDJSONFIF::navigateToField(currentDoc, fieldName), fieldName);
     /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
     if constexpr (std::same_as<T, bool>)
     {
@@ -317,10 +351,9 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
     }
     else if constexpr (std::same_as<T, char>)
     {
-        const std::string_view valueSV = currentDoc[fieldName];
-        PRECONDITION(valueSV.size() == 1, "Cannot take {} as character, because size is not 1", valueSV);
-        result.value
-            = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName)[0]);
+        const auto strValue = SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName);
+        PRECONDITION(strValue.size() == 1, "Cannot take {} as character, because size is not 1", strValue);
+        result.value = static_cast<T>(strValue[0]);
         return &result;
     }
     else if constexpr (std::signed_integral<T>)
@@ -361,28 +394,30 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, SIMDJSO
     /// the size of the var sized and the pointer to it
     thread_local static ParsedResultVariableSized result{};
 
-    /// Checking if the field is null but only if the field is nullable
-    if constexpr (Nullable)
-    {
-        if (checkIsNullJsonProxy(fieldIndex, fieldIndexFunction, metaData))
-        {
-            constexpr auto sizeOfValue = 0;
-            result = ParsedResultVariableSized{.varSizedPointer = nullptr, .size = sizeOfValue, .isNull = true};
-            return &result;
-        }
-    }
-
     INVARIANT(
         fieldIndex < metaData->getNumberOfFields(),
         "fieldIndex {} is out or bounds for schema keys of size: {}",
         fieldIndex,
         metaData->getNumberOfFields());
+
+    /// Navigate to the field once and reuse the result for both the null check and value extraction.
     auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
     const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
 
-    /// Get the value from the document and convert it to a span of bytes
-    const std::string_view value = SIMDJSONFIF::accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
+    if constexpr (Nullable)
+    {
+        auto simdJsonResult = SIMDJSONFIF::navigateToField(currentDoc, fieldName);
+        if (checkIsNullJsonProxy(simdJsonResult))
+        {
+            result = ParsedResultVariableSized{.varSizedPointer = nullptr, .size = 0, .isNull = true};
+            return &result;
+        }
+    }
 
+
+    /// Get the value from the document and convert it to a span of bytes
+    auto simdJsonResult = SIMDJSONFIF::accessSIMDJsonFieldOrThrow(SIMDJSONFIF::navigateToField(currentDoc, fieldName), fieldName);
+    const std::string_view value = simdJsonResult.get_string().value();
     result = ParsedResultVariableSized{.varSizedPointer = value.data(), .size = value.size(), .isNull = false};
     return &result;
 }
