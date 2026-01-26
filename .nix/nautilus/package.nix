@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "fe607618bb0683a3335e3199c7c4651523ab2a4f";
-    hash = "sha256-7SOBayt7UXZa6VQyFPFXjZ6lBWu8FPoWjlaI6tBfkfM=";
+    rev = "d75a6816436c824090c85191a0c1e39239cf2479";
+    hash = "sha256-M0OOYKk/bCegCv2RpuvJ4Q9gSccpW78r3C9xtrGIHe0=";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
