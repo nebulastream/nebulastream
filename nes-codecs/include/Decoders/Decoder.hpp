@@ -38,6 +38,18 @@ public:
         DECODING_REQUIRES_ANOTHER_BUFFER
     };
 
+    enum class DecodingResultStatus : uint8_t
+    {
+        SUCCESSFULLY_DECODED,
+        DECODING_ERROR
+    };
+
+    struct DecodingResult
+    {
+        DecodingResultStatus status;
+        size_t decompressedSize;
+    };
+
     Decoder() = default;
     virtual ~Decoder() = default;
 
@@ -48,8 +60,11 @@ public:
     virtual void decodeAndEmit(
         TupleBuffer& encodedBuffer,
         TupleBuffer& emptyDecodedBuffer,
-        const std::function<std::optional<TupleBuffer>(TupleBuffer&, const DecodeStatusType)>& emitAndProvide)
-        = 0;
+        const std::function<std::optional<TupleBuffer>(TupleBuffer&, const DecodeStatusType)>& emitAndProvide) = 0;
+
+    /// Stateless function that will decode the whole data in src into the dst vector
+    /// It is assumed that dst already allocated enough memory to hold the output
+    [[nodiscard]] virtual DecodingResult decodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const Decoder& decoder);
 

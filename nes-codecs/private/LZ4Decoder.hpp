@@ -39,6 +39,8 @@ public:
         TupleBuffer& emptyDecodedBuffer,
         const std::function<std::optional<TupleBuffer>(TupleBuffer&, const DecodeStatusType)>& emitAndProvide) override;
 
+    [[nodiscard]] DecodingResult decodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const override;
+
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:

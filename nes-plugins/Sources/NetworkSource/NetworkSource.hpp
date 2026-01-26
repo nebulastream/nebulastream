@@ -21,7 +21,9 @@
 #include <stop_token>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Decoders/Decoder.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -55,6 +57,11 @@ public:
 
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
+    void setDecoder(std::unique_ptr<Decoder> decoder)
+    {
+        this->decoder = std::move(decoder);
+    };
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
@@ -66,6 +73,7 @@ private:
     std::optional<rust::Box<ReceiverDataChannel>> channel;
     rust::Box<ReceiverNetworkService> receiverServer;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::optional<std::unique_ptr<Decoder>> decoder = std::nullopt;
 };
 
 struct ConfigParametersNetworkSource

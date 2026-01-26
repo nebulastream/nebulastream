@@ -20,4 +20,4 @@ target_include_directories(nes-network-bindings
         PRIVATE .
         PUBLIC include
 )
-target_link_libraries(nes-network-bindings PUBLIC nes-memory nes-common)
+target_link_libraries(nes-network-bindings PUBLIC nes-codecs nes-memory nes-common)

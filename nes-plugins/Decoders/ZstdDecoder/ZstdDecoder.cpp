@@ -87,6 +87,20 @@ void ZstdDecoder::decodeAndEmit(
     }
 }
 
+Decoder::DecodingResult ZstdDecoder::decodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const
+{
+    /// Zstd natively provides a method for "stateless" decoding of the whole buffer
+    /// We assume that dst allocated enough memory to hold the whole decoded buffer
+    const size_t srcSize = src.size_bytes();
+    const size_t dstSize = dst.capacity() * sizeof(char);
+    const size_t decompressedBytes = ZSTD_decompress(dst.data(), dstSize, src.data(), srcSize);
+    if (ZSTD_isError(decompressedBytes))
+    {
+        return DecodingResult{DecodingResultStatus::DECODING_ERROR, 0};
+    }
+    return DecodingResult{DecodingResultStatus::SUCCESSFULLY_DECODED, decompressedBytes};
+}
+
 std::ostream& ZstdDecoder::toString(std::ostream& str) const
 {
     str << "ZstdDecoder";

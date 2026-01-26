@@ -18,15 +18,20 @@
 #include <optional>
 #include <string>
 #include <utility>
+
 #include <Decoders/DecoderProvider.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Util/Common.hpp>
+#include <Util/Strings.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
+#include "../../nes-plugins/Sources/NetworkSource/NetworkSource.hpp"
 
 namespace NES
 {
@@ -54,6 +59,21 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         if (const auto usedCodec = sourceDescriptor.getFromConfig(SourceDescriptor::CODEC); usedCodec != "None")
         {
             std::unique_ptr<Decoder> decoder = DecoderProvider::provideDecoder(usedCodec);
+            if (toUpperCase(sourceDescriptor.getSourceType()) == "NETWORK")
+            {
+                /// This is a special case, since the Network Source takes care of decoding directly instead of relying on the source hanlde to do it.
+                /// Thus, the source hanlde does not obtain the decoder here.
+                std::unique_ptr<NetworkSource> networkSource = NES::dynamic_pointer_cast<NetworkSource, Source>(std::move(source.value()));
+                networkSource->setDecoder(std::move(decoder));
+
+                return std::make_unique<SourceHandle>(
+                    std::move(backpressureListener),
+                    std::move(originId),
+                    std::move(runtimeConfig),
+                    bufferPool,
+                    std::move(networkSource),
+                    std::nullopt);
+            }
             return std::make_unique<SourceHandle>(
                 std::move(backpressureListener),
                 std::move(originId),

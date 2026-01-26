@@ -19,6 +19,7 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Decoders/Decoder.hpp>
 
 struct SerializedTupleBufferHeader;
 
@@ -29,19 +30,24 @@ struct SerializedTupleBufferHeader;
 class TupleBufferBuilder
 {
 public:
-    explicit TupleBufferBuilder(NES::TupleBuffer& buffer, NES::AbstractBufferProvider& bufferProvider)
-        : buffer(buffer), bufferProvider(bufferProvider)
+    explicit TupleBufferBuilder(NES::TupleBuffer& buffer, NES::AbstractBufferProvider& bufferProvider, const NES::Decoder* decoder)
+        : buffer(buffer), bufferProvider(bufferProvider), decoder(decoder)
     {
     }
 
     void setMetadata(const SerializedTupleBufferHeader&);
-    void setData(rust::Slice<const uint8_t>);
-    void addChildBuffer(rust::Slice<const uint8_t>);
+    void setData(rust::Slice<const uint8_t>, bool encoded);
+    void addChildBuffer(rust::Slice<const uint8_t>, bool encoded);
 
 private:
     /// The wrapper is only a temporary object and thus does not store anything by value.
     NES::TupleBuffer& buffer; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     NES::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
+    /// This is a pointer to a decoder that is provided via the constructor, if the buffers, that are transmitted via the network, are encoded
+    /// This pointer will be passed by the Network Source itself
+    const NES::Decoder* decoder;
+
 };
 
 /// This function is required to allow threads from rust to set thread local variables required for logger context.

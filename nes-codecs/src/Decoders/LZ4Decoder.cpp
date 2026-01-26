@@ -102,6 +102,35 @@ void LZ4Decoder::decodeAndEmit(
     }
 }
 
+Decoder::DecodingResult LZ4Decoder::decodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const
+{
+    /// Create a decompression context just for this buffer
+    LZ4F_decompressionContext_t decompCtx;
+    LZ4F_errorCode_t errorCode = LZ4F_createDecompressionContext(&decompCtx, LZ4F_VERSION);
+    if (LZ4F_isError(errorCode))
+    {
+        NES_ERROR("Failed to create LZ4 decompression context.");
+        return DecodingResult{DecodingResultStatus::DECODING_ERROR, 0};
+    }
+
+    /// We assume that there is only one frame in the src buffer for now
+    /// If in the future this might not be the case, we have to adjust this part
+    size_t encodedBytes = src.size_bytes();
+    /// Another assumtion in this function is, that dst allocated enough memory to hold the whole decoded contents
+    /// This is because this function is only called for encoded tuple buffers, which have a maximum size in their unencoded form
+    size_t dstCapacity = dst.capacity() * sizeof(char);
+    const size_t remainingEncodedBytes = LZ4F_decompress(decompCtx, dst.data(), &dstCapacity, src.data(), &encodedBytes, nullptr);
+    if (LZ4F_isError(remainingEncodedBytes) || remainingEncodedBytes != 0)
+    {
+        /// We also return an error if the space in the vector did not suffice, since this means that the decoded data is larger than a tuple buffer
+        NES_ERROR("Error during decoding of whole buffer");
+        return DecodingResult{DecodingResultStatus::DECODING_ERROR, 0};
+    }
+    /// The number of decompressed bytes in dst is now the value of dstCapacity. We will use it in result
+    LZ4F_freeDecompressionContext(decompCtx);
+    return DecodingResult{DecodingResultStatus::SUCCESSFULLY_DECODED, dstCapacity};
+}
+
 std::ostream& LZ4Decoder::toString(std::ostream& str) const
 {
     /// Simply returns name due to lack of other meaningful debug information.

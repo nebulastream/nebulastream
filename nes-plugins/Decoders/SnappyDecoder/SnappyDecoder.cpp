@@ -160,6 +160,19 @@ void SnappyDecoder::decodeAndEmit(
     }
 }
 
+Decoder::DecodingResult SnappyDecoder::decodeBuffer(std::span<const std::byte> src, std::vector<char>&) const
+{
+    /// Src should hold an entire snappy frame. This means that at least the 4 byte header is included
+    /// This function should also only be called on decodeab
+    if (src.size_bytes() < 4 )
+    {
+        return DecodingResult{DecodingResultStatus::DECODING_ERROR, 0};
+    }
+    /// TBD
+    return DecodingResult{DecodingResultStatus::SUCCESSFULLY_DECODED, 0};
+
+}
+
 std::ostream& SnappyDecoder::toString(std::ostream& str) const
 {
     str << "SnappyDecoder: Currently storing " << encodedBufferStorage.size() << " bytes of encoded frame data.";

@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <Encoders/Encoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -66,7 +67,7 @@ public:
         return Instance;
     }
 
-    explicit NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder);
     ~NetworkSink() override = default;
 
     NetworkSink(const NetworkSink&) = delete;
@@ -93,6 +94,7 @@ private:
     std::string connectionAddr;
     std::string thisConnection;
     std::atomic_bool closed;
+    std::optional<std::unique_ptr<Encoder>> encoder;
 };
 
 struct ConfigParametersNetworkSink
@@ -113,7 +115,8 @@ struct ConfigParametersNetworkSink
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CONNECTION, CHANNEL, BIND);
+        = DescriptorConfig::createConfigParameterContainerMap(
+            SinkDescriptor::parameterMap, CONNECTION, CHANNEL, BIND, SinkDescriptor::CODEC);
 };
 
 }
