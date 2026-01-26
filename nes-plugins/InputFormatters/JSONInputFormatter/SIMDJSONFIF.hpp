@@ -44,6 +44,7 @@
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
+#include <Util/Strings.hpp>
 
 namespace NES
 {
@@ -92,11 +93,16 @@ struct SIMDJSONMetaData
         {
             if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
             {
-                fieldNamesInJson.emplace_back(fieldName.substr(qualifierPosition + 1));
+
+                const auto adaptedFiledName = replaceAll(fieldName.substr(qualifierPosition + 1), "$", "/");
+                fieldNamesInJson.emplace_back(std::string("/").append(adaptedFiledName));
             }
             else
             {
-                fieldNamesInJson.emplace_back(fieldName);
+                throw FormattingError(
+                "Expected qualified field <source_name>${}, but only got {}",
+                fieldName,
+                fieldName);
             }
         }
 
