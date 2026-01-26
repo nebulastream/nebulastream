@@ -347,7 +347,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
 int main(int argc, const char** argv)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::WorkerId("systest"), "main");
 
     auto config = parseConfiguration(argc, argv);
@@ -357,11 +357,13 @@ int main(int argc, const char** argv)
     switch (result.returnType)
     {
         case SystestExecutorResult::ReturnType::SUCCESS: {
-            auto endTime = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            std::cout << result.outputMessage << '\n';
-            std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
+            const auto endTime = std::chrono::high_resolution_clock::now();
+            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+            fmt::print(
+                "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
+                result.outputMessage,
+                duration.count(),
+                std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
             return 0;
         }
         case SystestExecutorResult::ReturnType::FAILED: {
@@ -371,7 +373,7 @@ int main(int argc, const char** argv)
             NES_ERROR("{}", result.outputMessage);
             std::cout << result.outputMessage << '\n';
             std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
+                      << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
             return result.errorCode.value();
         }
     }
