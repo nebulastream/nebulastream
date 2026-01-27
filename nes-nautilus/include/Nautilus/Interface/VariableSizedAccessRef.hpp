@@ -59,19 +59,6 @@ struct StateResolver<T>
 
 }
 
-template <>
-class val<NES::VariableSizedAccess::IndexOffsetSize>
-{
-public:
-    using Underlying = NES::VariableSizedAccess::IndexOffsetSize;
-
-    explicit val(const Underlying combinedIndex) : indexOffsetCombined(combinedIndex.combinedIndexOffset), size(combinedIndex.size) { }
-
-private:
-    val<uint64_t> indexOffsetCombined;
-    val<uint64_t> size;
-};
-
 /// We are specializing the nautilus::val<> implementation so that we can use nautilus::val<VariableSizedAccess>
 template <>
 class val<NES::VariableSizedAccess>
@@ -84,26 +71,23 @@ public:
     template <typename T>
     friend struct details::StateResolver;
 
-    using Underlying = NES::VariableSizedAccess::IndexOffsetSize;
+    using Underlying = NES::VariableSizedAccess;
 
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    explicit val(const Underlying variableSizedAccess) : variableSizedAccess(variableSizedAccess) { }
-
-    /// ReSharper disable once CppNonExplicitConvertingConstructor
-    explicit val(const val<Underlying>& variableSizedAccess) : variableSizedAccess(variableSizedAccess) { }
-
-    /// ReSharper disable once CppNonExplicitConvertingConstructor
-    explicit val(const NES::VariableSizedAccess variableSizedAccess) : variableSizedAccess(variableSizedAccess.getCombinedIdxOffset()) { }
+    explicit val(const Underlying variableSizedAccess)
+        : index(variableSizedAccess.getIndex().getRawIndex())
+        , offset(variableSizedAccess.getOffset().getRawOffset())
+        , size(variableSizedAccess.getSize().getRawSize())
+    {
+    }
 
     val(const val& other) = default;
     val& operator=(const val& other) = default;
 
-    /// IMPORTANT: This should be used with utmost care. Only, if there is no other way to work with the strong types.
-    /// In general, this method should only be used to write to a Nautilus::Record of if one calls a proxy function
-    [[nodiscard]] val<Underlying> convertToValue() const { return variableSizedAccess; }
-
 private:
-    val<Underlying> variableSizedAccess;
+    val<uint32_t> index;
+    val<uint32_t> offset;
+    val<uint64_t> size;
 };
 
 }

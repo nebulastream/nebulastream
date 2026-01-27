@@ -21,12 +21,6 @@ namespace NES
 {
 VariableSizedAccess::Index::Index(const uint64_t index) : index(index)
 {
-    PRECONDITION(index < (1UL << UnderlyingBits), "Currently we only support {} child buffers", (1UL << UnderlyingBits));
-}
-
-VariableSizedAccess::Index VariableSizedAccess::Index::convertToIndex(const IndexOffsetSize combinedIdxOffset)
-{
-    return Index{static_cast<uint32_t>(combinedIdxOffset.combinedIndexOffset >> 32UL)};
 }
 
 VariableSizedAccess::Index::Underlying VariableSizedAccess::Index::getRawIndex() const
@@ -53,12 +47,6 @@ operator%(const VariableSizedAccess::Index& index, const VariableSizedAccess::In
 
 VariableSizedAccess::Offset::Offset(const uint64_t offset) : offset(offset)
 {
-    PRECONDITION(offset < (1UL << UnderlyingBits), "Currently we only support {} ({}bit) offsets", (1UL << UnderlyingBits), UnderlyingBits);
-}
-
-VariableSizedAccess::Offset VariableSizedAccess::Offset::convertToOffset(const IndexOffsetSize combinedIdxOffset)
-{
-    return Offset{static_cast<uint32_t>(combinedIdxOffset.combinedIndexOffset & 0xffffffffUL)};
 }
 
 VariableSizedAccess::Offset::Underlying VariableSizedAccess::Offset::getRawOffset() const

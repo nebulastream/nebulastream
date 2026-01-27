@@ -64,31 +64,36 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
-        auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
+        auto fields
+            = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
-                          {
-                              const auto physicalType = formattingContext.physicalTypes[index];
-                              if (physicalType.type == DataType::Type::VARSIZED)
-                              {
-                                  const auto base = formattingContext.offsets[index];
-                                  uint64_t idxPacked{};
-                                  uint64_t size{};
-                                  auto sizeAddress = &tuple[base + offsetof(VariableSizedAccess::IndexOffsetSize, size)];
-                                  std::memcpy(&idxPacked, &tuple[base], sizeof(uint64_t));
-                                  std::memcpy(&size, sizeAddress, sizeof(uint64_t));
-                                  const VariableSizedAccess variableSizedAccess{
-                                      VariableSizedAccess::IndexOffsetSize{.combinedIndexOffset = idxPacked, .size = size}};
+                  [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
+                  {
+                      const auto physicalType = formattingContext.physicalTypes[index];
+                      if (physicalType.type == DataType::Type::VARSIZED)
+                      {
+                          const auto base = formattingContext.offsets[index];
+                          uint64_t index{};
+                          uint64_t offset{};
+                          uint64_t size{};
+                          auto indexAddress = &tuple[base + offsetof(VariableSizedAccess, index)];
+                          auto offsetAddress = &tuple[base + offsetof(VariableSizedAccess, offset)];
+                          auto sizeAddress = &tuple[base + offsetof(VariableSizedAccess, size)];
+                          std::memcpy(&index, indexAddress, sizeof(uint32_t));
+                          std::memcpy(&offset, offsetAddress, sizeof(uint32_t));
+                          std::memcpy(&size, sizeAddress, sizeof(uint64_t));
+                          const VariableSizedAccess variableSizedAccess{VariableSizedAccess{
+                              VariableSizedAccess::Index(index), VariableSizedAccess::Offset(offset), VariableSizedAccess::Size(size)}};
 
-                                  auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
-                                  if (copyOfEscapeStrings)
-                                  {
-                                      return "\"" + varSizedData + "\"";
-                                  }
-                                  return varSizedData;
-                              }
-                              return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
-                          });
+                          auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                          if (copyOfEscapeStrings)
+                          {
+                              return "\"" + varSizedData + "\"";
+                          }
+                          return varSizedData;
+                      }
+                      return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
+                  });
         ss << fmt::format("{}\n", fmt::join(fields, ","));
     }
     return ss.str();

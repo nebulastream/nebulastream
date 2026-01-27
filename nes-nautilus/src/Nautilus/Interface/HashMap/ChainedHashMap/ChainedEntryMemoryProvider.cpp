@@ -132,7 +132,7 @@ void storeVarSized(
         hashMapRef,
         bufferProviderRef,
         memoryAddress,
-        variableSizedData.getReference(),
+        variableSizedData.getContent(),
         variableSizedData.getSize());
 }
 }

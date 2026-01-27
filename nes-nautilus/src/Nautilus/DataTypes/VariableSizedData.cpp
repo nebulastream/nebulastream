@@ -114,11 +114,6 @@ nautilus::val<bool> VariableSizedData::operator!() const
     return ptrToVarSized;
 }
 
-[[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
-{
-    return ptrToVarSized;
-}
-
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)
 {
     oss << "Size(" << variableSizedData.size << "): ";
