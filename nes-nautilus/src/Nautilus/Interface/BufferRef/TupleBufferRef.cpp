@@ -143,8 +143,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         +[](const TupleBuffer* tupleBuffer, VariableSizedAccess* combinedIndexOffset)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            const VariableSizedAccess access(*combinedIndexOffset);
-            return loadAssociatedVarSizedValue(*tupleBuffer, access).data();
+            return loadAssociatedVarSizedValue(*tupleBuffer, *combinedIndexOffset).data();
         },
         recordBuffer.getReference(),
         combinedIndexOffset);
