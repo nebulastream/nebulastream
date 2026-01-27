@@ -25,6 +25,6 @@ SELECT * FROM person INTO personCheckSum;
 4000000 85430084707
 
 
-SELECT id FROM person WHERE CONCAT(city, state) == VARSIZED("redmondwy") INTO personIdSum;
+SELECT id FROM person WHERE CONCAT(city, state) == VARSIZED("redmondwy") OR CONCAT(city,state) == VARSIZED("portlandca") INTO personIdSum;
 ----
-4000000
+133343 48170045
