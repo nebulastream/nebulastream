@@ -94,8 +94,14 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
         = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
             [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
             {
+                auto tupleBuffer = nautilus::invoke(
+                        +[](HashMap* hm) {
+                            auto& chm = dynamic_cast<ChainedHashMap&>(*hm);
+                            return chm.getBuffer();
+                        },
+                        hashMap);
                 const ChainedHashMapRef hashMapRef{
-                    hashMap,
+                    tupleBuffer,
                     copyOfHashMapOptions.fieldKeys,
                     copyOfHashMapOptions.fieldValues,
                     copyOfHashMapOptions.entriesPerPage,
@@ -103,7 +109,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
                 for (const auto entry : hashMapRef)
                 {
                     const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                        entry, tupleBuffer, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
                     const auto state = entryRefReset.getValueMemArea();
                     nautilus::invoke(
                         +[](int8_t* pagedVectorMemArea) -> void

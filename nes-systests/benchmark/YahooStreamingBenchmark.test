@@ -2,6 +2,7 @@
 # description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks) with changed data types
 # groups: [milestone, benchmark, large, Aggregation]
 GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+#GlobalConfiguration worker.number_of_buffers_in_global_buffer_manager: [65536]
 
 
 # Source definitions

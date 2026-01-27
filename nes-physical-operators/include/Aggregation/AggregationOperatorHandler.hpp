@@ -38,19 +38,19 @@ namespace NES
 /// is large enough to store all slices of the window to be triggered.
 struct EmittedAggregationWindow
 {
-    EmittedAggregationWindow(const WindowInfo windowInfo, std::unique_ptr<HashMap> finalHashMap, const std::vector<HashMap*>& allHashMaps)
-        : windowInfo(windowInfo), finalHashMap(std::move(finalHashMap)), numberOfHashMaps(allHashMaps.size())
+    EmittedAggregationWindow(const WindowInfo windowInfo, const std::vector<HashMap*>& allHashMaps)
+        : windowInfo(windowInfo), numberOfHashMaps(allHashMaps.size())
     {
-        finalHashMapPtr = this->finalHashMap.get();
         /// Copying the hashmap pointers after this object, hence this + 1
         hashMaps = std::bit_cast<HashMap**>(this + 1);
         std::ranges::copy(allHashMaps, std::bit_cast<HashMap**>(hashMaps));
     }
 
     WindowInfo windowInfo;
-    HashMap* finalHashMapPtr;
-    std::unique_ptr<HashMap> finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
+    // HashMap* finalHashMapPtr;
+    // std::unique_ptr<HashMap> finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
     uint64_t numberOfHashMaps;
+    // todo: this has to change. the tuplebuffers are required now
     HashMap** hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
 };
 

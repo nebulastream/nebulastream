@@ -74,8 +74,10 @@ void AggregationOperatorHandler::triggerSlices(
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
         /// Getting all hashmaps for each slice that has at least one tuple
-        std::unique_ptr<ChainedHashMap> finalHashMap;
+        // std::unique_ptr<ChainedHashMap> finalHashMap;
         std::vector<HashMap*> allHashMaps;
+        bool finalHashMapFlag = false;
+        std::optional<TupleBuffer> finalHashMapTupleBuffer;
         uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
@@ -90,9 +92,18 @@ void AggregationOperatorHandler::triggerSlices(
 
                     allHashMaps.emplace_back(hashMap);
                     totalNumberOfTuples += hashMap->numberOfTuples();
-                    if (not finalHashMap)
+                    if (not finalHashMapFlag)
                     {
-                        finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(pipelineCtx->getBufferManager().get(), *dynamic_cast<ChainedHashMap*>(hashMap));
+                        auto castedHashMap = dynamic_cast<ChainedHashMap*>(hashMap);
+                        auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(castedHashMap->numberOfChains());
+                        finalHashMapTupleBuffer = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededFinalBufferSize);
+                        if (not finalHashMapTupleBuffer.value())
+                        {
+                            throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
+                        }
+                        // finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(*castedHashMap);
+                        ChainedHashMap chm(finalHashMapTupleBuffer.value(), castedHashMap->entrySize(), castedHashMap->numberOfChains(), castedHashMap->pageSize());
+                        finalHashMapFlag = true;
                     }
                 }
             }
@@ -110,7 +121,8 @@ void AggregationOperatorHandler::triggerSlices(
             throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
         }
         auto tupleBuffer = tupleBufferVal.value();
-
+        auto finalHashMapBufferIndex = tupleBuffer.storeChildBuffer(finalHashMapTupleBuffer.value());
+        INVARIANT(finalHashMapBufferIndex == ChainedHashMap::getNextPageChildBufferIndex(), "Could not link final hash map to Aggregation Window. Must be the first (possibly the only) child.");
         /// It might be that the buffer is not zeroed out.
         std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
 
@@ -128,7 +140,7 @@ void AggregationOperatorHandler::triggerSlices(
 
         /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
         auto tmp = tupleBuffer.getAvailableMemoryArea();
-        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, std::move(finalHashMap), allHashMaps};
+        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, allHashMaps};
 
 
         /// Dispatching the buffer to the probe operator via the task queue.

@@ -67,11 +67,18 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
     auto hashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::hashMaps));
-    auto finalHashMapPtr = readValueFromMemRef<HashMap*>(getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::finalHashMapPtr));
+    // auto finalHashMapPtr = readValueFromMemRef<HashMap*>(getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::finalHashMapPtr));
+    // construct the chained hash map view for the final hash map
+    auto pinnedBuffer = nautilus::invoke(+[](const TupleBuffer* parent, Arena* arena)
+    {
+        INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
+        auto buffer = parent->loadChildBuffer(ChainedHashMap::getNextPageChildBufferIndex());
+        return std::addressof(arena->pinBuffer(buffer));
+    }, recordBuffer.getReference(), executionCtx.pipelineMemoryProvider.arena.getArena());
 
     /// Combining all keys from all hash maps in the final hash map, and then iterating over the final hash map once to lower the aggregation states
     ChainedHashMapRef finalHashMap(
-        finalHashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
+        pinnedBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
     for (nautilus::val<uint64_t> curHashMap = 0; curHashMap < numberOfHashMaps; ++curHashMap)
     {
         const nautilus::val<HashMap*> hashMapPtr = hashMapRefs[curHashMap];
@@ -132,7 +139,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     /// Lowering, each aggregation state in the final hash map and passing the record to the child
     for (const auto entry : finalHashMap)
     {
-        const ChainedHashMapRef::ChainedEntryRef entryRef(entry, finalHashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+        const ChainedHashMapRef::ChainedEntryRef entryRef(entry, pinnedBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
@@ -164,7 +171,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                 "Resetting final hash map of emitted aggregation window start at {} and end at {}",
                 emittedAggregationWindow->windowInfo.windowStart,
                 emittedAggregationWindow->windowInfo.windowEnd);
-            emittedAggregationWindow->finalHashMap.reset();
+            // emittedAggregationWindow->finalHashMap.reset();
+            emittedAggregationWindow->~EmittedAggregationWindow();
         },
         aggregationWindowRef);
 }

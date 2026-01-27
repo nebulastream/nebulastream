@@ -50,15 +50,19 @@ HashMapSlice::HashMapDirectory::HashMapDirectory(AbstractBufferProvider* bufferP
         auto hashMapsPointer = mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
         for (uint32_t i = 0; i < metadataPointer[Offsets::NUM_HASH_MAPS_POS]; i++)
         {
-            // create child buffer for each hashmap and an empty hash map in each
-            auto childBuffer = bufferProvider->getBufferBlocking();
-            new (childBuffer.getAvailableMemoryArea<>().data()) ChainedHashMap(bufferProvider,
-                createNewHashMapSliceArgs.keySize,
-                createNewHashMapSliceArgs.valueSize,
-                createNewHashMapSliceArgs.numberOfBuckets,
-                createNewHashMapSliceArgs.pageSize);
-            auto childBufferIndex = mainBuffer.storeChildBuffer(childBuffer);
-            hashMapsPointer[Offsets::HASH_MAPS_BEGIN_POS + i] = childBufferIndex;
+            if (auto childBuffer = bufferProvider->getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(createNewHashMapSliceArgs.numberOfBuckets)))
+            {
+                ChainedHashMap chm(childBuffer.value(),
+                    createNewHashMapSliceArgs.keySize,
+                    createNewHashMapSliceArgs.valueSize,
+                    createNewHashMapSliceArgs.numberOfBuckets,
+                    createNewHashMapSliceArgs.pageSize);
+                auto childBufferIndex = mainBuffer.storeChildBuffer(childBuffer.value());
+                hashMapsPointer[Offsets::HASH_MAPS_BEGIN_POS + i] = childBufferIndex;
+            } else
+            {
+                throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+            }
         }
     }
     else
@@ -74,6 +78,13 @@ size_t HashMapSlice::HashMapDirectory::calculateMainBufferSize(const uint64_t nu
 
 VariableSizedAccess::Index HashMapSlice::getHashMapChildBufferIndex(const uint64_t pos) const
 {
+    return hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[HashMapDirectory::Offsets::HASH_MAPS_BEGIN_POS + pos];
+}
+
+VariableSizedAccess::Index HashMapSlice::getHashMapChildBufferIndex(const WorkerThreadId workerThreadId) const
+{
+    const auto pos = workerThreadId % numberOfHashMaps();
+    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
     return hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[HashMapDirectory::Offsets::HASH_MAPS_BEGIN_POS + pos];
 }
 

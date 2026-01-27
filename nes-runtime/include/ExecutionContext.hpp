@@ -55,10 +55,12 @@ struct Arena
     /// 2. The required size is larger than the last buffer size. In this case, we allocate a new buffer of fixed size.
     /// 3. The required size is smaller than the last buffer size. In this case, we return the pointer to the address in the last buffer.
     std::span<std::byte> allocateMemory(size_t sizeInBytes);
+    TupleBuffer& pinBuffer(TupleBuffer tupleBuffer);
 
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::vector<TupleBuffer> fixedSizeBuffers;
     std::vector<TupleBuffer> unpooledBuffers;
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
     size_t lastAllocationSize{0};
     size_t currentOffset{0};
 };
@@ -72,7 +74,7 @@ struct ArenaRef
     nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
 
     VariableSizedData allocateVariableSizedData(const nautilus::val<uint32_t>& sizeInBytes);
-
+    nautilus::val<Arena*> getArena();
 private:
     nautilus::val<Arena*> arenaRef;
     nautilus::val<size_t> availableSpaceForPointer;

@@ -104,6 +104,7 @@ public:
     [[nodiscard]] uint64_t numInputStreams() const;
     [[nodiscard]] uint64_t numHashMapsPerInputStream() const;
     [[nodiscard]] VariableSizedAccess::Index getHashMapChildBufferIndex(uint64_t pos) const;
+    [[nodiscard]] VariableSizedAccess::Index getHashMapChildBufferIndex(WorkerThreadId workerThreadId) const;
     [[nodiscard]] TupleBuffer loadHashMapBuffer(VariableSizedAccess::Index childBufferIndex) const;
     [[nodiscard]] VariableSizedAccess::Index setHashMapBuffer(TupleBuffer hashMapBuffer, uint64_t pos);
     [[nodiscard]] uint64_t getNumberOfTuples() const;

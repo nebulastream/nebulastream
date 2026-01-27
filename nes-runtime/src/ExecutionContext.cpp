@@ -90,6 +90,18 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
     return result;
 }
 
+TupleBuffer& Arena::pinBuffer(const TupleBuffer tupleBuffer)
+{
+    pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+    return *pinnedBuffers.back();
+}
+
+
+nautilus::val<Arena*> ArenaRef::getArena()
+{
+    return arenaRef;
+}
+
 nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
 {
     /// If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.

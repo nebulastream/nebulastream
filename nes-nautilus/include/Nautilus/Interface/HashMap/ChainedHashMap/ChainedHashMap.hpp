@@ -64,16 +64,17 @@ public:
 class ChainedHashMap final : public HashMap
 {
 public:
-    ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    ChainedHashMap(AbstractBufferProvider* bufferProvider, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
-    // ~ChainedHashMap() override;
+    ChainedHashMap(TupleBuffer &buffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
+    ChainedHashMap(TupleBuffer &buffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
+    ChainedHashMap(TupleBuffer &buffer);
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     void appendPage(AbstractBufferProvider* bufferProvider);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t numberOfTuples() const override;
     [[nodiscard]] const TupleBuffer getPage(uint64_t pageIndex) const;
     [[nodiscard]] const TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
-    [[nodiscard]] static uint64_t calculateMainBufferSize(uint64_t numberOfChains);
+    [[nodiscard]] static uint64_t calculateBufferSizeFromBuckets(uint64_t numberOfBuckets);
+    [[nodiscard]] static uint64_t calculateBufferSizeFromChains(uint64_t numberOfChains);
     [[nodiscard]] uint64_t getNumberOfPages() const;
     [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
     [[nodiscard]] uint64_t numberOfChains() const;
@@ -84,12 +85,8 @@ public:
     [[nodiscard]] VariableSizedAccess::Index storageSpaceChildBufferIndex() const;
     [[nodiscard]] VariableSizedAccess::Index varSizedSpaceChildBufferIndex() const;
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos) const;
-
-    /// Clears and deletes all entries in the hash map. It also releases the memory of any allocated buffers or other memory.
-    // void clear() noexcept;
-
-    /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
-    static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(AbstractBufferProvider* bufferProvider, const ChainedHashMap& other);
+    [[nodiscard]] static VariableSizedAccess::Index getNextPageChildBufferIndex();
+    [[nodiscard]] TupleBuffer* getBuffer();
 
 private:
     friend class ChainedHashMapRef;
@@ -124,6 +121,6 @@ private:
     };
 
     /// the main tuple buffer containing everything
-    TupleBuffer mainBuffer;
+    TupleBuffer& mainBuffer;
 };
 }
