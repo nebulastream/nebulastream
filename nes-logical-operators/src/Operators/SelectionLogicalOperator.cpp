@@ -22,6 +22,8 @@
 #include <variant>
 #include <vector>
 
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <fmt/format.h>
 
 #include <Configurations/Descriptor.hpp>
@@ -29,6 +31,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -36,6 +39,9 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+
+#include <rfl/json.hpp>
+#include <rfl.hpp>
 
 namespace NES
 {
@@ -144,7 +150,7 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     }
 
     auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
     for (auto& child : getChildren())
     {
@@ -156,12 +162,35 @@ void SelectionLogicalOperator::serialize(SerializableOperator& serializableOpera
     serializedFunction->CopyFrom(getPredicate().serialize());
     (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
 
+
     serializableOperator.mutable_operator_()->CopyFrom(proto);
+}
+
+Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
+{
+    return reflect(ReflectedSelectionLogicalOperator{std::make_optional(op.getPredicate())});
+}
+
+SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl) const
+{
+    auto [predicate] = unreflect<ReflectedSelectionLogicalOperator>(rfl);
+
+    if (!predicate.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize selection logical operator");
+    }
+
+    return SelectionLogicalOperator(predicate.value());
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<SelectionLogicalOperator>(arguments.reflected);
+    }
+
     auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
     if (std::holds_alternative<FunctionList>(functionVariant))
     {

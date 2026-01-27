@@ -25,6 +25,7 @@
 #include <utility>
 #include <variant>
 
+#include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -121,6 +122,30 @@ SerializableSinkDescriptor SinkDescriptor::serialize() const
         kv->emplace(key, descriptorConfigTypeToProto(value));
     }
     return serializedSinkDescriptor;
+}
+
+struct ReflectedSinkDescriptor
+{
+    std::variant<std::string, uint64_t> sinkName;
+    Schema schema;
+    std::string sinkType;
+    Reflected config;
+};
+
+Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
+{
+    return reflect(ReflectedSinkDescriptor{
+        .sinkName = descriptor.sinkName,
+        .schema = *descriptor.schema,
+        .sinkType = descriptor.sinkType,
+        .config = descriptor.getReflectedConfig(),
+    });
+}
+
+SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
+{
+    auto [name, schema, type, config] = unreflect<ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config)};
 }
 
 }

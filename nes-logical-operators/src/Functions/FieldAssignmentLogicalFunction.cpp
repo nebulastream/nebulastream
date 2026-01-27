@@ -161,6 +161,18 @@ SerializableFunction FieldAssignmentLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<FieldAssignmentLogicalFunction>::operator()(const FieldAssignmentLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+FieldAssignmentLogicalFunction Unreflector<FieldAssignmentLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAssignmentLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

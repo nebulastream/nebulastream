@@ -121,5 +121,17 @@ private:
     Schema leftInputSchema, rightInputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<JoinLogicalOperator>
+{
+    Reflected operator()(const JoinLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<JoinLogicalOperator>
+{
+    JoinLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
 }

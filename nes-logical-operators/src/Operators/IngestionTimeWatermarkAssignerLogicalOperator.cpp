@@ -125,6 +125,19 @@ void IngestionTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperat
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+Reflected Reflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const IngestionTimeWatermarkAssignerLogicalOperator& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+IngestionTimeWatermarkAssignerLogicalOperator
+Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

@@ -20,7 +20,10 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
+#include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -164,5 +167,39 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
         kv->emplace(key, descriptorConfigTypeToProto(value));
     }
     return serializableSourceDescriptor;
+}
+
+struct ReflectedSourceDescriptor
+{
+    uint64_t physicalSourceId = 0;
+    LogicalSource logicalSource;
+    std::string type;
+    ParserConfig parserConfig;
+    Reflected config;
+};
+
+Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
+{
+    ReflectedSourceDescriptor descriptor{
+        .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
+        .logicalSource = sourceDescriptor.logicalSource,
+        .type = sourceDescriptor.sourceType,
+        .parserConfig = sourceDescriptor.parserConfig,
+        .config = sourceDescriptor.getReflectedConfig()};
+
+    return reflect(descriptor);
+}
+
+SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
+{
+    auto reflectedSourceDescriptor = unreflect<ReflectedSourceDescriptor>(rfl);
+
+    DescriptorConfig::Config config;
+    return SourceDescriptor{
+        PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
+        LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
+        reflectedSourceDescriptor.type,
+        Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
+        std::move(reflectedSourceDescriptor.parserConfig)};
 }
 }

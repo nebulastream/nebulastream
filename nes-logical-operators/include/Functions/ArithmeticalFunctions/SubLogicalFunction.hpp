@@ -50,10 +50,33 @@ public:
 private:
     DataType dataType;
     LogicalFunction left, right;
+
+    friend Reflector<SubLogicalFunction>;
+};
+
+template <>
+struct Reflector<SubLogicalFunction>
+{
+    Reflected operator()(const SubLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<SubLogicalFunction>
+{
+    SubLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<SubLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedSubLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::SubLogicalFunction);

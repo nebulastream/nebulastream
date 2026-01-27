@@ -28,10 +28,12 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Serialization.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <SerializableOperator.pb.h>
@@ -74,16 +76,20 @@ public:
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
     [[nodiscard]] SerializableSourceDescriptor serialize() const;
+
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     friend class SourceCatalog;
     friend OperatorSerializationUtil;
+    friend struct Unreflector<SourceDescriptor>;
+    friend struct Reflector<SourceDescriptor>;
 
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
     ParserConfig parserConfig;
+
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -107,6 +113,18 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+};
+
+template <>
+struct Reflector<SourceDescriptor>
+{
+    Reflected operator()(const SourceDescriptor& sourceDescriptor) const;
+};
+
+template <>
+struct Unreflector<SourceDescriptor>
+{
+    SourceDescriptor operator()(const Reflected& rfl) const;
 };
 
 }

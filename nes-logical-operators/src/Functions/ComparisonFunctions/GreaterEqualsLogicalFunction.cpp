@@ -104,6 +104,18 @@ SerializableFunction GreaterEqualsLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<GreaterEqualsLogicalFunction>::operator()(const GreaterEqualsLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+GreaterEqualsLogicalFunction Unreflector<GreaterEqualsLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {

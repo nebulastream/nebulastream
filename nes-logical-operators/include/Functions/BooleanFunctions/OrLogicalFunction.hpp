@@ -52,6 +52,18 @@ private:
     LogicalFunction right;
 };
 
+template <>
+struct Reflector<OrLogicalFunction>
+{
+    Reflected operator()(const OrLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<OrLogicalFunction>
+{
+    OrLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<OrLogicalFunction>);
 
 }

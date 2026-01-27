@@ -50,10 +50,33 @@ public:
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend Reflector<LessLogicalFunction>;
+};
+
+template <>
+struct Reflector<LessLogicalFunction>
+{
+    Reflected operator()(const LessLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<LessLogicalFunction>
+{
+    LessLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<LessLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedLessLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::LessLogicalFunction);

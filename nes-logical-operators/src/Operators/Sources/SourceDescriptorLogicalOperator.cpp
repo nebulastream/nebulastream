@@ -113,4 +113,14 @@ void SourceDescriptorLogicalOperator::serialize(SerializableOperator& serializab
     serializableOperator.mutable_source()->CopyFrom(proto);
 }
 
+Reflected Reflector<SourceDescriptorLogicalOperator>::operator()(const SourceDescriptorLogicalOperator& op) const
+{
+    return reflect(op.getSourceDescriptor());
+}
+
+SourceDescriptorLogicalOperator Unreflector<SourceDescriptorLogicalOperator>::operator()(const Reflected& rfl) const
+{
+    auto sourceDescriptor = unreflect<SourceDescriptor>(rfl);
+    return SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
+}
 }

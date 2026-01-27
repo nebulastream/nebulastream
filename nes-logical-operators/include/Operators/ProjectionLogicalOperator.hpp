@@ -96,8 +96,32 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<ProjectionLogicalOperator>;
+};
+
+template <>
+struct Reflector<ProjectionLogicalOperator>
+{
+    Reflected operator()(const ProjectionLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<ProjectionLogicalOperator>
+{
+    ProjectionLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedProjectionLogicalOperator
+{
+    bool asterisk;
+    std::vector<std::pair<std::optional<std::string>, std::optional<LogicalFunction>>> projections;
+};
 
 }

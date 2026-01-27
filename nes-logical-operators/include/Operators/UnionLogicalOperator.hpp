@@ -64,6 +64,18 @@ private:
     TraitSet traitSet;
 };
 
+template <>
+struct Reflector<UnionLogicalOperator>
+{
+    Reflected operator()(const UnionLogicalOperator& _) const;
+};
+
+template <>
+struct Unreflector<UnionLogicalOperator>
+{
+    UnionLogicalOperator operator()(const Reflected& _) const;
+};
+
 static_assert(LogicalOperatorConcept<UnionLogicalOperator>);
 
 }

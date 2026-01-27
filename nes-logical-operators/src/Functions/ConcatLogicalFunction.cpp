@@ -27,6 +27,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 namespace NES
 {
@@ -103,9 +104,29 @@ SerializableFunction ConcatLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<ConcatLogicalFunction>::operator()(const ConcatLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedConcatLogicalFunction{.left = function.left, .right = function.right});
+}
+
+ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedConcatLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("ConcatLogicalFunction is missing a child");
+    }
+    return ConcatLogicalFunction(left.value(), right.value());
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<ConcatLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() < 2)
     {
         throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());

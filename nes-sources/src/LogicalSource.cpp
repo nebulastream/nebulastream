@@ -51,6 +51,17 @@ bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs)
 {
     return !(lhs == rhs);
 }
+
+Reflected Reflector<LogicalSource>::operator()(const LogicalSource& logicalSource) const
+{
+    return reflect(std::pair{logicalSource.getLogicalSourceName(), *logicalSource.getSchema()});
+}
+
+LogicalSource Unreflector<LogicalSource>::operator()(const Reflected& rfl) const
+{
+    auto [logicalSourceName, schema] = unreflect<std::pair<std::string, Schema>>(rfl);
+    return LogicalSource{std::move(logicalSourceName), schema};
+}
 }
 
 uint64_t std::hash<NES::LogicalSource>::operator()(const NES::LogicalSource& logicalSource) const noexcept

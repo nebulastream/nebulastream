@@ -51,10 +51,33 @@ public:
 private:
     DataType dataType;
     LogicalFunction child;
+
+    friend Reflector<NegateLogicalFunction>;
+};
+
+
+template <>
+struct Reflector<NegateLogicalFunction>
+{
+    Reflected operator()(const NegateLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<NegateLogicalFunction>
+{
+    NegateLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<NegateLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedNegateLogicalFunction
+{
+    std::optional<LogicalFunction> child;
+};
 }
 
 FMT_OSTREAM(NES::NegateLogicalFunction);

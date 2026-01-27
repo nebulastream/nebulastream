@@ -52,6 +52,18 @@ private:
     LogicalFunction child;
 };
 
+template <>
+struct Reflector<SqrtLogicalFunction>
+{
+    Reflected operator()(const SqrtLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<SqrtLogicalFunction>
+{
+    SqrtLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<SqrtLogicalFunction>);
 
 }

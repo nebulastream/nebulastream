@@ -52,10 +52,32 @@ private:
     DataType dataType;
     LogicalFunction left;
     LogicalFunction right;
+
+    friend Reflector<ConcatLogicalFunction>;
 };
 
 static_assert(LogicalFunctionConcept<ConcatLogicalFunction>);
 
+template <>
+struct Reflector<ConcatLogicalFunction>
+{
+    Reflected operator()(const ConcatLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<ConcatLogicalFunction>
+{
+    ConcatLogicalFunction operator()(const Reflected& reflected) const;
+};
+}
+
+namespace NES::detail
+{
+struct ReflectedConcatLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::ConcatLogicalFunction);

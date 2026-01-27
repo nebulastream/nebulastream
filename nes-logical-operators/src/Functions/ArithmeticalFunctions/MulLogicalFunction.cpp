@@ -26,6 +26,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 namespace NES
 {
@@ -106,8 +107,28 @@ SerializableFunction MulLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<MulLogicalFunction>::operator()(const MulLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedMulLogicalFunction{.left = function.left, .right = function.right});
+}
+
+MulLogicalFunction Unreflector<MulLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedMulLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("MulLogicalFunction is missing a child");
+    }
+    return MulLogicalFunction(left.value(), right.value());
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<MulLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());

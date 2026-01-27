@@ -34,6 +34,7 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -257,9 +258,54 @@ void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOper
     serializableOperator.mutable_operator_()->CopyFrom(proto);
 }
 
+Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogicalOperator& op) const
+{
+    detail::ReflectedProjectionLogicalOperator reflected;
+
+    for (auto [identifierOpt, b] : op.getProjections())
+    {
+        std::optional<std::string> identifier = (
+            identifierOpt.has_value()? std::make_optional(identifierOpt.value().getFieldName()): std::nullopt
+            );
+        reflected.projections.emplace_back(std::make_pair(
+            identifier,
+            std::make_optional(b))
+            );
+    }
+
+    reflected.asterisk = op.asterisk;
+
+    return reflect(reflected);
+}
+
+ProjectionLogicalOperator Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& rfl) const
+{
+
+    auto [asterisk, projections] = unreflect<detail::ReflectedProjectionLogicalOperator>(rfl);
+
+    std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
+
+    for (auto [type, function]: projections)
+    {
+        if (!function.has_value()) throw CannotDeserialize("Failed to deserialize Pojection Function");
+
+        parsedProjections.emplace_back(type, function.value());
+    }
+
+    return ProjectionLogicalOperator(
+        std::move(parsedProjections),
+        ProjectionLogicalOperator::Asterisk(asterisk)
+    );
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<ProjectionLogicalOperator>(arguments.reflected);
+    }
+
     const auto functionVariant = arguments.config.at(ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME);
     const auto asterisk = std::get<bool>(arguments.config.at(ProjectionLogicalOperator::ConfigParameters::ASTERISK));
 

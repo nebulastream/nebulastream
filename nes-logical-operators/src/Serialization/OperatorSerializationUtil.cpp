@@ -35,85 +35,54 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
+#include <rfl/json/read.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <rfl.hpp>
 
 namespace NES
 {
 
 
-LogicalOperator OperatorSerializationUtil::deserializeOperator(const SerializableOperator& serializedOperator)
+LogicalOperator OperatorSerializationUtil::deserializeOperator(const ReflectedOperator& serialized)
 {
-    std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
+    const std::optional<LogicalOperator> result = [&] -> std::optional<LogicalOperator>
     {
-        if (serializedOperator.has_source())
+        if (serialized.type == "Source")
         {
-            const auto& serializedSource = serializedOperator.source();
-            auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
-            auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-            return sourceOperator;
+            return unreflect<SourceDescriptorLogicalOperator>(serialized.config);
         }
 
-        if (serializedOperator.has_sink())
+        if (serialized.type == "Sink")
         {
-            const auto& sink = serializedOperator.sink();
-            const auto serializedSinkDescriptor = sink.has_sinkdescriptor() ? std::make_optional(sink.sinkdescriptor()) : std::nullopt;
-            DescriptorConfig::Config config;
-            for (const auto& [key, value] : serializedOperator.config())
-            {
-                config[key] = protoToDescriptorConfigType(value);
-            }
-            auto sinkName = config.at(SinkLogicalOperator::ConfigParameters::SINK_NAME);
-            if (not std::holds_alternative<std::string>(sinkName))
-            {
-                throw CannotDeserialize(
-                    "Expected string for sinkName but got {} while deserializing\n{}", sinkName, serializedOperator.DebugString());
-            }
-
-            auto sinkOperator = SinkLogicalOperator();
-            sinkOperator.sinkName = std::get<std::string>(sinkName);
-            sinkOperator.sinkDescriptor
-                = serializedSinkDescriptor.transform([](const auto& serialized) { return deserializeSinkDescriptor(serialized); });
-
-            return sinkOperator;
+            return unreflect<SinkLogicalOperator>(serialized.config);
         }
 
-        if (serializedOperator.has_operator_())
+        auto registryArgument
+            = LogicalOperatorRegistryArguments{.inputSchemas = {}, .outputSchema = Schema(), .config = {}, .reflected = serialized.config};
+
+        auto logicalOperatorOpt = LogicalOperatorRegistry::instance().create(serialized.type, registryArgument);
+
+        if (!logicalOperatorOpt.has_value())
         {
-            DescriptorConfig::Config config;
-            for (const auto& [key, value] : serializedOperator.config())
-            {
-                config[key] = protoToDescriptorConfigType(value);
-            }
-
-            auto registryArgument = LogicalOperatorRegistryArguments{
-                .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
-                .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
-                .config = config};
-
-
-            for (const auto& schema : serializedOperator.operator_().input_schemas())
-            {
-                registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
-            }
-
-            if (serializedOperator.operator_().has_output_schema())
-            {
-                registryArgument.outputSchema = SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().output_schema());
-            }
-            return LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
+            return std::nullopt;
         }
-        return std::nullopt;
+
+        auto logicalOperator = logicalOperatorOpt.value();
+
+        logicalOperator = logicalOperator.withInferredSchema(serialized.inputSchemas);
+
+        return std::make_optional(logicalOperator);
     }();
 
     if (result.has_value())
     {
-        TraitSet traitSet = TraitSetSerializationUtil::deserialize(&serializedOperator.trait_set());
-        return result->withTraitSet(std::move(traitSet)).withOperatorId(OperatorId{serializedOperator.operator_id()});
+        return result.value();
     }
 
-    throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());
+    // throw CannotDeserialize("could not de-serialize this serialized operator:\n{}", serializedOperator.DebugString());
+    throw CannotDeserialize("could not de-serialize this serialized operator {}", serialized.operatorId);
 }
 
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)

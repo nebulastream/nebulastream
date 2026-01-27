@@ -209,4 +209,25 @@ void SinkLogicalOperator::serialize(SerializableOperator& serializableOperator) 
 
     serializableOperator.mutable_sink()->CopyFrom(proto);
 }
+
+struct ReflectedSinkLogicalOperator
+{
+    std::optional<SinkDescriptor> sinkDescriptor;
+    std::string sinkName;
+};
+
+Reflected Reflector<SinkLogicalOperator>::operator()(const SinkLogicalOperator& op) const
+{
+    return reflect(ReflectedSinkLogicalOperator{.sinkDescriptor = op.getSinkDescriptor(), .sinkName = op.getSinkName()});
+}
+
+SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& rfl) const
+{
+    auto [descriptor, name] = unreflect<ReflectedSinkLogicalOperator>(rfl);
+    if (descriptor.has_value())
+    {
+        return SinkLogicalOperator{descriptor.value()};
+    }
+    return SinkLogicalOperator{name};
+}
 }

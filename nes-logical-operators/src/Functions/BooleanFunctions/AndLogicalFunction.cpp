@@ -28,6 +28,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 namespace NES
 {
@@ -113,8 +114,29 @@ SerializableFunction AndLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedAndLogicalFunction{.left = function.left, .right = function.right});
+}
+
+AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& rfl) const
+{
+    auto [left, right] = unreflect<detail::ReflectedAndLogicalFunction>(rfl);
+
+    if (!left.has_value() && !right.has_value())
+    {
+        throw CannotDeserialize("AndLogicalFunction is missing a child");
+    }
+    return AndLogicalFunction(left.value(),right.value());
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<AndLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());

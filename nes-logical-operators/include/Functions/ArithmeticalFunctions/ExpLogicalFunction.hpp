@@ -52,6 +52,18 @@ private:
     LogicalFunction child;
 };
 
+template <>
+struct Reflector<ExpLogicalFunction>
+{
+    Reflected operator()(const ExpLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<ExpLogicalFunction>
+{
+    ExpLogicalFunction operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalFunctionConcept<ExpLogicalFunction>);
 
 }

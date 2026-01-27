@@ -115,6 +115,18 @@ private:
     Schema inputSchema, outputSchema;
 };
 
+template <>
+struct Reflector<WindowedAggregationLogicalOperator>
+{
+    Reflected operator()(const WindowedAggregationLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<WindowedAggregationLogicalOperator>
+{
+    WindowedAggregationLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);
 
 }

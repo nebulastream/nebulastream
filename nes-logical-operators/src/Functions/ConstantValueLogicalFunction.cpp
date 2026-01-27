@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -107,9 +108,31 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+struct ReflectedConstantValueLogicalFunction
+{
+    std::string value;
+    DataType::Type type;
+};
+
+Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function) const
+{
+    return reflect(ReflectedConstantValueLogicalFunction{function.getConstantValue(), function.getDataType().type});
+}
+
+ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& rfl) const
+{
+    auto [value, type] = unreflect<ReflectedConstantValueLogicalFunction>(rfl);
+    return ConstantValueLogicalFunction{DataType{type}, value};
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<ConstantValueLogicalFunction>(arguments.reflected);
+    }
+
     if (not arguments.config.contains("constantValueAsString"))
     {
         throw CannotDeserialize("ConstantValueLogicalFunction requires a constantValueAsString in its config");

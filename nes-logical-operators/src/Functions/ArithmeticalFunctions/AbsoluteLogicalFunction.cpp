@@ -27,6 +27,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 namespace NES
 {
@@ -98,8 +99,27 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<AbsoluteLogicalFunction>::operator()(const AbsoluteLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedAbsoluteLogicalFunction{.child = function.child});
+}
+
+AbsoluteLogicalFunction Unreflector<AbsoluteLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedAbsoluteLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("AbsoluteLogicalFunction is missing its child");
+    }
+    return AbsoluteLogicalFunction(child.value());
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAbsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<AbsoluteLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());

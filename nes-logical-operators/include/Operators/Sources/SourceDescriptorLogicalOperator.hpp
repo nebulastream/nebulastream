@@ -22,10 +22,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
+#include <Serialization/SerializedData.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Serialization.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -70,4 +72,18 @@ private:
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
+
+template <>
+struct Reflector<SourceDescriptorLogicalOperator>
+{
+    Reflected operator()(const SourceDescriptorLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SourceDescriptorLogicalOperator>
+{
+    SourceDescriptorLogicalOperator operator()(const Reflected& rfl) const;
+};
+
+
 }

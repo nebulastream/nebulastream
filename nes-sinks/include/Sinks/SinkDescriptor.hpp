@@ -51,6 +51,7 @@ class SinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
     friend OperatorSerializationUtil;
+    friend Unreflector<SinkDescriptor>;
 
 public:
     ~SinkDescriptor() = default;
@@ -74,6 +75,8 @@ private:
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
+
+    friend Reflector<SinkDescriptor>;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -105,6 +108,20 @@ public:
 
     friend struct SinkLogicalOperator;
 };
+
+template <>
+struct Reflector<SinkDescriptor>
+{
+    Reflected operator()(const SinkDescriptor& op) const;
+};
+
+template <>
+struct Unreflector<SinkDescriptor>
+{
+    SinkDescriptor operator()(const Reflected& reflected) const;
+};
+
+
 }
 
 template <>

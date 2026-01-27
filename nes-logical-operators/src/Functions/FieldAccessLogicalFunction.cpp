@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -126,9 +127,32 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+struct ReflectedFieldAccessLogicalFunction
+{
+    std::string fieldName;
+    DataType::Type dataType;
+};
+
+Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
+{
+    return reflect(ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType().type});
+}
+
+FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& rfl) const
+{
+    auto [name, type] = unreflect<ReflectedFieldAccessLogicalFunction>(rfl);
+
+    return FieldAccessLogicalFunction{DataType{type}, name};
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<FieldAccessLogicalFunction>(arguments.reflected);
+    }
+
     if (not arguments.config.contains("FieldName"))
     {
         throw CannotDeserialize(

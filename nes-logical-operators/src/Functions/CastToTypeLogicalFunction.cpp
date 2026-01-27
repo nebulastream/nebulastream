@@ -99,4 +99,16 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
     return CastToTypeLogicalFunction(arguments.dataType, arguments.children[0]);
 }
 
+Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Reflector");
+}
+
+CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected& _) const
+{
+    // TODO to implement
+    throw NotImplemented("Unreflector");
+}
+
 }

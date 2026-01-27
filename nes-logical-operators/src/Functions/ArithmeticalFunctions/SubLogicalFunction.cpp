@@ -27,6 +27,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 
 namespace NES
 {
@@ -104,8 +105,28 @@ SerializableFunction SubLogicalFunction::serialize() const
     return serializedFunction;
 }
 
+Reflected Reflector<SubLogicalFunction>::operator()(const SubLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedSubLogicalFunction{.left = function.left, .right = function.right});
+}
+
+SubLogicalFunction Unreflector<SubLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedSubLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("SubLogicalFunction is missing a child");
+    }
+    return SubLogicalFunction(left.value(), right.value());
+}
+
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<SubLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
