@@ -70,8 +70,8 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
                       auto offset = formattingContext.offsets[index];
                       if (type.type == DataType::Type::VARSIZED)
                       {
-                          auto* const reference = reinterpret_cast<VariableSizedAccess::IndexOffsetSize*>(&tuple[offset]);
-                          const auto value = TupleBufferRef::loadAssociatedVarSizedValue(tbuffer, VariableSizedAccess(*reference));
+                          auto* const variableSizedAccess = reinterpret_cast<VariableSizedAccess*>(&tuple[offset]);
+                          const auto value = TupleBufferRef::loadAssociatedVarSizedValue(tbuffer, *variableSizedAccess);
                           return fmt::format(
                               R"("{}":"{}")",
                               formattingContext.names.at(index),
