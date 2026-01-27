@@ -210,3 +210,49 @@ SELECT id, status, value, type FROM stream4 INTO result7;
 7,produced,300,wind_turbine
 8,fault,0,solar_panel
 9,fault,0,hydro_plant
+
+# a simple bash command
+CREATE LOGICAL SOURCE single4(id UINT64, status VARSIZED, value UINT64,type VARSIZED);
+
+CREATE PHYSICAL SOURCE FOR single4 TYPE LinuxProcess SET(
+  './nes-systests/sources/bash.sh' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result8(
+  single4.id UINT64,
+  single4.status VARSIZED,
+  single4.value UINT64,
+  single4.type VARSIZED
+) TYPE File;
+
+SELECT id, status, value, type FROM single4 INTO result8;
+----
+0,produced,0,wind_turbine
+1,idle,100,solar_panel
+2,fault,200,hydro_plant
+
+# one last JSON test
+CREATE LOGICAL SOURCE single5(id UINT64, status VARSIZED, value UINT64,type VARSIZED);
+
+CREATE PHYSICAL SOURCE FOR single5 TYPE LinuxProcess SET(
+  './nes-systests/sources/bashjson.sh' AS `SOURCE`.command,
+  'JSON' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result9(
+  single5.id UINT64,
+  single5.status VARSIZED,
+  single5.value UINT64,
+  single5.type VARSIZED
+) TYPE File;
+
+SELECT id, status, value, type FROM single5 INTO result9;
+----
+0,produced,0,wind_turbine
+1,idle,100,solar_panel
+2,fault,200,hydro_plant

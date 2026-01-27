@@ -1,1 +1,4 @@
 SINGLE5$ID:UINT64,SINGLE5$STATUS:VARSIZED,SINGLE5$VALUE:UINT64,SINGLE5$TYPE:VARSIZED
+0,produced,0,wind_turbine
+1,idle,100,solar_panel
+2,fault,200,hydro_plant
