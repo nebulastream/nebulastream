@@ -179,6 +179,10 @@ nautilus::val<bool> VariableSizedData::operator!() const
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
 {
+    if (type == VariableSizedType::COMPOUND)
+    {
+        materialize();
+    }
     return ptrToVarSized;
 }
 

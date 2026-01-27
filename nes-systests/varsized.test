@@ -30,3 +30,12 @@ SELECT id, value FROM streamWithText WHERE text1 == VARSIZED("test1") AND text2 
 3,3
 6,4
 8,5
+
+# Filter equal with text
+SELECT id, value FROM streamWithText WHERE CONCAT(text1,text2) == VARSIZED("test1test2") INTO sinkStreamWithText;
+----
+12,1
+1,3
+3,3
+6,4
+8,5
