@@ -303,7 +303,7 @@ public:
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
-        if (AntlrSQLParser::DropSourceContext* dropSourceAst = dropAst->dropSubject()->dropSource(); dropSourceAst != nullptr)
+        if (AntlrSQLParser::DropSourceContext* dropSourceAst = dropAst->dropTarget()->dropSource(); dropSourceAst != nullptr)
         {
             if (const auto* const logicalSourceSubject = dropSourceAst->dropLogicalSourceSubject(); logicalSourceSubject != nullptr)
             {
@@ -328,12 +328,16 @@ public:
                 throw UnknownSourceName("There is no physical source with id {}", physicalSourceSubject->id->getText());
             }
         }
-        else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
+        else if (const auto* const dropQueryAst = dropAst->dropTarget()->dropQuery(); dropQueryAst != nullptr)
         {
+            if (dropQueryAst->id == nullptr)
+            {
+                return DropQueryStatement{std::nullopt};
+            }
             const auto id = QueryId{std::stoul(dropQueryAst->id->getText())};
             return DropQueryStatement{id};
         }
-        else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
+        else if (const auto* const dropSinkAst = dropAst->dropTarget()->dropSink(); dropSinkAst != nullptr)
         {
             const auto sinkName = bindIdentifier(dropSinkAst->name);
             return DropSinkStatement{sinkName};

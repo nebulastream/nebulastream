@@ -106,6 +106,8 @@ int main(int argc, char** argv)
         ArgumentParser stopQuery("stop");
         stopQuery.add_argument("queryId").scan<'i', size_t>();
 
+        ArgumentParser stopAll("stop-all");
+
         ArgumentParser unregisterQuery("unregister");
         unregisterQuery.add_argument("queryId").scan<'i', size_t>();
 
@@ -116,10 +118,12 @@ int main(int argc, char** argv)
         program.add_subparser(registerQuery);
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
+        program.add_subparser(stopAll);
         program.add_subparser(unregisterQuery);
         program.add_subparser(dump);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{registerQuery, startQuery, stopQuery, unregisterQuery, dump};
+        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{
+            registerQuery, startQuery, stopQuery, stopAll, unregisterQuery, dump};
 
         program.parse_args(argc, argv);
 
@@ -231,7 +235,15 @@ int main(int argc, char** argv)
             }
             return 0;
         }
-
+        if (program.is_subcommand_used("stop-all"))
+        {
+            if (auto res = queryManager->stopAll(); !res.has_value())
+            {
+                std::cerr << "Failed to stop all queries: " << res.error().what() << std::endl;
+                return 1;
+            }
+            return 0;
+        }
 
         bool handled = false;
         for (const auto& [name, fn] :
