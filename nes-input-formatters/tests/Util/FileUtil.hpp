@@ -248,8 +248,7 @@ inline void updateChildBufferIdx(
     const auto tupleByteOffset = tupleIdx * sizeOfSchemaInBytes;
     const size_t varSizedOffsetIdx = varSizedAccess.getIndex() % varSizedFieldOffsets.size();
     const auto varSizedOffset = varSizedFieldOffsets.at(varSizedOffsetIdx) + tupleByteOffset;
-    const auto combinedIndexOffset = varSizedAccess.getCombinedIdxOffset();
-    const auto combinedIndexOffsetBytes = std::as_bytes(std::span{&combinedIndexOffset, 1});
+    const auto combinedIndexOffsetBytes = std::as_bytes(std::span{&varSizedAccess, 1});
     std::ranges::copy(combinedIndexOffsetBytes, parentBuffer.getAvailableMemoryArea().begin() + varSizedOffset);
 }
 
