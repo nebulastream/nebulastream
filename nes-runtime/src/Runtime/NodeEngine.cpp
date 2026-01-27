@@ -155,6 +155,7 @@ void NodeEngine::stopAllQueries(QueryTerminationType terminationType)
         CPPTRACE_TRY
         {
             stopQuery(qId, terminationType);
+            unregisterQuery(qId);
         }
         CPPTRACE_CATCH(...)
         {

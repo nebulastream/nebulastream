@@ -186,26 +186,17 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
             .transform([&]() { return DropQueryStatementResult{std::vector<QueryId>{id}}; });
     }
 
-    std::vector<QueryId> toDrop = runningQueries;
-    runningQueries.clear();
+    auto result = queryManager->stopAll();
 
-    std::vector<QueryId> successfullyDropped;
-    successfullyDropped.reserve(toDrop.size());
-
-    for (const auto& id : toDrop)
+    if (!result.has_value())
     {
-        auto result = queryManager->stop(id).and_then([&]() { return queryManager->unregister(id); });
-        if (result.has_value())
-        {
-            successfullyDropped.push_back(id);
-        }
-        else
-        {
-            return std::unexpected{result.error()};
-        }
+        return std::unexpected{result.error()};
     }
 
-    return DropQueryStatementResult{.ids = std::move(successfullyDropped)};
+    std::vector<QueryId> droppedIds = runningQueries;
+    runningQueries.clear();
+
+    return DropQueryStatementResult{.ids = std::move(droppedIds)};
 }
 
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)
