@@ -1,0 +1,212 @@
+# name: sources/LinuxProcess.test
+# description: queries for single/multiple sources with most possible coverage
+# groups: [Sources]
+
+# Source for single linux process stream
+CREATE LOGICAL SOURCE single(value UINT64);
+
+CREATE PHYSICAL SOURCE FOR single TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result(single.value UINT64) TYPE File;
+
+SELECT value FROM single INTO result;
+----
+0
+1
+2
+3
+4
+
+# Source for single linux process stream (more complex)
+CREATE LOGICAL SOURCE single2(id UINT64, value UINT64, timestamp UINT64);
+
+CREATE PHYSICAL SOURCE FOR single2 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single2.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result2(single2.id UINT64, single2.value UINT64, single2.timestamp UINT64) TYPE File;
+
+SELECT * FROM single2 INTO result2;
+----
+1,10,100
+2,20,200
+3,30,300
+4,40,400
+
+# Source for single linux process stream (more complex, different field delimeter)
+CREATE LOGICAL SOURCE single2_2(id UINT64, value UINT64, timestamp UINT64);
+
+CREATE PHYSICAL SOURCE FOR single2_2 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single2_2.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  '|'  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result2_2(single2_2.id UINT64, single2_2.value UINT64, single2_2.timestamp UINT64) TYPE File;
+
+SELECT * FROM single2_2 INTO result2_2;
+----
+1,10,100
+2,20,200
+3,30,300
+4,40,400
+
+# Source for single linux process stream (more complex)
+CREATE LOGICAL SOURCE single3(id UINT64, status VARSIZED, value UINT64,type VARSIZED);
+
+CREATE PHYSICAL SOURCE FOR single3 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single3.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result3(
+  single3.id UINT64,
+  single3.status VARSIZED,
+  single3.value UINT64,
+  single3.type VARSIZED
+) TYPE File;
+
+SELECT id, status, value, type FROM single3 INTO result3;
+----
+0,produced,0,wind_turbine
+1,idle,100,solar_panel
+2,fault,200,hydro_plant
+
+# Source for double linux process stream (only linux process sources)
+CREATE LOGICAL SOURCE stream1(id UINT64, value UINT64, timestamp UINT64);
+
+CREATE PHYSICAL SOURCE FOR stream1 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single2.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE PHYSICAL SOURCE FOR stream1 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single2.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result4(stream1.id UINT64, stream1.value UINT64, stream1.timestamp UINT64) TYPE File;
+
+SELECT * FROM stream1 INTO result4;
+----
+1,10,100
+2,20,200
+3,30,300
+4,40,400
+1,10,100
+2,20,200
+3,30,300
+4,40,400
+
+# Source for double linux process stream (mixed sources)
+CREATE LOGICAL SOURCE stream2(id UINT64, value UINT64, timestamp UINT64);
+
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH FILE small/stream8.csv
+
+CREATE PHYSICAL SOURCE FOR stream2 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single2.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result5(stream2.id UINT64, stream2.value UINT64, stream2.timestamp UINT64) TYPE File;
+
+SELECT * FROM stream2 INTO result5;
+----
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+1,10,100
+2,20,200
+3,30,300
+4,40,400
+
+CREATE LOGICAL SOURCE stream3(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream3 TYPE TCP;
+ATTACH INLINE
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+
+CREATE PHYSICAL SOURCE FOR stream3 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single2.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result6(stream3.id UINT64, stream3.value UINT64, stream3.timestamp UINT64) TYPE File;
+
+SELECT * FROM stream3 INTO result6;
+----
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+1,10,100
+2,20,200
+3,30,300
+4,40,400
+
+# three sources and multiple datatypes
+CREATE LOGICAL SOURCE stream4(id UINT64, status VARSIZED, value UINT64,type VARSIZED);
+
+CREATE PHYSICAL SOURCE FOR stream4 TYPE LinuxProcess SET(
+  'python3 ./nes-systests/sources/LinuxProcess_Single3.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE PHYSICAL SOURCE FOR stream4 TYPE TCP;
+ATTACH INLINE
+3,produced,500,wind_turbine
+4,produced,100,solar_panel
+5,idle,200,wind_turbine
+6,fault,0,hydro_plant
+
+CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
+ATTACH INLINE
+7,produced,300,wind_turbine
+8,fault,0,solar_panel
+9,fault,0,hydro_plant
+
+CREATE SINK result7(
+  stream4.id UINT64,
+  stream4.status VARSIZED,
+  stream4.value UINT64,
+  stream4.type VARSIZED
+) TYPE File;
+
+SELECT id, status, value, type FROM stream4 INTO result7;
+----
+0,produced,0,wind_turbine
+1,idle,100,solar_panel
+2,fault,200,hydro_plant
+3,produced,500,wind_turbine
+4,produced,100,solar_panel
+5,idle,200,wind_turbine
+6,fault,0,hydro_plant
+7,produced,300,wind_turbine
+8,fault,0,solar_panel
+9,fault,0,hydro_plant

@@ -1,68 +1,24 @@
-----------------------------------------------------
---|||||| RUNNING THE EXAMPLE FROM README.MD |||||||||
-----------------------------------------------------
--- CREATE LOGICAL SOURCE demo(value UINT64);
--- CREATE PHYSICAL SOURCE FOR demo TYPE File SET('./demo-input.csv' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER);
--- CREATE SINK result(demo.value UINT64) TYPE File SET('./demo-output.csv' AS `SINK`.FILE_PATH, 'CSV' AS `SINK`.INPUT_FORMAT);
--- SELECT value FROM demo INTO result;
+CREATE LOGICAL SOURCE demo(id UINT64,
+  status VARSIZED,
+  value UINT64,
+  type VARSIZED
+);
 
--- *************************************************************************************
--- *                            SOURCE DEMOS                                           *
--- *************************************************************************************
-
----------------------------------------------------------------------------------------------
---|||||| first try: a command to execute a python script with flush=true to be safe |||||||||
----------------------------------------------------------------------------------------------
--- CREATE LOGICAL SOURCE demo(value UINT64);
---
--- CREATE PHYSICAL SOURCE FOR demo TYPE LinuxProcess SET(
---   'python3 /home/saad9098/nebulastream/producer.py' AS `SOURCE`.command,
---   'CSV' AS PARSER.`TYPE`,
---   '\n' AS PARSER.TUPLE_DELIMITER,
---   ','  AS PARSER.FIELD_DELIMITER
--- );
---
--- CREATE SINK result(demo.value UINT64) TYPE File SET(
---   './demo-output.csv' AS `SINK`.FILE_PATH,
---   'CSV' AS `SINK`.INPUT_FORMAT
--- );
--- SELECT value FROM demo INTO result;
-
----------------------------------------------------------------------------------------------
---|||||| second try: a bash command |||||||||
----------------------------------------------------------------------------------------------
-CREATE LOGICAL SOURCE demo(value UINT64);
 CREATE PHYSICAL SOURCE FOR demo TYPE LinuxProcess SET(
-  'sh -c "echo 1; echo 2; echo 3"' AS `SOURCE`.command,
+  'python3 /home/saad9098/nebulastream/producer2.py' AS `SOURCE`.command,
   'CSV' AS PARSER.`TYPE`,
   '\n' AS PARSER.TUPLE_DELIMITER,
   ','  AS PARSER.FIELD_DELIMITER
 );
-CREATE SINK result(demo.value UINT64) TYPE File SET(
-  './demo-output.csv' AS `SINK`.FILE_PATH,
+
+CREATE SINK result(
+  demo.id UINT64,
+  demo.status VARSIZED,
+  demo.value UINT64,
+  demo.type VARSIZED
+) TYPE File SET(
+  './demo2-output.csv' AS `SINK`.FILE_PATH,
   'CSV' AS `SINK`.INPUT_FORMAT
 );
-SELECT value FROM demo INTO result;
 
--- *************************************************************************************
--- *                            SINK DEMOS                                             *
--- *************************************************************************************
-
-----------------------------------------------------------------------------------------------------------
---|||||| first try: a command to execute a python script that outputs the dump from nebulastream |||||||||
-----------------------------------------------------------------------------------------------------------
--- CREATE LOGICAL SOURCE demo(value UINT64);
---
--- CREATE PHYSICAL SOURCE FOR demo TYPE LinuxProcess SET(
---   'python3 /home/saad9098/nebulastream/producer.py' AS `SOURCE`.command,
---   'CSV' AS PARSER.`TYPE`,
---   '\n' AS PARSER.TUPLE_DELIMITER,
---   ','  AS PARSER.FIELD_DELIMITER
--- );
---
--- CREATE SINK result(demo.value UINT64) TYPE LinuxProcess SET(
---   'python3 /home/saad9098/nebulastream/consumer.py' AS `SINK`.command,
---   'CSV' AS `SINK`.INPUT_FORMAT
--- );
---
--- SELECT value FROM demo INTO result;
+SELECT id, status, value, type FROM demo INTO result;

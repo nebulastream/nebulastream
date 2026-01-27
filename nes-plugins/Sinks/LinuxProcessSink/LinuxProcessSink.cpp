@@ -55,19 +55,14 @@ LinuxProcessSink::LinuxProcessSink(BackpressureController backpressureController
 
 void LinuxProcessSink::start(PipelineExecutionContext&)
 {
-    NES_DEBUG("Setting up LinuxProcessSink");
-    NES_DEBUG("LinuxProcessSink: starting consumer process with command='{}'", commandToRun);
+    NES_INFO("Ppening a process with: {}", commandToRun);
 
-    // Open a pipe to the process' stdin.
-    // "w" means: we write to the pipe -> becomes stdin of the spawned process.
     pipe = popen(commandToRun.c_str(), "w");
     if (!pipe)
     {
-        throw InvalidConfigParameter("Could not start process '{}' ", commandToRun);
+        throw CannotOpenSink("Could not start process: {} ", commandToRun);
     }
-
-    // Optional: unbuffered to deliver output immediately.
-    // setvbuf(pipe, nullptr, _IONBF, 0);
+    NES_INFO("Pipe connected to write in stdin of process: {}", commandToRun);
 }
 
 void LinuxProcessSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
@@ -76,27 +71,28 @@ void LinuxProcessSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExec
     PRECONDITION(pipe != nullptr, "LinuxProcessSink was not opened (start() not called or popen failed).");
     PRECONDITION(formatter != nullptr, "LinuxProcessSink formatter was not initialized.");
 
-    // Format the tuple buffer into the configured output format (CSV/JSON/...)
+    NES_INFO("Starting to fill stdin of process: {}", commandToRun);
+
     const auto out = formatter->getFormattedBuffer(inputTupleBuffer);
 
     if (!out.empty())
     {
         const size_t written = std::fwrite(out.c_str(), 1, out.size(), pipe);
+        NES_DEBUG("Written {}", written);
         if (written != out.size())
         {
-            throw CannotOpenSink(fmt::format("LinuxProcessSink: Failed to write to process (wrote {} of {} bytes).",
-                                              written,
-                                              out.size()));
+            NES_ERROR("Could not write to output file: from {} written: {}", out.size(), written);
         }
 
-        // For interactive consumers, flushing per buffer is often desired.
+        // For interactive consumers, flushing per buffer.
         std::fflush(pipe);
     }
+    NES_INFO("LinuxProcessSink finished writing");
 }
 
 void LinuxProcessSink::stop(PipelineExecutionContext&)
 {
-    NES_DEBUG("Stopping LinuxProcessSink");
+    NES_INFO("Stopping LinuxProcessSink");
 
     if (pipe)
     {
@@ -110,7 +106,7 @@ void LinuxProcessSink::stop(PipelineExecutionContext&)
         }
         else
         {
-            NES_TRACE("LinuxProcessSink: process closed (exit status raw={}).", rc);
+            NES_TRACE("LinuxProcessSink closed");
         }
     }
 }
@@ -133,5 +129,4 @@ SinkRegistryReturnType RegisterLinuxProcessSink(SinkRegistryArguments sinkRegist
     return std::make_unique<LinuxProcessSink>(std::move(sinkRegistryArguments.backpressureController),
                                               sinkRegistryArguments.sinkDescriptor);
 }
-
 }

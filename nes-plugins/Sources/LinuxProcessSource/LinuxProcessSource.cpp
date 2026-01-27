@@ -43,37 +43,32 @@ std::ostream& LinuxProcessSource::toString(std::ostream& str) const
 
 void LinuxProcessSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    std::cerr << "[LinuxProcessSource] open() command=" << commandToRun << std::endl;
 
-    NES_TRACE("LinuxProcessSource::open: Starting process with command: {}", commandToRun);
-    NES_INFO("LinuxProcessSource open: {}", commandToRun);
+    NES_INFO("opening a process with: {}", commandToRun);
 
 
-    errno = 0;
     pipe = popen(commandToRun.c_str(), "r");
     if (!pipe) {
-        char errbuf[256];
-        errbuf[0] = '\0';
-        (void)strerror_r(errno, errbuf, sizeof(errbuf));
-
-        throw InvalidConfigParameter("Could not start process '{}' ", commandToRun);
+        NES_TRACE("LinuxProcessSource::open: Could not open process with command: {}", commandToRun);
+        throw CannotOpenSource("Could not start process '{}' ", commandToRun);
     }
+
+    NES_INFO("Pipe connected to read the stdout of process: {}", commandToRun);
 }
 
 Source::FillTupleBufferResult LinuxProcessSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
-    // std::cerr << "[LinuxProcessSource] fillTupleBuffer()" << std::endl;
-
+	NES_INFO("Starting to fill buffer from stdout of process: {}", commandToRun);
     try
     {
         if (stopToken.stop_requested())
         {
+            NES_TRACE("LinuxProcessSource::fillTupleBuffer: stop requested");
             return FillTupleBufferResult::eos();
         }
         if (!pipe)
         {
             // consistent style: config/runtime issue -> InvalidConfigParameter is used elsewhere;
-            // if you have a more specific runtime exception in the repo, use that instead.
             throw InvalidConfigParameter("LinuxProcessSource: pipe is not open (open() not called?)");
         }
 
@@ -85,7 +80,6 @@ Source::FillTupleBufferResult LinuxProcessSource::fillTupleBuffer(TupleBuffer& t
 
         errno = 0;
         const size_t bytesRead = std::fread(mem.data(), 1, mem.size(), pipe);
-
         if (bytesRead > 0)
         {
             NES_DEBUG("LinuxProcessSource read {} bytes", bytesRead);
@@ -94,7 +88,7 @@ Source::FillTupleBufferResult LinuxProcessSource::fillTupleBuffer(TupleBuffer& t
 
         if (std::feof(pipe))
         {
-            NES_INFO("LinuxProcessSource detected EoS (process stdout EOF).");
+            NES_INFO("LinuxProcessSource detected EoS (process stdout EOF)");
             return FillTupleBufferResult::eos();
         }
 
@@ -104,33 +98,31 @@ Source::FillTupleBufferResult LinuxProcessSource::fillTupleBuffer(TupleBuffer& t
             throw std::runtime_error("LinuxProcessSource: error while reading from process");
         }
 
-        // no bytes, no error, no eof: treat as “no progress”
         return FillTupleBufferResult::withBytes(0);
     }
     catch (const std::exception& e)
     {
-        NES_ERROR("Failed to fill the TupleBuffer. Error: {}.", e.what());
+        NES_ERROR("Failed to fill the TupleBuffer. Error: {}", e.what());
         throw;
     }
+
 }
 
 DescriptorConfig::Config LinuxProcessSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    // same style as TCPSource
     return DescriptorConfig::validateAndFormat<ConfigParametersLinuxProcessSource>(std::move(config), name());
 }
 
 void LinuxProcessSource::close()
 {
-    // std::cerr << "[LinuxProcessSource] close()" << std::endl;
-
-    // NES_DEBUG("LinuxProcessSource::close: Closing process.");
+    NES_INFO("LinuxProcessSource::close: Closing process");
     if (pipe)
     {
         pclose(pipe);
         pipe = nullptr;
-        // NES_TRACE("LinuxProcessSource::close: Process closed.");
+        NES_TRACE("LinuxProcessSource::close: Process closed");
     }
+    NES_INFO("LinuxProcessSource::close: Process closed");
 }
 
 SourceValidationRegistryReturnType RegisterLinuxProcessSourceValidation(SourceValidationRegistryArguments sourceConfig)
@@ -138,9 +130,10 @@ SourceValidationRegistryReturnType RegisterLinuxProcessSourceValidation(SourceVa
     return LinuxProcessSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterLinuxProcessSource(SourceRegistryArguments args)
+
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterLinuxProcessSource(SourceRegistryArguments sourceRegistryArguments)
 {
-    return std::make_unique<LinuxProcessSource>(args.sourceDescriptor);
+    return std::make_unique<LinuxProcessSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
 }

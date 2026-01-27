@@ -32,7 +32,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES
 {
 
-/// Defines the names, (optional) default values, (optional) validation & config functions, for all LinuxProcess config parameters.
 struct ConfigParametersLinuxProcessSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> COMMAND{
@@ -49,7 +48,6 @@ class LinuxProcessSource : public Source
 public:
     static const std::string& name()
     {
-        // IMPORTANT: must match the SQL TYPE LinuxProcess
         static const std::string Instance = "LinuxProcess";
         return Instance;
     }

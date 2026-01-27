@@ -4,7 +4,7 @@ Suggested Structure (4 Speakers)
 Section	Speaker	Duration	Content
 1. Recap & Progress Overview	Person 1	3 min	Recap kick-off goals, high-level achievements
 2. LinuxProcessSource Deep Dive	Person 2	5 min	Implementation details, code walkthrough
-3. LinuxProcessSink Deep Dive	Person 3	5 min	Implementation details, code walkthrough
+3. LinuxProcessSink Deep Dive	Person 3	5 min	Implementation details (only CMakeFile.txt), plan
 4. Demo & Next Steps	Person 4	5 min	Live demo, testing plan, timeline
 
 
@@ -40,48 +40,37 @@ Our Solution:
 • LinuxProcessSink → Pipe results to external processes' stdin
 
 slide 3:
-✅ COMPLETED                          📋 PLANNED
-─────────────────────────────────────────────────────
-✅ LinuxProcessSource plugin          📋 LinuxProcessSink implementation
-   • Header & implementation             • start() - popen() write pipe
-   • fillTupleBuffer() logic             • execute() - format & write
-   • Config validation                   • stop() - cleanup
-   • CMake integration                   • Formatter integration
-                                      
-✅ LinuxProcessSink setup             📋 Testing Suite
-   • CMakeLists.txt                      • Unit tests
-   • Plugin registration                 • Integration tests
-                        
-✅ Demo scripts & SQL examples        
-   • producer.py                      📋 Documentation
-   • demo.sql queries                    • Usage guide
-                                         • API reference
+✅ COMPLETED                                             📋 PLANNED
+──────────────────────────────────────────────────────────────────────────────────────────────
+✅ LinuxProcessSource                                    📋 LinuxProcessSink implementation
+   • Header (Class)                                         • Header (Class)
+   • implementation (open(), fillTupleBuffer(), close())    • implementation (start(), execute(), stop())
+   • CMake (source plugin, validation plugin)
 
-                                    📋 Code Quality
-                                         • Remove debug statements
-✅ LinuxProcessSink setup                • Clean up commented code
-   • CMakeLists.txt                      • Code review & refactoring
-   • Plugin registration              📋 Size limiting for process output 
+✅ Demo scripts & SQL examples                           📋 Documentation (if needed)
+   • producer.py                                            • Usage guide
+   • consumer.py                                            • API reference
+   • demo.sql queries
+                                                         📋 Testing Suite
+                                                            • Unit tests
+                                                            • Integration tests
 
+                                                         📋 Code Quality
+                                                            • Remove & add debug statements
+                                                            • Clean up commented code
+                                                            • Code review & refactoring
 
-   more:
-   🧹 CODE CLEANUP TASKS
-─────────────────────────────────────────────────────
+                                                         📋 Size limiting for process output
 
-1. Remove Debug Statements
-   • std::cerr << "[LinuxProcessSource] open()..."
-   • std::cerr << "[LinuxProcessSource] fillTupleBuffer()"
-   • Commented NES_DEBUG/NES_TRACE lines
+───────────────────────────────────────────────────────────────────────────────────────────────
+
+1. Remove & Debug Statements
+   • better NES_DEBUG/NES_TRACE/NES:INFO statements
 
 2. Code Quality
    • Remove commented-out code blocks
-   • Consistent logging levels (TRACE vs DEBUG vs INFO)
-   • Review error messages for clarity
-
-3. Review TODOs
-   • setvbuf() buffering options in Sink
-   • Error recovery strategies
-
+   • Review error messages for clarity and tests
+   • Maximize efficiency when possible
 
 slide 4:
 ┌─────────────────────────────────────────────────────────────┐
@@ -107,7 +96,7 @@ slide 4:
 
 
 
-     slide 5:
+slide 5: LinuxProcessSource
 
 File Structure:
 nes-plugins/Sources/LinuxProcessSource/
@@ -116,135 +105,44 @@ nes-plugins/Sources/LinuxProcessSource/
 └── CMakeLists.txt           (38 lines)
 
 Key Components:
-• ConfigParametersLinuxProcessSource::COMMAND
-• popen(command, "r") for read-only pipe
-• fillTupleBuffer() → fread() from stdout
-• Proper error handling & stop_token support
-
-slide 6:
-
-// Opening the process pipe
+• Structure: ConfigParametersLinuxProcessSource::COMMAND
+• open(): → starts an external producer process, establishes a unidirectional data flow, data flows from process → NebulaStream, implemented via:
 void LinuxProcessSource::open(...) {
+    // Debug/Info statements
     pipe = popen(commandToRun.c_str(), "r");
-    if (!pipe) {
-        throw InvalidConfigParameter("Could not start process");
+    // Error handling logic
+}
+• fillTupleBuffer() → read from stdout
+• close() → close the process
+void LinuxProcessSource::close()
+{
+    if (pipe)
+    {
+        pclose(pipe);
+        pipe = nullptr;
+        // Debug/Info statements
     }
+    // Error handling logic
 }
-
-// Reading data into tuple buffer
-FillTupleBufferResult LinuxProcessSource::fillTupleBuffer(...) {
-    auto mem = tupleBuffer.getAvailableMemoryArea();
-    const size_t bytesRead = std::fread(mem.data(), 1, mem.size(), pipe);
-    
-    if (std::feof(pipe)) return FillTupleBufferResult::eos();
-    return FillTupleBufferResult::withBytes(bytesRead);
-}
+• Registry hooks and validation
 
 
-slide 7:
+slide 6: LinuxProcessSink
 
-✅ COMPLETED: CMake Setup
-─────────────────────────────────────────────────────
+File Structure:
 nes-plugins/Sinks/LinuxProcessSink/
 └── CMakeLists.txt   ✅ Done
-
-Plugin Registration:
-• add_plugin_as_library(LinuxProcess Sink ...)
-• add_plugin_as_library(LinuxProcess SinkValidation ...)
-• Include directories configured
-
-📋 TO IMPLEMENT:
 ├── LinuxProcessSink.hpp   📋 Planned
 └── LinuxProcessSink.cpp   📋 Planned
 
-
-slide 8:
-Following the Sink Guide (docs/guide/how_to_add_a_sink.md):
-
-┌─────────────────────────────────────────────────────────────┐
-│  1. Header Definition                                       │
-│     • ConfigParametersLinuxProcessSink (COMMAND param)      │
-│     • Class inheriting from Sink                            │
-│     • start(), execute(), stop() interface                  │
-├─────────────────────────────────────────────────────────────┤
-│  2. Constructor with Formatter                              │
-│     • Parse INPUT_FORMAT (CSV/JSON)                         │
-│     • Initialize appropriate formatter                      │
-├─────────────────────────────────────────────────────────────┤
-│  3. Process Mechanism                                       │
-│     • popen(command, "w") for write-only pipe               │
-│     • Write formatted tuples to process stdin               │
-├─────────────────────────────────────────────────────────────┤
-│  4. Registry Hooks                                          │
-│     • RegisterLinuxProcessSink()                            │
-│     • RegisterLinuxProcessSinkValidation()                  │
-└─────────────────────────────────────────────────────────────┘
-slide:
-// Planned: LinuxProcessSink.hpp
-class LinuxProcessSink final : public Sink {
-public:
-    void start(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer&, PipelineExecutionContext&) override;
-    void stop(PipelineExecutionContext&) override;
-private:
-    std::string commandToRun;
-    FILE* pipe = nullptr;
-    std::unique_ptr<Format> formatter;  // CSV or JSON
-};
-
-// Planned: Key methods
-void start()   → popen(command, "w")
-void execute() → formatter->getFormattedBuffer() → fwrite(pipe)
-void stop()    → fflush() → pclose()
+Key Components:
+• Structure: ConfigParametersLinuxProcessSink::COMMAND
+• start(): → Spawn consumer process
+• execute() → Write tuples to stdin
+• close() → Terminate process
 
 
-slide:
-Week 1: LinuxProcessSink Implementation
-┌────────────────┬────────────────────────────────────────────┐
-│ Saad           │ LinuxProcessSink.hpp                       │
-│                │ - Class definition & config parameters     │
-├────────────────┼────────────────────────────────────────────┤
-│ Roshni         │ LinuxProcessSink.cpp - Core logic          │
-│                │ - start(), execute(), stop()               │
-├────────────────┼────────────────────────────────────────────┤
-│ Emi            │ Formatter integration & validation         │
-│                │ - CSV/JSON output formatting               │
-├────────────────┼────────────────────────────────────────────┤
-│ Aleksandar     │ Registry hooks & demo queries              │
-│                │ - RegisterLinuxProcessSink()               │
-└────────────────┴────────────────────────────────────────────┘
-
-Week 2-3: Testing
-┌────────────────┬────────────────────────────────────────────┐
-│ All            │ Unit tests for Source & Sink               │
-│                │ Integration tests                          │
-│                │ System-level tests (.test files)           │
-└────────────────┴────────────────────────────────────────────┘
-
-Week 4: Documentation & Final Presentation
-
-
-
-slide 9:
-
--- SOURCE DEMO: Execute bash command
-CREATE LOGICAL SOURCE demo(value UINT64);
-CREATE PHYSICAL SOURCE FOR demo TYPE LinuxProcess SET(
-  'sh -c "echo 1; echo 2; echo 3"' AS `SOURCE`.command,
-  'CSV' AS PARSER.`TYPE`,
-  '\n' AS PARSER.TUPLE_DELIMITER
-);
-CREATE SINK result(...) TYPE File SET(...);
-SELECT value FROM demo INTO result;
-
--- SINK DEMO: Pipe to Python consumer
-CREATE SINK result(...) TYPE LinuxProcess SET(
-  'python3 consumer.py' AS `SINK`.command,
-  'CSV' AS `SINK`.INPUT_FORMAT
-);
-
-
-slide 10:
+slide 7-8: example python scripts
 # producer.py - Generates data stream
 for x in [1, 2, 3, 4]:
     print(x, flush=True)
@@ -255,34 +153,87 @@ for line in sys.stdin:
     print("ACTUATOR RECEIVED:", line.strip())
 
 
+slide 7-8: SQL-Demos for single node workers
+• Linux process source that executes a python script and reads from it and a file sink:
+CREATE LOGICAL SOURCE demo(value UINT64);
+CREATE PHYSICAL SOURCE FOR demo TYPE LinuxProcess SET(
+  'python3 /home/saad9098/nebulastream/producer.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+CREATE SINK result(demo.value UINT64) TYPE File SET(
+  './demo-output.csv' AS `SINK`.FILE_PATH,
+  'CSV' AS `SINK`.INPUT_FORMAT
+);
+SELECT value FROM demo INTO result;
+
+• File source and linux process sink that executes a python script and writes for it:
+CREATE LOGICAL SOURCE demo(value UINT64);
+CREATE PHYSICAL SOURCE FOR demo TYPE File SET('./demo-input.csv' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER);
+CREATE SINK result(demo.value UINT64) TYPE LinuxProcess SET(
+  'python3 /home/saad9098/nebulastream/consumer.py' AS `SINK`.command,
+  'CSV' AS `SINK`.INPUT_FORMAT
+);
+SELECT value FROM demo INTO result;
+
+• Linux process source and sink:
+CREATE LOGICAL SOURCE demo(value UINT64);
+
+CREATE PHYSICAL SOURCE FOR demo TYPE LinuxProcess SET(
+  'python3 /home/saad9098/nebulastream/producer.py' AS `SOURCE`.command,
+  'CSV' AS PARSER.`TYPE`,
+  '\n' AS PARSER.TUPLE_DELIMITER,
+  ','  AS PARSER.FIELD_DELIMITER
+);
+
+CREATE SINK result(demo.value UINT64) TYPE LinuxProcess SET(
+  'python3 /home/saad9098/nebulastream/consumer.py' AS `SINK`.command,
+  'CSV' AS `SINK`.INPUT_FORMAT
+);
+
+SELECT value FROM demo INTO result;
+
+slide 9: Plan
+
+Week 1: LinuxProcessSink Implementation 1
+┌────────────────┬────────────────────────────────────────────┐
+│ Saad & Aleks   │ LinuxProcessSink.hpp                       │
+│                │ - Class definition & config parameters     │
+├────────────────┼────────────────────────────────────────────┤
+│ Roshni & Emi   │ LinuxProcessSink.cpp - Core logic          │
+│                │ - start(), execute(), stop()               │
+└────────────────┴────────────────────────────────────────────┘
 
 
-slide 12:
-Week 1-2: Testing Implementation
+Week 2: LinuxProcessSink Implementation 2
+┌────────────────┬────────────────────────────────────────────┐
+│ Saad & Aleks   │ Formatter integration & validation         │
+│                │ - CSV/JSON output formatting               │
+├────────────────┼────────────────────────────────────────────┤
+│ Roshni & Emi   │ Registry hooks & Validation & demo queries │
+└────────────────┴────────────────────────────────────────────┘
+┌────────────────┬────────────────────────────────────────────┐
+│ All            │ Unit tests for Source & Sink               │
+│                │ Integration tests                          │
+│                │ System-level tests (.test files)           │
+└────────────────┴────────────────────────────────────────────┘
 
+Week 3-4: Testing, Cleaning, Debugging
+┌────────────────┬────────────────────────────────────────────┐
+│ All            │ Cleaning and adding debugging statements   │
+│                │ Unit tests for Source & Sink               │
+│                │ Integration tests                          │
+└────────────────┴────────────────────────────────────────────┘
 
-Week 3: Integration & Polish
-• Final testing round
-• Documentation updates
-• Prepare final presentation
+Week 5: Documentation & Final Presentation
+┌────────────────┬────────────────────────────────────────────┐
+│ All            │ combine Documentations                     │
+│                │ our Reflection                             │
+│                │ Prepare final presentation                 │
+└────────────────┴────────────────────────────────────────────┘
 
-
-
-slide 13:
-Challenges Encountered:
-• Understanding NebulaStream's plugin architecture
-• Buffering behavior with popen() 
-• Formatter integration for sink output
-• stop_token handling for graceful shutdown
-
-Key Learnings:
-• NebulaStream's extensibility through plugin registries
-• Importance of flush=True for Python subprocess stdout
-• TupleBuffer memory management patterns
-• CMake plugin registration macros
-
-
-slide 14:
+slide 10:
 Questions?
 
 Repository: nebulastream/nebulastream
