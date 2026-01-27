@@ -235,15 +235,6 @@ int main(int argc, char** argv)
             }
             return 0;
         }
-        if (program.is_subcommand_used("stop-all"))
-        {
-            if (auto res = queryManager->stopAll(); !res.has_value())
-            {
-                std::cerr << "Failed to stop all queries: " << res.error().what() << std::endl;
-                return 1;
-            }
-            return 0;
-        }
 
         bool handled = false;
         for (const auto& [name, fn] :
@@ -258,6 +249,17 @@ int main(int argc, char** argv)
                 handled = true;
                 break;
             }
+        }
+
+        if (program.is_subcommand_used("stop-all"))
+        {
+            auto result = queryManager->stopAll();
+            if (!result.has_value())
+            {
+                std::cerr << std::format("Error: {}\n", result.error().what());
+                return 1;
+            }
+            handled = true;
         }
 
         if (handled)

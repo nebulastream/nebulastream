@@ -146,20 +146,11 @@ void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
 
 void NodeEngine::stopAllQueries(QueryTerminationType terminationType)
 {
-    NES_INFO("NodeEngine: Stopping all queries with type {}", magic_enum::enum_name(terminationType));
-
-    std::vector<QueryId> runningQueries = queryTracker->getAllQueryIds();
-
-    for (const auto& qId : runningQueries)
+    NES_INFO("Stoping all queries");
+    const std::vector<QueryId> runningQueries = queryTracker->getAllQueryIds();
+    for (const auto& queryId : runningQueries)
     {
-        CPPTRACE_TRY
-        {
-            stopQuery(qId, terminationType);
-        }
-        CPPTRACE_CATCH(...)
-        {
-            NES_ERROR("Failed to stop query {} during stopAll", qId);
-        }
+        stopQuery(queryId, terminationType);
     }
 }
 
