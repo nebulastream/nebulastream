@@ -26,6 +26,7 @@
 #include <SerializableVariantDescriptor.pb.h>
 
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 
@@ -33,9 +34,9 @@ namespace NES
 {
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           field)
 {
 }
@@ -43,9 +44,9 @@ MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAc
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           field,
           std::move(asField))
 {
@@ -80,9 +81,11 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
-    this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
-    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()));
+    this->setInputStamp(getOnField().getDataType());
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
+        DataType::Type::FLOAT64, getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    this->setFinalAggregateStamp(newFinalAggregateStamp);
+    this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp));
 }
 
 Reflected MedianAggregationLogicalFunction::reflect() const

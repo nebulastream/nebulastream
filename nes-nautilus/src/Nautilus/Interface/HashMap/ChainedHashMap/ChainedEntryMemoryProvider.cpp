@@ -55,7 +55,7 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsKey.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytes();
+        offset += fieldValue.dataType.getSizeInBytesWithNull();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -64,7 +64,7 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsValue.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytes();
+        offset += fieldValue.dataType.getSizeInBytesWithNull();
     }
     return {fieldsKey, fieldsValue};
 }
