@@ -33,18 +33,18 @@
 namespace NES
 {
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp(DataTypeProvider::provideDataType(inputAggregateStampType))
-    , partialAggregateStamp(DataTypeProvider::provideDataType(partialAggregateStampType))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(finalAggregateStampType))
+    : inputStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , partialAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , finalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
     , onField(field)
     , asField(field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : inputStamp(DataTypeProvider::provideDataType(inputAggregateStampType))
-    , partialAggregateStamp(DataTypeProvider::provideDataType(partialAggregateStampType))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(finalAggregateStampType))
+    : inputStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , partialAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , finalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
     , onField(std::move(field))
     , asField(std::move(asField))
 {
@@ -79,11 +79,17 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
             newAsFieldName = attributeNameResolver + fieldName;
         }
 
-        /// a count aggregation is always on an uint 64
+        /// a count aggregation is always on an uint 64 and never returns a NULL value
+        auto newInputStamp = DataTypeProvider::provideDataType(
+            DataType::Type::UINT64,
+            getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+        auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE);
         auto newAsField = this->getAsField().withFieldName(newAsFieldName);
 
-        return this->withOnField(this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)))
-            .withAsField(newAsField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
+        return this->withInputStamp(newInputStamp)
+            .withOnField(this->getOnField().withDataType(newInputStamp))
+            .withFinalAggregateStamp(newFinalAggregateStamp)
+            .withAsField(newAsField.withDataType(newFinalAggregateStamp));
     }
     throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
 }

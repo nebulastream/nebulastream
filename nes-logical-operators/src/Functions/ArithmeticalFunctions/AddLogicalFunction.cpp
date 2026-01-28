@@ -14,11 +14,14 @@
 
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -34,7 +37,7 @@ namespace NES
 {
 
 AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right)
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right)
 {
 }
 
@@ -52,12 +55,16 @@ AddLogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) co
 
 LogicalFunction AddLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    INVARIANT(newChildren.size() == 2, "AddLogicalFunction expects exactly two child function but has {}", newChildren.size());
+    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
+    if (not newDataType.has_value())
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw DifferentFieldTypeExpected("Could not join {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
     }
-    return this->withChildren(newChildren);
+    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    return withDataType(newDataType.value()).withChildren(newChildren);
 }
 
 std::vector<LogicalFunction> AddLogicalFunction::getChildren() const
@@ -71,7 +78,8 @@ AddLogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType().join(children[1].getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    copy.dataType
+        = children[0].getDataType().join(children[1].getDataType()).value_or(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED));
     return copy;
 };
 
