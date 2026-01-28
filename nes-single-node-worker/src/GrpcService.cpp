@@ -14,6 +14,7 @@
 
 #include <GrpcService.hpp>
 
+#include <chrono>
 #include <exception>
 #include <string>
 #include <utility>
@@ -29,6 +30,7 @@
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -99,7 +101,7 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
     {
         return handleError(e, context);
     }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
 }
 
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
@@ -232,7 +234,29 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
     {
         return handleError(e, context);
     }
-    return {grpc::INTERNAL, "unkown exception"};
+    return {grpc::INTERNAL, "unknown exception"};
+}
+
+grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response)
+{
+    CPPTRACE_TRY
+    {
+        const auto status = delegate.getWorkerStatus(
+            std::chrono::system_clock::time_point(std::chrono::milliseconds(request->after_unix_timestamp_in_milli_seconds())));
+
+        serializeWorkerStatus(status, response);
+
+        return grpc::Status::OK;
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unknown exception"};
 }
 
 }
