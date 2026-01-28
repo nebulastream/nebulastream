@@ -67,62 +67,68 @@ public:
     ChainedHashMap(TupleBuffer &buffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
     ChainedHashMap(TupleBuffer &buffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     ChainedHashMap(TupleBuffer &buffer);
+
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     void appendPage(AbstractBufferProvider* bufferProvider);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
-    [[nodiscard]] uint64_t numberOfTuples() const override;
+
+    [[nodiscard]] uint64_t numberOfTuples() const override { return header().numTuples; }
     [[nodiscard]] const TupleBuffer getPage(uint64_t pageIndex) const;
     [[nodiscard]] const TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
     [[nodiscard]] static uint64_t calculateBufferSizeFromBuckets(uint64_t numberOfBuckets);
     [[nodiscard]] static uint64_t calculateBufferSizeFromChains(uint64_t numberOfChains);
-    [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
-    [[nodiscard]] uint64_t numberOfBuckets() const;
-    [[nodiscard]] uint64_t numberOfChains() const;
-    [[nodiscard]] uint64_t entrySize() const;
-    [[nodiscard]] uint64_t entriesPerPage() const;
-    [[nodiscard]] uint64_t pageSize() const;
-    [[nodiscard]] uint64_t mask() const;
-    [[nodiscard]] VariableSizedAccess::Index storageSpaceChildBufferIndex() const;
-    [[nodiscard]] VariableSizedAccess::Index varSizedSpaceChildBufferIndex() const;
+    [[nodiscard]] uint64_t getNumberOfPages() const { return header().numPages; }
+    [[nodiscard]] uint64_t getNumberOfVarSizedPages() const { return header().numVarSizedPages; }
+    [[nodiscard]] uint64_t numberOfBuckets() const { return header().numBuckets; }
+    [[nodiscard]] uint64_t numberOfChains() const { return header().numChains; }
+    [[nodiscard]] uint64_t entrySize() const { return header().entrySize; }
+    [[nodiscard]] uint64_t entriesPerPage() const { return header().entriesPerPage; }
+    [[nodiscard]] uint64_t pageSize() const { return header().pageSize; }
+    [[nodiscard]] uint64_t mask() const { return header().mask; }
+    [[nodiscard]] VariableSizedAccess::Index storageSpaceChildBufferIndex() const { return header().storageSpaceIndex; }
+    [[nodiscard]] VariableSizedAccess::Index varSizedSpaceChildBufferIndex() const { return header().varSizedSpaceIndex; }
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos) const;
     [[nodiscard]] static VariableSizedAccess::Index getNextPageChildBufferIndex();
-    [[nodiscard]] TupleBuffer* getBuffer();
+    /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
+    /// View and without using its access methods
+    [[nodiscard]] TupleBuffer* getBuffer() const { return std::addressof(buffer); }
 
 private:
     friend class ChainedHashMapRef;
 
-    /// Metadata for accessing the main buffer
-    struct Offsets
-    {
-        /// Specifies the number of pre-allocated var sized
-        static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
-        // for main buffer size calculation and code clarity
-        static constexpr auto MAIN_BUFFER_UINT64_FIELDS_NUM = 9;
-        static constexpr auto MAIN_BUFFER_UINT32_FIELDS_NUM = 2;
-        /// main buffer metadata field position indices (uint64 fields)
-        /// always cast to uint64_t when using the offsets below
-        static constexpr auto NUM_BUCKETS_POS = 0;
-        static constexpr auto NUM_CHAINS_POS = 1;
-        static constexpr auto PAGE_SIZE_POS = 2;
-        static constexpr auto ENTRY_SIZE_POS = 3;
-        static constexpr auto ENTRIES_PER_PAGE_POS = 4;
-        static constexpr auto NUM_TUPLES_POS = 5;
-        static constexpr auto MASK_POS = 6;
-        static constexpr auto NUM_PAGES_POS = 7;           // actively maintained as pages are inserted
-        static constexpr auto NUM_VARSIZED_PAGES_POS = 8;           // actively maintained as varsized pages are inserted
-        /// always cast to VariableSizedAccess::Index when using the offsets below
-        static constexpr uint32_t STORAGE_SPACE_INDEX_POS = (NUM_VARSIZED_PAGES_POS + 1) * sizeof(uint64_t) / sizeof(VariableSizedAccess::Index);
-        static constexpr uint32_t VARSIZED_SPACE_INDEX_POS = STORAGE_SPACE_INDEX_POS + 1; // points to the first varsized space page
-        /// always cast to uint64_t when using the offset below
-        static constexpr auto CHAINS_BEGIN_POS = (VARSIZED_SPACE_INDEX_POS + 1) * sizeof(VariableSizedAccess::Index) / sizeof(uint64_t);
+    /// Header structure stored at the beginning of the buffer
+    struct Header {
+        uint64_t numBuckets;
+        uint64_t numChains;
+        uint64_t pageSize;
+        uint64_t entrySize;
+        uint64_t entriesPerPage;
+        uint64_t numTuples;
+        uint64_t mask;
+        uint64_t numPages;
+        uint64_t numVarSizedPages;
+        VariableSizedAccess::Index storageSpaceIndex;
+        VariableSizedAccess::Index varSizedSpaceIndex;
+        /// Chains array starts immediately after this header
+        /// it is dynamically sized based on numChains, so nothing to store in here.
+        /// Conceptually, it is like below:
+        // uint64_t chains[numChains + 1];
     };
 
-    inline static const VariableSizedAccess::Index NEXT_PAGE_CHILD_BUFFER_INDEX {
-        0
-    };
+    static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
+    inline static const VariableSizedAccess::Index NEXT_PAGE_CHILD_BUFFER_INDEX{0};
+
+    /// Helper util methods for safe access
+    [[nodiscard]] Header& header() const {
+        return *buffer.getAvailableMemoryArea<Header>().data();
+    }
+
+    [[nodiscard]] uint64_t* chains() const {
+        auto* data = buffer.getAvailableMemoryArea<uint8_t>().data();
+        return reinterpret_cast<uint64_t*>(data + sizeof(Header));
+    }
 
     /// the main tuple buffer containing everything
-    TupleBuffer& mainBuffer;
+    TupleBuffer& buffer;
 };
 }

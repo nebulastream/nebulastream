@@ -130,10 +130,6 @@ public:
     nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) override;
     [[nodiscard]] EntryIterator begin() const;
     [[nodiscard]] EntryIterator end() const;
-    // [[nodiscard]] nautilus::val<uint64_t> getNumberOfTuples() const;
-    // [[nodiscard]] nautilus::val<uint64_t> getMask() const;
-    // nautilus::val<ChainedHashMapEntry*> getChain(const nautilus::val<uint64_t>& entryStartPos) const;
-
 
 private:
     /// Finds the chain for the given hash value. If no chain exists, it returns nullptr.

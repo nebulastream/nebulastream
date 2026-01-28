@@ -66,9 +66,6 @@ class HashMapSlice : public Slice
 {
 public:
     /// Holds the internals of the main TupleBuffer.
-    /// | threadHashMapAddress0 | threadHashMapAddress1 | ... | threadHashMapAddressN-1 |
-    /// |        64 bits        |        64 bits        |     |          64 bits        |
-    /// |           0           |           1           |     |            N-1          |
     struct HashMapDirectory
     {
         /// Offsets for accessing the main buffer
@@ -81,10 +78,23 @@ public:
             /// always use after casting the main  buffer to VariableSizedAccess::Index
             static constexpr uint32_t HASH_MAPS_BEGIN_POS = (NUM_HASH_MAPS_PER_INPUT_STREAM_POS + 1) * sizeof(uint64_t) / sizeof(VariableSizedAccess::Index);
         };
-
         explicit HashMapDirectory(AbstractBufferProvider* bufferProvider, uint64_t numHashMaps, uint64_t numInputStreams,
             const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs);
         [[nodiscard]] size_t calculateMainBufferSize(uint64_t numHashMaps, uint64_t numInputStreams) const;
+        // struct alignas(8) Header {
+        //     uint64_t numHashMaps;
+        //     uint64_t numInputStreams;
+        //     uint64_t numHashmapsPerInputStream;
+        //     /// hash map indices start immediately after the header
+        //     /// it is dynamically sized based on number of workers and input streams, so nothing to store in here.
+        //     /// Conceptually, it is like below:
+        //     // VariableSizedAccess::Index hashmaps[numWorkers * numInputStreams];
+        // };
+        // /// Helper util methods for safe access
+        // [[nodiscard]] Header& header() const {
+        //     return *reinterpret_cast<Header*>(mainBuffer.getAvailableMemoryArea().data());
+        // }
+
         TupleBuffer mainBuffer;
     };
 
