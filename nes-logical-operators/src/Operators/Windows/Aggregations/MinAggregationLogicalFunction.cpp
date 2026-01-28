@@ -68,8 +68,9 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()));
+    auto newFinalAggregationStamp = this->getOnField().getDataType();
+    this->setFinalAggregateStamp(newFinalAggregationStamp);
+    this->setAsField(this->getAsField().withDataType(newFinalAggregationStamp));
 }
 
 SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const

@@ -33,7 +33,9 @@ namespace NES
 {
 
 PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
+    : dataType(left.getDataType().join(right.getDataType()).value_or(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)))
+    , left(left)
+    , right(right) { };
 
 bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
@@ -67,7 +69,8 @@ LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) c
 {
     const auto newLeft = left.withInferredDataType(schema);
     const auto newRight = right.withInferredDataType(schema);
-    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newLeft, newRight});
+    auto newLogicalFunction = withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newLeft, newRight});
+    return newLogicalFunction;
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
@@ -80,6 +83,7 @@ PowLogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
+    copy.dataType = DataType{.type = copy.dataType.type, .isNullable = copy.left.getDataType().joinNullable(copy.right.getDataType())};
     return copy;
 };
 
