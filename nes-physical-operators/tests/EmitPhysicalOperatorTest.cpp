@@ -68,7 +68,12 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             return true;
         }
 
-        TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+        TupleBuffer& allocateTupleBuffer() override
+        {
+            auto tupleBuffer = bufferManager->getBufferBlocking();
+            allocatedTupleBuffers.emplace_back(tupleBuffer);
+            return allocatedTupleBuffers.back();
+        }
 
         [[nodiscard]] WorkerThreadId getId() const override { return INITIAL<WorkerThreadId>; }
 
