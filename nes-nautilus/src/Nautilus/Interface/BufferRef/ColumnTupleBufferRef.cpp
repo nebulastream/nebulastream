@@ -63,7 +63,7 @@ Record ColumnTupleBufferRef::readRecord(
         {
             continue;
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytes(), columnOffset);
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytesWithNull(), columnOffset);
         const auto& value = loadValue(type, recordBuffer, fieldAddress);
         record.write(name, value);
     }
@@ -85,7 +85,7 @@ void ColumnTupleBufferRef::writeRecord(
             /// Skipping any fields that are not part of the record
             continue;
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytes(), columnOffset);
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytesWithNull(), columnOffset);
         const auto& value = rec.read(name);
         storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
     }

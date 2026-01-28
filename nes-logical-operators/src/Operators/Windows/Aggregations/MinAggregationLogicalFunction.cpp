@@ -18,6 +18,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -30,12 +32,21 @@
 namespace NES
 {
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : WindowAggregationLogicalFunction(
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          field)
 {
 }
 
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
+    : WindowAggregationLogicalFunction(
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          field,
+          std::move(asField))
 {
 }
 
@@ -69,8 +80,9 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()));
+    auto newFinalAggregationStamp = this->getOnField().getDataType();
+    this->setFinalAggregateStamp(newFinalAggregationStamp);
+    this->setAsField(this->getAsField().withDataType(newFinalAggregationStamp));
 }
 
 Reflected MinAggregationLogicalFunction::reflect() const

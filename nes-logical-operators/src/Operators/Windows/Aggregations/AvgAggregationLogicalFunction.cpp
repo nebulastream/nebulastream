@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -31,9 +32,9 @@ namespace NES
 {
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           field)
 {
 }
@@ -41,9 +42,9 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLo
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(
-          field.getDataType(),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           field,
           asField)
 {
@@ -68,20 +69,26 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     {
         if (this->getOnField().getDataType().isSignedInteger())
         {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64));
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
+                DataType::Type::INT64,
+                getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
         }
         else
         {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64));
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
+                DataType::Type::UINT64,
+                getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
         }
     }
     else
     {
-        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
+            DataType::Type::FLOAT64,
+            getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = newOnField.getAs<FieldAccessLogicalFunction>().get().getFieldName();
+    const auto onFieldName = newOnField.getAs<FieldAccessLogicalFunction>()->getFieldName();
     const auto asFieldName = this->getAsField().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
@@ -95,9 +102,12 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
-    auto newAsField = this->getAsField().withDataType(getFinalAggregateStamp());
-    this->setAsField(newAsField);
+
     this->setOnField(newOnField.getAs<FieldAccessLogicalFunction>().get());
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
+        finalAggregateStampType, getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    this->setFinalAggregateStamp(newFinalAggregateStamp);
+    this->setAsField(this->getAsField().withDataType(newFinalAggregateStamp));
     this->setInputStamp(newOnField.getDataType());
 }
 

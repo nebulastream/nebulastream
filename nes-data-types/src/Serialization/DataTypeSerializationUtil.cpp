@@ -28,6 +28,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     auto serializedPhysicalTypeEnum = SerializableDataType_Type();
     SerializableDataType_Type_Parse(magic_enum::enum_name(dataType.type), &serializedPhysicalTypeEnum);
     serializedDataType->set_type(serializedPhysicalTypeEnum);
+    serializedDataType->set_nullable(dataType.nullable);
     return serializedDataType;
 }
 
@@ -46,7 +47,8 @@ DataType DataTypeSerializationUtil::deserializeDataType(const SerializableDataTy
             static_cast<std::underlying_type_t<DataType::Type>>(serializedDataType.type()),
             magic_enum::enum_values<DataType::Type>().size());
     }
-    const DataType deserializedDataType = DataType{.type = *type};
+    const DataType deserializedDataType
+        = DataType{*type, serializedDataType.nullable() ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
     return deserializedDataType;
 }
 

@@ -99,7 +99,7 @@ void CountAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t CountAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return inputType.getSizeInBytes();
+    return inputType.getSizeInBytesWithNull();
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterCountAggregationPhysicalFunction(

@@ -60,7 +60,7 @@ std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
         {
             varSizedFieldOffsets.emplace_back(priorFieldOffset);
         }
-        priorFieldOffset += field.dataType.getSizeInBytes();
+        priorFieldOffset += field.dataType.getSizeInBytesWithNull();
     }
     return varSizedFieldOffsets;
 }

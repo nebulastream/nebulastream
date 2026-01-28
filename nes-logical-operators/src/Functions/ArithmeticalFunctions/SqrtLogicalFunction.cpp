@@ -14,6 +14,8 @@
 
 #include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -64,8 +66,12 @@ SqrtLogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) 
 
 LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    const auto newChild = child.withInferredDataType(schema);
-    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newChild});
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    INVARIANT(newChildren.size() == 1, "SqrtLogicalFunction expects exactly two child function but has {}", newChildren.size());
+    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const

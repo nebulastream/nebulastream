@@ -93,14 +93,13 @@ LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema&
 
 Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function) const
 {
-    return reflect(
-        detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .type = function.getDataType().type});
+    return reflect(detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .dataType = function.getDataType()});
 }
 
 ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected) const
 {
-    auto [value, type] = unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
-    return ConstantValueLogicalFunction{DataType{type}, value};
+    auto [value, dataType] = unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
+    return ConstantValueLogicalFunction{dataType, value};
 }
 
 LogicalFunctionRegistryReturnType
