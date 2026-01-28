@@ -31,6 +31,35 @@
 namespace
 {
 
+static constexpr char DOUBLE_QUOTE = '"';
+
+bool isCompleteTuple(const std::string_view tuple, const NES::CSVMetaData& metaData)
+{
+    size_t fieldIdx = 1;
+    bool insideQuotedField = false;
+
+    for (const auto currentChar : tuple)
+    {
+        if (currentChar == DOUBLE_QUOTE)
+        {
+            insideQuotedField = !insideQuotedField;
+            continue;
+        }
+
+        if (insideQuotedField)
+        {
+            continue;
+        }
+
+        if (currentChar == metaData.getFieldDelimiter())
+        {
+            ++fieldIdx;
+        }
+    }
+
+    return (not insideQuotedField) && (fieldIdx == metaData.getNumberOfFields());
+}
+
 void initializeIndexFunctionForTuple(
     NES::FieldOffsets<NES::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
     const std::string_view tuple,
@@ -40,14 +69,32 @@ void initializeIndexFunctionForTuple(
     /// The start of the tuple is the offset of the first field of the tuple
     fieldOffsets.emplaceFieldOffset(startIdxOfTuple);
     size_t fieldIdx = 1;
+
+    bool insideQuotedField = false;
     /// Find field delimiters, until reaching the end of the tuple
-    /// The position of the field delimiter (+ size of field delimiter) is the beginning of the next field
-    for (size_t nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), 0); nextFieldOffset != std::string_view::npos;
-         nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), nextFieldOffset))
+    /// Ignore delimiters that are part of a quoted field
+    for (size_t currentIdx = 0; currentIdx < tuple.size(); ++currentIdx)
     {
-        nextFieldOffset += NES::CSVMetaData::SIZE_OF_FIELD_DELIMITER;
-        fieldOffsets.emplaceFieldOffset(startIdxOfTuple + nextFieldOffset);
+        const auto currentChar = tuple[currentIdx];
+        if (currentChar == DOUBLE_QUOTE)
+        {
+            insideQuotedField = !insideQuotedField;
+            continue;
+        }
+
+        if (insideQuotedField or currentChar != metaData.getFieldDelimiter())
+        {
+            continue;
+        }
+
+        const auto nextFieldOffset = startIdxOfTuple + currentIdx + NES::CSVMetaData::SIZE_OF_FIELD_DELIMITER;
+        fieldOffsets.emplaceFieldOffset(nextFieldOffset);
         ++fieldIdx;
+    }
+
+    if (insideQuotedField)
+    {
+        throw NES::CannotFormatSourceData("Number of double quotes (\") in CSV tuple is uneven.");
     }
     /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
     fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
@@ -69,7 +116,8 @@ void CSVInputFormatIndexer::indexRawBuffer(
 {
     fieldOffsets.startSetup(metaData.getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
 
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(metaData.getTupleDelimiter()));
+    const auto bufferView = rawBuffer.getBufferView();
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(bufferView.find(metaData.getTupleDelimiter()));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
     /// the InputFormatIndexerTask that there was no tuple delimiter in the buffer and return
@@ -81,21 +129,31 @@ void CSVInputFormatIndexer::indexRawBuffer(
 
     /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
     auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
-    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
+    size_t endIdxOfNextTuple = bufferView.find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
 
     while (endIdxOfNextTuple != std::string::npos)
     {
         /// Get a string_view for the next tuple, by using the start and the size of the next tuple
         INVARIANT(startIdxOfNextTuple <= endIdxOfNextTuple, "The start index of a tuple cannot be larger than the end index.");
         const auto sizeOfNextTuple = endIdxOfNextTuple - startIdxOfNextTuple;
-        const auto nextTuple = rawBuffer.getBufferView().substr(startIdxOfNextTuple, sizeOfNextTuple);
+        const auto nextTuple = bufferView.substr(startIdxOfNextTuple, sizeOfNextTuple);
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
         initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData);
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
         startIdxOfNextTuple = endIdxOfNextTuple + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
-        endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
+        endIdxOfNextTuple = bufferView.find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
+    }
+
+    const bool bufferFullyFilled = bufferView.size() == rawBuffer.getBufferSize();
+    if (endIdxOfNextTuple == std::string::npos && startIdxOfNextTuple < bufferView.size() && not bufferFullyFilled)
+    {
+        const auto trailingTuple = bufferView.substr(startIdxOfNextTuple);
+        if (isCompleteTuple(trailingTuple, metaData))
+        {
+            initializeIndexFunctionForTuple(fieldOffsets, trailingTuple, startIdxOfNextTuple, metaData);
+        }
     }
     /// Since 'endIdxOfNextTuple == std::string::npos', we use the startIdx to determine the offset of the last tuple
     const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);

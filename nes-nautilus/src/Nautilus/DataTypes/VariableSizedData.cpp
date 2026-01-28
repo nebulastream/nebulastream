@@ -87,15 +87,37 @@ nautilus::val<bool> VariableSizedData::isValid() const
     return size > 0 && ptrToVarSized != nullptr;
 }
 
+namespace
+{
+std::pair<nautilus::val<int8_t*>, nautilus::val<uint32_t>>
+stripEnclosingDoubleQuotes(nautilus::val<int8_t*> contentPtr, nautilus::val<uint32_t> contentSize)
+{
+    static constexpr char DOUBLE_QUOTE = '"';
+    if (contentSize > nautilus::val<uint32_t>(1))
+    {
+        const auto firstChar = readValueFromMemRef<char>(contentPtr);
+        const auto lastChar = readValueFromMemRef<char>(contentPtr + (contentSize - nautilus::val<uint32_t>(1)));
+        if (firstChar == nautilus::val<char>(DOUBLE_QUOTE) && lastChar == nautilus::val<char>(DOUBLE_QUOTE))
+        {
+            contentPtr = contentPtr + nautilus::val<uint32_t>(1);
+            contentSize = contentSize - nautilus::val<uint32_t>(2);
+        }
+    }
+    return {contentPtr, contentSize};
+}
+}
+
 nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
 {
-    if (size != rhs.size)
+    const auto [lhsContent, lhsSize] = stripEnclosingDoubleQuotes(getContent(), size);
+    const auto [rhsContent, rhsSize] = stripEnclosingDoubleQuotes(rhs.getContent(), rhs.size);
+
+    if (lhsSize != rhsSize)
     {
         return {false};
     }
-    const auto varSizedData = getContent();
-    const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
+
+    const auto compareResult = (nautilus::memcmp(lhsContent, rhsContent, lhsSize) == 0);
     return {compareResult};
 }
 
