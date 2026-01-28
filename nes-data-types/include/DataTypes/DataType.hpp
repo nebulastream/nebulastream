@@ -46,6 +46,12 @@ struct DataType final
         VARSIZED,
     };
 
+    enum class NULLABLE : uint8_t
+    {
+        IS_NULLABLE,
+        NOT_NULLABLE
+    };
+
     template <class T>
     [[nodiscard]] bool isSameDataType() const
     {
@@ -104,10 +110,16 @@ struct DataType final
     bool operator!=(const DataType& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);
 
-    [[nodiscard]] uint32_t getSizeInBytes() const;
+    /// Provides the size needed for storing this data type containing any additional space, e.g., for null-handling
+    [[nodiscard]] uint32_t getSizeInBytesWithNull() const;
+
+    /// Provides the raw underlying size. This means the raw data type without any additional space, e.g., for null-handling
+    [[nodiscard]] uint32_t getSizeInBytesWithoutNull() const;
+
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
     [[nodiscard]] std::optional<DataType> join(const DataType& otherDataType) const;
+    [[nodiscard]] NULLABLE joinNullable(const DataType& otherDataType) const;
     [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;
@@ -117,6 +129,7 @@ struct DataType final
     [[nodiscard]] bool isNumeric() const;
 
     Type type{Type::UNDEFINED};
+    NULLABLE isNullable;
 };
 
 }

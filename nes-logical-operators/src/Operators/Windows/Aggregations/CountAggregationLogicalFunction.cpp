@@ -32,19 +32,19 @@ namespace NES
 {
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
+          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
           field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
-          DataTypeProvider::provideDataType(inputAggregateStampType),
-          DataTypeProvider::provideDataType(partialAggregateStampType),
-          DataTypeProvider::provideDataType(finalAggregateStampType),
-          std::move(field),
+          DataTypeProvider::provideDataType(inputAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(partialAggregateStampType, field.getDataType().isNullable),
+          DataTypeProvider::provideDataType(finalAggregateStampType, field.getDataType().isNullable),
+          field,
           std::move(asField))
 {
 }
@@ -72,8 +72,9 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
             this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
         }
 
-        /// a count aggregation is always on an uint 64
-        this->setOnField(this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
+        /// a count aggregation is always on an uint 64 and never returns a NULL value
+        this->setOnField(this->getOnField().withDataType(
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, getOnField().getDataType().isNullable)));
         this->setAsField(this->getAsField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
     }
     else

@@ -38,75 +38,82 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
     /// For a playground, please take a look at the godbolt link: https://godbolt.org/z/j1cTfczbh
     constexpr int8_t sizeOfIntInBytes = sizeof(int32_t);
     constexpr int8_t sizeOfLongInBytes = sizeof(int64_t);
+    const auto isNullableBool
+        = (left.isNullable == NES::DataType::NULLABLE::IS_NULLABLE) or (right.isNullable == NES::DataType::NULLABLE::IS_NULLABLE);
+    const auto isNullable = isNullableBool ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
 
     /// If left is a float, the result is a float or double depending on the bits of the left float
     if (left.isFloat() and right.isInteger())
     {
-        return (left.getSizeInBytes() == sizeOfIntInBytes) ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32)
-                                                           : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64);
+        return (left.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
+            ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32, isNullable)
+            : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64, isNullable);
     }
 
     if (left.isInteger() and right.isFloat())
     {
-        return (right.getSizeInBytes() == sizeOfIntInBytes) ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32)
-                                                            : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64);
+        return (right.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
+            ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32, isNullable)
+            : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64, isNullable);
     }
 
     if (right.isFloat() && left.isFloat())
     {
-        return (left.getSizeInBytes() == sizeOfLongInBytes or right.getSizeInBytes() == sizeOfLongInBytes)
-            ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64)
-            : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32);
+        return (left.getSizeInBytesWithoutNull() == sizeOfLongInBytes or right.getSizeInBytesWithoutNull() == sizeOfLongInBytes)
+            ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64, isNullable)
+            : NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32, isNullable);
     }
 
     if (right.isInteger() and left.isInteger())
     {
         /// We need to still cast here to an integer, as the lowerBound is a member of Integer and not of Numeric
-        if (left.getSizeInBytes() < sizeOfIntInBytes and right.getSizeInBytes() < sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() < sizeOfIntInBytes and right.getSizeInBytesWithoutNull() < sizeOfIntInBytes)
         {
-            return NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32);
+            return NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32, isNullable);
         }
 
-        if (left.getSizeInBytes() == sizeOfIntInBytes and right.getSizeInBytes() < sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfIntInBytes and right.getSizeInBytesWithoutNull() < sizeOfIntInBytes)
         {
             return (
-                left.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32)
-                                       : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32));
+                left.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32, isNullable)
+                                       : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32, isNullable));
         }
 
-        if (left.getSizeInBytes() < sizeOfIntInBytes and right.getSizeInBytes() == sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() < sizeOfIntInBytes and right.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
         {
             return (
-                right.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32)
-                                        : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32));
+                right.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32, isNullable)
+                                        : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32, isNullable));
         }
 
-        if (left.getSizeInBytes() == sizeOfIntInBytes and right.getSizeInBytes() == sizeOfIntInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfIntInBytes and right.getSizeInBytesWithoutNull() == sizeOfIntInBytes)
         {
             return (
-                (left.isSignedInteger() and right.isSignedInteger()) ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32)
-                                                                     : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32));
+                (left.isSignedInteger() and right.isSignedInteger())
+                    ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT32, isNullable)
+                    : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT32, isNullable));
         }
 
-        if (left.getSizeInBytes() == sizeOfLongInBytes and right.getSizeInBytes() < sizeOfLongInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfLongInBytes and right.getSizeInBytesWithoutNull() < sizeOfLongInBytes)
         {
             return (
-                left.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64)
-                                       : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64));
+                left.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64, isNullable)
+                                       : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64, isNullable));
         }
 
-        if (left.getSizeInBytes() < sizeOfLongInBytes and right.getSizeInBytes() == sizeOfLongInBytes)
+        if (left.getSizeInBytesWithoutNull() < sizeOfLongInBytes and right.getSizeInBytesWithoutNull() == sizeOfLongInBytes)
         {
             return (
-                right.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64)
-                                        : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64));
+                right.isSignedInteger() ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64, isNullable)
+                                        : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64, isNullable));
         }
 
-        if (left.getSizeInBytes() == sizeOfLongInBytes and right.getSizeInBytes() == sizeOfLongInBytes)
+        if (left.getSizeInBytesWithoutNull() == sizeOfLongInBytes and right.getSizeInBytesWithoutNull() == sizeOfLongInBytes)
         {
             return (
-                (left.isSignedInteger() and right.isSignedInteger()) ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64)
-                                                                     : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64));
+                (left.isSignedInteger() and right.isSignedInteger())
+                    ? NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64, isNullable)
+                    : NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64, isNullable));
         }
     }
 
@@ -118,7 +125,7 @@ namespace NES
 {
 
 /// NOLINTBEGIN(readability-magic-numbers)
-uint32_t DataType::getSizeInBytes() const
+uint32_t DataType::getSizeInBytesWithoutNull() const
 {
     switch (this->type)
     {
@@ -144,6 +151,37 @@ uint32_t DataType::getSizeInBytes() const
             return 8;
         case Type::UNDEFINED:
             return 0;
+    }
+    std::unreachable();
+}
+
+uint32_t DataType::getSizeInBytesWithNull() const
+{
+    const auto nullByte = (isNullable == NES::DataType::NULLABLE::IS_NULLABLE) ? 1 : 0;
+    switch (this->type)
+    {
+        case Type::INT8:
+        case Type::UINT8:
+        case Type::BOOLEAN:
+        case Type::CHAR:
+            return 1 + nullByte;
+        case Type::INT16:
+        case Type::UINT16:
+            return 2 + nullByte;
+        case Type::INT32:
+        case Type::UINT32:
+        case Type::FLOAT32:
+            return 4 + nullByte;
+        case Type::VARSIZED:
+            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+            /// and 8 bytes for the size of the VARSIZED
+            return 16 + nullByte;
+        case Type::INT64:
+        case Type::UINT64:
+        case Type::FLOAT64:
+            return 8 + nullByte;
+        case Type::UNDEFINED:
+            return 0 + nullByte;
     }
     std::unreachable();
 }
@@ -178,7 +216,7 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::BOOLEAN:
             return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case Type::CHAR: {
-            if (getSizeInBytes() != 1)
+            if (getSizeInBytesWithNull() != 1)
             {
                 return "invalid char type";
             }
@@ -199,74 +237,74 @@ bool DataType::isType(const Type type) const
     return this->type == type;
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::CHAR};
+    return DataType{.type = DataType::Type::CHAR, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::BOOLEAN};
+    return DataType{.type = DataType::Type::BOOLEAN, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::FLOAT32};
+    return DataType{.type = DataType::Type::FLOAT32, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::FLOAT64};
+    return DataType{.type = DataType::Type::FLOAT64, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::INT8};
+    return DataType{.type = DataType::Type::INT8, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::INT16};
+    return DataType{.type = DataType::Type::INT16, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::INT32};
+    return DataType{.type = DataType::Type::INT32, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::INT64};
+    return DataType{.type = DataType::Type::INT64, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::UINT8};
+    return DataType{.type = DataType::Type::UINT8, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::UINT16};
+    return DataType{.type = DataType::Type::UINT16, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::UINT32};
+    return DataType{.type = DataType::Type::UINT32, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::UINT64};
+    return DataType{.type = DataType::Type::UINT64, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::UNDEFINED};
+    return DataType{.type = DataType::Type::UNDEFINED, .isNullable = args.isNullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(const DataTypeRegistryArguments args)
 {
-    return DataType{.type = DataType::Type::VARSIZED};
+    return DataType{.type = DataType::Type::VARSIZED, .isNullable = args.isNullable};
 }
 
 bool DataType::isInteger() const
@@ -290,15 +328,25 @@ bool DataType::isNumeric() const
     return isInteger() or isFloat();
 }
 
+DataType::NULLABLE DataType::joinNullable(const DataType& otherDataType) const
+{
+    const auto isNullableBool
+        = (this->isNullable == NES::DataType::NULLABLE::IS_NULLABLE) or (otherDataType.isNullable == NES::DataType::NULLABLE::IS_NULLABLE);
+    const auto isNullableResult = isNullableBool ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
+    return isNullableResult;
+}
+
 std::optional<DataType> DataType::join(const DataType& otherDataType) const
 {
+    const auto isNullableResult = joinNullable(otherDataType);
     if (this->type == Type::UNDEFINED)
     {
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED)};
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
     }
     if (this->type == Type::VARSIZED)
     {
-        return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED)} : std::nullopt;
+        return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullableResult)}
+                                                      : std::nullopt;
     }
 
     if (this->isNumeric())
@@ -325,17 +373,17 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     {
         if (otherDataType.type == Type::CHAR)
         {
-            return {DataTypeProvider::provideDataType(Type::CHAR)};
+            return {DataTypeProvider::provideDataType(Type::CHAR, isNullableResult)};
         }
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED)};
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
     }
     if (this->type == Type::BOOLEAN)
     {
         if (otherDataType.type == Type::BOOLEAN)
         {
-            return {DataTypeProvider::provideDataType(Type::BOOLEAN)};
+            return {DataTypeProvider::provideDataType(Type::BOOLEAN, isNullableResult)};
         }
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED)};
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
     }
     NES_WARNING("Cannot join {} and {}", *this, otherDataType);
     return std::nullopt;
@@ -343,7 +391,8 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)
 {
-    return os << fmt::format("DataType(type: {})", magic_enum::enum_name(dataType.type));
+    return os << fmt::format(
+               "DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), magic_enum::enum_name(dataType.isNullable));
 }
 
 }

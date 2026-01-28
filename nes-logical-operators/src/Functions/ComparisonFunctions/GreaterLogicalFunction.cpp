@@ -33,7 +33,9 @@ namespace NES
 {
 
 GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, left.getDataType().joinNullable(right.getDataType())))
+    , left(std::move(left))
+    , right(std::move(right))
 {
 }
 
