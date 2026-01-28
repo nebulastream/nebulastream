@@ -81,13 +81,6 @@ VariableSizedAccess::Index HashMapSlice::getHashMapChildBufferIndex(const uint64
     return hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[HashMapDirectory::Offsets::HASH_MAPS_BEGIN_POS + pos];
 }
 
-VariableSizedAccess::Index HashMapSlice::getHashMapChildBufferIndex(const WorkerThreadId workerThreadId) const
-{
-    const auto pos = workerThreadId % numberOfHashMaps();
-    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
-    return hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>()[HashMapDirectory::Offsets::HASH_MAPS_BEGIN_POS + pos];
-}
-
 TupleBuffer HashMapSlice::loadHashMapBuffer(const VariableSizedAccess::Index childBufferIndex) const
 {
     TupleBuffer childBuffer = hashMapDirectory.mainBuffer.loadChildBuffer(childBufferIndex);

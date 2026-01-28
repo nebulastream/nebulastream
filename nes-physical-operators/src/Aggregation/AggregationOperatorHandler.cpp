@@ -73,37 +73,45 @@ void AggregationOperatorHandler::triggerSlices(
 {
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
-        /// Getting all hashmaps for each slice that has at least one tuple
-        // std::unique_ptr<ChainedHashMap> finalHashMap;
-        std::vector<HashMap*> allHashMaps;
+        /// Getting all tuple buffers for each slice that has at least one tuple
+        std::vector<TupleBuffer> allTupleBuffers;
         bool finalHashMapFlag = false;
         std::optional<TupleBuffer> finalHashMapTupleBuffer;
         uint64_t totalNumberOfTuples = 0;
+
         for (const auto& slice : allSlices)
         {
             const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
             for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->numberOfHashMaps(); ++hashMapIdx)
             {
-                if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
-                    (hashMap != nullptr) and hashMap->numberOfTuples() > 0)
-                {
-                    /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
-                    rollingAverageNumberOfKeys.wlock()->add(hashMap->numberOfTuples());
+                // Get the tuple buffer (optional)
+                auto tupleBufferOpt = aggregationSlice->getHashMapTupleBuffer(WorkerThreadId(hashMapIdx));
 
-                    allHashMaps.emplace_back(hashMap);
-                    totalNumberOfTuples += hashMap->numberOfTuples();
-                    if (not finalHashMapFlag)
+                if (tupleBufferOpt.has_value())
+                {
+                    auto tupleBuffer = tupleBufferOpt.value();
+                    // Get the hashmap pointer from the tuple buffer to check if it has tuples
+                    ChainedHashMap chainedHashMap(tupleBuffer);
+                    HashMap* hashMap = &chainedHashMap;
+                    if (hashMap->numberOfTuples() > 0)
                     {
-                        auto castedHashMap = dynamic_cast<ChainedHashMap*>(hashMap);
-                        auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(castedHashMap->numberOfChains());
-                        finalHashMapTupleBuffer = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededFinalBufferSize);
-                        if (not finalHashMapTupleBuffer.value())
+                        /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
+                        rollingAverageNumberOfKeys.wlock()->add(hashMap->numberOfTuples());
+
+                        allTupleBuffers.emplace_back(tupleBuffer);
+                        totalNumberOfTuples += hashMap->numberOfTuples();
+
+                        if (not finalHashMapFlag)
                         {
-                            throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
+                            auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(chainedHashMap.numberOfChains());
+                            finalHashMapTupleBuffer = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededFinalBufferSize);
+                            if (not finalHashMapTupleBuffer.has_value())
+                            {
+                                throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
+                            }
+                            ChainedHashMap finalChainedHashMap(finalHashMapTupleBuffer.value(), chainedHashMap.entrySize(), chainedHashMap.numberOfBuckets(), chainedHashMap.pageSize());
+                            finalHashMapFlag = true;
                         }
-                        // finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(*castedHashMap);
-                        ChainedHashMap chm(finalHashMapTupleBuffer.value(), castedHashMap->entrySize(), castedHashMap->numberOfChains(), castedHashMap->pageSize());
-                        finalHashMapFlag = true;
                     }
                 }
             }
@@ -111,18 +119,28 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// We need a buffer that is large enough to store:
-        /// - all pointers to all hashmaps of the window to be triggered
-        /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
-        const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(HashMap*));
+        /// Note: We no longer store pointers, but attach buffers as children
+        const auto neededBufferSize = sizeof(EmittedAggregationWindow);
         const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
         if (not tupleBufferVal.has_value())
         {
             throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
         }
         auto tupleBuffer = tupleBufferVal.value();
+
+        /// First, attach the final hashmap buffer (must be first as per invariant)
         auto finalHashMapBufferIndex = tupleBuffer.storeChildBuffer(finalHashMapTupleBuffer.value());
         INVARIANT(finalHashMapBufferIndex == ChainedHashMap::getNextPageChildBufferIndex(), "Could not link final hash map to Aggregation Window. Must be the first (possibly the only) child.");
+
+        /// Then, attach all hashmap tuple buffers as children
+        // std::vector<VariableSizedAccess::Index> hashMapBufferIndices;
+        for (auto& hashMapTupleBuffer : allTupleBuffers)
+        {
+            auto bufferIndex = tupleBuffer.storeChildBuffer(hashMapTupleBuffer);
+            // hashMapBufferIndices.emplace_back(bufferIndex);
+        }
+
         /// It might be that the buffer is not zeroed out.
         std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
 
@@ -140,8 +158,7 @@ void AggregationOperatorHandler::triggerSlices(
 
         /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
         auto tmp = tupleBuffer.getAvailableMemoryArea();
-        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, allHashMaps};
-
+        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, allTupleBuffers.size()};
 
         /// Dispatching the buffer to the probe operator via the task queue.
         pipelineCtx->emitBuffer(tupleBuffer);

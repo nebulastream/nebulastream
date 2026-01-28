@@ -77,10 +77,10 @@ TupleBuffer* getAggHashMapProxy(
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
     // return aggregationSlice->getHashMapPtrOrCreate(bufferProvider, workerThreadId);
-    auto hashMapChildIndex = aggregationSlice->getHashMapChildBufferIndex(workerThreadId);
+    /// @todo: maybe merge these two calls?
+    auto hashMapChildIndex = aggregationSlice->getWorkerHashMapIndex(workerThreadId);
     auto hashMapTupleBuffer = aggregationSlice->loadHashMapBuffer(hashMapChildIndex);
     return std::addressof(arena->pinBuffer(hashMapTupleBuffer));
-    // return aggregationSlice->getHashMapPtr(workerThreadId);
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -100,6 +100,10 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                 [copyOfHashMapOptions = hashMapOptions,
                  copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
                 {
+                    if (hashMap == nullptr)
+                    {
+                        return;
+                    }
                     auto tupleBuffer = nautilus::invoke(
                         +[](HashMap* hm) {
                             auto& chm = dynamic_cast<ChainedHashMap&>(*hm);
@@ -140,7 +144,13 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapTupleBuffer = invoke(
-        getAggHashMapProxy, ctx.pipelineMemoryProvider.bufferProvider, ctx.pipelineMemoryProvider.arena.getArena(), operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy,
+        ctx.pipelineMemoryProvider.bufferProvider,
+        ctx.pipelineMemoryProvider.arena.getArena(),
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     ChainedHashMapRef hashMap(
         hashMapTupleBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 

@@ -36,6 +36,9 @@ public:
     /// Returns the pointer to the underlying hashmap.
     /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.
     [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
+
+    [[nodiscard]] std::optional<TupleBuffer> getHashMapTupleBuffer(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] VariableSizedAccess::Index getWorkerHashMapIndex(WorkerThreadId workerThreadId) const;
     // [[nodiscard]] HashMap* getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, WorkerThreadId workerThreadId);
 };
 

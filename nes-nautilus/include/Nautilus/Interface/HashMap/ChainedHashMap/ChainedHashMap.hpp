@@ -77,6 +77,7 @@ public:
     [[nodiscard]] static uint64_t calculateBufferSizeFromChains(uint64_t numberOfChains);
     [[nodiscard]] uint64_t getNumberOfPages() const;
     [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
+    [[nodiscard]] uint64_t numberOfBuckets() const;
     [[nodiscard]] uint64_t numberOfChains() const;
     [[nodiscard]] uint64_t entrySize() const;
     [[nodiscard]] uint64_t entriesPerPage() const;
@@ -97,18 +98,19 @@ private:
         /// Specifies the number of pre-allocated var sized
         static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
         // for main buffer size calculation and code clarity
-        static constexpr auto MAIN_BUFFER_UINT64_FIELDS_NUM = 8;
+        static constexpr auto MAIN_BUFFER_UINT64_FIELDS_NUM = 9;
         static constexpr auto MAIN_BUFFER_UINT32_FIELDS_NUM = 2;
         /// main buffer metadata field position indices (uint64 fields)
         /// always cast to uint64_t when using the offsets below
-        static constexpr auto NUM_CHAINS_POS = 0;
-        static constexpr auto PAGE_SIZE_POS = 1;
-        static constexpr auto ENTRY_SIZE_POS = 2;
-        static constexpr auto ENTRIES_PER_PAGE_POS = 3;
-        static constexpr auto NUM_TUPLES_POS = 4;
-        static constexpr auto MASK_POS = 5;
-        static constexpr auto NUM_PAGES_POS = 6;           // actively maintained as pages are inserted
-        static constexpr auto NUM_VARSIZED_PAGES_POS = 7;           // actively maintained as varsized pages are inserted
+        static constexpr auto NUM_BUCKETS_POS = 0;
+        static constexpr auto NUM_CHAINS_POS = 1;
+        static constexpr auto PAGE_SIZE_POS = 2;
+        static constexpr auto ENTRY_SIZE_POS = 3;
+        static constexpr auto ENTRIES_PER_PAGE_POS = 4;
+        static constexpr auto NUM_TUPLES_POS = 5;
+        static constexpr auto MASK_POS = 6;
+        static constexpr auto NUM_PAGES_POS = 7;           // actively maintained as pages are inserted
+        static constexpr auto NUM_VARSIZED_PAGES_POS = 8;           // actively maintained as varsized pages are inserted
         /// always cast to VariableSizedAccess::Index when using the offsets below
         static constexpr uint32_t STORAGE_SPACE_INDEX_POS = (NUM_VARSIZED_PAGES_POS + 1) * sizeof(uint64_t) / sizeof(VariableSizedAccess::Index);
         static constexpr uint32_t VARSIZED_SPACE_INDEX_POS = STORAGE_SPACE_INDEX_POS + 1; // points to the first varsized space page

@@ -23,6 +23,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
@@ -34,6 +35,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include "Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp"
 
 namespace NES
 {
@@ -114,33 +116,44 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// Counting how many tuples the probe has to check for this probe task
     uint64_t totalNumberOfTuples = 0;
 
-    /// Getting all hash maps for the left and right slice
-    auto getHashMapsForSlice = [&](const Slice& slice, const JoinBuildSideType& buildSide)
+    /// Getting all tuple buffers for the left and right slice
+    auto getTupleBuffersForSlice = [&](const Slice& slice, const JoinBuildSideType& buildSide)
     {
-        std::vector<HashMap*> allHashMaps;
+        std::vector<TupleBuffer> allTupleBuffers;
         const auto* const hashJoinSlice = dynamic_cast<const HJSlice*>(&slice);
         INVARIANT(hashJoinSlice != nullptr, "Slice must be of type HashMapSlice!");
         for (uint64_t hashMapIdx = 0; hashMapIdx < hashJoinSlice->getNumberOfHashMapsForSide(); ++hashMapIdx)
         {
-            if (auto* hashMap = hashJoinSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), buildSide);
-                hashMap and hashMap->numberOfTuples() > 0)
-            {
-                /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
-                rollingAverageNumberOfKeys.wlock()->add(hashMap->numberOfTuples());
+            // Get the tuple buffer (optional)
+            auto tupleBufferOpt = hashJoinSlice->getHashMapTupleBuffer(WorkerThreadId(hashMapIdx), buildSide);
 
-                allHashMaps.emplace_back(hashMap);
-                totalNumberOfTuples += hashMap->numberOfTuples();
+            if (tupleBufferOpt.has_value())
+            {
+                auto tupleBuffer = tupleBufferOpt.value();
+                // Get the hashmap pointer from the tuple buffer to check if it has tuples
+                ChainedHashMap chainedHashMap(tupleBuffer);
+                HashMap* hashMap = &chainedHashMap;
+
+                if (hashMap->numberOfTuples() > 0)
+                {
+                    /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
+                    rollingAverageNumberOfKeys.wlock()->add(hashMap->numberOfTuples());
+
+                    allTupleBuffers.emplace_back(tupleBuffer);
+                    totalNumberOfTuples += hashMap->numberOfTuples();
+                }
             }
         }
-        return allHashMaps;
+        return allTupleBuffers;
     };
-    const auto leftHashMaps = getHashMapsForSlice(sliceLeft, JoinBuildSideType::Left);
-    const auto rightHashMaps = getHashMapsForSlice(sliceRight, JoinBuildSideType::Right);
+
+    const auto leftTupleBuffers = getTupleBuffersForSlice(sliceLeft, JoinBuildSideType::Left);
+    const auto rightTupleBuffers = getTupleBuffersForSlice(sliceRight, JoinBuildSideType::Right);
 
     /// We need a buffer that is large enough to store:
-    /// - all pointers to (left + right) hashmaps of the window to be triggered
     /// - size of EmittedHJWindowTrigger
-    const auto neededBufferSize = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(HashMap*));
+    /// Note: We no longer store pointers, but attach buffers as children
+    const auto neededBufferSize = sizeof(EmittedHJWindowTrigger);
     const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
     if (not tupleBufferVal.has_value())
     {
@@ -150,6 +163,22 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// As we are here "emitting" a buffer, we have to set the originId, the seq number, the watermark and the "number of tuples".
     /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
     auto tupleBuffer = tupleBufferVal.value();
+
+    /// Attach all left hashmap tuple buffers as children
+    for (auto leftTupleBuffer : leftTupleBuffers)
+    {
+        auto leftIndex = tupleBuffer.storeChildBuffer(leftTupleBuffer);
+    }
+
+    /// Then attach all right hashmap tuple buffers as children
+    for (auto rightTupleBuffer : rightTupleBuffers)
+    {
+        auto rightIndex = tupleBuffer.storeChildBuffer(rightTupleBuffer);
+    }
+
+    /// It might be that the buffer is not zeroed out.
+    std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
+
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
@@ -160,7 +189,7 @@ void HJOperatorHandler::emitSlicesToProbe(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
     /// Writing all necessary information for the probe to the buffer via the placement constructor
-    new (tupleBuffer.getAvailableMemoryArea().data()) EmittedHJWindowTrigger{windowInfo, leftHashMaps, rightHashMaps};
+    new (tupleBuffer.getAvailableMemoryArea().data()) EmittedHJWindowTrigger{windowInfo, leftTupleBuffers.size(), rightTupleBuffers.size()};
 
     /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);
@@ -171,8 +200,7 @@ void HJOperatorHandler::emitSlicesToProbe(
         tupleBuffer.getWatermark(),
         tupleBuffer.getSequenceNumber(),
         tupleBuffer.getOriginId(),
-        leftHashMaps.size(),
-        rightHashMaps.size());
+        leftTupleBuffers.size(),
+        rightTupleBuffers.size());
 }
-
 }

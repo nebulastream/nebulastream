@@ -32,7 +32,10 @@ public:
     HJSlice(
         AbstractBufferProvider* bufferProvider, SliceStart sliceStart, SliceEnd sliceEnd,
         const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
+    /// @todo: remove gethashmapptr?
     [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
+    [[nodiscard]] std::optional<TupleBuffer> getHashMapTupleBuffer(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
+    [[nodiscard]] VariableSizedAccess::Index getWorkerHashMapIndex(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
     // [[nodiscard]] HashMap* getHashMapPtrOrCreate(AbstractBufferProvider* bufferProvider, WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide);
     [[nodiscard]] uint64_t getNumberOfHashMapsForSide() const;
 };

@@ -31,8 +31,9 @@
 namespace NES
 {
 class HJBuildPhysicalOperator;
-HashMap* getHashJoinHashMapProxy(
+TupleBuffer* getHashJoinHashMapProxy(
     AbstractBufferProvider* bufferProvider,
+    Arena* arena,
     const HJOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
@@ -45,8 +46,9 @@ HashMap* getHashJoinHashMapProxy(
 class HJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
 {
 public:
-    friend HashMap* getHashJoinHashMapProxy(
+    friend TupleBuffer* getHashJoinHashMapProxy(
         AbstractBufferProvider* bufferProvider,
+        Arena* arena,
         const HJOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
