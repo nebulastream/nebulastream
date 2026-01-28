@@ -25,6 +25,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -39,6 +40,17 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery);
 template <typename T>
 bool compareStringAsTypeWithError(const std::string& left, const std::string& right)
 {
+    /// If both string values are NULL, they are equal
+    if (NES::toLowerCase(left) == "null" and NES::toLowerCase(right) == "null")
+    {
+        return true;
+    }
+    if ((NES::toLowerCase(left) == "null" and NES::toLowerCase(right) != "null")
+        or (NES::toLowerCase(left) != "null" and NES::toLowerCase(right) == "null"))
+    {
+        return false;
+    }
+
     static constexpr auto EPSILON = 1e-5;
     /// We need to compare the strings as the correct type
     /// It is not possible to compare the strings directly, because the string representation of a float can be different
