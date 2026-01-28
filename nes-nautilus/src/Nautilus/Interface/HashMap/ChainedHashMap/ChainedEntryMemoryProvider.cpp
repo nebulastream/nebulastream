@@ -19,7 +19,9 @@
 #include <span>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -75,11 +77,14 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
-            if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+            if (type.isType(DataType::Type::VARSIZED))
             {
                 const auto varSizedDataPtr
                     = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
-                VariableSizedData varSizedData(varSizedDataPtr);
+                const auto sizeOfVarSized = readValueFromMemRef<uint32_t>(varSizedDataPtr);
+                const auto payloadOffset = nautilus::val<uint32_t>(sizeof(uint32_t));
+                const auto varSizedPayloadPtr = varSizedDataPtr + payloadOffset;
+                VariableSizedData varSizedData(varSizedPayloadPtr, sizeOfVarSized);
                 return varSizedData;
             }
 
@@ -117,16 +122,18 @@ void storeVarSized(
             const int8_t* varSizedData,
             const uint64_t varSizedDataSize)
         {
-            auto spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize);
+            constexpr size_t sizeOfIndex = sizeof(uint32_t);
+            auto spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize + sizeOfIndex);
             const std::span<const int8_t> varSizedSpan{varSizedData, varSizedData + varSizedDataSize};
-            std::ranges::copy(std::as_bytes(varSizedSpan), spaceForVarSizedData.begin());
+            *reinterpret_cast<uint32_t*>(spaceForVarSizedData.data()) = varSizedDataSize;
+            std::ranges::copy(std::as_bytes(varSizedSpan), spaceForVarSizedData.begin() + sizeOfIndex);
             *memoryAddressInEntry = reinterpret_cast<const signed char*>(spaceForVarSizedData.data());
         },
         hashMapRef,
         bufferProviderRef,
         memoryAddress,
-        variableSizedData.getReference(),
-        variableSizedData.getTotalSize());
+        variableSizedData.getContent(),
+        variableSizedData.getSize());
 }
 }
 
@@ -142,7 +149,7 @@ void ChainedEntryMemoryProvider::writeRecord(
         const auto& entryRefCopy = entryRef;
         auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
         const auto memoryAddress = castedEntryAddress + fieldOffset;
-        if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+        if (type.isType(DataType::Type::VARSIZED))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
             storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
@@ -164,7 +171,7 @@ void ChainedEntryMemoryProvider::writeEntryRef(
     {
         const auto value = readVarVal(otherEntryRef, fieldIdentifier);
         const auto memoryAddress = static_cast<nautilus::val<int8_t*>>(entryRef) + nautilus::val<uint64_t>(fieldOffset);
-        if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+        if (type.isType(DataType::Type::VARSIZED))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
             storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);

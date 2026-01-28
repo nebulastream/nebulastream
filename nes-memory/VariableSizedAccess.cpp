@@ -21,12 +21,11 @@ namespace NES
 {
 VariableSizedAccess::Index::Index(const uint64_t index) : index(index)
 {
-    PRECONDITION(index < (1UL << UnderlyingBits), "Currently we only support {} child buffers", (1UL << UnderlyingBits));
 }
 
-VariableSizedAccess::Index VariableSizedAccess::Index::convertToIndex(const CombinedIndex combinedIdxOffset)
+VariableSizedAccess::Index::Underlying VariableSizedAccess::Index::getRawIndex() const
 {
-    return Index{static_cast<uint32_t>(combinedIdxOffset >> 32UL)};
+    return index;
 }
 
 std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Index& index)
@@ -48,12 +47,6 @@ operator%(const VariableSizedAccess::Index& index, const VariableSizedAccess::In
 
 VariableSizedAccess::Offset::Offset(const uint64_t offset) : offset(offset)
 {
-    PRECONDITION(offset < (1UL << UnderlyingBits), "Currently we only support {} ({}bit) offsets", (1UL << UnderlyingBits), UnderlyingBits);
-}
-
-VariableSizedAccess::Offset VariableSizedAccess::Offset::convertToOffset(const CombinedIndex combinedIdxOffset)
-{
-    return Offset{static_cast<uint32_t>(combinedIdxOffset & 0xffffffffUL)};
 }
 
 VariableSizedAccess::Offset::Underlying VariableSizedAccess::Offset::getRawOffset() const
@@ -65,5 +58,15 @@ std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Offset& of
 {
     return os << offset.offset;
 }
+
+VariableSizedAccess::Size::Size(uint64_t size) : size(size)
+{
+}
+
+VariableSizedAccess::Size::Underlying VariableSizedAccess::Size::getRawSize() const
+{
+    return size;
+}
+
 
 }

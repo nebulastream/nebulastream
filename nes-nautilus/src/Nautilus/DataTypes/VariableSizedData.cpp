@@ -27,13 +27,8 @@
 namespace NES
 {
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size)
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size)
     : size(size), ptrToVarSized(reference)
-{
-}
-
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
-    : VariableSizedData(pointerToVarSizedData, readValueFromMemRef<uint32_t>(pointerToVarSizedData))
 {
 }
 
@@ -109,22 +104,12 @@ nautilus::val<bool> VariableSizedData::operator!() const
     return !isValid();
 }
 
-nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
-{
-    return getContentSize() + nautilus::val<uint32_t>(sizeof(uint32_t));
-}
-
-[[nodiscard]] nautilus::val<uint32_t> VariableSizedData::getContentSize() const
+[[nodiscard]] nautilus::val<uint64_t> VariableSizedData::getSize() const
 {
     return size;
 }
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
-{
-    return ptrToVarSized + nautilus::val<uint64_t>(sizeof(uint32_t));
-}
-
-[[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
 {
     return ptrToVarSized;
 }
