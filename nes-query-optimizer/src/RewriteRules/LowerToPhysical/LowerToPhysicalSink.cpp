@@ -34,7 +34,7 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
     PRECONDITION(sink->getSinkDescriptor().has_value(), "Expected SinkLogicalOperator to have sink descriptor");
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     auto physicalOperator = SinkPhysicalOperator(sink->getSinkDescriptor().value()); /// NOLINT(bugprone-unchecked-optional-access)
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -25,57 +26,96 @@
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_set>
-#include <nameof.hpp>
-
+#include <utility>
+#include <Util/DynamicBase.hpp>
 #include <Util/PlanRenderer.hpp>
-
 #include <ErrorHandling.hpp>
 #include <SerializableTrait.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
 
+namespace detail
+{
+struct ErasedTrait;
+}
+
+template <typename Checked = NES::detail::ErasedTrait>
+struct TypedTrait;
+using Trait = TypedTrait<>;
+
 /// Concept defining the interface for all traits in the query optimizer.
 /// Traits are used to annotate logical operators with additional properties
 /// that can be used during query optimization.
-struct TraitConcept
-{
-    virtual ~TraitConcept() = default;
-
+template <typename T>
+concept TraitConcept = requires(const T& thisTrait, ExplainVerbosity verbosity, const T& rhs) {
     /// Returns the type information of this trait.
     /// @return const std::type_info& The type information of this trait.
-    [[nodiscard]] virtual const std::type_info& getType() const = 0;
-    [[nodiscard]] virtual std::string_view getName() const = 0;
+    { thisTrait.getType() } -> std::convertible_to<const std::type_info&>;
+    { thisTrait.getName() } -> std::convertible_to<std::string_view>;
 
     /// Serializes this trait to a protobuf message.
     /// @return SerializableTrait The serialized trait.
-    [[nodiscard]] virtual SerializableTrait serialize() const = 0;
+    { thisTrait.serialize() } -> std::convertible_to<SerializableTrait>;
+
+    /// Returns a string representation of the function
+    { thisTrait.explain(verbosity) } -> std::convertible_to<std::string>;
+
+    /// Computes the hash value for this trait.
+    /// @return size_t The hash value.
+    { thisTrait.hash() } -> std::convertible_to<size_t>;
 
     /// Compares this trait with another trait for equality.
     /// @param other The trait to compare with.
     /// @return bool True if the traits are equal, false otherwise.
-    virtual bool operator==(const TraitConcept& other) const = 0;
-
-    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
-
-    /// Computes the hash value for this trait.
-    /// @return size_t The hash value.
-    [[nodiscard]] virtual size_t hash() const = 0;
+    { thisTrait == rhs } -> std::convertible_to<bool>;
 };
+
+namespace detail
+{
+/// @brief A type erased wrapper for traits
+struct ErasedTrait
+{
+    virtual ~ErasedTrait() = default;
+
+    [[nodiscard]] virtual const std::type_info& getType() const = 0;
+    [[nodiscard]] virtual std::string_view getName() const = 0;
+    [[nodiscard]] virtual SerializableTrait serialize() const = 0;
+    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
+    [[nodiscard]] virtual size_t hash() const = 0;
+    [[nodiscard]] virtual bool equals(const ErasedTrait& other) const = 0;
+    [[nodiscard]] virtual std::unique_ptr<ErasedTrait> clone() const = 0;
+
+    friend bool operator==(const ErasedTrait& lhs, const ErasedTrait& rhs) { return lhs.equals(rhs); }
+
+private:
+    template <typename T>
+    friend struct NES::TypedTrait;
+    ///If the trait inherits from DynamicBase (over Castable), then returns a pointer to the wrapped trait as DynamicBase,
+    ///so that we can then safely try to dyncast the DynamicBase* to Castable<T>*
+    [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
+};
+
+template <TraitConcept TraitType>
+struct TraitModel;
+}
 
 /// Base class providing default implementations for traits without custom data
 template <typename Derived>
-struct DefaultTrait : TraitConcept
+struct DefaultTrait
 {
-    bool operator==(const TraitConcept& other) const final { return typeid(other) == typeid(Derived); }
+    bool operator==(const DefaultTrait& other) const { return typeid(other) == typeid(Derived); }
 
-    [[nodiscard]] size_t hash() const final { return std::type_index(typeid(Derived)).hash_code(); }
+    [[nodiscard]] size_t hash() const { return std::type_index(typeid(Derived)).hash_code(); }
 
-    [[nodiscard]] const std::type_info& getType() const final { return typeid(Derived); }
+    [[nodiscard]] const std::type_info& getType() const { return typeid(Derived); }
 
-    [[nodiscard]] SerializableTrait serialize() const final { return SerializableTrait{}; }
+    [[nodiscard]] SerializableTrait serialize() const { return SerializableTrait{}; }
 
-    [[nodiscard]] std::string explain(ExplainVerbosity) const final { return "DefaultTrait"; }
+    [[nodiscard]] std::string explain(ExplainVerbosity) const { return "DefaultTrait"; }
+
+    [[nodiscard]] virtual std::string_view getName() const = 0;
 
     friend Derived;
 
@@ -83,119 +123,229 @@ private:
     DefaultTrait() = default;
 };
 
-/// A type-erased wrapper for traits.
-/// C.f.: https://sean-parent.stlab.cc/presentations/2017-01-18-runtime-polymorphism/2017-01-18-runtime-polymorphism.pdf
-/// This class provides type erasure for traits, allowing them to be stored
-/// and manipulated without knowing their concrete type. It uses the PIMPL pattern
-/// to store the actual trait implementation.
-/// @tparam T The type of the trait. Must inherit from TraitConcept.
-template <typename T>
-concept IsTrait = std::is_base_of_v<TraitConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
-
-/// Type-erased trait that can be used to annotate logical operators.
-struct Trait
+/// @brief A type erased wrapper for heap-allocated traits.
+/// @tparam Checked A trait type that this wrapper guarantees it contains.
+/// Either a type erased virtual trait class or the actual type.
+/// You can cast with TypedTrait::tryGetAs, to try to get a TypedTrait for a specific type.
+template <typename Checked>
+struct TypedTrait
 {
-    /// Constructs a Trait from a concrete trait type.
-    /// @tparam TraitType The type of the trait. Must satisfy IsTrait concept.
-    /// @param op The trait to wrap.
-    template <IsTrait TraitType>
-    Trait(const TraitType& op) : self(std::make_unique<Model<TraitType>>(op)) /// NOLINT
+    template <TraitConcept T>
+    requires std::same_as<Checked, NES::detail::ErasedTrait>
+    TypedTrait(TypedTrait<T> other) : self(other.self) /// NOLINT(google-explicit-constructor)
     {
     }
 
-    Trait(const Trait& other);
-    Trait(Trait&&) noexcept;
-
-    bool operator==(const Trait& other) const { return self->equals(*other.self); }
-
-    [[nodiscard]] size_t hash() const { return self->hash(); }
-
-    /// Attempts to get the underlying trait as type TraitType.
-    /// @tparam TraitType The type to try to get the trait as.
-    /// @return std::optional<TraitType> The trait if it is of type TraitType, nullopt otherwise.
-    template <IsTrait TraitType>
-    [[nodiscard]] std::optional<TraitType> tryGet() const
+    /// Constructs a Trait from a concrete trait type.
+    /// @tparam T The type of the trait. Must satisfy TraitConcept concept.
+    /// @param op The trait to wrap.
+    template <typename T>
+    TypedTrait(const T& op) : self(std::make_unique<NES::detail::TraitModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
-        if (auto p = dynamic_cast<const Model<TraitType>*>(self.get()))
+    }
+
+    template <TraitConcept T>
+    TypedTrait(const NES::detail::TraitModel<T>& op) /// NOLINT(google-explicit-constructor)
+        : self(std::make_unique<NES::detail::TraitModel<T>>(op.impl))
+    {
+    }
+
+    explicit TypedTrait(std::unique_ptr<const NES::detail::ErasedTrait> op) : self(std::move(op)) { }
+
+    TypedTrait(const TypedTrait& other) : self(other.self->clone()) { }
+
+    TypedTrait(TypedTrait&&) noexcept = default;
+    TypedTrait& operator=(TypedTrait&&) noexcept = default;
+    ~TypedTrait() = default;
+    TypedTrait() = delete;
+
+    TypedTrait& operator=(const TypedTrait& other)
+    {
+        if (this != &other)
         {
-            return p->data;
+            self = other.self->clone();
+        }
+        return *this;
+    }
+
+    ///@brief Alternative to operator*
+    [[nodiscard]] const Checked& get() const
+    {
+        if constexpr (std::is_same_v<NES::detail::ErasedTrait, Checked>)
+        {
+            return *self;
+        }
+        else
+        {
+            return dynamic_cast<const NES::detail::TraitModel<Checked>*>(self.get())->impl;
+        }
+    }
+
+    const Checked& operator*() const
+    {
+        if constexpr (std::is_same_v<NES::detail::ErasedTrait, Checked>)
+        {
+            return *self;
+        }
+        else
+        {
+            return dynamic_cast<const NES::detail::TraitModel<Checked>*>(self.get())->impl;
+        }
+    }
+
+    const Checked* operator->() const
+    {
+        if constexpr (std::is_same_v<NES::detail::ErasedTrait, Checked>)
+        {
+            return self.get();
+        }
+        else
+        {
+            auto casted = dynamic_cast<const NES::detail::TraitModel<Checked>*>(self.get());
+            return &casted->impl;
+        }
+    }
+
+    /// Attempts to get the underlying trait as type T.
+    /// @tparam T The type to try to get the trait as.
+    /// @return std::optional<TypedTrait<T>> The trait if it is of type T, nullopt otherwise.
+    template <TraitConcept T>
+    std::optional<TypedTrait<T>> tryGetAs() const
+    {
+        if (auto model = dynamic_cast<const NES::detail::TraitModel<T>*>(self.get()))
+        {
+            return TypedTrait<T>{model->impl};
+        }
+        return std::nullopt;
+    }
+
+    /// Attempts to get the underlying trait as type T.
+    /// @tparam T The type to try to get the trait as.
+    /// @return std::optional<std::shared_ptr<const Castable<T>>> The function if it is of type T and Castable<T>, nullopt otherwise.
+    template <typename T>
+    requires(!TraitConcept<T>)
+    std::optional<std::shared_ptr<const Castable<T>>> tryGetAs() const
+    {
+        if (auto castable = self->getImpl(); castable.has_value())
+        {
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const Castable<T>>{self, ptr};
+            }
         }
         return std::nullopt;
     }
 
     /// Gets the underlying trait as type T.
     /// @tparam T The type to get the trait as.
-    /// @return const T The trait.
+    /// @return TypedTrait<T> The trait.
     /// @throw InvalidDynamicCast If the trait is not of type T.
-    template <typename T>
-    [[nodiscard]] T get() const
+    template <TraitConcept T>
+    TypedTrait<T> getAs() const
     {
-        if (auto p = dynamic_cast<const Model<T>*>(self.get()))
+        if (auto model = dynamic_cast<const NES::detail::TraitModel<T>*>(self.get()))
         {
-            return p->data;
+            return TypedTrait<T>{model->impl};
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
+        std::unreachable();
     }
 
-    Trait& operator=(const Trait& other);
+    /// Gets the underlying trait as type T.
+    /// @tparam T The type to get the trait as.
+    /// @return std::shared_ptr<const Castable<T>> The trait.
+    /// @throw InvalidDynamicCast If the trait is not of type T or does not inherit from Castable<T>.
+    template <typename T>
+    requires(!TraitConcept<T>)
+    std::shared_ptr<const Castable<T>> getAs() const
+    {
+        if (auto castable = self->getImpl(); castable.has_value())
+        {
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const Castable<T>>{self, ptr};
+            }
+        }
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
+        std::unreachable();
+    }
 
-    /// Serializes this trait to a protobuf message.
-    /// @return SerializableTrait The serialized trait.
-    [[nodiscard]] SerializableTrait serialize() const;
+    [[nodiscard]] SerializableTrait serialize() const { return self->serialize(); };
 
-    [[nodiscard]] const std::type_info& getTypeInfo() const;
-    [[nodiscard]] std::string_view getName() const;
+    [[nodiscard]] const std::type_info& getTypeInfo() const { return self->getType(); };
 
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+    [[nodiscard]] std::string_view getName() const { return self->getName(); };
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const { return self->explain(verbosity); };
+
+    [[nodiscard]] size_t hash() const { return self->hash(); }
+
+    bool operator==(const Trait& other) const { return self->equals(*other.self); }
 
 private:
-    struct Concept : TraitConcept
-    {
-        [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
-        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
-    };
+    template <typename FriendChecked>
+    friend struct TypedTrait;
 
-    template <IsTrait TraitType>
-    struct Model : Concept
-    {
-        TraitType data;
-
-        explicit Model(TraitType d) : data(std::move(d)) { }
-
-        [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data); }
-
-        bool operator==(const TraitConcept& other) const override
-        {
-            if (auto p = dynamic_cast<const Model*>(&other))
-            {
-                return data.operator==(p->data);
-            }
-            return false;
-        }
-
-        [[nodiscard]] bool equals(const Concept& other) const override
-        {
-            if (auto p = dynamic_cast<const Model*>(&other))
-            {
-                return data.operator==(p->data);
-            }
-            return false;
-        }
-
-        [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
-
-        [[nodiscard]] size_t hash() const override { return data.hash(); }
-
-        [[nodiscard]] const std::type_info& getType() const override { return data.getType(); }
-
-        [[nodiscard]] std::string_view getName() const override { return data.getName(); }
-
-        [[nodiscard]] SerializableTrait serialize() const override { return data.serialize(); }
-    };
-
-    std::unique_ptr<Concept> self;
+    std::unique_ptr<const NES::detail::ErasedTrait> self;
 };
 
+namespace detail
+{
+/// @brief Wrapper type that acts as a bridge between a type satisfying TraitConcept and TypedTrait
+template <TraitConcept TraitType>
+struct TraitModel : ErasedTrait
+{
+    TraitType impl;
+
+    explicit TraitModel(TraitType impl) : impl(std::move(impl)) { }
+
+    [[nodiscard]] std::unique_ptr<ErasedTrait> clone() const override { return std::make_unique<TraitModel>(impl); }
+
+    bool operator==(const Trait& other) const
+    {
+        if (auto ptr = dynamic_cast<const TraitModel*>(&other))
+        {
+            return impl.operator==(ptr->impl);
+        }
+        return false;
+    }
+
+    [[nodiscard]] bool equals(const ErasedTrait& other) const override
+    {
+        if (auto ptr = dynamic_cast<const TraitModel*>(&other))
+        {
+            return impl.operator==(ptr->impl);
+        }
+        return false;
+    }
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity); }
+
+    [[nodiscard]] size_t hash() const override { return impl.hash(); }
+
+    [[nodiscard]] const std::type_info& getType() const override { return impl.getType(); }
+
+    [[nodiscard]] std::string_view getName() const override { return impl.getName(); }
+
+    [[nodiscard]] SerializableTrait serialize() const override { return impl.serialize(); }
+
+private:
+    template <typename T>
+    friend struct TypedLogicalFunction;
+
+    [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
+    {
+        if constexpr (std::is_base_of_v<DynamicBase, TraitType>)
+        {
+            return static_cast<const DynamicBase*>(&impl);
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+};
+}
 }
 
 template <>

@@ -36,7 +36,7 @@ RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logic
     auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->unit));
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value().memoryLayout;
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema(), memoryLayoutType, memoryLayoutType);
 

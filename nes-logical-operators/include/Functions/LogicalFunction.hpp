@@ -26,7 +26,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
