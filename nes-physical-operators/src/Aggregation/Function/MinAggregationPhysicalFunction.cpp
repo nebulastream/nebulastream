@@ -99,7 +99,7 @@ void MinAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t MinAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return inputType.getSizeInBytes();
+    return inputType.getSizeInBytesWithNull();
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMinAggregationPhysicalFunction(
