@@ -361,7 +361,7 @@ int main(int argc, const char** argv)
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
             std::cout << result.outputMessage << '\n';
             std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
+                      << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
             return 0;
         }
         case SystestExecutorResult::ReturnType::FAILED: {
@@ -371,7 +371,7 @@ int main(int argc, const char** argv)
             NES_ERROR("{}", result.outputMessage);
             std::cout << result.outputMessage << '\n';
             std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
+                      << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
             return result.errorCode.value();
         }
     }

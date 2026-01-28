@@ -51,7 +51,7 @@ public:
     /// immediately.
     virtual void repeatTask(const TupleBuffer&, std::chrono::milliseconds) = 0;
 
-    virtual TupleBuffer allocateTupleBuffer() = 0;
+    virtual TupleBuffer& allocateTupleBuffer() = 0;
     [[nodiscard]] virtual WorkerThreadId getId() const = 0;
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<AbstractBufferProvider> getBufferManager() const = 0;
@@ -60,5 +60,8 @@ public:
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
     virtual void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) = 0;
+
+protected:
+    std::vector<TupleBuffer> allocatedTupleBuffers;
 };
 }

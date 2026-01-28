@@ -1,5 +1,5 @@
 # name: formatter/FieldDelimiterRightAfterBufferSplit.test
-# description: formatter tests
+# description: formatter tests TODO #1272
 # groups: [Formatter, Tuples, CompilationIntensive]
 
 # NOTE: assumes that raw tuple buffers are of page size (4096 bytes)

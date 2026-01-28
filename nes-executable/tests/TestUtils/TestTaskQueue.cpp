@@ -52,11 +52,12 @@ bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, c
     return true;
 }
 
-TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
+TupleBuffer& TestPipelineExecutionContext::allocateTupleBuffer()
 {
     if (auto buffer = bufferManager->getBufferNoBlocking())
     {
-        return buffer.value();
+        allocatedTupleBuffers.emplace_back(buffer.value());
+        return allocatedTupleBuffers.back();
     }
     throw BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
 }
