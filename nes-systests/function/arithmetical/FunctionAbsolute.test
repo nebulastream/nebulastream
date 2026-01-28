@@ -1,4 +1,4 @@
-# name: function/arithmetical/FunctionCeil.test
+# name: function/arithmetical/FunctionAbsolute.test
 # description: Simple function absolute tests
 # groups: [Function, FunctionAbs]
 
