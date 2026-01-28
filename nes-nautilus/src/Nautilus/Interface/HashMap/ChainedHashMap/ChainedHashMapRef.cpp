@@ -332,9 +332,27 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
     {
-        if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier))
+        /// We need to take the null values into account as they are a separate group.
+        /// Thus, a simple if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier)) is not enough
+        const auto keyValue = keys.read(fieldIdentifier);
+        const auto entryValue = entryRef.getKey(fieldIdentifier);
+        if (keyValue.isNull() != entryValue.isNull())
         {
             return false;
+        }
+        if (type.isType(DataType::Type::VARSIZED_POINTER_REP))
+        {
+            if (keyValue.cast<VariableSizedData>() != entryValue.cast<VariableSizedData>())
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (keyValue.castToType(type.type) != entryValue.castToType(type.type))
+            {
+                return false;
+            }
         }
     }
     return true;

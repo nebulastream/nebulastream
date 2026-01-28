@@ -89,20 +89,15 @@ std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
 LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
-    for (auto& node : getChildren())
+    bool isNullable = false;
+    for (auto& child : getChildren())
     {
-        newChildren.push_back(node.withInferredDataType(schema));
+        newChildren.push_back(child.withInferredDataType(schema));
+        isNullable = isNullable or newChildren.back().getDataType().isNullableAsBool();
     }
-    /// check if children dataType is correct
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
-    {
-        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", left.getDataType());
-    }
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
-    {
-        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", right.getDataType());
-    }
-    return this->withChildren(newChildren);
+    auto newDataType = this->getDataType();
+    newDataType.isNullable = isNullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return withDataType(newDataType).withChildren(newChildren);
 }
 
 SerializableFunction AndLogicalFunction::serialize() const

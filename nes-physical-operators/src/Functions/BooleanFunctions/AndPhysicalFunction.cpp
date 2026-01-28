@@ -16,12 +16,15 @@
 
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <select.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -30,7 +33,17 @@ VarVal AndPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);
-    return leftValue && rightValue;
+
+    /// Any expression involving null results in NULL, expect for NULL or True
+    /// As NULL or True can be determined without evaluation the NULL value
+    const auto specialCondition = (leftValue.cast<nautilus::val<bool>>() == false and not leftValue.isNull())
+        or (rightValue.cast<nautilus::val<bool>>() == false and not rightValue.isNull());
+    const auto newValue
+        = nautilus::select(specialCondition, nautilus::val<bool>{false}, (leftValue && rightValue).cast<nautilus::val<bool>>());
+    const auto newNullable
+        = leftValue.isNullable() or rightValue.isNullable() ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    const auto newNull = nautilus::select(specialCondition, nautilus::val<bool>{false}, leftValue.isNull() or rightValue.isNull());
+    return VarVal{newValue, newNullable, newNull};
 }
 
 AndPhysicalFunction::AndPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)

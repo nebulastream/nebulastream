@@ -26,7 +26,9 @@
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
+#include <select.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
@@ -34,20 +36,30 @@ namespace NES
 {
 
 CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
-    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
+    DataType inputType,
+    DataType resultType,
+    PhysicalFunction inputFunction,
+    Record::RecordFieldIdentifier resultFieldIdentifier,
+    const bool includeNullValues)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    , includeNullValues(includeNullValues)
 {
 }
 
 void CountAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider&, const Record&)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
+    /// If the value is null and we are taking null values into account
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    const auto multiplicationFactor = nautilus::select(
+        (inputType.isNullableAsBool() and not includeNullValues) and value.isNull(), nautilus::val<int8_t>{0}, nautilus::val<int8_t>{1});
+
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, inputType.type);
+    const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
 
     /// Updating the count with the new value
-    const auto newCount = count + nautilus::val<uint64_t>(1);
+    const auto newCount = count + multiplicationFactor;
 
     /// Writing the new count and count back to the aggregation state
     newCount.writeToMemory(memAreaCount);
@@ -60,11 +72,11 @@ void CountAggregationPhysicalFunction::combine(
 {
     /// Reading the count from the first aggregation state
     const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto count1 = VarVal::readVarValFromMemory(memAreaCount1, inputType.type);
+    const auto count1 = VarVal::readNonNullableVarValFromMemory(memAreaCount1, resultType);
 
     /// Reading the count from the second aggregation state
     const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto count2 = VarVal::readVarValFromMemory(memAreaCount2, inputType.type);
+    const auto count2 = VarVal::readNonNullableVarValFromMemory(memAreaCount2, resultType);
 
     /// Adding the counts together
     const auto newCount = count1 + count2;
@@ -77,7 +89,7 @@ Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readVarValFromMemory(memAreaCount, inputType.type);
+    const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
 
     /// Creating a record with the count
     Record record;
@@ -99,14 +111,18 @@ void CountAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t CountAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return inputType.getSizeInBytesWithNull();
+    return resultType.getSizeInBytesWithNull();
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterCountAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<CountAggregationPhysicalFunction>(
-        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
+        std::move(arguments.inputType),
+        std::move(arguments.resultType),
+        arguments.inputFunction,
+        arguments.resultFieldIdentifier,
+        arguments.includeNullValues);
 }
 
 }

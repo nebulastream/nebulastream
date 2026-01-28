@@ -48,6 +48,11 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
 {
 }
 
+bool AvgAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
+}
+
 std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;
@@ -68,18 +73,18 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
         if (this->getOnField().getDataType().isSignedInteger())
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64, getOnField().getDataType().isNullable));
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64, newOnField.getDataType().isNullable));
         }
         else
         {
             newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, getOnField().getDataType().isNullable));
+                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64, newOnField.getDataType().isNullable));
         }
     }
     else
     {
         newOnField
-            = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, getOnField().getDataType().isNullable));
+            = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64, newOnField.getDataType().isNullable));
     }
 
     ///Set fully qualified name for the as Field

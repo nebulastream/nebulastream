@@ -123,6 +123,7 @@ struct DataType final
     [[nodiscard]] NULLABLE joinNullable(const DataType& otherDataType) const;
     [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
+    [[nodiscard]] bool isNullableAsBool() const;
     [[nodiscard]] bool isType(Type type) const;
     [[nodiscard]] bool isInteger() const;
     [[nodiscard]] bool isSignedInteger() const;
