@@ -76,11 +76,17 @@ int main(const int argc, const char* argv[])
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
-            builder.AddListeningPort(configuration->grpcAddressUri.getValue().toString(), grpc::InsecureServerCredentials());
+            builder.AddListeningPort(configuration->grpcAddressUri.getValue(), grpc::InsecureServerCredentials());
             builder.RegisterService(&workerService);
             grpc::EnableDefaultHealthCheckService(true);
 
             const auto server = builder.BuildAndStart();
+            if (!server)
+            {
+                NES_ERROR("Failed to start GRPC Server. Stopping worker...");
+                return 1;
+            }
+
             const auto hook = shutdownHook(*server);
             NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
             server->Wait();
