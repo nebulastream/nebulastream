@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -91,7 +92,10 @@ void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child, 
             decodingResult.status == NES::Decoder::DecodingResultStatus::SUCCESSFULLY_DECODED,
             "Decoding of transmitted child buffer caused error");
 
-        auto childBuffer = bufferProvider.getUnpooledBuffer(decodingResult.decompressedSize);
+        /// The child content might fit into a normal buffer, so we do not neccessarely get an unpooled one.
+        auto childBuffer = (decodingResult.decompressedSize <= bufferProvider.getBufferSize())
+            ? std::optional(bufferProvider.getBufferBlocking())
+            : bufferProvider.getUnpooledBuffer(decodingResult.decompressedSize);
 
         if (!childBuffer)
         {
@@ -104,11 +108,14 @@ void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child, 
             childBuffer->getBufferSize(),
             decodingResult.decompressedSize);
         std::memcpy(childBuffer->getAvailableMemoryArea<>().data(), decodedData.data(), decodingResult.decompressedSize);
+        /// Update number of tuples to match the amount of "used" bytes in the buffer
+        childBuffer->setNumberOfTuples(decodingResult.decompressedSize);
         [[maybe_unused]] auto childIndex = buffer.storeChildBuffer(*childBuffer);
     }
     else
     {
-        auto childBuffer = bufferProvider.getUnpooledBuffer(child.size());
+        auto childBuffer = (child.size() <= bufferProvider.getBufferSize()) ? std::optional(bufferProvider.getBufferBlocking())
+                                                                            : bufferProvider.getUnpooledBuffer(child.size());
         if (!childBuffer)
         {
             throw NES::CannotAllocateBuffer("allocating child buffer");
@@ -121,6 +128,7 @@ void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child, 
             child.length());
 
         std::ranges::copy(child, childBuffer->getAvailableMemoryArea<uint8_t>().begin());
+        childBuffer->setNumberOfTuples(child.size());
         [[maybe_unused]] auto childIndex
             = buffer.storeChildBuffer(*childBuffer); /// index should already be present in the owning parent buffer
     }

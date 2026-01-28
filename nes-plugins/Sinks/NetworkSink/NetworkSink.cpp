@@ -184,16 +184,19 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         {
             /// Encode the child
             auto childBuffer = inputBuffer.loadChildBuffer(VariableSizedAccess::Index(childIdx));
-            auto childMemory = childBuffer.getAvailableMemoryArea<>();
+            /// In TupleBufferRef.cpp, copyVarSizedAndIncrementMetaData, the number of tuples of a child buffer corresponds to the written bytes.
+            /// We can assume that each buffer in end-to-end queries passes through at least one emit, as we need to enter at least one pipeline for the initial input formatting,
+            /// thus we can always read out the amount of written bytes by using the tuple count.
+            /// We can use this information to only transmit actually relevant data and then set the number of tuples (bytes) correctly again in NetworkBindings.cpp
+            const std::span childMemory(childBuffer.getAvailableMemoryArea<>().data(), childBuffer.getNumberOfTuples());
             std::vector<char> encodedChild{};
             const auto encodingResult = encoder.value()->encodeBuffer(childMemory, encodedChild);
-            /// Currently not sure if "Number of tuples" will always tell the actually written bytes of a child buffer, otherwise we could optimize this more.
             if (encodingResult.status == Encoder::EncodeStatusType::ENCODING_ERROR
-                || encodingResult.compressedSize >= childBuffer.getBufferSize())
+                || encodingResult.compressedSize >= childBuffer.getNumberOfTuples())
             {
                 /// Send the unencoded child
                 encodedChildren.emplace_back(0);
-                std::span childAsInt8 = childBuffer.getAvailableMemoryArea<const uint8_t>();
+                std::span childAsInt8(childBuffer.getAvailableMemoryArea<const uint8_t>().data(), childBuffer.getNumberOfTuples());
                 children.emplace_back(childAsInt8);
             }
             else
@@ -206,7 +209,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 const std::span encodedChildSpan(childBuffer.getAvailableMemoryArea<const uint8_t>().data(), encodingResult.compressedSize);
                 children.emplace_back(encodedChildSpan);
             }
-            childBufferSizes.emplace_back(childBuffer.getBufferSize());
+            childBufferSizes.emplace_back(childBuffer.getNumberOfTuples());
         }
         const std::span usedBufferMemory(inputBuffer.getAvailableMemoryArea<>().data(), inputBuffer.getNumberOfTuples() * tupleSize);
         std::vector<char> encodedBuffer{};
@@ -247,7 +250,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         for (size_t childIdx = 0; childIdx < inputBuffer.getNumberOfChildBuffers(); ++childIdx)
         {
             auto childBuffer = inputBuffer.loadChildBuffer(VariableSizedAccess::Index(childIdx));
-            auto childMemory = childBuffer.getAvailableMemoryArea<const uint8_t>();
+            std::span childMemory(childBuffer.getAvailableMemoryArea<const uint8_t>().data(), childBuffer.getNumberOfTuples());
             children.emplace_back(childMemory);
         }
 
