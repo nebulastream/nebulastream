@@ -757,6 +757,8 @@ struct SystestBinder::Impl
         const auto differentialTestResultFileName = std::string(testFileName) + "differential";
 
         auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
+
+
         currentTest.setConfigurationOverrides(configOverrides);
 
         try
@@ -919,5 +921,4 @@ std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(
 }
 
 SystestBinder::~SystestBinder() = default;
-
 }
