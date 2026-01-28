@@ -75,6 +75,7 @@ public:
 
     Schema addField(std::string name, const DataType& dataType);
     Schema addField(std::string name, DataType::Type type);
+    Schema addField(std::string name, DataType::Type type, DataType::NULLABLE);
 
     /// Replaces the type of the field
     [[nodiscard]] bool replaceTypeOfField(const std::string& name, DataType type);

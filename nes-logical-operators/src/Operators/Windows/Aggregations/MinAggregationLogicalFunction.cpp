@@ -18,6 +18,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -31,20 +33,20 @@
 namespace NES
 {
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp(field.getDataType())
-    , partialAggregateStamp(field.getDataType())
-    , finalAggregateStamp(field.getDataType())
-    , onField(field)
-    , asField(field)
+    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , onField{field}
+    , asField{field}
 {
 }
 
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
-    : inputStamp(field.getDataType())
-    , partialAggregateStamp(field.getDataType())
-    , finalAggregateStamp(field.getDataType())
-    , onField(field)
-    , asField(std::move(asField))
+    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , onField{field}
+    , asField{std::move(asField)}
 {
 }
 
@@ -79,11 +81,11 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(c
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
-    auto newAsField = this->getAsField().withFieldName(newAsFieldName).withDataType(newOnField.getDataType());
-    return this->withOnField(newOnField)
-        .withInputStamp(newOnField.getDataType())
-        .withFinalAggregateStamp(newOnField.getDataType())
-        .withAsField(newAsField);
+    auto newFinalAggregationStamp = newOnField.getDataType();
+    return this->withInputStamp(newOnField.getDataType())
+        .withOnField(newOnField)
+        .withFinalAggregateStamp(newFinalAggregationStamp)
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
 Reflected MinAggregationLogicalFunction::reflect() const
