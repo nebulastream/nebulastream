@@ -98,7 +98,7 @@ void MaxAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t MaxAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return inputType.getSizeInBytes();
+    return inputType.getSizeInBytesWithNull();
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMaxAggregationPhysicalFunction(
