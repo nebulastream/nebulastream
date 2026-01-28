@@ -3,17 +3,17 @@
 # groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
-CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED NOT NULL, page_id VARSIZED NOT NULL, campaign_id VARSIZED NOT NULL, ad_id VARSIZED NOT NULL, ad_type VARSIZED NOT NULL, event_type VARSIZED NOT NULL, event_time UINT64 NOT NULL, ip_address VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
 ATTACH FILE large/ysb/ysb1k_more_data_3GB.csv
 
-CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED NOT NULL, page_id VARSIZED NOT NULL, campaign_id VARSIZED NOT NULL, ad_id VARSIZED NOT NULL, ad_type VARSIZED NOT NULL, event_type VARSIZED NOT NULL, event_time UINT64 NOT NULL, ip_address VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
 ATTACH FILE large/ysb/ysb10k_more_data_3GB.csv
 
-CREATE SINK printSink(ysb1k.campaign UINT64)  TYPE File;
-CREATE SINK ysb1kChecksum(ysb1k.start UINT64, ysb1k.end UINT64, ysb1k.campaign_id VARSIZED, ysb1k.count_user_id UINT64)  TYPE Checksum;
-CREATE SINK ysb10kChecksum(ysb10k.start UINT64, ysb10k.end UINT64, ysb10k.campaign_id VARSIZED, ysb10k.count_user_id UINT64)  TYPE Checksum;
+CREATE SINK printSink(ysb1k.campaign UINT64 NOT NULL)  TYPE File;
+CREATE SINK ysb1kChecksum(ysb1k.start UINT64 NOT NULL, ysb1k.end UINT64 NOT NULL, ysb1k.campaign_id VARSIZED NOT NULL, ysb1k.count_user_id UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK ysb10kChecksum(ysb10k.start UINT64 NOT NULL, ysb10k.end UINT64 NOT NULL, ysb10k.campaign_id VARSIZED NOT NULL, ysb10k.count_user_id UINT64 NOT NULL)  TYPE Checksum;
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
 # YSB Query

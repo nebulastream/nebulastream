@@ -4,13 +4,13 @@
 
 
 
-CREATE SINK file_output(id UINT64, value UINT64, timestamp UINT64) TYPE File;
+CREATE SINK file_output(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
 	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
 	'CSV' AS PARSER.`TYPE`,
-	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
 INTO file_output;
 ----
 1,1,12
@@ -21,7 +21,7 @@ INTO file_output;
 
 
 
-CREATE SINK generator_output(id UINT64, field2 UINT64) TYPE File;
+CREATE SINK generator_output(id UINT64 NOT NULL, field2 UINT64 NOT NULL) TYPE File;
 
 SELECT ID, FIELD2
 FROM Generator(
@@ -30,7 +30,7 @@ FROM Generator(
     1 AS `SOURCE`.SEED,
     'CSV' AS PARSER.`TYPE`,
     'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS `SOURCE`.GENERATOR_SCHEMA,
-    SCHEMA(id UINT64, field2 UINT64) AS `SOURCE`.`SCHEMA`)
+    SCHEMA(id UINT64 NOT NULL, field2 UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
 INTO generator_output;
 ----
 0 0
@@ -45,7 +45,7 @@ INTO generator_output;
 9 5
 
 
-CREATE LOGICAL SOURCE input(id UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE input(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR input TYPE File;
 ATTACH FILE small/stream8.csv
 
@@ -58,5 +58,5 @@ SELECT ID, VALUE, TIMESTAMP
 FROM File(
 	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
 	'CSV' AS PARSER.`TYPE`,
-	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
 INTO file_output;

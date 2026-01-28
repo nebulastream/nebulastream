@@ -2,7 +2,7 @@
 # description: Filter transactions with amount > 1000.0 and status == "completed"
 # groups: [Function, Filter, Varsized, Float]
 
-CREATE LOGICAL SOURCE transactions(amount FLOAT64, status VARSIZED);
+CREATE LOGICAL SOURCE transactions(amount FLOAT64 NOT NULL, status VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR transactions TYPE File;
 ATTACH INLINE
 500.0, pending
@@ -14,7 +14,7 @@ ATTACH INLINE
 3000.0,Completed
 5000.0,completed
 
-CREATE SINK sink(`TRANSACTIONS$AMOUNT` FLOAT64, `TRANSACTIONS$STATUS` VARSIZED) TYPE File;
+CREATE SINK sink(`TRANSACTIONS$AMOUNT` FLOAT64 NOT NULL, `TRANSACTIONS$STATUS` VARSIZED NOT NULL) TYPE File;
 SELECT * FROM transactions
 WHERE amount > FLOAT64(1000.0) AND status == VARSIZED("completed")
 INTO sink;

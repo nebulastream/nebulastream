@@ -299,7 +299,7 @@ INSTANTIATE_TEST_CASE_P(
     [](const testing::TestParamInfo<PagedVectorTest::ParamType>& info)
     {
         std::stringstream ss;
-        ss << magic_enum::enum_name(std::get<0>(info.param));
+        ss << magic_enum::enum_name(std::get<0>(info.param)) << "_";
         ss << magic_enum::enum_name(std::get<1>(info.param));
         return ss.str();
     });

@@ -2,7 +2,7 @@
 # description: Simple map tests with an add function
 # groups: [Map]
 
-CREATE LOGICAL SOURCE stream(ID UINT64, VALUE UINT64, TIMESTAMP UINT64);
+CREATE LOGICAL SOURCE stream(ID UINT64 NOT NULL, VALUE UINT64 NOT NULL, TIMESTAMP UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1,1,1000
@@ -14,16 +14,16 @@ ATTACH INLINE
 7,21,21000
 
 #SINK streamSink UINT64 ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP
-CREATE SINK streamSink(id UINT64, stream.value UINT64, stream.timestamp UINT64) TYPE File;
+CREATE SINK streamSink(id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL) TYPE File;
 
 #SINK streamSinkWithNew UINT64 STREAM$ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP UINT64 NEW
-CREATE SINK streamSinkWithNew(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, new UINT64) TYPE File;
+CREATE SINK streamSinkWithNew(stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, new UINT64 NOT NULL) TYPE File;
 
 #SINK streamSinkWithNew2 UINT64 ID UINT64 STREAM$VALUE UINT64 STREAM$TIMESTAMP UINT64 NEW UINT64 NEW2
-CREATE SINK streamSinkWithNew2(id UINT64, stream.value UINT64, stream.timestamp UINT64, new UINT64, new2 UINT64) TYPE File;
+CREATE SINK streamSinkWithNew2(id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, new UINT64 NOT NULL, new2 UINT64 NOT NULL) TYPE File;
 
 #SINK sinkOnlyIdAndNew2 UINT64 NEW2 UINT64 ID
-CREATE SINK sinkOnlyIdAndNew2(new2 UINT64, id UINT64) TYPE File;
+CREATE SINK sinkOnlyIdAndNew2(new2 UINT64 NOT NULL, id UINT64 NOT NULL) TYPE File;
 
 # Map with add function touches one field
 SELECT id + UINT64(1) AS id, value, timestamp FROM stream INTO streamSink;
