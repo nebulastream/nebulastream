@@ -137,18 +137,19 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         return VarVal::readVarValFromMemory(fieldReference, physicalType.type);
     }
 
-    auto combinedIndexOffset = static_cast<nautilus::val<VariableSizedAccess*>>(fieldReference);
+    auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(fieldReference);
 
     const auto varSizedPtr = invoke(
-        +[](const TupleBuffer* tupleBuffer, VariableSizedAccess* combinedIndexOffset)
+        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            return loadAssociatedVarSizedValue(*tupleBuffer, *combinedIndexOffset).data();
+            INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+            return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
         },
         recordBuffer.getReference(),
-        combinedIndexOffset);
+        variableSizedAccess);
 
-    const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(combinedIndexOffset, offsetof(VariableSizedAccess, size));
+    const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
     return VariableSizedData(varSizedPtr, size);
 }
 
