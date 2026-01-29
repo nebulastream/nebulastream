@@ -191,7 +191,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string createPhysicalSourceStatement
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as `SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
-    const ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+    const ParserConfig expectedParserConfig{
+        .parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ",", .allowCommasInStrings = true};
     std::unordered_map<std::string, std::string> unvalidatedConfig{{"file_path", "/dev/null"}};
     const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig)).value();
 
