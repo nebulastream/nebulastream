@@ -22,6 +22,7 @@ message SerializableParserConfig {
   string type = 1;
   string tupleDelimiter = 2;
   string fieldDelimiter = 3;
+  bool allowCommasInStrings = 4;
 };
 
 message SerializableSinkDescriptor
