@@ -96,13 +96,18 @@ public:
     using IndexerMetaData = CSVMetaData;
     using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;
 
-    CSVInputFormatIndexer() = default;
+    // CSVInputFormatIndexer() = default;
+    explicit CSVInputFormatIndexer(const bool allowCommasInStrings) : allowCommasInStrings(allowCommasInStrings) {};
     ~CSVInputFormatIndexer() = default;
+
 
     void indexRawBuffer(
         FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
 
     friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
+
+private:
+    bool allowCommasInStrings{};
 };
 
 }

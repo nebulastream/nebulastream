@@ -43,6 +43,11 @@ struct InputFormatIndexerRegistryArguments
     {
     }
 
+    const ParserConfig& getInputFormatterConfig()
+    {
+        return inputFormatIndexerConfig;
+    }
+
     /// Instantiates an InputFormatter with a specific input format indexer
     template <InputFormatIndexerType IndexerType>
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
