@@ -59,8 +59,6 @@ protected:
 
 private:
     folly::Synchronized<std::ostream*> outputStream;
-    std::unique_ptr<Format> outputParser;
-
     uint32_t ingestion = 0;
 };
 
