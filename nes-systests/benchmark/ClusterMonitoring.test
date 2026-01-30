@@ -7,18 +7,18 @@
 ## For example, the data from the lightsaber paper is a subset of the original data, as it only contains 16k tuples.
 ## Furthermore, as we are having heavily out-of-order data, we need to use float64 for the cpu, ram and disk fields to ensure that the results are deterministic for the original data. The lightsaber data uses float32 for these fields.
 ##
-CREATE LOGICAL SOURCE monitoringLightsaber(creationTS UINT64, jobId UINT64, taskId UINT64, machineId INT64, eventType INT16, userId INT16, category INT16, priority INT16, cpu FLOAT32, ram FLOAT32, disk FLOAT32, constraints INT16);
+CREATE LOGICAL SOURCE monitoringLightsaber(creationTS UINT64 NOT NULL, jobId UINT64 NOT NULL, taskId UINT64 NOT NULL, machineId INT64 NOT NULL, eventType INT16 NOT NULL, userId INT16 NOT NULL, category INT16 NOT NULL, priority INT16 NOT NULL, cpu FLOAT32 NOT NULL, ram FLOAT32 NOT NULL, disk FLOAT32 NOT NULL, constraints INT16 NOT NULL);
 CREATE PHYSICAL SOURCE FOR monitoringLightsaber TYPE File;
 ATTACH FILE large/cluster_monitoring/google-cluster-data-lightsaber_1M.csv
 
-CREATE LOGICAL SOURCE monitoringClusterData(creationTS UINT64, jobId UINT64, taskId UINT64, machineId INT64, eventType INT16, userId INT16, category INT16, priority INT16, cpu FLOAT64, ram FLOAT64, disk FLOAT64, constraints BOOLEAN);
+CREATE LOGICAL SOURCE monitoringClusterData(creationTS UINT64 NOT NULL, jobId UINT64 NOT NULL, taskId UINT64 NOT NULL, machineId INT64 NOT NULL, eventType INT16 NOT NULL, userId INT16 NOT NULL, category INT16 NOT NULL, priority INT16 NOT NULL, cpu FLOAT64 NOT NULL, ram FLOAT64 NOT NULL, disk FLOAT64 NOT NULL, constraints BOOLEAN NOT NULL);
 CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE File;
 ATTACH FILE large/cluster_monitoring/google-cluster-data-original_1G.csv
 
 
-CREATE SINK q1Checksum(monitoringClusterData.start UINT64, monitoringClusterData.end UINT64, monitoringClusterData.totalCpu FLOAT64, monitoringClusterData.jobId UINT64) TYPE Checksum;
-CREATE SINK q2Checksum(monitoringLightsaber.start UINT64, monitoringLightsaber.end UINT64, monitoringLightsaber.totalCpu FLOAT32, monitoringLightsaber.jobId UINT64)  TYPE Checksum;
-CREATE SINK q2Sink(monitoringLightsaber.start UINT64, monitoringLightsaber.end UINT64, monitoringLightsaber.totalCpu FLOAT32, monitoringLightsaber.jobId UINT64)  TYPE File;
+CREATE SINK q1Checksum(monitoringClusterData.start UINT64 NOT NULL, monitoringClusterData.end UINT64 NOT NULL, monitoringClusterData.totalCpu FLOAT64 NOT NULL, monitoringClusterData.jobId UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK q2Checksum(monitoringLightsaber.start UINT64 NOT NULL, monitoringLightsaber.end UINT64 NOT NULL, monitoringLightsaber.totalCpu FLOAT32 NOT NULL, monitoringLightsaber.jobId UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q2Sink(monitoringLightsaber.start UINT64 NOT NULL, monitoringLightsaber.end UINT64 NOT NULL, monitoringLightsaber.totalCpu FLOAT32 NOT NULL, monitoringLightsaber.jobId UINT64 NOT NULL)  TYPE File;
 
 # These test is currently disabled, as we cannot ensure deterministic results for the queries
 # The problem is that the queries perform a floating point aggregation. Due to our out-of-order processing, the results may differ slightly.

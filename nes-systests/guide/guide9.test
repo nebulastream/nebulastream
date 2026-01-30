@@ -3,9 +3,9 @@
 # groups: [Window, Aggregation, Tumbling, Count, Avg]
 
 CREATE LOGICAL SOURCE api_requests(
-    endpoint VARSIZED,
-    response_time FLOAT64,
-    ts INT64
+    endpoint VARSIZED NOT NULL,
+    response_time FLOAT64 NOT NULL,
+    ts INT64 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR api_requests TYPE File;
@@ -20,8 +20,8 @@ ATTACH INLINE
 /search,190.0,330000
 
 CREATE SINK sink(
-    `API_REQUESTS$RESPONSE_TIME_COUNT` UINT64,
-    `API_REQUESTS$RESPONSE_TIME_AVG`   FLOAT64
+    `API_REQUESTS$RESPONSE_TIME_COUNT` UINT64 NOT NULL,
+    `API_REQUESTS$RESPONSE_TIME_AVG`   FLOAT64 NOT NULL
 ) TYPE File;
 
 SELECT

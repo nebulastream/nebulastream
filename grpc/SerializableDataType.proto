@@ -33,5 +33,11 @@ message SerializableDataType {
       VARSIZED = 13;
   }
 
+  enum Nullable {
+    IS_NULLABLE = 0;
+    NOT_NULLABLE = 1;
+  }
+
   Type type = 1;
+  Nullable isNullable = 2;
 }

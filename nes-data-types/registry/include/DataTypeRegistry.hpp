@@ -26,6 +26,7 @@ using DataTypeRegistryReturnType = DataType;
 
 struct DataTypeRegistryArguments
 {
+    DataType::NULLABLE isNullable;
 };
 
 class DataTypeRegistry : public BaseRegistry<DataTypeRegistry, std::string, DataTypeRegistryReturnType, DataTypeRegistryArguments>
