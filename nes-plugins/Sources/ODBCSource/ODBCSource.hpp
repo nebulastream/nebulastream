@@ -55,10 +55,10 @@ public:
     ODBCSource(ODBCSource&&) = delete;
     ODBCSource& operator=(ODBCSource&&) = delete;
 
-    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token& stopToken) override;
 
     /// Open ODBC connection.
-    void open() override;
+    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     /// Close ODBC connection.
     void close() override;
 

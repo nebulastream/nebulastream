@@ -141,7 +141,7 @@ std::ostream& ODBCSource::toString(std::ostream& str) const
     return str;
 }
 
-void ODBCSource::open()
+void ODBCSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     this->connection = std::make_unique<ODBCConnection>();
 
@@ -162,7 +162,7 @@ void ODBCSource::open()
     NES_DEBUG("ODBCSource connected successfully.");
 }
 
-size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token&)
+Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token&)
 {
     /// fetch as many rows as possible until buffer is full
     const size_t maxRowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
@@ -174,7 +174,8 @@ size_t ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvi
         std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
         pollStatus = this->connection->executeQuery(this->query, tupleBuffer, bufferProvider, maxRowsPerBuffer);
     }
-    return tupleBuffer.getNumberOfTuples();
+    return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples());
+    // return Source::FillTupleBufferResult{tupleBuffer.getNumberOfTuples()};
 }
 
 DescriptorConfig::Config ODBCSource::validateAndFormat(std::unordered_map<std::string, std::string> config)

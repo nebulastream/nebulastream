@@ -34,7 +34,7 @@
 namespace NES
 {
 
-Schema::Field::Field(std::string name, DataType dataType) : name(Util::toUpperCase(std::move(name))), dataType(std::move(dataType))
+Schema::Field::Field(std::string name, DataType dataType) : name(toUpperCase(std::move(name))), dataType(std::move(dataType))
 {
 }
 

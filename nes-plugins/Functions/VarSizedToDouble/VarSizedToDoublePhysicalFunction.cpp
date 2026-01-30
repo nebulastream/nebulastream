@@ -46,10 +46,10 @@ double convertVarSizedToDouble(const char* varSizedPtr, const uint32_t varSizedL
     auto inputCopy = std::string{varSizedSV};
     inputCopy.erase(std::ranges::remove(inputCopy, '?').begin(), inputCopy.end());
     inputCopy.erase(std::ranges::remove(inputCopy, ' ').begin(), inputCopy.end());
-    const auto splitSV = NES::Util::splitWithStringDelimiter<std::string_view>(varSizedSV, "?");
+    const auto splitSV = splitWithStringDelimiter<std::string_view>(varSizedSV, "?");
     try
     {
-        const auto doubleVal = NES::Util::from_chars_with_exception<double>(inputCopy);
+        const auto doubleVal = from_chars_with_exception<double>(inputCopy);
         return doubleVal;
     }
     catch (Exception)
@@ -62,7 +62,7 @@ double convertVarSizedToDouble(const char* varSizedPtr, const uint32_t varSizedL
 VarVal VarSizedToDoublePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = child.execute(record, arena).cast<VariableSizedData>();
-    const nautilus::val<double> doubleVal = nautilus::invoke(convertVarSizedToDouble, leftValue.getContent(), leftValue.getContentSize());
+    const nautilus::val<double> doubleVal = nautilus::invoke(convertVarSizedToDouble, leftValue.getContent(), leftValue.getSize());
     return doubleVal;
 }
 

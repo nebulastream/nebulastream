@@ -102,7 +102,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
 std::optional<LogicalSource> SourceCatalog::getLogicalSource(const std::string& logicalSourceName) const
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto found = namesToLogicalSourceMapping.find(logicalSourceName); found != namesToLogicalSourceMapping.end())
+    if (const auto found = namesToLogicalSourceMapping.find(Util::toUpperCase(logicalSourceName)); found != namesToLogicalSourceMapping.end())
     {
         return found->second;
     }

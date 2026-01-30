@@ -37,9 +37,9 @@ IsNaNLogicalFunction::IsNaNLogicalFunction(const LogicalFunction& child)
 {
 }
 
-bool IsNaNLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool IsNaNLogicalFunction::operator==(const IsNaNLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const IsNaNLogicalFunction*>(&rhs))
+    if (const auto* other = &rhs)
     {
         return child == other->child;
     }

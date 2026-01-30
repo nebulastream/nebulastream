@@ -37,9 +37,9 @@ VarSizedToDoubleLogicalFunction::VarSizedToDoubleLogicalFunction(const LogicalFu
 {
 }
 
-bool VarSizedToDoubleLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool VarSizedToDoubleLogicalFunction::operator==(const VarSizedToDoubleLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const VarSizedToDoubleLogicalFunction*>(&rhs))
+    if (const auto* other = &rhs)
     {
         return child == other->child;
     }

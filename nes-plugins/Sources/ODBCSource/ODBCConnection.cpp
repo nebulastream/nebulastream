@@ -327,24 +327,42 @@ SQLRETURN ODBCConnection::readVarSized(
     const size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, TupleBuffer& buffer, AbstractBufferProvider& bufferProvider) const
 {
     /// Add 1 byte for the null terminator (required)
-    if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.sqlColumnSize + sizeof(uint32_t)))
+    if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.sqlColumnSize))
     {
         const auto ret = SQLGetData(
             hstmt,
             colIdx,
             SQL_C_CHAR,
-            varSizedBuffer.value().getAvailableMemoryArea<char>().data() + sizeof(uint32_t),
+            varSizedBuffer.value().getAvailableMemoryArea<char>().data(),
             typeInfo.sqlColumnSize,
             &indicator);
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
         INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
-        varSizedBuffer.value().getAvailableMemoryArea<uint32_t>()[0] = indicator;
+        // varSizedBuffer.value().getAvailableMemoryArea<uint32_t>()[0] = indicator;
         const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
         *reinterpret_cast<VariableSizedAccess*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()])
-            = VariableSizedAccess{childBufferIdx};
+            = VariableSizedAccess{childBufferIdx, VariableSizedAccess::Size{static_cast<uint64_t>(indicator)}};
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + DataType{DataType::Type::VARSIZED}.getSizeInBytes());
         return ret;
     }
+    // if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.sqlColumnSize + sizeof(uint32_t)))
+    // {
+    //     const auto ret = SQLGetData(
+    //         hstmt,
+    //         colIdx,
+    //         SQL_C_CHAR,
+    //         varSizedBuffer.value().getAvailableMemoryArea<char>().data() + sizeof(uint32_t),
+    //         typeInfo.sqlColumnSize,
+    //         &indicator);
+    //     checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
+    //     INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
+    //     varSizedBuffer.value().getAvailableMemoryArea<uint32_t>()[0] = indicator;
+    //     const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
+    //     *reinterpret_cast<VariableSizedAccess*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()])
+    //         = VariableSizedAccess{childBufferIdx};
+    //     buffer.setNumberOfTuples(buffer.getNumberOfTuples() + DataType{DataType::Type::VARSIZED}.getSizeInBytes());
+    //     return ret;
+    // }
     throw BufferAllocationFailure("Could not get unpooled buffer for VarSized value");
 }
 
@@ -430,8 +448,8 @@ SQLRETURN ODBCConnection::readDataIntoBuffer(
 
 std::vector<SQLCHAR> ODBCConnection::buildNewRowFetchSting(const std::string_view userQuery, const uint64_t numRowsToFetch)
 {
-    const auto trimmedQuery = NES::Util::trimWhiteSpaces(userQuery);
-    const auto selectSplit = NES::Util::splitWithStringDelimiter<std::string_view>(trimmedQuery, "SELECT");
+    const auto trimmedQuery = trimWhiteSpaces(userQuery);
+    const auto selectSplit = splitWithStringDelimiter<std::string_view>(trimmedQuery, "SELECT");
     INVARIANT(selectSplit.size() == 1, "Query '{}' did not contain exactly one SELECT statement at the start.", trimmedQuery);
     std::string selectTopNRows = fmt::format("SELECT TOP {} {} ORDER BY LabVal_ID DESC", numRowsToFetch, selectSplit.at(0));
     std::vector<SQLCHAR> queryBuffer(selectTopNRows.begin(), selectTopNRows.end());
