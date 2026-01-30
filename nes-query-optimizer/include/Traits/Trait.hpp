@@ -85,7 +85,6 @@ struct ErasedTrait
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual size_t hash() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedTrait& other) const = 0;
-    [[nodiscard]] virtual std::unique_ptr<ErasedTrait> clone() const = 0;
 
     friend bool operator==(const ErasedTrait& lhs, const ErasedTrait& rhs) { return lhs.equals(rhs); }
 
@@ -140,44 +139,30 @@ struct TypedTrait
     /// @tparam T The type of the trait. Must satisfy TraitConcept concept.
     /// @param op The trait to wrap.
     template <typename T>
-    TypedTrait(const T& op) : self(std::make_unique<NES::detail::TraitModel<T>>(op)) /// NOLINT(google-explicit-constructor)
+    TypedTrait(const T& op) : self(std::make_shared<NES::detail::TraitModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
 
     template <TraitConcept T>
     TypedTrait(const NES::detail::TraitModel<T>& op) /// NOLINT(google-explicit-constructor)
-        : self(std::make_unique<NES::detail::TraitModel<T>>(op.impl))
+        : self(std::make_shared<NES::detail::TraitModel<T>>(op.impl))
     {
     }
 
-    explicit TypedTrait(std::unique_ptr<const NES::detail::ErasedTrait> op) : self(std::move(op)) { }
+    explicit TypedTrait(std::shared_ptr<const NES::detail::ErasedTrait> op) : self(std::move(op)) { }
 
-    TypedTrait(const TypedTrait& other) : self(other.self->clone()) { }
-
-    TypedTrait(TypedTrait&&) noexcept = default;
-    TypedTrait& operator=(TypedTrait&&) noexcept = default;
-    ~TypedTrait() = default;
     TypedTrait() = delete;
-
-    TypedTrait& operator=(const TypedTrait& other)
-    {
-        if (this != &other)
-        {
-            self = other.self->clone();
-        }
-        return *this;
-    }
 
     ///@brief Alternative to operator*
     [[nodiscard]] const Checked& get() const
     {
         if constexpr (std::is_same_v<NES::detail::ErasedTrait, Checked>)
         {
-            return *self;
+            return *std::dynamic_pointer_cast<const NES::detail::ErasedTrait>(self);
         }
         else
         {
-            return dynamic_cast<const NES::detail::TraitModel<Checked>*>(self.get())->impl;
+            return std::dynamic_pointer_cast<const NES::detail::TraitModel<Checked>>(self)->impl;
         }
     }
 
@@ -185,11 +170,11 @@ struct TypedTrait
     {
         if constexpr (std::is_same_v<NES::detail::ErasedTrait, Checked>)
         {
-            return *self;
+            return *std::dynamic_pointer_cast<const NES::detail::ErasedTrait>(self);
         }
         else
         {
-            return dynamic_cast<const NES::detail::TraitModel<Checked>*>(self.get())->impl;
+            return std::dynamic_pointer_cast<const NES::detail::TraitModel<Checked>>(self)->impl;
         }
     }
 
@@ -197,11 +182,11 @@ struct TypedTrait
     {
         if constexpr (std::is_same_v<NES::detail::ErasedTrait, Checked>)
         {
-            return self.get();
+            return std::dynamic_pointer_cast<const NES::detail::ErasedTrait>(self).get();
         }
         else
         {
-            auto casted = dynamic_cast<const NES::detail::TraitModel<Checked>*>(self.get());
+            auto casted = std::dynamic_pointer_cast<const NES::detail::TraitModel<Checked>>(self);
             return &casted->impl;
         }
     }
@@ -212,9 +197,9 @@ struct TypedTrait
     template <TraitConcept T>
     std::optional<TypedTrait<T>> tryGetAs() const
     {
-        if (auto model = dynamic_cast<const NES::detail::TraitModel<T>*>(self.get()))
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::TraitModel<T>>(self))
         {
-            return TypedTrait<T>{model->impl};
+            return TypedTrait<T>{std::static_pointer_cast<const NES::detail::ErasedTrait>(model)};
         }
         return std::nullopt;
     }
@@ -243,11 +228,11 @@ struct TypedTrait
     template <TraitConcept T>
     TypedTrait<T> getAs() const
     {
-        if (auto model = dynamic_cast<const NES::detail::TraitModel<T>*>(self.get()))
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::TraitModel<T>>(self))
         {
-            return TypedTrait<T>{model->impl};
+            return TypedTrait<T>{std::static_pointer_cast<const NES::detail::ErasedTrait>(model)};
         }
-        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
+        PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
         std::unreachable();
     }
 
@@ -286,7 +271,7 @@ private:
     template <typename FriendChecked>
     friend struct TypedTrait;
 
-    std::unique_ptr<const NES::detail::ErasedTrait> self;
+    std::shared_ptr<const NES::detail::ErasedTrait> self;
 };
 
 namespace detail
@@ -298,8 +283,6 @@ struct TraitModel : ErasedTrait
     TraitType impl;
 
     explicit TraitModel(TraitType impl) : impl(std::move(impl)) { }
-
-    [[nodiscard]] std::unique_ptr<ErasedTrait> clone() const override { return std::make_unique<TraitModel>(impl); }
 
     bool operator==(const Trait& other) const
     {
@@ -331,7 +314,7 @@ struct TraitModel : ErasedTrait
 
 private:
     template <typename T>
-    friend struct TypedLogicalFunction;
+    friend struct TypedTrait;
 
     [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
     {
