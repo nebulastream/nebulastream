@@ -58,7 +58,6 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Checksum checksum;
-    std::unique_ptr<Format> formatter;
 };
 
 struct ConfigParametersChecksum

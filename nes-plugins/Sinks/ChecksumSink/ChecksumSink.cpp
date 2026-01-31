@@ -40,7 +40,6 @@ ChecksumSink::ChecksumSink(BackpressureController backpressureController, const 
     : Sink(std::move(backpressureController))
     , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
-    , formatter(std::make_unique<CSVFormat>(*sinkDescriptor.getSchema(), true))
 {
 }
 
@@ -85,7 +84,17 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
-    const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
+    /// Read formatted buffer contents into string
+    std::string formatted;
+    const uint64_t bytesInMainBuffer = std::min(inputBuffer.getBufferSize(), inputBuffer.getNumberOfTuples());
+    formatted += std::string(inputBuffer.getAvailableMemoryArea<char>().data(), bytesInMainBuffer);
+
+    /// Write continuation of formatted contents via child buffers into formatted
+    for (size_t index = 0; index < inputBuffer.getNumberOfChildBuffers(); index++)
+    {
+        auto childBuffer = inputBuffer.loadChildBuffer(VariableSizedAccess::Index(index));
+        formatted += std::string(childBuffer.getAvailableMemoryArea<char>().data(), childBuffer.getNumberOfTuples());
+    }
     checksum.add(formatted);
 }
 
