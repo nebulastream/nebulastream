@@ -10,6 +10,10 @@ RUN apt-get update -y && apt-get install -y \
         clang-tidy-${LLVM_TOOLCHAIN_VERSION} \
         lldb-${LLVM_TOOLCHAIN_VERSION} \
         gdb \
+        jq \
+        yq \
+        expect \
+        bats \
         python3-venv \
         python3-bs4 \
         openjdk-21-jre-headless
