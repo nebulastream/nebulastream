@@ -174,8 +174,8 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
         std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
         pollStatus = this->connection->executeQuery(this->query, tupleBuffer, bufferProvider, maxRowsPerBuffer);
     }
-    return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples());
-    // return Source::FillTupleBufferResult{tupleBuffer.getNumberOfTuples()};
+    const auto numberOfTuples = tupleBuffer.getNumberOfTuples() / this->fetchedSizeOfRow;
+    return FillTupleBufferResult::withBytes(numberOfTuples);
 }
 
 DescriptorConfig::Config ODBCSource::validateAndFormat(std::unordered_map<std::string, std::string> config)

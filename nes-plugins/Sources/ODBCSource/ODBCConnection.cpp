@@ -147,7 +147,7 @@ TypeInfo getTypeInfo(const SQLSMALLINT sqlType, const SQLULEN sqlColLen)
             return TypeInfo{
                 .sqlType = SQL_VARCHAR,
                 .nesType = type->second,
-                .nesTypeSize = sizeof(NES::VariableSizedAccess),
+                .nesTypeSize = NES::DataType{NES::DataType::Type::VARSIZED}.getSizeInBytes(),
                 .sqlColumnSize = sqlColLen};
         }
         constexpr size_t maxDigitsIn32BitFloat = 24;
@@ -338,31 +338,13 @@ SQLRETURN ODBCConnection::readVarSized(
             &indicator);
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
         INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
-        // varSizedBuffer.value().getAvailableMemoryArea<uint32_t>()[0] = indicator;
         const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
         *reinterpret_cast<VariableSizedAccess*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()])
             = VariableSizedAccess{childBufferIdx, VariableSizedAccess::Size{static_cast<uint64_t>(indicator)}};
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + DataType{DataType::Type::VARSIZED}.getSizeInBytes());
         return ret;
     }
-    // if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.sqlColumnSize + sizeof(uint32_t)))
-    // {
-    //     const auto ret = SQLGetData(
-    //         hstmt,
-    //         colIdx,
-    //         SQL_C_CHAR,
-    //         varSizedBuffer.value().getAvailableMemoryArea<char>().data() + sizeof(uint32_t),
-    //         typeInfo.sqlColumnSize,
-    //         &indicator);
-    //     checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
-    //     INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
-    //     varSizedBuffer.value().getAvailableMemoryArea<uint32_t>()[0] = indicator;
-    //     const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
-    //     *reinterpret_cast<VariableSizedAccess*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()])
-    //         = VariableSizedAccess{childBufferIdx};
-    //     buffer.setNumberOfTuples(buffer.getNumberOfTuples() + DataType{DataType::Type::VARSIZED}.getSizeInBytes());
-    //     return ret;
-    // }
+
     throw BufferAllocationFailure("Could not get unpooled buffer for VarSized value");
 }
 

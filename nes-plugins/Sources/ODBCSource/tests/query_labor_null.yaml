@@ -13,7 +13,7 @@ logical:
       - name: GruppenNr
         type: INT32
       - name: Gruppe
-        type: VARSIZED
+        type: INT32
       - name: Bez
         type: VARSIZED
       - name: Wert
