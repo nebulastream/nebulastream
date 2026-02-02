@@ -16,4 +16,8 @@ RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     adduser --uid ${UID} --gid ${GID} ${USERNAME} && \
     chown -R ${UID}:${GID} ${NES_PREBUILT_VCPKG_ROOT}))
 
+# Create containerd socket directory with appropriate permissions
+RUN mkdir -p /run/containerd && \
+    chown -R ${UID}:${GID} /run/containerd
+
 USER ${USERNAME}

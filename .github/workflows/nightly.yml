@@ -99,6 +99,7 @@ jobs:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
         - ccache:/ccache
+        - /var/run/docker.sock:/var/run/docker.sock
       env:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
