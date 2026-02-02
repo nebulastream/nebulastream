@@ -88,10 +88,10 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const OverrideQueriesMap& queriesByOverride,
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
-    const URI& grpcURI,
+    const std::string& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
-    auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI.toString(), grpc::InsecureChannelCredentials()));
+    auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI, grpc::InsecureChannelCredentials()));
     Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
     while (true)
@@ -178,7 +178,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
 
     std::mt19937 rng(std::random_device{}());
     const auto grpcURI = config.grpcAddressUri.getValue();
-    const bool runRemote = not grpcURI.empty();
+    const bool runRemote = config.remoteTestExecution.getValue();
 
     if (runRemote)
     {
@@ -305,7 +305,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
-        if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
+        if (const auto grpcURI = config.grpcAddressUri.getValue(); config.remoteTestExecution.getValue())
         {
             progressTracker.reset();
             progressTracker.setTotalQueries(queries.size());
