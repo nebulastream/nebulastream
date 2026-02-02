@@ -22,3 +22,4 @@ add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogi
 add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
+add_plugin(CastToUnixTs LogicalFunction nes-logical-operators CastToUnixTimestampLogicalFunction.cpp)
