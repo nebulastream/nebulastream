@@ -16,6 +16,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <Functions/ExtractFromTimestampLogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
@@ -23,19 +24,20 @@
 namespace NES
 {
 
-/// Converts a unix timestamp in milliseconds (UINT64) to a human-readable UTC timestamp string (VARSIZED),
-/// formatted as: YYYY-MM-DDTHH:MM:SS.mmmZ (ISO-8601 UTC)
-class CastFromUnixTimestampPhysicalFunction
+/// Extracts a calendar component (day-of-month, month, or year) from a unix timestamp in
+/// milliseconds (UINT64) and returns it as UINT64. The component is selected via `unit`.
+class ExtractFromTimestampPhysicalFunction
 {
 public:
-    explicit CastFromUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
+    ExtractFromTimestampPhysicalFunction(TimestampUnit unit, PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
+    TimestampUnit unit;
     DataType outputType;
     PhysicalFunction childFunction;
 };
 
-static_assert(PhysicalFunctionConcept<CastFromUnixTimestampPhysicalFunction>);
+static_assert(PhysicalFunctionConcept<ExtractFromTimestampPhysicalFunction>);
 
 }
