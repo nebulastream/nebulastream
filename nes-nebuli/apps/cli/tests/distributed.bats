@@ -32,6 +32,12 @@ setup_file() {
     exit 1
   fi
 
+  if [ -z "$NES_TEST_TMP_DIR" ]; then
+    echo "ERROR: NES_TEST_TMP_DIR environment variable must be set" >&2
+    echo "Usage: NES_TEST_TMP_DIR=/path/to/build/test-tmp" >&2
+    exit 1
+  fi
+
   if [ ! -f "$NES_CLI" ]; then
     echo "ERROR: NES_CLI file does not exist: $NES_CLI" >&2
     exit 1
@@ -52,12 +58,7 @@ setup_file() {
     exit 1
   fi
 
-  # Print environment info for debugging
-  echo "# Using NES_CLI: $NES_CLI" >&3
-  echo "# Using NEBULASTREAM: $NEBULASTREAM" >&3
-
-  # Build Docker images
-  docker build -t worker-image -f - $(dirname $(realpath $NEBULASTREAM)) <<EOF
+  export WORKER_IMAGE=$(docker build -q -f - $(dirname $(realpath $NEBULASTREAM)) <<EOF
     FROM ubuntu:24.04 AS app
     ENV LLVM_TOOLCHAIN_VERSION=19
     RUN apt update -y && apt install curl wget gpg -y
@@ -75,7 +76,8 @@ setup_file() {
     COPY nes-single-node-worker /usr/bin
     ENTRYPOINT ["nes-single-node-worker"]
 EOF
-  docker build -t nes-cli-image -f - $(dirname $(realpath $NES_CLI)) <<EOF
+)
+  export CLI_IMAGE=$(docker build -q -f - $(dirname $(realpath $NES_CLI)) <<EOF
     FROM ubuntu:24.04 AS app
     ENV LLVM_TOOLCHAIN_VERSION=19
     RUN apt update -y && apt install curl wget gpg -y
@@ -88,19 +90,49 @@ EOF
 
     COPY nes-cli /usr/bin
 EOF
+)
+
+  # Print environment info for debugging
+  echo "# Using NES_CLI: $NES_CLI" >&3
+  echo "# Using NEBULASTREAM: $NEBULASTREAM" >&3
+  echo "# Using WORKER_IMAGE: $WORKER_IMAGE" >&3
+  echo "# Using CLI_IMAGE: $CLI_IMAGE" >&3
+}
+
+teardown_file() {
+  # Clean up any global resources if needed
+  echo "# Test suite completed" >&3
+
+  docker rmi $WORKER_IMAGE || true
+  docker rmi $CLI_IMAGE || true
 }
 
 setup() {
-  export TMP_DIR=$(mktemp -d)
-
+  # Create temp directory within the mounted workspace (not /tmp)
+  # so it's accessible from docker-compose containers running on the host
+  mkdir -p "$NES_TEST_TMP_DIR"
+  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
   cp -r "$NES_CLI_TESTDATA" "$TMP_DIR"
   cd "$TMP_DIR" || exit
-
   echo "# Using TEST_DIR: $TMP_DIR" >&3
+
+  volume=$(docker volume create)
+  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
+  docker cp . $volume_host_container:/data
+  docker stop -t0 $volume_host_container
+  export TEST_VOLUME=$volume
+  echo "# Using test volume: $TEST_VOLUME" >&3
+}
+
+sync_workdir() {
+  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
+  docker cp $volume_host_container:/data/. .
+  docker stop -t0 $volume_host_container
 }
 
 teardown() {
   docker compose down -v || true
+  docker volume rm $TEST_VOLUME || true
 }
 
 function setup_distributed() {
@@ -248,6 +280,8 @@ assert_json_contains() {
 
   run DOCKER_NES_CLI -t tests/good/crazy-join-one-fast-source.yaml start
   echo $output
+
+  sync_workdir
   cat nes-cli.log
   [ "$status" -eq 0 ]
   # Output should be a query ID (numeric)
@@ -271,6 +305,8 @@ assert_json_contains() {
   docker compose stop worker-node
 
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml -d start
+
+  sync_workdir
   grep "(6002) : query registration call failed; Status: UNAVAILABLE" nes-cli.log
   [ "$status" -eq 1 ]
 

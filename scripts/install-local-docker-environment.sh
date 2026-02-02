@@ -254,3 +254,57 @@ Either build locally with the -l option, or open a PR (draft) and let the CI bui
                --build-arg ROOTLESS=${USE_ROOTLESS} \
                --build-arg TAG=${TAG} .
 fi
+
+# Detect the docker socket path (works for both rootful and rootless Docker)
+DOCKER_SOCKET=""
+
+# Try to get docker socket path from context
+DOCKER_CONTEXT_HOST=$(docker context inspect --format '{{.Endpoints.docker.Host}}' 2>/dev/null || echo "")
+if [ -n "$DOCKER_CONTEXT_HOST" ]; then
+    # Extract path from unix:///path/to/docker.sock format
+    DOCKER_SOCKET=$(echo "$DOCKER_CONTEXT_HOST" | sed 's|^unix://||')
+fi
+
+# Fallback: Check common locations
+if [ ! -S "$DOCKER_SOCKET" ]; then
+    # Try rootless location
+    if [ -S "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/docker.sock" ]; then
+        DOCKER_SOCKET="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/docker.sock"
+    # Try rootful location
+    elif [ -S "/var/run/docker.sock" ]; then
+        DOCKER_SOCKET="/var/run/docker.sock"
+    else
+        DOCKER_SOCKET="/var/run/docker.sock"  # Default fallback
+    fi
+fi
+
+echo ""
+echo "========================================================================================"
+echo "Docker Development Environment Setup Complete!"
+echo "========================================================================================"
+echo ""
+echo "To enable Docker-in-Docker testing, mount the docker socket:"
+echo ""
+if [ -S "$DOCKER_SOCKET" ]; then
+    echo "Detected docker socket at: $DOCKER_SOCKET"
+    echo ""
+    echo "Command line:"
+    echo "  docker run -v $DOCKER_SOCKET:/var/run/docker.sock \\"
+    echo "    -v \$(pwd):\$(pwd) -w \$(pwd) nebulastream/nes-development:local"
+    echo ""
+    echo "CLion Docker Toolchain (Settings → Docker → Container settings → Run options):"
+    echo "  -v $DOCKER_SOCKET:/var/run/docker.sock"
+else
+    echo "Warning: Could not detect docker socket automatically."
+    echo ""
+    echo "Rootful Docker (default):"
+    echo "  -v /var/run/docker.sock:/var/run/docker.sock"
+    echo ""
+    echo "Rootless Docker (typical):"
+    echo "  -v \$XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock"
+    echo "  or"
+    echo "  -v /run/user/\$(id -u)/docker.sock:/var/run/docker.sock"
+fi
+echo ""
+echo "Note: Docker CLI connects to host Docker daemon via socket. No isolation namespace."
+echo "========================================================================================"
