@@ -79,6 +79,7 @@
           tbb
           python3
           openjdk21
+          howard-hinnant-date
           reflect_cppPkg
         ]);
 
