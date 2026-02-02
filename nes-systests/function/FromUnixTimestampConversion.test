@@ -1,0 +1,48 @@
+# name: Unix to Timestamp conversion
+# description: Checks if the conversion from unix timestamps (ms) to UTC zulu timestamp strings works
+# groups: [Function]
+
+CREATE LOGICAL SOURCE timestampsStream(timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR timestampsStream TYPE File;
+ATTACH INLINE
+0
+1000
+1234
+0
+1639494303000
+1771243200000
+253402300799999
+
+# different data type than a uint64_t
+CREATE LOGICAL SOURCE WrongDataType(timestamp VARSIZED);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1970-01-01T00:00:00.000Z
+
+# Error, wrong data type
+SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM WrongDataType INTO FILE();
+----
+Error 2006
+
+
+SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM timestampsStream INTO FILE();
+----
+1970-01-01T00:00:00.000Z
+1970-01-01T00:00:01.000Z
+1970-01-01T00:00:01.234Z
+1970-01-01T00:00:00.000Z
+2021-12-14T15:05:03.000Z
+2026-02-16T12:00:00.000Z
+9999-12-31T23:59:59.999Z
+
+
+# NULL CASES
+
+CREATE LOGICAL SOURCE timestampsStream_NULL(V1 UINT64 NOT NULL, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR timestampsStream_NULL TYPE File;
+ATTACH INLINE
+0,
+
+SELECT CASTFROMUNIXTS(timestamp) AS timestampsStream FROM timestampsStream_NULL INTO FILE();
+----
+NULL
