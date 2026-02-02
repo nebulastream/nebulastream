@@ -29,7 +29,6 @@
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
-#include <from_current.hpp>
 
 namespace NES
 {
