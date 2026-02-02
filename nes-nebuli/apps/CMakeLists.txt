@@ -43,8 +43,8 @@ target_include_directories(nes-cli
 # Because the REPL has both a interactive and non-interactive mode, the REPL is tested in both ways.
 # We use bats to drive the non-interactive tests for the cli and repl and expect to drive the interactive test for the repl
 
-# Tests are gated behind the ENABLE_DOCKER_TESTS, which is disabled by default to prevent accidental Docker-in-Docker Tests.
-# Important: If you enable the flag make sure you invoke the ctest from outside the development container!!
+# Tests are gated behind ENABLE_DOCKER_TESTS, which is now enabled by default.
+# These tests use docker CLI to run docker-compose from within the development container.
 # This also tests the embedded version of the repl, which does not require a docker compose setup.
 
 find_program(BATS bats)
@@ -105,6 +105,7 @@ if (ENABLE_DOCKER_TESTS)
                 env NES_CLI=$<TARGET_FILE:nes-cli>
                 env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
                 env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+                env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
                 ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/distributed.bats
         )
         set_tests_properties(distributed-cli-test PROPERTIES LABELS "DockerCompose")
@@ -115,6 +116,7 @@ if (ENABLE_DOCKER_TESTS)
                 env NES_REPL=$<TARGET_FILE:nes-repl>
                 env NES_REPL_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
                 env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+                env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
                 ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/distributed.bats
         )
         set_tests_properties(distributed-repl-tests PROPERTIES LABELS "DockerCompose")
@@ -132,6 +134,7 @@ if (ENABLE_DOCKER_TESTS)
                     COMMAND
                     env NES_REPL=$<TARGET_FILE:nes-repl>
                     env NES_REPL_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
+                    env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
                     env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
                     ${TEST_FILE}
             )
