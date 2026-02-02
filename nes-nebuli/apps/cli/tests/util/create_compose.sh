@@ -20,6 +20,16 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+if [ -z "$WORKER_IMAGE" ]; then
+  echo "ERROR: WORKER_IMAGE is not set"
+  exit 1
+fi
+
+if [ -z "$CLI_IMAGE" ]; then
+  echo "ERROR: CLI_IMAGE is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -43,16 +53,16 @@ fi
 cat <<EOF
 services:
   nes-cli:
-    image: nes-cli-image
+    image: $CLI_IMAGE
     pull_policy: never
     environment:
       NES_WORKER_GRPC_ADDR: worker-node:8080
-      XDG_STATE_HOME: $(pwd)/.xdg-state
+      XDG_STATE_HOME: /workdir/.xdg-state
     stop_grace_period: 0s
+    working_dir: /workdir
     command: ["sleep", "infinity"]
-    working_dir: $(pwd)
     volumes:
-      - $(pwd):$(pwd)
+      - $TEST_VOLUME:/workdir
 EOF
 
 # Read workers and generate services
@@ -68,9 +78,9 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   # Generate service definition
   cat <<EOF
   $HOST_NAME:
-    image: worker-image
+    image: $WORKER_IMAGE
     pull_policy: never
-    working_dir: $(pwd)/$HOST_NAME
+    working_dir: /workdir/$HOST_NAME
     healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$GRPC_PORT", "-connect-timeout", "5s" ]
       interval: 1s
@@ -82,7 +92,13 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:
-      - $(pwd):$(pwd)
+      - $TEST_VOLUME:/workdir
 EOF
 
 done
+
+cat <<EOF
+volumes:
+  $TEST_VOLUME:
+    external: true
+EOF
