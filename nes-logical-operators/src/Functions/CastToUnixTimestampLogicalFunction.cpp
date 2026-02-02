@@ -108,6 +108,7 @@ CastToUnixTimestampLogicalFunction
 Unreflector<CastToUnixTimestampLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [function] = context.unreflect<detail::ReflectedCastToUnixTimestampLogicalFunction>(reflected);
+
     return CastToUnixTimestampLogicalFunction{std::move(function)};
 }
 
@@ -118,7 +119,7 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToUnixTsLogicalFunction(LogicalFu
     {
         throw CannotDeserialize("CastToUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return CastToUnixTimestampLogicalFunction(arguments.children[0]);
+    return CastToUnixTimestampLogicalFunction{arguments.children[0]};
 }
 
 }
