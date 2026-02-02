@@ -25,7 +25,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
@@ -84,18 +84,19 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
-    /// Read formatted buffer contents into string
-    std::string formatted;
-    const uint64_t bytesInMainBuffer = std::min(inputBuffer.getBufferSize(), inputBuffer.getNumberOfTuples());
-    formatted += std::string(inputBuffer.getAvailableMemoryArea<char>().data(), bytesInMainBuffer);
+    /// Create a buffer iterator to help iterate through the tuplebuffer and its children
+    BufferIterator iterator(inputBuffer);
 
-    /// Write continuation of formatted contents via child buffers into formatted
-    for (size_t index = 0; index < inputBuffer.getNumberOfChildBuffers(); index++)
+    bool processedAllBuffers = false;
+    while (!processedAllBuffers)
     {
-        auto childBuffer = inputBuffer.loadChildBuffer(VariableSizedAccess::Index(index));
-        formatted += std::string(childBuffer.getAvailableMemoryArea<char>().data(), childBuffer.getNumberOfTuples());
+        /// Get the next buffer
+        BufferIterator::BufferElement element = iterator.getNextElement();
+        /// Create string out of formatted buffer
+        const std::string formatted(element.buffer.getAvailableMemoryArea<char>().data(), element.contentLength);
+        checksum.add(formatted);
+        processedAllBuffers = element.isLastElement;
     }
-    checksum.add(formatted);
 }
 
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

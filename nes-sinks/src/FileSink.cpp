@@ -32,7 +32,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <SinksParsing/JSONFormat.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -105,14 +105,16 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     {
         {
             const auto wlocked = outputFileStream.wlock();
-            /// Number of tuples corrsponds to the amount of written bytes overall, some might be in child buffers
-            const uint64_t tupleBufferBytes = std::min(inputTupleBuffer.getBufferSize(), inputTupleBuffer.getNumberOfTuples());
-            wlocked->write(inputTupleBuffer.getAvailableMemoryArea<char>().data(), tupleBufferBytes);
-            /// Write the contents of all the child buffers
-            for (size_t index = 0; index < inputTupleBuffer.getNumberOfChildBuffers(); index++)
+            /// Create a buffer iterator to help iterate through the tuplebuffer and its children
+            BufferIterator iterator(std::move(inputTupleBuffer));
+
+            bool processedAllBuffers = false;
+            while (!processedAllBuffers)
             {
-                auto childBuffer = inputTupleBuffer.loadChildBuffer(VariableSizedAccess::Index(index));
-                wlocked->write(childBuffer.getAvailableMemoryArea<char>().data(), static_cast<int64_t>(childBuffer.getNumberOfTuples()));
+                /// Get the next buffer to be written
+                BufferIterator::BufferElement element = iterator.getNextElement();
+                wlocked->write(element.buffer.getAvailableMemoryArea<char>().data(), static_cast<long>(element.contentLength));
+                processedAllBuffers = element.isLastElement;
             }
             wlocked->flush();
         }

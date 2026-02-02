@@ -28,7 +28,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
 #include <SinksParsing/Format.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
 #include <PipelineExecutionContext.hpp>

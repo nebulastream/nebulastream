@@ -25,7 +25,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <SinksParsing/JSONFormat.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -59,12 +59,15 @@ void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
     const uint64_t bytesInTupleBuffer = std::min(inputBuffer.getBufferSize(), inputBuffer.getNumberOfTuples());
     {
         const auto wlocked = *outputStream.wlock();
-        const uint64_t bytesInTupleBuffer = std::min(inputBuffer.getBufferSize(), inputBuffer.getNumberOfTuples());
-        wlocked->write(inputBuffer.getAvailableMemoryArea<char>().data(), bytesInTupleBuffer);
-        for (size_t index = 0; index < inputBuffer.getNumberOfChildBuffers(); index++)
+        /// Create iterator for buffer
+        BufferIterator iterator(inputBuffer);
+        bool processedAllBuffers = false;
+        while (!processedAllBuffers)
         {
-            auto childBuffer = inputBuffer.loadChildBuffer(VariableSizedAccess::Index(index));
-            wlocked->write(childBuffer.getAvailableMemoryArea<char>().data(), static_cast<int64_t>(childBuffer.getNumberOfTuples()));
+            /// Get the next buffer to be written
+            BufferIterator::BufferElement element = iterator.getNextElement();
+            wlocked->write(element.buffer.getAvailableMemoryArea<char>().data(), static_cast<long>(element.contentLength));
+            processedAllBuffers = element.isLastElement;
         }
         wlocked->write(std::string("\n").data(), 1);
         wlocked->flush();
