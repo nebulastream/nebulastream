@@ -172,10 +172,17 @@ proc setup {topology_file} {
         puts "Usage: NES_REPL_TESTDATA=/path/to/nes-nebuli/apps/repl/tests NES_REPL=/path/to/nes-repl NEBULASTREAM=/path/to/nes-single-node-worker [test script]"
         exit 1
     }
+    puts [exec printenv]
+    if {![info exists env(NES_TEST_TMP_DIR)]} {
+        puts "ERROR: NES_TEST_TMP_DIR environment variable must be set"
+        puts "Usage: NES_TEST_TMP_DIR=/path/to/build/test-tmp"
+        exit 1
+    }
 
     set nes_repl_binary $env(NES_REPL)
     set worker_binary $env(NEBULASTREAM)
     set testdata_dir $env(NES_REPL_TESTDATA)
+    set test_tmp_dir $env(NES_TEST_TMP_DIR)
 
     # Validate binaries exist
     if {![file exists $nes_repl_binary]} {
@@ -210,9 +217,13 @@ proc setup {topology_file} {
     puts "Using NES_REPL: $nes_repl_binary"
     puts "Using NEBULASTREAM: $worker_binary"
 
-    # Create temp directory
-    set temp_dir [exec mktemp -d]
+    # Create temp directory within the mounted workspace (not /tmp)
+    # so it's accessible from docker-compose containers running on the host
+    exec mkdir -p $test_tmp_dir
+    set temp_dir [exec mktemp -d -p $test_tmp_dir]
+    exec cp -r $testdata_dir $temp_dir
     cd $temp_dir
+    puts "Using temp directory: $temp_dir"
 
     puts "Building Docker images..."
 
@@ -240,8 +251,8 @@ ENTRYPOINT ["nes-single-node-worker"]}
     set fp [open $worker_dockerfile_path w]
     puts $fp $dockerfile_worker
     close $fp
-    catch {exec docker build -t worker-image -f $worker_dockerfile_path $worker_dir 2>@1} build_output
-    puts $build_output
+    set env(WORKER_IMAGE) [exec docker build -q -f $worker_dockerfile_path $worker_dir]
+    puts "Built worker image: $env(WORKER_IMAGE)"
 
     # Build nes-repl image
     set nes_repl_dir [file dirname $nes_repl_binary]
@@ -262,25 +273,52 @@ COPY nes-repl /usr/bin}
     set fp [open $nes_repl_dockerfile_path w]
     puts $fp $dockerfile_nes_repl
     close $fp
-    catch {exec docker build -t nes-repl-image -f $nes_repl_dockerfile_path $nes_repl_dir 2>@1} build_output
-    puts $build_output
+    set env(REPL_IMAGE) [exec docker build -q -f $nes_repl_dockerfile_path $nes_repl_dir]
+    puts "Built REPL image: $env(REPL_IMAGE)"
 
     puts "Using $temp_dir"
     puts "Setting up Docker Compose environment..."
 
+    # Create Docker volume and copy data into it
+    set test_volume [exec docker volume create]
+    set volume_host_container [exec docker run -d --rm -v $test_volume:/data alpine sleep infinite]
+    exec docker cp . $volume_host_container:/data
+    exec docker stop -t0 $volume_host_container
+    set env(TEST_VOLUME) $test_volume
+    puts "Using test volume: $test_volume"
+
     # Generate docker-compose.yaml
-    exec $testdata_dir/util/create_compose.sh $testdata_dir/topologies/$topology_file > docker-compose.yaml
+    set testdata_base [file tail $testdata_dir]
+    exec $testdata_base/util/create_compose.sh $testdata_base/topologies/$topology_file > docker-compose.yaml
 
     # Start docker compose services
     catch {exec docker compose up -d --wait 2>@1} compose_output
     puts $compose_output
 
+    # Helper to sync workdir from volume
+    proc sync_workdir {} {
+        global env
+        set test_volume $env(TEST_VOLUME)
+        set volume_host_container [exec docker run -d --rm -v $test_volume:/data alpine sleep infinite]
+        exec docker cp $volume_host_container:/data/. .
+        exec docker stop -t0 $volume_host_container
+    }
+
     # Register cleanup handler to ensure docker compose is always stopped
     proc cleanup {} {
-        global temp_dir
+        global temp_dir env
         puts "\nCleaning up Docker Compose environment..."
         cd $temp_dir
         catch {exec docker compose down -v 2>@1} cleanup_error
+        if {[info exists env(TEST_VOLUME)]} {
+            catch {exec docker volume rm $env(TEST_VOLUME) 2>@1} volume_error
+        }
+        if {[info exists env(WORKER_IMAGE)]} {
+            catch {exec docker rmi $env(WORKER_IMAGE) 2>@1} worker_image_error
+        }
+        if {[info exists env(REPL_IMAGE)]} {
+            catch {exec docker rmi $env(REPL_IMAGE) 2>@1} repl_image_error
+        }
     }
 
     # Register cleanup to run on exit and signals

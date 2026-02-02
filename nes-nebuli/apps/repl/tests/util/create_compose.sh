@@ -20,6 +20,16 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+if [ -z "$WORKER_IMAGE" ]; then
+  echo "ERROR: WORKER_IMAGE is not set"
+  exit 1
+fi
+
+if [ -z "$REPL_IMAGE" ]; then
+  echo "ERROR: REPL_IMAGE is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -43,13 +53,13 @@ fi
 cat <<EOF
 services:
   nes-repl:
-    image: nes-repl-image
+    image: $REPL_IMAGE
     pull_policy: never
     stop_grace_period: 0s
     working_dir: /workdir
     command: ["sleep", "infinity"]
     volumes:
-      - $(pwd):/workdir
+      - $TEST_VOLUME:/workdir
 EOF
 
 # Read workers and generate services
@@ -65,7 +75,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   # Generate service definition
   cat <<EOF
   $HOST_NAME:
-    image: worker-image
+    image: $WORKER_IMAGE
     pull_policy: never
     working_dir: /workdir/$HOST_NAME
     healthcheck:
@@ -79,7 +89,13 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:
-      - $(pwd):/workdir
+      - $TEST_VOLUME:/workdir
 EOF
 
 done
+
+cat <<EOF
+volumes:
+  $TEST_VOLUME:
+    external: true
+EOF

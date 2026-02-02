@@ -36,6 +36,7 @@ jobs:
       volumes:
         - ccache:/ccache
         - test-file-cache:/test-file-cache
+        - /var/run/docker.sock:/var/run/docker.sock
       env:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
