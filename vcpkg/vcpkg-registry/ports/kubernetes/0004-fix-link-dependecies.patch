@@ -1,0 +1,17 @@
+--- a/kubernetes/CMakeLists.txt
++++ b/kubernetes/CMakeLists.txt
+@@ -1,6 +1,11 @@
+ cmake_minimum_required (VERSION 2.6...3.10.2)
+ project (CGenerator C)
+ 
++# Find dependencies
++find_package(cJSON CONFIG REQUIRED)
++find_package(yaml CONFIG REQUIRED)
++find_package(libwebsockets CONFIG REQUIRED)
++
+ cmake_policy(SET CMP0063 NEW)
+ 
+ set(CMAKE_C_VISIBILITY_PRESET default)
+@@ -1643,6 +1644,7 @@
+ target_link_libraries(${pkgName} PUBLIC ${CURL_LIBRARIES} )
++target_link_libraries(${pkgName} PUBLIC cJSON::cjson yaml websockets)
