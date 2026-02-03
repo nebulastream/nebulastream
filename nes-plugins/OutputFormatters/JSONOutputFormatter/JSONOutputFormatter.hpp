@@ -13,32 +13,16 @@
 */
 
 #pragma once
+
 #include <OutputFormatters/OutputFormatter.hpp>
-
-#include <cstddef>
-#include <ostream>
-#include <string>
-#include <vector>
-
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <fmt/core.h>
-#include <fmt/ostream.h>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <static.hpp>
-#include <val.hpp>
 
 namespace NES
 {
-
-class CSVOutputFormatter : public OutputFormatter
+class JSONOutputFormatter : public OutputFormatter
 {
 public:
-    explicit CSVOutputFormatter(const size_t numberOfFields, const bool escapeString);
+    explicit JSONOutputFormatter(size_t numberOfFields);
 
-    /// Write the string formatted VarVal value into the record buffer
     [[nodiscard]] nautilus::val<size_t> getFormattedValue(
         VarVal value,
         std::string fieldName,
@@ -51,13 +35,8 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
-
-    friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
-
-private:
-    bool escapeStrings;
+    friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
 };
-
 }
 
 FMT_OSTREAM(NES::OutputFormatter);

@@ -78,7 +78,7 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
         }
         const auto& value = rec.read(name);
         const auto amountWritten = formatter->getFormattedValue(
-            value, type, i, fieldAddress, remainingBytes, isFirstRecordOfBuffer, recordBuffer, bufferProvider);
+            value, name, type, i, fieldAddress, remainingBytes, isFirstRecordOfBuffer, recordBuffer, bufferProvider);
         /// This signalizes that the buffer did not have enough remaining space to capture the formatted value.
         /// Therefore, we signalize the emit operator to emit the current buffer
         if (amountWritten == nautilus::val<size_t>(std::string::npos))

@@ -12,52 +12,48 @@
     limitations under the License.
 */
 
-#include <CSVOutputFormatter.hpp>
-
+#include <JSONOutputFormatter.hpp>
 
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
-#include <memory>
-#include <ostream>
-#include <ranges>
-#include <sstream>
 #include <string>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
 #include <OutputFormatterRegistry.hpp>
-#include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
 
 namespace NES
 {
-CSVOutputFormatter::CSVOutputFormatter(const size_t numberOfFields, const bool escapeStrings)
-    : OutputFormatter(numberOfFields), escapeStrings(escapeStrings)
+
+JSONOutputFormatter::JSONOutputFormatter(const size_t numberOfFields) : OutputFormatter(numberOfFields)
 {
 }
 
 template <typename T>
 size_t formatValToString(
     const T val,
+    const std::string* fieldName,
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
+    const bool isFirst,
     const bool isLast,
     const DataType* physicalType,
     const bool allowChildren,
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    std::string stringFormattedValue(physicalType->formattedBytesToString(&val));
-    stringFormattedValue += isLast ? "\n" : ",";
+    std::string stringFormattedValue = isFirst ? "{" : "";
+    /// Add field name
+    stringFormattedValue += fmt::format("\"{}\":", *fieldName);
+    /// Add value
+    stringFormattedValue += physicalType->formattedBytesToString(&val);
+    stringFormattedValue += isLast ? "}\n" : ",";
 
     /// Write bytes of the string into the buffer starting adress if space suffices.
     const size_t stringSize = stringFormattedValue.size();
@@ -75,9 +71,9 @@ size_t formatValToString(
     return stringSize;
 }
 
-nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
+nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
     VarVal value,
-    const std::string,
+    const std::string fieldName,
     const DataType& fieldType,
     const nautilus::static_val<uint64_t>& fieldIndex,
     const nautilus::val<int8_t*>& fieldPointer,
@@ -86,7 +82,8 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    nautilus::val<bool> isLastField = fieldIndex == nautilus::val<uint64_t>(numberOfFields) - 1;
+    nautilus::val<bool> isfirstField = fieldIndex == nautilus::val<uint64_t>(0);
+    nautilus::val<bool> isLastField = fieldIndex == (nautilus::val<uint64_t>(numberOfFields) - 1);
     if (fieldType.type != DataType::Type::VARSIZED)
     {
         /// Invoke c++ function that parses value into a string and writes it to the field address
@@ -99,8 +96,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<bool>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -112,8 +111,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<int8_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -125,8 +126,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<int16_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -138,8 +141,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<int32_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -151,8 +156,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<int64_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -164,8 +171,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<char>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -177,8 +186,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<uint8_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -190,8 +201,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<uint16_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -203,8 +216,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<uint32_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -216,8 +231,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<uint64_t>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -229,8 +246,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<float>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -242,8 +261,10 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
                 return nautilus::invoke(
                     formatValToString<double>,
                     castedVal,
+                    nautilus::val<const std::string*>(&fieldName),
                     fieldPointer,
                     remainingSize,
+                    isfirstField,
                     isLastField,
                     nautilus::val<const DataType*>(&fieldType),
                     allowChildren,
@@ -260,21 +281,20 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
     return nautilus::invoke(
         +[](int8_t* bufferStartingAddress,
             const uint64_t remainingSpace,
+            const bool isFirst,
             const bool isLast,
-            const bool escapeStrings,
             const int8_t* varSizedContent,
+            const std::string* fieldName,
             const uint32_t contentSize,
             const bool allowChildren,
             TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider)
         {
             /// Convert the content to a string
-            std::string stringFormattedValue(reinterpret_cast<const char*>(varSizedContent), contentSize);
-            if (escapeStrings)
-            {
-                stringFormattedValue = "\"" + stringFormattedValue + "\"";
-            }
-            stringFormattedValue += isLast ? "\n" : ",";
+            std::string stringFormattedValue = isFirst ? "{" : "";
+            stringFormattedValue += fmt::format("\"{}\":", *fieldName);
+            stringFormattedValue += fmt::format("\"{}\"", std::string(reinterpret_cast<const char*>(varSizedContent), contentSize));
+            stringFormattedValue += isLast ? "}\n" : ",";
 
             const size_t stringSize = stringFormattedValue.size();
             if (stringSize > remainingSpace)
@@ -291,23 +311,24 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
         },
         fieldPointer,
         remainingSize,
+        isfirstField,
         isLastField,
-        nautilus::val<bool>(escapeStrings),
         varSizedValue.getContent(),
+        nautilus::val<const std::string*>(&fieldName),
         varSizedValue.getSize(),
         allowChildren,
         recordBuffer.getReference(),
         bufferProvider);
 }
 
-std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)
+std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
 {
-    return out << fmt::format("CSVOutputFormatter(Escape Strings: {})", format.escapeStrings);
+    return out << fmt::format("JSONOutputFormatter()");
 }
 
-OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterCSVOutputFormatter(OutputFormatterRegistryArguments args)
+OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
 {
-    return std::make_unique<CSVOutputFormatter>(args.numberOfFields, false);
+    return std::make_unique<JSONOutputFormatter>(args.numberOfFields);
 }
 
 }
