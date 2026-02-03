@@ -36,6 +36,7 @@
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include "Nautilus/Interface/Record.hpp"
 #include <Nautilus/Interface/RecordBuffer.hpp>
 
 namespace NES
@@ -77,7 +78,7 @@ size_t formatValToString(
 
 nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
     VarVal value,
-    const std::string,
+    const Record::RecordFieldIdentifier&,
     const DataType& fieldType,
     const nautilus::static_val<uint64_t>& fieldIndex,
     const nautilus::val<int8_t*>& fieldPointer,

@@ -41,7 +41,7 @@ public:
     /// Write the string formatted VarVal value into the record buffer
     [[nodiscard]] nautilus::val<size_t> getFormattedValue(
         VarVal value,
-        std::string fieldName,
+        const Record::RecordFieldIdentifier& fieldName,
         const DataType& fieldType,
         const nautilus::static_val<uint64_t>& fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,

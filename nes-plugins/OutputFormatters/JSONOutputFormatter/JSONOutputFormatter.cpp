@@ -27,6 +27,7 @@
 #include <OutputFormatterRegistry.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES
 {
@@ -73,7 +74,7 @@ size_t formatValToString(
 
 nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
     VarVal value,
-    const std::string fieldName,
+    const Record::RecordFieldIdentifier& fieldName,
     const DataType& fieldType,
     const nautilus::static_val<uint64_t>& fieldIndex,
     const nautilus::val<int8_t*>& fieldPointer,

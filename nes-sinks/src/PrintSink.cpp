@@ -26,7 +26,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
-#include <SinksParsing/JSONFormat.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>

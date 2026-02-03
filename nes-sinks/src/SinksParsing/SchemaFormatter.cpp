@@ -23,7 +23,7 @@ namespace NES
 {
 std::string SchemaFormatter::getFormattedSchema()
 {
-    PRECONDITION(schema.hasFields(), "Encountered schema without fields.");
+    PRECONDITION(schema->hasFields(), "Encountered schema without fields.");
     std::stringstream ss;
     ss << schema->getFields().front().name << ":" << magic_enum::enum_name(schema->getFields().front().dataType.type);
     for (const auto& field : schema->getFields() | std::views::drop(1))

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <OutputFormatters/OutputFormatter.hpp>
+#include "Nautilus/Interface/Record.hpp"
 
 namespace NES
 {
@@ -25,7 +26,7 @@ public:
 
     [[nodiscard]] nautilus::val<size_t> getFormattedValue(
         VarVal value,
-        std::string fieldName,
+        const Record::RecordFieldIdentifier& fieldName,
         const DataType& fieldType,
         const nautilus::static_val<uint64_t>& fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,

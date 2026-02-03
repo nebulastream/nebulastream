@@ -12,6 +12,5 @@
 
 add_source_files(nes-sinks
         BufferIterator.cpp
-        JSONFormat.cpp
         SchemaFormatter.cpp
 )
