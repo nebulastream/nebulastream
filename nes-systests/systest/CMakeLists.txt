@@ -143,7 +143,6 @@ add_tests_if_enabled(tests)
 
 # -x
 # --verbose-run
-message(STATUS "bats: ${BATS}")
 add_test(
         NAME test-container-test
         COMMAND
