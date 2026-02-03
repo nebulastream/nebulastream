@@ -47,6 +47,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/Signal.hpp>
 #include <Util/Strings.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
@@ -507,6 +508,7 @@ int main(int argc, char** argv)
 {
     CPPTRACE_TRY
     {
+        NES::setupSignalHandlers();
         using argparse::ArgumentParser;
         ArgumentParser program("nebucli");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
