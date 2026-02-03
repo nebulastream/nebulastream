@@ -168,26 +168,26 @@ jobs:
             push: true
             tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
             context: .
-          file: docker/dependency/Base.dockerfile
+            file: docker/dependency/Base.dockerfile
       - name: Build Dependency Image
         uses: Wandalen/wretry.action@v3.8.0
         with:
-
           action: docker/build-push-action@v6
           with: |
             push: true
             tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
             build-args: |
-            TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-            ARCH=${{matrix.arch}}
-            STDLIB=${{matrix.stdlib}}
-            SANITIZER=${{matrix.sanitizer}}
-            VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}context: .
+              TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+              ARCH=${{matrix.arch}}
+              STDLIB=${{matrix.stdlib}}
+              SANITIZER=${{matrix.sanitizer}}
+              VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
+            context: .
             file: docker/dependency/Dependency.dockerfile
-          secrets: |
-            R2_KEY=${{secrets.R2_KEY}}
-            R2_SECRET=${{secrets.R2_SECRET}}
-            R2_ACCOUNT_ID=${{secrets.R2_ACCOUNT_ID}}
+            secrets: |
+              R2_KEY=${{secrets.R2_KEY}}
+              R2_SECRET=${{secrets.R2_SECRET}}
+              R2_ACCOUNT_ID=${{secrets.R2_ACCOUNT_ID}}
       - name: Build Development Image
         uses: Wandalen/wretry.action@v3.8.0
         with:
@@ -196,8 +196,8 @@ jobs:
             push: true
             tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
             build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          context: .
-          file: docker/dependency/Development.dockerfile
+            context: .
+            file: docker/dependency/Development.dockerfile
       - name: Build CI Image
         uses: Wandalen/wretry.action@v3.8.0
         with:
