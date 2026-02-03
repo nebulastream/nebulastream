@@ -121,7 +121,7 @@ function setup_distributed() {
 
 DOCKER_SYSTEST() {
   echo "Starting: $BATS_TEST_NAME" >&3
-  docker compose run --rm systest systest --workingDir $(pwd)/workdir "$@"
+  docker compose run --rm systest systest --workingDir $(pwd)/workdir "$@" >&3
 }
 
 

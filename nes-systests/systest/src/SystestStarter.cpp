@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -23,11 +24,15 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <signal.h>
+#include <unistd.h>
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
@@ -345,8 +350,27 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 }
 }
 
+void safe_handler(int signal)
+{
+    cpptrace::frame_ptr buffer[100];
+    auto buffersUsed = cpptrace::safe_generate_raw_trace(buffer, 100, 2);
+    cpptrace::object_trace trace;
+    for (std::size_t i = 0; i < buffersUsed; i++)
+    {
+        cpptrace::safe_object_frame frame;
+        cpptrace::get_safe_object_frame(buffer[i], &frame);
+        trace.frames.push_back(frame.resolve());
+    }
+    trace.resolve().print_with_snippets();
+    _exit(signal);
+}
+
 int main(int argc, const char** argv)
 {
+    cpptrace::register_terminate_handler();
+    signal(SIGSEGV, safe_handler);
+    signal(SIGFPE, safe_handler);
+
     auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::WorkerId("systest"), "main");
 
