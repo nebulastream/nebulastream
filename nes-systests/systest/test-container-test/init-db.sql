@@ -8,7 +8,7 @@ CREATE TABLE dbo.v_Labor_null
     mlife_FallNr      INT,
     Zeitpunkt         SMALLDATETIME,
     GruppenNr         INT,
-    Gruppe            NVARCHAR(50),
+    Gruppe            INT,
     Bez               NVARCHAR(50),
     Wert              VARCHAR(256),
     Einheit           VARCHAR(256),
@@ -47,11 +47,11 @@ CREATE TABLE dbo.v_Vitalwerte_unvalidiert
 -- Insert dummy data into v_Labor_null
 INSERT INTO dbo.v_Labor_null (LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID)
 VALUES
-    (1, 1001, '2024-01-15 08:30', 1, 'Hämatologie', 'Hämoglobin', '14.5', 'g/dL', '12-16', 'S001', '2024-01-15 08:00', '2024-01-15 09:00', 101),
-    (2, 1001, '2024-01-15 08:30', 1, 'Hämatologie', 'Leukozyten', '7.2', '10^9/L', '4-10', 'S001', '2024-01-15 08:00', '2024-01-15 09:00', 101),
-    (3, 1002, '2024-01-15 09:15', 2, 'Chemie', 'Glucose', '95', 'mg/dL', '70-110', 'S002', '2024-01-15 08:45', '2024-01-15 09:30', 102),
-    (4, 1002, '2024-01-15 09:15', 2, 'Chemie', 'Kreatinin', '0.9', 'mg/dL', '0.6-1.2', 'S002', '2024-01-15 08:45', '2024-01-15 09:30', 102),
-    (5, 1003, '2024-01-15 10:00', 1, 'Hämatologie', 'Thrombozyten', '250', '10^9/L', '150-400', 'S003', '2024-01-15 09:30', '2024-01-15 10:15', 103);
+    (1, 1001, '2024-01-15 08:30', 1, 5, 'Hämoglobin', '14.5', 'g/dL', '12-16', 'S001', '2024-01-15 08:00', '2024-01-15 09:00', 101),
+    (2, 1001, '2024-01-15 08:30', 1, 5, 'Leukozyten', '7.2', '10^9/L', '4-10', 'S001', '2024-01-15 08:00', '2024-01-15 09:00', 101),
+    (3, 1002, '2024-01-15 09:15', 2, 5, 'Glucose', '95', 'mg/dL', '70-110', 'S002', '2024-01-15 08:45', '2024-01-15 09:30', 102),
+    (4, 1002, '2024-01-15 09:15', 2, 5, 'Kreatinin', '0.9', 'mg/dL', '0.6-1.2', 'S002', '2024-01-15 08:45', '2024-01-15 09:30', 102),
+    (5, 1003, '2024-01-15 10:00', 1, 5, 'Thrombozyten', '250', '10^9/L', '150-400', 'S003', '2024-01-15 09:30', '2024-01-15 10:15', 103);
 
 -- Insert dummy data into v_Vitalwerte_unvalidiert
 INSERT INTO dbo.v_Vitalwerte_unvalidiert (mlife_ANR, mlife_FallNr, Herzfrequenz, BPdias, BPM, BPsys, Temp, ZVD, dPAP, mPAP, sPAP, dNiB, mNiB, sNiB, SPO2, PulsRate, LAP, ZentTemp, BIS, HZV)
