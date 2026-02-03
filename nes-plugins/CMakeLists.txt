@@ -23,6 +23,9 @@ activate_optional_plugin("Sources/ODBCSource" ON)
 activate_optional_plugin("Functions/VarSizedToDouble" ON)
 activate_optional_plugin("Functions/IsNan" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
+activate_optional_plugin("Sources/ODBCSource" ON)
+activate_optional_plugin("Sinks/MQTTSink" ON)
+activate_optional_plugin("Sources/MQTTSource" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
