@@ -158,18 +158,16 @@ void ODBCSource::open(std::shared_ptr<AbstractBufferProvider>)
     /// We don't want to catch errors here, but further up in the query engine
     connection->connect(connectionString, this->syncTable, this->query);
     this->fetchedSizeOfRow = this->connection->getFetchedSizeOfRow();
-    // NES_WARNING("ODBC inferred row size is: {}", this->fetchedSizeOfRow);
-    // NES_DEBUG("ODBCSource connected successfully.");
+    if (this->fetchedSizeOfRow == 0)
+    {
+        throw CannotOpenSource("Size of schema must not be 0");
+    }
+    NES_DEBUG("ODBCSource connected successfully.");
 }
 
 Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token&)
 {
     /// fetch as many rows as possible until buffer is full
-    if (this->fetchedSizeOfRow == 0)
-    {
-        NES_ERROR("Tried to divide by 0");
-        return FillTupleBufferResult::eos();
-    }
     const size_t maxRowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
 
     ODBCPollStatus pollStatus{ODBCPollStatus::NO_NEW_ROWS};
