@@ -1,0 +1,13 @@
+diff --git a/src/MQTTAsync.h b/src/MQTTAsync.h
+index 7c5b621..0bb66c8 100644
+--- a/src/MQTTAsync.h
++++ b/src/MQTTAsync.h
+@@ -1171,7 +1171,7 @@ typedef struct
+ 	 * Check documentation for SSL_CTX_set_alpn_protos
+ 	 * Exists only if struct_version >= 5
+ 	 */
+-	const unsigned char *protos;
++	const char *protos;
+ 
+ 	/**
+ 	 * The length of the vector protos vector
