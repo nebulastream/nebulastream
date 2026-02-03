@@ -115,6 +115,10 @@ teardown() {
 
 function setup_distributed() {
   cat $NES_DIR/nes-systests/systest/test-container-test/init-db.sql > init-db.sql
+  # setup the MQTT container
+  cat $NES_DIR/nes-systests/systest/test-container-test/mosquitto.conf > mosquitto.conf
+  cat $NES_DIR/nes-systests/systest/test-container-test/mqtt-data.jsonl > mqtt-data.jsonl
+
   $NES_DIR/nes-systests/systest/test-container-test/create_compose_mssql_server.sh "$1" > docker-compose.yaml
   docker compose up -d --wait
 }
@@ -124,8 +128,8 @@ DOCKER_SYSTEST() {
   docker compose run --rm systest systest --workingDir $(pwd)/workdir "$@" >&3
 }
 
-
-@test "two node systest" {
+# Todo: remove config (odbc.yaml) also (mqtt.yaml)
+@test "odbc source test" {
   setup_distributed $NES_DIR/nes-systests/configs/sources/odbc.yaml
   run DOCKER_SYSTEST --groups TestContainer
 

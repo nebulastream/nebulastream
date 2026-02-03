@@ -54,6 +54,10 @@ services:
     depends_on:
       db_init:
         condition: service_completed_successfully
+      mqtt_broker:
+        condition: service_healthy
+      mqtt_producer:
+        condition: service_completed_successfully
 
   sql_server:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -80,6 +84,45 @@ services:
     command: /opt/mssql-tools18/bin/sqlcmd -S sql_server -U sa -P 'samplePassword1!' -C -i /init-db.sql
     volumes:
       - ./init-db.sql:/init-db.sql:ro
+
+  mqtt_broker:
+    image: eclipse-mosquitto:2.0
+    container_name: mqtt_broker_container
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "test", "-q", "1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  mqtt_producer:
+    image: alpine:latest
+    container_name: mqtt_producer_container
+    depends_on:
+      mqtt_broker:
+        condition: service_healthy
+    volumes:
+      - ./mqtt-data.jsonl:/mqtt-data.jsonl:ro
+    command: >
+      sh -c '
+      apk add --no-cache mosquitto-clients > /dev/null 2>&1;
+      i=0;
+      while IFS= read -r line || [ -n "\$\$line" ]; do
+        printf "%s\n" "\$\$line" | mosquitto_pub -h mqtt_broker -t "test/data/\$\$i" -s -r -q 1;
+        i=\$\$((i + 1));
+      done < /mqtt-data.jsonl;
+      echo "All messages published";
+      '
+
+volumes:
+  mosquitto_data:
+
 
 EOF
 
@@ -116,6 +159,8 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     depends_on:
       db_init:
         condition: service_completed_successfully
+      mqtt_broker:
+        condition: service_healthy
 EOF
 
 done

@@ -1,0 +1,16 @@
+# name: sources/MQTT.test
+# description: Simple tests for the MQTT source
+# groups: [TestContainer]
+CREATE LOGICAL SOURCE mqtt_source(id INT32, value INT32, timestamp UINT64);
+
+# mqtt_broker
+CREATE PHYSICAL SOURCE FOR mqtt_source TYPE MQTT SET("JSON" AS PARSER.`TYPE`, "mqtt_broker" AS `SOURCE`.serveruri, "test/data/+" AS `SOURCE`.topic, "100" AS `SOURCE`.flushintervalms);
+
+# docker compose exec mqtt_broker mosquitto_sub -h localhost -t "test/data" -C 5
+SELECT id, value, timestamp FROM mqtt_source INTO File();
+----
+1 2 3
+1 2 3
+1 2 3
+1 2 3
+1 2 3

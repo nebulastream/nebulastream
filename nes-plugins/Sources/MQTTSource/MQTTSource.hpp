@@ -64,6 +64,7 @@ private:
     std::string topic;
     int32_t qos;
     std::chrono::milliseconds flushingInterval;
+    size_t maxFlushRetries;
 
     std::unique_ptr<mqtt::async_client> client;
 
@@ -116,7 +117,7 @@ std::string generateUUID()
 struct ConfigParametersMQTTSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
-        "serverURI",
+        "serveruri",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SERVER_URI, config); }};
 
@@ -138,9 +139,14 @@ struct ConfigParametersMQTTSource
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TOPIC, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
-        "flushIntervalMS",
+        "flushintervalms",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_FLUSH_RETRIES{
+        "maxflushretries",
+        5,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_FLUSH_RETRIES, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<int32_t> QOS{
         "qos",
@@ -156,8 +162,9 @@ struct ConfigParametersMQTTSource
             return qos;
         }};
 
+    // Todo: without adding 'SourceDescriptor::parameterMap' we get a horrid error message (unordered_map::at, without context)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SERVER_URI, CLIENT_ID, QOS, TOPIC, FLUSH_INTERVAL_MS);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, SERVER_URI, CLIENT_ID, QOS, TOPIC, FLUSH_INTERVAL_MS, MAX_FLUSH_RETRIES);
 };
 
 }

@@ -1,5 +1,5 @@
-# name: projection/Projection.test
-# description: Simple map tests with an add function
+# name: sources/ODBC.test
+# description: Simple tests for the ODBC source
 # groups: [TestContainer]
 CREATE LOGICAL SOURCE odbc_source(LabVal_ID INT32, mlife_FallNr INT32, Zeitpunkt UINT64, GruppenNr INT32, Gruppe INT32, Bez VARSIZED, Wert VARSIZED, Einheit VARSIZED, Wertebereich VARSIZED, SampleNr VARSIZED, TSFail UINT64, TSLog UINT64, Lab_ID INT32);
 

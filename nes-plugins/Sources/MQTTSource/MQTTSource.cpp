@@ -45,6 +45,7 @@ MQTTSource::MQTTSource(const SourceDescriptor& sourceDescriptor)
     , qos(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::QOS))
     , flushingInterval(std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::duration<float, std::milli>(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::FLUSH_INTERVAL_MS))))
+    , maxFlushRetries(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::MAX_FLUSH_RETRIES))
 {
 }
 
@@ -65,7 +66,7 @@ void MQTTSource::open(std::shared_ptr<AbstractBufferProvider>)
 
     try
     {
-        const auto connectOptions = mqtt::connect_options_builder().automatic_reconnect(true).clean_session(false).finalize();
+        const auto connectOptions = mqtt::connect_options_builder().automatic_reconnect(true).clean_session(true).finalize();
 
         client->start_consuming();
 
@@ -74,6 +75,10 @@ void MQTTSource::open(std::shared_ptr<AbstractBufferProvider>)
         if (const auto response = token->get_connect_response(); !response.is_session_present())
         {
             client->subscribe(topic, qos)->wait();
+        } else
+        {
+            client->subscribe(topic, qos)->wait();
+            NES_DEBUG("MQTT open response: (Is session present: {})", response.is_session_present())
         }
     }
     catch (const mqtt::exception& e)
@@ -85,6 +90,7 @@ void MQTTSource::open(std::shared_ptr<AbstractBufferProvider>)
 Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken)
 {
     size_t tbOffset = 0;
+    size_t flushRetries = 0;
     const auto tbSize = tupleBuffer.getBufferSize();
     std::string_view payload;
     auto nextFlush = std::chrono::system_clock::now() + std::chrono::milliseconds(flushingInterval);
@@ -97,12 +103,18 @@ Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupl
     }
 
     /// When the stashed payload is larger than a single TB, we skip the loop
+    // Todo: get rid of loop skipping and payloadstash, use poolprovider instead
     while (tbOffset < tbSize && !stopToken.stop_requested())
     {
         if (nextFlush < std::chrono::system_clock::now())
         {
             if (tbOffset == 0)
             {
+                if (flushRetries > maxFlushRetries)
+                {
+                    return FillTupleBufferResult::eos();
+                }
+                ++flushRetries;
                 nextFlush = std::chrono::system_clock::now() + std::chrono::milliseconds(flushingInterval);
             }
             else
