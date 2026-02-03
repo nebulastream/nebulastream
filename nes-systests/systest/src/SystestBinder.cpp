@@ -471,26 +471,6 @@ struct SystestBinder::Impl
         switch (testData.first)
         {
             case TestDataIngestionType::INLINE: {
-                if (physicalSourceConfig.type == "ODBC")
-                {
-                    physicalSourceConfig.parserConfig = {{"type", "Native"}};
-                    physicalSourceConfig.sourceConfig
-                        = {{"host", "sql_server"},
-                           {"port", "1433"},
-                           {"database", "master"},
-                           {"username", "sa"},
-                           {"password", "samplePassword1!"},
-                           {"driver", "ODBC Driver 18 for SQL Server"},
-                           {"sync_table", "dbo.v_Labor_null"},
-                           {"poll_interval_ms", "1000"},
-                           // {"query",
-                           //  "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, "
-                           //  "TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null"},
-                           {"query",
-                            "SELECT LabVal_ID FROM dbo.v_Labor_null"},
-                           {"trust_server_certificate", "true"}};
-                    return physicalSourceConfig;
-                }
                 const auto testFile = generateSourceFilePath();
                 return SourceDataProvider::provideInlineDataSource(
                     std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads), testFile);
