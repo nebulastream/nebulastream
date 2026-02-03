@@ -176,10 +176,27 @@ QueryStatementHandler::QueryStatementHandler(
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
     const std::unique_lock lock(mutex);
-    std::erase(runningQueries, statement.id);
-    return queryManager->stop(statement.id)
-        .and_then([&statement, this] { return queryManager->unregister(statement.id); })
-        .transform([&statement] { return DropQueryStatementResult{statement.id}; });
+
+    if (statement.id.has_value())
+    {
+        const auto id = statement.id.value();
+        std::erase(runningQueries, id);
+        return queryManager->stop(id)
+            .and_then([&]() { return queryManager->unregister(id); })
+            .transform([&]() { return DropQueryStatementResult{std::vector<QueryId>{id}}; });
+    }
+
+    auto result = queryManager->stopAll();
+
+    if (!result.has_value())
+    {
+        return std::unexpected{result.error()};
+    }
+
+    std::vector<QueryId> droppedIds = runningQueries;
+    runningQueries.clear();
+
+    return DropQueryStatementResult{.ids = std::move(droppedIds)};
 }
 
 std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()(const QueryStatement& statement)

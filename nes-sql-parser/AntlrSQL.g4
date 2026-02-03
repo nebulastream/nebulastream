@@ -78,9 +78,9 @@ typeDefinition: DATA_TYPE;
 
 fromQuery: AS query;
 
-dropStatement: DROP dropSubject;
-dropSubject: dropQuery | dropSource | dropSink;
-dropQuery: QUERY id=unsignedIntegerLiteral;
+dropStatement: DROP dropTarget;
+dropTarget: dropQuery | dropSource | dropSink;
+dropQuery: QUERY (ALL | id=unsignedIntegerLiteral);
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE name=strictIdentifier;
 dropPhysicalSourceSubject: PHYSICAL SOURCE id=unsignedIntegerLiteral;
