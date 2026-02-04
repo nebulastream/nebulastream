@@ -1,0 +1,66 @@
+# name: aggregation/AggregationEventInline.test
+# description: Aggregation with inline trigger events. Currently assumes no checkpointing support.
+# groups: [Aggregation, EventInline]
+
+CREATE LOGICAL SOURCE stream(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE TCP;
+ATTACH INLINE
+1,0
+2,50
+3,120
+
+CREATE LOGICAL SOURCE stream2(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE TCP;
+ATTACH INLINE
+10,0
+<CRASH>
+10,30
+<RESTART>
+12,60
+13,170
+
+CREATE SINK sinkAggEvent(stream.start UINT64, stream.end UINT64, stream.i64_out UINT64) TYPE File;
+CREATE SINK sinkAggEvent2(stream2.start UINT64, stream2.end UINT64, stream2.i64_out UINT64) TYPE File;
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkAggEvent;
+----
+0,100,2
+100,200,1
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream2 WINDOW TUMBLING(ts, size 100 ms) INTO sinkAggEvent2;
+----
+0,100,1
+100,200,1
+
+CREATE LOGICAL SOURCE stream3(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream3 TYPE TCP;
+ATTACH INLINE
+20,0
+<CRASH>
+<RESTART>
+22,60
+23,170
+
+CREATE SINK sinkAggEvent3(stream3.start UINT64, stream3.end UINT64, stream3.i64_out UINT64) TYPE File;
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream3 WINDOW TUMBLING(ts, size 100 ms) INTO sinkAggEvent3;
+----
+0,100,1
+100,200,1
+
+CREATE LOGICAL SOURCE stream4(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream4 TYPE TCP;
+ATTACH INLINE
+30,0
+<CRASH>
+<RESTART>
+31,50
+<CRASH>
+<RESTART>
+32,120
+
+CREATE SINK sinkAggEvent4(stream4.start UINT64, stream4.end UINT64, stream4.i64_out UINT64) TYPE File;
+
+SELECT start, end, COUNT(i64) as i64_out FROM stream4 WINDOW TUMBLING(ts, size 100 ms) INTO sinkAggEvent4;
+----
+100,200,1
