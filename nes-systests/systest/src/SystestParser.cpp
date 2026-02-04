@@ -449,10 +449,10 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
     return tuples;
 }
 
-std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> SystestParser::expectCreateStatement()
+std::pair<std::string, std::optional<TestData>> SystestParser::expectCreateStatement()
 {
     std::string createQuery;
-    std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData = std::nullopt;
+    std::optional<TestData> testData = std::nullopt;
 
     while (currentLine < lines.size())
     {
@@ -477,19 +477,62 @@ std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vecto
 
     if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH INLINE"))
     {
-        testData = std::make_pair(TestDataIngestionType::INLINE, std::vector<std::string>{});
+        testData = TestData{};
+        testData->ingestionType = TestDataIngestionType::INLINE;
         currentLine++;
+        InlineEventScript script{};
+        /// Parses inline event types
         while (currentLine < lines.size() && !lines[currentLine].empty())
         {
-            testData.value().second.push_back(lines[currentLine]);
+            const auto& rawLine = lines[currentLine];
+            if (rawLine.starts_with('<') && rawLine.ends_with('>'))
+            {
+                const auto marker = rawLine.substr(1, rawLine.size() - 2);
+                InlineAction action{};
+                if (marker == "CRASH")
+                {
+                    action.type = InlineActionType::CrashWorker;
+                }
+                else if (marker == "RESTART")
+                {
+                    action.type = InlineActionType::RestartWorker;
+                }
+                else if (marker.rfind("DELAY", 0) == 0)
+                {
+                    action.type = InlineActionType::DelayMs;
+                    const auto pos = marker.find(' ');
+                    if (pos != std::string::npos)
+                    {
+                        action.payload = std::stoull(marker.substr(pos + 1));
+                    }
+                }
+                else
+                {
+                    throw SLTUnexpectedToken("Unknown inline event marker: <{}>", marker);
+                }
+                script.actions.push_back(std::move(action));
+            }
+            else
+            {
+                InlineAction sendAction{};
+                sendAction.type = InlineActionType::SendTuple;
+                sendAction.tuple = rawLine;
+                script.actions.push_back(std::move(sendAction));
+                testData->tuples.push_back(rawLine);
+            }
             currentLine++;
+        }
+        if (script.hasEvents())
+        {
+            testData->inlineEventScript = std::move(script);
         }
         currentLine--;
     }
     else if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH FILE"))
     {
-        testData = std::make_pair(TestDataIngestionType::FILE, std::vector<std::string>{});
-        testData->second.push_back(lines[currentLine].substr(std::strlen("ATTACH FILE") + 1));
+        testData = TestData{};
+        testData->ingestionType = TestDataIngestionType::FILE;
+        testData->tuples.push_back(lines[currentLine].substr(std::strlen("ATTACH FILE") + 1));
     }
     else
     {
