@@ -97,7 +97,7 @@ Pipeline::Pipeline(const SinkPhysicalOperator& op) : rootOperator(op), pipelineI
 
 bool Pipeline::isSourcePipeline() const
 {
-    return getRootOperator().tryGet<SourcePhysicalOperator>().has_value();
+    return getRootOperator().tryGetAs<SourcePhysicalOperator>().has_value();
 }
 
 bool Pipeline::isOperatorPipeline() const
@@ -107,7 +107,7 @@ bool Pipeline::isOperatorPipeline() const
 
 bool Pipeline::isSinkPipeline() const
 {
-    return getRootOperator().tryGet<SinkPhysicalOperator>().has_value();
+    return getRootOperator().tryGetAs<SinkPhysicalOperator>().has_value();
 }
 
 void Pipeline::prependOperator(const PhysicalOperator& newOp)

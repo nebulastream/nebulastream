@@ -35,7 +35,7 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<TupleBufferRef> bufferRef,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
-    ~StreamJoinBuildPhysicalOperator() override = default;
+    ~StreamJoinBuildPhysicalOperator() = default;
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;
 

@@ -23,6 +23,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -40,6 +41,8 @@ public:
         std::shared_ptr<TupleBufferRef> bufferRef,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
 
-    void execute(ExecutionContext& executionCtx, Record& record) const override;
+    void execute(ExecutionContext& executionCtx, Record& record) const;
+
+    [[nodiscard]] NLJBuildPhysicalOperator withChild(const PhysicalOperator& child) const;
 };
 }

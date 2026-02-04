@@ -38,6 +38,7 @@
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 #include <function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
@@ -136,6 +137,13 @@ void NLJProbePhysicalOperator::performNLJ(
         }
         outerItemPos = outerItemPos + nautilus::val<uint64_t>{1};
     }
+}
+
+NLJProbePhysicalOperator NLJProbePhysicalOperator::withChild(const PhysicalOperator& child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
 }
 
 void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

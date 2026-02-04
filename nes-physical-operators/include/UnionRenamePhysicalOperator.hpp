@@ -17,23 +17,40 @@
 #include <string>
 #include <vector>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
 {
-class UnionRenamePhysicalOperator final : public PhysicalOperatorConcept
+class UnionRenamePhysicalOperator final
 {
 public:
     UnionRenamePhysicalOperator(std::vector<std::string> inputFields, std::vector<std::string> outputFields);
 
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    [[nodiscard]] UnionRenamePhysicalOperator withChild(PhysicalOperator newChild) const;
 
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& ctx) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+
+protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
 
 private:
     std::vector<std::string> inputFields;
     std::vector<std::string> outputFields;
     std::optional<PhysicalOperator> child;
 };
+
+static_assert(PhysicalOperatorConcept<UnionRenamePhysicalOperator>);
+
 }

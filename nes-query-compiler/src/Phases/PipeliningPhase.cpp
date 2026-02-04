@@ -107,7 +107,7 @@ PhysicalOperator createScanOperator(
     /// with a parser type other than "NATIVE" (NATIVE data does not require formatting)
     if (prevPipeline.isSourcePipeline())
     {
-        const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
+        const auto inputFormatterConfig = prevPipeline.getRootOperator().getAs<SourcePhysicalOperator>()->getDescriptor().getParserConfig();
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return ScanPhysicalOperator(
@@ -195,9 +195,9 @@ void buildPipelineRecursively(
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             /// If the operator is a sink we might have to create an output formatter
-            if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+            if (auto sink = opWrapper->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>())
             {
-                auto outputFormat = sink->getDescriptor().getFormatType();
+                auto outputFormat = sink->get().getDescriptor().getFormatType();
                 if (toUpperCase(outputFormat) != "NATIVE")
                 {
                     addOutputFormattingEmit(
@@ -205,7 +205,7 @@ void buildPipelineRecursively(
                         *prevOpWrapper,
                         configuredBufferSize,
                         std::string(outputFormat),
-                        sink->getDescriptor().getOutputFormatterConfig());
+                        sink->get().getDescriptor().getOutputFormatterConfig());
                 }
                 else
                 {
@@ -284,13 +284,13 @@ void buildPipelineRecursively(
     }
 
     /// Case 3: Sink Operator – treat sinks as pipeline breakers
-    if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+    if (auto sink = opWrapper->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>())
     {
-        const auto sinkFormat = sink->getDescriptor().getFormatType();
+        const auto sinkFormat = sink->get().getDescriptor().getFormatType();
         if (currentPipeline->isSourcePipeline())
         {
             const auto sourceFormat = toUpperCase(
-                currentPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig().parserType);
+                currentPipeline->getRootOperator().getAs<SourcePhysicalOperator>()->getDescriptor().getParserConfig().parserType);
 
             /// Add a formatting pipeline if the source-sink pipelines do not simply forward natively formatted data
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers
@@ -315,7 +315,7 @@ void buildPipelineRecursively(
                         *opWrapper,
                         configuredBufferSize,
                         std::string(sinkFormat),
-                        sink->getDescriptor().getOutputFormatterConfig());
+                        sink->get().getDescriptor().getOutputFormatterConfig());
                 }
 
                 INVARIANT(sourcePipeline->getRootOperator().getChild().has_value(), "Scan operator requires at least an emit as child.");
@@ -343,7 +343,7 @@ void buildPipelineRecursively(
                     *prevOpWrapper,
                     configuredBufferSize,
                     std::string(sinkFormat),
-                    sink->getDescriptor().getOutputFormatterConfig());
+                    sink->get().getDescriptor().getOutputFormatterConfig());
             }
         }
         const auto newPipeline = std::make_shared<Pipeline>(*sink);

@@ -39,7 +39,7 @@ PhysicalPlanBuilder::PhysicalPlanBuilder(QueryId id) : queryId(id)
 
 void PhysicalPlanBuilder::addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink)
 {
-    PRECONDITION(sink->getPhysicalOperator().tryGet<SinkPhysicalOperator>(), "Expects SinkOperators as roots");
+    PRECONDITION(sink->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>(), "Expects SinkOperators as roots");
     sinks.emplace_back(std::move(sink));
 }
 
@@ -84,7 +84,7 @@ void verifyFlippedGraph(
     for (const auto& rootOperator : newRoots)
     {
         INVARIANT(
-            rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(),
+            rootOperator->getPhysicalOperator().tryGetAs<SourcePhysicalOperator>(),
             "Expects SourceOperators as roots after flip but got {}",
             rootOperator->getPhysicalOperator());
     }
@@ -126,7 +126,7 @@ void verifyFlippedGraph(
         if (node->getChildren().empty())
         {
             INVARIANT(
-                node->getPhysicalOperator().tryGet<SinkPhysicalOperator>(),
+                node->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>(),
                 "Expects SinkOperators as leaves after flip but got {}",
                 node->getPhysicalOperator());
         }

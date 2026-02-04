@@ -23,6 +23,7 @@
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -40,8 +41,9 @@ public:
         std::shared_ptr<TupleBufferRef> bufferRef,
         HashMapOptions hashMapOptions,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+    [[nodiscard]] HJBuildPhysicalOperator withChild(const PhysicalOperator& child) const;
 
 private:
     HashMapOptions hashMapOptions;

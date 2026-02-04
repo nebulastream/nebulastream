@@ -20,7 +20,9 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
+#include <PhysicalOperator.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 
 namespace NES
@@ -34,11 +36,12 @@ public:
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         OperatorHandlerId operatorHandlerId,
         WindowMetaData windowMetaData);
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
+    [[nodiscard]] AggregationProbePhysicalOperator withChild(const PhysicalOperator& child) const;
 
 private:
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
 };
-
 }

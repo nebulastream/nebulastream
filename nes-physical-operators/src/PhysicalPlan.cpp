@@ -38,7 +38,7 @@ PhysicalPlan::PhysicalPlan(
 {
     for (const auto& rootOperator : this->rootOperators)
     {
-        PRECONDITION(rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(), "Expects SourcePhysicalOperator as roots");
+        PRECONDITION(rootOperator->getPhysicalOperator().tryGetAs<SourcePhysicalOperator>(), "Expects SourcePhysicalOperator as roots");
     }
 }
 
