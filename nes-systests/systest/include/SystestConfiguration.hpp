@@ -21,7 +21,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
-#include <Util/URI.hpp>
+#include <Configurations/Validation/EndpointValidation.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
@@ -55,13 +55,19 @@ public:
     SequenceOption<StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
     StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
-    ScalarOption<NES::URI> grpcAddressUri
+
+    /// Remote Tests: If enabled, systest will reach out to the gRPC address specified by grpcAddressUri
+    ScalarOption<bool> remoteTestExecution = {"remote_test_execution", "false", "run tests on remote worker"};
+    ScalarOption<std::string> grpcAddressUri
         = {"grpc",
+           "[::]:8080",
            R"(The address to try to bind to the server in URI form. If
 the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
-192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
+192.168.1.1:31416, dns:///[::1]:27182, etc.)",
+           {std::make_shared<EndpointValidation>(EndpointValidation::GRPC)}};
+
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;

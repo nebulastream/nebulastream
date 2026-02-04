@@ -75,7 +75,10 @@ inline std::string discardPerformanceMessage(RunningQuery&)
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(
-    const std::vector<SystestQuery>& queries, uint64_t numConcurrentQueries, const URI& serverURI, SystestProgressTracker& progressTracker);
+    const std::vector<SystestQuery>& queries,
+    uint64_t numConcurrentQueries,
+    const std::string& serverURI,
+    SystestProgressTracker& progressTracker);
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
