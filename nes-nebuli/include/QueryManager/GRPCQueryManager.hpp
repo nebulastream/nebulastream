@@ -16,6 +16,7 @@
 
 #include <QueryManager/QueryManager.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
@@ -30,9 +31,10 @@ namespace NES
 class GRPCQueryManager final : public QueryManager
 {
     std::unique_ptr<WorkerRPCService::Stub> stub;
+    std::chrono::milliseconds rpcDeadline;
 
 public:
-    explicit GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel);
+    explicit GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel, std::chrono::milliseconds deadline = std::chrono::seconds{30});
     std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept override;
     std::expected<void, Exception> stop(QueryId queryId) noexcept override;
     std::expected<void, Exception> start(QueryId queryId) noexcept override;

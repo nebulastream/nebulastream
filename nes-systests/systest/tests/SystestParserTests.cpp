@@ -74,7 +74,7 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
     const std::string str = sourceIn + "\n";
 
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        [&](const std::string&, const std::optional<TestData>& testData)
         {
             isCreateCallbackCalled = true;
             ASSERT_FALSE(testData.has_value());
@@ -106,8 +106,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
             ASSERT_EQ(queryIn, queryOut);
             queryCallbackCalled = true;
         });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
+    parser.registerOnCreateCallback([&](const std::string&, const std::optional<TestData>&) { FAIL(); });
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId)
                                           { receivedResultTuples = std::move(resultTuples); });
 
@@ -135,8 +134,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
         {
             /// nop
         });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
+    parser.registerOnCreateCallback([&](const std::string&, const std::optional<TestData>&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
@@ -172,8 +170,7 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
             differentialQueryCallbackCalled = true;
         });
 
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+    parser.registerOnCreateCallback([&](const std::string&, const std::optional<TestData>&) { });
 
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
                                           { FAIL() << "Result tuple callback should not be called for a differential query test."; });
@@ -223,8 +220,7 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
                                           { FAIL() << "Result tuple callback should not be called for a differential query test."; });
 
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+    parser.registerOnCreateCallback([&](const std::string&, const std::optional<TestData>&) { });
 
     parser.registerOnErrorExpectationCallback(
         [](const SystestParser::ErrorExpectation&, SystestQueryId)

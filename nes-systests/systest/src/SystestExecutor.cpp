@@ -84,6 +84,23 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     std::exit(1); ///NOLINT(concurrency-mt-unsafe)
 }
 
+std::vector<Systest::SystestQuery> filterInlineEventQueriesForRemote(const std::vector<Systest::SystestQuery>& queries)
+{
+    std::vector<Systest::SystestQuery> filtered;
+    filtered.reserve(queries.size());
+    for (const auto& query : queries)
+    {
+        if (Systest::hasInlineEventWorkerRestart(query))
+        {
+            std::cout << "Skipping inline-event query for remote worker: " << query.testName << ":" << query.queryIdInFile.toString()
+                      << "\n";
+            continue;
+        }
+        filtered.push_back(query);
+    }
+    return filtered;
+}
+
 [[noreturn]] void runEndlessRemote(
     const OverrideQueriesMap& queriesByOverride,
     std::mt19937& rng,
@@ -91,6 +108,12 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const URI& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
+    if (queriesByOverride.empty())
+    {
+        std::cout << "No queries to run in remote endless mode after skipping inline-event queries.\n";
+        std::exit(0); /// NOLINT(concurrency-mt-unsafe)
+    }
+
     auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI.toString(), grpc::InsecureChannelCredentials()));
     Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
@@ -182,7 +205,16 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
 
     if (runRemote)
     {
-        runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, grpcURI, progressTracker);
+        OverrideQueriesMap filteredQueriesByOverride;
+        for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
+        {
+            auto filtered = filterInlineEventQueriesForRemote(queriesForConfig);
+            if (!filtered.empty())
+            {
+                filteredQueriesByOverride.emplace(overrideConfig, std::move(filtered));
+            }
+        }
+        runEndlessRemote(filteredQueriesByOverride, rng, numberConcurrentQueries, grpcURI, progressTracker);
     }
     else
     {
@@ -307,10 +339,19 @@ SystestExecutorResult SystestExecutor::executeSystests()
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
         {
+            const auto remoteQueries = filterInlineEventQueriesForRemote(queries);
             progressTracker.reset();
-            progressTracker.setTotalQueries(queries.size());
-            auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, progressTracker);
-            failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+            progressTracker.setTotalQueries(remoteQueries.size());
+
+            if (!remoteQueries.empty())
+            {
+                auto failed = runQueriesAtRemoteWorker(remoteQueries, numberConcurrentQueries, grpcURI, progressTracker);
+                failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+            }
+            else
+            {
+                std::cout << "No queries to run in remote mode after skipping inline-event queries.\n";
+            }
         }
         else
         {
@@ -377,8 +418,31 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
 
-                    auto failed = runQueriesAtLocalWorker(queriesForConfig, numberConcurrentQueries, configCopy, progressTracker);
-                    failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+                    std::vector<Systest::SystestQuery> restartableQueries;
+                    std::vector<Systest::SystestQuery> regularQueries;
+                    for (const auto& query : queriesForConfig)
+                    {
+                        if (Systest::hasInlineEventWorkerRestart(query))
+                        {
+                            restartableQueries.push_back(query);
+                        }
+                        else
+                        {
+                            regularQueries.push_back(query);
+                        }
+                    }
+
+                    if (!regularQueries.empty())
+                    {
+                        auto failed = runQueriesAtLocalWorker(regularQueries, numberConcurrentQueries, configCopy, progressTracker);
+                        failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+                    }
+
+                    if (!restartableQueries.empty())
+                    {
+                        auto failed = runInlineEventQueriesWithWorkerRestart(restartableQueries, configCopy, progressTracker);
+                        failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+                    }
                 }
             }
         }

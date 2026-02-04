@@ -93,8 +93,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
 
     SystestParser parser{};
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+    parser.registerOnCreateCallback([&](const std::string&, const std::optional<TestData>&) { });
 
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
@@ -105,9 +104,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
     const auto* const filename = SYSTEST_DATA_DIR "invalid_differential.dummy";
 
     SystestParser parser{};
-    parser.registerOnCreateCallback(
-        [&](const std::string&,
-            const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { /* nop, ensure parsing*/ });
+    parser.registerOnCreateCallback([&](const std::string&, const std::optional<TestData>&) { /* nop, ensure parsing*/ });
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { /* nop, ensure parsing*/ });
     parser.registerOnDifferentialQueryBlockCallback(
         [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });

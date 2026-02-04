@@ -192,7 +192,7 @@ public:
 
 private:
     bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes, const std::stop_token& stopToken);
 
     int connection = -1;
     int sockfd = -1;

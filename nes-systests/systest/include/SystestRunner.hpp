@@ -72,6 +72,14 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker);
 
+/// @return true if the query contains inline events that require crashing or restarting the worker
+[[nodiscard]] bool hasInlineEventWorkerRestart(const SystestQuery& query);
+
+/// Run queries that include inline crash/restart events. Each query is executed on its own embedded worker instance and the worker
+/// is restarted once when the inline event is triggered.
+[[nodiscard]] std::vector<RunningQuery> runInlineEventQueriesWithWorkerRestart(
+    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, SystestProgressTracker& progressTracker);
+
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(
