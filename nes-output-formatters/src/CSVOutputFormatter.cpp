@@ -264,7 +264,7 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
             const bool isLast,
             const bool escapeStrings,
             const int8_t* varSizedContent,
-            const uint32_t contentSize,
+            const uint64_t contentSize,
             const bool allowChildren,
             TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider)

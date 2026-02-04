@@ -286,7 +286,7 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
             const bool isLast,
             const int8_t* varSizedContent,
             const std::string* fieldName,
-            const uint32_t contentSize,
+            const uint64_t contentSize,
             const bool allowChildren,
             TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider)
