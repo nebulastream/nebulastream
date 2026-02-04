@@ -17,7 +17,10 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -36,14 +39,65 @@ bool SinkPhysicalOperator::operator==(const SinkPhysicalOperator& other) const
     return descriptor == other.descriptor;
 }
 
-std::optional<PhysicalOperator> SinkPhysicalOperator::getChild() const
+std::optional<PhysicalOperator> SinkPhysicalOperator::getChild()
 {
     return std::nullopt;
 }
 
-void SinkPhysicalOperator::setChild(PhysicalOperator)
+SinkPhysicalOperator SinkPhysicalOperator::withChild(const PhysicalOperator&)
 {
     PRECONDITION(false, "Sink has no child.");
+}
+
+void SinkPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx)
+{
+    setupChild(ctx, compCtx);
+}
+
+void SinkPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer)
+{
+    openChild(ctx, recordBuffer);
+}
+
+void SinkPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer)
+{
+    closeChild(ctx, recordBuffer);
+}
+
+void SinkPhysicalOperator::terminate(ExecutionContext& ctx)
+{
+    terminateChild(ctx);
+}
+
+void SinkPhysicalOperator::execute(ExecutionContext& ctx, Record& record)
+{
+    executeChild(ctx, record);
+}
+
+void SinkPhysicalOperator::setupChild(ExecutionContext&, CompilationContext&)
+{
+    INVARIANT(false, "Child operator is not set");
+}
+
+void SinkPhysicalOperator::openChild(ExecutionContext&, RecordBuffer&)
+{
+    INVARIANT(false, "Child operator is not set");
+}
+
+void SinkPhysicalOperator::closeChild(ExecutionContext&, RecordBuffer&)
+{
+    INVARIANT(false, "Child operator is not set");
+}
+
+void SinkPhysicalOperator::executeChild(ExecutionContext&, Record&)
+{
+    INVARIANT(false, "Child operator is not set");
+    ;
+}
+
+void SinkPhysicalOperator::terminateChild(ExecutionContext&)
+{
+    INVARIANT(false, "Child operator is not set");
 }
 
 }

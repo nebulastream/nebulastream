@@ -18,7 +18,11 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <CompilationContext.hpp>
+#include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -35,7 +39,7 @@ SourceDescriptor SourcePhysicalOperator::getDescriptor() const
 OriginId SourcePhysicalOperator::getOriginId() const
 {
     return originId;
-};
+}
 
 bool SourcePhysicalOperator::operator==(const SourcePhysicalOperator& other) const
 {
@@ -47,9 +51,66 @@ std::optional<PhysicalOperator> SourcePhysicalOperator::getChild() const
     return child;
 }
 
-void SourcePhysicalOperator::setChild(PhysicalOperator child)
+SourcePhysicalOperator SourcePhysicalOperator::withChild(PhysicalOperator newChild) const
 {
-    this->child = std::move(child);
+    auto copy = *this;
+    copy.child = std::move(newChild);
+    return copy;
+}
+
+void SourcePhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
+void SourcePhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    openChild(ctx, recordBuffer);
+}
+
+void SourcePhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    closeChild(ctx, recordBuffer);
+}
+
+void SourcePhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    terminateChild(ctx);
+}
+
+void SourcePhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+{
+    executeChild(ctx, record);
+}
+
+void SourcePhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void SourcePhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void SourcePhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void SourcePhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void SourcePhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 }

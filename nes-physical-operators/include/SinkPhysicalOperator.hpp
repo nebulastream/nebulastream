@@ -16,23 +16,43 @@
 #include <memory>
 #include <optional>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
 {
-class SinkPhysicalOperator final : public PhysicalOperatorConcept
+class SinkPhysicalOperator final
 {
 public:
     explicit SinkPhysicalOperator(const SinkDescriptor& descriptor);
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator) override;
+
+    static std::optional<PhysicalOperator> getChild();
+    static SinkPhysicalOperator withChild(const PhysicalOperator&);
+
+    static void setup(ExecutionContext& ctx, CompilationContext& compCtx);
+    static void open(ExecutionContext& ctx, RecordBuffer& recordBuffer);
+    static void close(ExecutionContext& ctx, RecordBuffer& recordBuffer);
+    static void terminate(ExecutionContext& ctx);
+    static void execute(ExecutionContext& ctx, Record& record);
 
     [[nodiscard]] SinkDescriptor getDescriptor() const;
 
     bool operator==(const SinkPhysicalOperator& other) const;
 
+protected:
+    /// Helper classes to propagate to the child
+    static void setupChild(ExecutionContext&, CompilationContext&);
+    static void openChild(ExecutionContext&, RecordBuffer&);
+    static void closeChild(ExecutionContext&, RecordBuffer&);
+    static void executeChild(ExecutionContext&, Record&);
+    static void terminateChild(ExecutionContext&);
+
 private:
     SinkDescriptor descriptor;
 };
+
+static_assert(PhysicalOperatorConcept<SinkPhysicalOperator>);
+
 }

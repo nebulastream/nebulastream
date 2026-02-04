@@ -29,6 +29,7 @@
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
 
@@ -87,5 +88,12 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     /// Write record to the pagedVector
     const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+}
+
+NLJBuildPhysicalOperator NLJBuildPhysicalOperator::withChild(const PhysicalOperator& child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
 }
 }

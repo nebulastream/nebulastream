@@ -31,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 #include <function.hpp>
 #include <static.hpp>
@@ -167,6 +168,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             emittedAggregationWindow->finalHashMap.reset();
         },
         aggregationWindowRef);
+}
+
+AggregationProbePhysicalOperator AggregationProbePhysicalOperator::withChild(const PhysicalOperator& child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(

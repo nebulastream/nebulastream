@@ -26,6 +26,8 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -44,7 +46,9 @@ public:
         std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    [[nodiscard]] NLJProbePhysicalOperator withChild(const PhysicalOperator& child) const;
+
 
 protected:
     void performNLJ(

@@ -25,6 +25,8 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
+#include <CompilationContext.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
 #include <PhysicalOperator.hpp>
@@ -59,6 +61,23 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
     inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
+std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const
+{
+    return child;
+}
+
+ScanPhysicalOperator ScanPhysicalOperator::withChild(PhysicalOperator newChild) const
+{
+    auto copy = *this;
+    copy.child = std::move(newChild);
+    return copy;
+}
+
+void ScanPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
@@ -85,14 +104,49 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     }
 }
 
-std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const
+void ScanPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    return child;
+    closeChild(ctx, recordBuffer);
 }
 
-void ScanPhysicalOperator::setChild(PhysicalOperator child)
+void ScanPhysicalOperator::terminate(ExecutionContext& ctx) const
 {
-    this->child = std::move(child);
+    terminateChild(ctx);
+}
+
+void ScanPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+{
+    executeChild(ctx, record);
+}
+
+void ScanPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void ScanPhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void ScanPhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void ScanPhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void ScanPhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 }

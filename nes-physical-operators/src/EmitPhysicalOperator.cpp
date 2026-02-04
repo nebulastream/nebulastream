@@ -148,9 +148,11 @@ std::optional<PhysicalOperator> EmitPhysicalOperator::getChild() const
     return child;
 }
 
-void EmitPhysicalOperator::setChild(PhysicalOperator child)
+EmitPhysicalOperator EmitPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
-    this->child = std::move(child);
+    auto copy = *this;
+    copy.child = std::move(newChild);
+    return copy;
 }
 
 }

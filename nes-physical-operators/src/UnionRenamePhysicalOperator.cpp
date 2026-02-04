@@ -20,6 +20,8 @@
 #include <utility>
 #include <vector>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <static.hpp>
@@ -27,15 +29,6 @@
 namespace NES
 {
 
-void UnionRenamePhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
-{
-    Record outputRecord;
-    for (nautilus::static_val<size_t> i = 0; i < inputFields.size(); ++i)
-    {
-        outputRecord.write(outputFields[i], record.read(inputFields[i]));
-    }
-    executeChild(ctx, outputRecord);
-}
 
 UnionRenamePhysicalOperator::UnionRenamePhysicalOperator(std::vector<std::string> inputFields, std::vector<std::string> outputFields)
     : inputFields(std::move(inputFields)), outputFields(std::move(outputFields))
@@ -48,9 +41,71 @@ std::optional<PhysicalOperator> UnionRenamePhysicalOperator::getChild() const
     return child;
 }
 
-void UnionRenamePhysicalOperator::setChild(PhysicalOperator child)
+UnionRenamePhysicalOperator UnionRenamePhysicalOperator::withChild(PhysicalOperator newChild) const
 {
-    this->child = std::move(child);
+    auto copy = *this;
+    copy.child = std::move(newChild);
+    return copy;
+}
+
+void UnionRenamePhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
+void UnionRenamePhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    openChild(ctx, recordBuffer);
+}
+
+void UnionRenamePhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    closeChild(ctx, recordBuffer);
+}
+
+void UnionRenamePhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    terminateChild(ctx);
+}
+
+void UnionRenamePhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+{
+    Record outputRecord;
+    for (nautilus::static_val<size_t> i = 0; i < inputFields.size(); ++i)
+    {
+        outputRecord.write(outputFields[i], record.read(inputFields[i]));
+    }
+    executeChild(ctx, outputRecord);
+}
+
+void UnionRenamePhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void UnionRenamePhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void UnionRenamePhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void UnionRenamePhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void UnionRenamePhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 }
