@@ -58,8 +58,9 @@ singleStatement: statement ';'? EOF;
 
 terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
-statement: query | createStatement | dropStatement | showStatement;
+statement: query | createStatement | dropStatement | showStatement | explainStatement;
 
+explainStatement: EXPLAIN query;
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
@@ -490,6 +491,8 @@ AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 JSON: 'JSON';
 TEXT: 'TEXT';
+EXPLAIN: 'EXPLAIN' | 'explain';
+
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
 /// End of the keywords list
