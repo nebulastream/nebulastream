@@ -65,7 +65,7 @@ public:
 
     size_t syncRowCount();
 
-    void connect(const std::string& connectionString, std::string_view syncTable, std::string_view query);
+    void connect(const std::string& connectionString, std::string_view syncTable, std::string_view query, bool readOnlyNewRows);
 
     template <typename T>
     SQLRETURN readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator) const

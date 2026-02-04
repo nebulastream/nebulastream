@@ -129,6 +129,8 @@ ODBCSource::ODBCSource(const SourceDescriptor& sourceDescriptor)
     , syncTable(sourceDescriptor.getFromConfig(ConfigParametersODBC::SYNC_TABLE))
     , query(sourceDescriptor.getFromConfig(ConfigParametersODBC::QUERY))
     , trustServerCertificate(sourceDescriptor.getFromConfig(ConfigParametersODBC::TRUST_SERVER_CERTIFICATE))
+    , maxRetries(sourceDescriptor.getFromConfig(ConfigParametersODBC::MAX_RETRIES))
+    , readOnlyNewRows(sourceDescriptor.getFromConfig(ConfigParametersODBC::READ_ONLY_NEW_ROWS))
 {
 }
 
@@ -156,7 +158,7 @@ void ODBCSource::open(std::shared_ptr<AbstractBufferProvider>)
         (this->trustServerCertificate) ? "yes" : "no");
 
     /// We don't want to catch errors here, but further up in the query engine
-    connection->connect(connectionString, this->syncTable, this->query);
+    connection->connect(connectionString, this->syncTable, this->query, this->readOnlyNewRows);
     this->fetchedSizeOfRow = this->connection->getFetchedSizeOfRow();
     if (this->fetchedSizeOfRow == 0)
     {
@@ -170,15 +172,14 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
     /// fetch as many rows as possible until buffer is full
     const size_t maxRowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
 
-    ODBCPollStatus pollStatus{ODBCPollStatus::NO_NEW_ROWS};
+    auto pollStatus{ODBCPollStatus::NO_NEW_ROWS};
     size_t retryCount = 0;
-    constexpr size_t MAX_RETRIES = 5;
-    while (pollStatus == ODBCPollStatus::NO_NEW_ROWS or retryCount >= MAX_RETRIES)
+    while (pollStatus == ODBCPollStatus::NO_NEW_ROWS or retryCount >= maxRetries)
     {
         /// wait for data to arrive
         std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
         pollStatus = this->connection->executeQuery(this->query, tupleBuffer, bufferProvider, maxRowsPerBuffer);
-        if (++retryCount >= MAX_RETRIES)
+        if (++retryCount >= maxRetries)
         {
             return FillTupleBufferResult::eos();
         }

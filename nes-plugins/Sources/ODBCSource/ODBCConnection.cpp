@@ -284,7 +284,7 @@ size_t ODBCConnection::syncRowCount()
     return rowCount;
 }
 
-void ODBCConnection::connect(const std::string& connectionString, const std::string_view syncTable, const std::string_view query)
+void ODBCConnection::connect(const std::string& connectionString, const std::string_view syncTable, const std::string_view query, const bool readOnlyNewRows)
 {
     SQLCHAR outConnectionString[1024];
     SQLSMALLINT outConnectionStringLength;
@@ -323,8 +323,11 @@ void ODBCConnection::connect(const std::string& connectionString, const std::str
     {
         checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Prepare failed");
     }
-    // this->rowCountTracker = syncRowCount();
-    this->rowCountTracker = 0;
+    /// fetch the current number of rows to read only newly added rows
+    if (readOnlyNewRows)
+    {
+        this->rowCountTracker = syncRowCount();
+    }
 }
 
 SQLRETURN ODBCConnection::readVarSized(

@@ -78,6 +78,8 @@ private:
     std::string syncTable;
     std::string query;
     bool trustServerCertificate;
+    size_t maxRetries;
+    bool readOnlyNewRows;
 
     size_t fetchedSizeOfRow{0};
     std::unique_ptr<ODBCConnection> connection;
@@ -138,8 +140,18 @@ struct ConfigParametersODBC
             return DescriptorConfig::tryGet(TRUST_SERVER_CERTIFICATE, config);
         }};
 
+    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_RETRIES{
+        "maxretries",
+        5,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RETRIES, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<bool> READ_ONLY_NEW_ROWS{
+        "readonlynewrows",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(READ_ONLY_NEW_ROWS, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, HOST, PORT, DRIVER, POLL_INTERVAL_MS, SYNC_TABLE, QUERY, USERNAME, PASSWORD, DATABASE, TRUST_SERVER_CERTIFICATE);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, HOST, PORT, DRIVER, POLL_INTERVAL_MS, SYNC_TABLE, QUERY, USERNAME, PASSWORD, DATABASE, TRUST_SERVER_CERTIFICATE, MAX_RETRIES, READ_ONLY_NEW_ROWS);
 };
 
 }
