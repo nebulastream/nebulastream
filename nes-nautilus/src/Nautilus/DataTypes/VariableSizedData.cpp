@@ -37,14 +37,17 @@ RegularContent::RegularContent(nautilus::val<int8_t*> content, nautilus::val<uin
 
 nautilus::val<bool> RegularContent::operator==(const RegularContent& rhs) const
 {
+    if (contentSize != rhs.contentSize)
+    {
+        return false;
+    }
     return nautilus::memcmp(ptr, rhs.ptr, contentSize) == 0;
 }
 
 nautilus::val<bool> RegularContent::operator==(const CompoundContent& rhs) const
 {
-    const auto compareFirst = nautilus::memcmp(ptr, rhs.firstPtr, rhs.firstSize) == 0;
-    const auto compareSecond = nautilus::memcmp(ptr + rhs.firstSize, rhs.secondPtr, rhs.secondSize) == 0;
-    return compareFirst && compareSecond;
+    // Use operator definition in CompoundContent
+    return rhs == *this;
 }
 
 CompoundContent::CompoundContent(
@@ -75,7 +78,7 @@ nautilus::val<int8_t*> CompoundContent::getContent() const
 
 nautilus::val<bool> CompoundContent::operator==(const RegularContent& rhs) const
 {
-    if (firstPtr + secondSize != rhs.ptr)
+    if (firstPtr + secondSize != rhs.contentSize)
     {
         return false;
     }
@@ -127,7 +130,7 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableS
 
 nautilus::val<bool> VariableSizedData::isValid() const
 {
-    return std::visit([](const auto& c) { return c.isValid(); }, content);
+    return std::visit([](const auto& content) { return content.isValid(); }, content);
 }
 
 nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
@@ -152,7 +155,7 @@ nautilus::val<bool> VariableSizedData::operator!() const
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
-    return std::visit([](const auto& c) { return c.getContent(); }, content);
+    return std::visit([](const auto& content) { return content.getContent(); }, content);
 }
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
