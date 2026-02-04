@@ -100,6 +100,40 @@ FROM File(
 INTO output;
 ```
 
+#### Inline Events
+
+You can mix scripted events with inline test data to drive worker lifecycle changes while tuples are streamed. Add lines wrapped in
+angle brackets inside an `ATTACH INLINE` block. These lines are interpreted by the systest runner instead of being sent as tuples.
+
+Supported markers:
+- `<CRASH>`: terminate the local worker process used by systest.
+- `<RESTART>`: start a fresh worker; tuples scripted while the worker is down are dropped (no replay).
+- `<DELAY <milliseconds>>`: pause the script before continuing (omit the number for no delay).
+
+Notes:
+- Inline events only work with inline data on TCP physical sources. The systest runner injects `socket_host`/`socket_port`
+  automatically; keep the source type as `TCP` and do not override these settings.
+- Crash/restart scripts require running against a local worker so the runner can control the process lifecycle.
+
+Example:
+```sql
+CREATE LOGICAL SOURCE stream(i64 INT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE TCP;
+ATTACH INLINE
+10,0
+<CRASH>
+<RESTART>
+12,60
+13,170
+
+CREATE SINK sink(stream.start UINT64, stream.end UINT64, stream.cnt UINT64) TYPE File;
+
+SELECT start, end, COUNT(i64) as cnt FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sink;
+----
+0,100,2
+100,200,1
+```
+
 ### Sinks
 Sinks are also defined via SQL statements, can be written over multiple lines, and must be concluded with a semicolon or a trailing empty line.
 When creating a sink, the exact expected schema and the type of the sink must be provided.
