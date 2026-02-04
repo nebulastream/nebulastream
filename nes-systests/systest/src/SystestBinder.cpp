@@ -47,6 +47,7 @@
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -61,6 +62,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <InlineEventServer.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
 #include <QueryId.hpp>
@@ -77,7 +79,7 @@ namespace NES::Systest
 class SLTSinkFactory
 {
 public:
-    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog, std::vector<Host> possibleSinkPlacements)
+    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog, std::vector<WorkerId> possibleSinkPlacements)
         : sinkCatalog(std::move(sinkCatalog)), possibleSinkPlacements(std::move(possibleSinkPlacements))
     {
     }
@@ -99,17 +101,14 @@ public:
                     config["input_format"] = "CSV";
                 }
 
-                PRECONDITION(
-                    not possibleSinkPlacements.empty(),
-                    "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
-                std::string host = possibleSinkPlacements.at(0).getRawValue();
+                std::string host = possibleSinkPlacements.empty() ? "localhost" : possibleSinkPlacements.at(0).getRawValue();
                 if (auto hostIt = config.find("host"); hostIt != config.end())
                 {
                     host = hostIt->second;
                 }
 
                 const auto sink
-                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, Host(host), std::move(config));
+                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, WorkerId(host), std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -122,10 +121,7 @@ public:
     std::optional<SinkDescriptor>
     getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config)
     {
-        PRECONDITION(
-            not possibleSinkPlacements.empty(),
-            "Topology must list at least one worker in allow_sink_placement to assign a default inline sink host");
-        config.try_emplace("host", possibleSinkPlacements.at(0).getRawValue());
+        config.try_emplace("host", possibleSinkPlacements.empty() ? "localhost" : possibleSinkPlacements.at(0).getRawValue());
         return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config));
     }
 
@@ -150,7 +146,7 @@ public:
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
-    std::vector<Host> possibleSinkPlacements;
+    std::vector<WorkerId> possibleSinkPlacements;
     std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
         sinkProviders;
 };
@@ -249,6 +245,14 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
+    void setInlineEvents(
+        std::unordered_map<SourceDescriptor, InlineEventScript> scripts,
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> controllers)
+    {
+        inlineEventScripts = std::move(scripts);
+        inlineEventControllers = std::move(controllers);
+    }
+
     void optimizeQueries(const NES::LegacyOptimizer& optimizer)
     {
         if (!boundPlan.has_value())
@@ -313,6 +317,39 @@ public:
 
         auto planInfoTemplate = createPlanInfoOrException();
 
+        std::unordered_set<SourceDescriptor> usedSources;
+        if (optimizedPlan.has_value())
+        {
+            for (const auto& sourceOperator : getOperatorByType<SourceDescriptorLogicalOperator>(optimizedPlan.value().getGlobalPlan()))
+            {
+                usedSources.insert(sourceOperator->getSourceDescriptor());
+            }
+        }
+        if (sourcesToFilePathsAndCounts.has_value())
+        {
+            for (const auto& [source, _] : sourcesToFilePathsAndCounts.value())
+            {
+                usedSources.insert(source);
+            }
+        }
+
+        std::unordered_map<SourceDescriptor, InlineEventScript> queryInlineEventScripts;
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> queryInlineEventControllers;
+        for (const auto& [sourceDescriptor, script] : inlineEventScripts)
+        {
+            if (usedSources.contains(sourceDescriptor))
+            {
+                queryInlineEventScripts.emplace(sourceDescriptor, script);
+            }
+        }
+        for (const auto& [sourceDescriptor, controller] : inlineEventControllers)
+        {
+            if (usedSources.contains(sourceDescriptor))
+            {
+                queryInlineEventControllers.emplace(sourceDescriptor, controller);
+            }
+        }
+
         std::vector<SystestQuery> queries;
         queries.reserve(configurationOverrides.size());
         for (const auto& configurationOverride : configurationOverrides)
@@ -327,7 +364,9 @@ public:
                  .expectedResultsOrExpectedError = expectedResultsValue,
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = std::move(configurationOverride),
-                 .differentialQueryPlan = optimizedDifferentialQueryPlan});
+                 .differentialQueryPlan = optimizedDifferentialQueryPlan,
+                 .inlineEventScripts = queryInlineEventScripts,
+                 .inlineEventControllers = queryInlineEventControllers});
         }
         return queries;
     }
@@ -335,7 +374,7 @@ public:
     /// NOLINTEND(bugprone-unchecked-optional-access)
 
 private:
-    /// We could make all the fields just public and set them, but since some setters contain more complex logic, I wanted to keep access uniform.
+    /// We could make all the fields just public and set them, since some setters contain more complex logic.
     std::optional<TestName> testName;
     SystestQueryId queryIdInFile;
     std::optional<std::filesystem::path> testFilePath;
@@ -351,6 +390,8 @@ private:
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
     std::optional<DistributedLogicalPlan> optimizedDifferentialQueryPlan;
+    std::unordered_map<SourceDescriptor, InlineEventScript> inlineEventScripts;
+    std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> inlineEventControllers;
     bool built = false;
 };
 
@@ -367,9 +408,9 @@ struct SystestBinder::Impl
         , clusterConfiguration(std::move(clusterConfiguration))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
-        for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
+        for (const auto& [host, grpc, capacity, downstream, config] : this->clusterConfiguration.workers)
         {
-            workerCatalog->addWorker(host, data, capacity, downstream, config);
+            workerCatalog->addWorker(host, grpc, capacity, downstream, config);
         }
     }
 
@@ -427,7 +468,6 @@ struct SystestBinder::Impl
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<SystestQuery> queries;
         uint64_t loadedFiles = 0;
-
         for (const auto& testfile : discoveredTestFiles | std::views::values)
         {
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
@@ -451,7 +491,7 @@ struct SystestBinder::Impl
         return std::make_pair(queries, loadedFiles);
     }
 
-    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
+    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
@@ -518,22 +558,22 @@ struct SystestBinder::Impl
     [[nodiscard]] PhysicalSourceConfig setUpSourceWithTestData(
         PhysicalSourceConfig& physicalSourceConfig,
         std::shared_ptr<std::vector<std::jthread>> sourceThreads,
-        std::pair<TestDataIngestionType, std::vector<std::string>> testData) const
+        const TestData& testData) const
     {
-        switch (testData.first)
+        switch (testData.ingestionType)
         {
             case TestDataIngestionType::INLINE: {
                 const auto testFile = generateSourceFilePath();
                 return SourceDataProvider::provideInlineDataSource(
-                    std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads), testFile);
+                    std::move(physicalSourceConfig), testData.tuples, std::move(sourceThreads), testFile);
             }
             case TestDataIngestionType::FILE: {
-                if (testData.second.size() != 1)
+                if (testData.tuples.size() != 1)
                 {
                     throw UnknownException("Invalid State");
                 }
 
-                const std::filesystem::path testFilePath = generateSourceFilePath(testData.second[0]);
+                const std::filesystem::path testFilePath = generateSourceFilePath(testData.tuples[0]);
                 return SourceDataProvider::provideFileDataSource(std::move(physicalSourceConfig), std::move(sourceThreads), testFilePath);
             }
             default:
@@ -545,12 +585,13 @@ struct SystestBinder::Impl
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const CreatePhysicalSourceStatement& statement,
-        std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
+        std::optional<TestData> testData,
+        std::unordered_map<SourceDescriptor, InlineEventScript>& inlineEventScripts,
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>>& inlineEventControllers) const
     {
-        PRECONDITION(
-            not clusterConfiguration.allowSourcePlacement.empty(),
-            "Topology must list at least one worker in allow_source_placement to assign a default source host");
-        std::string host = clusterConfiguration.allowSourcePlacement.at(0).getRawValue();
+        std::string host = clusterConfiguration.allowSourcePlacement.empty()
+            ? "localhost"
+            : clusterConfiguration.allowSourcePlacement.at(0).getRawValue();
         auto sourceConfigCopy = statement.sourceConfig;
         if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
         {
@@ -567,9 +608,28 @@ struct SystestBinder::Impl
         std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
 
+        std::shared_ptr<InlineEventController> inlineEventController;
         if (testData.has_value())
         {
-            physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
+            const auto useInlineEventController = testData->inlineEventScript && testData->inlineEventScript->hasEvents();
+            if (!useInlineEventController)
+            {
+                physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, testData.value());
+            }
+            else
+            {
+                if (toUpperCase(statement.sourceType) != "TCP")
+                {
+                    NES_WARNING("Inline events are only supported for TCP sources. Forcing TCP instead of {}.", statement.sourceType);
+                }
+                physicalSourceConfig.type = "TCP";
+                inlineEventController = std::make_shared<InlineEventController>(*testData->inlineEventScript);
+                physicalSourceConfig.sourceConfig.emplace("socket_port", std::to_string(inlineEventController->getPort()));
+                const char* envHost = std::getenv("NES_SYSTEST_INLINE_EVENT_HOST");
+                const std::string defaultSocketHost = (envHost != nullptr && *envHost != '\0') ? envHost : "localhost";
+                physicalSourceConfig.sourceConfig.try_emplace("socket_host", defaultSocketHost);
+                physicalSourceConfig.sourceConfig.try_emplace("flush_interval_ms", "10");
+            }
         }
 
         const auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
@@ -581,13 +641,23 @@ struct SystestBinder::Impl
         if (const auto created = sourceCatalog->addPhysicalSource(
                 *logicalSource,
                 physicalSourceConfig.type,
-                Host(host),
+                WorkerId(host),
                 physicalSourceConfig.sourceConfig,
-                physicalSourceConfig.parserConfig);
-            not created.has_value())
+                physicalSourceConfig.parserConfig))
         {
-            throw Exception(created.error());
+            const auto hasInlineEvent = testData.has_value() && testData->inlineEventScript && testData->inlineEventScript->hasEvents();
+            if (hasInlineEvent)
+            {
+                inlineEventScripts.emplace(*created, *testData->inlineEventScript);
+                if (inlineEventController)
+                {
+                    inlineEventControllers.emplace(*created, inlineEventController);
+                }
+            }
+            return;
         }
+
+        throw InvalidQuerySyntax();
     }
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
@@ -606,7 +676,9 @@ struct SystestBinder::Impl
         SLTSinkFactory& sltSinkProvider,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
-        std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
+        std::optional<TestData> testData,
+        std::unordered_map<SourceDescriptor, InlineEventScript>& inlineEventScripts,
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>>& inlineEventControllers) const
     {
         const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
         const auto parseResult = managedParser->parseSingle();
@@ -627,7 +699,13 @@ struct SystestBinder::Impl
         }
         else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
         {
-            createPhysicalSource(sourceCatalog, sourceThreads, std::get<CreatePhysicalSourceStatement>(statement), std::move(testData));
+            createPhysicalSource(
+                sourceCatalog,
+                sourceThreads,
+                std::get<CreatePhysicalSourceStatement>(statement),
+                std::move(testData),
+                inlineEventScripts,
+                inlineEventControllers);
         }
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
@@ -663,10 +741,10 @@ struct SystestBinder::Impl
                 sourceConfig.emplace("file_path", filePath);
             }
 
-            PRECONDITION(
-                not clusterConfiguration.allowSourcePlacement.empty(),
-                "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
-            sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
+            sourceConfig.try_emplace(
+                "host",
+                clusterConfiguration.allowSourcePlacement.empty() ? "localhost"
+                                                                  : clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
@@ -725,7 +803,7 @@ struct SystestBinder::Impl
         const SystestQueryId& currentQueryNumberInTest,
         const TypedLogicalOperator<SinkLogicalOperator>& sinkOperator) const
     {
-        const std::string sinkName = sinkOperator->getSinkName();
+        const auto sinkName = sinkOperator->getSinkName();
 
         /// Replacing the sinkName with the created unique sink name
         const auto sinkForQuery = toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
@@ -827,14 +905,12 @@ struct SystestBinder::Impl
         SLTSinkFactory& sltSinkProvider,
         std::string leftQuery,
         std::string rightQuery,
-        const SystestQueryId currentQueryNumberInTest,
+        const SystestQueryId& currentQueryNumberInTest,
         const std::vector<ConfigurationOverride>& configOverrides) const
     {
         const auto differentialTestResultFileName = std::string(testFileName) + "differential";
 
         auto& currentTest = plans.emplace(currentQueryNumberInTest, SystestQueryBuilder{currentQueryNumberInTest}).first->second;
-
-
         currentTest.setConfigurationOverrides(configOverrides);
 
         try
@@ -869,10 +945,11 @@ struct SystestBinder::Impl
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
-        uint64_t sourceIndex = 0;
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
+        std::unordered_map<SourceDescriptor, InlineEventScript> inlineEventScripts;
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> inlineEventControllers;
         std::vector configOverrides{ConfigurationOverride{}};
         std::vector globalConfigOverrides{ConfigurationOverride{}};
         std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
@@ -959,8 +1036,18 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback(
-            [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+            [&, sourceCatalog](const std::string& query, std::optional<TestData> input)
+            {
+                createCallback(
+                    binder,
+                    sourceCatalog,
+                    sltSinkProvider,
+                    sourceThreads,
+                    query,
+                    std::move(input),
+                    inlineEventScripts,
+                    inlineEventControllers);
+            });
 
         try
         {
@@ -969,16 +1056,17 @@ struct SystestBinder::Impl
         catch (Exception& exception)
         {
             tryLogCurrentException();
-            exception.what() += fmt::format("Could not successfully parse and bind test file://{}", testFilePath.string());
+            exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
             throw;
         }
         return plans
             | std::ranges::views::transform(
-                   [&testFilePath, this, testFileName, &sourceThreads](auto& pair)
+                   [&testFilePath, this, testFileName, &sourceThreads, &inlineEventScripts, &inlineEventControllers](auto& pair)
                    {
                        pair.second.setPaths(testFilePath, workingDir);
                        pair.second.setName(std::string{testFileName});
                        pair.second.setAdditionalSourceThreads(sourceThreads);
+                       pair.second.setInlineEvents(inlineEventScripts, inlineEventControllers);
                        return pair.second;
                    })
             | std::ranges::to<std::vector>();
@@ -1008,4 +1096,5 @@ std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(
 }
 
 SystestBinder::~SystestBinder() = default;
+
 }

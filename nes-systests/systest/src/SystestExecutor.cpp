@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -28,14 +27,13 @@
 #include <optional>
 #include <random>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <unistd.h>
-#include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
+
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -46,14 +44,11 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
-#include <nlohmann/json_fwd.hpp>
-#include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <SystestConfiguration.hpp>
-#include <SystestProgressTracker.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
@@ -90,6 +85,23 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     std::exit(1); ///NOLINT(concurrency-mt-unsafe)
 }
 
+std::vector<Systest::SystestQuery> filterQueriesForRemoteExecution(const std::vector<Systest::SystestQuery>& queries)
+{
+    std::vector<Systest::SystestQuery> filtered;
+    filtered.reserve(queries.size());
+    for (const auto& query : queries)
+    {
+        if (!query.configurationOverride.overrideParameters.empty())
+        {
+            std::cout << "Skipping query with configuration override in remote mode: " << query.testName << ":"
+                      << query.queryIdInFile.toString() << "\n";
+            continue;
+        }
+        filtered.push_back(query);
+    }
+    return filtered;
+}
+
 [[noreturn]] void runEndlessRemote(
     const OverrideQueriesMap& queriesByOverride,
     std::mt19937& rng,
@@ -97,13 +109,11 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const SystestClusterConfiguration& clusterConfig,
     Systest::SystestProgressTracker& progressTracker)
 {
-    auto workerCatalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    if (queriesByOverride.empty())
     {
-        workerCatalog->addWorker(host, data, capacity, downstream, config);
+        std::cout << "No queries to run in remote endless mode.\n";
+        std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
-
-    Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createGRPCBackend()));
 
     while (true)
     {
@@ -118,8 +128,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         {
             auto shuffledQueries = entry.second;
             std::ranges::shuffle(shuffledQueries, rng);
-            const auto failedQueries = Systest::runQueries(
-                shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+            const auto failedQueries
+                = Systest::runQueriesAtRemoteWorker(shuffledQueries, numberConcurrentQueries, clusterConfig, progressTracker);
             exitOnFailureIfNeeded(failedQueries, shuffledQueries.size());
         }
     }
@@ -150,19 +160,10 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
 
-            auto workerCatalog = std::make_shared<WorkerCatalog>();
-            for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
-            {
-                workerCatalog->addWorker(host, data, capacity, downstream, config);
-            }
-
-            Systest::QuerySubmitter querySubmitter(
-                std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
-
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);
-            const auto failedQueries = Systest::runQueries(
-                shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+            const auto failedQueries
+                = Systest::runQueriesAtLocalWorker(shuffledQueries, numberConcurrentQueries, clusterConfig, configCopy, progressTracker);
             exitOnFailureIfNeeded(failedQueries, shuffledQueries.size());
         }
     }
@@ -198,7 +199,16 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
 
     if (config.remoteWorker.getValue())
     {
-        runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, progressTracker);
+        OverrideQueriesMap filteredQueriesByOverride;
+        for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
+        {
+            auto filtered = filterQueriesForRemoteExecution(queriesForConfig);
+            if (!filtered.empty())
+            {
+                filteredQueriesByOverride.emplace(overrideConfig, std::move(filtered));
+            }
+        }
+        runEndlessRemote(filteredQueriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, progressTracker);
     }
     else
     {
@@ -217,7 +227,7 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
         return;
     }
 
-    if (exists(symlinkPath, errorCode) || is_symlink(symlinkPath, errorCode))
+    if (exists(symlinkPath) || is_symlink(symlinkPath))
     {
         std::filesystem::remove(symlinkPath, errorCode);
         if (errorCode)
@@ -331,10 +341,19 @@ SystestExecutorResult SystestExecutor::executeSystests()
         std::vector<Systest::RunningQuery> failedQueries;
         if (config.remoteWorker.getValue())
         {
+            const auto remoteQueries = filterQueriesForRemoteExecution(queries);
             progressTracker.reset();
-            progressTracker.setTotalQueries(queries.size());
-            auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig, progressTracker);
-            failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+            progressTracker.setTotalQueries(remoteQueries.size());
+
+            if (!remoteQueries.empty())
+            {
+                auto failed = runQueriesAtRemoteWorker(remoteQueries, numberConcurrentQueries, config.clusterConfig, progressTracker);
+                failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+            }
+            else
+            {
+                std::cout << "No queries to run in remote mode.\n";
+            }
         }
         else
         {

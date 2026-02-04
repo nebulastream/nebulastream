@@ -20,4 +20,5 @@ add_source_files(nes-systest-lib
         SystestConfiguration.cpp
         QuerySubmitter.cpp
         SystestBinder.cpp
+        InlineEventServer.cpp
 )

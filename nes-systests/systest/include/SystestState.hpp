@@ -25,6 +25,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -33,11 +34,15 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <DistributedLogicalPlan.hpp>
@@ -45,6 +50,7 @@
 #include <SystestConfiguration.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Systest
 {
@@ -96,8 +102,46 @@ struct hash<NES::Systest::ConfigurationOverride>
 namespace NES::Systest
 {
 
+enum class TestDataIngestionType : uint8_t
+{
+    INLINE,
+    FILE
+};
+
+enum class InlineActionType : uint8_t
+{
+    SendTuple,
+    DelayMs,
+    CrashWorker,
+    RestartWorker
+};
+
+struct InlineAction
+{
+    InlineActionType type = InlineActionType::SendTuple;
+    std::string tuple;
+    std::optional<uint64_t> payload;
+};
+
+struct InlineEventScript
+{
+    std::vector<InlineAction> actions;
+
+    [[nodiscard]] bool hasEvents() const
+    {
+        return std::ranges::any_of(actions, [](const InlineAction& action) { return action.type != InlineActionType::SendTuple; });
+    }
+};
+
+struct TestData
+{
+    TestDataIngestionType ingestionType{TestDataIngestionType::INLINE};
+    std::vector<std::string> tuples;
+    std::optional<InlineEventScript> inlineEventScript;
+};
 
 class SystestRunner;
+class InlineEventController;
 
 using TestName = std::string;
 using TestGroup = std::string;
@@ -152,6 +196,8 @@ struct SystestQuery
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         Schema sinkOutputSchema;
 
+        PlanInfo() = delete;
+
         PlanInfo(
             DistributedLogicalPlan plan,
             std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources,
@@ -199,6 +245,8 @@ struct SystestQuery
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
+    std::unordered_map<SourceDescriptor, InlineEventScript> inlineEventScripts;
+    std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> inlineEventControllers;
 };
 
 struct RunningQuery
@@ -206,7 +254,7 @@ struct RunningQuery
     SystestQuery systestQuery;
     DistributedQueryId queryId{DistributedQueryId::INVALID};
     std::optional<DistributedQueryId> differentialQueryPair;
-    DistributedQueryStatus queryStatus;
+    DistributedQueryStatus queryStatus{};
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;
