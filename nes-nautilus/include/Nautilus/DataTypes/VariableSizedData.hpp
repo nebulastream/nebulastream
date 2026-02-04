@@ -40,7 +40,7 @@ struct RegularContent
     nautilus::val<int8_t*> ptr;
     nautilus::val<uint64_t> contentSize;
 
-    RegularContent(nautilus::val<int8_t*> content, nautilus::val<uint64_t> size);
+    RegularContent(const nautilus::val<int8_t*>& content, nautilus::val<uint64_t> size);
 
     [[nodiscard]] nautilus::val<int8_t*> getContent() const { return ptr; }
 
@@ -62,10 +62,10 @@ struct CompoundContent
 
     CompoundContent(
         ArenaRef* arena,
-        nautilus::val<int8_t*> first,
-        nautilus::val<uint64_t> firstSz,
-        nautilus::val<int8_t*> second,
-        nautilus::val<uint64_t> secondSz);
+        const nautilus::val<int8_t*>& first,
+        nautilus::val<uint64_t> firstSize,
+        const nautilus::val<int8_t*>& second,
+        nautilus::val<uint64_t> secondSize);
 
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
 
