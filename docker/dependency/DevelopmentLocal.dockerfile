@@ -13,7 +13,7 @@ RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     (delgroup ubuntu || true) && \
     (deluser ubuntu || true) && \
     addgroup --gid ${GID} ${USERNAME} && \
-    adduser --uid ${UID} --gid ${GID} ${USERNAME})) && \
-    chown -R ${UID}:${GID} ${NES_PREBUILT_VCPKG_ROOT}
+    adduser --uid ${UID} --gid ${GID} ${USERNAME} && \
+    chown -R ${UID}:${GID} ${NES_PREBUILT_VCPKG_ROOT}))
 
 USER ${USERNAME}

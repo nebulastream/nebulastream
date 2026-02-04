@@ -164,7 +164,16 @@ fi
 
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
-TAG=${HASH}-${STDLIB}-${SANITIZER}
+ARCH=$(uname -m)
+if [ "$ARCH" == "x86_64" ]; then
+   ARCH="x64"
+elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+   ARCH="arm64"
+else
+  echo -e "${RED}Arch: $ARCH is not supported. Only x86_64 and aarch64|arm64 are handled. Arch is determined using 'uname -m'${NC}"
+  exit 1
+fi
+TAG=${HASH}-${ARCH}-${STDLIB}-${SANITIZER}
 
 # Docker on macOS appears to always enable the mapping from the container root user to the hosts current
 # user
@@ -189,28 +198,34 @@ if docker info -f "{{println .SecurityOptions}}" | grep -q rootless || [ "$FORCE
   USE_USERNAME=root
 fi
 
-ARCH=$(uname -m)
-if [ "$ARCH" == "x86_64" ]; then
-   ARCH="x64"
-elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-   ARCH="arm64"
-else
-  echo -e "${RED}Arch: $ARCH is not supported. Only x86_64 and aarch64|arm64 are handled. Arch is determined using 'uname -m'${NC}"
-  exit 1
-fi
 
 if [ $BUILD_LOCAL -eq 1 ]; then
   echo "Building local docker images using hash: ${HASH}."
   echo "This might take a while..."
   docker build -f docker/dependency/Base.dockerfile -t nebulastream/nes-development-base:local .
 
-  docker build -f docker/dependency/Dependency.dockerfile \
-          --build-arg VCPKG_DEPENDENCY_HASH=${HASH} \
-          --build-arg TAG=local \
-          --build-arg STDLIB=${STDLIB} \
-          --build-arg ARCH=${ARCH} \
-          --build-arg SANITIZER=${SANITIZER} \
-          -t nebulastream/nes-development-dependency:local .
+  if [[ -n "$R2_KEY" && -n "$R2_SECRET" && -n "$R2_ACCOUNT_ID" ]]; then
+      echo "Secrets found. Building with R2 cache..."
+      docker build -f docker/dependency/Dependency.dockerfile \
+              --build-arg VCPKG_DEPENDENCY_HASH="${HASH}" \
+              --secret id=R2_KEY,env=R2_KEY \
+              --secret id=R2_SECRET,env=R2_SECRET \
+              --secret id=R2_ACCOUNT_ID,env=R2_ACCOUNT_ID \
+              --build-arg TAG=local \
+              --build-arg STDLIB="${STDLIB}" \
+              --build-arg ARCH="${ARCH}" \
+              --build-arg SANITIZER="${SANITIZER}" \
+              -t nebulastream/nes-development-dependency:local .
+  else
+      echo "Missing secrets. Building without R2 cache..."
+      docker build -f docker/dependency/Dependency.dockerfile \
+              --build-arg VCPKG_DEPENDENCY_HASH="${HASH}" \
+              --build-arg TAG=local \
+              --build-arg STDLIB="${STDLIB}" \
+              --build-arg ARCH="${ARCH}" \
+              --build-arg SANITIZER="${SANITIZER}" \
+              -t nebulastream/nes-development-dependency:local .
+  fi
 
   docker build -f docker/dependency/Development.dockerfile \
             --build-arg TAG=local \
