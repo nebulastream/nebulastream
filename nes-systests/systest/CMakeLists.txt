@@ -180,3 +180,13 @@ if (ENABLE_DOCKER_TESTS AND ENABLE_BATS_TESTS)
     )
     set_tests_properties(systest-remote-test PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
 endif ()
+
+add_test(
+        NAME test-container-test
+        COMMAND
+        env SYSTEST=$<TARGET_FILE:systest>
+        env NES_DIR=${CMAKE_SOURCE_DIR}
+        env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+        ${BATS} ${CMAKE_CURRENT_SOURCE_DIR}/test-container-test/test_container_test.bats
+)
+set_tests_properties(test-container-test PROPERTIES LABELS "DockerCompose")
