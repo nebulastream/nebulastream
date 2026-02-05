@@ -203,13 +203,13 @@ DOCKER_SYSTEST() {
 
 @test "two node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
-  run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
+  run DOCKER_SYSTEST -e large tcp TestContainer --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  run DOCKER_SYSTEST -e large tcp TestContainer --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
 
@@ -218,6 +218,6 @@ DOCKER_SYSTEST() {
     skip "Large tests disabled (ENABLE_LARGE_TESTS=$ENABLE_LARGE_TESTS)"
   fi
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
-  run DOCKER_SYSTEST -g large -e tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
+  run DOCKER_SYSTEST -g large -e tcp TestContainer --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
 }
