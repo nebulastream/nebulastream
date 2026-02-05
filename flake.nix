@@ -80,6 +80,7 @@
           python3
           openjdk21
           reflect_cppPkg
+          paho-mqtt-cpp
         ]);
 
         antlr4Jar = pkgs.fetchurl {
