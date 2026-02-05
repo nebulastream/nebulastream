@@ -27,5 +27,7 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.40 && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-$(dpkg --print-architecture) && \
     chmod +x /bin/grpc_health_probe
 
+VOLUME /state
+ENV XDG_STATE_HOME=/state
 COPY --from=build /tmp/bin /usr/bin
 ENTRYPOINT ["nes-cli"]
