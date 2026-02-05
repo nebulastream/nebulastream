@@ -11,14 +11,14 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(MQTT Sink nes-sinks-registry mqtt_sink_plugin MQTTSink.cpp)
-add_plugin_as_library(MQTT SinkValidation nes-sinks-registry mqtt_sink_validation_plugin MQTTSink.cpp)
+add_plugin_as_library(MQTT Sink nes-sinks-registry mqtt_sink_plugin_library MQTTSink.cpp)
+add_plugin_as_library(MQTT SinkValidation nes-sinks-registry mqtt_sink_validation_plugin_library MQTTSink.cpp)
 
-target_include_directories(mqtt_sink_plugin
+target_include_directories(mqtt_sink_plugin_library
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(mqtt_sink_validation_plugin
+target_include_directories(mqtt_sink_validation_plugin_library
         PUBLIC include
         PRIVATE .
 )
