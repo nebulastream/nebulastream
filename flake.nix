@@ -220,6 +220,10 @@
                 pkgs.openjdk21
                 pkgs.howard-hinnant-date
                 pkgs.libuuid
+                # paho-mqtt-cpp's CMake config does find_dependency(eclipse-paho-mqtt-c),
+                # so the C client has to be on CMAKE_PREFIX_PATH as well.
+                pkgs.paho-mqtt-c
+                pkgs.paho-mqtt-cpp
                 ireeruntimePkg
               ];
           in {
