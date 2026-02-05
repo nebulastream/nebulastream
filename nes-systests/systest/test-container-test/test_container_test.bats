@@ -91,6 +91,11 @@ EOF
     && echo "deb-src [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
     && apt update -y \
     && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
+    RUN curl -sSL -O https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb && \
+                dpkg -i packages-microsoft-prod.deb && \
+                rm packages-microsoft-prod.deb && \
+                apt-get update && \
+                ACCEPT_EULA=Y apt-get install -y msodbcsql18
 
     COPY systest /usr/bin
 EOF
@@ -114,6 +119,9 @@ function setup_distributed() {
   cat $NES_DIR/nes-systests/systest/test-container-test/mosquitto.conf > mosquitto.conf
   cat $NES_DIR/nes-systests/systest/test-container-test/mqtt-data.jsonl > mqtt-data.jsonl
 
+  # setup MSSQL Server container
+  cat $NES_DIR/nes-systests/systest/test-container-test/init-db.sql > init-db.sql
+
   $NES_DIR/nes-systests/systest/test-container-test/create_test_containers.sh > docker-compose.yaml
   echo "Running docker compose up" >&3
   docker compose up -d --wait 2>/dev/null
@@ -124,7 +132,7 @@ DOCKER_SYSTEST() {
   docker compose run -q --rm systest systest --workingDir $(pwd)/workdir "$@" 2>&3
 }
 
-@test "mqtt source test" {
+@test "test container tests" {
   setup_distributed
   run DOCKER_SYSTEST --groups TestContainer
 
