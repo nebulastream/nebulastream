@@ -74,6 +74,7 @@
           tbb
           python3
           openjdk21
+          paho-mqtt-cpp
         ]);
 
         antlr4Jar = pkgs.fetchurl {
