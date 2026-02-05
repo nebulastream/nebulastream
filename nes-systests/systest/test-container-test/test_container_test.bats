@@ -110,6 +110,10 @@ teardown() {
 }
 
 function setup_distributed() {
+  # setup the MQTT container
+  cat $NES_DIR/nes-systests/systest/test-container-test/mosquitto.conf > mosquitto.conf
+  cat $NES_DIR/nes-systests/systest/test-container-test/mqtt-data.jsonl > mqtt-data.jsonl
+
   $NES_DIR/nes-systests/systest/test-container-test/create_test_containers.sh > docker-compose.yaml
   echo "Running docker compose up" >&3
   docker compose up -d --wait 2>/dev/null
@@ -120,7 +124,7 @@ DOCKER_SYSTEST() {
   docker compose run -q --rm systest systest --workingDir $(pwd)/workdir "$@" 2>&3
 }
 
-@test "dummy test container test" {
+@test "mqtt source test" {
   setup_distributed
   run DOCKER_SYSTEST --groups TestContainer
 
