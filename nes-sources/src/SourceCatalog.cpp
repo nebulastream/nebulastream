@@ -15,6 +15,7 @@
 #include <Sources/SourceCatalog.hpp>
 
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -65,7 +66,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
     return std::nullopt;
 }
 
-std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
+std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
     const std::string_view sourceType,
     std::unordered_map<std::string, std::string> descriptorConfig,
@@ -76,20 +77,21 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     const auto logicalPhysicalIter = logicalToPhysicalSourceMapping.find(logicalSource);
     if (logicalPhysicalIter == logicalToPhysicalSourceMapping.end())
     {
-        NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist", logicalSource.getLogicalSourceName());
-        return std::nullopt;
+        NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist.", logicalSource.getLogicalSourceName());
+        return std::unexpected{UnknownSourceName("Logical source {} does not exist.", logicalSource.getLogicalSourceName())};
     }
     auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
     auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType, std::move(descriptorConfig));
     if (not descriptorConfigOpt.has_value())
     {
-        return std::nullopt;
+        return std::unexpected{
+            UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activate it.", sourceType)};
     }
 
     auto parserConfigObject = ParserConfig::create(parserConfig);
     if (not contains(parserConfigObject.parserType))
     {
-        throw InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType);
+        return std::unexpected{InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType)};
     }
 
     SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfigObject};
