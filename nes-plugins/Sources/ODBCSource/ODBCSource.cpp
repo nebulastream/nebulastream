@@ -158,21 +158,32 @@ void ODBCSource::open(std::shared_ptr<AbstractBufferProvider>)
     /// We don't want to catch errors here, but further up in the query engine
     connection->connect(connectionString, this->syncTable, this->query);
     this->fetchedSizeOfRow = this->connection->getFetchedSizeOfRow();
-    NES_WARNING("ODBC inferred row size is: {}", this->fetchedSizeOfRow);
-    NES_DEBUG("ODBCSource connected successfully.");
+    // NES_WARNING("ODBC inferred row size is: {}", this->fetchedSizeOfRow);
+    // NES_DEBUG("ODBCSource connected successfully.");
 }
 
 Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::stop_token&)
 {
     /// fetch as many rows as possible until buffer is full
+    if (this->fetchedSizeOfRow == 0)
+    {
+        NES_ERROR("Tried to divide by 0");
+        return FillTupleBufferResult::eos();
+    }
     const size_t maxRowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
 
     ODBCPollStatus pollStatus{ODBCPollStatus::NO_NEW_ROWS};
-    while (pollStatus == ODBCPollStatus::NO_NEW_ROWS)
+    size_t retryCount = 0;
+    constexpr size_t MAX_RETRIES = 5;
+    while (pollStatus == ODBCPollStatus::NO_NEW_ROWS or retryCount >= MAX_RETRIES)
     {
         /// wait for data to arrive
         std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
         pollStatus = this->connection->executeQuery(this->query, tupleBuffer, bufferProvider, maxRowsPerBuffer);
+        if (++retryCount >= MAX_RETRIES)
+        {
+            return FillTupleBufferResult::eos();
+        }
     }
     const auto numberOfTuples = tupleBuffer.getNumberOfTuples() / this->fetchedSizeOfRow;
     return FillTupleBufferResult::withBytes(numberOfTuples);

@@ -289,6 +289,7 @@ void ODBCConnection::connect(const std::string& connectionString, const std::str
     SQLCHAR outConnectionString[1024];
     SQLSMALLINT outConnectionStringLength;
 
+    NES_DEBUG("Attempting connection with: {}",  connectionString);
     std::cout << "Attempting connection with: " << connectionString << '\n';
 
     SQLRETURN ret = SQLDriverConnect(
@@ -305,6 +306,8 @@ void ODBCConnection::connect(const std::string& connectionString, const std::str
 
     std::cout << "Successfully connected to MS SQL Server!\n";
     std::cout << "Connection string used: " << reinterpret_cast<char*>(outConnectionString) << '\n';
+    NES_DEBUG("Successfully connected to MS SQL Server!");
+    NES_DEBUG("Connection string used: {}", reinterpret_cast<char*>(outConnectionString));
 
     // Allocate statement handle
     ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
@@ -320,7 +323,8 @@ void ODBCConnection::connect(const std::string& connectionString, const std::str
     {
         checkError(ret, SQL_HANDLE_STMT, hstmtCount, "Prepare failed");
     }
-    this->rowCountTracker = syncRowCount();
+    // this->rowCountTracker = syncRowCount();
+    this->rowCountTracker = 0;
 }
 
 SQLRETURN ODBCConnection::readVarSized(
