@@ -80,7 +80,8 @@ INGORED_ENDINGS = {
     "jsonl",
     "onnx",
     "gitkeep",
-    "gitattributes"
+    "gitattributes",
+    "conf"
 }
 
 VENDORED_FILES = {
