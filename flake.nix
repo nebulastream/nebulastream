@@ -220,6 +220,7 @@
                 pkgs.openjdk21
                 pkgs.howard-hinnant-date
                 pkgs.libuuid
+                pkgs.paho-mqtt-cpp
               ];
           in {
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
