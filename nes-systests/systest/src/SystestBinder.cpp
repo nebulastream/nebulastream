@@ -516,12 +516,11 @@ struct SystestBinder::Impl
         }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                *logicalSource, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
+                *logicalSource, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig);
+            not created.has_value())
         {
-            return;
+            throw Exception(created.error());
         }
-
-        throw InvalidQuerySyntax();
     }
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
@@ -890,7 +889,7 @@ struct SystestBinder::Impl
         catch (Exception& exception)
         {
             tryLogCurrentException();
-            exception.what() += fmt::format("Could not successfully parse test file://{}", testFilePath.string());
+            exception.what() += fmt::format("Could not successfully parse and bind test file://{}", testFilePath.string());
             throw;
         }
         return plans

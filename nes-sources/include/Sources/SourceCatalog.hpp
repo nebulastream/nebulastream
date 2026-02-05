@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <expected>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -56,7 +57,7 @@ public:
 
     /// @brief creates a new physical source and associates it with a logical source
     /// @return nullopt if the logical source is not registered anymore, otherwise a source descriptor with an assigned id
-    [[nodiscard]] std::optional<SourceDescriptor> addPhysicalSource(
+    [[nodiscard]] std::expected<SourceDescriptor, Exception> addPhysicalSource(
         const LogicalSource& logicalSource,
         std::string_view sourceType,
         std::unordered_map<std::string, std::string> descriptorConfig,
