@@ -46,7 +46,8 @@
     "scope-guard",
     "boost-url",
     "simdjson",
-    "paho-mqttpp3"
+    "paho-mqttpp3",
+    "unixodbc"
   ],
   "overrides": [
     {

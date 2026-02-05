@@ -31,6 +31,8 @@ services:
         condition: service_healthy
       mqtt_producer:
         condition: service_completed_successfully
+      db_init:
+        condition: service_completed_successfully
 
   mqtt_broker:
     image: eclipse-mosquitto:2.0
@@ -66,6 +68,32 @@ services:
       done < /mqtt-data.jsonl;
       echo "All messages published";
       '
+
+  sql_server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql_server_container
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=samplePassword1!
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./init-db.sql:/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'samplePassword1!' -C -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  db_init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sql_server:
+        condition: service_healthy
+    command: /opt/mssql-tools18/bin/sqlcmd -S sql_server -U sa -P 'samplePassword1!' -C -i /init-db.sql
+    volumes:
+      - ./init-db.sql:/init-db.sql:ro
 
 volumes:
   mosquitto_data:
