@@ -164,7 +164,7 @@ fi
 
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
-TAG=${HASH}-${STDLIB}-${SANITIZER}
+TAG=${HASH}-x64-${STDLIB}-${SANITIZER}
 
 # Docker on macOS appears to always enable the mapping from the container root user to the hosts current
 # user

@@ -35,6 +35,27 @@ CREATE SINK sinkNewIdNewValueNewTimestamp(new_field_1 UINT64, stream.id UINT64, 
 CREATE SINK sinkIdNewIdValueTimeStamp(stream.id UINT64, new_id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
 CREATE SINK sinkNewIdIdValueTimestamp(new_id UINT64, stream.id UINT64, value UINT64, timestamp UINT64)  TYPE File;
 
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
+
+# 1: [id]
+SELECT id FROM stream INTO sinkId;
+----
+1
+2
+3
+4
+5
+6
+7
 
 # 1: [id]
 SELECT id FROM stream INTO sinkId;
