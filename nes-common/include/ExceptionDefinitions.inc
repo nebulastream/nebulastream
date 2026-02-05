@@ -51,7 +51,7 @@ EXCEPTION(UnknownFunctionType, 2105, "unknown function type")
 EXCEPTION(UnknownSinkType, 2106, "unknown sink type")
 EXCEPTION(UnknownSourceType, 2107, "unknown source type")
 EXCEPTION(UnknownSinkFormat, 2108, "unknown sink format")
-EXCEPTION(UnknownSourceFormat, 2109, "unknown source format")
+
 EXCEPTION(UnknownPhysicalOperator, 2110, "unknown physical operator")
 EXCEPTION(UnknownLogicalOperator, 2111, "unknown logical operator")
 EXCEPTION(UnknownUserDefinedFunctionType, 2112, "unknown user defined function type")
