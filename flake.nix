@@ -221,6 +221,7 @@
                 pkgs.howard-hinnant-date
                 pkgs.libuuid
                 ireeruntimePkg
+                pkgs.paho-mqtt-cpp
               ];
           in {
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
