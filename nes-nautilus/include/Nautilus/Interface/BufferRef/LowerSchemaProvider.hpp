@@ -17,8 +17,10 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 
 namespace NES
 {
@@ -36,11 +38,13 @@ enum class MemoryLayoutType : uint8_t
 class LowerSchemaProvider
 {
 public:
-    static std::shared_ptr<TupleBufferRef>
-    lowerSchemaWithOutputFormat(uint64_t bufferSize, const Schema& schema, const std::string& outputFormatterType);
+    static std::shared_ptr<TupleBufferRef> lowerSchemaWithOutputFormat(
+        uint64_t bufferSize,
+        const Schema& schema,
+        const std::string& outputFormatterType,
+        const std::unordered_map<std::string, std::string>& config);
 
-    static std::shared_ptr<TupleBufferRef>
-    lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
+    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
 };
 
 }

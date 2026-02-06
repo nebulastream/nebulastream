@@ -13,13 +13,14 @@
 */
 #pragma once
 
-#include <memory>
+#include <optional>
 #include <string>
-#include <OutputFormatters/OutputFormatter.hpp>
-#include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <string_view>
+#include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 
-namespace NES::OutputFormatterProvider
+namespace NES::OutputFormatterValidationProvider
 {
-[[nodiscard]] std::shared_ptr<OutputFormatter>
-provideOutputFormatter(std::string outputFormatterType, size_t numberOfFields, const OutputFormatterDescriptor& descriptor);
+/// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
+std::optional<DescriptorConfig::Config> provide(std::string_view outputFormat, std::unordered_map<std::string, std::string> stringConfig);
 }

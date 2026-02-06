@@ -27,14 +27,19 @@
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/OutputFormatterProvider.hpp>
+#include <OutputFormatters/OutputFormatterValidationProvider.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchemaWithOutputFormat(const uint64_t bufferSize, const Schema& schema, const std::string& outputFormatterType)
+std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
+    const uint64_t bufferSize,
+    const Schema& schema,
+    const std::string& outputFormatterType,
+    const std::unordered_map<std::string, std::string>& config)
 {
     std::vector<OutputFormatterBufferRef::Field> fields;
     fields.reserve(schema.getNumberOfFields());
@@ -50,18 +55,20 @@ LowerSchemaProvider::lowerSchemaWithOutputFormat(const uint64_t bufferSize, cons
         0UL,
         [](auto size, const OutputFormatterBufferRef::Field& field) { return size + field.type.getSizeInBytes(); });
 
+    /// Create the output formatter descriptor
+    auto descriptorConfigOpt = OutputFormatterValidationProvider::provide(outputFormatterType, config);
+    INVARIANT(descriptorConfigOpt.has_value(), "Parameter config for output format of type {} could not be validated", outputFormatterType);
+    const OutputFormatterDescriptor descriptor(descriptorConfigOpt.value());
+
     /// Create a output formatter instance by calling the registry
     const std::shared_ptr<OutputFormatter> outputFormatter
-        = OutputFormatterProvider::provideOutputFormatter(outputFormatterType, schema.getNumberOfFields());
+        = OutputFormatterProvider::provideOutputFormatter(outputFormatterType, schema.getNumberOfFields(), descriptor);
 
-    return std::make_shared<OutputFormatterBufferRef>(
-        OutputFormatterBufferRef{std::move(fields), outputFormatter, tupleSize, bufferSize});
+    return std::make_shared<OutputFormatterBufferRef>(OutputFormatterBufferRef{std::move(fields), outputFormatter, tupleSize, bufferSize});
 }
 
-std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
-    const uint64_t bufferSize,
-    const Schema& schema,
-    const MemoryLayoutType layoutType)
+std::shared_ptr<TupleBufferRef>
+LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType)
 {
     /// For now, we assume that the fields lie in the exact same order as in the Schema. Later on, we can have a separate optimizer phase
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.

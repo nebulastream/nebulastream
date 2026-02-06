@@ -66,14 +66,20 @@ public:
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
+    [[nodiscard]] std::unordered_map<std::string, std::string> getOutputFormatterConfig() const;
 
 private:
     explicit SinkDescriptor(
-        std::variant<std::string, uint64_t> sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+        std::variant<std::string, uint64_t> sinkName,
+        const Schema& schema,
+        std::string_view sinkType,
+        const std::unordered_map<std::string, std::string>& formatConfig,
+        DescriptorConfig::Config config);
 
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
+    std::unordered_map<std::string, std::string> formatConfig;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)

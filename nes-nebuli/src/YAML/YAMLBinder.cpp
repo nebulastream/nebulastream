@@ -75,6 +75,7 @@ struct convert<NES::CLI::Sink>
         rhs.type = node["type"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -186,11 +187,12 @@ std::vector<SourceDescriptor> CLI::YAMLBinder::bindRegisterPhysicalSources(const
 std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector<Sink>& unboundSinks)
 {
     std::vector<SinkDescriptor> boundSinks{};
-    for (const auto& [sinkName, schemaFields, sinkType, sinkConfig] : unboundSinks)
+    for (const auto& [sinkName, schemaFields, sinkType, formatConfig, sinkConfig] : unboundSinks)
     {
         auto schema = bindSchema(schemaFields);
         NES_DEBUG("Adding sink: {} of type {}", sinkName, sinkType);
-        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, sinkConfig); sinkDescriptor.has_value())
+        if (auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, sinkType, sinkConfig, formatConfig);
+            sinkDescriptor.has_value())
         {
             boundSinks.push_back(sinkDescriptor.value());
         }

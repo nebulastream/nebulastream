@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <JSONOutputFormatter.hpp>
+#include "JSONOutputFormatter.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -21,13 +21,14 @@
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <fmt/format.h>
 #include <OutputFormatterRegistry.hpp>
+#include <OutputFormatterValidationRegistry.hpp>
 #include <static.hpp>
 #include <val.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES
 {
@@ -322,9 +323,20 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
         bufferProvider);
 }
 
+DescriptorConfig::Config JSONOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersJSON>(std::move(config), "JSON");
+}
+
 std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
 {
     return out << fmt::format("JSONOutputFormatter()");
+}
+
+OutputFormatterValidationRegistryReturnType
+OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
+{
+    return JSONOutputFormatter::validateAndFormat(std::move(args.config));
 }
 
 OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)

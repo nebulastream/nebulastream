@@ -23,6 +23,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -36,13 +37,15 @@
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
-#include "Nautilus/Interface/Record.hpp"
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <OutputFormatterValidationRegistry.hpp>
 
 namespace NES
 {
-CSVOutputFormatter::CSVOutputFormatter(const size_t numberOfFields, const bool escapeStrings)
-    : OutputFormatter(numberOfFields), escapeStrings(escapeStrings)
+CSVOutputFormatter::CSVOutputFormatter(const size_t numberOfFields, const OutputFormatterDescriptor& descriptor)
+    : OutputFormatter(numberOfFields), escapeStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::ESCAPE_STRINGS))
 {
 }
 
@@ -306,9 +309,19 @@ std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)
     return out << fmt::format("CSVOutputFormatter(Escape Strings: {})", format.escapeStrings);
 }
 
+DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersCSV>(std::move(config), "CSV");
+}
+
+OutputFormatterValidationRegistryReturnType OutputFormatterValidationGeneratedRegistrar::RegisterCSVOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
+{
+    return CSVOutputFormatter::validateAndFormat(args.config);
+}
+
 OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterCSVOutputFormatter(OutputFormatterRegistryArguments args)
 {
-    return std::make_unique<CSVOutputFormatter>(args.numberOfFields, false);
+    return std::make_unique<CSVOutputFormatter>(args.numberOfFields, args.descriptor);
 }
 
 }

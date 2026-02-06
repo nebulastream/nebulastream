@@ -124,13 +124,14 @@ void addOutputFormattingEmit(
     const std::shared_ptr<Pipeline>& pipeline,
     const PhysicalOperatorWrapper& wrappedOp,
     uint64_t configuredBufferSize,
-    const std::string& outputFormat)
+    const std::string& outputFormat,
+    const std::unordered_map<std::string, std::string>& config)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
     const auto& schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    const auto bufferRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormat);
+    const auto bufferRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormat, config);
 
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
@@ -163,10 +164,16 @@ void buildPipelineRecursively(
             {
                 /// The CHECKSUM sink is a special case, that requires CSV output formatting to calculate the checksum.
                 /// It does not own an output_format parameter, so we need to identify it by name and set the output format to CSV manually
-                auto outputFormat = toUpperCase(sink->getDescriptor().getSinkType()) == "CHECKSUM" ? "CSV" : sink->getDescriptor().getFormatType();
+                auto outputFormat
+                    = toUpperCase(sink->getDescriptor().getSinkType()) == "CHECKSUM" ? "CSV" : sink->getDescriptor().getFormatType();
                 if (toUpperCase(outputFormat) != "NATIVE")
                 {
-                    addOutputFormattingEmit(currentPipeline, *prevOpWrapper, configuredBufferSize, std::string(outputFormat));
+                    addOutputFormattingEmit(
+                        currentPipeline,
+                        *prevOpWrapper,
+                        configuredBufferSize,
+                        std::string(outputFormat),
+                        sink->getDescriptor().getOutputFormatterConfig());
                 }
                 else
                 {
@@ -244,7 +251,8 @@ void buildPipelineRecursively(
     /// Case 3: Sink Operator – treat sinks as pipeline breakers
     if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
     {
-        const auto sinkFormat = toUpperCase(sink->getDescriptor().getSinkType()) == "CHECKSUM" ? "CSV" : sink->getDescriptor().getFormatType();
+        const auto sinkFormat
+            = toUpperCase(sink->getDescriptor().getSinkType()) == "CHECKSUM" ? "CSV" : sink->getDescriptor().getFormatType();
         if (currentPipeline->isSourcePipeline())
         {
             const auto sourceFormat = toUpperCase(
@@ -269,7 +277,11 @@ void buildPipelineRecursively(
                     /// The output format is treated in a case sensitive manner, since it serves as a key to the output formatter registry.
                     /// That's why we cannot pass the upper case sinkFormat.
                     addOutputFormattingEmit(
-                        sourcePipeline, *opWrapper, configuredBufferSize, std::string(sinkFormat));
+                        sourcePipeline,
+                        *opWrapper,
+                        configuredBufferSize,
+                        std::string(sinkFormat),
+                        sink->getDescriptor().getOutputFormatterConfig());
                 }
 
                 INVARIANT(sourcePipeline->getRootOperator().getChild().has_value(), "Scan operator requires at least an emit as child.");
@@ -293,7 +305,11 @@ void buildPipelineRecursively(
             else
             {
                 addOutputFormattingEmit(
-                    currentPipeline, *prevOpWrapper, configuredBufferSize, std::string(sinkFormat));
+                    currentPipeline,
+                    *prevOpWrapper,
+                    configuredBufferSize,
+                    std::string(sinkFormat),
+                    sink->getDescriptor().getOutputFormatterConfig());
             }
         }
         const auto newPipeline = std::make_shared<Pipeline>(*sink);

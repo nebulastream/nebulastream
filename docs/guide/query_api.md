@@ -64,6 +64,8 @@ sinks:
       input_format: CSV
       file_path: "<path>"
       append: false
+    parser_config:
+      escape_strings: false
 
 logical:
   - name: LRB
@@ -146,7 +148,8 @@ CREATE SINK csv_sink(
 ) TYPE File SET(
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
-   FALSE as `SINK`.APPEND
+   FALSE as `SINK`.APPEND,
+   FALSE as `PARSER`.ESCAPE_STRINGS
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -268,6 +271,9 @@ Available sink types include:
 The `SET` clause specifies the output details.
 For a `File` sink, this includes the file path and the data format for the output.
 
+- The sink itself can be configured via `SINK.*` parameters.
+- The output formatter can be configured via `PARSER.*` parameters.
+- 
 ---
 ## Input Formatters
 Tuples can arrive in a variety of formats.
@@ -288,6 +294,25 @@ CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
 
 Currently, we support the text-based CSV format, with JSON following in an upcoming release.
 
+---
+## Output Formatters
+The output formatter component converts records with values in our native in-memory format into the desired output format of a sink.
+They are employed by sinks that utilize the `INPUT_FORMAT` parameter to configure the format of the result tuples.
+
+Out-of-the-box available output formats are:
+- CSV
+- JSON
+
+Some output formats may be configurable via parameters. For instance, the bool parameter `ESCAPE_STRINGS` controls how the CSVOutputFormatter
+represents strings.
+All required parameters can be specified via `PARSER.*` in each sink.
+```sql
+CREATE SINK sink_name TYPE FILE SET(
+       'CSV' as `SINK`.INPUT_FORMAT
+       TRUE as `PARSER`.ESCAPE_STRINGS
+       ...
+);
+```
 ---
 ## Data Types
 In NebulaStream, each field is associated with exactly one data type.

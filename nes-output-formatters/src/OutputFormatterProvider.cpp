@@ -20,12 +20,13 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <OutputFormatterRegistry.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 
 namespace NES::OutputFormatterProvider
 {
-std::shared_ptr<OutputFormatter> provideOutputFormatter(std::string outputFormatterType, size_t numberOfFields)
+std::shared_ptr<OutputFormatter> provideOutputFormatter(std::string outputFormatterType, size_t numberOfFields, const OutputFormatterDescriptor& descriptor)
 {
-    auto args = OutputFormatterRegistryArguments{numberOfFields};
+    auto args = OutputFormatterRegistryArguments{numberOfFields, descriptor};
     if (auto outputFormatter = OutputFormatterRegistry::instance().create(outputFormatterType, args))
     {
         return std::move(outputFormatter.value());

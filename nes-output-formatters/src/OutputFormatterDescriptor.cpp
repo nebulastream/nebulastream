@@ -12,34 +12,20 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <cstddef>
-#include <memory>
-#include <string>
-
-#include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
-#include <Util/Registry.hpp>
+
+#include <Configurations/Descriptor.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
 
-using OutputFormatterRegistryReturnType = std::unique_ptr<OutputFormatter>;
-
-struct OutputFormatterRegistryArguments
+OutputFormatterDescriptor::OutputFormatterDescriptor(DescriptorConfig::Config config) : Descriptor(std::move(config))
 {
-    size_t numberOfFields;
-    OutputFormatterDescriptor descriptor;
-};
-
-class OutputFormatterRegistry
-    : public BaseRegistry<OutputFormatterRegistry, std::string, OutputFormatterRegistryReturnType, OutputFormatterRegistryArguments>
-{
-};
-
 }
 
-#define INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
-#include <OutputFormatterGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
+std::ostream& operator<<(std::ostream& out, const OutputFormatterDescriptor& descriptor)
+{
+    return out << fmt::format("OutputFormatterDescriptor: (Config: {})", descriptor.toStringConfig());
+}
+}

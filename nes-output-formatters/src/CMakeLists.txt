@@ -11,7 +11,10 @@
 # limitations under the License.
 
 add_source_files(nes-output-formatters
-            OutputFormatter.cpp
+        OutputFormatter.cpp
         OutputFormatterProvider.cpp
+        OutputFormatterDescriptor.cpp
+        OutputFormatterValidationProvider.cpp
 )
 add_plugin(CSV OutputFormatter nes-output-formatters CSVOutputFormatter.cpp)
+add_plugin(CSV OutputFormatterValidation nes-output-formatters CSVOutputFormatter.cpp)

@@ -20,23 +20,24 @@
 #include <string>
 #include <vector>
 
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <static.hpp>
 #include <val.hpp>
 
 namespace NES
 {
-
 class CSVOutputFormatter : public OutputFormatter
 {
 public:
-    explicit CSVOutputFormatter(const size_t numberOfFields, const bool escapeString);
+    explicit CSVOutputFormatter(const size_t numberOfFields, const OutputFormatterDescriptor& descriptor);
 
     /// Write the string formatted VarVal value into the record buffer
     [[nodiscard]] nautilus::val<size_t> getFormattedValue(
@@ -52,12 +53,28 @@ public:
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
+    /// validates and formats a string to string configuration
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
 private:
     bool escapeStrings;
 };
+}
 
+namespace NES::OutputFormatterConfig
+{
+struct ConfigParametersCSV
+{
+    static inline const DescriptorConfig::ConfigParameter<bool> ESCAPE_STRINGS{
+        "escape_strings",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ESCAPE_STRINGS, config); }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(ESCAPE_STRINGS);
+};
 }
 
 FMT_OSTREAM(NES::OutputFormatter);

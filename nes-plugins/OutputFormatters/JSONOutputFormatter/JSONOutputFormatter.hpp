@@ -15,7 +15,8 @@
 #pragma once
 
 #include <OutputFormatters/OutputFormatter.hpp>
-#include "Nautilus/Interface/Record.hpp"
+#include <Nautilus/Interface/Record.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {
@@ -35,8 +36,19 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
+};
+
+}
+
+namespace NES::OutputFormatterConfig{
+struct ConfigParametersJSON
+{
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap();
 };
 }
 

@@ -28,4 +28,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-output-formatters REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(OutputFormatter)
+create_registries_for_component(OutputFormatter OutputFormatterValidation)

@@ -14,32 +14,27 @@
 
 #pragma once
 
-#include <cstddef>
-#include <memory>
 #include <string>
+#include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 
-#include <OutputFormatters/OutputFormatter.hpp>
-#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
 {
 
-using OutputFormatterRegistryReturnType = std::unique_ptr<OutputFormatter>;
+using OutputFormatterValidationRegistryReturnType = DescriptorConfig::Config;
 
-struct OutputFormatterRegistryArguments
+struct OutputFormatterValidationRegistryArguments
 {
-    size_t numberOfFields;
-    OutputFormatterDescriptor descriptor;
+    std::unordered_map<std::string, std::string> config;
 };
 
-class OutputFormatterRegistry
-    : public BaseRegistry<OutputFormatterRegistry, std::string, OutputFormatterRegistryReturnType, OutputFormatterRegistryArguments>
+class OutputFormatterValidationRegistry final : public BaseRegistry<OutputFormatterValidationRegistry, std::string, OutputFormatterValidationRegistryReturnType, OutputFormatterValidationRegistryArguments>
 {
 };
-
 }
 
-#define INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
-#include <OutputFormatterGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
+#define INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY
+#include <OutputFormatterValidationGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY
