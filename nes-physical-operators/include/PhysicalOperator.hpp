@@ -15,8 +15,8 @@
 #pragma once
 
 #include <atomic>
-#include <cstdint>
 #include <concepts>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -29,12 +29,13 @@
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 #include <nameof.hpp>
 
 namespace NES
@@ -68,7 +69,7 @@ concept PhysicalOperatorConcept = requires(
     RecordBuffer& recordBuffer,
     CompilationContext& compCtx,
     Record& record,
-    PhysicalOperator child,
+    PhysicalOperator& child,
     T& rhs) {
 
     { op.getChild() } -> std::convertible_to<std::optional<PhysicalOperator>>;
@@ -137,7 +138,7 @@ private:
     [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
 };
 
-template <PhysicalOperatorConcept FunctionType>
+template <PhysicalOperatorConcept OperatorType>
 struct OperatorModel;
 }
 
@@ -276,6 +277,7 @@ template <PhysicalOperatorConcept OperatorType>
 struct OperatorModel : ErasedPhysicalOperator
 {
     OperatorType impl;
+    OperatorId id;
 
     explicit OperatorModel(OperatorType impl) : impl(std::move(impl)) { }
 

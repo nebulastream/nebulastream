@@ -24,7 +24,7 @@ namespace NES
 {
 
 /// Map functions read record fields, apply transformations, and can set/update fields.
-class MapPhysicalOperator final : public PhysicalOperatorConcept
+class MapPhysicalOperator final
 {
 public:
     MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction);
