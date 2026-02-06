@@ -14,9 +14,7 @@
 
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 
-#include <cstdint>
 #include <ostream>
-#include <utility>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
@@ -30,7 +28,7 @@ namespace NES
 namespace detail
 {
 
-RegularContent::RegularContent(const nautilus::val<int8_t*>& content, nautilus::val<uint64_t> size) : ptr(content), contentSize(size)
+RegularContent::RegularContent(const nautilus::val<int8_t*>& content, const nautilus::val<uint64_t>& size) : ptr(content), contentSize(size)
 {
 }
 
@@ -52,9 +50,9 @@ nautilus::val<bool> RegularContent::operator==(const CompoundContent& rhs) const
 CompoundContent::CompoundContent(
     ArenaRef* arena,
     const nautilus::val<int8_t*>& first,
-    nautilus::val<uint64_t> firstSize,
+    const nautilus::val<uint64_t>& firstSize,
     const nautilus::val<int8_t*>& second,
-    nautilus::val<uint64_t> secondSize)
+    const nautilus::val<uint64_t>& secondSize)
     : arenaRef(arena), firstPtr(first), secondPtr(second), firstSize(firstSize), secondSize(secondSize)
 {
 }
