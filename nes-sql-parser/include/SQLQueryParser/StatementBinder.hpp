@@ -26,13 +26,10 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
-#include <Plans/LogicalPlan.hpp>
-
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -43,6 +40,7 @@
 namespace NES
 {
 
+using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">;
 using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
 
 enum class StatementOutputFormat : uint8_t
@@ -127,21 +125,37 @@ struct ExplainQueryStatement
 
 struct ShowQueriesStatement
 {
-    std::optional<QueryId> id;
+    std::optional<DistributedQueryId> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    QueryId id;
+    DistributedQueryId id;
 };
 
 struct WorkerStatusStatement
 {
+    std::vector<std::string> host;
+};
+
+struct CreateWorkerStatement
+{
+    std::string host;
+    std::string grpc;
+    std::optional<size_t> capacity;
+    std::vector<std::string> downstream;
+};
+
+struct DropWorkerStatement
+{
+    std::string host;
 };
 
 using Statement = std::variant<
     WorkerStatusStatement,
+    CreateWorkerStatement,
+    DropWorkerStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
@@ -236,3 +250,5 @@ FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
 FMT_OSTREAM(NES::WorkerStatusStatement);
 FMT_OSTREAM(NES::ExplainQueryStatement);
+FMT_OSTREAM(NES::CreateWorkerStatement);
+FMT_OSTREAM(NES::DropWorkerStatement);

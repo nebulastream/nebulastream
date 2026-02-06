@@ -32,7 +32,7 @@ struct EventBase
 
     ChronoClock::time_point timestamp = ChronoClock::now();
     WorkerThreadId threadId = INVALID<WorkerThreadId>;
-    QueryId queryId = INVALID_LOCAL_QUERY_ID;
+    QueryId queryId = QueryId(INVALID_LOCAL_QUERY_ID);
 };
 
 struct TaskExecutionStart : EventBase

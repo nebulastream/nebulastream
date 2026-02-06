@@ -21,6 +21,7 @@
 #include <memory>
 #include <optional>
 #include <random>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
@@ -44,6 +45,9 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 
+extern void initReceiverService(const std::string& connectionAddr, const NES::WorkerId& workerId);
+extern void initSenderService(const std::string& connectionAddr, const NES::WorkerId& workerId);
+
 namespace NES
 {
 
@@ -66,16 +70,25 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
+
+    if (!configuration.connection.getValue().empty())
+    {
+        initReceiverService(configuration.connection.getValue(), workerId);
+        initSenderService(configuration.connection.getValue(), workerId);
+    }
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a query ID
-        if (!plan.getQueryId().isValid())
+        /// Check if the plan already has a local query ID, generate one if needed
+        /// but preserve the distributed query ID if present
+        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
         {
-            plan.setQueryId(QueryId(LocalQueryId(UUIDToString(generateUUID()))));
+            auto localId = LocalQueryId(generateUUID());
+            auto globalId = plan.getQueryId().getGlobalQueryId();
+            plan.setQueryId(QueryId(localId, globalId));
         }
 
         const LogContext context("queryId", plan.getQueryId());

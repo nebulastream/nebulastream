@@ -19,14 +19,70 @@
 namespace NES
 {
 
+QueryId::QueryId() : localQueryId(INVALID_LOCAL_QUERY_ID), globalQueryId(DistributedQueryId(DistributedQueryId::INVALID))
+{
+}
+
+QueryId::QueryId(LocalQueryId localQueryId) : localQueryId(localQueryId), globalQueryId(DistributedQueryId(DistributedQueryId::INVALID))
+{
+}
+
+QueryId::QueryId(LocalQueryId localQueryId, DistributedQueryId globalQueryId)
+    : localQueryId(localQueryId), globalQueryId(std::move(globalQueryId))
+{
+}
+
 QueryId QueryId::createLocal()
 {
-    return QueryId(LocalQueryId(UUIDToString(generateUUID())));
+    auto localQueryId = LocalQueryId(UUIDToString(generateUUID()));
+    return QueryId(localQueryId, DistributedQueryId(DistributedQueryId::INVALID));
+}
+
+QueryId QueryId::createDistributed(DistributedQueryId globalQueryId)
+{
+    return QueryId(INVALID_LOCAL_QUERY_ID, std::move(globalQueryId));
+}
+
+bool QueryId::isValid() const
+{
+    return localQueryId != INVALID_LOCAL_QUERY_ID;
+}
+
+bool QueryId::isDistributed() const
+{
+    return globalQueryId != DistributedQueryId(DistributedQueryId::INVALID);
+}
+
+bool QueryId::operator==(const QueryId& other) const
+{
+    return localQueryId == other.localQueryId && globalQueryId == other.globalQueryId;
+}
+
+bool QueryId::operator!=(const QueryId& other) const
+{
+    return !(*this == other);
+}
+
+bool QueryId::operator==(const LocalQueryId& other) const
+{
+    return localQueryId == other;
+}
+
+bool QueryId::operator!=(const LocalQueryId& other) const
+{
+    return localQueryId != other;
 }
 
 std::ostream& operator<<(std::ostream& os, const QueryId& queryId)
 {
-    os << queryId.localQueryId;
+    if (queryId.isDistributed())
+    {
+        os << "QueryId(local=" << queryId.localQueryId << ", global=" << queryId.globalQueryId << ")";
+    }
+    else
+    {
+        os << "QueryId(local=" << queryId.localQueryId << ")";
+    }
     return os;
 }
 

@@ -97,7 +97,7 @@ SHOW QUERIES;
 
 -- 5. Submit a query
 SELECT TS FROM ENDLESS INTO SOMESINK;
--- Returns: [{"global_query_id":"<query-id>"}]
+-- Returns: [{"query_id":"<query-id>"}]
 
 -- 6. View running queries
 SHOW QUERIES;
@@ -119,7 +119,7 @@ SHOW QUERIES;
 
 ```json
 {
-  "global_query_id": "amazing_stallion",
+  "query_id": "amazing_stallion",
   "query_status": "Running",
   "running": {
     "formatted": "2025-11-18 15:06:57.377000",
@@ -231,8 +231,10 @@ DROP QUERY WHERE ID='<query-id>';
 
 ## NES-CLI (One-Shot Topology Controller)
 
-NES-CLI is a stateless CLI tool for deploying and managing queries based on YAML topology files. Unlike the interactive
-REPL, `nes-cli` performs single operations and exits.
+NES-CLI is a "stateless" CLI tool for deploying and managing queries based on YAML topology files. Unlike the REPL, `nes-cli` performs single operations and exits. The CLI is stateless in the sense that source/sink catalogs and topology configuration are always loaded from YAML files—nothing is persisted between invocations.
+
+> [!NOTE]
+> **Implementation Detail:** To enable query management across CLI invocations, the CLI maintains an internal mapping of global query IDs to local query instances in `$XDG_STATE_HOME/nebucli/` (or `$HOME/.local/state/nebucli/`). This is an implementation detail and should not be relied upon.
 
 ### Basic Usage
 
@@ -496,7 +498,7 @@ Returns JSON array with query status information:
 ```json
 [
   {
-    "global_query_id": "amazing_stallion",
+    "query_id": "amazing_stallion",
     "query_status": "Running"
   },
   {

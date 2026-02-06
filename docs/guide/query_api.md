@@ -46,6 +46,7 @@ query: |
 
 sinks:
   - name: csv_sink
+    host: localhost:9090
     schema:
       - name: lrb$start
         type: UINT64
@@ -86,6 +87,7 @@ logical:
 physical:
   - logical: lrb
     type: TCP
+    host: localhost:9090
     parser_config:
       type: CSV
       tuple_delimiter: "\n"
@@ -97,18 +99,22 @@ physical:
       flush_interval_ms: 100
       connect_timeout_seconds: 60
   - logical: lrb
-    host: worker-1:9090
+    host: localhost:9090
     type: File
     parser_config:
       type: JSON
     source_config:
       file_path: lrb.json
+worker:
+  - host: localhost:9090
+    grpc: localhost:8080
 ```
 This YAML can be sent to `nes-cli` to register or run the query.
 
 Here's the equivalent SQL syntax:
 
 ```sql
+CREATE WORKER 'localhost:9090' AT 'localhost:8080';
 CREATE LOGICAL SOURCE lrb(
   creationTS UINT64,
   vehicle INT16,
@@ -120,6 +126,7 @@ CREATE LOGICAL SOURCE lrb(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
+  'localhost:9090' AS `SOURCE`.`HOST`, 
   'localhost' as `SOURCE`.SOCKET_HOST,
   50501 as `SOURCE`.SOCKET_PORT,
   65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
@@ -131,6 +138,7 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
+  'localhost:9090' AS `SOURCE`.`HOST`,
   'lrb.json' as `SOURCE`.FILE_PATH,
   'JSON' as PARSER.`TYPE`
 );
@@ -143,6 +151,7 @@ CREATE SINK csv_sink(
   positionDiv5280 INT32,
   lrb.avgSpeed FLOAT64
 ) TYPE File SET(
+  'localhost:9090' AS `SINK`.`HOST`, 
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
   FALSE as `SINK`.APPEND
@@ -203,6 +212,7 @@ Supported physical source types:
 In our example, we define two physical sources that both feed the `lrb` logical source:
 ```sql
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
+  'localhost:9090' AS `SOURCE`.`HOST`, 
   'localhost' as `SOURCE`.SOCKET_HOST,
   50501 as `SOURCE`.SOCKET_PORT,
   65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
@@ -214,6 +224,7 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
+  'localhost:9090' AS `SOURCE`.`HOST`,
   'lrb.json' as `SOURCE`.FILE_PATH,
   'JSON' as PARSER.`TYPE`
 );
@@ -253,6 +264,7 @@ CREATE SINK csv_sink(
   positionDiv5280 INT32,
   lrb.avgSpeed FLOAT64
 ) TYPE File SET(
+  'localhost:9090' AS `SINK`.`HOST`, 
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.INPUT_FORMAT,
   FALSE as `SINK`.APPEND
@@ -266,6 +278,8 @@ Available sink types include:
 
 The `SET` clause specifies the output details.
 For a `File` sink, this includes the file path and the data format for the output.
+
+The `HOST` configuration parameter specifies the worker node which hosts the physical source. (The same applies for sinks).
 
 ---
 ## Input Formatters

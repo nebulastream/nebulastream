@@ -182,8 +182,8 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
         {"file_path", filePath}, {"max_inflight_buffers", std::to_string(numberOfRequiredSourceBuffers)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
-    const auto sourceDescriptor
-        = sourceCatalog.addPhysicalSource(logicalSource.value(), "File", std::move(fileSourceConfiguration), {{"type", "CSV"}});
+    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
+        logicalSource.value(), "File", "localhost", std::move(fileSourceConfiguration), {{"type", "CSV"}});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
