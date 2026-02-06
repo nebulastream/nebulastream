@@ -14,8 +14,8 @@
 
 #pragma once
 #include <cstddef>
-#include <Runtime/TupleBuffer.hpp>
 #include <utility>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {
@@ -32,7 +32,7 @@ public:
         bool isLastElement;
     };
 
-    explicit BufferIterator(TupleBuffer  buffer) : tupleBuffer(std::move(buffer)) {}
+    explicit BufferIterator(TupleBuffer buffer) : tupleBuffer(std::move(buffer)) { }
 
     [[nodiscard]] BufferElement getNextElement();
 
@@ -41,5 +41,3 @@ private:
     size_t bufferIndex = 0;
 };
 }
-
-

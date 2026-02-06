@@ -24,6 +24,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -35,7 +36,6 @@
 #include <static.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES
 {
@@ -65,7 +65,8 @@ public:
         const nautilus::val<uint64_t>& remainingSize,
         const nautilus::val<bool>& allowChildren,
         const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+        = 0;
 
     virtual std::ostream& toString(std::ostream&) const = 0;
 

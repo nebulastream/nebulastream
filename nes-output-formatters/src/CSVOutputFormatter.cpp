@@ -25,22 +25,22 @@
 #include <string>
 #include <utility>
 
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <OutputFormatterRegistry.hpp>
+#include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Configurations/Descriptor.hpp>
-#include <OutputFormatterValidationRegistry.hpp>
 
 namespace NES
 {
@@ -314,7 +314,8 @@ DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_ma
     return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersCSV>(std::move(config), "CSV");
 }
 
-OutputFormatterValidationRegistryReturnType OutputFormatterValidationGeneratedRegistrar::RegisterCSVOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
+OutputFormatterValidationRegistryReturnType
+OutputFormatterValidationGeneratedRegistrar::RegisterCSVOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
 {
     return CSVOutputFormatter::validateAndFormat(args.config);
 }

@@ -18,8 +18,8 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {
@@ -48,7 +48,7 @@ void OutputFormatter::writeWithChildBuffers(
     while (remainingBytes > 0)
     {
         /// Write as many bytes in the latest child buffer as possible and allocate a new one if space does not suffice
-        const VariableSizedAccess::Index childIndex(numOfChildBuffers-1);
+        const VariableSizedAccess::Index childIndex(numOfChildBuffers - 1);
         auto lastChildBuffer = tupleBuffer->loadChildBuffer(childIndex);
         const auto bufferOffset = lastChildBuffer.getNumberOfTuples();
         const uint32_t valueOffset = value.size() - remainingBytes;

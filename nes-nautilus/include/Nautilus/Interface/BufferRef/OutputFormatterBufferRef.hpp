@@ -21,11 +21,11 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <OutputFormatters/OutputFormatter.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <OutputFormatters/OutputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES
 {
@@ -46,7 +46,8 @@ class OutputFormatterBufferRef final : public TupleBufferRef
     std::vector<Field> fields;
     std::shared_ptr<OutputFormatter> formatter;
 
-    explicit OutputFormatterBufferRef(std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, uint64_t tupleSize, uint64_t bufferSize);
+    explicit OutputFormatterBufferRef(
+        std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, uint64_t tupleSize, uint64_t bufferSize);
 
     friend class NES::LowerSchemaProvider;
 

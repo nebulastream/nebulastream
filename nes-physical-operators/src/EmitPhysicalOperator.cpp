@@ -65,7 +65,8 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
     nautilus::val<size_t> recordsWritten = 0;
-    recordsWritten = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider, true);
+    recordsWritten
+        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider, true);
     /// recordsWritten == npos indicates that the buffer must be emitted first. We emit and than call write record again.
     if (recordsWritten == nautilus::val<size_t>(std::string::npos))
     {
@@ -75,7 +76,8 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = 0_u64;
 
-        recordsWritten = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+        recordsWritten
+            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     }
 
     /// If our BufferRef is an OutputFormatterBufferRef, records written contains the amount of bytes that were written and not the amount of records,

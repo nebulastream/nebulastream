@@ -165,7 +165,8 @@ public:
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
-        return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions, .formatConfig = formatOptions};
+        return CreateSinkStatement{
+            .name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions, .formatConfig = formatOptions};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
