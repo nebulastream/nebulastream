@@ -165,3 +165,13 @@ JSONEOF
   run jq -e '.created_at' "$XDG_STATE_HOME/nebucli/42.json"
   [ "$status" -eq 0 ]
 }
+
+@test "nebucli dump with topology from stdin" {
+  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI dump"
+  [ "$status" -eq 0 ]
+}
+
+@test "nebucli dump with topology from stdin and adhoc query" {
+  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI dump 'SELECT * FROM stream INTO VOID_SINK'"
+  [ "$status" -eq 0 ]
+}

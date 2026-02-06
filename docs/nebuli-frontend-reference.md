@@ -263,12 +263,34 @@ nes-cli -t topology.yaml stop <query-id-1> <query-id-2> <query-id-3>
 export NES_TOPOLOGY_FILE=topology.yaml
 nes-cli dump
 nes-cli start
+
+# Read topology from stdin
+cat topology.yaml | nes-cli dump
+cat topology.yaml | nes-cli start
+cat topology.yaml | nes-cli start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
+cat topology.yaml | nes-cli status <query-id>
+cat topology.yaml | nes-cli stop <query-id>
+
+# Works with Docker too
+cat topology.yaml | docker run -i nes-cli start
+cat topology.yaml | docker run -i nes-cli dump
+cat topology.yaml | docker run -i nes-cli stop <query-id>
+cat topology.yaml | docker run -i nes-cli status <query-id>
 ```
 
 **Flags:**
 
-- `-t <file>` - Topology file path (or use `NES_TOPOLOGY_FILE` environment variable)
+- `-t <file>` - Topology file path (or use `NES_TOPOLOGY_FILE` environment variable, or pipe via stdin)
 - `-d` - Debug mode with detailed logging
+
+**Topology File Resolution Order:**
+
+The CLI looks for the topology file in the following priority order:
+1. `-t <file>` flag - Explicitly specified file path (takes precedence over all other sources)
+2. **stdin** - If input is piped (detected via `isatty`) and no `-t` flag was provided
+3. `NES_TOPOLOGY_FILE` environment variable
+4. `topology.yaml` in current directory
+5. `topology.yml` in current directory
 
 ### Topology File Format
 

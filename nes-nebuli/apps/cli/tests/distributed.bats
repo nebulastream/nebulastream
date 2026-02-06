@@ -401,3 +401,42 @@ EOF
   assert_json_contains "[{\"local_query_id\":$local_query_id, \"query_status\":\"Running\", \"started\": {}}]" "$output"
 
 }
+
+@test "launch query with topology from stdin" {
+  setup_distributed tests/topologies/1-node.yaml
+  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli start'"
+  [ "$status" -eq 0 ]
+}
+
+@test "launch and stop query with topology from stdin" {
+  setup_distributed tests/topologies/1-node.yaml
+  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
+  [ "$status" -eq 0 ]
+
+  # Output should be a query ID (numeric)
+  [[ "$output" =~ ^[0-9]+$ ]]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli stop $QUERY_ID'"
+  [ "$status" -eq 0 ]
+}
+
+@test "query status with topology from stdin" {
+  setup_distributed tests/topologies/1-node.yaml
+  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
+  [ "$status" -eq 0 ]
+
+  # Output should be a query ID (numeric)
+  [[ "$output" =~ ^[0-9]+$ ]]
+  QUERY_ID=$output
+
+  sleep 1
+
+  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli status $QUERY_ID'"
+  [ "$status" -eq 0 ]
+
+  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+}
