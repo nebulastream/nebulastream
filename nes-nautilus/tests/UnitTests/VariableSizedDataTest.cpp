@@ -17,11 +17,13 @@
 #include <cstring>
 #include <ios>
 #include <iosfwd>
+#include <memory>
 #include <random>
 #include <utility>
 #include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -29,6 +31,7 @@
 #include <nautilus/function.hpp>
 #include <nautilus/std/sstream.h>
 #include <std/cstring.h>
+#include <Arena.hpp>
 #include <BaseUnitTest.hpp>
 #include <val_ptr.hpp>
 
@@ -233,6 +236,311 @@ TEST_F(VariableSizedDataTest, ostreamTest)
 
     /// Performing the comparison in a proxy function, as we cannot access the underlying data of the nautilus::stringstream object
     nautilus::invoke(compareStringProxy, output.str().c_str(), expected.str().c_str());
+}
+
+TEST_F(VariableSizedDataTest, IsValid)
+{
+    constexpr auto sizeInBytes = 512;
+    auto data = createVariableSizedRandomData(sizeInBytes);
+    const nautilus::val<int8_t*> ptr(data.data());
+
+    const VariableSizedData varData(ptr, sizeInBytes);
+    EXPECT_TRUE(varData.isValid());
+}
+
+TEST_F(VariableSizedDataTest, GetSizeAndContent)
+{
+    constexpr auto sizeInBytes = 512;
+    auto data = createVariableSizedRandomData(sizeInBytes);
+    const nautilus::val<int8_t*> ptr(data.data());
+
+    const VariableSizedData varData(ptr, sizeInBytes);
+
+    EXPECT_EQ(varData.getSize(), sizeInBytes);
+    EXPECT_TRUE(nautilus::memcmp(varData.getContent(), ptr, sizeInBytes) == 0);
+}
+
+TEST_F(VariableSizedDataTest, EqualityWithSameData)
+{
+    constexpr auto sizeInBytes = 512;
+    auto data1 = createVariableSizedRandomData(sizeInBytes);
+    auto data2 = data1; // Copy same data
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+
+    const VariableSizedData varData1(ptr1, sizeInBytes);
+    const VariableSizedData varData2(ptr2, sizeInBytes);
+
+    EXPECT_TRUE(varData1 == varData2);
+    EXPECT_FALSE(varData1 != varData2);
+}
+
+TEST_F(VariableSizedDataTest, InequalityWithDifferentData)
+{
+    constexpr auto sizeInBytes = 512;
+    auto data1 = createVariableSizedRandomData(sizeInBytes);
+    auto data2 = createVariableSizedRandomData(sizeInBytes);
+    data2[0] = static_cast<int8_t>(data1[0] + 1); // Ensure different
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+
+    const VariableSizedData varData1(ptr1, sizeInBytes);
+    const VariableSizedData varData2(ptr2, sizeInBytes);
+
+    EXPECT_FALSE(varData1 == varData2);
+    EXPECT_TRUE(varData1 != varData2);
+}
+
+TEST_F(VariableSizedDataTest, InequalityWithDifferentSizes)
+{
+    constexpr auto size1 = 512;
+    constexpr auto size2 = 256;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+
+    EXPECT_FALSE(varData1 == varData2);
+    EXPECT_TRUE(varData1 != varData2);
+}
+
+TEST_F(VariableSizedDataTest, GetReference)
+{
+    constexpr auto sizeInBytes = 512;
+    auto data = createVariableSizedRandomData(sizeInBytes);
+    const nautilus::val<int8_t*> ptr(data.data());
+
+    const VariableSizedData varData(ptr, sizeInBytes);
+
+    // getReference should return same as getContent for regular data
+    EXPECT_TRUE(nautilus::memcmp(varData.getReference(), varData.getContent(), sizeInBytes) == 0);
+}
+
+TEST_F(VariableSizedDataTest, SmallDataSize)
+{
+    constexpr auto sizeInBytes = 1;
+    auto data = createVariableSizedRandomData(sizeInBytes);
+    const nautilus::val<int8_t*> ptr(data.data());
+
+    const VariableSizedData varData(ptr, sizeInBytes);
+
+    EXPECT_EQ(varData.getSize(), sizeInBytes);
+    EXPECT_TRUE(varData.isValid());
+    EXPECT_TRUE(nautilus::memcmp(varData.getContent(), ptr, sizeInBytes) == 0);
+}
+
+TEST_F(VariableSizedDataTest, LargeDataSize)
+{
+    constexpr auto sizeInBytes = 1024 * 1024; // 1MB
+    auto data = createVariableSizedRandomData(sizeInBytes);
+    const nautilus::val<int8_t*> ptr(data.data());
+
+    const VariableSizedData varData(ptr, sizeInBytes);
+
+    EXPECT_EQ(varData.getSize(), sizeInBytes);
+    EXPECT_TRUE(varData.isValid());
+    EXPECT_TRUE(nautilus::memcmp(varData.getContent(), ptr, sizeInBytes) == 0);
+}
+
+TEST_F(VariableSizedDataTest, CompoundConstruction)
+{
+    auto bufferManager = BufferManager::create();
+    Arena arena(bufferManager);
+    nautilus::val<Arena*> arenaPtr(&arena);
+    ArenaRef arenaRef(arenaPtr);
+
+    constexpr auto size1 = 256;
+    constexpr auto size2 = 128;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+
+    // Create compound data
+    const VariableSizedData compoundData(varData1, varData2, arenaRef);
+
+    // Verify size is sum of both
+    EXPECT_EQ(compoundData.getSize(), size1 + size2);
+    EXPECT_TRUE(compoundData.isValid());
+    EXPECT_TRUE(nautilus::memcmp(compoundData.getContent(), data1.data(), size1) == 0);
+    EXPECT_TRUE(nautilus::memcmp(compoundData.getContent() + nautilus::val<int>(size1), data2.data(), size2) == 0);
+}
+
+TEST_F(VariableSizedDataTest, CompoundContentMatchesConcatenation)
+{
+    auto bufferManager = BufferManager::create();
+    Arena arena(bufferManager);
+    nautilus::val<Arena*> arenaPtr(&arena);
+    ArenaRef arenaRef(arenaPtr);
+
+    constexpr auto size1 = 256;
+    constexpr auto size2 = 128;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+
+    // Create expected concatenated data
+    std::vector<int8_t> expectedData;
+    expectedData.insert(expectedData.end(), data1.begin(), data1.end());
+    expectedData.insert(expectedData.end(), data2.begin(), data2.end());
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+
+    const VariableSizedData compoundData(varData1, varData2, arenaRef);
+
+    // Verify content matches concatenation
+    EXPECT_TRUE(nautilus::memcmp(compoundData.getContent(), expectedData.data(), size1 + size2) == 0);
+}
+
+TEST_F(VariableSizedDataTest, CompoundEqualityWithRegular)
+{
+    auto bufferManager = BufferManager::create();
+    Arena arena(bufferManager);
+    nautilus::val<Arena*> arenaPtr(&arena);
+    ArenaRef arenaRef(arenaPtr);
+
+    constexpr auto size1 = 256;
+    constexpr auto size2 = 128;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+
+    // Create concatenated data for regular VariableSizedData
+    std::vector<int8_t> concatenatedData;
+    concatenatedData.insert(concatenatedData.end(), data1.begin(), data1.end());
+    concatenatedData.insert(concatenatedData.end(), data2.begin(), data2.end());
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+    const nautilus::val<int8_t*> ptrConcatenated(concatenatedData.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+    const VariableSizedData compoundData(varData1, varData2, arenaRef);
+    const VariableSizedData regularData(ptrConcatenated, size1 + size2);
+
+    // Compound and regular with same content should be equal
+    EXPECT_TRUE(compoundData == regularData);
+    EXPECT_TRUE(regularData == compoundData);
+}
+
+TEST_F(VariableSizedDataTest, CompoundInequalityWithDifferentData)
+{
+    auto bufferManager = BufferManager::create();
+    Arena arena(bufferManager);
+    nautilus::val<Arena*> arenaPtr(&arena);
+    ArenaRef arenaRef(arenaPtr);
+
+    constexpr auto size1 = 256;
+    constexpr auto size2 = 128;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+    auto data3 = createVariableSizedRandomData(size1 + size2);
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+    const nautilus::val<int8_t*> ptr3(data3.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+    const VariableSizedData compoundData(varData1, varData2, arenaRef);
+    const VariableSizedData differentData(ptr3, size1 + size2);
+
+    // Compound and regular with different content should not be equal
+    EXPECT_FALSE(compoundData == differentData);
+    EXPECT_TRUE(compoundData != differentData);
+}
+
+TEST_F(VariableSizedDataTest, CompoundEqualityWithCompound)
+{
+    auto bufferManager = BufferManager::create();
+    Arena arena(bufferManager);
+    nautilus::val<Arena*> arenaPtr(&arena);
+    ArenaRef arenaRef(arenaPtr);
+
+    constexpr auto size1 = 256;
+    constexpr auto size2 = 128;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+    auto data1Copy = data1;
+    auto data2Copy = data2;
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+    const nautilus::val<int8_t*> ptr1Copy(data1Copy.data());
+    const nautilus::val<int8_t*> ptr2Copy(data2Copy.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+    const VariableSizedData varData1Copy(ptr1Copy, size1);
+    const VariableSizedData varData2Copy(ptr2Copy, size2);
+
+    const VariableSizedData compoundData1(varData1, varData2, arenaRef);
+    const VariableSizedData compoundData2(varData1Copy, varData2Copy, arenaRef);
+
+    // Two compound data with same content should be equal
+    EXPECT_TRUE(compoundData1 == compoundData2);
+}
+
+TEST_F(VariableSizedDataTest, CompoundGetReference)
+{
+    auto bufferManager = BufferManager::create();
+    Arena arena(bufferManager);
+    const nautilus::val<Arena*> arenaPtr(&arena);
+    ArenaRef arenaRef(arenaPtr);
+
+    constexpr auto size1 = 256;
+    constexpr auto size2 = 128;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+    const VariableSizedData compoundData(varData1, varData2, arenaRef);
+
+    // getReference should return same as getContent
+    EXPECT_TRUE(nautilus::memcmp(compoundData.getReference(), compoundData.getContent(), size1 + size2) == 0);
+}
+
+TEST_F(VariableSizedDataTest, CompoundCopyConstruction)
+{
+    auto bufferManager = BufferManager::create();
+    Arena arena(bufferManager);
+    nautilus::val<Arena*> arenaPtr(&arena);
+    ArenaRef arenaRef(arenaPtr);
+
+    constexpr auto size1 = 256;
+    constexpr auto size2 = 128;
+    auto data1 = createVariableSizedRandomData(size1);
+    auto data2 = createVariableSizedRandomData(size2);
+
+    const nautilus::val<int8_t*> ptr1(data1.data());
+    const nautilus::val<int8_t*> ptr2(data2.data());
+
+    const VariableSizedData varData1(ptr1, size1);
+    const VariableSizedData varData2(ptr2, size2);
+    const VariableSizedData compoundData(varData1, varData2, arenaRef);
+
+    // Copy the compound data
+    const VariableSizedData copiedCompound = compoundData;
+
+    EXPECT_EQ(copiedCompound.getSize(), size1 + size2);
+    EXPECT_TRUE(copiedCompound == compoundData);
 }
 
 }
