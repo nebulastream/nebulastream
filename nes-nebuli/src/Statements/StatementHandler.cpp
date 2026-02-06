@@ -230,7 +230,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 
         if (statement.id)
         {
-            optimizedPlan.setQueryId(QueryId(*statement.id));
+            optimizedPlan.setQueryId(QueryId(LocalQueryId(*statement.id)));
         }
         const auto queryResult = queryManager->registerQuery(optimizedPlan);
         return queryResult

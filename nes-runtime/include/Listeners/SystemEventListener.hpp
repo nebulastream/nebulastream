@@ -21,6 +21,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -37,7 +38,7 @@ struct SubmitQuerySystemEvent : BaseSystemEvent
     SubmitQuerySystemEvent(QueryId queryId, std::string query) : queryId(queryId), query(std::move(query)) { }
 
     SubmitQuerySystemEvent() = default;
-    QueryId queryId = INVALID<QueryId>;
+    QueryId queryId = QueryId();
     std::string query;
 };
 
@@ -46,7 +47,7 @@ struct StartQuerySystemEvent : BaseSystemEvent
     explicit StartQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
 
     StartQuerySystemEvent() = default;
-    QueryId queryId = INVALID<QueryId>;
+    QueryId queryId = QueryId();
 };
 
 struct StopQuerySystemEvent : BaseSystemEvent
@@ -54,7 +55,7 @@ struct StopQuerySystemEvent : BaseSystemEvent
     explicit StopQuerySystemEvent(QueryId queryId) : queryId(queryId) { }
 
     StopQuerySystemEvent() = default;
-    QueryId queryId = INVALID<QueryId>;
+    QueryId queryId = QueryId();
 };
 
 using SystemEvent = std::variant<SubmitQuerySystemEvent, StartQuerySystemEvent, StopQuerySystemEvent>;

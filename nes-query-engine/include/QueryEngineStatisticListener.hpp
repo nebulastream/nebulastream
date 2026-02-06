@@ -32,7 +32,7 @@ struct EventBase
 
     ChronoClock::time_point timestamp = ChronoClock::now();
     WorkerThreadId threadId = INVALID<WorkerThreadId>;
-    QueryId queryId = INVALID<QueryId>;
+    QueryId queryId = INVALID_LOCAL_QUERY_ID;
 };
 
 struct TaskExecutionStart : EventBase
@@ -46,7 +46,7 @@ struct TaskExecutionStart : EventBase
 
     PipelineId pipelineId = INVALID<PipelineId>;
     TaskId taskId = INVALID<TaskId>;
-    size_t numberOfTuples;
+    size_t numberOfTuples{};
 };
 
 struct TaskEmit : EventBase
@@ -129,9 +129,7 @@ struct PipelineStart : EventBase
 
 struct PipelineStop : EventBase
 {
-    PipelineStop(WorkerThreadId threadId, QueryId queryId, PipelineId pipeline_id) : EventBase(threadId, queryId), pipelineId(pipeline_id)
-    {
-    }
+    PipelineStop(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId) : EventBase(threadId, queryId), pipelineId(pipelineId) { }
 
     PipelineStop() = default;
 

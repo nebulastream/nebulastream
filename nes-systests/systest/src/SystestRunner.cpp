@@ -39,6 +39,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>

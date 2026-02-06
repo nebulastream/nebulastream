@@ -33,20 +33,20 @@ message RegisterQueryRequest {
 }
 
 message RegisterQueryReply {
-  uint64 queryId = 1;
+  string queryId = 1;
 }
 
 message UnregisterQueryRequest {
-  uint64 queryId = 1;
+  string queryId = 1;
 }
 
 message StartQueryRequest {
-  uint64 queryId = 1;
+  string queryId = 1;
 }
 
 message StopQueryRequest {
     enum QueryTerminationType {Graceful = 0; HardStop = 1; Failure = 2; Invalid = 3;};
-    uint64 queryId = 2;
+    string queryId = 2;
     QueryTerminationType terminationType = 3;
 }
 
@@ -66,7 +66,7 @@ message Error {
 }
 
 message QueryStatusRequest {
-  uint64 queryId = 1;
+  string queryId = 1;
 }
 
 message QueryMetrics {
@@ -77,13 +77,13 @@ message QueryMetrics {
 }
 
 message QueryStatusReply {
-    uint64 queryId = 1;
+    string queryId = 1;
     QueryState state = 2;
     QueryMetrics metrics = 3;
 }
 
 message QueryLogRequest {
-    uint64 queryId = 1;
+    string queryId = 1;
 }
 
 message QueryLogEntry {
@@ -102,12 +102,12 @@ message WorkerStatusRequest {
 
 message WorkerStatusResponse {
   message ActiveQuery {
-    uint64 query_id = 1;
+    string query_id = 1;
     optional uint64 started_unix_timestamp_in_milli_seconds = 2;
   }
 
   message TerminatedQuery {
-    uint64 query_id = 1;
+    string query_id = 1;
     optional uint64 started_unix_timestamp_in_milli_seconds = 2;
     uint64 terminated_unix_timestamp_in_milli_seconds = 3;
     optional Error error = 4;

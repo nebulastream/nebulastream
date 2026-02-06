@@ -504,9 +504,8 @@ struct TestingHarness
     std::unique_ptr<QueryEngine> qm;
     size_t numberOfThreads;
 
-    QueryId::Underlying queryIdCounter = INITIAL<QueryId>.getRawValue();
-    QueryId::Underlying lastOriginIdCounter = INITIAL<OriginId>.getRawValue();
-    QueryId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
+    OriginId::Underlying lastOriginIdCounter = INITIAL<OriginId>.getRawValue();
+    PipelineId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
 
     QueryPlanBuilder::identifier_t lastIdentifier = 0;
     std::unordered_map<QueryPlanBuilder::identifier_t, ExecutablePipelineStage*> stages;
@@ -533,7 +532,7 @@ struct TestingHarness
     ///   auto query = test.addNewQuery(std::move(builder));
     /// ```
     QueryPlanBuilder buildNewQuery() const;
-    std::unique_ptr<ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
+    std::pair<QueryId, std::unique_ptr<ExecutableQueryPlan>> addNewQuery(QueryPlanBuilder&& builder);
 
     /// List of status events to be emitted by a query with QueryId `id`
     void expectQueryStatusEvents(QueryId id, std::initializer_list<QueryState> states);
@@ -551,7 +550,7 @@ struct TestingHarness
     void start();
 
     /// Inserts a new Query into the Query Engine. Requires `start` to be called beforehand.
-    void startQuery(std::unique_ptr<ExecutableQueryPlan> query) const;
+    void startQuery(QueryId queryId, std::unique_ptr<ExecutableQueryPlan> query) const;
     /// Stops a Query. Requires `start` to be called beforehand.
     void stopQuery(QueryId id) const;
 

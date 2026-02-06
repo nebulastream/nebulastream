@@ -42,6 +42,7 @@
 #include <Sequencing/SequenceData.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/UUID.hpp>
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -274,9 +275,9 @@ QueryPlanBuilder TestingHarness::buildNewQuery() const
     return QueryPlanBuilder{lastIdentifier, lastPipelineIdCounter, lastOriginIdCounter};
 }
 
-std::unique_ptr<ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
+std::pair<QueryId, std::unique_ptr<ExecutableQueryPlan>> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
 {
-    const auto queryId = QueryId(queryIdCounter++);
+    const auto queryId = QueryId::createLocal();
     lastIdentifier = builder.nextIdentifier;
     lastOriginIdCounter = builder.originIdCounter;
     lastPipelineIdCounter = builder.pipelineIdCounter;
@@ -288,7 +289,7 @@ std::unique_ptr<ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilde
     sinkControls.insert(pSinkCtrls.begin(), pSinkCtrls.end());
     pipelineControls.insert(pPipelineCtrls.begin(), pPipelineCtrls.end());
     stages.insert(pStages.begin(), pStages.end());
-    return std::move(plan);
+    return {queryId, std::move(plan)};
 }
 
 void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<QueryState> states)
@@ -364,9 +365,9 @@ void TestingHarness::start()
     qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm, WorkerId("test"));
 }
 
-void TestingHarness::startQuery(std::unique_ptr<ExecutableQueryPlan> query) const
+void TestingHarness::startQuery(QueryId queryId, std::unique_ptr<ExecutableQueryPlan> query) const
 {
-    qm->start(std::move(query));
+    qm->start(queryId, std::move(query));
 }
 
 void TestingHarness::stopQuery(QueryId id) const

@@ -209,7 +209,7 @@ struct SystestQuery
 struct RunningQuery
 {
     SystestQuery systestQuery;
-    QueryId queryId = INVALID_QUERY_ID;
+    QueryId queryId = INVALID_LOCAL_QUERY_ID;
     std::optional<QueryId> differentialQueryPair;
     LocalQueryStatus queryStatus{};
     std::optional<uint64_t> bytesProcessed{0};
