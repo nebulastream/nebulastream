@@ -117,6 +117,7 @@ include(cmake/Sanitizers.cmake)
 include(cmake/CheckToolchain.cmake)
 include(cmake/UseCCache.cmake)
 include(cmake/UseMold.cmake)
+include(cmake/EnableRust.cmake)
 include(cmake/CheckDocker.cmake)
 
 if (ENABLE_IWYU)
@@ -258,7 +259,7 @@ if (CODE_COVERAGE)
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-single-node-worker")
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-plugins")
-
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-network")
     foreach (NES_DIR ${NES_COVERAGE_DIRECTORIES})
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
     endforeach ()

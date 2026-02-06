@@ -10,23 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_common_test(nes-common-tests
-        "ThreadNamingTest.cpp"
-        "NonBlockingMonotonicSeqQueueTest.cpp"
-        "UtilFunctionTest.cpp"
-        "StringUtilTest.cpp"
-        "RangesTest.cpp"
-        "LogLevelTest.cpp"
-        "BFSIteratorTest.cpp"
-        "RollingAverageTest.cpp"
-        "TypeTraitsTest.cpp"
-)
-target_link_libraries(nes-common-tests nes_rust_bindings)
+find_package(magic_enum CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
-add_nes_test(nes-thread-test
-        "ThreadTest.cpp"
+corrosion_add_cxxbridge(
+        nes-logger-bindings
+        CRATE nes_rust_bindings
+        FILES ../spdlog/lib.rs
 )
-
-add_nes_test(chunk-collector-test
-        "ChunkCollectorTest.cpp"
-)
+target_sources(nes-logger-bindings PRIVATE src/LoggerBindings.cpp)
+target_link_libraries(nes-logger-bindings PUBLIC nes-common spdlog::spdlog magic_enum::magic_enum)
+target_include_directories(nes-logger-bindings PUBLIC include)
