@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,7 +35,6 @@ public:
 
     GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
 
-    [[nodiscard]] SerializableFunction serialize() const;
     [[nodiscard]] bool operator==(const GreaterEqualsLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
@@ -49,10 +50,33 @@ public:
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend Reflector<GreaterEqualsLogicalFunction>;
+};
+
+template <>
+struct Reflector<GreaterEqualsLogicalFunction>
+{
+    Reflected operator()(const GreaterEqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<GreaterEqualsLogicalFunction>
+{
+    GreaterEqualsLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<GreaterEqualsLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedGreaterEqualsLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
+};
 }
 
 FMT_OSTREAM(NES::GreaterEqualsLogicalFunction);

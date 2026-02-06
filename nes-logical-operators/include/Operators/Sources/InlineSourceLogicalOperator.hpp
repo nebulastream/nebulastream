@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -41,7 +41,6 @@ public:
         std::unordered_map<std::string, std::string> parserConfig);
 
     [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
-    static void serialize(SerializableOperator&);
 
     [[nodiscard]] InlineSourceLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -73,6 +72,18 @@ private:
     std::string sourceType;
     std::unordered_map<std::string, std::string> sourceConfig;
     std::unordered_map<std::string, std::string> parserConfig;
+};
+
+template <>
+struct Reflector<InlineSourceLogicalOperator>
+{
+    Reflected operator()(const InlineSourceLogicalOperator&) const;
+};
+
+template <>
+struct Unreflector<InlineSourceLogicalOperator>
+{
+    InlineSourceLogicalOperator operator()(const Reflected&) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);

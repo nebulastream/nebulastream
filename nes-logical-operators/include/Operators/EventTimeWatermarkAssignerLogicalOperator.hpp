@@ -29,6 +29,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
@@ -44,7 +45,6 @@ public:
     Windowing::TimeUnit unit;
 
     [[nodiscard]] bool operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] EventTimeWatermarkAssignerLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -81,6 +81,18 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+};
+
+template <>
+struct Reflector<EventTimeWatermarkAssignerLogicalOperator>
+{
+    Reflected operator()(const EventTimeWatermarkAssignerLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<EventTimeWatermarkAssignerLogicalOperator>
+{
+    EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);

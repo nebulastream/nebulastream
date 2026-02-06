@@ -15,6 +15,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <Util/Reflection.hpp>
 
 namespace NES::Windowing
 {
@@ -43,4 +44,19 @@ private:
     uint64_t multiplier;
 };
 
+}
+
+namespace NES
+{
+template <>
+struct Reflector<Windowing::TimeUnit>
+{
+    Reflected operator()(const Windowing::TimeUnit& timeUnit) const;
+};
+
+template <>
+struct Unreflector<Windowing::TimeUnit>
+{
+    Windowing::TimeUnit operator()(const Reflected& reflected) const;
+};
 }

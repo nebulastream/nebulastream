@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -31,9 +32,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionSerialization.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -124,40 +127,38 @@ std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChild
     return children;
 }
 
-void EventTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+struct ReflectedEventTimeWatermarkAssignerLogicalOperator
 {
-    SerializableLogicalOperator proto;
+    std::optional<LogicalFunction> onField;
+    Windowing::TimeUnit timeUnit;
+};
 
-    proto.set_operator_type(NAME);
+Reflected Reflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const EventTimeWatermarkAssignerLogicalOperator& op) const
+{
+    return reflect(ReflectedEventTimeWatermarkAssignerLogicalOperator{.onField = op.onField, .timeUnit = op.unit});
+}
 
-    for (const auto& inputSchema : getInputSchemas())
+EventTimeWatermarkAssignerLogicalOperator
+Unreflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& reflected) const
+{
+    auto [onField, timeUnit] = unreflect<ReflectedEventTimeWatermarkAssignerLogicalOperator>(reflected);
+
+    if (!onField.has_value())
     {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
+        throw CannotDeserialize("EventTimeWatermarkAssignerLogicalOperator is missing onField function");
     }
 
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
-
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    FunctionList funcList;
-    *funcList.add_functions() = onField.serialize();
-    const DescriptorConfig::ConfigType funcVariant = std::move(funcList);
-    (*serializableOperator.mutable_config())[ConfigParameters::FUNCTION] = descriptorConfigTypeToProto(funcVariant);
-
-    const DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
-    (*serializableOperator.mutable_config())[ConfigParameters::TIME_MS] = descriptorConfigTypeToProto(timeVariant);
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return EventTimeWatermarkAssignerLogicalOperator{onField.value(), timeUnit};
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<EventTimeWatermarkAssignerLogicalOperator>(arguments.reflected);
+    }
+
     auto timeVariant = arguments.config.at(EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::TIME_MS);
     auto functionVariant = arguments.config.at(EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::FUNCTION);
 

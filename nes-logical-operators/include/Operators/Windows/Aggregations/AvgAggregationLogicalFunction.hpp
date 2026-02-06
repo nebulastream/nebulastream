@@ -20,6 +20,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,12 +34,34 @@ public:
 
     void inferStamp(const Schema& schema) override;
     ~AvgAggregationLogicalFunction() override = default;
-    [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] Reflected reflect() const override;
 
 private:
     static constexpr std::string_view NAME = "Avg";
     static constexpr DataType::Type partialAggregateStampType = DataType::Type::UNDEFINED;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
+
+template <>
+struct Reflector<AvgAggregationLogicalFunction>
+{
+    Reflected operator()(const AvgAggregationLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<AvgAggregationLogicalFunction>
+{
+    AvgAggregationLogicalFunction operator()(const Reflected& reflected) const;
+};
+}
+
+namespace NES::detail
+{
+struct ReflectedAvgAggregationLogicalFunction
+{
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
+};
+
 }

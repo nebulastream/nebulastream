@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -21,6 +22,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -31,8 +33,6 @@ public:
     static constexpr std::string_view NAME = "Ceil";
 
     explicit CeilLogicalFunction(const LogicalFunction& child);
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const CeilLogicalFunction& rhs) const;
 
@@ -49,8 +49,30 @@ public:
 private:
     DataType dataType;
     LogicalFunction child;
+
+    friend struct Reflector<CeilLogicalFunction>;
+};
+
+template <>
+struct Reflector<CeilLogicalFunction>
+{
+    Reflected operator()(const CeilLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<CeilLogicalFunction>
+{
+    CeilLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<CeilLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedCeilLogicalFunction
+{
+    std::optional<LogicalFunction> child;
+};
 }

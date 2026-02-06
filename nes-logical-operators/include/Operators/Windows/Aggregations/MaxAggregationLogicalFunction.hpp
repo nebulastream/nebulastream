@@ -19,6 +19,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -32,10 +33,32 @@ public:
 
     void inferStamp(const Schema& schema) override;
     ~MaxAggregationLogicalFunction() override = default;
-    [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] Reflected reflect() const override;
 
 private:
     static constexpr std::string_view NAME = "Max";
 };
+
+template <>
+struct Reflector<MaxAggregationLogicalFunction>
+{
+    Reflected operator()(const MaxAggregationLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<MaxAggregationLogicalFunction>
+{
+    MaxAggregationLogicalFunction operator()(const Reflected& reflected) const;
+};
+}
+
+namespace NES::detail
+{
+struct ReflectedMaxAggregationLogicalFunction
+{
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
+};
+
 }

@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
@@ -66,4 +67,18 @@ TimeUnit TimeUnit::Days()
     return TimeUnit(1000 * 60 * 60 * 24);
 }
 
+}
+
+namespace NES
+{
+Reflected Reflector<Windowing::TimeUnit>::operator()(const Windowing::TimeUnit& timeUnit) const
+{
+    return reflect(timeUnit.getMillisecondsConversionMultiplier());
+}
+
+Windowing::TimeUnit Unreflector<Windowing::TimeUnit>::operator()(const Reflected& reflected) const
+{
+    const auto multiplier = unreflect<uint64_t>(reflected);
+    return Windowing::TimeUnit{multiplier};
+}
 }

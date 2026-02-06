@@ -14,35 +14,27 @@
 
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
+
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Reflection.hpp>
-#include <Util/Registry.hpp>
 
 namespace NES
 {
 
-using LogicalOperatorRegistryReturnType = LogicalOperator;
-
-struct LogicalOperatorRegistryArguments
+struct ReflectedOperator
 {
+    std::string type;
+    uint64_t operatorId = 0;
+    std::vector<uint64_t> childrenIds;
+    Reflected config;
+    TraitSet traitSet;
     std::vector<Schema> inputSchemas;
-    Schema outputSchema;
-    DescriptorConfig::Config config;
-    Reflected reflected;
+    std::optional<Schema> outputSchema;
 };
 
-class LogicalOperatorRegistry
-    : public BaseRegistry<LogicalOperatorRegistry, std::string, LogicalOperatorRegistryReturnType, LogicalOperatorRegistryArguments>
-{
-};
 }
-
-#define INCLUDED_FROM_REGISTRY_LOGICAL_OPERATOR
-#include <LogicalOperatorGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_LOGICAL_OPERATOR

@@ -28,6 +28,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -42,7 +43,6 @@ struct SinkLogicalOperator final
     explicit SinkLogicalOperator(SinkDescriptor sinkDescriptor);
 
     [[nodiscard]] bool operator==(const SinkLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] SinkLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -88,5 +88,26 @@ private:
     friend class OperatorSerializationUtil;
 };
 
+template <>
+struct Reflector<SinkLogicalOperator>
+{
+    Reflected operator()(const SinkLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<SinkLogicalOperator>
+{
+    SinkLogicalOperator operator()(const Reflected& reflected) const;
+};
+
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);
+}
+
+namespace NES::detail
+{
+struct ReflectedSinkLogicalOperator
+{
+    std::optional<SinkDescriptor> sinkDescriptor;
+    std::string sinkName;
+};
 }

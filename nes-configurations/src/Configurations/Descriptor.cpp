@@ -19,9 +19,14 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <variant>
+
+#include <Configurations/ConfigSerialization.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Overloaded.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
@@ -196,6 +201,120 @@ std::string Descriptor::toStringConfig() const
     std::stringstream ss;
     ss << this->config;
     return ss.str();
+}
+
+struct ReflectedDescriptorConfig
+{
+    std::unordered_map<std::string, std::pair<std::string, Reflected>> config;
+};
+
+Reflected Descriptor::getReflectedConfig() const
+{
+    ReflectedDescriptorConfig reflectedConfig;
+
+    for (const auto& [key, value] : this->config)
+    {
+        std::visit(
+            Overloaded{
+                [&](const int32_t val) { reflectedConfig.config[key] = std::make_pair("int32_t", reflect(val)); },
+                [&](const uint32_t val) { reflectedConfig.config[key] = std::make_pair("uint32_t", reflect(val)); },
+                [&](const int64_t val) { reflectedConfig.config[key] = std::make_pair("int64_t", reflect(val)); },
+                [&](const uint64_t val) { reflectedConfig.config[key] = std::make_pair("uint64_t", reflect(val)); },
+                [&](bool val) { reflectedConfig.config[key] = std::make_pair("bool", reflect(val)); },
+                [&](char val) { reflectedConfig.config[key] = std::make_pair("char", reflect(val)); },
+                [&](float val) { reflectedConfig.config[key] = std::make_pair("float", reflect(val)); },
+                [&](double val) { reflectedConfig.config[key] = std::make_pair("double", reflect(val)); },
+                [&](const std::string& val) { reflectedConfig.config[key] = std::make_pair("string", reflect(val)); },
+                [&](const EnumWrapper& val) { reflectedConfig.config[key] = std::make_pair("EnumWrapper", reflect(val)); },
+                [&](const FunctionList& val) { reflectedConfig.config[key] = std::make_pair("FunctionList", reflect(val)); },
+                [&](const AggregationFunctionList& val)
+                { reflectedConfig.config[key] = std::make_pair("AggregationFunctionList", reflect(val)); },
+                [&](const WindowInfos& val) { reflectedConfig.config[key] = std::make_pair("WindowInfos", reflect(val)); },
+                [&](const ProjectionList& val) { reflectedConfig.config[key] = std::make_pair("ProjectionList", reflect(val)); },
+                [&](const UInt64List& val) { reflectedConfig.config[key] = std::make_pair("UInt64List", reflect(val)); }},
+            value);
+    }
+
+    return reflect(reflectedConfig);
+}
+
+DescriptorConfig::Config Descriptor::unreflectConfig(const Reflected& rfl)
+{
+    auto reflectedConfig = unreflect<ReflectedDescriptorConfig>(rfl);
+    DescriptorConfig::Config config;
+
+    for (auto [key, pair] : reflectedConfig.config)
+    {
+        auto [type, value] = pair;
+
+        if (type == "int32_t")
+        {
+            config[key] = unreflect<int32_t>(value);
+        }
+        else if (type == "uint32_t")
+        {
+            config[key] = unreflect<uint32_t>(value);
+        }
+        else if (type == "int64_t")
+        {
+            config[key] = unreflect<int64_t>(value);
+        }
+        else if (type == "uint64_t")
+        {
+            config[key] = unreflect<uint64_t>(value);
+        }
+        else if (type == "bool")
+        {
+            config[key] = unreflect<bool>(value);
+        }
+        else if (type == "char")
+        {
+            config[key] = unreflect<char>(value);
+        }
+        else if (type == "float")
+        {
+            config[key] = unreflect<float>(value);
+        }
+        else if (type == "double")
+        {
+            config[key] = unreflect<double>(value);
+        }
+        else if (type == "string")
+        {
+            config[key] = unreflect<std::string>(value);
+        }
+        else if (type == "EnumWrapper")
+        {
+            config[key] = unreflect<EnumWrapper>(value);
+        }
+        else if (type == "FunctionList")
+        {
+            config[key] = unreflect<FunctionList>(value);
+        }
+        else if (type == "AggregationFunctionList")
+        {
+            config[key] = unreflect<AggregationFunctionList>(value);
+        }
+        else if (type == "WindowInfos")
+        {
+            config[key] = unreflect<WindowInfos>(value);
+        }
+        else if (type == "ProjectionList")
+        {
+            config[key] = unreflect<ProjectionList>(value);
+        }
+        else if (type == "UInt64List")
+        {
+            config[key] = unreflect<UInt64List>(value);
+        }
+        else
+        {
+            throw CannotDeserialize();
+        }
+    }
+
+
+    return config;
 }
 
 }

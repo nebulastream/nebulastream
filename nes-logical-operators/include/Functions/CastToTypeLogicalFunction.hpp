@@ -21,6 +21,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "Cast";
 
     CastToTypeLogicalFunction(DataType dataType, LogicalFunction child);
-
-    [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const CastToTypeLogicalFunction& rhs) const;
 
@@ -51,6 +50,18 @@ public:
 private:
     DataType castToType;
     LogicalFunction child;
+};
+
+template <>
+struct Reflector<CastToTypeLogicalFunction>
+{
+    Reflected operator()(const CastToTypeLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<CastToTypeLogicalFunction>
+{
+    CastToTypeLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<CastToTypeLogicalFunction>);

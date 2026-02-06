@@ -15,12 +15,14 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -34,13 +36,35 @@ public:
     ~CountAggregationLogicalFunction() override = default;
 
     void inferStamp(const Schema& schema) override;
-    [[nodiscard]] SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] Reflected reflect() const override;
 
 private:
     static constexpr std::string_view NAME = "Count";
     static constexpr DataType::Type inputAggregateStampType = DataType::Type::UINT64;
     static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
+};
+
+template <>
+struct Reflector<CountAggregationLogicalFunction>
+{
+    Reflected operator()(const CountAggregationLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<CountAggregationLogicalFunction>
+{
+    CountAggregationLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+}
+
+namespace NES::detail
+{
+struct ReflectedCountAggregationLogicalFunction
+{
+    std::optional<FieldAccessLogicalFunction> onField;
+    std::optional<FieldAccessLogicalFunction> asField;
 };
 }

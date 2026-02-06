@@ -22,6 +22,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -100,25 +101,30 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->setInputStamp(newOnField.getDataType());
 }
 
-SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
+Reflected AvgAggregationLogicalFunction::reflect() const
 {
-    SerializableAggregationFunction serializedAggregationFunction;
-    serializedAggregationFunction.set_type(NAME);
+    return NES::reflect(this);
+}
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(this->getOnField().serialize());
+Reflected Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregationLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedAvgAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+}
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(this->getAsField().serialize());
-
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
-    return serializedAggregationFunction;
+AvgAggregationLogicalFunction Unreflector<AvgAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [onField, asField] = unreflect<detail::ReflectedAvgAggregationLogicalFunction>(reflected);
+    return AvgAggregationLogicalFunction{onField, asField};
 }
 
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return std::make_shared<AvgAggregationLogicalFunction>(unreflect<AvgAggregationLogicalFunction>(arguments.reflected));
+    }
+
     if (arguments.fields.size() != 2)
     {
         throw CannotDeserialize("AvgAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
