@@ -23,6 +23,9 @@ option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the sys
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(CODE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Enable tests" ON)
+option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
+option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" ON)
+
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
@@ -114,6 +117,7 @@ include(cmake/Sanitizers.cmake)
 include(cmake/CheckToolchain.cmake)
 include(cmake/UseCCache.cmake)
 include(cmake/UseMold.cmake)
+include(cmake/CheckDocker.cmake)
 
 if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)

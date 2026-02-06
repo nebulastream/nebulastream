@@ -33,6 +33,8 @@ jobs:
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
