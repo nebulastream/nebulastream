@@ -60,6 +60,5 @@ void parseRawValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
-    QuotationType quotationType,
-    ArenaRef& arenaRef);
+    QuotationType quotationType);
 }
