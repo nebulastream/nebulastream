@@ -15,7 +15,6 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
 #include <variant>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <nautilus/std/sstream.h>
@@ -40,7 +39,7 @@ struct RegularContent
     nautilus::val<int8_t*> ptr;
     nautilus::val<uint64_t> contentSize;
 
-    RegularContent(const nautilus::val<int8_t*>& content, nautilus::val<uint64_t> size);
+    RegularContent(const nautilus::val<int8_t*>& content, const nautilus::val<uint64_t>& size);
 
     [[nodiscard]] nautilus::val<int8_t*> getContent() const { return ptr; }
 
@@ -63,9 +62,9 @@ struct CompoundContent
     CompoundContent(
         ArenaRef* arena,
         const nautilus::val<int8_t*>& first,
-        nautilus::val<uint64_t> firstSize,
+        const nautilus::val<uint64_t>& firstSize,
         const nautilus::val<int8_t*>& second,
-        nautilus::val<uint64_t> secondSize);
+        const nautilus::val<uint64_t>& secondSize);
 
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
 
@@ -93,7 +92,7 @@ public:
     VariableSizedData& operator=(VariableSizedData&& other) noexcept = default;
     ~VariableSizedData() = default;
 
-    [[nodiscard]] nautilus::val<uint32_t> getSize() const { return size; }
+    [[nodiscard]] nautilus::val<uint64_t> getSize() const;
 
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
 
