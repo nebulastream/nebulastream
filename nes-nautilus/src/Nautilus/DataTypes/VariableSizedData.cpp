@@ -30,8 +30,7 @@ namespace NES
 namespace detail
 {
 
-RegularContent::RegularContent(const nautilus::val<int8_t*>& content, nautilus::val<uint64_t> size)
-    : ptr(content), contentSize(std::move(size))
+RegularContent::RegularContent(const nautilus::val<int8_t*>& content, nautilus::val<uint64_t> size) : ptr(content), contentSize(size)
 {
 }
 
@@ -56,7 +55,7 @@ CompoundContent::CompoundContent(
     nautilus::val<uint64_t> firstSize,
     const nautilus::val<int8_t*>& second,
     nautilus::val<uint64_t> secondSize)
-    : arenaRef(arena), firstPtr(first), secondPtr(second), firstSize(std::move(firstSize)), secondSize(std::move(secondSize))
+    : arenaRef(arena), firstPtr(first), secondPtr(second), firstSize(firstSize), secondSize(secondSize)
 {
 }
 
@@ -74,7 +73,7 @@ nautilus::val<int8_t*> CompoundContent::getContent() const
 
 nautilus::val<bool> CompoundContent::operator==(const RegularContent& rhs) const
 {
-    if (firstPtr + secondSize != rhs.contentSize)
+    if (firstSize + secondSize != rhs.contentSize)
     {
         return false;
     }
