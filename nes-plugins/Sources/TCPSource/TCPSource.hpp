@@ -179,7 +179,7 @@ public:
     TCPSource(TCPSource&&) = delete;
     TCPSource& operator=(TCPSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, AbstractBufferProvider&, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;

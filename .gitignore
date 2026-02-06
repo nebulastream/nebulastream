@@ -45,6 +45,8 @@ nes-asp/data/*.csv
 scripts/__pycache__
 .ccache
 
+.ccache
+
 # Ignore nix symlinks
 .nix/clang
 .nix/clang++

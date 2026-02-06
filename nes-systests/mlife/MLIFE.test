@@ -1,0 +1,87 @@
+# name: window/WindowAggregationDifferentDataTypesKeyed.test
+# description: Test window aggregations over different data types for keyed windows
+# groups: [Aggregation, WindowOperators]
+
+# 60000 = 1min
+# 86400000 = 1 day
+# 43200000 = 1/2 day
+CREATE LOGICAL SOURCE stream(keyI8 INT8, f64 FLOAT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+# 1 days
+1,0,0
+1,0,43200000
+# 2 days
+1,1,86400000
+1,1,129600000
+# 3 days
+1,2,172800000
+1,2,216000000
+# 4 days
+1,3,259200000
+1,3,302400000
+# 5 days
+1,4,345600000
+1,4,388800000
+# 6 days
+1,5,432000000
+1,5,475200000
+# 7 days
+1,6,518400000
+1,6,561600000
+# 8 days
+1,7,604800000
+1,7,648000000
+# 9 days
+1,8,691200000
+1,8,734400000
+# 10 days
+1,9,777600000
+1,9,820800000
+
+
+SELECT start, end as end7days, keyI8 as id, MIN(f64) as min7days FROM stream GROUP BY (keyI8) WINDOW SLIDING(ts, size 7 day, advance by 1 day) INTO File();
+----
+0, 604800000, 1, 0.0
+86400000, 691200000, 1, 1.0
+172800000, 777600000, 1, 2.0
+259200000, 864000000, 1, 3.0
+345600000, 950400000, 1, 4.0
+432000000, 1036800000, 1, 5.0
+518400000, 1123200000, 1, 6.0
+604800000, 1209600000, 1, 7.0
+691200000, 1296000000, 1, 8.0
+
+SELECT start, end as end1day, keyI8 as id2, MIN(f64) as min1day FROM stream GROUP BY (keyI8) WINDOW TUMBLING(ts, size 1 day) INTO File();
+----
+0, 86400000, 1, 0.0
+86400000, 172800000, 1, 1.0
+172800000, 259200000, 1, 2.0
+259200000, 345600000, 1, 3.0
+345600000, 432000000, 1, 4.0
+432000000, 518400000, 1, 5.0
+518400000, 604800000, 1, 6.0
+604800000, 691200000, 1, 7.0
+691200000, 777600000, 1, 8.0
+
+SELECT start, (end - UINT64(86400000)) as end1day, keyI8 as id2, MIN(f64) as min1day FROM stream GROUP BY (keyI8) WINDOW TUMBLING(ts, size 1 day) INTO File();
+----
+0 0 1 0.0
+86400000 86400000 1 1.0
+172800000 172800000 1 2.0
+259200000 259200000 1 3.0
+345600000 345600000 1 4.0
+432000000 432000000 1 5.0
+518400000 518400000 1 6.0
+604800000 604800000 1 7.0
+691200000 691200000 1 8.0
+
+# AND end1day >= end7days
+SELECT min1day, min7days FROM (SELECT start, end as end7days, keyI8 as id, MIN(f64) as min7days FROM stream GROUP BY (keyI8) WINDOW SLIDING(ts, size 7 day, advance by 1 day)) INNER JOIN
+(SELECT start, end as end1day, keyI8 as id2, MIN(f64) as min1day FROM stream GROUP BY (keyI8) WINDOW TUMBLING(ts, size 1 day))
+ON (id = id2 AND end1day > end7days) WINDOW SLIDING (start, size 8 day, advance by 1 day) INTO File();
+----
+7.0,0.0
+8.0,1.0
+9.0,2.0
+
