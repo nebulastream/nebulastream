@@ -66,13 +66,32 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
         NES_DEBUG("Parser configuration did not contain: field_delimiter, using default: ,");
         created.fieldDelimiter = ",";
     }
+    if (const auto commaCheck = configMap.find("allow_commas_in_strings"); commaCheck != configMap.end())
+    {
+        const auto commaCheckParsed = from_chars<bool>(commaCheck->second);
+        if (not commaCheckParsed)
+        {
+            throw InvalidConfigParameter("no_commas_in_strings config argument must be parsable boolean, but was: {}", commaCheck->second);
+        }
+        created.allowCommasInStrings = commaCheckParsed.value();
+        ;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: allow_commas_in_strings, using default: true");
+        created.allowCommasInStrings = true;
+    }
     return created;
 }
 
 std::ostream& operator<<(std::ostream& os, const ParserConfig& obj)
 {
     return os << fmt::format(
-               "ParserConfig(type: {}, tupleDelimiter: {}, fieldDelimiter: {})", obj.parserType, obj.tupleDelimiter, obj.fieldDelimiter);
+               "ParserConfig(type: {}, tupleDelimiter: '{}', fieldDelimiter: '{}', allowCommasInStrings: {})",
+               obj.parserType,
+               obj.tupleDelimiter,
+               obj.fieldDelimiter,
+               obj.allowCommasInStrings);
 }
 
 SourceDescriptor::SourceDescriptor(
@@ -155,6 +174,7 @@ SerializableSourceDescriptor SourceDescriptor::serialize() const
     serializedParserConfig->set_type(parserConfig.parserType);
     serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
     serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
+    serializedParserConfig->set_allowcommasinstrings(parserConfig.allowCommasInStrings);
     serializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
