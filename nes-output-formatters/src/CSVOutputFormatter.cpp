@@ -185,7 +185,11 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
 
 std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)
 {
-    return out << fmt::format("CSVOutputFormatter(Escape Strings: {})", format.escapeStrings);
+    return out << fmt::format(
+               "CSVOutputFormatter(Escape Strings: {}, Field Delimiter: {}, Tuple Delimiter: {})",
+               format.escapeStrings,
+               format.fieldDelimiter,
+               format.tupleDelimiter);
 }
 
 DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)

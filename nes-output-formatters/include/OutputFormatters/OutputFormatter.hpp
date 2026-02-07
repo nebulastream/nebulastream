@@ -18,24 +18,17 @@
 #include <cstdint>
 #include <limits>
 #include <ostream>
-#include <ranges>
-#include <sstream>
-#include <string>
-#include <utility>
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <fmt/base.h>
-#include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <ErrorHandling.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -70,15 +63,6 @@ public:
         = 0;
 
     virtual std::ostream& toString(std::ostream&) const = 0;
-
-    /// Allocate child buffers to write the string completely into the tuple buffer
-    /// String may span between children or between the main buffer and the first child
-    static void writeWithChildBuffers(
-        std::string value,
-        uint64_t remainingSpace,
-        TupleBuffer* tupleBuffer,
-        AbstractBufferProvider* bufferProvider,
-        int8_t* bufferStartingAddress);
 
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);
 

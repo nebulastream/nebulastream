@@ -14,57 +14,10 @@
 
 #include <OutputFormatters/OutputFormatter.hpp>
 
-#include <cstddef>
-#include <cstdint>
 #include <ostream>
-#include <string>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {
-void OutputFormatter::writeWithChildBuffers(
-    std::string value,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider,
-    int8_t* bufferStartingAddress)
-{
-    size_t remainingBytes = value.size();
-    uint32_t numOfChildBuffers = tupleBuffer->getNumberOfChildBuffers();
-    /// Fill up the remaing space in the main tuple buffer before allocating any child buffers
-    if (numOfChildBuffers == 0)
-    {
-        std::memcpy(bufferStartingAddress, value.c_str(), remainingSpace);
-        remainingBytes -= remainingSpace;
-        /// Create the first child buffer, if necessary
-        if (remainingBytes > 0)
-        {
-            auto newChildBuffer = bufferProvider->getBufferBlocking();
-            auto index = tupleBuffer->storeChildBuffer(newChildBuffer);
-            numOfChildBuffers++;
-        }
-    }
-    while (remainingBytes > 0)
-    {
-        /// Write as many bytes in the latest child buffer as possible and allocate a new one if space does not suffice
-        const VariableSizedAccess::Index childIndex(numOfChildBuffers - 1);
-        auto lastChildBuffer = tupleBuffer->loadChildBuffer(childIndex);
-        const auto bufferOffset = lastChildBuffer.getNumberOfTuples();
-        const uint32_t valueOffset = value.size() - remainingBytes;
-        const uint64_t writable = std::min(remainingBytes, lastChildBuffer.getBufferSize() - bufferOffset);
-        std::memcpy(lastChildBuffer.getAvailableMemoryArea<>().data() + bufferOffset, value.c_str() + valueOffset, writable);
-        remainingBytes -= writable;
-        lastChildBuffer.setNumberOfTuples(bufferOffset + writable);
-        if (remainingBytes > 0)
-        {
-            auto newChildBuffer = bufferProvider->getBufferBlocking();
-            auto index = tupleBuffer->storeChildBuffer(newChildBuffer);
-            numOfChildBuffers++;
-        }
-    }
-}
-
 std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj)
 {
     return obj.toString(os);
