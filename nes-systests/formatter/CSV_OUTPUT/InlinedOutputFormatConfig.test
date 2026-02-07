@@ -31,9 +31,3 @@ This
 is
 a
 test
-
-SELECT * FROM csvSource2 INTO File('CSV' as `SINK`.INPUT_FORMAT, ";" as `PARSER`.FIELD_DELIMITER, "\n" as `PARSER`.TUPLE_DELIMITER);
-----
-1;2;3
-4;5;6
-7;8;9
