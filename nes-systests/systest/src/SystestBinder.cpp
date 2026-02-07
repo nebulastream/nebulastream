@@ -82,11 +82,17 @@ public:
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
+                std::unordered_map<std::string, std::string> formatConfig{};
                 if (sinkType == "File")
                 {
                     config["input_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config), {});
+                else if (toUpperCase(sinkType) == "CHECKSUM")
+                {
+                    formatConfig["escape_strings"] = "true";
+                }
+                const auto sink
+                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config), formatConfig);
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -634,6 +640,10 @@ struct SystestBinder::Impl
         if (not(sinkConfig.contains("input_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
             sinkConfig.emplace("input_format", "CSV");
+        }
+        if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
+        {
+            formatConfig["escape_strings"] = "true";
         }
 
         auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);
