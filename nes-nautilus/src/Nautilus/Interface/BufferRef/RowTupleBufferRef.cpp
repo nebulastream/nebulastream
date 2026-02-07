@@ -72,14 +72,8 @@ nautilus::val<size_t> RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    nautilus::val<bool> checkSpaceBeforeWriting) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    if (checkSpaceBeforeWriting && (recordIndex >= capacity))
-    {
-        return std::string::npos;
-    }
-
     const auto bufferAddress = recordBuffer.getMemArea();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
@@ -95,6 +89,19 @@ nautilus::val<size_t> RowTupleBufferRef::writeRecord(
         storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
     }
     return 1;
+}
+
+nautilus::val<size_t> RowTupleBufferRef::writeRecordSafely(
+    nautilus::val<uint64_t>& recordIndex,
+    const RecordBuffer& recordBuffer,
+    const Record& rec,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
+    if (recordIndex >= capacity)
+    {
+        return INVALID_WRITE_RETURN;
+    }
+    return writeRecord(recordIndex, recordBuffer, rec, bufferProvider);
 }
 
 std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames() const

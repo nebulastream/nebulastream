@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -21,6 +22,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <val.hpp>
 
 namespace NES
 {
@@ -81,7 +83,7 @@ static size_t writeValAsString(
 {
     /// Convert val to a string
     /// In the future, users could provide custom conversions for a specific datatype T in order to optimize.
-    std::string stringFormattedValue(physicalType->formattedBytesToString(&val));
+    const std::string stringFormattedValue(physicalType->formattedBytesToString(&val));
 
     /// Write string into the memory at starting address. If there is not enough space, allocate children, if allowed.
     const size_t stringSize = stringFormattedValue.size();
@@ -92,7 +94,7 @@ static size_t writeValAsString(
             writeWithChildBuffers(stringFormattedValue, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
             return remainingSpace;
         }
-        return std::string::npos;
+        return std::numeric_limits<size_t>::max();
     }
     std::memcpy(bufferStartingAddress, stringFormattedValue.data(), stringSize);
     return stringSize;
@@ -259,7 +261,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         default: {
-            return std::string::npos;
+            return std::numeric_limits<size_t>::max();
         }
     }
 }

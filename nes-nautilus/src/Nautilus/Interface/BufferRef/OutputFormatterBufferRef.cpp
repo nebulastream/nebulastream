@@ -49,39 +49,48 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    nautilus::val<bool> checkSpaceBeforeWriting) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    nautilus::val isFirstRecordOfBuffer(bytesWritten == nautilus::val<uint64_t>(0));
-    /// If there is no space left in this buffer, we emit
-    if (checkSpaceBeforeWriting && (bytesWritten >= bufferSize))
-    {
-        return std::string::npos;
-    }
+    const nautilus::val isFirstRecordOfBuffer(bytesWritten == nautilus::val<uint64_t>(0));
     const auto bufferAddress = recordBuffer.getMemArea();
     /// Calculating the field offset is therefore straight forward
-    auto recordAddress = bufferAddress + bytesWritten;
+    const auto recordAddress = bufferAddress + bytesWritten;
     /// This will be incremented by the amount of bytes written for each field to calculate the field address
     nautilus::val<size_t> writtenForThisRecord(0);
+
     /// This value counts the amount of actual fields of the sink schema that we visited already.
     /// Iterate through the vals of the record and pass them to the output formatter for formatting
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
         const auto& [name, type, fieldOffset] = fields.at(i);
         const auto fieldAddress = recordAddress + writtenForThisRecord;
-        nautilus::val<unsigned long> remainingBytes(bufferSize - bytesWritten - writtenForThisRecord);
+        nautilus::val remainingBytes(bufferSize - bytesWritten - writtenForThisRecord);
         const auto& value = rec.read(name);
         const auto amountWritten = formatter->getFormattedValue(
             value, name, type, i, fieldAddress, remainingBytes, isFirstRecordOfBuffer, recordBuffer, bufferProvider);
+
         /// This signalizes that the buffer did not have enough remaining space to capture the formatted value.
         /// Therefore, we signalize the emit operator to emit the current buffer
-        if (amountWritten == nautilus::val<size_t>(std::string::npos))
+        if (amountWritten == nautilus::val<size_t>(INVALID_WRITE_RETURN))
         {
-            return std::string::npos;
+            return INVALID_WRITE_RETURN;
         }
         writtenForThisRecord += amountWritten;
     }
     return writtenForThisRecord;
+}
+
+nautilus::val<size_t> OutputFormatterBufferRef::writeRecordSafely(
+    nautilus::val<uint64_t>& bytesWritten,
+    const RecordBuffer& recordBuffer,
+    const Record& rec,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
+    if (bytesWritten >= bufferSize)
+    {
+        return INVALID_WRITE_RETURN;
+    }
+    return writeRecord(bytesWritten, recordBuffer, rec, bufferProvider);
 }
 
 std::vector<Record::RecordFieldIdentifier> OutputFormatterBufferRef::getAllFieldNames() const

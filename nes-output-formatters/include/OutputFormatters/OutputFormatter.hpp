@@ -16,6 +16,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <ostream>
 #include <ranges>
 #include <sstream>
@@ -82,6 +83,8 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);
 
 protected:
+    static constexpr size_t INVALID_WRITE_RETURN = std::numeric_limits<size_t>::max();
+
     /// Number of fields in the output schema
     size_t numberOfFields;
 };

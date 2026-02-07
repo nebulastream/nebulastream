@@ -64,7 +64,7 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
     {
         if (!allowChildren)
         {
-            return std::string::npos;
+            return INVALID_WRITE_RETURN;
         }
         nautilus::invoke(
             +[](const bool isFirstField,
@@ -115,9 +115,9 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
         /// Convert the VarVal to a string and write it into the address.
         nautilus::val<size_t> amountWritten = formatAndWriteVal(
             value, fieldType, fieldPointer + written, currentRemainingSize, allowChildren, recordBuffer, bufferProvider);
-        if (amountWritten == std::string::npos)
+        if (amountWritten == INVALID_WRITE_RETURN)
         {
-            return std::string::npos;
+            return INVALID_WRITE_RETURN;
         }
         written += amountWritten;
         currentRemainingSize -= amountWritten;
@@ -132,7 +132,7 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
         {
             if (!allowChildren)
             {
-                return std::string::npos;
+                return INVALID_WRITE_RETURN;
             }
             /// Convert the varsized value to a string and allocate child memory to fully write it
             nautilus::invoke(
@@ -187,7 +187,7 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
     {
         if (!allowChildren)
         {
-            return std::string::npos;
+            return INVALID_WRITE_RETURN;
         }
         nautilus::invoke(
             +[](const char* delimiterPointer,
