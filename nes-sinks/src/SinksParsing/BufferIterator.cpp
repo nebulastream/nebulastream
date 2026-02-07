@@ -24,11 +24,10 @@ namespace NES
 BufferIterator::BufferElement BufferIterator::getNextElement()
 {
     /// The very first buffer to be returned as element is the "main" tuple buffer
-    /// The getNumberOfTuples call for this buffer might return a number higher than the buffer size for this buffer, since it also includes
     /// the number of bytes in all children (see OutputFormatterRef). In this case the whole tupĺe buffer is filled.
     if (bufferIndex == 0)
     {
-        const size_t bytesInBuffer = std::min(tupleBuffer.getBufferSize(), tupleBuffer.getNumberOfTuples());
+        const size_t bytesInBuffer = tupleBuffer.getNumberOfTuples();
         const bool isLast = bufferIndex == tupleBuffer.getNumberOfChildBuffers();
         bufferIndex++;
         return {tupleBuffer, bytesInBuffer, isLast};

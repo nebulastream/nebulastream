@@ -69,13 +69,7 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
     {
         const auto& [name, type, fieldOffset] = fields.at(i);
         const auto fieldAddress = recordAddress + writtenForThisRecord;
-        nautilus::val<unsigned long> remainingBytes(0);
-        /// In case that we already continued writing into child buffers, because a single record did not fit into the buffer,
-        /// the written bytes might be higher than the buffer size, leading to unwanted behaviour if subtracted
-        if (!isFirstRecordOfBuffer || bytesWritten + writtenForThisRecord <= bufferSize)
-        {
-            remainingBytes = bufferSize - bytesWritten - writtenForThisRecord;
-        }
+        nautilus::val<unsigned long> remainingBytes(bufferSize - bytesWritten - writtenForThisRecord);
         const auto& value = rec.read(name);
         const auto amountWritten = formatter->getFormattedValue(
             value, name, type, i, fieldAddress, remainingBytes, isFirstRecordOfBuffer, recordBuffer, bufferProvider);
