@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "JSONOutputFormatter.hpp"
+#include <JSONOutputFormatter.hpp>
 
 #include <cstddef>
 #include <cstdint>

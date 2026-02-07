@@ -37,6 +37,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <std/cstring.h>
 
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
@@ -47,7 +48,10 @@
 namespace NES
 {
 CSVOutputFormatter::CSVOutputFormatter(const size_t numberOfFields, const OutputFormatterDescriptor& descriptor)
-    : OutputFormatter(numberOfFields), escapeStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::ESCAPE_STRINGS))
+    : OutputFormatter(numberOfFields)
+    , escapeStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::ESCAPE_STRINGS))
+    , fieldDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::FIELD_DELIMITER))
+    , tupleDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::TUPLE_DELIMITER))
 {
 }
 
@@ -140,11 +144,11 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
     nautilus::val<const char*> delimiter("");
     if (fieldIndex == nautilus::val<uint64_t>(numberOfFields) - 1)
     {
-        delimiter = "\n";
+        delimiter = tupleDelimiter.c_str();
     }
     else
     {
-        delimiter = ",";
+        delimiter = fieldDelimiter.c_str();
     }
 
     nautilus::val delimiterLength(nautilus::strlen(delimiter));

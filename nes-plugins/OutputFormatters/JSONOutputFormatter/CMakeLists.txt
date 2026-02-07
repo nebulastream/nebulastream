@@ -18,7 +18,8 @@ target_include_directories(json_output_formatter_plugin
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(json_output_formatter_plugin
+
+target_include_directories(json_output_formatter_validation_plugin
         PUBLIC include
         PRIVATE .
 )

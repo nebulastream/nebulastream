@@ -59,7 +59,9 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
 private:
-    bool escapeStrings;
+    const bool escapeStrings;
+    const std::string fieldDelimiter;
+    const std::string tupleDelimiter;
 };
 }
 
@@ -72,8 +74,18 @@ struct ConfigParametersCSV
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ESCAPE_STRINGS, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_DELIMITER{
+        "field_delimiter",
+        ",",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_DELIMITER, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
+        "tuple_delimiter",
+        "\n",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(ESCAPE_STRINGS);
+        = DescriptorConfig::createConfigParameterContainerMap(ESCAPE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
 };
 }
 

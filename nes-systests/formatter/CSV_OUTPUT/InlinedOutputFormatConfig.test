@@ -3,12 +3,20 @@
 # groups: [Formatter, CSV]
 
 CREATE LOGICAL SOURCE csvSource(textdata VARSIZED);
+CREATE LOGICAL SOURCE csvSource2(field1 INT32, field2 INT32, field3 INT32);
+
 CREATE PHYSICAL SOURCE FOR csvSource TYPE File SET("CSV" AS `PARSER`.`TYPE`);
 ATTACH INLINE
 This
 is
 a
 test
+
+CREATE PHYSICAL SOURCE FOR csvSource2 TYPE File SET("CSV" AS `PARSER`.`TYPE`);
+ATTACH INLINE
+1,2,3
+4,5,6
+7,8,9
 
 SELECT * FROM csvSource INTO File('CSV' as `SINK`.INPUT_FORMAT, TRUE as `PARSER`.ESCAPE_STRINGS);
 ----
@@ -23,3 +31,9 @@ This
 is
 a
 test
+
+SELECT * FROM csvSource2 INTO File('CSV' as `SINK`.INPUT_FORMAT, ";" as `PARSER`.FIELD_DELIMITER, "\n" as `PARSER`.TUPLE_DELIMITER);
+----
+1;2;3
+4;5;6
+7;8;9
