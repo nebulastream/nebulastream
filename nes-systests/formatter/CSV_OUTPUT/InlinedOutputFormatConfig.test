@@ -1,0 +1,33 @@
+# name: OutputFormatConfig.test
+# description: tests the output formatter configuration
+# groups: [Formatter, CSV]
+
+CREATE LOGICAL SOURCE csvSource(textdata VARSIZED);
+CREATE LOGICAL SOURCE csvSource2(field1 INT32, field2 INT32, field3 INT32);
+
+CREATE PHYSICAL SOURCE FOR csvSource TYPE File SET("CSV" AS `PARSER`.`TYPE`);
+ATTACH INLINE
+This
+is
+a
+test
+
+CREATE PHYSICAL SOURCE FOR csvSource2 TYPE File SET("CSV" AS `PARSER`.`TYPE`);
+ATTACH INLINE
+1,2,3
+4,5,6
+7,8,9
+
+SELECT * FROM csvSource INTO File('CSV' as `SINK`.INPUT_FORMAT, TRUE as `PARSER`.ESCAPE_STRINGS);
+----
+"This"
+"is"
+"a"
+"test"
+
+SELECT * FROM csvSource INTO File('CSV' as `SINK`.INPUT_FORMAT, FALSE as `PARSER`.ESCAPE_STRINGS);
+----
+This
+is
+a
+test

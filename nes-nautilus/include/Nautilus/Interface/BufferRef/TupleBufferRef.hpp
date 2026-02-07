@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <span>
 
@@ -40,6 +41,7 @@ namespace NES
 class TupleBufferRef
 {
 protected:
+    static constexpr size_t INVALID_WRITE_RETURN = std::numeric_limits<size_t>::max();
     uint64_t capacity;
     uint64_t bufferSize;
     uint64_t tupleSize;
@@ -70,7 +72,19 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getMemArea()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
-    virtual void writeRecord(
+    /// @param checkSpaceBeforeWriting: If true, the function will evaluate if the record index fits into the buffer based on the capacity member. Should remain false if the capacity does not matter.
+    /// Returns the number of records (or bytes in the case of OutputFormatter) that were written into the buffer
+    /// std::string::npos is returned, the buffer must be emitted first
+    virtual nautilus::val<size_t> writeRecord(
+        nautilus::val<uint64_t>& recordIndex,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+        = 0;
+
+    /// Write record, but checks if the recordIndex is out of bounds
+    /// Will return the max value for size_t, if the index is out of bounds
+    virtual nautilus::val<size_t> writeRecordSafely(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,

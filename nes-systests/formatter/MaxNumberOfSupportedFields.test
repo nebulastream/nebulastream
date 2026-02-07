@@ -1,6 +1,6 @@
 # name: formatter/SingleTupleThatSpansThreeTBRaws.test
 # description: formatter tests
-# groups: [Formatter, Tuples]
+# groups: [Formatter, Tuples, CompilationIntensive]
 
 # NOTE: adding just one more field causes a crash (see: SchemaWith307FieldCausesQueryCompilationCrash.test.disabled)
 
