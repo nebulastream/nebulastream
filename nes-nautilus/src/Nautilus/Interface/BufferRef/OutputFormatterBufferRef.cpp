@@ -27,8 +27,10 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <ErrorHandling.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_concepts.hpp>
 
 namespace NES
 {
@@ -45,7 +47,7 @@ OutputFormatterBufferRef::readRecord(const std::vector<Record::RecordFieldIdenti
     std::unreachable();
 }
 
-nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
+nautilus::val<uint64_t> OutputFormatterBufferRef::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
@@ -56,7 +58,7 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
     /// Calculating the field offset is therefore straight forward
     const auto recordAddress = bufferAddress + bytesWritten;
     /// This will be incremented by the amount of bytes written for each field to calculate the field address
-    nautilus::val<size_t> writtenForThisRecord(0);
+    nautilus::val<uint64_t> writtenForThisRecord(0);
 
     /// This value counts the amount of actual fields of the sink schema that we visited already.
     /// Iterate through the vals of the record and pass them to the output formatter for formatting
@@ -64,14 +66,14 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
     {
         const auto& [name, type, fieldOffset] = fields.at(i);
         const auto fieldAddress = recordAddress + writtenForThisRecord;
-        nautilus::val remainingBytes(bufferSize - bytesWritten - writtenForThisRecord);
+        const nautilus::val remainingBytes(bufferSize - bytesWritten - writtenForThisRecord);
         const auto& value = rec.read(name);
         const auto amountWritten = formatter->getFormattedValue(
             value, name, type, i, fieldAddress, remainingBytes, isFirstRecordOfBuffer, recordBuffer, bufferProvider);
 
         /// This signalizes that the buffer did not have enough remaining space to capture the formatted value.
         /// Therefore, we signalize the emit operator to emit the current buffer
-        if (amountWritten == nautilus::val<size_t>(INVALID_WRITE_RETURN))
+        if (amountWritten == nautilus::val<uint64_t>(INVALID_WRITE_RETURN))
         {
             return INVALID_WRITE_RETURN;
         }
@@ -80,7 +82,7 @@ nautilus::val<size_t> OutputFormatterBufferRef::writeRecord(
     return writtenForThisRecord;
 }
 
-nautilus::val<size_t> OutputFormatterBufferRef::writeRecordSafely(
+nautilus::val<uint64_t> OutputFormatterBufferRef::writeRecordSafely(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,

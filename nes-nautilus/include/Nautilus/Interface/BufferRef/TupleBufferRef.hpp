@@ -28,6 +28,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -41,7 +42,7 @@ namespace NES
 class TupleBufferRef
 {
 protected:
-    static constexpr size_t INVALID_WRITE_RETURN = std::numeric_limits<size_t>::max();
+    static constexpr uint64_t INVALID_WRITE_RETURN = std::numeric_limits<uint64_t>::max();
     uint64_t capacity;
     uint64_t bufferSize;
     uint64_t tupleSize;
@@ -74,8 +75,7 @@ public:
     /// @param rec: Record to be stored
     /// @param checkSpaceBeforeWriting: If true, the function will evaluate if the record index fits into the buffer based on the capacity member. Should remain false if the capacity does not matter.
     /// Returns the number of records (or bytes in the case of OutputFormatter) that were written into the buffer
-    /// std::string::npos is returned, the buffer must be emitted first
-    virtual nautilus::val<size_t> writeRecord(
+    virtual nautilus::val<uint64_t> writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
@@ -83,8 +83,8 @@ public:
         = 0;
 
     /// Write record, but checks if the recordIndex is out of bounds
-    /// Will return the max value for size_t, if the index is out of bounds
-    virtual nautilus::val<size_t> writeRecordSafely(
+    /// Will return the max value for uint64_t, if the index is out of bounds
+    virtual nautilus::val<uint64_t> writeRecordSafely(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,

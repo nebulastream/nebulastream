@@ -14,7 +14,6 @@
 
 #include <Sinks/FileSink.hpp>
 
-#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -105,14 +104,14 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
         {
             const auto wlocked = outputFileStream.wlock();
             /// Create a buffer iterator to help iterate through the tuplebuffer and its children
-            BufferIterator iterator(std::move(inputTupleBuffer));
+            BufferIterator iterator(inputTupleBuffer);
 
             bool processedAllBuffers = false;
             while (!processedAllBuffers)
             {
                 /// Get the next buffer to be written
                 BufferIterator::BufferElement element = iterator.getNextElement();
-                wlocked->write(element.buffer.getAvailableMemoryArea<char>().data(), static_cast<long>(element.contentLength));
+                wlocked->write(element.buffer.getAvailableMemoryArea<char>().data(), element.contentLength);
                 processedAllBuffers = element.isLastElement;
             }
             wlocked->flush();

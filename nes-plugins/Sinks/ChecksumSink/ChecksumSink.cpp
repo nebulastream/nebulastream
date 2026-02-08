@@ -24,10 +24,12 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ostream.h>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>

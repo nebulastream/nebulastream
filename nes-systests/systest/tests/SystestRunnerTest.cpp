@@ -38,6 +38,7 @@
 
 #include <Identifiers/NESStrongType.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <BaseUnitTest.hpp>

@@ -16,6 +16,7 @@
 
 #include <ostream>
 #include <Configurations/Descriptor.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
@@ -27,7 +28,7 @@ class OutputFormatterDescriptor final : public Descriptor
 public:
     ~OutputFormatterDescriptor() = default;
 
-    friend std::ostream& operator<<(std::ostream& out, const OutputFormatterDescriptor& OutputFormatterDescriptor);
+    friend std::ostream& operator<<(std::ostream& out, const OutputFormatterDescriptor& outputFormatterDescriptor);
 
 private:
     /// Add LowerSchemaProvider as fiend, so that it can construct the descriptor

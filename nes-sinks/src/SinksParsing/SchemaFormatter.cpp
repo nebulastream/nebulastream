@@ -17,7 +17,9 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

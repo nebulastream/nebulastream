@@ -17,10 +17,10 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 
 namespace NES
 {

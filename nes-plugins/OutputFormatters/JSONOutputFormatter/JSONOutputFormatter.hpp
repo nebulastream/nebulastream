@@ -14,9 +14,22 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <ostream>
+#include <string>
+#include <unordered_map>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <static.hpp>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -25,7 +38,7 @@ class JSONOutputFormatter : public OutputFormatter
 public:
     explicit JSONOutputFormatter(size_t numberOfFields);
 
-    [[nodiscard]] nautilus::val<size_t> getFormattedValue(
+    [[nodiscard]] nautilus::val<uint64_t> getFormattedValue(
         VarVal value,
         const Record::RecordFieldIdentifier& fieldName,
         const DataType& fieldType,

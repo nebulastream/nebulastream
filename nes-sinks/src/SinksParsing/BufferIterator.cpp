@@ -14,8 +14,7 @@
 
 #include <SinksParsing/BufferIterator.hpp>
 
-#include <algorithm>
-#include <cstddef>
+#include <cstdint>
 #include <Runtime/VariableSizedAccess.hpp>
 
 namespace NES
@@ -27,10 +26,10 @@ BufferIterator::BufferElement BufferIterator::getNextElement()
     /// the number of bytes in all children (see OutputFormatterRef). In this case the whole tupĺe buffer is filled.
     if (bufferIndex == 0)
     {
-        const size_t bytesInBuffer = tupleBuffer.getNumberOfTuples();
+        const uint64_t bytesInBuffer = tupleBuffer.getNumberOfTuples();
         const bool isLast = bufferIndex == tupleBuffer.getNumberOfChildBuffers();
         bufferIndex++;
-        return {tupleBuffer, bytesInBuffer, isLast};
+        return {.buffer = tupleBuffer, .contentLength = bytesInBuffer, .isLastElement = isLast};
     }
 
     /// Iterate through the children
@@ -38,6 +37,6 @@ BufferIterator::BufferElement BufferIterator::getNextElement()
     const TupleBuffer childBuffer = tupleBuffer.loadChildBuffer(VariableSizedAccess::Index(bufferIndex - 1));
     const bool isLast = bufferIndex == tupleBuffer.getNumberOfChildBuffers();
     bufferIndex++;
-    return {childBuffer, childBuffer.getNumberOfTuples(), isLast};
+    return {.buffer = childBuffer, .contentLength = childBuffer.getNumberOfTuples(), .isLastElement = isLast};
 }
 }

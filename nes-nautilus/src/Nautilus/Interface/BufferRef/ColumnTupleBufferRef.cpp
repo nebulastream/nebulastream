@@ -70,7 +70,7 @@ Record ColumnTupleBufferRef::readRecord(
     return record;
 }
 
-nautilus::val<size_t> ColumnTupleBufferRef::writeRecord(
+nautilus::val<uint64_t> ColumnTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
@@ -92,7 +92,7 @@ nautilus::val<size_t> ColumnTupleBufferRef::writeRecord(
     return 1;
 }
 
-nautilus::val<size_t> ColumnTupleBufferRef::writeRecordSafely(
+nautilus::val<uint64_t> ColumnTupleBufferRef::writeRecordSafely(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,

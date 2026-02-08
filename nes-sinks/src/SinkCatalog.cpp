@@ -35,7 +35,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     const Schema& schema,
     const std::string_view sinkType,
     std::unordered_map<std::string, std::string> config,
-    std::unordered_map<std::string, std::string> formatConfig)
+    const std::unordered_map<std::string, std::string>& formatConfig)
 {
     if (std::ranges::all_of(sinkName, [](const char character) { return std::isdigit(character); }))
     {
@@ -51,7 +51,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     }
 
     const auto lockedSinks = sinks.wlock();
-    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(formatConfig), std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, formatConfig, std::move(descriptorConfigOpt.value())};
     lockedSinks->emplace(std::move(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }
@@ -71,7 +71,7 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     const Schema& schema,
     std::string_view sinkType,
     std::unordered_map<std::string, std::string> config,
-    std::unordered_map<std::string, std::string> formatConfig) const
+    const std::unordered_map<std::string, std::string>& formatConfig) const
 {
     auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
 
@@ -83,7 +83,7 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     }
 
     auto sinkDescriptor
-        = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, std::move(formatConfig), std::move(descriptorConfigOpt.value())};
+        = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, formatConfig, std::move(descriptorConfigOpt.value())};
 
     return sinkDescriptor;
 }

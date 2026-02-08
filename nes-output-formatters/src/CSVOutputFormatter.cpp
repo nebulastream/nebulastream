@@ -19,14 +19,12 @@
 #include <cstring>
 #include <memory>
 #include <ostream>
-#include <ranges>
-#include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -34,16 +32,17 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 #include <std/cstring.h>
 
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
-#include <ErrorHandling.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -55,7 +54,7 @@ CSVOutputFormatter::CSVOutputFormatter(const size_t numberOfFields, const Output
 {
 }
 
-nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
+nautilus::val<uint64_t> CSVOutputFormatter::getFormattedValue(
     VarVal value,
     const Record::RecordFieldIdentifier&,
     const DataType& fieldType,
@@ -66,12 +65,12 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    nautilus::val<size_t> written(0);
+    nautilus::val<uint64_t> written(0);
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
     if (fieldType.type != DataType::Type::VARSIZED)
     {
         /// Convert the VarVal to a string and write it into the address.
-        nautilus::val<size_t> amountWritten
+        nautilus::val<uint64_t> amountWritten
             = formatAndWriteVal(value, fieldType, fieldPointer, currentRemainingSize, allowChildren, recordBuffer, bufferProvider);
         if (amountWritten == INVALID_WRITE_RETURN)
         {
@@ -85,7 +84,7 @@ nautilus::val<size_t> CSVOutputFormatter::getFormattedValue(
         /// For varsized values, we cast to VariableSizedData and access the formatted string that way
         const auto varSizedValue = value.cast<VariableSizedData>();
         /// Calculate the size of the content that needs to be written
-        const nautilus::val<size_t> amountToWrite = varSizedValue.getSize() + nautilus::val<uint8_t>(escapeStrings) * 2;
+        const nautilus::val<uint64_t> amountToWrite = varSizedValue.getSize() + nautilus::val<uint8_t>(escapeStrings) * 2;
         if (amountToWrite > currentRemainingSize)
         {
             if (!allowChildren)

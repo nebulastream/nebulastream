@@ -50,7 +50,7 @@ public:
     ///
     /// AllowChildren is a fail-safe that allows us to always be able to at least write one output-formatted record into a record buffer.
     /// If set to true, child buffers can be allocated to write the value into if the space of the main vector is not enough
-    [[nodiscard]] virtual nautilus::val<size_t> getFormattedValue(
+    [[nodiscard]] virtual nautilus::val<uint64_t> getFormattedValue(
         VarVal value,
         const Record::RecordFieldIdentifier& fieldName,
         const DataType& fieldType,
@@ -67,7 +67,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);
 
 protected:
-    static constexpr size_t INVALID_WRITE_RETURN = std::numeric_limits<size_t>::max();
+    static constexpr uint64_t INVALID_WRITE_RETURN = std::numeric_limits<uint64_t>::max();
 
     /// Number of fields in the output schema
     size_t numberOfFields;

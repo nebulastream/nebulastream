@@ -15,14 +15,21 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <limits>
 #include <string>
 
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
+#include <function.hpp>
 #include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -47,7 +54,7 @@ inline void writeWithChildBuffers(
         if (remainingBytes > 0)
         {
             auto newChildBuffer = bufferProvider->getBufferBlocking();
-            auto index = tupleBuffer->storeChildBuffer(newChildBuffer);
+            (void)tupleBuffer->storeChildBuffer(newChildBuffer);
             numOfChildBuffers++;
         }
     }
@@ -65,14 +72,14 @@ inline void writeWithChildBuffers(
         if (remainingBytes > 0)
         {
             auto newChildBuffer = bufferProvider->getBufferBlocking();
-            auto index = tupleBuffer->storeChildBuffer(newChildBuffer);
+            (void)tupleBuffer->storeChildBuffer(newChildBuffer);
             numOfChildBuffers++;
         }
     }
 }
 
 template <typename T>
-static size_t writeValAsString(
+static uint64_t writeValAsString(
     const T val,
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
@@ -94,7 +101,7 @@ static size_t writeValAsString(
             writeWithChildBuffers(stringFormattedValue, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
             return remainingSpace;
         }
-        return std::numeric_limits<size_t>::max();
+        return std::numeric_limits<uint64_t>::max();
     }
     std::memcpy(bufferStartingAddress, stringFormattedValue.data(), stringSize);
     return stringSize;
@@ -104,8 +111,8 @@ static size_t writeValAsString(
 /// The string is then written into the memory of the record buffer, starting from address.
 /// Should the space not suffice and allowChildren be set to true, it uses writeWithChildrenBuffers to allocate new space.
 /// Returns the amount of bytes written in the record buffer itself, children excluded.
-inline nautilus::val<size_t> formatAndWriteVal(
-    VarVal value,
+inline nautilus::val<uint64_t> formatAndWriteVal(
+    const VarVal& value,
     const DataType& fieldType,
     const nautilus::val<int8_t*>& address,
     const nautilus::val<uint64_t>& remainingSize,
@@ -117,7 +124,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
     switch (fieldType.type)
     {
         case DataType::Type::BOOLEAN: {
-            const nautilus::val<bool> castedVal = value.cast<nautilus::val<bool>>();
+            const auto castedVal = value.cast<nautilus::val<bool>>();
             return nautilus::invoke(
                 writeValAsString<bool>,
                 castedVal,
@@ -129,7 +136,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::INT8: {
-            const nautilus::val<int8_t> castedVal = value.cast<nautilus::val<int8_t>>();
+            const auto castedVal = value.cast<nautilus::val<int8_t>>();
             return nautilus::invoke(
                 writeValAsString<int8_t>,
                 castedVal,
@@ -141,7 +148,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::INT16: {
-            const nautilus::val<int16_t> castedVal = value.cast<nautilus::val<int16_t>>();
+            const auto castedVal = value.cast<nautilus::val<int16_t>>();
             return nautilus::invoke(
                 writeValAsString<int16_t>,
                 castedVal,
@@ -153,7 +160,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::INT32: {
-            const nautilus::val<int32_t> castedVal = value.cast<nautilus::val<int32_t>>();
+            const auto castedVal = value.cast<nautilus::val<int32_t>>();
             return nautilus::invoke(
                 writeValAsString<int32_t>,
                 castedVal,
@@ -165,7 +172,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::INT64: {
-            const nautilus::val<int64_t> castedVal = value.cast<nautilus::val<int64_t>>();
+            const auto castedVal = value.cast<nautilus::val<int64_t>>();
             return nautilus::invoke(
                 writeValAsString<int64_t>,
                 castedVal,
@@ -177,7 +184,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::CHAR: {
-            const nautilus::val<char> castedVal = value.cast<nautilus::val<char>>();
+            const auto castedVal = value.cast<nautilus::val<char>>();
             return nautilus::invoke(
                 writeValAsString<char>,
                 castedVal,
@@ -189,7 +196,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::UINT8: {
-            const nautilus::val<uint8_t> castedVal = value.cast<nautilus::val<uint8_t>>();
+            const auto castedVal = value.cast<nautilus::val<uint8_t>>();
             return nautilus::invoke(
                 writeValAsString<uint8_t>,
                 castedVal,
@@ -201,7 +208,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::UINT16: {
-            const nautilus::val<uint16_t> castedVal = value.cast<nautilus::val<uint16_t>>();
+            const auto castedVal = value.cast<nautilus::val<uint16_t>>();
             return nautilus::invoke(
                 writeValAsString<uint16_t>,
                 castedVal,
@@ -213,7 +220,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::UINT32: {
-            const nautilus::val<uint32_t> castedVal = value.cast<nautilus::val<uint32_t>>();
+            const auto castedVal = value.cast<nautilus::val<uint32_t>>();
             return nautilus::invoke(
                 writeValAsString<uint32_t>,
                 castedVal,
@@ -225,7 +232,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::UINT64: {
-            const nautilus::val<uint64_t> castedVal = value.cast<nautilus::val<uint64_t>>();
+            const auto castedVal = value.cast<nautilus::val<uint64_t>>();
             return nautilus::invoke(
                 writeValAsString<uint64_t>,
                 castedVal,
@@ -237,7 +244,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::FLOAT32: {
-            const nautilus::val<float> castedVal = value.cast<nautilus::val<float>>();
+            const auto castedVal = value.cast<nautilus::val<float>>();
             return nautilus::invoke(
                 writeValAsString<float>,
                 castedVal,
@@ -249,7 +256,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         case DataType::Type::FLOAT64: {
-            const nautilus::val<double> castedVal = value.cast<nautilus::val<double>>();
+            const auto castedVal = value.cast<nautilus::val<double>>();
             return nautilus::invoke(
                 writeValAsString<double>,
                 castedVal,
@@ -261,7 +268,7 @@ inline nautilus::val<size_t> formatAndWriteVal(
                 bufferProvider);
         }
         default: {
-            return std::numeric_limits<size_t>::max();
+            return std::numeric_limits<uint64_t>::max();
         }
     }
 }

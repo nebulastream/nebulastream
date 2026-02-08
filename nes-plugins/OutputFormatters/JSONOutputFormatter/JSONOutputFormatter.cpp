@@ -16,9 +16,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <ostream>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -28,11 +31,15 @@
 #include <fmt/format.h>
 #include <std/cstring.h>
 
+#include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -41,7 +48,7 @@ JSONOutputFormatter::JSONOutputFormatter(const size_t numberOfFields) : OutputFo
 {
 }
 
-nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
+nautilus::val<uint64_t> JSONOutputFormatter::getFormattedValue(
     VarVal value,
     const Record::RecordFieldIdentifier& fieldName,
     const DataType& fieldType,
@@ -52,13 +59,13 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    nautilus::val<size_t> written(0);
+    nautilus::val<uint64_t> written(0);
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
 
     /// Write the pre-value content
-    nautilus::val<bool> firstField = fieldIndex == nautilus::val<uint64_t>(0);
+    const nautilus::val<bool> firstField = fieldIndex == nautilus::val<uint64_t>(0);
     /// Calculate the size of the pre-value content. Includes the size of the escaped fieldname, the colon and, optionally, the curly bracket
-    nautilus::val<size_t> preFieldContentSize = fieldName.size() + 3 + nautilus::val<uint8_t>(firstField);
+    nautilus::val<uint64_t> preFieldContentSize = fieldName.size() + 3 + nautilus::val<uint8_t>(firstField);
 
     if (preFieldContentSize > currentRemainingSize)
     {
@@ -113,7 +120,7 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
     if (fieldType.type != DataType::Type::VARSIZED)
     {
         /// Convert the VarVal to a string and write it into the address.
-        nautilus::val<size_t> amountWritten = formatAndWriteVal(
+        nautilus::val<uint64_t> amountWritten = formatAndWriteVal(
             value, fieldType, fieldPointer + written, currentRemainingSize, allowChildren, recordBuffer, bufferProvider);
         if (amountWritten == INVALID_WRITE_RETURN)
         {
@@ -127,7 +134,7 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
         /// For varsized values, we cast to VariableSizedData and access the formatted string that way
         const auto varSizedValue = value.cast<VariableSizedData>();
         /// Calculate the size of the content that needs to be written, counting the escape characters
-        const nautilus::val<size_t> amountToWrite = varSizedValue.getSize() + 2;
+        const nautilus::val<uint64_t> amountToWrite = varSizedValue.getSize() + 2;
         if (amountToWrite > currentRemainingSize)
         {
             if (!allowChildren)
@@ -143,7 +150,7 @@ nautilus::val<size_t> JSONOutputFormatter::getFormattedValue(
                     TupleBuffer* tupleBuffer,
                     AbstractBufferProvider* bufferProvider)
                 {
-                    std::string stringFormattedValue
+                    const std::string stringFormattedValue
                         = fmt::format("\"{}\"", std::string(reinterpret_cast<const char*>(varSizedContent), contentSize));
                     writeWithChildBuffers(stringFormattedValue, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
                 },

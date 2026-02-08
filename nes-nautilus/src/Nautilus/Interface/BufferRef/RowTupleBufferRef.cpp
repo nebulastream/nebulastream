@@ -68,7 +68,7 @@ Record RowTupleBufferRef::readRecord(
     return record;
 }
 
-nautilus::val<size_t> RowTupleBufferRef::writeRecord(
+nautilus::val<uint64_t> RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
@@ -91,7 +91,7 @@ nautilus::val<size_t> RowTupleBufferRef::writeRecord(
     return 1;
 }
 
-nautilus::val<size_t> RowTupleBufferRef::writeRecordSafely(
+nautilus::val<uint64_t> RowTupleBufferRef::writeRecordSafely(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,

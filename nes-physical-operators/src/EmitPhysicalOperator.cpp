@@ -14,8 +14,8 @@
 
 #include <EmitPhysicalOperator.hpp>
 
-#include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -64,11 +64,11 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    nautilus::val<size_t> recordsWritten = 0;
+    nautilus::val<uint64_t> recordsWritten = 0;
     recordsWritten
         = bufferRef->writeRecordSafely(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     /// recordsWritten == npos indicates that the buffer must be emitted first. We emit and than call write record again.
-    if (recordsWritten == nautilus::val<size_t>(std::string::npos))
+    if (recordsWritten == nautilus::val<uint64_t>(std::numeric_limits<uint64_t>::max()))
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();

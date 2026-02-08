@@ -43,6 +43,7 @@ enum ErrorCode
 
 #define EXCEPTION(name, code, msg) name = (code),
 #include <ExceptionDefinitions.inc>
+
 #undef EXCEPTION
 };
 }

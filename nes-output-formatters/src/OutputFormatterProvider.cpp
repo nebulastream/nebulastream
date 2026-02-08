@@ -14,6 +14,7 @@
 
 #include <OutputFormatters/OutputFormatterProvider.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
@@ -25,9 +26,9 @@
 namespace NES::OutputFormatterProvider
 {
 std::shared_ptr<OutputFormatter>
-provideOutputFormatter(std::string outputFormatterType, size_t numberOfFields, const OutputFormatterDescriptor& descriptor)
+provideOutputFormatter(std::string outputFormatterType, const size_t numberOfFields, const OutputFormatterDescriptor& descriptor)
 {
-    auto args = OutputFormatterRegistryArguments{numberOfFields, descriptor};
+    auto args = OutputFormatterRegistryArguments{.numberOfFields = numberOfFields, .descriptor = descriptor};
     if (auto outputFormatter = OutputFormatterRegistry::instance().create(outputFormatterType, args))
     {
         return std::move(outputFormatter.value());

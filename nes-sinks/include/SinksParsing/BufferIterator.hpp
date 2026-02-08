@@ -13,7 +13,7 @@
 */
 
 #pragma once
-#include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -28,7 +28,7 @@ public:
     struct BufferElement
     {
         TupleBuffer buffer;
-        size_t contentLength;
+        uint64_t contentLength;
         bool isLastElement;
     };
 

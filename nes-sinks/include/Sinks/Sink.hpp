@@ -15,13 +15,7 @@
 #pragma once
 
 #include <ostream>
-#include <ranges>
-#include <sstream>
-#include <string>
-#include <DataTypes/Schema.hpp>
-#include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
 

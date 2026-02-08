@@ -16,31 +16,34 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/core.h>
-#include <fmt/ostream.h>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
 class CSVOutputFormatter : public OutputFormatter
 {
 public:
-    explicit CSVOutputFormatter(const size_t numberOfFields, const OutputFormatterDescriptor& descriptor);
+    explicit CSVOutputFormatter(size_t numberOfFields, const OutputFormatterDescriptor& descriptor);
 
     /// Write the string formatted VarVal value into the record buffer
-    [[nodiscard]] nautilus::val<size_t> getFormattedValue(
+    [[nodiscard]] nautilus::val<uint64_t> getFormattedValue(
         VarVal value,
         const Record::RecordFieldIdentifier& fieldName,
         const DataType& fieldType,
@@ -59,9 +62,9 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
 private:
-    const bool escapeStrings;
-    const std::string fieldDelimiter;
-    const std::string tupleDelimiter;
+    bool escapeStrings;
+    std::string fieldDelimiter;
+    std::string tupleDelimiter;
 };
 }
 

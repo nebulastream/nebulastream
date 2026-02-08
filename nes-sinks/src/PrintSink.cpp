@@ -55,9 +55,8 @@ void PrintSink::stop(PipelineExecutionContext&)
 void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
-    const uint64_t bytesInTupleBuffer = std::min(inputBuffer.getBufferSize(), inputBuffer.getNumberOfTuples());
     {
-        const auto wlocked = *outputStream.wlock();
+        auto* const wlocked = *outputStream.wlock();
         /// Create iterator for buffer
         BufferIterator iterator(inputBuffer);
         bool processedAllBuffers = false;
@@ -65,7 +64,7 @@ void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
         {
             /// Get the next buffer to be written
             BufferIterator::BufferElement element = iterator.getNextElement();
-            wlocked->write(element.buffer.getAvailableMemoryArea<char>().data(), static_cast<long>(element.contentLength));
+            wlocked->write(element.buffer.getAvailableMemoryArea<char>().data(), element.contentLength);
             processedAllBuffers = element.isLastElement;
         }
         wlocked->write(std::string("\n").data(), 1);

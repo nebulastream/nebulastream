@@ -14,8 +14,10 @@
 
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 
+#include <ostream>
+#include <utility>
 #include <Configurations/Descriptor.hpp>
-#include <SerializableOperator.pb.h>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -24,8 +26,8 @@ OutputFormatterDescriptor::OutputFormatterDescriptor(DescriptorConfig::Config co
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const OutputFormatterDescriptor& descriptor)
+std::ostream& operator<<(std::ostream& out, const OutputFormatterDescriptor& outputFormatterDescriptor)
 {
-    return out << fmt::format("OutputFormatterDescriptor: (Config: {})", descriptor.toStringConfig());
+    return out << fmt::format("OutputFormatterDescriptor: (Config: {})", outputFormatterDescriptor.toStringConfig());
 }
 }
