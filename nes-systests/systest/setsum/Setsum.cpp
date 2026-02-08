@@ -226,11 +226,9 @@ void Setsum::remove(const Setsum& setsum)
         // Atomic compare-exchange loop for modular subtraction
         uint32_t oldValue = columns.at(i).load(std::memory_order::relaxed);
         uint32_t newValue = 0;
-
-        // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while) - compare_exchange_weak requires do-while pattern
+        
         do
         {
-            // Use uint64_t to prevent overflow when adding inverse
             newValue = static_cast<uint32_t>((static_cast<uint64_t>(oldValue) + inverse) % PRIMES.at(i));
         }
         while (!columns.at(i).compare_exchange_weak(oldValue, newValue,
