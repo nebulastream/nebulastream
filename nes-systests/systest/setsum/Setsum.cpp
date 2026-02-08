@@ -217,13 +217,13 @@ void Setsum::remove(std::string_view data)
 
 void Setsum::remove(const Setsum& setsum)
 {
-    // Add each hash value to its corresponding column with modulo prime
+    // Subtract by adding the modular inverse of the input data: inverse(x) = prime - x
     for (size_t i = 0; i < NUM_COLUMNS; i++)
     {
         const uint32_t value = setsum.columns.at(i).load(std::memory_order::relaxed);
         const uint32_t inverse = (PRIMES.at(i) - value) % PRIMES.at(i);
 
-        // Atomic compare-exchange loop for modular addition
+        // Atomic compare-exchange loop for modular subtraction
         uint32_t oldValue = columns.at(i).load(std::memory_order::relaxed);
         uint32_t newValue = 0;
 
