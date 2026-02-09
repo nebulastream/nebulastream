@@ -30,6 +30,31 @@ if [ -z "$SYSTEST_IMAGE" ]; then
   exit 1
 fi
 
+if [ -z "$NES_DIR" ]; then
+  echo "ERROR: NES_DIR is not set"
+  exit 1
+fi
+
+if [ -z "$CONTAINER_WORKDIR" ]; then
+  echo "ERROR: CONTAINER_WORKDIR is not set"
+  exit 1
+fi
+
+if [ -z "$TEST_VOLUME" ]; then
+  echo "ERROR: TEST_VOLUME is not set"
+  exit 1
+fi
+
+if [ -z "$TESTDATA_VOLUME" ]; then
+  echo "ERROR: TESTDATA_VOLUME is not set"
+  exit 1
+fi
+
+if [ -z "$TESTCONFIG_VOLUME" ]; then
+  echo "ERROR: TESTCONFIG_VOLUME is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -50,6 +75,10 @@ if [ ! -f "$WORKERS_FILE" ]; then
 fi
 
 # Start building the compose file
+# Volume mounts:
+#   TESTDATA_VOLUME:   test input data -> /data
+#   TESTCONFIG_VOLUME: contains /nes-systests/* -> $NES_DIR (reconstructs $NES_DIR/nes-systests/*)
+#   TEST_VOLUME:       test working directory -> $CONTAINER_WORKDIR
 cat <<EOF
 services:
   systest:
@@ -57,9 +86,11 @@ services:
     pull_policy: never
     stop_grace_period: 0s
     command: ["sleep", "infinity"]
-    working_dir: $NES_DIR
+    working_dir: $CONTAINER_WORKDIR
     volumes:
-      - $TEST_VOLUME:$NES_DIR
+      - $TESTDATA_VOLUME:/data
+      - $TESTCONFIG_VOLUME:$NES_DIR
+      - $TEST_VOLUME:$CONTAINER_WORKDIR
 EOF
 
 # Read workers and generate services
@@ -77,7 +108,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   $HOST_NAME:
     image: $WORKER_IMAGE
     pull_policy: never
-    working_dir: /$NES_DIR/$HOST_NAME
+    working_dir: $CONTAINER_WORKDIR/$HOST_NAME
     healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$GRPC_PORT", "-connect-timeout", "5s" ]
       interval: 1s
@@ -87,16 +118,22 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     command: [
       "--grpc=$HOST_NAME:$GRPC_PORT",
       "--connection=$HOST",
-      "--worker.default_query_execution.execution_mode=INTERPRETER",
+      "--worker.default_query_execution.execution_mode=COMPILER",
     ]
     volumes:
-      - $TEST_VOLUME:/$NES_DIR
+      - $TESTDATA_VOLUME:/data
+      - $TEST_VOLUME:$CONTAINER_WORKDIR
+      - $TESTCONFIG_VOLUME:$NES_DIR # Test Config needs to be mounted to the worker as the generator source will reference metadata.
 EOF
 
 done
 
 cat <<EOF
 volumes:
+  $TESTDATA_VOLUME:
+    external: true
+  $TESTCONFIG_VOLUME:
+    external: true
   $TEST_VOLUME:
     external: true
 EOF
