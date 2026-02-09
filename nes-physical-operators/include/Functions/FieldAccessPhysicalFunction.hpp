@@ -16,19 +16,23 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-class FieldAccessPhysicalFunction : public PhysicalFunctionConcept
+class FieldAccessPhysicalFunction
 {
 public:
     explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     const Record::RecordFieldIdentifier field;
 };
+
+static_assert(PhysicalFunctionConcept<FieldAccessPhysicalFunction>);
+
 
 }
