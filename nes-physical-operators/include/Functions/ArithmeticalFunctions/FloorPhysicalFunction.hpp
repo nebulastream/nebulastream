@@ -23,16 +23,18 @@
 namespace NES
 {
 
-class FloorPhysicalFunction final : public PhysicalFunctionConcept
+class FloorPhysicalFunction final
 {
 public:
     explicit FloorPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction childFunction;
     DataType inputType;
     DataType outputType;
 };
+
+static_assert(PhysicalFunctionConcept<FloorPhysicalFunction>);
 
 }
