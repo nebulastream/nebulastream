@@ -17,21 +17,24 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
 /// Performs leftSubPhysicalFunction % rightSubPhysicalFunction
-class ModPhysicalFunction : public PhysicalFunctionConcept
+class ModPhysicalFunction
 {
 public:
     ModPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
-    VarVal execute(const Record& record, ArenaRef& arena) const override;
+    VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction leftPhysicalFunction;
     PhysicalFunction rightPhysicalFunction;
 };
+
+static_assert(PhysicalFunctionConcept<ModPhysicalFunction>);
 
 }

@@ -22,15 +22,18 @@
 
 namespace NES
 {
-class RoundPhysicalFunction final : public PhysicalFunctionConcept
+class RoundPhysicalFunction final
 {
 public:
     explicit RoundPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction childFunction;
     DataType inputType;
     DataType outputType;
 };
+
+static_assert(PhysicalFunctionConcept<RoundPhysicalFunction>);
+
 }
