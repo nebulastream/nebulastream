@@ -54,7 +54,7 @@ void ZstdDecoder::decodeAndEmit(
         .src = encodedBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), .size = encodedBuffer.getNumberOfTuples(), .pos = 0};
 
     size_t returnedCode = -1;
-    while (returnedCode != 0)
+    while (src.pos < src.size)
     {
         /// We create a new output buffer for the empty decoded buffer. We use get buffer size for the size since we aim to fill the whole
         /// buffer, if possible.
@@ -66,7 +66,7 @@ void ZstdDecoder::decodeAndEmit(
         returnedCode = ZSTD_decompressStream(decompCtx, &dst, &src);
         if (ZSTD_isError(returnedCode))
         {
-            NES_ERROR("Failed to decompress zstd-encoded buffer.");
+            NES_ERROR("Failed to decompress zstd-encoded buffer. Error-Type {}", ZSTD_getErrorName(returnedCode));
             /// Sometimes, we get a decompression error right at the end of the data stream. I have no idea why this is happening, but just
             /// returning without emitting anything resolved the endless loop issue and did not lead to data loss for the large systests.
             return;
@@ -75,7 +75,7 @@ void ZstdDecoder::decodeAndEmit(
         currentDecodedBuffer.setNumberOfTuples(dst.pos);
 
         /// Emit decoded buffer. If the encoded buffer was not fully encoded yet, provide a new, empty buffer.
-        if (returnedCode == 0)
+        if (src.pos == src.size)
         {
             auto _ = emitAndProvide(currentDecodedBuffer, DecodeStatusType::FINISHED_DECODING_CURRENT_BUFFER);
         }

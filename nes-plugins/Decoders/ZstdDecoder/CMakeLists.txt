@@ -19,7 +19,7 @@ FetchContent_Declare(
 )
 FetchContent_GetProperties(zstd)
 if(NOT zstd_POPULATED)
-    FetchContent_Populate(zstd)
+    FetchContent_MakeAvailable(zstd)
     # The source is now downloaded to ${zstd_SOURCE_DIR}
 endif()
 # Custom target for building Zstd
