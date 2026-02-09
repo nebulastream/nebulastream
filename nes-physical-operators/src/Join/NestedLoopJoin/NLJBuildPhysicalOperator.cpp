@@ -88,4 +88,12 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
+
+
+NLJBuildPhysicalOperator NLJBuildPhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
+}
 }

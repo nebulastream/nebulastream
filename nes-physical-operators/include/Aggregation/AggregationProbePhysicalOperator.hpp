@@ -34,11 +34,12 @@ public:
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         OperatorHandlerId operatorHandlerId,
         WindowMetaData windowMetaData);
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
+    AggregationProbePhysicalOperator withChild(PhysicalOperator child) const;
 
 private:
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
 };
-
 }

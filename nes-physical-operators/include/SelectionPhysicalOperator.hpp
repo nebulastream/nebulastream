@@ -23,17 +23,38 @@ namespace NES
 {
 
 /// @brief Selection operator that evaluates a boolean function on each record.
-class SelectionPhysicalOperator final : public PhysicalOperatorConcept
+class SelectionPhysicalOperator final
 {
 public:
     explicit SelectionPhysicalOperator(PhysicalFunction function) : function(std::move(function)) { };
-    void execute(ExecutionContext& ctx, Record& record) const override;
 
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    SelectionPhysicalOperator withChild(PhysicalOperator child) const;
+
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& ctx) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+
+    OperatorId getId() const;
+    OperatorId id = INVALID_OPERATOR_ID;
+    bool operator==(const SelectionPhysicalOperator&) const { return true; };
+
+
+protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
 
 private:
     const PhysicalFunction function;
     std::optional<PhysicalOperator> child;
 };
+
+static_assert(PhysicalOperatorConcept<SelectionPhysicalOperator>);
+
 }

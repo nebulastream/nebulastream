@@ -72,8 +72,8 @@ concept PhysicalOperatorConcept = requires(
     PhysicalOperator& child,
     T& rhs) {
 
-    { op.getChild() } -> std::convertible_to<std::optional<PhysicalOperator>>;
-    { op.withChild(child) } -> std::convertible_to<T>;
+    { op.getChild() };/// -> std::convertible_to<std::optional<PhysicalOperator>>;
+    { op.withChild(child) };/// -> std::convertible_to<T>;
 
     /// This is called once before the operator starts processing records.
     { op.setup(execCtx, compCtx) } -> std::same_as<void>;
@@ -93,12 +93,7 @@ concept PhysicalOperatorConcept = requires(
     /// Executes the operator on the given record.
     { op.execute(execCtx, record) } -> std::same_as<void>;
 
-    /// Unique identifier for this operator.
     { op.getId() } -> std::convertible_to<OperatorId>;
-    { op.toString() } -> std::convertible_to<std::string>;
-
-    /// Compares this function with another for equality
-    { op == rhs } -> std::convertible_to<bool>;
     };
 
 namespace detail
@@ -123,13 +118,6 @@ struct ErasedPhysicalOperator
 
     friend bool operator==(const ErasedPhysicalOperator& lhs, const ErasedPhysicalOperator& rhs) { return lhs.equals(rhs); }
 
-protected:
-    virtual void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const = 0;
-    virtual void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const = 0;
-    virtual void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const = 0;
-    virtual void executeChild(ExecutionContext& executionCtx, Record& record) const = 0;
-    virtual void terminateChild(ExecutionContext& executionCtx) const = 0;
-
 private:
     template <typename T>
     friend struct NES::TypedPhysicalOperator;
@@ -138,8 +126,8 @@ private:
     [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
 };
 
-template <PhysicalOperatorConcept OperatorType>
-struct OperatorModel;
+template <PhysicalOperatorConcept PhysicalOperatorType>
+struct PhysicalOperatorModel;
 }
 
 template <typename Checked>
@@ -151,15 +139,17 @@ struct TypedPhysicalOperator
     {
     }
 
-    /// Constructs a PhysicalOperator from a concrete operator type.
-    template <typename T>
-    TypedPhysicalOperator(const T& op) : self(std::make_shared<NES::detail::OperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
+    /// Constructs a LogicalOperator from a concrete operator type.
+    /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
+    /// @param op The operator to wrap.
+    template <PhysicalOperatorConcept T>
+    TypedPhysicalOperator(const T& op) : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
 
     template <PhysicalOperatorConcept T>
-    TypedPhysicalOperator(const NES::detail::OperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
-        : self(std::make_shared<NES::detail::OperatorModel<T>>(op.impl))
+    TypedPhysicalOperator(const NES::detail::PhysicalOperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
+        : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op.impl))
     {
     }
 
@@ -176,7 +166,7 @@ struct TypedPhysicalOperator
         }
         else
         {
-            return std::dynamic_pointer_cast<const NES::detail::OperatorModel<Checked>>(self)->impl;
+            return std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<Checked>>(self)->impl;
         }
     }
 
@@ -190,7 +180,7 @@ struct TypedPhysicalOperator
         }
         else
         {
-            auto casted = std::dynamic_pointer_cast<const NES::detail::OperatorModel<Checked>>(self);
+            auto casted = std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<Checked>>(self);
             return &casted->impl;
         }
     }
@@ -199,7 +189,7 @@ struct TypedPhysicalOperator
     template <PhysicalOperatorConcept T>
     std::optional<TypedPhysicalOperator<T>> tryGetAs() const
     {
-        if (auto model = std::dynamic_pointer_cast<const NES::detail::OperatorModel<T>>(self))
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<T>>(self))
         {
             return TypedPhysicalOperator<T>{std::static_pointer_cast<const NES::detail::ErasedPhysicalOperator>(model)};
         }
@@ -225,7 +215,7 @@ struct TypedPhysicalOperator
     template <PhysicalOperatorConcept T>
     TypedPhysicalOperator<T> getAs() const
     {
-        if (auto model = std::dynamic_pointer_cast<const NES::detail::OperatorModel<T>>(self))
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<T>>(self))
         {
             return TypedPhysicalOperator<T>{std::static_pointer_cast<const NES::detail::ErasedPhysicalOperator>(model)};
         }
@@ -273,13 +263,12 @@ private:
 namespace detail
 {
 /// @brief Wrapper type that acts as a bridge between a type satisfying PhysicalOperatorConcept and TypedPhysicalOperator
-template <PhysicalOperatorConcept OperatorType>
-struct OperatorModel : ErasedPhysicalOperator
+template <PhysicalOperatorConcept PhysicalOperatorType>
+struct PhysicalOperatorModel : ErasedPhysicalOperator
 {
-    OperatorType impl;
-    OperatorId id;
+    PhysicalOperatorType impl;
 
-    explicit OperatorModel(OperatorType impl) : impl(std::move(impl)) { }
+    explicit PhysicalOperatorModel(PhysicalOperatorType impl) : impl(std::move(impl)) { impl.id = getNextPhysicalOperatorId(); }
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override { return impl.getChild(); }
 
@@ -294,13 +283,13 @@ struct OperatorModel : ErasedPhysicalOperator
     void terminate(ExecutionContext& ctx) const override { impl.terminate(ctx); }
     void execute(ExecutionContext& ctx, Record& record) const override { impl.execute(ctx, record); }
 
-    [[nodiscard]] OperatorType get() const { return impl; }
+    [[nodiscard]] PhysicalOperatorType get() const { return impl; }
     [[nodiscard]] OperatorId getId() const override { return impl.getId(); }
-    [[nodiscard]] std::string toString() const override { return impl.toString(); }
+    [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(PhysicalOperatorType)); }
 
     [[nodiscard]] bool operator==(const PhysicalOperator& other) const
     {
-        if (auto ptr = dynamic_cast<const OperatorModel*>(&other))
+        if (auto ptr = dynamic_cast<const PhysicalOperatorModel*>(&other))
         {
             return impl.operator==(ptr->impl);
         }
@@ -309,7 +298,7 @@ struct OperatorModel : ErasedPhysicalOperator
 
     [[nodiscard]] bool equals(const ErasedPhysicalOperator& other) const override
     {
-        if (auto ptr = dynamic_cast<const OperatorModel*>(&other))
+        if (auto ptr = dynamic_cast<const PhysicalOperatorModel*>(&other))
         {
             return impl.operator==(ptr->impl);
         }
@@ -322,7 +311,7 @@ private:
 
     [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
     {
-        if constexpr (std::is_base_of_v<DynamicBase, OperatorType>)
+        if constexpr (std::is_base_of_v<DynamicBase, PhysicalOperatorType>)
         {
             return static_cast<const DynamicBase*>(&impl);
         }

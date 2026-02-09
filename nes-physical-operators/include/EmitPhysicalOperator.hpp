@@ -31,26 +31,36 @@ namespace NES
 
 /// @brief Basic emit operator that receives records from an upstream operator and
 /// writes them to a tuple buffer according to a memory layout.
-class EmitPhysicalOperator final : public PhysicalOperatorConcept
+class EmitPhysicalOperator final
 {
 public:
     explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
 
-    void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ }
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    EmitPhysicalOperator withChild(PhysicalOperator child) const;
 
-    void terminate(ExecutionContext&) const override { /*noop*/ }
-
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void setup(ExecutionContext&, CompilationContext&) const { /*noop*/ }
+    void terminate(ExecutionContext&) const { /*noop*/ }
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
     void emitRecordBuffer(
         ExecutionContext& ctx,
         RecordBuffer& recordBuffer,
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& potentialLastChunk) const;
 
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+    OperatorId getId() const;
+    OperatorId id = INVALID_OPERATOR_ID;
+    bool operator==(const EmitPhysicalOperator&) const = default;
+
+protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
 
 private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;
@@ -59,5 +69,7 @@ private:
     std::shared_ptr<TupleBufferRef> bufferRef;
     OperatorHandlerId operatorHandlerId;
 };
+
+static_assert(PhysicalOperatorConcept<EmitPhysicalOperator>);
 
 }

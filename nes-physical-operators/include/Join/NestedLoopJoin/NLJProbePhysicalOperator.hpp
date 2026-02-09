@@ -44,7 +44,9 @@ public:
         std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    NLJProbePhysicalOperator withChild(PhysicalOperator child) const;
+
 
 protected:
     void performNLJ(

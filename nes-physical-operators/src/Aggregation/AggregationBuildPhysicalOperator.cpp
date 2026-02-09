@@ -169,6 +169,13 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     }
 }
 
+AggregationBuildPhysicalOperator AggregationBuildPhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
+}
+
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     std::unique_ptr<TimeFunction> timeFunction,

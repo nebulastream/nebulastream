@@ -27,6 +27,38 @@ MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWr
 {
 }
 
+std::optional<PhysicalOperator> MapPhysicalOperator::getChild() const
+{
+    return child;
+}
+
+MapPhysicalOperator MapPhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = std::move(child);
+    return copy;
+}
+
+void MapPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
+void MapPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    openChild(ctx, recordBuffer);
+}
+
+void MapPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    closeChild(ctx, recordBuffer);
+}
+
+void MapPhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    terminateChild(ctx);
+}
+
 void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// execute map function
@@ -37,14 +69,39 @@ void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     executeChild(ctx, record);
 }
 
-std::optional<PhysicalOperator> MapPhysicalOperator::getChild() const
+OperatorId MapPhysicalOperator::getId() const
 {
-    return child;
+    return id;
 }
 
-void MapPhysicalOperator::setChild(PhysicalOperator child)
+void MapPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
-    this->child = std::move(child);
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void MapPhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void MapPhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void MapPhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void MapPhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 }

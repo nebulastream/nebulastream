@@ -27,14 +27,32 @@ namespace NES
 
 /// @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
 /// Furthermore, it supports projection push down to eliminate unneeded reads
-class ScanPhysicalOperator final : public PhysicalOperatorConcept
+class ScanPhysicalOperator final
 {
 public:
-    explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
+    ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    ScanPhysicalOperator withChild(PhysicalOperator child) const;
+
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& ctx) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+
+    OperatorId getId() const;
+    OperatorId id = INVALID_OPERATOR_ID;
+    bool operator==(const ScanPhysicalOperator&) const = default;
+
+
+protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
 
 private:
     std::shared_ptr<TupleBufferRef> bufferRef;
@@ -44,5 +62,7 @@ private:
 
     void rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 };
+
+static_assert(PhysicalOperatorConcept<ScanPhysicalOperator>);
 
 }

@@ -21,20 +21,78 @@
 namespace NES
 {
 
-void UnionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
-{
-    /// Path-through, will be optimized out during query compilation
-    executeChild(ctx, record);
-}
 
 std::optional<PhysicalOperator> UnionPhysicalOperator::getChild() const
 {
     return child;
 }
 
-void UnionPhysicalOperator::setChild(PhysicalOperator child)
+UnionPhysicalOperator UnionPhysicalOperator::withChild(PhysicalOperator child) const
 {
-    this->child = std::move(child);
+    auto copy = *this;
+    copy.child = std::move(child);
+    return copy;
+}
+
+void UnionPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
+void UnionPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    openChild(ctx, recordBuffer);
+}
+
+void UnionPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    closeChild(ctx, recordBuffer);
+}
+
+void UnionPhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    terminateChild(ctx);
+}
+
+void UnionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+{
+    /// Path-through, will be optimized out during query compilation
+    executeChild(ctx, record);
+}
+
+OperatorId UnionPhysicalOperator::getId() const
+{
+    return id;
+}
+
+void UnionPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void UnionPhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void UnionPhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void UnionPhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void UnionPhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 }

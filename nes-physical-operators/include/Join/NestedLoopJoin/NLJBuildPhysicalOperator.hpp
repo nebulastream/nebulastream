@@ -38,6 +38,8 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<TupleBufferRef> bufferRef);
 
-    void execute(ExecutionContext& executionCtx, Record& record) const override;
+    void execute(ExecutionContext& executionCtx, Record& record) const;
+
+    NLJBuildPhysicalOperator withChild(PhysicalOperator child) const;
 };
 }

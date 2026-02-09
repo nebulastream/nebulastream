@@ -58,6 +58,13 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
 {
 }
 
+HJProbePhysicalOperator HJProbePhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
+}
+
 void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline

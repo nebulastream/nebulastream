@@ -27,6 +27,23 @@ namespace NES
 IngestionTimeWatermarkAssignerPhysicalOperator::IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction)
     : timeFunction(std::move(timeFunction)) { };
 
+std::optional<PhysicalOperator> IngestionTimeWatermarkAssignerPhysicalOperator::getChild() const
+{
+    return child;
+}
+
+IngestionTimeWatermarkAssignerPhysicalOperator IngestionTimeWatermarkAssignerPhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = std::move(child);
+    return copy;
+}
+
+void IngestionTimeWatermarkAssignerPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
 void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
@@ -43,19 +60,53 @@ void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& exec
     }
 }
 
+void IngestionTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    closeChild(ctx, recordBuffer);
+}
+
+void IngestionTimeWatermarkAssignerPhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    terminateChild(ctx);
+}
+
 void IngestionTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     executeChild(executionCtx, record);
 }
 
-std::optional<PhysicalOperator> IngestionTimeWatermarkAssignerPhysicalOperator::getChild() const
+OperatorId IngestionTimeWatermarkAssignerPhysicalOperator::getId() const
 {
-    return child;
+    return id;
 }
 
-void IngestionTimeWatermarkAssignerPhysicalOperator::setChild(PhysicalOperator child)
+void IngestionTimeWatermarkAssignerPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
-    this->child = std::move(child);
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
 }
 
+void IngestionTimeWatermarkAssignerPhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void IngestionTimeWatermarkAssignerPhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void IngestionTimeWatermarkAssignerPhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void IngestionTimeWatermarkAssignerPhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
+}
 }

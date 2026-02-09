@@ -22,6 +22,38 @@
 namespace NES
 {
 
+std::optional<PhysicalOperator> SelectionPhysicalOperator::getChild() const
+{
+    return child;
+}
+
+SelectionPhysicalOperator SelectionPhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = std::move(child);
+    return copy;
+}
+
+void SelectionPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
+void SelectionPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    openChild(ctx, recordBuffer);
+}
+
+void SelectionPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    closeChild(ctx, recordBuffer);
+}
+
+void SelectionPhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    terminateChild(ctx);
+}
+
 void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// evaluate function and call child operator if function is valid
@@ -31,14 +63,39 @@ void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) c
     }
 }
 
-std::optional<PhysicalOperator> SelectionPhysicalOperator::getChild() const
+OperatorId SelectionPhysicalOperator::getId() const
 {
-    return child;
+    return id;
 }
 
-void SelectionPhysicalOperator::setChild(PhysicalOperator child)
+void SelectionPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
-    this->child = std::move(child);
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void SelectionPhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void SelectionPhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void SelectionPhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void SelectionPhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 }

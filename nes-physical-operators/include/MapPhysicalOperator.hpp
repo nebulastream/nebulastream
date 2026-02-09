@@ -28,10 +28,28 @@ class MapPhysicalOperator final
 {
 public:
     MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction);
-    void execute(ExecutionContext& ctx, Record& record) const override;
 
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    MapPhysicalOperator withChild(PhysicalOperator child) const;
+
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& ctx) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+
+    OperatorId getId() const;
+    OperatorId id = INVALID_OPERATOR_ID;
+    bool operator==(const MapPhysicalOperator&) const { return true; };
+
+
+protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
 
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
@@ -39,5 +57,7 @@ private:
 
     std::optional<PhysicalOperator> child;
 };
+
+static_assert(PhysicalOperatorConcept<MapPhysicalOperator>);
 
 }

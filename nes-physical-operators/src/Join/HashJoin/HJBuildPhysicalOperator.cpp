@@ -185,4 +185,10 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
 {
 }
 
+HJBuildPhysicalOperator HJBuildPhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
+}
 }

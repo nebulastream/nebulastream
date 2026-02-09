@@ -51,8 +51,10 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         HashMapOptions hashMapOptions);
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+
+    AggregationBuildPhysicalOperator withChild(PhysicalOperator child) const;
 
 private:
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()

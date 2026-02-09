@@ -75,11 +75,28 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 {
 }
 
+std::optional<PhysicalOperator> WindowProbePhysicalOperator::getChild() const
+{
+    return child;
+}
+
+WindowProbePhysicalOperator WindowProbePhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = std::move(child);
+    return copy;
+}
+
 void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     /// Giving child operators the change to setup
     setupChild(executionCtx, compilationContext);
     invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
+}
+
+void WindowProbePhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
+    openChild(ctx, recordBuffer);
 }
 
 void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -96,22 +113,52 @@ void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 
     /// Now close for all children
-    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
-}
-
-std::optional<PhysicalOperator> WindowProbePhysicalOperator::getChild() const
-{
-    return child;
-}
-
-void WindowProbePhysicalOperator::setChild(PhysicalOperator child)
-{
-    this->child = std::move(child);
+    closeChild(executionCtx, recordBuffer);
 }
 
 void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     nautilus::invoke(terminateProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
     terminateChild(executionCtx);
+}
+
+void WindowProbePhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+{
+    executeChild(ctx, record);
+}
+
+OperatorId WindowProbePhysicalOperator::getId() const
+{
+    return id;
+}
+
+void WindowProbePhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void WindowProbePhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void WindowProbePhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void WindowProbePhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void WindowProbePhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 }

@@ -169,6 +169,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         aggregationWindowRef);
 }
 
+AggregationProbePhysicalOperator AggregationProbePhysicalOperator::withChild(PhysicalOperator child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
+}
+
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
     HashMapOptions hashMapOptions,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,

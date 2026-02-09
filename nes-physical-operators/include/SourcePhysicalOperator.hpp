@@ -21,21 +21,41 @@
 
 namespace NES
 {
-class SourcePhysicalOperator final : public PhysicalOperatorConcept
+class SourcePhysicalOperator final
 {
 public:
     explicit SourcePhysicalOperator(SourceDescriptor descriptor, OriginId id);
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    SourcePhysicalOperator withChild(PhysicalOperator child) const;
+
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& ctx) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+
+    OperatorId getId() const;
+    OperatorId id = INVALID_OPERATOR_ID;
 
     [[nodiscard]] SourceDescriptor getDescriptor() const;
     [[nodiscard]] OriginId getOriginId() const;
 
     bool operator==(const SourcePhysicalOperator& other) const;
 
+protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
+
 private:
     std::optional<PhysicalOperator> child;
     OriginId originId;
     SourceDescriptor descriptor;
 };
+
+static_assert(PhysicalOperatorConcept<SourcePhysicalOperator>);
+
 }
