@@ -69,8 +69,7 @@ concept PhysicalOperatorConcept = requires(
     RecordBuffer& recordBuffer,
     CompilationContext& compCtx,
     Record& record,
-    PhysicalOperator& child,
-    T& rhs) {
+    PhysicalOperator& child) {
 
     { op.getChild() };/// -> std::convertible_to<std::optional<PhysicalOperator>>;
     { op.withChild(child) };/// -> std::convertible_to<T>;
@@ -114,9 +113,6 @@ struct ErasedPhysicalOperator
 
     [[nodiscard]] virtual OperatorId getId() const = 0;
     [[nodiscard]] virtual std::string toString() const = 0;
-    [[nodiscard]] virtual bool equals(const ErasedPhysicalOperator& other) const = 0;
-
-    friend bool operator==(const ErasedPhysicalOperator& lhs, const ErasedPhysicalOperator& rhs) { return lhs.equals(rhs); }
 
 private:
     template <typename T>
@@ -251,8 +247,6 @@ struct TypedPhysicalOperator
     [[nodiscard]] OperatorId getId() const { return self->getId(); }
     [[nodiscard]] std::string toString() const { return self->toString(); }
 
-    [[nodiscard]] bool operator==(const PhysicalOperator& other) const { return self->equals(*other.self); }
-
 private:
     template <typename FriendChecked>
     friend struct TypedPhysicalOperator;
@@ -288,15 +282,6 @@ struct PhysicalOperatorModel : ErasedPhysicalOperator
     [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(PhysicalOperatorType)); }
 
     [[nodiscard]] bool operator==(const PhysicalOperator& other) const
-    {
-        if (auto ptr = dynamic_cast<const PhysicalOperatorModel*>(&other))
-        {
-            return impl.operator==(ptr->impl);
-        }
-        return false;
-    }
-
-    [[nodiscard]] bool equals(const ErasedPhysicalOperator& other) const override
     {
         if (auto ptr = dynamic_cast<const PhysicalOperatorModel*>(&other))
         {

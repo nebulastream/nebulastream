@@ -52,7 +52,6 @@ public:
 
     OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
-    bool operator==(const EmitPhysicalOperator&) const = default;
 
 protected:
     /// Helper classes to propagate to the child

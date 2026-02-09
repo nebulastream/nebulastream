@@ -43,8 +43,6 @@ public:
 
     OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
-    bool operator==(const ScanPhysicalOperator&) const = default;
-
 
 protected:
     /// Helper classes to propagate to the child
