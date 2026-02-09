@@ -67,8 +67,6 @@ void ZstdDecoder::decodeAndEmit(
         if (ZSTD_isError(returnedCode))
         {
             NES_ERROR("Failed to decompress zstd-encoded buffer. Error-Type {}", ZSTD_getErrorName(returnedCode));
-            /// Sometimes, we get a decompression error right at the end of the data stream. I have no idea why this is happening, but just
-            /// returning without emitting anything resolved the endless loop issue and did not lead to data loss for the large systests.
             return;
         }
         /// Set number of tuples using the output buffer pos
