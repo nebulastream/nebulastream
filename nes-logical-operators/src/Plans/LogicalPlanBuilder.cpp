@@ -214,6 +214,12 @@ LogicalPlan LogicalPlanBuilder::addStore(const DescriptorConfig::Config& config,
     return promoteOperatorToRoot(queryPlan, storeOp);
 }
 
+LogicalPlan LogicalPlanBuilder::addStore(const DescriptorConfig::Config& config, const LogicalPlan& queryPlan)
+{
+    const auto storeOp = StoreLogicalOperator(config);
+    return promoteOperatorToRoot(queryPlan, storeOp);
+}
+
 LogicalPlan
 LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType)
 {

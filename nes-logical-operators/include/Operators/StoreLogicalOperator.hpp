@@ -52,7 +52,6 @@ public:
     [[nodiscard]] Schema getOutputSchema() const;
     [[nodiscard]] StoreLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
-    //void serialize(SerializableOperator& serializableOperator) const;
 
     [[nodiscard]] const DescriptorConfig::Config& getConfig() const { return config; }
 
