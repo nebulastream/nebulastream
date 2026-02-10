@@ -16,10 +16,12 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <exception>
-#include <sstream>
+#include <ranges>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -147,14 +149,13 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::unordered
     }
 }
 
-std::string BaseConfiguration::toString()
+void BaseConfiguration::overwriteConfigWithYAMLNode(const YAML::Node& node)
 {
-    std::stringstream ss;
-    for (auto option : getOptions())
+    if (node.IsNull())
     {
-        ss << option->toString() << "\n";
+        return;
     }
-    return ss.str();
+    parseFromYAMLNode(node);
 }
 
 void BaseConfiguration::clear()
@@ -169,15 +170,62 @@ void BaseConfiguration::accept(OptionVisitor& visitor)
 {
     if (!name.empty())
     {
-        visitor.visitConcrete(getName(), getDescription(), "");
+        visitor.visitOption(
+            {.name = getName(), .description = getDescription(), .defaultValue = "", .currentValue = "", .isExplicitlySet = false});
     }
     for (auto& option : getOptions())
     {
-        visitor.push();
-        option->accept(visitor);
-        visitor.pop();
+        if (auto* config = dynamic_cast<BaseConfiguration*>(option))
+        {
+            visitor.pushSection(config->getName());
+            config->accept(visitor);
+            visitor.popSection();
+        }
+        else if (option)
+        {
+            visitor.push();
+            option->accept(visitor);
+            visitor.pop();
+        }
     }
 };
+
+std::vector<const BaseOption*> BaseConfiguration::getOptions() const
+{
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    auto options = const_cast<BaseConfiguration*>(this)->getOptions();
+    return {options.begin(), options.end()};
+}
+
+bool BaseConfiguration::isExplicitlySet() const
+{
+    return std::ranges::any_of(getOptions(), [](const auto* option) { return option->isExplicitlySet(); });
+}
+
+void BaseConfiguration::applyExplicitlySetFrom(const BaseConfiguration& source)
+{
+    auto sourceOptions = source.getOptions();
+    auto targetOptions = getOptions();
+    INVARIANT(sourceOptions.size() == targetOptions.size(), "Cannot merge configurations with different option counts");
+    for (size_t i = 0; i < sourceOptions.size(); i++)
+    {
+        if (const auto* nestedSource = dynamic_cast<const BaseConfiguration*>(sourceOptions[i]))
+        {
+            auto* nestedTarget = dynamic_cast<BaseConfiguration*>(targetOptions[i]);
+            nestedTarget->applyExplicitlySetFrom(*nestedSource);
+        }
+        else if (sourceOptions[i]->isExplicitlySet())
+        {
+            targetOptions[i]->copyValueFrom(*sourceOptions[i]);
+        }
+    }
+}
+
+void BaseConfiguration::copyValueFrom(const BaseOption& source)
+{
+    const auto& sourceConfig = dynamic_cast<const BaseConfiguration&>(source);
+    applyExplicitlySetFrom(sourceConfig);
+}
 
 std::unordered_map<std::string, BaseOption*> BaseConfiguration::getOptionMap()
 {
