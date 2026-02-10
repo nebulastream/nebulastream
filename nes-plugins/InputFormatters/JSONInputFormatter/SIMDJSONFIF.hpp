@@ -209,8 +209,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     static VariableSizedData parseStringIntoNautilusRecord(
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<SIMDJSONMetaData*>& metaData,
-        const ArenaRef& arenaRef);
+        const nautilus::val<SIMDJSONMetaData*>& metaData);
 
     void writeValueToRecord(
         DataType::Type physicalType,
@@ -218,8 +217,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const std::string& fieldName,
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<const SIMDJSONMetaData*>& metaData,
-        ArenaRef& arenaRef) const;
+        const nautilus::val<const SIMDJSONMetaData*>& metaData) const;
 
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadSpanningRecord(
@@ -227,8 +225,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<int8_t*>&,
         const nautilus::val<uint64_t>&,
         const IndexerMetaData& metaData,
-        nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
-        ArenaRef& arenaRef) const
+        nautilus::val<SIMDJSONFIF*> fieldIndexFunction) const
     {
         Record record;
         for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)
@@ -243,13 +240,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             auto fieldIdx = static_cast<nautilus::val<FieldIndex>>(i);
             const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
             writeValueToRecord(
-                fieldDataType.type,
-                record,
-                fieldName,
-                fieldIdx,
-                fieldIndexFunction,
-                nautilus::val<const IndexerMetaData*>(&metaData),
-                arenaRef);
+                fieldDataType.type, record, fieldName, fieldIdx, fieldIndexFunction, nautilus::val<const IndexerMetaData*>(&metaData));
         }
         /// Increment iterator and return record
         nautilus::invoke(
