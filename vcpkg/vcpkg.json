@@ -18,7 +18,8 @@
         {
           "name": "nautilus",
           "features": [
-            "mlir"
+            "mlir",
+            "debug"
           ]
         }
       ]

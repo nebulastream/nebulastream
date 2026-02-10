@@ -10,13 +10,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(NAUTILUS_PATCHES "0001-disable-ubsan-function-call-check.patch")
+
+if("debug" IN_LIST FEATURES)
+    list(APPEND NAUTILUS_PATCHES
+        "timing.patch"
+        "logging.patch"
+        "find_forks.patch"
+    )
+endif()
+
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF fe607618bb0683a3335e3199c7c4651523ab2a4f
-        SHA512 4f344d38e2e377bb7d153c6cf000f3171726ed5bfe80bf5931c6a37bb7645f64959ca64440f0aa82363727287265f5902dbe045117e95e1ebd1c61817182f0fc
-		PATCHES
-		0001-disable-ubsan-function-call-check.patch
+		REF 6286b5d80e5b60ac84f370bdd80f8201c6a51309
+		SHA512 dab7e426dd055472ceade4fb57dcea9a6063baaabc000c7e575f1b688e77406ba5e6d5b4d8e4c5426bcbc38f01315f5546b46e29f3b24c887c2bd58b5396021b
+		PATCHES ${NAUTILUS_PATCHES}
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
@@ -37,6 +46,7 @@ vcpkg_cmake_configure(
 		-DUSE_EXTERNAL_MLIR=ON
 		-DUSE_EXTERNAL_SPDLOG=ON
 		-DUSE_EXTERNAL_FMT=ON
+		-DENABLE_LOGGING=${ENABLE_LOGGING_FLAG}
 		${ADDITIONAL_CMAKE_OPTIONS}
 )
 

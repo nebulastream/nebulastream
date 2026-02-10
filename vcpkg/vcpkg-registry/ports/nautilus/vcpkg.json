@@ -18,6 +18,12 @@
         }
       ],
       "description": "Build with mlir support"
+    },
+    "debug": {
+      "description": "Enable debug features including fork tracing, logging, and timing",
+      "dependencies": [
+        "cpptrace"
+      ]
     }
   },
   "dependencies": [

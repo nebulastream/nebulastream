@@ -1,0 +1,163 @@
+From 13ec1d010a08a825cd77c4073950b33f2c816ea3 Mon Sep 17 00:00:00 2001
+From: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Sun, 4 Jan 2026 14:27:08 +0100
+Subject: [PATCH] find forks
+
+---
+ nautilus/CMakeLists.txt                       |  4 +-
+ .../src/nautilus/tracing/TraceContext.cpp     | 51 ++++++++++++++++---
+ 2 files changed, 48 insertions(+), 7 deletions(-)
+
+diff --git a/nautilus/CMakeLists.txt b/nautilus/CMakeLists.txt
+index df33bec..26e50fd 100644
+--- a/nautilus/CMakeLists.txt
++++ b/nautilus/CMakeLists.txt
+@@ -12,6 +12,8 @@ add_subdirectory(src)
+ 
+ get_source(nautilus NAUTILUS_SOURCE_FILES)
+ 
++find_package(cpptrace CONFIG REQUIRED)
++
+ # Add Library
+ # nautilus tracing requires frame-pointers
+ target_compile_options(nautilus INTERFACE -fno-omit-frame-pointer)
+@@ -34,7 +36,7 @@ set_target_properties(nautilus PROPERTIES
+         EXPORT_NAME nautilus
+ )
+ 
+-target_link_libraries(nautilus PRIVATE fmt::fmt)
++target_link_libraries(nautilus PRIVATE fmt::fmt cpptrace::cpptrace)
+ 
+ if (ENABLE_LOGGING)
+     target_link_libraries(nautilus PRIVATE spdlog::spdlog)
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.cpp b/nautilus/src/nautilus/tracing/TraceContext.cpp
+index c835acc..b6e3acb 100644
+--- a/nautilus/src/nautilus/tracing/TraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/TraceContext.cpp
+@@ -4,6 +4,7 @@
+ #include "nautilus/exceptions/RuntimeException.hpp"
+ #include "nautilus/logging.hpp"
+ #include <cassert>
++#include <cpptrace/cpptrace.hpp>
+ #include <cxxabi.h>
+ #include <dlfcn.h>
+ #include <fmt/chrono.h>
+@@ -20,9 +21,27 @@
+ enum class ForkRole { CHILD, PARENT };
+ static thread_local std::vector<std::pair<pid_t, int>> pendingForks;
+ static thread_local size_t currentForkDepth = 0;
++static thread_local uintptr_t traceFunctionAddress = 0;
++static thread_local cpptrace::stacktrace forkedAt {};
++static thread_local nautilus::tracing::Snapshot forkedTag {};
+ static thread_local bool invertNextFork = false;
+ 
+-[[noreturn]] void exitChild() {
++[[noreturn]] void exitChild(std::optional<std::pair<nautilus::tracing::Snapshot, cpptrace::stacktrace>> mergedAt) {
++	if (currentForkDepth > 0) {
++		auto framesRange =
++		    forkedAt.frames |
++		    std::views::take_while([](const auto& frame) { return frame.raw_address != traceFunctionAddress; }) |
++		    std::views::filter([](const auto& frame) { return !frame.filename.starts_with("/usr/"); }) |
++		    std::views::transform([](const auto& frame) {
++			    return fmt::format("{} at {}:{}", frame.symbol, frame.filename, frame.line.value_or(-1));
++		    });
++		std::vector<std::string> result;
++		std::ranges::copy(framesRange, std::back_inserter(result));
++		std::span<std::string> relevant {result.data(), result.size() - 2};
++
++		fmt::println(stderr, "{:\t>{}} Forked at Tag {} [{}]", "", currentForkDepth, forkedTag,
++		             fmt::join(relevant, " <- "));
++	}
+ 	for (auto [pid, pipe] : pendingForks) {
+ 		write(pipe, "A", 1);
+ 		int status;
+@@ -30,22 +49,41 @@ static thread_local bool invertNextFork = false;
+ 		assert(status == 0);
+ 	}
+ 
++	if (mergedAt) {
++		auto& [tag, mergedAtTrace] = *mergedAt;
++		auto framesRange =
++			mergedAtTrace.frames |
++			std::views::take_while([](const auto& frame) { return frame.raw_address != traceFunctionAddress; }) |
++			std::views::filter([](const auto& frame) { return !frame.filename.starts_with("/usr/"); }) |
++			std::views::transform([](const auto& frame) {
++				return fmt::format("{} at {}:{}", frame.symbol, frame.filename, frame.line.value_or(-1));
++			});
++		std::vector<std::string> result;
++		std::ranges::copy(framesRange, std::back_inserter(result));
++		std::span<std::string> relevant {result.data(), result.size() - 2};
++
++		fmt::println(stderr, "{:\t>{}} Merged at Tag {} [{}]", "", currentForkDepth, tag, fmt::join(relevant, " <- "));
++	}
++
+ 	TRACER_LOG("EXIT");
+ 	// Shared memory is automatically visible to parent - no need to serialize
+ 	_exit(0);
+ }
+ 
+-ForkRole forkExecution(nautilus::tracing::Trace& trace) {
++ForkRole forkExecution(nautilus::tracing::Snapshot tag, nautilus::tracing::Trace& trace) {
+ 	int sync_pipe[2];
+ 	pipe(sync_pipe);
+ 
+ 	int pid = fork();
++
+ 	if (pid == 0) {
+ 		assert(trace.globalTagMap.header->magic == 0xDEADBEEF);
+ 		close(sync_pipe[1]);
+ 		char buf;
+ 		read(sync_pipe[0], &buf, 1);
+ 		pendingForks.clear();
++		forkedTag = tag;
++		forkedAt = cpptrace::generate_trace(4);
+ 
+ 		// Increment fork depth in child process
+ 		currentForkDepth++;
+@@ -134,7 +172,7 @@ TypedValueRef TraceContext::traceOperation([[maybe_unused]] Op op, OnCreation&&
+ 		state->executionTrace.globalTagMap.insert(tag, oi);
+ 		return result;
+ 	} else {
+-		exitChild();
++		exitChild({{tag, cpptrace::stacktrace::current(5)}});
+ 	}
+ }
+ 
+@@ -164,7 +202,7 @@ void TraceContext::traceReturnOperation([[maybe_unused]] Type resultType, const
+ 	TRACER_LOG("RETURN");
+ 	auto tag = recordSnapshot();
+ 	state->executionTrace.addReturn(tag, ref);
+-	exitChild();
++	exitChild({});
+ }
+ 
+ TypedValueRef TraceContext::traceOperation(Op op, Type resultType, std::vector<TypedValueRef> inputs) {
+@@ -179,7 +217,7 @@ bool TraceContext::traceCmp(const TypedValueRef& targetRef, const double probabi
+ 	log::debug("Trace CMP");
+ 	auto tag = recordSnapshot();
+ 	if (!state->executionTrace.checkTag(tag)) {
+-		exitChild();
++		exitChild({{tag, cpptrace::stacktrace::current(5)}});
+ 	}
+ 	auto [_, oi] = state->executionTrace.appendCmp(tag, targetRef, probability);
+ 	TRACER_LOG("CMP at position: Block: {} Operation: {}", oi.blockIndex.offset, oi.operationOffset.offset);
+@@ -189,7 +227,7 @@ bool TraceContext::traceCmp(const TypedValueRef& targetRef, const double probabi
+ 	bool exploreBranchFirst = !invertNextFork;
+ 	invertNextFork = false;
+ 
+-	if (forkExecution(state->executionTrace) == ForkRole::PARENT) {
++	if (forkExecution(tag, state->executionTrace) == ForkRole::PARENT) {
+ 		if (exploreBranchFirst) {
+ 			state->executionTrace.getOperation(oi).arguments<CmpInput>().trueBlock =
+ 			    state->executionTrace.createNewBlock().getBlockId();
+@@ -235,6 +273,7 @@ std::unique_ptr<ExecutionTrace> TraceContext::trace(std::function<void()>& trace
+ 		assert(tracerTrace.globalTagMap.header->magic == 0xDEADBEEF);
+ 		tracerTrace.createNewBlock();
+ 		try {
++			traceFunctionAddress = cpptrace::object_trace::current(1).frames[0].raw_address;
+ 			traceFunction();
+ 		} catch (...) {
+ 			fmt::println(stderr, "Trace Function threw an exception!. Terminating Trace");
+-- 
+2.50.0
+
