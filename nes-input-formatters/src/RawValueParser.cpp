@@ -107,7 +107,7 @@ void parseRawValueIntoRecord(
             switch (quotationType)
             {
                 case QuotationType::NONE: {
-                    VariableSizedData const varSized(fieldAddress, fieldSize);
+                    const VariableSizedData varSized(fieldAddress, fieldSize);
                     record.write(fieldName, varSized);
                     return;
                 }
@@ -115,7 +115,7 @@ void parseRawValueIntoRecord(
                     const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
                     const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
 
-                    VariableSizedData const varSized(fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
+                    const VariableSizedData varSized(fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
                     record.write(fieldName, varSized);
                     return;
                 }
