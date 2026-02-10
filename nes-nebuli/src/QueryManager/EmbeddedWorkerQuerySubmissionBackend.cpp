@@ -32,9 +32,17 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
     WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
     : worker{[&]()
              {
-                 workerConfiguration.grpcAddressUri.setValue(config.grpc.getRawValue());
+                 /// Start with the per-worker topology config, then overlay only
+                 /// explicitly-set CLI values so that CLI args take highest priority
+                 /// but topology values aren't clobbered by CLI defaults.
+                 SingleNodeWorkerConfiguration mergedConfig = config.config;
+                 mergedConfig.applyExplicitlySetFrom(workerConfiguration);
+
+                 /// Set connection/grpc from topology (these always come from cluster config)
+                 mergedConfig.grpcAddressUri.setValue(config.grpc.getRawValue());
+
                  const LogContext logContext("create", config.grpc);
-                 return SingleNodeWorker(workerConfiguration, WorkerId("embedded"));
+                 return SingleNodeWorker(mergedConfig, WorkerId("embedded"));
              }()}
 {
 }

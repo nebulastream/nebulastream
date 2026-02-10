@@ -168,8 +168,8 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::QueryManager>(
-                std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{NES::GrpcAddr(program.get<std::string>("-s"))}));
+            queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(
+                NES::WorkerConfig{.grpc = NES::GrpcAddr(program.get<std::string>("-s")), .config = {}}));
         }
         else
         {
@@ -193,7 +193,7 @@ int main(int argc, char** argv)
 
             /// The embedded worker does not actually expose a grpc server so the grpc address is ignored. It has to be a valid URL.
             queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(
-                NES::WorkerConfig{NES::GrpcAddr("i-dont-exist:0")}, singleNodeWorkerConfig));
+                NES::WorkerConfig{.grpc = NES::GrpcAddr("i-dont-exist:0"), .config = {}}, singleNodeWorkerConfig));
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
                       "single node worker.")
