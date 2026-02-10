@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <vector>
 #include <Identifiers/NESStrongType.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
 {
@@ -30,6 +31,7 @@ struct WorkerConfig
     GrpcAddr grpc;
     size_t capacity;
     std::vector<HostAddr> downstream;
+    SingleNodeWorkerConfiguration config;
 };
 
 }

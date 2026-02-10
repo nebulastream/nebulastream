@@ -27,9 +27,14 @@
 namespace NES
 {
 
-bool WorkerCatalog::addWorker(const HostAddr& host, const GrpcAddr& grpc, size_t capacity, const std::vector<HostAddr>& downstream)
+bool WorkerCatalog::addWorker(
+    const HostAddr& host,
+    const GrpcAddr& grpc,
+    size_t capacity,
+    const std::vector<HostAddr>& downstream,
+    SingleNodeWorkerConfiguration config)
 {
-    const bool added = workers.try_emplace(host, host, grpc, capacity, downstream).second;
+    const bool added = workers.try_emplace(host, WorkerConfig{host, grpc, capacity, downstream, std::move(config)}).second;
     if (added)
     {
         topology.addNode(host, downstream);

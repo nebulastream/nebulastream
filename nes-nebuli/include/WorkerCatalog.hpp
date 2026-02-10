@@ -33,7 +33,12 @@ class WorkerCatalog
     uint64_t version = 0;
 
 public:
-    bool addWorker(const HostAddr& host, const GrpcAddr& grpc, size_t capacity, const std::vector<HostAddr>& downstream);
+    bool addWorker(
+        const HostAddr& host,
+        const GrpcAddr& grpc,
+        size_t capacity,
+        const std::vector<HostAddr>& downstream,
+        SingleNodeWorkerConfiguration config = {});
     std::optional<WorkerConfig> removeWorker(const HostAddr& hostAddr);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const HostAddr& hostAddr) const;
     [[nodiscard]] size_t size() const;
