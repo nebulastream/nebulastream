@@ -1,8 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: Feature Request
-    url: https://github.com/nebulastream/nebulastream-public/discussions/new?category=ideas
-    about: Submit feature requests here
-  - name: NebulaStream Community Support
-    url: https://github.com/nebulastream/nebulastream/discussions
-    about: Please ask and answer questions here.
