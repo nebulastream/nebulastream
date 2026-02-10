@@ -64,6 +64,22 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
     fmt::format_to(
         std::back_inserter(buf), "{}Pipeline(ID({}), Provider({}))\n", indentStr, pipeline.getPipelineId().getRawValue(), modeName);
 
+    if (!pipeline.getOperatorHandlers().empty())
+    {
+        fmt::format_to(std::back_inserter(buf), "{}  OperatorHandlers (count={}): ", indentStr, pipeline.getOperatorHandlers().size());
+        bool first = true;
+        for (const auto& hid : pipeline.getOperatorHandlers() | std::views::keys)
+        {
+            if (!first)
+            {
+                fmt::format_to(std::back_inserter(buf), ", ");
+            }
+            fmt::format_to(std::back_inserter(buf), "{}", hid.getRawValue());
+            first = false;
+        }
+        fmt::format_to(std::back_inserter(buf), "\n");
+    }
+
     fmt::format_to(
         std::back_inserter(buf), "{}  Operator chain:\n{}", indentStr, operatorChainToString(pipeline.getRootOperator(), indent + 4));
 

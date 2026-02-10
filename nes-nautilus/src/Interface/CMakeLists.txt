@@ -19,4 +19,5 @@ add_source_files(nes-nautilus
         Record.cpp
         RecordBuffer.cpp
         NautilusBuffer.cpp
+        BinaryRowEncoder.cpp
 )

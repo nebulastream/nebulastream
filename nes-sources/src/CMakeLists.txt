@@ -20,11 +20,14 @@ add_source_files(nes-sources
         SourceValidationProvider.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
+        BinaryStoreSource.cpp
 )
 
 # Register plugins
 add_plugin(File Source FileSource.cpp)
 add_plugin(File SourceValidation FileSource.cpp)
+add_plugin(BinaryStore Source BinaryStoreSource.cpp)
+add_plugin(BinaryStore SourceValidation BinaryStoreSource.cpp)
 
 # Systest adaptors
 add_plugin(File InlineData FileSource.cpp)

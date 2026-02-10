@@ -50,6 +50,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Operators/StoreLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -415,7 +416,8 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (
         helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference
-        and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+        and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex
+        and helpers.top().getSource().empty())
     {
         /// get main source name
         helpers.top().setSource(bindIdentifier(context));
@@ -535,6 +537,13 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         {
             queryPlan = LogicalPlanBuilder::addSelection(*havingExpr, queryPlan);
         }
+    }
+    /// inject store operator into the plan before sink if TIME_TRAVEL_STORE was provided
+    if (helpers.top().storeOptions.has_value())
+    {
+        auto opts = *helpers.top().storeOptions;
+        const auto cfg = StoreLogicalOperator::validateAndFormatConfig(std::move(opts));
+        queryPlan = LogicalPlanBuilder::addStore(cfg, queryPlan);
     }
     helpers.pop();
     if (helpers.empty())
@@ -1100,5 +1109,13 @@ void AntlrSQLQueryPlanCreator::exitModelInferenceRelation(AntlrSQLParser::ModelI
     helpers.top().queryPlans.push_back(std::move(plan));
     helpers.top().isModelInference = false;
     AntlrSQLBaseListener::exitModelInferenceRelation(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterTimeTravelClause(AntlrSQLParser::TimeTravelClauseContext* context)
+{
+    std::unordered_map<std::string, std::string> options;
+    options.emplace("file_path", "/tmp/REPLAY-NebulaStream/store_read_out.bin");
+
+    helpers.top().storeOptions = std::move(options);
 }
 }

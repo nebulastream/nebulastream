@@ -94,6 +94,7 @@ public:
         std::unordered_map<std::string, std::string> formatConfig,
         const LogicalPlan& queryPlan);
 
+    static LogicalPlan addStore(const DescriptorConfig::Config& config, const LogicalPlan& queryplan);
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
     static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType);

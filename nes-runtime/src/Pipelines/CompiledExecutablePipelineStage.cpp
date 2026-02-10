@@ -71,7 +71,6 @@ CompiledExecutablePipelineStage::compilePipeline() const
         {
             auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
             RecordBuffer recordBuffer(recordBufferRef);
-
             pipeline->getRootOperator().open(ctx, recordBuffer);
             switch (ctx.getOpenReturnState())
             {

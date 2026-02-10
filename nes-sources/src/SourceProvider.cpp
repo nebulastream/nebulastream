@@ -17,8 +17,10 @@
 #include <memory>
 #include <string>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/BinaryStoreSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
@@ -46,7 +48,20 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
             ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
             : defaultMaxInflightBuffers;
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
-
+        NES_DEBUG(
+            "SourceProvider: lowering source type={} originId={} parserType={}",
+            sourceDescriptor.getSourceType(),
+            originId.getRawValue(),
+            sourceDescriptor.getParserConfig().parserType);
+        if (sourceDescriptor.getSourceType() == "BinaryStore")
+        {
+            const auto* binaryStore = dynamic_cast<BinaryStoreSource*>(source.value().get());
+            NES_DEBUG("SourceProvider: created BinaryStoreSource instance? {}", binaryStore ? "yes" : "no");
+            if (binaryStore == nullptr)
+            {
+                throw UnknownSourceType("Expected BinaryStoreSource instance for BinaryStore type, but got a different implementation");
+            }
+        }
         return std::make_unique<SourceHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }
