@@ -25,6 +25,7 @@
 #include <random>
 #include <sstream>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -120,7 +121,9 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
 }
 
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(
-    const TupleBuffer& inputBufferKeys, const TupleBuffer& bufferActual, const std::map<TestUtils::RecordWithFields, Record>& exactMap)
+    const TupleBuffer& inputBufferKeys,
+    const TupleBuffer& bufferActual,
+    const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
 {
     PRECONDITION(
         inputBufferKeys.getNumberOfTuples() == bufferActual.getNumberOfTuples(),
@@ -150,7 +153,7 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     const TupleBuffer& bufferActual,
     const TupleBufferRef& memoryProviderInputBuffer,
-    const std::map<TestUtils::RecordWithFields, Record>& exactMap)
+    const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
 {
     PRECONDITION(
         exactMap.size() == bufferActual.getNumberOfTuples(),
@@ -324,9 +327,10 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-std::map<RecordWithFields, Record> ChainedHashMapTestUtils::createExactMap(const ExactMapInsert exactMapInsert)
+std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>
+ChainedHashMapTestUtils::createExactMap(const ExactMapInsert exactMapInsert)
 {
-    std::map<TestUtils::RecordWithFields, Record> exactMap;
+    std::unordered_map<TestUtils::RecordWithFields, Record, RecordWithFieldsHash> exactMap;
     for (const auto& buffer : inputBuffers)
     {
         const RecordBuffer recordBuffer(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
@@ -351,7 +355,7 @@ std::map<RecordWithFields, Record> ChainedHashMapTestUtils::createExactMap(const
 }
 
 void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
-    ChainedHashMap& hashMap, const std::map<RecordWithFields, Record>& exactMap)
+    ChainedHashMap& hashMap, const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
 {
     /// Ensuring that the number of tuples is correct.
     ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());
@@ -381,7 +385,8 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     }
 }
 
-void ChainedHashMapTestUtils::checkEntryIterator(ChainedHashMap& hashMap, const std::map<TestUtils::RecordWithFields, Record>& exactMap)
+void ChainedHashMapTestUtils::checkEntryIterator(
+    ChainedHashMap& hashMap, const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
 {
     /// Ensuring that the number of tuples is correct.
     ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());
