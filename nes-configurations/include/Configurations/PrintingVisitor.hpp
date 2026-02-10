@@ -29,12 +29,12 @@ public:
 
     void pop() override { indent -= 1; }
 
-    void visitConcrete(std::string name, std::string description, std::string_view defaultValue) override
+    void visitOption(const OptionInfo& info) override
     {
-        os << std::string(indent * 4, ' ') << "- " << name << ": " << description;
-        if (!defaultValue.empty())
+        os << std::string(indent * 4, ' ') << "- " << info.name << ": " << info.description;
+        if (!info.defaultValue.empty())
         {
-            os << " (Default: " << defaultValue << ")";
+            os << " (Default: " << info.defaultValue << ")";
         }
         os << "\n";
     }
