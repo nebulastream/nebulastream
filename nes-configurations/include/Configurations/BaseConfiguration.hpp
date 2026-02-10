@@ -41,12 +41,25 @@ public:
     /// @param inputParams map with key=command line parameter and value = value
     void overwriteConfigWithCommandLineInput(const std::unordered_map<std::string, std::string>& inputParams);
 
+    /**
+     * @brief Overwrite configuration from a YAML node
+     * @param node YAML node containing configuration key-value pairs
+     */
+    void overwriteConfigWithYAMLNode(const YAML::Node& node);
+
     /// clears all options and set the default values
     void clear() override;
 
     void accept(OptionVisitor& visitor) override;
 
-    std::string toString() override;
+    /// Returns true if any child option was explicitly set.
+    [[nodiscard]] bool isExplicitlySet() const override;
+
+    /// Copies only explicitly-set options from source onto this configuration.
+    /// For nested BaseConfiguration children, recurses. For leaf options, copies the value.
+    void applyExplicitlySetFrom(const BaseConfiguration& source);
+
+    void copyValueFrom(const BaseOption& source) override;
 
 protected:
     template <DerivedBaseOption T>

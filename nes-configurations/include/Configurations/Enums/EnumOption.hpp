@@ -42,23 +42,19 @@ public:
     EnumOption<T>& operator=(const T& value)
     {
         this->value = value;
+        this->explicitlySet_ = true;
         return *this;
-    };
-
-    std::string toString() override
-    {
-        std::stringstream os;
-        os << "Name: " << this->name << "\n";
-        os << "Description: " << this->description << "\n";
-        os << "Value: " << std::string(magic_enum::enum_name(this->value)) << "\n";
-        os << "Default Value: " << std::string(magic_enum::enum_name(this->defaultValue)) << "\n";
-        return os.str();
     };
 
     void accept(OptionVisitor& visitor) override
     {
         auto* config = dynamic_cast<BaseConfiguration*>(this);
-        visitor.visitConcrete(this->name, this->description, magic_enum::enum_name(this->getDefaultValue()));
+        visitor.visitOption(
+            {this->name,
+             this->description,
+             magic_enum::enum_name(this->getDefaultValue()),
+             magic_enum::enum_name(this->value),
+             this->explicitlySet_});
         if (config)
         {
             config->accept(visitor);
@@ -79,6 +75,7 @@ protected:
             throw InvalidConfigParameter("Enum for {} was not found. Valid options are {}", node.as<std::string>(), ss.str());
         }
         this->value = magic_enum::enum_cast<T>(node.as<std::string>()).value();
+        this->explicitlySet_ = true;
     };
 
     void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override
@@ -95,6 +92,7 @@ protected:
             throw InvalidConfigParameter("Enum for {} was not found. Valid options are {}", value, ss.str());
         }
         this->value = magic_enum::enum_cast<T>(value).value();
+        this->explicitlySet_ = true;
     };
 };
 

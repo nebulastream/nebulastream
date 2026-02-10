@@ -41,11 +41,14 @@ public:
 
     std::string getDescription();
 
-    ///TODO(#336): Overload operator
-    /// We want something like friend std::ostream& operator<<(std::ostream& out, const BaseOption& baseOption);
-    virtual std::string toString() = 0;
-
     virtual void accept(OptionVisitor&) = 0;
+
+    /// Returns true if this option was explicitly set by user input (YAML, CLI, or setValue),
+    /// as opposed to just holding its default value.
+    [[nodiscard]] virtual bool isExplicitlySet() const { return explicitlySet_; }
+
+    /// Copies the value from another option of the same concrete type.
+    virtual void copyValueFrom(const BaseOption& source) = 0;
 
 protected:
     friend class BaseConfiguration;
@@ -59,6 +62,7 @@ protected:
 
     std::string name;
     std::string description;
+    bool explicitlySet_ = false;
 };
 
 template <class T>

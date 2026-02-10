@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <cctype>
 #include <exception>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <Configurations/BaseOption.hpp>
@@ -147,14 +146,13 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::unordered
     }
 }
 
-std::string BaseConfiguration::toString()
+void BaseConfiguration::overwriteConfigWithYAMLNode(const YAML::Node& node)
 {
-    std::stringstream ss;
-    for (auto option : getOptions())
+    if (node.IsNull())
     {
-        ss << option->toString() << "\n";
+        return;
     }
-    return ss.str();
+    parseFromYAMLNode(node);
 }
 
 void BaseConfiguration::clear()
@@ -169,15 +167,55 @@ void BaseConfiguration::accept(OptionVisitor& visitor)
 {
     if (!name.empty())
     {
-        visitor.visitConcrete(getName(), getDescription(), "");
+        visitor.visitOption({getName(), getDescription(), "", "", false});
     }
     for (auto& option : getOptions())
     {
-        visitor.push();
-        option->accept(visitor);
-        visitor.pop();
+        if (auto* config = dynamic_cast<BaseConfiguration*>(option))
+        {
+            visitor.pushSection(config->getName());
+            config->accept(visitor);
+            visitor.popSection();
+        }
+        else
+        {
+            visitor.push();
+            option->accept(visitor);
+            visitor.pop();
+        }
     }
 };
+
+bool BaseConfiguration::isExplicitlySet() const
+{
+    return std::ranges::any_of(
+        const_cast<BaseConfiguration*>(this)->getOptions(), [](const auto* option) { return option->isExplicitlySet(); });
+}
+
+void BaseConfiguration::applyExplicitlySetFrom(const BaseConfiguration& source)
+{
+    auto sourceOptions = const_cast<BaseConfiguration&>(source).getOptions();
+    auto targetOptions = getOptions();
+    INVARIANT(sourceOptions.size() == targetOptions.size(), "Cannot merge configurations with different option counts");
+    for (size_t i = 0; i < sourceOptions.size(); i++)
+    {
+        if (auto* nestedSource = dynamic_cast<BaseConfiguration*>(sourceOptions[i]))
+        {
+            auto* nestedTarget = dynamic_cast<BaseConfiguration*>(targetOptions[i]);
+            nestedTarget->applyExplicitlySetFrom(*nestedSource);
+        }
+        else if (sourceOptions[i]->isExplicitlySet())
+        {
+            targetOptions[i]->copyValueFrom(*sourceOptions[i]);
+        }
+    }
+}
+
+void BaseConfiguration::copyValueFrom(const BaseOption& source)
+{
+    const auto& sourceConfig = dynamic_cast<const BaseConfiguration&>(source);
+    applyExplicitlySetFrom(sourceConfig);
+}
 
 std::unordered_map<std::string, BaseOption*> BaseConfiguration::getOptionMap()
 {
