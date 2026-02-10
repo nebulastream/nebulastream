@@ -1,0 +1,24 @@
+# name: differential_correct.dummy
+# description: Test file for differential query parsing.
+# groups: [Parser]
+
+# This test case verifies that the parser can correctly distinguish
+# between a main query and a differential query, which is provided
+# instead of a result set.
+
+CREATE LOGICAL SOURCE stream(id INT64, value INT64, timestamp INT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+5,1,1000
+10,1,1001
+15,1,1002
+20,2,2000
+25,19,19000
+30,20,20000
+35,21,21000
+
+CREATE SINK streamSink(id INT64, stream.value INT64, stream.timestamp INT64) TYPE File;
+
+SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;
+====
+SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;

@@ -1,0 +1,272 @@
+# name: function/comparison/FunctionGreater.test
+# description: Simple function greater tests
+# groups: [Function,FunctionGreater]
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23.3,42.42
+
+CREATE SINK sinkConstant(i8 BOOLEAN, i16 BOOLEAN, i32 BOOLEAN, i64 BOOLEAN, u8 BOOLEAN, u16 BOOLEAN, u32 BOOLEAN, u64 BOOLEAN, f32 BOOLEAN, f64 BOOLEAN)  TYPE File;
+CREATE SINK sinkI8(i8_i8 BOOLEAN, i8_i8_plus_1 BOOLEAN, i8_i16 BOOLEAN, i8_i16_plus_1 BOOLEAN, i8_i32 BOOLEAN, i8_i32_plus_1 BOOLEAN, i8_i64 BOOLEAN, i8_i64_plus_1 BOOLEAN, i8_u8 BOOLEAN, i8_u8_plus_1 BOOLEAN, i8_u16 BOOLEAN, i8_u16_plus_1 BOOLEAN, i8_u32 BOOLEAN, i8_u32_plus_1 BOOLEAN, i8_u64 BOOLEAN, i8_u64_plus_1 BOOLEAN, i8_f32 BOOLEAN, i8_f32_plus_1 BOOLEAN, i8_f64 BOOLEAN, i8_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkI16(i16_i8 BOOLEAN, i16_i8_plus_1 BOOLEAN, i16_i16 BOOLEAN, i16_i16_plus_1 BOOLEAN, i16_i32 BOOLEAN, i16_i32_plus_1 BOOLEAN, i16_i64 BOOLEAN, i16_i64_plus_1 BOOLEAN, i16_u8 BOOLEAN, i16_u8_plus_1 BOOLEAN, i16_u16 BOOLEAN, i16_u16_plus_1 BOOLEAN, i16_u32 BOOLEAN, i16_u32_plus_1 BOOLEAN, i16_u64 BOOLEAN, i16_u64_plus_1 BOOLEAN, i16_f32 BOOLEAN, i16_f32_plus_1 BOOLEAN, i16_f64 BOOLEAN, i16_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkI32(i32_i8 BOOLEAN, i32_i8_plus_1 BOOLEAN, i32_i16 BOOLEAN, i32_i16_plus_1 BOOLEAN, i32_i32 BOOLEAN, i32_i32_plus_1 BOOLEAN, i32_i64 BOOLEAN, i32_i64_plus_1 BOOLEAN, i32_u8 BOOLEAN, i32_u8_plus_1 BOOLEAN, i32_u16 BOOLEAN, i32_u16_plus_1 BOOLEAN, i32_u32 BOOLEAN, i32_u32_plus_1 BOOLEAN, i32_u64 BOOLEAN, i32_u64_plus_1 BOOLEAN, i32_f32 BOOLEAN, i32_f32_plus_1 BOOLEAN, i32_f64 BOOLEAN, i32_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkI64(i64_i8 BOOLEAN, i64_i8_plus_1 BOOLEAN, i64_i16 BOOLEAN, i64_i16_plus_1 BOOLEAN, i64_i32 BOOLEAN, i64_i32_plus_1 BOOLEAN, i64_i64 BOOLEAN, i64_i64_plus_1 BOOLEAN, i64_u8 BOOLEAN, i64_u8_plus_1 BOOLEAN, i64_u16 BOOLEAN, i64_u16_plus_1 BOOLEAN, i64_u32 BOOLEAN, i64_u32_plus_1 BOOLEAN, i64_u64 BOOLEAN, i64_u64_plus_1 BOOLEAN, i64_f32 BOOLEAN, i64_f32_plus_1 BOOLEAN, i64_f64 BOOLEAN, i64_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkU8(u8_i8 BOOLEAN, u8_i8_plus_1 BOOLEAN, u8_i16 BOOLEAN, u8_i16_plus_1 BOOLEAN, u8_i32 BOOLEAN, u8_i32_plus_1 BOOLEAN, u8_i64 BOOLEAN, u8_i64_plus_1 BOOLEAN, u8_u8 BOOLEAN, u8_u8_plus_1 BOOLEAN, u8_u16 BOOLEAN, u8_u16_plus_1 BOOLEAN, u8_u32 BOOLEAN, u8_u32_plus_1 BOOLEAN, u8_u64 BOOLEAN, u8_u64_plus_1 BOOLEAN, u8_f32 BOOLEAN, u8_f32_plus_1 BOOLEAN, u8_f64 BOOLEAN, u8_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkU16(u16_i8 BOOLEAN, u16_i8_plus_1 BOOLEAN, u16_i16 BOOLEAN, u16_i16_plus_1 BOOLEAN, u16_i32 BOOLEAN, u16_i32_plus_1 BOOLEAN, u16_i64 BOOLEAN, u16_i64_plus_1 BOOLEAN, u16_u8 BOOLEAN, u16_u8_plus_1 BOOLEAN, u16_u16 BOOLEAN, u16_u16_plus_1 BOOLEAN, u16_u32 BOOLEAN, u16_u32_plus_1 BOOLEAN, u16_u64 BOOLEAN, u16_u64_plus_1 BOOLEAN, u16_f32 BOOLEAN, u16_f32_plus_1 BOOLEAN, u16_f64 BOOLEAN, u16_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkU32(u32_i8 BOOLEAN, u32_i8_plus_1 BOOLEAN, u32_i16 BOOLEAN, u32_i16_plus_1 BOOLEAN, u32_i32 BOOLEAN, u32_i32_plus_1 BOOLEAN, u32_i64 BOOLEAN, u32_i64_plus_1 BOOLEAN, u32_u8 BOOLEAN, u32_u8_plus_1 BOOLEAN, u32_u16 BOOLEAN, u32_u16_plus_1 BOOLEAN, u32_u32 BOOLEAN, u32_u32_plus_1 BOOLEAN, u32_u64 BOOLEAN, u32_u64_plus_1 BOOLEAN, u32_f32 BOOLEAN, u32_f32_plus_1 BOOLEAN, u32_f64 BOOLEAN, u32_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkU64(u64_i8 BOOLEAN, u64_i8_plus_1 BOOLEAN, u64_i16 BOOLEAN, u64_i16_plus_1 BOOLEAN, u64_i32 BOOLEAN, u64_i32_plus_1 BOOLEAN, u64_i64 BOOLEAN, u64_i64_plus_1 BOOLEAN, u64_u8 BOOLEAN, u64_u8_plus_1 BOOLEAN, u64_u16 BOOLEAN, u64_u16_plus_1 BOOLEAN, u64_u32 BOOLEAN, u64_u32_plus_1 BOOLEAN, u64_u64 BOOLEAN, u64_u64_plus_1 BOOLEAN, u64_f32 BOOLEAN, u64_f32_plus_1 BOOLEAN, u64_f64 BOOLEAN, u64_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkF32(f32_i8 BOOLEAN, f32_i8_plus_1 BOOLEAN, f32_i16 BOOLEAN, f32_i16_plus_1 BOOLEAN, f32_i32 BOOLEAN, f32_i32_plus_1 BOOLEAN, f32_i64 BOOLEAN, f32_i64_plus_1 BOOLEAN, f32_u8 BOOLEAN, f32_u8_plus_1 BOOLEAN, f32_u16 BOOLEAN, f32_u16_plus_1 BOOLEAN, f32_u32 BOOLEAN, f32_u32_plus_1 BOOLEAN, f32_u64 BOOLEAN, f32_u64_plus_1 BOOLEAN, f32_f32 BOOLEAN, f32_f32_plus_1 BOOLEAN, f32_f64 BOOLEAN, f32_f64_plus_1 BOOLEAN)  TYPE File;
+CREATE SINK sinkF64(f64_i8 BOOLEAN, f64_i8_plus_1 BOOLEAN, f64_i16 BOOLEAN, f64_i16_plus_1 BOOLEAN, f64_i32 BOOLEAN, f64_i32_plus_1 BOOLEAN, f64_i64 BOOLEAN, f64_i64_plus_1 BOOLEAN, f64_u8 BOOLEAN, f64_u8_plus_1 BOOLEAN, f64_u16 BOOLEAN, f64_u16_plus_1 BOOLEAN, f64_u32 BOOLEAN, f64_u32_plus_1 BOOLEAN, f64_u64 BOOLEAN, f64_u64_plus_1 BOOLEAN, f64_f32 BOOLEAN, f64_f32_plus_1 BOOLEAN, f64_f64 BOOLEAN, f64_f64_plus_1 BOOLEAN)  TYPE File;
+
+# Todo #442: the below system level tests currently perform downcasts.
+# Check if different numeric types support the greater operation
+SELECT
+    i8 > INT32(42) AS i8,
+    i16 > INT32(42) AS i16,
+    i32 > INT32(42) AS i32,
+    i64 > INT32(42) AS i64,
+
+    u8 > UINT32(42) AS u8,
+    u16 > UINT32(42) AS u16,
+    u32 > UINT32(42) AS u32,
+    u64 > UINT32(42) AS u64,
+
+    f32 > FLOAT32(42.0) AS f32,
+    f64 > FLOAT64(42.0) AS f64
+FROM stream INTO sinkConstant;
+----
+0,0,0,0,0,1,1,1,0,1
+
+# Greater i8 value with all other data types
+SELECT
+    # signed
+    i8 > i8 AS i8_i8,
+    i8 > i8 + INT8(1) AS i8_i8_plus_1,
+    i8 > i16 AS i8_i16,
+    i8 > i16 + INT16(1) AS i8_i16_plus_1,
+    i8 > i32 AS i8_i32,
+    i8 > i32 + INT32(1) AS i8_i32_plus_1,
+    i8 > i64 AS i8_i64,
+    i8 > i64 + INT64(1) AS i8_i64_plus_1,
+    # unsigned
+    i8 > u8  AS i8_u8,
+    i8 > u8 + UINT8(1) AS i8_u8_plus_1,
+    i8 > u16 AS i8_u16,
+    i8 > u16 + UINT16(1) AS i8_u16_plus_1,
+    i8 > u32 AS i8_u32,
+    i8 > u32 + UINT32(1) AS i8_u32_plus_1,
+    i8 > u64 AS i8_u64,
+    i8 > u64 + UINT64(1) AS i8_u64_plus_1,
+    # float
+    i8 > f32 AS i8_f32,
+    i8 > f32 + FLOAT32(1) AS i8_f32_plus_1,
+    i8 > f64 AS i8_f64,
+    i8 > f64 + FLOAT64(1) AS i8_f64_plus_1
+FROM stream INTO sinkI8;
+----
+0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0
+
+# Greater i16 value with all other data types
+SELECT
+    # signed
+    i16 > i8 AS i16_i8,
+    i16 > i8 + INT8(1) AS i16_i8_plus_1,
+    i16 > i16 AS i16_i16,
+    i16 > i16 + INT16(1) AS i16_i16_plus_1,
+    i16 > i32 AS i16_i32,
+    i16 > i32 + INT32(1) AS i16_i32_plus_1,
+    i16 > i64 AS i16_i64,
+    i16 > i64 + INT64(1) AS i16_i64_plus_1,
+    # unsigned
+    i16 > u8 AS i16_u8,
+    i16 > u8 + UINT8(1) AS i16_u8_plus_1,
+    u16 > i16 AS i16_u16,
+    u16 > i16 + INT16(1) AS i16_u16_plus_1,
+    i16 > u32 AS i16_u32,
+    i16 > u32 + UINT32(1) AS i16_u32_plus_1,
+    i16 > u64 AS i16_u64,
+    i16 > u64 + UINT64(1) AS i16_u64_plus_1,
+    # float
+    i16 > f32 AS i16_f32,
+    i16 > f32 + FLOAT32(1) AS i16_f32_plus_1,
+    i16 > f64 AS i16_f64,
+    i16 > f64 + FLOAT64(1) AS i16_f64_plus_1
+FROM stream INTO sinkI16;
+----
+0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0
+
+# Greater i32 value with all other data types
+SELECT
+    # signed
+    i32 > i8 AS i32_i8,
+    i32 > i8 + INT8(1) AS i32_i8_plus_1,
+    i32 > i16 AS i32_i16,
+    i32 > i16 + INT16(1) AS i32_i16_plus_1,
+    i32 > i32 AS i32_i32,
+    i32 > i32 + INT32(1) AS i32_i32_plus_1,
+    i32 > i64 AS i32_i64,
+    i32 > i64 + INT64(1) AS i32_i64_plus_1,
+    # unsigned
+    i32 > u8 AS i32_u8,
+    i32 > u8 + UINT8(1) AS i32_u8_plus_1,
+    i32 > u16 AS i32_u16,
+    i32 > u16 + UINT16(1) AS i32_u16_plus_1,
+    i32 > u32 AS i32_u32,
+    i32 > u32 + UINT32(1) AS i32_u32_plus_1,
+    i32 > u64 AS i32_u64,
+    i32 > u64 + UINT64(1) AS i32_u64_plus_1,
+    # float
+    i32 > f32 AS i32_f32,
+    i32 > f32 + FLOAT32(1) AS i32_f32_plus_1,
+    i32 > f64 AS i32_f64,
+    i32 > f64 + FLOAT64(1) AS i32_f64_plus_1
+FROM stream INTO sinkI32;
+----
+0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,0,0,0,0
+
+# Greater i64 value with all other data types
+SELECT
+    # signed
+    i64 > i8 AS i64_i8,
+    i64 > i8 + INT8(1) AS i64_i8_plus_1,
+    i64 > i16 AS i64_i16,
+    i64 > i16 + INT16(1) AS i64_i16_plus_1,
+    i64 > i32 AS i64_i32,
+    i64 > i32 + INT32(1) AS i64_i32_plus_1,
+    i64 > i64 AS i64_i64,
+    i64 > i64 + INT64(1) AS i64_i64_plus_1,
+    # unsigned
+    i64 > u8 AS i64_u8,
+    i64 > u8 + UINT8(1) AS i64_u8_plus_1,
+    i64 > u16 AS i64_u16,
+    i64 > u16 + UINT16(1) AS i64_u16_plus_1,
+    i64 > u32 AS i64_u32,
+    i64 > u32 + UINT32(1) AS i64_u32_plus_1,
+    i64 > u64 AS i64_u64,
+    i64 > u64 + UINT64(1) AS i64_u64_plus_1,
+    # float
+    i64 > f32 AS i64_f32,
+    i64 > f32 + FLOAT32(1) AS i64_f32_plus_1,
+    i64 > f64 AS i64_f64,
+    i64 > f64 + FLOAT64(1) AS i64_f64_plus_1
+FROM stream INTO sinkI64;
+----
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0
+
+
+# Greater u8 value with all other data types
+SELECT
+    # signed
+    u8 > i8 AS u8_i8,
+    u8 > i8 + INT8(1) AS u8_i8_plus_1,
+    u8 > i16 AS u8_i16,
+    u8 > i16 + INT16(1) AS u8_i16_plus_1,
+    u8 > i32 AS u8_i32,
+    u8 > i32 + INT32(1) AS u8_i32_plus_1,
+    u8 > i64 AS u8_i64,
+    u8 > i64 + INT64(1) AS u8_i64_plus_1,
+    # unsigned
+    u8 > u8  AS u8_u8,
+    u8 > u8 + UINT8(1) AS u8_u8_plus_1,
+    u8 > u16 AS u8_u16,
+    u8 > u16 + UINT16(1) AS u8_u16_plus_1,
+    u8 > u32 AS u8_u32,
+    u8 > u32 + UINT32(1) AS u8_u32_plus_1,
+    u8 > u64 AS u8_u64,
+    u8 > u64 + UINT64(1) AS u8_u64_plus_1,
+    # float
+    u8 > f32 AS u8_f32,
+    u8 > f32 + FLOAT32(1) AS u8_f32_plus_1,
+    u8 > f64 AS u8_f64,
+    u8 > f64 + FLOAT64(1) AS u8_f64_plus_1
+FROM stream INTO sinkU8;
+----
+1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,0,0
+
+# Greater u16 value with all other data types
+SELECT
+    # signed
+    u16 > i8 AS u16_i8,
+    u16 > i8 + INT8(1) AS u16_i8_plus_1,
+    u16 > i16 AS u16_i16,
+    u16 > i16 + INT16(1) AS u16_i16_plus_1,
+    u16 > i32 AS u16_i32,
+    u16 > i32 + INT32(1) AS u16_i32_plus_1,
+    u16 > i64 AS u16_i64,
+    u16 > i64 + INT64(1) AS u16_i64_plus_1,
+    # unsigned
+    u16 > u8 AS u16_u8,
+    u16 > u8 + UINT8(1) AS u16_u8_plus_1,
+    u16 > i16 AS u16_u16,
+    u16 > i16 + INT16(1) AS u16_u16_plus_1,
+    u16 > u32 AS u16_u32,
+    u16 > u32 + UINT32(1) AS u16_u32_plus_1,
+    u16 > u64 AS u16_u64,
+    u16 > u64 + UINT64(1) AS u16_u64_plus_1,
+    # float
+    u16 > f32 AS u16_f32,
+    u16 > f32 + FLOAT32(1) AS u16_f32_plus_1,
+    u16 > f64 AS u16_f64,
+    u16 > f64 + FLOAT64(1) AS u16_f64_plus_1
+FROM stream INTO sinkU16;
+----
+1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1
+
+# Greater u32 value with all other data types
+SELECT
+    # signed
+    u32 > i8 AS u32_i8,
+    u32 > i8 + INT8(1) AS u32_i8_plus_1,
+    u32 > i16 AS u32_i16,
+    u32 > i16 + INT16(1) AS u32_i16_plus_1,
+    u32 > i32 AS u32_i32,
+    u32 > i32 + INT32(1) AS u32_i32_plus_1,
+    u32 > i64 AS u32_i64,
+    u32 > i64 + INT64(1) AS u32_i64_plus_1,
+    # unsigned
+    u32 > u8 AS u32_u8,
+    u32 > u8 + UINT8(1) AS u32_u8_plus_1,
+    u32 > u16 AS u32_u16,
+    u32 > u16 + UINT16(1) AS u32_u16_plus_1,
+    u32 > u32 AS u32_u32,
+    u32 > u32 + UINT32(1) AS u32_u32_plus_1,
+    u32 > u64 AS u32_u64,
+    u32 > u64 + UINT64(1) AS u32_u64_plus_1,
+    # float
+    u32 > f32 AS u32_f32,
+    u32 > f32 + FLOAT32(1) AS u32_f32_plus_1,
+    u32 > f64 AS u32_f64,
+    u32 > f64 + FLOAT64(1) AS u32_f64_plus_1
+FROM stream INTO sinkU32;
+----
+0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1
+
+# Greater u64 value with all other data types
+SELECT
+    # signed
+    u64 > i8 AS u64_i8,
+    u64 > i8 + INT8(1) AS u64_i8_plus_1,
+    u64 > i16 AS u64_i16,
+    u64 > i16 + INT16(1) AS u64_i16_plus_1,
+    u64 > i32 AS u64_i32,
+    u64 > i32 + INT32(1) AS u64_i32_plus_1,
+    u64 > i64 AS u64_i64,
+    u64 > i64 + INT64(1) AS u64_i64_plus_1,
+    # unsigned
+    u64 > u8 AS u64_u8,
+    u64 > u8 + UINT8(1) AS u64_u8_plus_1,
+    u64 > u16 AS u64_u16,
+    u64 > u16 + UINT16(1) AS u64_u16_plus_1,
+    u64 > u32 AS u64_u32,
+    u64 > u32 + UINT32(1) AS u64_u32_plus_1,
+    u64 > u64 AS u64_u64,
+    u64 > u64 + UINT64(1) AS u64_u64_plus_1,
+    # float
+    u64 > f32 AS u64_f32,
+    u64 > f32 + FLOAT32(1) AS u64_f32_plus_1,
+    u64 > f64 AS u64_f64,
+    u64 > f64 + FLOAT64(1) AS u64_f64_plus_1
+FROM stream INTO sinkU64;
+----
+0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1

@@ -1,0 +1,286 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a44ca977a..4e9ccab83 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,17 +1,14 @@
+ cmake_minimum_required(VERSION 3.21)
+-project(nesfolly)
++project(folly)
+ 
+ set(CMAKE_CXX_STANDARD 23)
+ 
+-# Currently there is a dependency on BOOST-MPL
+-find_package(Boost REQUIRED)
+-
+ configure_file(
+         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/folly-config.h.cmake
+         ${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h
+ )
+ 
+-add_library(nesfolly
++add_library(folly
+         folly/SharedMutex.cpp
+         folly/ScopeGuard.cpp
+         folly/concurrency/CacheLocality.cpp
+@@ -32,12 +29,12 @@ add_library(nesfolly
+         folly/Executor.cpp
+         folly/portability/SysMembarrier.cpp
+         folly/memory/MallctlHelper.cpp
++        folly/memory/detail/MallocImpl.cpp
+ )
+ 
+-target_compile_features(nesfolly PRIVATE cxx_std_20)
++target_compile_features(folly PRIVATE cxx_std_20)
+ 
+-target_include_directories(nesfolly PUBLIC
+-        ${Boost_INCLUDE_DIRS}
++target_include_directories(folly PUBLIC
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/config>)
+ 
+@@ -71,7 +68,7 @@ install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets # create export s
+ )
+ # Install Export Set
+ install(EXPORT ${PROJECT_NAME}-targets
+-        NAMESPACE nesfolly::
++        NAMESPACE folly::
+         DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+ 
+ 
+diff --git a/cmake/config.cmake b/cmake/config.cmake
+index 29a8021e9..0e267af7f 100644
+--- a/cmake/config.cmake
++++ b/cmake/config.cmake
+@@ -1,5 +1,5 @@
+ @PACKAGE_INIT@
+ 
+-include(${CMAKE_CURRENT_LIST_DIR}/nesfolly-targets.cmake)
++include(${CMAKE_CURRENT_LIST_DIR}/folly-targets.cmake)
+ 
+-check_required_components(nesfolly)
++check_required_components(folly)
+diff --git a/folly/container/Access.h b/folly/container/Access.h
+index 50c948f85..35e5d8670 100644
+--- a/folly/container/Access.h
++++ b/folly/container/Access.h
+@@ -88,14 +88,14 @@ FOLLY_INLINE_VARIABLE constexpr data_fn data{};
+ //  begin
+ //
+ //  Invokes unqualified begin with std::begin in scope.
+-FOLLY_CREATE_FREE_INVOKER(begin_fn, begin, std);
+-FOLLY_INLINE_VARIABLE constexpr begin_fn begin{};
++// FOLLY_CREATE_FREE_INVOKER(begin_fn, begin, std);
++// FOLLY_INLINE_VARIABLE constexpr begin_fn begin{};
+ 
+ //  end
+ //
+ //  Invokes unqualified end with std::end in scope.
+-FOLLY_CREATE_FREE_INVOKER(end_fn, end, std);
+-FOLLY_INLINE_VARIABLE constexpr end_fn end{};
++// FOLLY_CREATE_FREE_INVOKER(end_fn, end, std);
++// FOLLY_INLINE_VARIABLE constexpr end_fn end{};
+ 
+ } // namespace access
+ 
+diff --git a/folly/container/Foreach-inl.h b/folly/container/Foreach-inl.h
+index d6b709502..ec38285fb 100644
+--- a/folly/container/Foreach-inl.h
++++ b/folly/container/Foreach-inl.h
+@@ -98,14 +98,14 @@ struct IsTuple<EnableIfTuple<T>, T> : std::true_type {};
+ /**
+  * Check if the sequence is a range
+  */
+-template <typename Type, typename T = typename std::decay<Type>::type>
+-using EnableIfRange = void_t<
+-    decltype(access::begin(std::declval<T&>())),
+-    decltype(access::end(std::declval<T&>()))>;
+-template <typename, typename T>
+-struct IsRange : std::false_type {};
+-template <typename T>
+-struct IsRange<EnableIfRange<T>, T> : std::true_type {};
++// template <typename Type, typename T = typename std::decay<Type>::type>
++// using EnableIfRange = void_t<
++//     decltype(access::begin(std::declval<T&>())),
++//     decltype(access::end(std::declval<T&>()))>;
++// template <typename, typename T>
++// struct IsRange : std::false_type {};
++// template <typename T>
++// struct IsRange<EnableIfRange<T>, T> : std::true_type {};
+ 
+ struct TupleTag {};
+ struct RangeTag {};
+@@ -114,8 +114,7 @@ struct RangeTag {};
+  * Should ideally check if it is a tuple and if not return void, but msvc fails
+  */
+ template <typename Sequence>
+-using SequenceTag =
+-    std::conditional_t<IsRange<void, Sequence>::value, RangeTag, TupleTag>;
++using SequenceTag = TupleTag;
+ 
+ struct BeginAddTag {};
+ struct IndexingTag {};
+@@ -153,41 +152,41 @@ LoopControl invoke_returning_loop_control(Func&& f, Args&&... a) {
+ /**
+  * Implementations for the runtime function
+  */
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<3>, Sequence&& range, Func& func) {
+-  auto first = access::begin(range);
+-  auto last = access::end(range);
+-  for (auto index = std::size_t{0}; first != last; ++index) {
+-    auto next = std::next(first);
+-    auto control = invoke_returning_loop_control(func, *first, index, first);
+-    if (loop_break == control) {
+-      break;
+-    }
+-    first = next;
+-  }
+-}
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<2>, Sequence&& range, Func& func) {
+-  // make a three arg adaptor for the function passed in so that the main
+-  // implementation function can be used
+-  auto three_arg_adaptor = [&func](
+-                               auto&& ele, auto index, auto) -> decltype(auto) {
+-    return func(std::forward<decltype(ele)>(ele), index);
+-  };
+-  for_each_range_impl(
+-      index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
+-}
+-
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<1>, Sequence&& range, Func& func) {
+-  // make a three argument adaptor for the function passed in that just ignores
+-  // the second and third argument
+-  auto three_arg_adaptor = [&func](auto&& ele, auto, auto) -> decltype(auto) {
+-    return func(std::forward<decltype(ele)>(ele));
+-  };
+-  for_each_range_impl(
+-      index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
+-}
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<3>, Sequence&& range, Func& func) {
++//   auto first = access::begin(range);
++//   auto last = access::end(range);
++//   for (auto index = std::size_t{0}; first != last; ++index) {
++//     auto next = std::next(first);
++//     auto control = invoke_returning_loop_control(func, *first, index, first);
++//     if (loop_break == control) {
++//       break;
++//     }
++//     first = next;
++//   }
++// }
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<2>, Sequence&& range, Func& func) {
++//   // make a three arg adaptor for the function passed in so that the main
++//   // implementation function can be used
++//   auto three_arg_adaptor = [&func](
++//                                auto&& ele, auto index, auto) -> decltype(auto) {
++//     return func(std::forward<decltype(ele)>(ele), index);
++//   };
++//   for_each_range_impl(
++//       index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
++// }
++//
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<1>, Sequence&& range, Func& func) {
++//   // make a three argument adaptor for the function passed in that just ignores
++//   // the second and third argument
++//   auto three_arg_adaptor = [&func](auto&& ele, auto, auto) -> decltype(auto) {
++//     return func(std::forward<decltype(ele)>(ele));
++//   };
++//   for_each_range_impl(
++//       index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
++// }
+ 
+ /**
+  * Handlers for iteration
+@@ -260,40 +259,40 @@ void for_each_impl(TupleTag, Sequence&& range, Func& func) {
+   static_assert(!std::is_same<tag, void>::value, "unknown invocability");
+   for_each_tuple_impl(tag{}, std::forward<Sequence>(range), func);
+ }
+-template <typename Sequence, typename Func>
+-void for_each_impl(RangeTag, Sequence&& range, Func& func) {
+-  using iter = decltype(access::begin(std::declval<Sequence>()));
+-  using type = decltype(*std::declval<iter>());
+-  using tag = ForEachImplTag<Func, type, iter>;
+-  static_assert(!std::is_same<tag, void>::value, "unknown invocability");
+-  for_each_range_impl(tag{}, std::forward<Sequence>(range), func);
+-}
+-
++// template <typename Sequence, typename Func>
++// void for_each_impl(RangeTag, Sequence&& range, Func& func) {
++//   using iter = decltype(access::begin(std::declval<Sequence>()));
++//   using type = decltype(*std::declval<iter>());
++//   using tag = ForEachImplTag<Func, type, iter>;
++//   static_assert(!std::is_same<tag, void>::value, "unknown invocability");
++//   for_each_range_impl(tag{}, std::forward<Sequence>(range), func);
++// }
++//
+ template <typename Sequence, typename Index>
+ decltype(auto) fetch_impl(IndexingTag, Sequence&& sequence, Index&& index) {
+   return std::forward<Sequence>(sequence)[std::forward<Index>(index)];
+ }
+-template <typename Sequence, typename Index>
+-decltype(auto) fetch_impl(BeginAddTag, Sequence&& sequence, Index index) {
+-  return *(access::begin(std::forward<Sequence>(sequence)) + index);
+-}
++// template <typename Sequence, typename Index>
++// decltype(auto) fetch_impl(BeginAddTag, Sequence&& sequence, Index index) {
++//   return *(access::begin(std::forward<Sequence>(sequence)) + index);
++// }
+ 
+ template <typename Sequence, typename Index>
+ decltype(auto) fetch_impl(TupleTag, Sequence&& sequence, Index index) {
+   return get_impl<index>(std::forward<Sequence>(sequence));
+ }
+-template <typename Sequence, typename Index>
+-decltype(auto) fetch_impl(RangeTag, Sequence&& sequence, Index&& index) {
+-  using iter = decltype(access::begin(std::declval<Sequence>()));
+-  using iter_traits = std::iterator_traits<remove_cvref_t<iter>>;
+-  using iter_cat = typename iter_traits::iterator_category;
+-  using tag = std::conditional_t<
+-      std::is_same<iter_cat, std::random_access_iterator_tag>::value,
+-      BeginAddTag,
+-      IndexingTag>;
+-  return fetch_impl(
+-      tag{}, std::forward<Sequence>(sequence), std::forward<Index>(index));
+-}
++// template <typename Sequence, typename Index>
++// decltype(auto) fetch_impl(RangeTag, Sequence&& sequence, Index&& index) {
++//   using iter = decltype(access::begin(std::declval<Sequence>()));
++//   using iter_traits = std::iterator_traits<remove_cvref_t<iter>>;
++//   using iter_cat = typename iter_traits::iterator_category;
++//   using tag = std::conditional_t<
++//       std::is_same<iter_cat, std::random_access_iterator_tag>::value,
++//       BeginAddTag,
++//       IndexingTag>;
++//   return fetch_impl(
++//       tag{}, std::forward<Sequence>(sequence), std::forward<Index>(index));
++// }
+ 
+ } // namespace for_each_detail
+ 
+diff --git a/folly/functional/Invoke.h b/folly/functional/Invoke.h
+index f94435605..87adbf4e2 100644
+--- a/folly/functional/Invoke.h
++++ b/folly/functional/Invoke.h
+@@ -19,11 +19,11 @@
+ #include <functional>
+ #include <type_traits>
+ 
+-#include <boost/preprocessor/control/expr_iif.hpp>
+-#include <boost/preprocessor/facilities/is_empty_variadic.hpp>
+-#include <boost/preprocessor/list/for_each.hpp>
+-#include <boost/preprocessor/logical/not.hpp>
+-#include <boost/preprocessor/tuple/to_list.hpp>
++// #include <boost/preprocessor/control/expr_iif.hpp>
++// #include <boost/preprocessor/facilities/is_empty_variadic.hpp>
++// #include <boost/preprocessor/list/for_each.hpp>
++// #include <boost/preprocessor/logical/not.hpp>
++// #include <boost/preprocessor/tuple/to_list.hpp>
+ 
+ #include <folly/CppAttributes.h>
+ #include <folly/Portability.h>
+

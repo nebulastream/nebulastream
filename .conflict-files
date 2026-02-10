@@ -1,0 +1,3 @@
+ancestorEntries = ["nes-systests/systest/src/SystestExecutor.cpp", "nes-systests/systest/src/SystestRunner.cpp"]
+ourEntries = ["nes-systests/systest/src/SystestExecutor.cpp", "nes-systests/systest/src/SystestRunner.cpp"]
+theirEntries = ["nes-systests/systest/src/SystestExecutor.cpp", "nes-systests/systest/src/SystestRunner.cpp"]
