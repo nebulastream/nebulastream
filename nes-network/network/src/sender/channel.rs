@@ -16,6 +16,7 @@ use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
+use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
 use tokio::sync::oneshot;
@@ -238,71 +239,59 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
 
     /// Attempts to send the next pending TupleBuffer to the receiver.
     ///
-    /// This method moves one buffer from `pending_writes` to `wait_for_ack` and
-    /// transmits it over the network. The buffer remains in `wait_for_ack` until
-    /// an acknowledgment (Ack/Nack) is received.
-    ///
     /// # Behavior
     ///
-    /// 1. Moves buffer from front of `pending_writes` to `wait_for_ack` (keyed by sequence number)
-    /// 2. Feeds the buffer to the network writer (doesn't flush yet)
-    /// 3. On success: Buffer stays in `wait_for_ack` awaiting acknowledgment
-    /// 4. On failure or cancellation: Buffer is moved back to front of `pending_writes` for retry
+    /// 1. Clones the front buffer from `pending_writes` and feeds it to the network writer
+    /// 2. On success: Moves the buffer from `pending_writes` to `wait_for_ack`
+    /// 3. On failure: Buffer stays in `pending_writes` for retry
     ///
-    /// # Error Handling
+    /// # Cancel Safety
     ///
-    /// If sending fails, the buffer is returned to the front of `pending_writes` to
-    /// preserve ordering. The method does not return an error for send failures - it
-    /// silently queues the buffer for retry on the next iteration.
+    /// The buffer remains in `pending_writes` until `feed()` succeeds. This is
+    /// critical because this future is used inside `select!`, which drops
+    /// non-winning branches at `.await` points. If the buffer were moved to
+    /// `wait_for_ack` before `feed()`, a drop would strand it there without
+    /// ever being sent — the receiver would never ack it.
+    /// Attempts to send the next pending buffer to the receiver.
+    ///
+    /// IMPORTANT: The buffer stays in `pending_writes` until `feed()` succeeds.
+    /// This is critical because `select!` can drop this future at any `.await`
+    /// point. If we moved the buffer to `wait_for_ack` before `feed()` and the
+    /// future was dropped, the buffer would be stranded in `wait_for_ack`
+    /// without ever being sent — the receiver would never ack it.
     async fn send_pending(
         cancel_token: &CancellationToken,
         writer: &mut DataChannelSenderWriter<W>,
         pending_writes: &mut VecDeque<TupleBuffer>,
         wait_for_ack: &mut HashMap<OriginSequenceNumber, TupleBuffer>,
     ) -> InternalResult<()> {
-        if pending_writes.is_empty() {
+        let Some(buffer) = pending_writes.front() else {
             return Ok(());
-        }
-
-        let sequence_number = pending_writes
-            .front()
-            .expect("BUG: check value earlier")
-            .sequence();
+        };
+        let sequence_number = buffer.sequence();
         trace!("Sending {:?}", sequence_number);
-        assert!(
-            wait_for_ack
-                .insert(
-                    sequence_number,
-                    pending_writes
-                        .pop_front()
-                        .expect("BUG: checked value earlier"),
-                )
-                .is_none(),
-            "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was send via a single channel."
-        );
-        let next_buffer = wait_for_ack
-            .get(&sequence_number)
-            .expect("BUG: value was inserted earlier");
 
         let Some(result) = cancel_token
-            .run_until_cancelled(writer.feed(DataChannelRequest::Data(next_buffer.clone())))
+            .run_until_cancelled(writer.feed(DataChannelRequest::Data(buffer.clone())))
             .await
         else {
-            pending_writes.push_front(
-                wait_for_ack
-                    .remove(&sequence_number)
-                    .expect("BUG: value was inserted earlier"),
-            );
+            // Cancelled: buffer is still safely in pending_writes
             return Err(ErrorOrStatus::Status(ChannelHandlerStatus::Cancelled));
         };
 
-        if result.is_err() {
-            warn!("Sending {:?} failed", sequence_number);
-            pending_writes.push_front(
-                wait_for_ack
-                    .remove(&sequence_number)
-                    .expect("BUG: value was inserted earlier"),
-            );
+        match result {
+            Ok(()) => {
+                // feed() succeeded — now move to wait_for_ack
+                let buffer = pending_writes.pop_front().expect("BUG: was front");
+                assert!(
+                    wait_for_ack.insert(sequence_number, buffer).is_none(),
+                    "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was sent via a single channel."
+                );
+            }
+            Err(_) => {
+                // feed() failed — buffer stays in pending_writes for retry
+                warn!("Sending {:?} failed", sequence_number);
+            }
         }
 
         Ok(())
@@ -363,53 +352,41 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// Main event loop that multiplexes between software commands, network responses, and pending sends.
     ///
     /// This method implements the core logic of the sliding window protocol. It uses
-    /// `tokio::select!` to concurrently wait on multiple event sources and handle
-    /// whichever becomes ready first.
+    /// a single `tokio::select!` with `if` guards to conditionally enable branches
+    /// based on the current state:
     ///
-    /// # Flow Control Logic
+    /// - `should_send_pending`: Sends buffered data when `pending_writes` is non-empty
+    /// - `should_read_from_software`: Accepts new commands when `wait_for_ack` < `MAX_PENDING_ACKS`
+    /// - `should_read_from_other_side`: Reads acks when `wait_for_ack` is non-empty
     ///
-    /// The event loop has two modes based on the current state:
-    ///
-    /// **Mode 1: Backpressure Limit Reached** (when total inflight buffers >= `MAX_PENDING_ACKS`)
-    /// - Only listens to: network responses
-    /// - Does NOT read software commands (applies backpressure to sender)
-    /// - Does NOT attempt to send new buffers
-    /// - This prevents exceeding the `MAX_PENDING_ACKS` limit and forces acknowledgment processing
-    ///
-    /// **Mode 2: Normal Operation** (when under backpressure limit)
-    /// - Listens to: software commands and network responses
-    /// - Additionally attempts to send from `pending_writes` if not empty
-    /// - This mode handles both active transmission (when buffers pending) and idle waiting (when no buffers pending)
-    ///
-    /// This two-mode approach ensures the sliding window is respected while maximizing
-    /// throughput when possible.
+    /// When there is no pending data to send, the codec buffer is flushed before
+    /// entering `select!` so the receiver can see previously fed data and send acks.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
-            let number_of_inflight_buffers = self.pending_writes.len() + self.wait_for_ack.len();
+            let should_read_from_software = self.wait_for_ack.len() < MAX_PENDING_ACKS;
+            let should_read_from_other_side = !self.wait_for_ack.is_empty();
+            let should_send_pending = !self.pending_writes.is_empty();
 
-            // reached the backpressure limit. We will only read from the other side, to either
-            // acknowledge inflight packets or react to the other side closing the channel
-            if number_of_inflight_buffers >= MAX_PENDING_ACKS {
-                // Make sure that all writes have been flushed, otherwise we might wait forever
-                // because the other side never received anything to acknowledge.
+            // When there's nothing left to send, flush the codec buffer so the
+            // receiver actually sees the data we fed earlier and can send Acks.
+            if !should_send_pending {
                 Self::flush_writes(&self.cancellation_token, &mut self.writer).await?;
-                let response =
-                    Self::read_from_other_side(&self.cancellation_token, &mut self.reader).await?;
-                self.handle_response(response)?;
-                continue;
             }
 
-            if !self.pending_writes.is_empty() {
-                select! {
-                    response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader) => self.handle_response(response?)?,
-                    request = Self::read_from_software(&self.cancellation_token, &mut self.queue) => self.handle_request(request?).await?,
-                    send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack) => send_result?,
-                }
-            } else {
-                select! {
-                    response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader) => self.handle_response(response?)?,
-                    request = Self::read_from_software(&self.cancellation_token, &mut self.queue) => self.handle_request(request?).await?,
-                }
+            select! {
+                response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader), if should_read_from_other_side => {
+                    self.handle_response(response?)?;
+                },
+                request = Self::read_from_software(&self.cancellation_token, &mut self.queue), if should_read_from_software => {
+                    self.handle_request(request?).await?;
+                },
+                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
+                    send_result?;
+                },
+                _ = tokio::time::sleep(Duration::from_secs(10)) => {
+                    warn!("No progress for 10 seconds (pending: {}, wait_for_ack: {})",
+                        self.pending_writes.len(), self.wait_for_ack.len());
+                },
             }
         }
     }

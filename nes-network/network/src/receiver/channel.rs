@@ -15,6 +15,7 @@
 use super::control::*;
 use crate::protocol::*;
 use futures::SinkExt;
+use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
 use tokio::sync::oneshot;
@@ -96,6 +97,9 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
         // from the other side.
         select! {
             _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
+            _ = tokio::time::sleep(Duration::from_secs(10)) => {
+                warn!("No data received from sender for 10 seconds");
+            },
             request = connection_reader.next() => pending_buffer = {
                 // Reader next could fail if the connection aborts, in which case the channel fails,
                 // but will be retried after a delay. See @create_channel_handler
