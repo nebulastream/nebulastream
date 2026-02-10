@@ -81,8 +81,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        nautilus::val<FieldOffsets*> fieldOffsetsPtr,
-        [[maybe_unused]] ArenaRef& arenaRef) const
+        nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
     {
         /// static loop over number of fields (which don't change)
@@ -118,8 +117,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        const nautilus::val<FieldOffsets*> fieldOffsetsPtr,
-        [[maybe_unused]] ArenaRef& arenaRef) const
+        const nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
     {
         /// static loop over number of fields (which don't change)
