@@ -24,6 +24,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -34,6 +35,7 @@ using GrpcAddr = NESStrongStringType<struct GrpcAddr_, "INVALID">;
 struct WorkerConfig
 {
     GrpcAddr grpc;
+    SingleNodeWorkerConfiguration config;
 };
 
 class QuerySubmissionBackend

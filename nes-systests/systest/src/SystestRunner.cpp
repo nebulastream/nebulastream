@@ -322,8 +322,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     nlohmann::json& resultJson,
     SystestProgressTracker& progressTracker)
 {
-    auto worker = std::make_unique<QueryManager>(
-        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
+    auto worker = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
@@ -464,8 +464,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker)
 {
-    auto embeddedQueryManager = std::make_unique<QueryManager>(
-        std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr("localhost:8080")}, configuration));
+    auto embeddedQueryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+        WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
     QuerySubmitter submitter(std::move(embeddedQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
@@ -476,8 +476,8 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::string& serverURI,
     SystestProgressTracker& progressTracker)
 {
-    auto remoteQueryManager
-        = std::make_unique<QueryManager>(std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI)}));
+    auto remoteQueryManager = std::make_unique<QueryManager>(
+        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI), .config = {}}));
     QuerySubmitter submitter(std::move(remoteQueryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
