@@ -235,3 +235,147 @@ TEST(SetsumTest, AddRemoveSameItem)
 
     EXPECT_EQ(setsum1, setsum2);
 }
+
+/// Test that adds setsums and compares with a setsum with equivalent elements
+TEST(SetsumTest, AddSetsums)
+{
+    constexpr std::string_view item1 = "first_item";
+    constexpr std::string_view item2 = "second_item";
+    constexpr std::string_view item3 = "third_item";
+
+    Setsum setsum1;
+    setsum1.add(item1);
+    setsum1.add(item2);
+
+    Setsum setsum2;
+    setsum2.add(item3);
+
+    Setsum setsum3;
+    setsum3.add(setsum1);
+    setsum3.add(setsum2);
+
+    Setsum setsum4;
+    setsum4.add(item1);
+    setsum4.add(item2);
+    setsum4.add(item3);
+
+    EXPECT_EQ(setsum3, setsum4);
+}
+
+/// Test that removes setsums and compares with a setsum with equivalent elements
+TEST(SetsumTest, RemoveSetsums)
+{
+    constexpr std::string_view item1 = "first_item";
+    constexpr std::string_view item2 = "second_item";
+    constexpr std::string_view item3 = "third_item";
+
+
+    Setsum setsum1;
+    setsum1.add(item1);
+    setsum1.add(item2);
+    setsum1.add(item3);
+
+    Setsum setsum2;
+    setsum2.add(item3);
+
+    setsum1.remove(setsum2);
+
+    Setsum setsum3;
+    setsum3.add(item1);
+    setsum3.add(item2);
+
+    EXPECT_EQ(setsum1, setsum3);
+}
+
+/// Test that checks adding setsums works in a multithreaded situation
+TEST(SetsumTest, MultiThreadedSetsums)
+{
+    constexpr size_t numberOfThreads = 8;
+    constexpr size_t writesPerThread = 100000;
+
+    constexpr std::string_view testData1 = "thread_data_1";
+    constexpr std::string_view testData2 = "thread_data_2";
+
+    Setsum setsum1;
+    setsum1.add(testData1);
+    Setsum setsum2;
+    setsum1.add(testData2);
+
+    Setsum setsum3;
+    Setsum setsum4;
+
+    std::vector<std::jthread> threads{};
+    std::barrier barrier(numberOfThreads);
+    threads.reserve(numberOfThreads);
+
+    // Multi-threaded adds to setsum3
+    for (size_t threadIdx = 0; threadIdx < numberOfThreads; threadIdx++)
+    {
+        threads.emplace_back(
+            [&]()
+            {
+                barrier.arrive_and_wait();
+                for (size_t i = 0; i < writesPerThread; i++)
+                {
+                    if (i % 2 == 0)
+                    {
+                        setsum3.add(setsum1);
+                    }
+                    else
+                    {
+                        setsum3.add(setsum2);
+                    }
+                }
+            });
+    }
+    threads.clear();
+
+    // Single-threaded adds to setsum4 (same total count)
+    for (size_t i = 0; i < numberOfThreads * writesPerThread; i++)
+    {
+        if (i % 2 == 0)
+        {
+            setsum4.add(setsum1);
+        }
+        else
+        {
+            setsum4.add(setsum2);
+        }
+    }
+
+    EXPECT_EQ(setsum3, setsum4);
+}
+
+/// Testing add and remove functions with input as setsums
+TEST(SetsumTest, AddRemoveSetsums)
+{
+    constexpr std::string_view item1 = "apple";
+    constexpr std::string_view item2 = "banana";
+    constexpr std::string_view item3 = "cherry";
+
+    Setsum setsum1;
+    setsum1.add(item1);
+    setsum1.add(item2);
+    setsum1.add(item3);
+
+    Setsum setsum2;
+    setsum2.add(item2);
+
+    Setsum setsum3;
+    setsum3.add(setsum1);
+    setsum3.remove(setsum2);
+
+    Setsum setsum4;
+    setsum4.add(item1);
+    setsum4.add(item3);
+
+    EXPECT_EQ(setsum3, setsum4);
+
+    // Test removing and re-adding
+    Setsum setsum5;
+    setsum5.add(setsum1);
+    setsum5.remove(setsum2);
+    setsum5.add(setsum2); // Re-add banana
+
+    EXPECT_EQ(setsum5, setsum1);
+}

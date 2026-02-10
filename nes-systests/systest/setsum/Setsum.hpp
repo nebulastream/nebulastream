@@ -19,13 +19,14 @@
 #include <ostream>
 #include <string_view>
 
+constexpr size_t NUM_COLUMNS = 8;
 /// Setsum - order agnostic, additive, subtractive checksum
 /// Based on the algorithm from https://avi.im/blag/2025/setsum/
 /// Uses 8 columns with large primes near 2^32 and MurmurHash3
 struct Setsum
 {
     /// 8 large prime numbers close to 2^32 (UINT32_MAX = 4294967295)
-    static constexpr std::array<uint32_t, 8> PRIMES = {
+    static constexpr std::array<uint32_t, NUM_COLUMNS> PRIMES = {
         4294967291U, // 2^32 - 5
         4294967279U, // 2^32 - 17
         4294967231U, // 2^32 - 65
@@ -38,9 +39,11 @@ struct Setsum
 
     /// Add data to the setsum (order-agnostic)
     void add(std::string_view data);
+    void add(const Setsum& setsum);
 
     /// Remove data from the setsum by adding the modular inverse
     void remove(std::string_view data);
+    void remove(const Setsum& setsum);
 
     /// Equality comparison
     /// Explicitly implemented to perform atomic loads for safe comparison
@@ -57,5 +60,5 @@ struct Setsum
     friend std::ostream& operator<<(std::ostream& os, const Setsum& obj);
 
     /// 8 columns storing the setsum state (256 bits total)
-    std::array<std::atomic<uint32_t>, 8> columns = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::array<std::atomic<uint32_t>, NUM_COLUMNS> columns = {0, 0, 0, 0, 0, 0, 0, 0};
 };

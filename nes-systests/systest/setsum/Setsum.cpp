@@ -36,7 +36,7 @@ constexpr uint32_t FINALIZE_MIX1 = 0x85ebca6b;       // Finalization avalanche m
 constexpr uint32_t FINALIZE_MIX2 = 0xc2b2ae35;       // Finalization avalanche mixer
 
 constexpr size_t BLOCK_SIZE = 4;
-constexpr size_t NUM_COLUMNS = 8;
+
 
 // Bit shifts for hash finalization and mixing
 constexpr uint32_t SHIFT_16 = 16;
@@ -167,6 +167,28 @@ void Setsum::add(std::string_view data)
     }
 }
 
+void Setsum::add(const Setsum& setsum)
+{
+    // Add each hash value to its corresponding column with modulo prime
+    for (size_t i = 0; i < NUM_COLUMNS; i++)
+    {
+        const uint32_t value = setsum.columns.at(i).load(std::memory_order::relaxed) ;
+
+        // Atomic compare-exchange loop for modular addition
+        uint32_t oldValue = columns.at(i).load(std::memory_order::relaxed);
+        uint32_t newValue = 0;
+
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while) - compare_exchange_weak requires do-while pattern
+        do
+        {
+            // Use uint64_t to prevent overflow when adding
+            newValue = static_cast<uint32_t>((static_cast<uint64_t>(oldValue) + value) % PRIMES.at(i));
+        }
+        while (!columns.at(i).compare_exchange_weak(oldValue, newValue,
+                                                   std::memory_order::relaxed));
+    }
+}
+
 void Setsum::remove(std::string_view data)
 {
     // Hash the input data to get 8 x uint32_t values
@@ -189,6 +211,27 @@ void Setsum::remove(std::string_view data)
             newValue = static_cast<uint32_t>((static_cast<uint64_t>(oldValue) + inverse) % PRIMES.at(i));
         }
         while (!columns.at(i).compare_exchange_weak(oldValue, newValue, 
+                                                   std::memory_order::relaxed));
+    }
+}
+
+void Setsum::remove(const Setsum& setsum)
+{
+    // Subtract by adding the modular inverse of the input data: inverse(x) = prime - x
+    for (size_t i = 0; i < NUM_COLUMNS; i++)
+    {
+        const uint32_t value = setsum.columns.at(i).load(std::memory_order::relaxed);
+        const uint32_t inverse = (PRIMES.at(i) - value) % PRIMES.at(i);
+
+        // Atomic compare-exchange loop for modular subtraction
+        uint32_t oldValue = columns.at(i).load(std::memory_order::relaxed);
+        uint32_t newValue = 0;
+        
+        do
+        {
+            newValue = static_cast<uint32_t>((static_cast<uint64_t>(oldValue) + inverse) % PRIMES.at(i));
+        }
+        while (!columns.at(i).compare_exchange_weak(oldValue, newValue,
                                                    std::memory_order::relaxed));
     }
 }
