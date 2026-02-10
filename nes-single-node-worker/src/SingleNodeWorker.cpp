@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <unistd.h>
+#include <Configurations/ConfigValuePrinter.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
@@ -58,6 +59,12 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, WorkerId workerId)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
+    {
+        std::stringstream configStr;
+        ConfigValuePrinter printer(configStr);
+        SingleNodeWorkerConfiguration(configuration).accept(printer);
+        NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", workerId.getRawValue(), configStr.str());
+    }
     if (configuration.enableGoogleEventTrace.getValue())
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
