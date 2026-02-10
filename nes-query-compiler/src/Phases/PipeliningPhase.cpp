@@ -96,6 +96,10 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
+    if (wrappedOpAfterScan.getHandler() && wrappedOpAfterScan.getHandlerId())
+    {
+        newPipeline->getOperatorHandlers().emplace(wrappedOpAfterScan.getHandlerId().value(), wrappedOpAfterScan.getHandler().value());
+    }
     return newPipeline;
 }
 
@@ -241,6 +245,10 @@ void buildPipelineRecursively(
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
         const auto newPipeline = std::make_shared<Pipeline>(*sink);
+        if (opWrapper->getHandler() && opWrapper->getHandlerId())
+        {
+            newPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
+        }
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap.emplace(opId, newPipelinePtr);

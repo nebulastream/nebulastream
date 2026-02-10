@@ -14,6 +14,10 @@
         pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
         llvm = pkgs.llvmPackages_19;
+        rustPlatform = pkgs.makeRustPlatform {
+          cargo = pkgs.cargo;
+          rustc = pkgs.rustc;
+        };
         clangStdenv = llvm.stdenv;
         mkShellClang = pkgs.mkShell.override { stdenv = clangStdenv; };
 
@@ -86,6 +90,13 @@
         antlr4Jar = pkgs.fetchurl {
           url = "https://www.antlr.org/download/antlr-${antlr4Pkg.version}-complete.jar";
           hash = "sha256-6uLfoRmmQydERnKv9j6ew1ogGA3FuAkLemq4USXfTXY=";
+        };
+
+        corrosionSrc = pkgs.fetchFromGitHub {
+          owner = "corrosion-rs";
+          repo = "corrosion";
+          rev = "v0.5.2";
+          hash = "sha256-sO2U0llrDOWYYjnfoRZE+/ofg3kb+ajFmqvaweRvT7c=";
         };
 
         devCmakePrelude = pkgs.writeText "nes-dev-prelude.cmake" ''
@@ -167,6 +178,7 @@
           MLIR_DIR = "${mlirBinary}/lib/cmake/mlir";
           LLVM_DIR = "${mlirBinary}/lib/cmake/llvm";
           CMAKE_MODULE_PATH = lib.makeSearchPath "share/cmake/Modules" [ libdwarfModule ];
+          FETCHCONTENT_SOURCE_DIR_CORROSION = "${corrosionSrc}";
         };
 
         clionSetupScript = pkgs.writeShellApplication {
@@ -242,19 +254,34 @@
           gdb
           llvm.lldb
           python3
+          cargo
+          rustc
         ];
 
         defaultPackage = clangStdenv.mkDerivation rec {
           pname = "nebulastream";
           version = "unstable";
           src = ./.;
+          cargoRoot = "nes-network";
+          cargoDeps = rustPlatform.fetchCargoVendor {
+            inherit src cargoRoot;
+            hash = "sha256-ozxnwxYF9iS+DSyawwvmYVflX139Lg66xJrnHvqiHuw=";
+          };
 
-          nativeBuildInputs = buildTools;
+          nativeBuildInputs = buildTools ++ [
+            rustPlatform.cargoSetupHook
+            pkgs.cargo
+            pkgs.rustc
+          ];
           buildInputs = llvmTools ++ thirdPartyDeps ++ [ mlirBinary ];
           patches = nebulastreamPatches;
 
           CMAKE_PREFIX_PATH = cmakePrefixPath;
           PKG_CONFIG_PATH = pkgConfigPath;
+
+          preConfigure = ''
+            export CARGO_HOME="$sourceRoot/.cargo"
+          '';
 
           postPatch = ''
             substituteInPlace CMakeLists.txt --replace "find_package(Protobuf REQUIRED)" "find_package(Protobuf CONFIG REQUIRED)"
@@ -273,6 +300,7 @@
             "-DNES_ENABLES_TESTS=ON"
             "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
             "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
+            "-DFETCHCONTENT_SOURCE_DIR_CORROSION=${corrosionSrc}"
           ];
 
           enableParallelBuilding = true;
@@ -376,6 +404,7 @@
               "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
               "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
               "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
+              "-DFETCHCONTENT_SOURCE_DIR_CORROSION=${corrosionSrc}"
             ];
             shellHook = ''
               unset NES_PREBUILT_VCPKG_ROOT

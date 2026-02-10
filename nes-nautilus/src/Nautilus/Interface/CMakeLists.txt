@@ -18,4 +18,5 @@ add_subdirectory(PagedVector)
 add_source_files(nes-nautilus
         Record.cpp
         RecordBuffer.cpp
+        BinaryRowEncoder.cpp
 )

@@ -60,7 +60,47 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
+    auto desc = sourceOperator.getDescriptor();
+    auto parserCfg = desc.getParserConfig();
+    if ((desc.getSourceType() == "BinaryStore") && (parserCfg.parserType.empty()))
+    {
+        parserCfg.parserType = "Native";
+    }
+
     std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
+    NES_DEBUG(
+        "LowerToCompiledQueryPlanPhase: Source originId={} type={} parserType={}",
+        desc.getPhysicalSourceId().getRawValue(),
+        desc.getSourceType(),
+        parserCfg.parserType);
+    const bool isBinaryStore = (desc.getSourceType() == "BinaryStore");
+    const bool isInterpreter = (pipelineQueryPlan->getExecutionMode() == ExecutionMode::INTERPRETER);
+
+    if (isBinaryStore && isInterpreter)
+    {
+        std::vector<std::weak_ptr<ExecutablePipeline>> firstStages;
+        const Predecessor predecessor = OperatorId{sourceOperator.getOriginId().getRawValue()};
+        for (const auto& successor : pipeline->getSuccessors())
+        {
+            if (successor->isSinkPipeline())
+            {
+                processSuccessor(predecessor, successor);
+            }
+            else
+            {
+                if (auto exec = processOperatorPipeline(successor))
+                {
+                    firstStages.emplace_back(exec);
+                }
+            }
+        }
+        pipelineQueryPlan->removePipeline(*pipeline);
+
+        sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.id, desc, std::move(firstStages));
+
+        return;
+    }
+
 
     for (const auto& successor : pipeline->getSuccessors())
     {
@@ -69,8 +109,7 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
             executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
-    sources.emplace_back(
-        sourceOperator.getOriginId(), sourceOperator.id, sourceOperator.getDescriptor(), std::move(executableSuccessorPipelines));
+    sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.id, desc, std::move(executableSuccessorPipelines));
 }
 
 void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline)
