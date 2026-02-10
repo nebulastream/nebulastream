@@ -67,6 +67,15 @@ if ! command -v yq &>/dev/null; then
   exit 1
 fi
 
+# Check if worker config is valid (not null, empty object, or whitespace)
+is_valid_config() {
+  local config="$1"
+  if [ "$config" = "null" ] || [ "$config" = "{}" ] || [ -z "$config" ]; then
+    return 1
+  fi
+  return 0
+}
+
 WORKERS_FILE=$1
 
 if [ ! -f "$WORKERS_FILE" ]; then
@@ -103,7 +112,45 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   GRPC=$(yq -r ".workers[$i].grpc" "$WORKERS_FILE")
   GRPC_PORT=$(echo $GRPC | cut -d':' -f2)
 
-  # Generate service definition
+  # Check if worker has config
+  HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
+
+  if [ "$HAS_CONFIG" = "true" ]; then
+    CONFIG_CONTENT=$(yq ".workers[$i].config" "$WORKERS_FILE")
+
+    if is_valid_config "$CONFIG_CONTENT"; then
+      # Generate service with config file creation
+      cat <<EOF
+  $HOST_NAME:
+    image: $WORKER_IMAGE
+    pull_policy: never
+    working_dir: $CONTAINER_WORKDIR/$HOST_NAME
+    healthcheck:
+      test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$GRPC_PORT", "-connect-timeout", "5s" ]
+      interval: 1s
+      timeout: 5s
+      retries: 3
+      start_period: 0s
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        mkdir -p $CONTAINER_WORKDIR/configs
+        cat > $CONTAINER_WORKDIR/configs/$HOST_NAME.yaml <<'NES_CONFIG_EOF'
+$(yq ".workers[$i].config" "$WORKERS_FILE")
+        NES_CONFIG_EOF
+        exec nes-single-node-worker --grpc=$HOST_NAME:$GRPC_PORT --connection=$HOST --configPath=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml
+    volumes:
+      - $TESTDATA_VOLUME:/data
+      - $TEST_VOLUME:$CONTAINER_WORKDIR
+      - $TESTCONFIG_VOLUME:$NES_DIR
+EOF
+      continue
+    fi
+  fi
+
+  # Worker has no config or invalid config - use original command
   cat <<EOF
   $HOST_NAME:
     image: $WORKER_IMAGE
@@ -118,12 +165,11 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     command: [
       "--grpc=$HOST_NAME:$GRPC_PORT",
       "--connection=$HOST",
-      "--worker.default_query_execution.execution_mode=COMPILER",
     ]
     volumes:
       - $TESTDATA_VOLUME:/data
       - $TEST_VOLUME:$CONTAINER_WORKDIR
-      - $TESTCONFIG_VOLUME:$NES_DIR # Test Config needs to be mounted to the worker as the generator source will reference metadata.
+      - $TESTCONFIG_VOLUME:$NES_DIR
 EOF
 
 done

@@ -524,7 +524,7 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     auto catalog = std::make_shared<WorkerCatalog>();
     for (const auto& [host, grpc, capacity, downstream, config] : clusterConfig.workers)
     {
-        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream);
+        catalog->addWorker(HostAddr(host), GrpcAddr(grpc), capacity, downstream, config);
     }
 
     /// Running the Systest against a remote worker setup cannot use configuration overrides as the worker configuration is not handled
