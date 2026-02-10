@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -81,12 +82,14 @@ public:
         const std::vector<DataType::Type>& keyTypes, const std::vector<DataType::Type>& valueTypes, ExecutionMode backend);
 
     std::string compareExpectedWithActual(
-        const TupleBuffer& inputBufferKeys, const TupleBuffer& bufferActual, const std::map<RecordWithFields, Record>& exactMap);
+        const TupleBuffer& inputBufferKeys,
+        const TupleBuffer& bufferActual,
+        const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap);
 
     std::string compareExpectedWithActual(
         const TupleBuffer& bufferActual,
         const TupleBufferRef& memoryProviderInputBuffer,
-        const std::map<RecordWithFields, Record>& exactMap);
+        const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap);
 
     /// Compiles the query that writes the values for all keys in keyBufferRef to outputBufferForKeys.
     /// This enables us to perform a comparison in the c++ code by comparing every value in the record buffer with the exact value.
@@ -114,15 +117,16 @@ public:
 
     /// Creates an exact map of the inputBuffers.
     /// If overwriteIfExisting is true, we will overwrite an existing key in the map.
-    std::map<RecordWithFields, Record> createExactMap(ExactMapInsert exactMapInsert);
+    std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash> createExactMap(ExactMapInsert exactMapInsert);
 
     /// Checks if the values in the hash map are correct by comparing them with the exact map.
     /// We call the compiled function to write all values of the map to the output buffer via the EntryIterator
-    void checkEntryIterator(ChainedHashMap& hashMap, const std::map<RecordWithFields, Record>& exactMap);
+    void checkEntryIterator(ChainedHashMap& hashMap, const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap);
 
     /// Checks if the values in the hash map are correct by comparing them with the exact map.
     /// We call the compiled function that finds all entries and writes them to the output buffer.
-    void checkIfValuesAreCorrectViaFindEntry(ChainedHashMap& hashMap, const std::map<RecordWithFields, Record>& exactMap);
+    void checkIfValuesAreCorrectViaFindEntry(
+        ChainedHashMap& hashMap, const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap);
 };
 
 }
