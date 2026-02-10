@@ -12,15 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# Convert cmake boolean to bash boolean
-to_bool() {
-    case "${1^^}" in
-        1|ON|YES|TRUE|Y) echo "true" ;;
-        *) echo "false" ;;
-    esac
-}
-
 setup_file() {
   # Validate SYSTEST environment variable once for all tests
   if [ -z "$SYSTEST" ]; then
@@ -32,12 +23,6 @@ setup_file() {
   if [ -z "$NEBULASTREAM" ]; then
     echo "ERROR: NEBULASTREAM environment variable must be set" >&2
     echo "Usage: NEBULASTREAM=/path/to/nes-single-node-worker bats nebucli.bats" >&2
-    exit 1
-  fi
-
-  if [ -z "$ENABLE_LARGE_TESTS" ]; then
-    echo "ERROR: ENABLE_LARGE_TESTS environment variable must be set" >&2
-    echo "Usage: ENABLE_LARGE_TESTS=TRUE" >&2
     exit 1
   fi
 
@@ -137,14 +122,6 @@ EOF
     | docker exec -i $volume_host_container tar -xf - -C /config/nes-systests
   docker stop -t0 $volume_host_container
 
-
-
-  if [ "$(to_bool "${ENABLE_LARGE_TESTS:-OFF}")" = "true" ]; then
-    export NES_EXCLUDE_TEST_GROUPS="-e tcp"
-  else
-    export NES_EXCLUDE_TEST_GROUPS="-e tcp large"
-  fi
-
   echo "# Using SYSTEST: $SYSTEST" >&3
   echo "# Using NEBULASTREAM: $NEBULASTREAM" >&3
   echo "# Using NES_DIR: $NES_DIR" >&3
@@ -153,7 +130,6 @@ EOF
   echo "# Using TESTDATA_VOLUME: $TESTDATA_VOLUME" >&3
   echo "# Using TESTCONFIG_VOLUME: $TESTCONFIG_VOLUME" >&3
   echo "# Using CONTAINER_WORKDIR: $CONTAINER_WORKDIR" >&3
-  echo "# Excluding test groups: $NES_EXCLUDE_TEST_GROUPS" >&3
 }
 
 teardown_file() {
@@ -221,17 +197,16 @@ DOCKER_SYSTEST() {
 }
 
 @test "two node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node.yaml
-  run DOCKER_SYSTEST ${NES_EXCLUDE_TEST_GROUPS} --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
+  run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run DOCKER_SYSTEST ${NES_EXCLUDE_TEST_GROUPS} --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
-
 
 @test "large scale tests on two nodes" {
   if [ "$ENABLE_LARGE_TESTS" != "ON" ]; then

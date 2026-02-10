@@ -145,7 +145,8 @@ struct WorkerConfig
     std::string grpc;
     size_t capacity{};
     std::vector<std::string> downstream;
-    std::unordered_map<std::string, std::string> config; /// Flattened dot-separated config (e.g., "worker.receiver_queue_size" -> "2")
+    std::unordered_map<std::string, std::string>
+        config; /// Flattened dot-separated config (e.g., "worker.network.receiver_queue_size" -> "2")
 };
 
 struct QueryConfig
@@ -161,7 +162,7 @@ struct QueryConfig
 namespace
 {
 /// Recursively flattens a nested YAML map into dot-separated key-value pairs.
-/// e.g., {worker: {receiver_queue_size: 2}} -> {"worker.receiver_queue_size": "2"}
+/// e.g., {worker: {network: {receiver_queue_size: 2}}} -> {"worker.network.receiver_queue_size": "2"}
 void flattenYAMLNode(const YAML::Node& node, const std::string& prefix, std::unordered_map<std::string, std::string>& result)
 {
     if (node.IsMap())

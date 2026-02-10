@@ -56,7 +56,8 @@ workers:
     config:
       worker:
         number_of_buffers_in_global_buffer_manager: 128
-        receiver_queue_size: 2
+        network:
+          receiver_queue_size: 2
   - host: worker-2:9090
     grpc: worker-2:8080
     downstream: [ worker-1:8080 ]

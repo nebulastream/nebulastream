@@ -2,9 +2,13 @@ workers:
   - host: "localhost:9090"
     grpc: "localhost:8080"
     capacity: 10000
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 8
 
 allow_source_placement:
-  - "localhost:9090"
+  - "localhost:8080"
 
 allow_sink_placement:
-  - "localhost:9090"
+  - "localhost:8080"

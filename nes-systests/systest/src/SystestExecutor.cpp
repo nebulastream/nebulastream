@@ -158,7 +158,7 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
             auto workerCatalog = std::make_shared<WorkerCatalog>();
             for (const auto& [host, grpc, capacity, downstream, config] : clusterConfig.workers)
             {
-                workerCatalog->addWorker(host, grpc, capacity, downstream);
+                workerCatalog->addWorker(host, grpc, capacity, downstream, config);
             }
 
             Systest::QuerySubmitter querySubmitter(

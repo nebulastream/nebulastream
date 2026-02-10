@@ -108,7 +108,6 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     CONFIG_ARG="\"--configPath=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml\","
   fi
 
-
   cat <<EOF
   $HOST_NAME:
     image: $WORKER_IMAGE
@@ -128,7 +127,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     volumes:
       - $TESTDATA_VOLUME:/data
       - $TEST_VOLUME:$CONTAINER_WORKDIR
-      - $TESTCONFIG_VOLUME:$NES_DIR # Test Config needs to be mounted to the worker as the generator source will reference metadata.
+      - $TESTCONFIG_VOLUME:$NES_DIR
 EOF
 
 done
