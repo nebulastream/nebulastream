@@ -71,8 +71,8 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
     config.clusterConfig = SystestClusterConfiguration{
-        .workers
-        = {WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}}},
+        .workers = {WorkerConfig{
+            .host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}, .config = {}}},
         .allowSourcePlacement = {HostAddr("localhost:9090")},
         .allowSinkPlacement = {HostAddr("localhost:9090")}};
 
@@ -102,8 +102,8 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
     config.clusterConfig = SystestClusterConfiguration{
-        .workers
-        = {WorkerConfig{.host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}}},
+        .workers = {WorkerConfig{
+            .host = HostAddr("localhost:9090"), .grpc = GrpcAddr("localhost:8080"), .capacity = 1000, .downstream = {}, .config = {}}},
         .allowSourcePlacement = {HostAddr("localhost:9090")},
         .allowSinkPlacement = {HostAddr("localhost:9090")}};
 
