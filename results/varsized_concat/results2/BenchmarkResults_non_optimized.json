@@ -1,0 +1,26 @@
+[
+  {
+    "bytesPerSecond": 1424159725.1074657,
+    "query name": "varsized_nexmark_concat:4",
+    "time": 0.618569,
+    "tuplesPerSecond": 6466538.090334304
+  },
+  {
+    "bytesPerSecond": 1371740041.7622356,
+    "query name": "varsized_nexmark_concat:3",
+    "time": 0.642207,
+    "tuplesPerSecond": 6228521.333464133
+  },
+  {
+    "bytesPerSecond": 1529071763.5664299,
+    "query name": "varsized_nexmark_concat:2",
+    "time": 0.576128,
+    "tuplesPerSecond": 6942901.577427239
+  },
+  {
+    "bytesPerSecond": 1519083896.6333055,
+    "query name": "varsized_nexmark_concat:1",
+    "time": 0.579916,
+    "tuplesPerSecond": 6897550.679753619
+  }
+]
