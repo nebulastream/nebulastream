@@ -360,9 +360,9 @@ struct SystestBinder::Impl
         , clusterConfiguration(std::move(clusterConfiguration))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
-        for (const auto& [host, grpc, capacity, downstream] : this->clusterConfiguration.workers)
+        for (const auto& [host, grpc, capacity, downstream, config] : this->clusterConfiguration.workers)
         {
-            workerCatalog->addWorker(host, grpc, capacity, downstream);
+            workerCatalog->addWorker(host, grpc, capacity, downstream, config);
         }
     }
 

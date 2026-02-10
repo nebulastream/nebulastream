@@ -218,8 +218,9 @@ int main(int argc, char** argv)
             .host = NES::HostAddr("localhost:9090"),
             .grpc = NES::GrpcAddr(singleNodeWorkerConfig.grpcAddressUri.getValue()),
             .capacity = 10000,
-            .downstream = {}};
-        workerCatalog->addWorker(workerConfig.host, workerConfig.grpc, workerConfig.capacity, workerConfig.downstream);
+            .downstream = {},
+            .config = {}};
+        workerCatalog->addWorker(workerConfig.host, workerConfig.grpc, workerConfig.capacity, workerConfig.downstream, workerConfig.config);
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost("localhost:9090")};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost("localhost:9090")};

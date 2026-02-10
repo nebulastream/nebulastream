@@ -2,18 +2,30 @@ workers:
   - host: "sink-node:9090"
     grpc: "sink-node:8080"
     capacity: 10000
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
   - host: "intermediate-node-1:9090"
     grpc: "intermediate-node-1:8080"
     capacity: 4
     downstream:
       - "sink-node:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
   - host: "intermediate-node-2:9090"
     grpc: "intermediate-node-2:8080"
     capacity: 4
     downstream:
       - "sink-node:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
   - host: "source-node-1:9090"
     grpc: "source-node-1:8080"
@@ -21,6 +33,10 @@ workers:
     downstream:
       - "intermediate-node-1:9090"
       - "intermediate-node-2:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
   - host: "source-node-2:9090"
     grpc: "source-node-2:8080"
@@ -28,6 +44,10 @@ workers:
     downstream:
       - "intermediate-node-1:9090"
       - "intermediate-node-2:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
   - host: "source-node-3:9090"
     grpc: "source-node-3:8080"
@@ -35,6 +55,10 @@ workers:
     downstream:
       - "intermediate-node-1:9090"
       - "intermediate-node-2:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
   - host: "source-node-4:9090"
     grpc: "source-node-4:8080"
@@ -42,6 +66,10 @@ workers:
     downstream:
       - "intermediate-node-1:9090"
       - "intermediate-node-2:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
   - host: "source-node-5:9090"
     grpc: "source-node-5:8080"
@@ -49,6 +77,10 @@ workers:
     downstream:
       - "intermediate-node-1:9090"
       - "intermediate-node-2:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
 
 allow_source_placement:
   - "source-node-1:9090"
