@@ -23,11 +23,13 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -36,6 +38,7 @@
 #include <ErrorHandling.hpp>
 #include <options.hpp>
 #include <static.hpp>
+#include <val_details.hpp>
 
 namespace NES::TestUtils
 {
@@ -61,8 +64,31 @@ struct RecordWithFields
         return false;
     }
 
+    bool operator==(const RecordWithFields& other) const
+    {
+        return std::ranges::all_of(
+            fields,
+            [this, &other](const auto fieldIdentifier)
+            { return (record.read(fieldIdentifier) == other.record.read(fieldIdentifier)).operator bool(); });
+    }
+
     Record record;
     std::vector<Record::RecordFieldIdentifier> fields;
+};
+
+struct RecordWithFieldsHash
+{
+    std::size_t operator()(const RecordWithFields& record) const
+    {
+        uint64_t hashValue = 0;
+        const std::unique_ptr<HashFunction> hashFunction = std::make_unique<MurMur3HashFunction>();
+        for (const auto& fieldIdentifier : nautilus::static_iterable(record.fields))
+        {
+            auto val = record.record.read(fieldIdentifier);
+            hashValue ^= nautilus::details::RawValueResolver<uint64_t>::getRawValue(hashFunction->calculate(val));
+        }
+        return hashValue;
+    }
 };
 
 /// We store the name of a nautilus function and the backend type in this struct
