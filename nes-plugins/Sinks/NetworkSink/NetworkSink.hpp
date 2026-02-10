@@ -48,8 +48,13 @@ class BackpressureHandler
     };
 
     folly::Synchronized<State> stateLock;
+    size_t upperThreshold;
+    size_t lowerThreshold;
 
 public:
+    /// @param upperThreshold Number of buffered tuples at which backpressure is acquired.
+    /// @param lowerThreshold Number of buffered tuples at which backpressure is released.
+    explicit BackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0);
     std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& backpressureController);
     std::optional<TupleBuffer> onSuccess(BackpressureController& backpressureController);
     bool empty() const;
@@ -66,7 +71,7 @@ public:
         return Instance;
     }
 
-    explicit NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
     ~NetworkSink() override = default;
 
     NetworkSink(const NetworkSink&) = delete;
@@ -112,8 +117,21 @@ struct ConfigParametersNetworkSink
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
+        "backpressure_upper_threshold",
+        100,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
+        "backpressure_lower_threshold",
+        50,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, CONNECTION, CHANNEL, BIND);
+        = DescriptorConfig::createConfigParameterContainerMap(
+            SinkDescriptor::parameterMap, CONNECTION, CHANNEL, BIND, BACKPRESSURE_UPPER_THRESHOLD, BACKPRESSURE_LOWER_THRESHOLD);
 };
 
 }

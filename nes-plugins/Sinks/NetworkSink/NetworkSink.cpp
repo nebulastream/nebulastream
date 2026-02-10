@@ -47,47 +47,62 @@
 namespace NES
 {
 
+BackpressureHandler::BackpressureHandler(size_t upperThreshold, size_t lowerThreshold)
+    : upperThreshold(upperThreshold), lowerThreshold(lowerThreshold)
+{
+    PRECONDITION(
+        lowerThreshold < upperThreshold, "lowerThreshold ({}) must be less than upperThreshold ({})", lowerThreshold, upperThreshold);
+}
+
 std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, BackpressureController& backpressureController)
 {
     auto rstate = stateLock.ulock();
-    if (rstate->hasBackpressure)
-    {
-        /// Backpressure is already signaled. We want to ensure that at least one TupleBuffer is floating around the TaskQueue,
-        /// so we can peridically test if we can send data again.
-        /// Otherwise, it might be possible that nothing triggers execution of this pipeline again, resulting in a deadlock
-        if (buffer.getSequenceNumber() == rstate->pendingSequenceNumber && buffer.getChunkNumber() == rstate->pendingChunkNumber)
-        {
-            /// We dedicate one seq/chunk number pair as the pending tuple buffer. If this is the pending tuple buffer we emit it again
-            return buffer;
-        }
 
-        const auto wstate = rstate.moveFromUpgradeToWrite();
-        wstate->buffered.emplace_back(std::move(buffer));
-        return {};
+    /// If this is the pending retry buffer, re-emit it to keep the retry loop alive.
+    if (buffer.getSequenceNumber() == rstate->pendingSequenceNumber && buffer.getChunkNumber() == rstate->pendingChunkNumber)
+    {
+        return buffer;
     }
 
-    /// Apply backpressure now on the backpressureController, leading to blocked ingestion threads until pressure is released again onSuccess.
     const auto wstate = rstate.moveFromUpgradeToWrite();
-    backpressureController.applyPressure();
-    NES_DEBUG("Backpressure: {}", wstate->buffered.size());
-    wstate->hasBackpressure = true;
-    wstate->pendingSequenceNumber = buffer.getSequenceNumber();
-    wstate->pendingChunkNumber = buffer.getChunkNumber();
-    return buffer;
+    wstate->buffered.emplace_back(std::move(buffer));
+
+    /// Apply backpressure when the buffer count reaches the upper hysteresis threshold.
+    if (!wstate->hasBackpressure && wstate->buffered.size() >= upperThreshold)
+    {
+        backpressureController.applyPressure();
+        NES_DEBUG("Backpressure acquired: {} buffered (upper threshold: {})", wstate->buffered.size(), upperThreshold);
+        wstate->hasBackpressure = true;
+    }
+
+    /// Ensure there is always one pending buffer being retried to avoid deadlocks.
+    if (wstate->pendingSequenceNumber == INVALID<SequenceNumber>)
+    {
+        auto pending = std::move(wstate->buffered.front());
+        wstate->buffered.pop_front();
+        wstate->pendingSequenceNumber = pending.getSequenceNumber();
+        wstate->pendingChunkNumber = pending.getChunkNumber();
+        return pending;
+    }
+
+    return {};
 }
 
 /// Called on a successful send of a buffer to the network channel.
-/// 1. If we currently have backpressure, release pressure on the backpressureController, causing ingestion to proceed.
-/// 2. In case of buffers remaining in the state, pop the oldest from the deque and return to try to send. Otherwise, return an empty optional.
+/// Clears the pending buffer and releases backpressure when the buffer count drops to the lower hysteresis threshold.
+/// Returns the next buffered tuple to send, if any.
 std::optional<TupleBuffer> BackpressureHandler::onSuccess(BackpressureController& backpressureController)
 {
     const auto state = stateLock.wlock();
-    if (state->hasBackpressure)
+    state->pendingSequenceNumber = INVALID<SequenceNumber>;
+    state->pendingChunkNumber = INVALID<ChunkNumber>;
+
+    /// Release backpressure when the buffer count drops to the lower hysteresis threshold.
+    if (state->hasBackpressure && state->buffered.size() <= lowerThreshold)
     {
         backpressureController.releasePressure();
+        NES_DEBUG("Backpressure released: {} buffered (lower threshold: {})", state->buffered.size(), lowerThreshold);
         state->hasBackpressure = false;
-        state->pendingChunkNumber = INVALID<ChunkNumber>;
-        state->pendingSequenceNumber = INVALID<SequenceNumber>;
     }
 
     if (not state->buffered.empty())
@@ -107,6 +122,9 @@ bool BackpressureHandler::empty() const
 NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , tupleSize(sinkDescriptor.getSchema()->getSizeOfSchemaInBytes())
+    , backpressureHandler(
+          sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_UPPER_THRESHOLD),
+          sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_LOWER_THRESHOLD))
     , channelId(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CHANNEL))
     , connectionAddr(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CONNECTION))
     , thisConnection(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BIND))
