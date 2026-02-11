@@ -28,8 +28,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
-#include <SinksParsing/Format.hpp>
 #include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -59,8 +57,6 @@ protected:
 
 private:
     folly::Synchronized<std::ostream*> outputStream;
-    std::unique_ptr<Format> outputParser;
-
     uint32_t ingestion = 0;
 };
 

@@ -53,9 +53,15 @@ Schema InlineSinkLogicalOperator::getSchema() const
     return schema;
 }
 
+std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getFormatConfig() const
+{
+    return formatConfig;
+}
+
 bool InlineSinkLogicalOperator::operator==(const InlineSinkLogicalOperator& rhs) const
 {
-    return this->sinkType == rhs.sinkType && this->schema == rhs.schema && this->sinkConfig == rhs.sinkConfig;
+    return this->sinkType == rhs.sinkType && this->schema == rhs.schema && this->sinkConfig == rhs.sinkConfig
+        && this->formatConfig == rhs.formatConfig;
 }
 
 std::string InlineSinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -107,8 +113,11 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
 }
 
 InlineSinkLogicalOperator::InlineSinkLogicalOperator(
-    std::string type, const Schema& schema, std::unordered_map<std::string, std::string> config)
-    : schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config))
+    std::string type,
+    const Schema& schema,
+    std::unordered_map<std::string, std::string> config,
+    std::unordered_map<std::string, std::string> formatConfig)
+    : schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config)), formatConfig(std::move(formatConfig))
 {
 }
 
