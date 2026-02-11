@@ -17,6 +17,7 @@ vcpkg_from_github(
         SHA512 68c6315bbab9a1fe8855977db2b4ff3ed8fed097cd73e3eef089eb4d487bb09f503c0f348ee36a340a65319617e573f9993cad582a6b5b9b4a53edc0b3dd17f0
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		0002-increase-typed-value-ref-u16-to-u32.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
@@ -31,6 +32,7 @@ vcpkg_cmake_configure(
 		OPTIONS
 		-DENABLE_TESTS=OFF
 		-DENABLE_MLIR_BACKEND=ON
+		-DENABLE_LOGGING=OFF
 		-DENABLE_BC_BACKEND=OFF
 		-DENABLE_C_BACKEND=OFF
 		-DENABLE_STACKTRACE=OFF
