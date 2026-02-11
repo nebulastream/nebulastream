@@ -24,10 +24,12 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ostream.h>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -37,10 +39,7 @@ namespace NES
 {
 
 ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , isOpen(false)
-    , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
-    , formatter(std::make_unique<CSVFormat>(*sinkDescriptor.getSchema(), true))
+    : Sink(std::move(backpressureController)), isOpen(false), outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
 {
 }
 
@@ -85,8 +84,19 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
-    const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
-    checksum.add(formatted);
+    /// Create a buffer iterator to help iterate through the tuplebuffer and its children
+    BufferIterator iterator(inputBuffer);
+
+    bool processedAllBuffers = false;
+    while (!processedAllBuffers)
+    {
+        /// Get the next buffer
+        BufferIterator::BufferElement element = iterator.getNextElement();
+        /// Create string out of formatted buffer
+        const std::string formatted(element.buffer.getAvailableMemoryArea<char>().data(), element.contentLength);
+        checksum.add(formatted);
+        processedAllBuffers = element.isLastElement;
+    }
 }
 
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

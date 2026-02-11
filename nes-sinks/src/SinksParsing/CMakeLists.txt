@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-sinks
-        CSVFormat.cpp
-        JSONFormat.cpp
+        BufferIterator.cpp
+        SchemaFormatter.cpp
 )

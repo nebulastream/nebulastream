@@ -14,8 +14,8 @@
 
 #include <EmitPhysicalOperator.hpp>
 
-#include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -60,21 +60,29 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= getMaxRecordsPerBuffer())
+
+    /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
+    /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
+    /// to the brim, i.e., have no more space left.
+    nautilus::val<uint64_t> recordsWritten = 0;
+    recordsWritten
+        = bufferRef->writeRecordSafely(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+    /// recordsWritten == npos indicates that the buffer must be emitted first. We emit and than call write record again.
+    if (recordsWritten == nautilus::val<uint64_t>(std::numeric_limits<uint64_t>::max()))
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = 0_u64;
+
+        recordsWritten
+            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     }
 
-    /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
-    /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
-    /// to the brim, i.e., have no more space left.
-    bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
-    emitState->outputIndex = emitState->outputIndex + 1;
+    /// If our BufferRef is an OutputFormatterBufferRef, records written contains the amount of bytes that were written and not the amount of records,
+    /// since this is the only way to retrieve the amount of bytes in the buffer in this case.
+    emitState->outputIndex = emitState->outputIndex + recordsWritten;
 }
 
 void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
