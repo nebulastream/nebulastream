@@ -33,7 +33,11 @@ namespace NES
 class InlineSinkLogicalOperator
 {
 public:
-    explicit InlineSinkLogicalOperator(std::string sinkType, const Schema& schema, std::unordered_map<std::string, std::string> config);
+    explicit InlineSinkLogicalOperator(
+        std::string sinkType,
+        const Schema& schema,
+        std::unordered_map<std::string, std::string> config,
+        std::unordered_map<std::string, std::string> formatConfig);
 
     [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
     static void serialize(SerializableOperator&);
@@ -55,6 +59,7 @@ public:
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::unordered_map<std::string, std::string> getSinkConfig() const;
     [[nodiscard]] Schema getSchema() const;
+    [[nodiscard]] std::unordered_map<std::string, std::string> getFormatConfig() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSink";
@@ -65,6 +70,7 @@ private:
     Schema schema;
     std::string sinkType;
     std::unordered_map<std::string, std::string> sinkConfig;
+    std::unordered_map<std::string, std::string> formatConfig;
 };
 
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);

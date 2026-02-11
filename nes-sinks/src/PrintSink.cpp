@@ -25,8 +25,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
-#include <SinksParsing/JSONFormat.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
@@ -43,17 +42,6 @@ PrintSink::PrintSink(BackpressureController backpressureController, const SinkDe
     , outputStream(&std::cout)
     , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
-    {
-        case InputFormat::CSV:
-            outputParser = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
-            break;
-        case InputFormat::JSON:
-            outputParser = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
-            break;
-        default:
-            throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
-    }
 }
 
 void PrintSink::start(PipelineExecutionContext&)
@@ -67,15 +55,27 @@ void PrintSink::stop(PipelineExecutionContext&)
 void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
-
-    const auto bufferAsString = outputParser->getFormattedBuffer(inputBuffer);
-    *(*outputStream.wlock()) << bufferAsString << '\n';
+    {
+        auto* const wlocked = *outputStream.wlock();
+        /// Create iterator for buffer
+        BufferIterator iterator(inputBuffer);
+        bool processedAllBuffers = false;
+        while (!processedAllBuffers)
+        {
+            /// Get the next buffer to be written
+            BufferIterator::BufferElement element = iterator.getNextElement();
+            wlocked->write(element.buffer.getAvailableMemoryArea<char>().data(), element.contentLength);
+            processedAllBuffers = element.isLastElement;
+        }
+        wlocked->write(std::string("\n").data(), 1);
+        wlocked->flush();
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds{ingestion});
 }
 
 std::ostream& PrintSink::toString(std::ostream& str) const
 {
-    str << fmt::format("PRINT_SINK(Writing to: std::cout, using outputParser: {}", *outputParser);
+    str << fmt::format("PRINT_SINK");
     return str;
 }
 

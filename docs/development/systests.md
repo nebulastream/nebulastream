@@ -119,6 +119,7 @@ Instead of naming the sink, you can create the inline sink by writing `[TYPE]([o
 The accepted options are mostly the same as when creating a sink via a `CREATE SINK` statement.
 The only difference is that a schema CAN OPTIONALLY be given via the options `SINK.SCHEMA` using the `SCHEMA` function.
 If no schema is given, the schema is inferred automatically.
+Inline sinks are also able to configure the output formatter via `PARSER.*` parameters.
 
 Because the systest framework automatically sets the sink file paths, `File` and `Generator` sinks can be created
 without any options. 
@@ -132,7 +133,7 @@ INTO File();
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
-INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS `SINK`.`SCHEMA`);
+INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS `SINK`.`SCHEMA`, FALSE AS `PARSER`.ESCAPE_STRINGS);
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source

@@ -30,6 +30,7 @@ message SerializableSinkDescriptor
   SerializableSchema sinkSchema = 2;
   string sinkType = 3;
   map<string, SerializableVariantDescriptor> config = 4;
+  map<string, string> formatConfig = 5;
 }
 
 message SerializableSourceDescriptor
