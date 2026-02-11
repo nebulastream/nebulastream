@@ -82,11 +82,13 @@ jobs:
             build/**/*.stats
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && !github.event.act }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
+          report_type: test_results
+          slug: nebulastream/nebulastream
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
-          file: /junit.xml
+          files: /junit.xml
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
