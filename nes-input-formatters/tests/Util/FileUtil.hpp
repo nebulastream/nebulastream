@@ -26,11 +26,11 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Sequencing/SequenceData.hpp>
-#include <SinksParsing/Format.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 
@@ -131,6 +131,15 @@ inline void writePagedSizeBufferChunkToFile(
     }
 }
 
+/// @return Variable sized data as a string
+inline std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess)
+{
+    /// Retrieve the variable sized value as span over its bytes
+    const auto varSizedSpan = TupleBufferRef::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
+    const auto* const strPtrContent = reinterpret_cast<const char*>(varSizedSpan.data());
+    return std::string{strPtrContent, variableSizedAccess.getSize().getRawSize()};
+}
+
 inline void writePagedSizeTupleBufferChunkToFile(
     std::span<TupleBuffer> pagedSizeBufferChunk,
     const SequenceNumber::Underlying sequenceNumber,
@@ -161,7 +170,7 @@ inline void writePagedSizeTupleBufferChunkToFile(
                     const auto currentTupleVarSizedFieldOffset = currentTupleOffset + varSizedFieldOffset;
                     const VariableSizedAccess varSizedAccess{
                         *reinterpret_cast<VariableSizedAccess*>(buffer.getAvailableMemoryArea().data() + currentTupleVarSizedFieldOffset)};
-                    const auto variableSizedData = Format::readVarSizedDataAsString(buffer, varSizedAccess);
+                    const auto variableSizedData = readVarSizedDataAsString(buffer, varSizedAccess);
                     appendFile.write(variableSizedData.data(), static_cast<std::streamsize>(variableSizedData.size()));
                 }
             }

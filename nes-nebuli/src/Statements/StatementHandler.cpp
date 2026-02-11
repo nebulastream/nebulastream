@@ -152,7 +152,8 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, statement.sinkConfig))
+    if (const auto created = sinkCatalog->addSinkDescriptor(
+            statement.name, statement.schema, statement.sinkType, statement.sinkConfig, statement.formatConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }
