@@ -31,7 +31,9 @@
 namespace NES
 {
 class AggregationBuildPhysicalOperator;
-HashMap* getAggHashMapProxy(
+TupleBuffer* getAggHashMapProxy(
+    AbstractBufferProvider* bufferProvider,
+    PipelineExecutionContext* pec,
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
@@ -40,7 +42,9 @@ HashMap* getAggHashMapProxy(
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
 public:
-    friend HashMap* getAggHashMapProxy(
+    friend TupleBuffer* getAggHashMapProxy(
+        AbstractBufferProvider* bufferProvider,
+        PipelineExecutionContext* pec,
         const AggregationOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,

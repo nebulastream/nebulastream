@@ -44,7 +44,9 @@
 
 namespace NES
 {
-HashMap* getHashJoinHashMapProxy(
+TupleBuffer* getHashJoinHashMapProxy(
+    AbstractBufferProvider* bufferProvider,
+    PipelineExecutionContext* pec,
     const HJOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -61,7 +63,7 @@ HashMap* getHashJoinHashMapProxy(
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
-        timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
+        timestamp, operatorHandler->getCreateNewSlicesFunction(bufferProvider, hashMapSliceArgs));
     INVARIANT(
         hashMap.size() == 1,
         "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support "
@@ -71,7 +73,9 @@ HashMap* getHashJoinHashMapProxy(
     /// Converting the slice to an HJSlice and returning the pointer to the hashmap
     const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
-    return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
+    auto hashMapChildIndex = hjSlice->getWorkerHashMapIndex(workerThreadId, buildSide);
+    auto hashMapTupleBuffer = hjSlice->loadHashMapBuffer(hashMapChildIndex);
+    return std::addressof(pec->pinBuffer(std::move(hashMapTupleBuffer)));
 }
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -94,8 +98,15 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
         = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
             [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
             {
+                auto tupleBuffer = nautilus::invoke(
+                    +[](HashMap* hm)
+                    {
+                        auto& chm = dynamic_cast<ChainedHashMap&>(*hm);
+                        return chm.getBuffer();
+                    },
+                    hashMap);
                 const ChainedHashMapRef hashMapRef{
-                    hashMap,
+                    tupleBuffer,
                     copyOfHashMapOptions.fieldKeys,
                     copyOfHashMapOptions.fieldValues,
                     copyOfHashMapOptions.entriesPerPage,
@@ -103,7 +114,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
                 for (const auto entry : hashMapRef)
                 {
                     const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                        entry, tupleBuffer, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
                     const auto state = entryRefReset.getValueMemArea();
                     nautilus::invoke(
                         +[](int8_t* pagedVectorMemArea) -> void
@@ -128,15 +139,18 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
+    const auto hashMapTupleBuffer = invoke(
         getHashJoinHashMapProxy,
+        ctx.pipelineMemoryProvider.bufferProvider,
+        ctx.pipelineContext,
         operatorHandler,
         timestamp,
         ctx.workerThreadId,
         nautilus::val<JoinBuildSideType>(joinBuildSide),
         nautilus::val<const HJBuildPhysicalOperator*>(this));
+
     ChainedHashMapRef hashMap{
-        hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
+        hashMapTupleBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
     /// Calling the key functions to add/update the keys to the record
     nautilus::val<bool> containsNullInKey{false};
@@ -153,15 +167,15 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     /// in the result set. This is the case as an inner join requires all join conditions to be TRUE (i.e., no NULL values in the join fields).
     if (not containsNullInKey)
     {
-        /// Finding or creating the entry for the provided record
-        const auto hashMapEntry = hashMap.findOrCreateEntry(
-            record,
-            *hashMapOptions.hashFunction,
-            [&](const nautilus::val<AbstractHashMapEntry*>& entry)
-            {
-                /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
-                const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                    entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+        ///Finding or creating the entry for the provided record
+    const auto hashMapEntry = hashMap.findOrCreateEntry(
+        record,
+        *hashMapOptions.hashFunction,
+        [&](const nautilus::val<AbstractHashMapEntry*>& entry)
+        {
+            /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
+            const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                entry, hashMapTupleBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 nautilus::invoke(
                     +[](int8_t* pagedVectorMemArea) -> void
@@ -176,7 +190,8 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
             ctx.pipelineMemoryProvider.bufferProvider);
 
         /// Inserting the tuple into the corresponding hash entry
-        const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+        const ChainedHashMapRef::ChainedEntryRef entryRef{
+        hashMapEntry, hashMapTupleBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
         auto entryMemArea = entryRef.getValueMemArea();
         const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
         pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);

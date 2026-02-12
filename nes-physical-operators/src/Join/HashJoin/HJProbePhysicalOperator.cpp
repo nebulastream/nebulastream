@@ -84,33 +84,60 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
     const auto windowInfoRef = getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
     const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
-    auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
-
 
     /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps
     for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
     {
-        const nautilus::val<HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
+        /// Pin the current left hashmap buffer
+        auto pinnedLeftBuffer = nautilus::invoke(
+            +[](const TupleBuffer* parent, uint32_t leftHashMapIndex, PipelineExecutionContext* pec)
+            {
+                INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
+                /// Left buffers start at index 0
+                VariableSizedAccess::Index bufferIndex{leftHashMapIndex};
+                auto buffer = parent->loadChildBuffer(bufferIndex);
+                return std::addressof(pec->pinBuffer(std::move(buffer)));
+            },
+            recordBuffer.getReference(),
+            leftHashMapIndex,
+            executionCtx.pipelineContext);
+
         ChainedHashMapRef leftHashMap{
-            leftHashMapPtr,
+            pinnedLeftBuffer,
             leftHashMapOptions.fieldKeys,
             leftHashMapOptions.fieldValues,
             leftHashMapOptions.entriesPerPage,
             leftHashMapOptions.entrySize};
+
         for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
         {
-            const nautilus::val<HashMap*> rightHashMapPtr = rightHashMapRefs[rightHashMapIndex];
+            /// Pin the current right hashmap buffer
+            /// Right buffers start after all left buffers
+            auto pinnedRightBuffer = nautilus::invoke(
+                +[](const TupleBuffer* parent, uint32_t leftNumberOfHashMaps, uint32_t rightHashMapIndex, PipelineExecutionContext* pec)
+                {
+                    INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
+                    /// Right buffers start after all left buffers
+                    VariableSizedAccess::Index bufferIndex{leftNumberOfHashMaps + rightHashMapIndex};
+                    auto buffer = parent->loadChildBuffer(bufferIndex);
+                    return std::addressof(pec->pinBuffer(std::move(buffer)));
+                },
+                recordBuffer.getReference(),
+                leftNumberOfHashMaps,
+                rightHashMapIndex,
+                executionCtx.pipelineContext);
+
             const ChainedHashMapRef rightHashMap{
-                rightHashMapPtr,
+                pinnedRightBuffer,
                 rightHashMapOptions.fieldKeys,
                 rightHashMapOptions.fieldValues,
                 rightHashMapOptions.entriesPerPage,
                 rightHashMapOptions.entrySize};
+
             for (const auto rightEntry : rightHashMap)
             {
                 const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
-                    rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
+                    rightEntry, pinnedRightBuffer, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
                 auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
                 const PagedVectorRef rightPagedVector{rightPagedVectorMem, rightBufferRef};
                 const auto rightFields = rightBufferRef->getAllFieldNames();
@@ -122,7 +149,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 {
                     /// At this moment, we can be sure that both paged vector contain only records that satisfy the join condition
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
-                        leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
+                        leftEntry, pinnedLeftBuffer, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
                     const PagedVectorRef leftPagedVector{leftPagedVectorMem, leftBufferRef};
                     const auto leftFields = leftBufferRef->getAllFieldNames();

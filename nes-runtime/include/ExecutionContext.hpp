@@ -97,6 +97,7 @@ struct ExecutionContext final
     /// You do not have to take care of the memory management yourself, as the memory is automatically destroyed after the pipeline invocation.
     [[nodiscard]] nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
 
+    [[nodiscard]] nautilus::val<TupleBuffer*> pinBuffer(nautilus::val<TupleBuffer*> tupleBuffer) const;
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
