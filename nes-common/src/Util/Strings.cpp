@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
 #include <concepts>
 #include <cstddef>
 #include <optional>
@@ -36,7 +37,13 @@ std::optional<float> from_chars<float>(const std::string_view input)
     const std::string str(trimWhiteSpaces(input));
     try
     {
-        return std::stof(str);
+        std::size_t pos = 0;
+        const auto value = std::stof(str, &pos);
+        if (pos != str.size())
+        {
+            return {};
+        }
+        return value;
     }
     catch (...) /// NOLINT(no-raw-catch-all)
     {
@@ -129,7 +136,15 @@ std::optional<double> from_chars<double>(const std::string_view input)
     const std::string str(trimWhiteSpaces(input));
     try
     {
-        return std::stod(str);
+        /// Clearing errno before calling stod()
+        std::size_t pos = 0;
+        errno = 0;
+        const auto value = std::stod(str, &pos);
+        if (pos != str.size() or errno == ERANGE)
+        {
+            return {};
+        }
+        return value;
     }
     catch (...) /// NOLINT(no-raw-catch-all)
     {
