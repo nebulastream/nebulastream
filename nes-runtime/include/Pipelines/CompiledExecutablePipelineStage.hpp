@@ -13,6 +13,8 @@
 */
 #pragma once
 
+#include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -36,6 +38,12 @@ public:
         std::shared_ptr<Pipeline> pipeline,
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
+
+    static void resetCompilationMetrics();
+    [[nodiscard]] static std::chrono::nanoseconds getTotalCompilationTime();
+    [[nodiscard]] static std::chrono::nanoseconds getCompilationWallTime();
+    [[nodiscard]] static uint64_t getCompilationCount();
+
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;

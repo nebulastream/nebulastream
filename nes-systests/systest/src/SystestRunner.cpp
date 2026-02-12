@@ -68,6 +68,28 @@ namespace NES::Systest
 {
 namespace
 {
+std::atomic<int64_t> queryRuntimeSumNanoseconds{0};
+std::atomic<uint64_t> queryRuntimeMeasurements{0};
+
+void recordQueryRuntime(const LocalQueryStatus& queryStatus)
+{
+    const auto stop = queryStatus.metrics.stop;
+    if (not stop.has_value())
+    {
+        return;
+    }
+
+    const auto start = queryStatus.metrics.running.has_value() ? queryStatus.metrics.running : queryStatus.metrics.start;
+    if (not start.has_value() || stop.value() < start.value())
+    {
+        return;
+    }
+
+    const auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(stop.value() - start.value());
+    queryRuntimeSumNanoseconds.fetch_add(elapsedTime.count());
+    queryRuntimeMeasurements.fetch_add(1);
+}
+
 template <typename ErrorCallable>
 void reportResult(
     std::shared_ptr<RunningQuery>& runningQuery,
@@ -123,6 +145,22 @@ void processQueryWithError(
         performanceMessageBuilder);
 }
 
+}
+
+void resetQueryRuntimeMetrics()
+{
+    queryRuntimeSumNanoseconds.store(0);
+    queryRuntimeMeasurements.store(0);
+}
+
+std::chrono::nanoseconds getQueryRuntimeSum()
+{
+    return std::chrono::nanoseconds(queryRuntimeSumNanoseconds.load());
+}
+
+uint64_t getQueryRuntimeMeasurements()
+{
+    return queryRuntimeMeasurements.load();
 }
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
@@ -210,6 +248,7 @@ std::vector<RunningQuery> runQueries(
             }
 
             auto& runningQuery = it->second;
+            recordQueryRuntime(queryStatus);
 
             if (queryStatus.state == QueryState::Failed)
             {
@@ -358,6 +397,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         ranQueries.emplace_back(runningQueryPtr);
         submitter.startQuery(queryId);
         const auto summary = submitter.finishedQueries().at(0);
+        recordQueryRuntime(summary);
 
         if (summary.state == QueryState::Failed)
         {
