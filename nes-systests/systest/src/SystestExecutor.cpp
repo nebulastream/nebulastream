@@ -36,6 +36,7 @@
 #include <vector>
 #include <unistd.h>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -278,6 +279,8 @@ void setupLogging(const SystestConfiguration& config)
 SystestExecutorResult SystestExecutor::executeSystests()
 {
     setupLogging(config);
+    CompiledExecutablePipelineStage::resetCompilationMetrics();
+    Systest::resetQueryRuntimeMetrics();
 
     CPPTRACE_TRY
     {
@@ -417,7 +420,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 .errorCode = ErrorCode::QueryStatusFailed};
         }
         std::stringstream outputMessage;
-        outputMessage << '\n' << "All queries passed.";
+        outputMessage << '\n' << "All queries passed." << '\n';
         return {.returnType = SystestExecutorResult::ReturnType::SUCCESS, .outputMessage = outputMessage.str()};
     }
     CPPTRACE_CATCH(Exception & e)
