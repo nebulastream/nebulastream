@@ -37,26 +37,14 @@ namespace NES
 /// This task models the information for a hash join based window trigger
 struct EmittedHJWindowTrigger
 {
-    EmittedHJWindowTrigger(
-        const WindowInfo windowInfo, const std::vector<HashMap*>& leftHashMaps, const std::vector<HashMap*>& rightHashMaps)
-        : windowInfo(windowInfo), leftNumberOfHashMaps(leftHashMaps.size()), rightNumberOfHashMaps(rightHashMaps.size())
+    EmittedHJWindowTrigger(const WindowInfo windowInfo, const uint64_t leftNumberOfHashMaps, const uint64_t rightNumberOfHashMaps)
+        : windowInfo(windowInfo), leftNumberOfHashMaps(leftNumberOfHashMaps), rightNumberOfHashMaps(rightNumberOfHashMaps)
     {
-        /// Copying the left and right hashmap pointer pointers after this object, hence this + 1
-        const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(HashMap*);
-        auto* addressFirstLeftHashMapPtr = std::bit_cast<int8_t*>(this + 1);
-        auto* addressFirstRightHashMapPtr = std::bit_cast<int8_t*>(this + 1) + leftHashMapPtrSizeInByte;
-        this->leftHashMaps = std::bit_cast<HashMap**>(addressFirstLeftHashMapPtr);
-        this->rightHashMaps = std::bit_cast<HashMap**>(addressFirstRightHashMapPtr);
-        std::ranges::copy(leftHashMaps, std::bit_cast<HashMap**>(addressFirstLeftHashMapPtr));
-        std::ranges::copy(rightHashMaps, std::bit_cast<HashMap**>(addressFirstRightHashMapPtr));
     }
 
     WindowInfo windowInfo;
     uint64_t leftNumberOfHashMaps;
     uint64_t rightNumberOfHashMaps;
-    HashMap** leftHashMaps; /// Pointer to the stored pointers of all hash maps of the left input stream that the probe should iterate over
-    HashMap**
-        rightHashMaps; /// Pointer to the stored pointers of all hash maps of the right input stream that the probe should iterate over
 };
 
 class HJOperatorHandler final : public StreamJoinOperatorHandler
@@ -69,7 +57,7 @@ public:
         uint64_t maxNumberOfBuckets);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
+    getCreateNewSlicesFunction(AbstractBufferProvider* bufferProvider, const CreateNewSlicesArguments& newSlicesArguments) const override;
 
     bool wasSetupCalled(const JoinBuildSideType& buildSide);
     void setNautilusCleanupExec(
