@@ -65,25 +65,78 @@ struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 class HashMapSlice : public Slice
 {
 public:
+    /// Holds the internals of the main TupleBuffer.
+    struct HashMapDirectory
+    {
+        explicit HashMapDirectory(
+            AbstractBufferProvider* bufferProvider,
+            uint64_t numHashMaps,
+            uint64_t numInputStreams,
+            const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs);
+        [[nodiscard]] static size_t calculateMainBufferSize(uint64_t numHashMaps, uint64_t numInputStreams);
+
+        struct alignas(8) Header
+        {
+            uint64_t numHashMaps;
+            uint64_t numInputStreams;
+            uint64_t numHashmapsPerInputStream;
+
+            /// hash map indices start immediately after the header
+            /// it is dynamically sized based on number of workers and input streams, so nothing to store in here.
+            /// Conceptually, it is like below:
+            /// VariableSizedAccess::Index hashmaps[numWorkers * numInputStreams];
+            Header(uint64_t numHashMaps, uint64_t numInputStreams, uint64_t numHashmapsPerInputStream)
+                : numHashMaps(numHashMaps), numInputStreams(numInputStreams), numHashmapsPerInputStream(numHashmapsPerInputStream)
+            {
+            }
+        };
+
+        /// Helper util methods for safe access
+        [[nodiscard]] Header& header() { return *mainBuffer.getAvailableMemoryArea<Header>().data(); }
+
+        [[nodiscard]] const Header& header() const { return *mainBuffer.getAvailableMemoryArea<Header>().data(); }
+
+        [[nodiscard]] VariableSizedAccess::Index* hashMaps()
+        {
+            auto* data = mainBuffer.getAvailableMemoryArea<uint8_t>().data();
+            return reinterpret_cast<VariableSizedAccess::Index*>(data + sizeof(Header));
+        }
+
+        [[nodiscard]] const VariableSizedAccess::Index* hashMaps() const
+        {
+            auto* data = mainBuffer.getAvailableMemoryArea<uint8_t>().data();
+            return reinterpret_cast<const VariableSizedAccess::Index*>(data + sizeof(Header));
+        }
+
+        TupleBuffer mainBuffer;
+    };
+
     explicit HashMapSlice(
+        AbstractBufferProvider* bufferProvider,
         SliceStart sliceStart,
         SliceEnd sliceEnd,
         const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
-        uint64_t numberOfHashMaps,
-        uint64_t numberOfInputStreams);
-
-    ~HashMapSlice() override;
+        uint64_t numHashMaps,
+        uint64_t numInputStreams)
+        : Slice(sliceStart, sliceEnd)
+        , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
+        , hashMapDirectory(bufferProvider, numHashMaps, numInputStreams, createNewHashMapSliceArgs)
+    {
+    }
 
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
-    [[nodiscard]] uint64_t getNumberOfHashMaps() const;
-
+    [[nodiscard]] uint64_t numberOfHashMaps() const;
+    [[nodiscard]] uint64_t numInputStreams() const;
+    [[nodiscard]] uint64_t numHashMapsPerInputStream() const;
+    [[nodiscard]] VariableSizedAccess::Index getHashMapChildBufferIndex(uint64_t pos) const;
+    [[nodiscard]] TupleBuffer loadHashMapBuffer(VariableSizedAccess::Index childBufferIndex) const;
+    [[nodiscard]] VariableSizedAccess::Index setHashMapBuffer(TupleBuffer hashMapBuffer, uint64_t pos);
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
 protected:
-    std::vector<std::unique_ptr<HashMap>> hashMaps;
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
-    uint64_t numberOfHashMapsPerInputStream;
-    uint64_t numberOfInputStreams;
-};
 
+private:
+    HashMapDirectory hashMapDirectory;
+};
 }
