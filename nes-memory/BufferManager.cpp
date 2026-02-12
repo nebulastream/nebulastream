@@ -33,6 +33,7 @@
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
+#include <ittnotify.h>
 
 namespace NES
 {
@@ -185,14 +186,29 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
+namespace
+{
+__itt_domain* domain = __itt_domain_create("buffermanager");
+__itt_string_handle* waitForBuffer = __itt_string_handle_create("Wait for Buffer");
+}
+
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
     detail::MemorySegment* memSegment = nullptr;
-    const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
-    if (!availableBuffers.tryReadUntil(deadline, memSegment))
+
+    /// fast path
+    if (!availableBuffers.read(memSegment))
     {
-        return std::nullopt;
+        __itt_task_begin(domain, __itt_null, __itt_null, waitForBuffer);
+        const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
+        if (!availableBuffers.tryReadUntil(deadline, memSegment))
+        {
+            __itt_task_end(domain);
+            return std::nullopt;
+        }
+        __itt_task_end(domain);
     }
+
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);

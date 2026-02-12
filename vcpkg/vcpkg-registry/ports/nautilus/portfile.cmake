@@ -17,6 +17,7 @@ vcpkg_from_github(
         SHA512 4f344d38e2e377bb7d153c6cf000f3171726ed5bfe80bf5931c6a37bb7645f64959ca64440f0aa82363727287265f5902dbe045117e95e1ebd1c61817182f0fc
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		0002-enable-intel-jit-listener-and-frame-pointer.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
