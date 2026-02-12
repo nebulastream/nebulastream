@@ -1,0 +1,159 @@
+# name: formatter/MalformedStrings.test
+# description: testing malformed strings, e.g., 3_14 instead of 3.14
+# groups: [Formatter]
+
+CREATE LOGICAL SOURCE csvStreamFloating(id UINT64 NOT NULL, value FLOAT64, isMalformedString BOOLEAN, metadata VARSIZED);
+CREATE PHYSICAL SOURCE FOR csvStreamFloating TYPE File;
+ATTACH INLINE
+1,3.14,false,"valid"
+2,3_14,true,"malformed_underscore"
+3,abc,true,"non_numeric"
+4,3.14.5,true,"malformed_double_dot"
+5,null,false,"null_value"
+6,3 14,true,"malformed_space"
+7,3.14,false,"valid"
+8,3..14,true,"malformed_double_dot"
+9,3.14.15.92,true,"malformed_multiple_dots"
+10,3.14,false,"valid"
+11,1.8e309,true,"double_overflow"
+12,-1.8e309,true,"double_underflow"
+13,123abc,true,"mixed_alphanumeric"
+14,"12 34",true,"space_between_digits"
+15,1.234,false,"dot_separator"
+16,0x1F,false,"hexadecimal"
+17,0123,false,"leading_zero"
+18,+123,false,"explicit_positive_sign"
+19,--123,true,"double_negative_sign"
+20,123.0,false,"decimal_point"
+21,123L,true,"suffix"
+22,123_456,true,"underscore_separator"
+23,123 456 789,true,"multiple_spaces"
+24,123.456.789,true,"multiple_dots"
+25,123a456,true,"alphabetic_middle"
+26,123$456,true,"symbol_middle"
+27,(123),true,"parentheses"
+28,[123],true,"brackets"
+29,123%,true,"percentage_sign"
+30,123abc,true,"trailing_alphabetic"
+
+CREATE LOGICAL SOURCE csvStreamInteger(id UINT64 NOT NULL, value UINT64, isMalformedString BOOLEAN, metadata VARSIZED);
+CREATE PHYSICAL SOURCE FOR csvStreamInteger TYPE File;
+ATTACH INLINE
+1,123,false,"valid"
+2,12_3,true,"malformed_underscore"
+3,abc,true,"non_numeric"
+4,123.456,true,"malformed_decimal_point"
+5,NULL,false,"null_value"
+6,12 345,true,"malformed_space"
+7,123,false,"valid"
+8,12..345,true,"malformed_double_dot"
+9,123.456.789,true,"malformed_multiple_dots"
+10,99999999999999999999,true,"integer_overflow"
+11,-123,true,"negative_value"
+12,0x1F,true,"hexadecimal"
+13,0123,false,"leading_zero"
+14,--123,true,"double_negative_sign"
+15,123L,true,"suffix"
+16,123_456,true,"underscore_separator"
+17,123 456 789,true,"multiple_spaces"
+18,123.456,true,"decimal_point"
+19,123a456,true,"alphabetic_middle"
+20,123$456,true,"symbol_middle"
+21,(123),true,"parentheses"
+22,[123],true,"brackets"
+23,123%,true,"percentage_sign"
+24,123abc,true,"trailing_alphabetic"
+25,1.8e309,true,"scientific_notation"
+26,123.0,true,"decimal_point_zero"
+
+
+CREATE LOGICAL SOURCE jsonStreamFloating(ID UINT64 NOT NULL, VALUE FLOAT64, ISMALFORMEDSTRING BOOLEAN, METADATA VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStreamFloating TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"ID": 1,"VALUE": 3.14,"ISMALFORMEDSTRING": false,"METADATA": "valid"}
+{"ID": 2,"VALUE": "3.14","ISMALFORMEDSTRING": true,"METADATA": "malformed_quotation"}
+
+CREATE LOGICAL SOURCE jsonStreamInteger(ID UINT64 NOT NULL, VALUE UINT64, ISMALFORMEDSTRING BOOLEAN, METADATA VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStreamInteger TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"ID": 1,"VALUE": 3,"ISMALFORMEDSTRING": false,"METADATA": "valid"}
+{"ID": 2,"VALUE": "3.14","ISMALFORMEDSTRING": true,"METADATA": "malformed_quotation"}
+{"ID": 3,"VALUE": 99999999999999999999,"ISMALFORMEDSTRING": true,"METADATA": "integer_overflow"}
+
+
+# Simple SELECT * query. We expect null for all malformed values
+SELECT * FROM csvStreamFloating INTO FILE();
+----
+1,3.14,false,"valid"
+2,NULL,true,"malformed_underscore"
+3,NULL,true,"non_numeric"
+4,NULL,true,"malformed_double_dot"
+5,null,false,"null_value"
+6,NULL,true,"malformed_space"
+7,3.14,false,"valid"
+8,NULL,true,"malformed_double_dot"
+9,NULL,true,"malformed_multiple_dots"
+10,3.14,false,"valid"
+11,NULL,true,"double_overflow"
+12,NULL,true,"double_underflow"
+13,NULL,true,"mixed_alphanumeric"
+14,NULL,true,"space_between_digits"
+15,1.234,false,"dot_separator"
+16,0x1F,false,"hexadecimal"
+17,0123,false,"leading_zero"
+18,+123,false,"explicit_positive_sign"
+19,NULL,true,"double_negative_sign"
+20,123.0,false,"decimal_point"
+21,NULL,true,"suffix"
+22,NULL,true,"underscore_separator"
+23,NULL,true,"multiple_spaces"
+24,NULL,true,"multiple_dots"
+25,NULL,true,"alphabetic_middle"
+26,NULL,true,"symbol_middle"
+27,NULL,true,"parentheses"
+28,NULL,true,"brackets"
+29,NULL,true,"percentage_sign"
+30,NULL,true,"trailing_alphabetic"
+
+# Simple SELECT * query. We expect null for all malformed values
+SELECT * FROM csvStreamInteger INTO FILE();
+----
+1,123,false,"valid"
+2,NULL,true,"malformed_underscore"
+3,NULL,true,"non_numeric"
+4,NULL,true,"malformed_decimal_point"
+5,NULL,false,"null_value"
+6,NULL,true,"malformed_space"
+7,123,false,"valid"
+8,NULL,true,"malformed_double_dot"
+9,NULL,true,"malformed_multiple_dots"
+10,NULL,true,"integer_overflow"
+11,NULL,true,"negative_value"
+12,31,true,"hexadecimal"
+13,123,false,"leading_zero"
+14,NULL,true,"double_negative_sign"
+15,NULL,true,"suffix"
+16,NULL,true,"underscore_separator"
+17,NULL,true,"multiple_spaces"
+18,NULL,true,"decimal_point"
+19,NULL,true,"alphabetic_middle"
+20,NULL,true,"symbol_middle"
+21,NULL,true,"parentheses"
+22,NULL,true,"brackets"
+23,NULL,true,"percentage_sign"
+24,NULL,true,"trailing_alphabetic"
+25,NULL,true,"scientific_notation"
+26,NULL,true,"decimal_point_zero"
+
+# Simple SELECT * query. We expect null for all malformed values
+SELECT * FROM jsonStreamFloating INTO FILE();
+----
+1,3.14,false,valid
+2,NULL,true,malformed_quotation
+
+# Simple SELECT * query. We expect null for all malformed values
+SELECT * FROM jsonStreamInteger INTO FILE();
+----
+1,3,false,valid
+2,NULL,true,malformed_quotation
+3,NULL,true,integer_overflow

@@ -237,8 +237,10 @@ public:
 
     std::pair<bool, FieldIndex> indexJSON(std::string_view jsonSV, size_t batchSize);
 
-    template <typename T>
-    static T parseSIMDJsonValueOrThrow(
+    /// Tries to parse the value. If it can not parse the value and the field is nullable, we return nullopt to signal
+    /// to the callee that the value shall be NULL. If it can not parse the value and the field is NOT nullable, we throw.
+    template <typename T, bool Nullable>
+    static std::optional<T> parseSIMDJsonValueOrThrow(
         simdjson::simdjson_result<T> simdJsonValue,
         simdjson::simdjson_result<simdjson::ondemand::value>& rawVal,
         const std::string_view expectedType,
@@ -246,6 +248,10 @@ public:
     {
         if (not simdJsonValue.has_value())
         {
+            if constexpr (Nullable)
+            {
+                return {};
+            }
             throw FormattingError(
                 "SimdJson could not parse field value {} of type '{}' belonging to field '{}' with error: {}",
                 rawVal.raw_json().value(),
@@ -290,6 +296,18 @@ requires(
 ParseResultFixed<T>*
 parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
 {
+    auto returnNullValueOrParsed = [](std::optional<T> parsedValue, ParseResultFixed<T>& result) -> ParseResultFixed<T>*
+    {
+        if (not parsedValue.has_value())
+        {
+            result.isNull = true;
+            result.value = T{0};
+            return &result;
+        }
+        result.value = static_cast<T>(parsedValue.value());
+        return &result;
+    };
+
     /// We use the thread local to return multiple values.
     /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
     thread_local static ParseResultFixed<T> result;
@@ -312,40 +330,48 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
     /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
     if constexpr (std::same_as<T, bool>)
     {
-        result.value = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_bool(), simdJsonResult, "bool", fieldName));
-        return &result;
+        const auto parsedValue
+            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_bool(), simdJsonResult, "bool", fieldName);
+        return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::same_as<T, char>)
     {
         const std::string_view valueSV = currentDoc[fieldName];
         PRECONDITION(valueSV.size() == 1, "Cannot take {} as character, because size is not 1", valueSV);
-        result.value
-            = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName)[0]);
+        const auto parsedValue = SIMDJSONFIF::parseSIMDJsonValueOrThrow<std::string_view, Nullable>(
+            simdJsonResult.get_string(), simdJsonResult, "char", fieldName);
+        if (not parsedValue.has_value())
+        {
+            result.isNull = true;
+            result.value = T{0};
+            return &result;
+        }
+        result.value = static_cast<T>(parsedValue.value()[0]);
         return &result;
     }
     else if constexpr (std::signed_integral<T>)
     {
-        result.value
-            = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_int64(), simdJsonResult, "integer", fieldName));
-        return &result;
+        const auto parsedValue
+            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<int64_t, Nullable>(simdJsonResult.get_int64(), simdJsonResult, "integer", fieldName);
+        return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::unsigned_integral<T>)
     {
-        result.value
-            = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_uint64(), simdJsonResult, "unsigned", fieldName));
-        return &result;
+        const auto parsedValue = SIMDJSONFIF::parseSIMDJsonValueOrThrow<uint64_t, Nullable>(
+            simdJsonResult.get_uint64(), simdJsonResult, "unsigned", fieldName);
+        return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::is_same_v<T, double>)
     {
-        result.value
-            = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_double(), simdJsonResult, "double", fieldName));
-        return &result;
+        const auto parsedValue
+            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_double(), simdJsonResult, "double", fieldName);
+        return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::is_same_v<T, float>)
     {
-        result.value
-            = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_double(), simdJsonResult, "float", fieldName));
-        return &result;
+        const auto parsedValue
+            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<double, Nullable>(simdJsonResult.get_double(), simdJsonResult, "float", fieldName);
+        return returnNullValueOrParsed(parsedValue, result);
     }
     else
     {
