@@ -163,7 +163,8 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     {
         /// Storage buffer already exists - just add the new page
         auto varSizedBuffer = buffer.loadChildBuffer(varSizedBufferIdx);
-        auto tmp = varSizedBuffer.storeChildBuffer(newPage.value());
+        auto tmp = varSizedBuffer.storeChildBuffer(
+            newPage.value()); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
     }
     else
     {
@@ -239,7 +240,8 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider) const
     {
         /// storage buffer already exists
         auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
-        auto newPageIdx = storageBuffer.storeChildBuffer(newPage);
+        auto newPageIdx = storageBuffer.storeChildBuffer(
+            newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
     }
     else
     {
@@ -250,7 +252,8 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider) const
             throw CannotAllocateBuffer("Could not allocate memory for storage space of ChainedHashMap of size {}", std::to_string(4));
         }
         auto storageBuffer = std::move(newStorageBuffer.value());
-        auto newPageIdx = storageBuffer.storeChildBuffer(newPage);
+        auto newPageIdx = storageBuffer.storeChildBuffer(
+            newPage); ///NOLINT: storeChildBuffer is [[nodiscard]] but no use for child buffer index at this point.
         header().storageSpaceIndex = buffer.storeChildBuffer(storageBuffer);
     }
 }
