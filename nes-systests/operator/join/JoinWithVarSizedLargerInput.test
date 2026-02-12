@@ -1,0 +1,181 @@
+# name: join/JoinWithDifferentDataTypesLargeInput.test
+# description: Test join operator and the join function performs the join operation with variable sized data and large input
+# groups: [WindowOperators, Join]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+
+CREATE LOGICAL SOURCE stream1(
+  key1_s1 VARSIZED,
+  key2_s1 VARSIZED,
+  i8_s1 INT8,
+  i16_s1 INT16,
+  i32_s1 INT32,
+  i64_s1 INT64,
+  u8_s1 UINT8,
+  u16_s1 UINT16,
+  u32_s1 UINT32,
+  u64_s1 UINT64,
+  f32_s1 FLOAT32,
+  f64_s1 FLOAT64,
+  ts UINT64
+);
+CREATE PHYSICAL SOURCE FOR stream1 TYPE File;
+ATTACH INLINE
+key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100
+
+
+CREATE LOGICAL SOURCE stream2(
+  key1_s2 VARSIZED,
+  key2_s2 VARSIZED,
+  i8_s2 INT8,
+  i16_s2 INT16,
+  i32_s2 INT32,
+  i64_s2 INT64,
+  u8_s2 UINT8,
+  u16_s2 UINT16,
+  u32_s2 UINT32,
+  u64_s2 UINT64,
+  f32_s2 FLOAT32,
+  f64_s2 FLOAT64,
+  ts UINT64
+);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
+key123Text,falseKey2,2,2,2,2,2,2,2,2,2,2,501
+falseKey1,otherKey566CoolText,3,3,3,3,3,3,3,3,3,3,502
+key123Text,falseKey2,4,4,4,4,4,4,4,4,4,4,503
+falseKey1,otherKey566CoolText,5,5,5,5,5,5,5,5,5,5,504
+key123Text,falseKey2,6,6,6,6,6,6,6,6,6,6,505
+key123Text,otherKey566CoolText,7,7,7,7,7,7,7,7,7,7,506
+key123Text,falseKey2,8,8,8,8,8,8,8,8,8,8,507
+falseKey1,otherKey566CoolText,9,9,9,9,9,9,9,9,9,9,508
+falseKey1,otherKey566CoolText,10,10,10,10,10,10,10,10,10,10,509
+key123Text,otherKey566CoolText,11,11,11,11,11,11,11,11,11,11,510
+key123Text,falseKey2,12,12,12,12,12,12,12,12,12,12,511
+falseKey1,otherKey566CoolText,13,13,13,13,13,13,13,13,13,13,512
+key123Text,falseKey2,14,14,14,14,14,14,14,14,14,14,513
+falseKey1,otherKey566CoolText,15,15,15,15,15,15,15,15,15,15,514
+key123Text,falseKey2,16,16,16,16,16,16,16,16,16,16,515
+key123Text,otherKey566CoolText,17,17,17,17,17,17,17,17,17,17,516
+key123Text,falseKey2,18,18,18,18,18,18,18,18,18,18,517
+falseKey1,otherKey566CoolText,19,19,19,19,19,19,19,19,19,19,518
+falseKey1,otherKey566CoolText,20,20,20,20,20,20,20,20,20,20,519
+key123Text,otherKey566CoolText,21,21,21,21,21,21,21,21,21,21,520
+key123Text,falseKey2,22,22,22,22,22,22,22,22,22,22,521
+falseKey1,otherKey566CoolText,23,23,23,23,23,23,23,23,23,23,522
+key123Text,falseKey2,24,24,24,24,24,24,24,24,24,24,523
+falseKey1,otherKey566CoolText,25,25,25,25,25,25,25,25,25,25,524
+key123Text,falseKey2,26,26,26,26,26,26,26,26,26,26,525
+key123Text,otherKey566CoolText,27,27,27,27,27,27,27,27,27,27,526
+key123Text,falseKey2,28,28,28,28,28,28,28,28,28,28,527
+falseKey1,otherKey566CoolText,29,29,29,29,29,29,29,29,29,29,528
+falseKey1,otherKey566CoolText,30,30,30,30,30,30,30,30,30,30,529
+key123Text,otherKey566CoolText,31,31,31,31,31,31,31,31,31,31,530
+key123Text,falseKey2,32,32,32,32,32,32,32,32,32,32,531
+falseKey1,otherKey566CoolText,33,33,33,33,33,33,33,33,33,33,532
+key123Text,falseKey2,34,34,34,34,34,34,34,34,34,34,533
+falseKey1,otherKey566CoolText,35,35,35,35,35,35,35,35,35,35,534
+key123Text,falseKey2,36,36,36,36,36,36,36,36,36,36,535
+key123Text,otherKey566CoolText,37,37,37,37,37,37,37,37,37,37,536
+key123Text,falseKey2,38,38,38,38,38,38,38,38,38,38,537
+falseKey1,otherKey566CoolText,39,39,39,39,39,39,39,39,39,39,538
+falseKey1,otherKey566CoolText,40,40,40,40,40,40,40,40,40,40,539
+key123Text,otherKey566CoolText,41,41,41,41,41,41,41,41,41,41,540
+key123Text,falseKey2,42,42,42,42,42,42,42,42,42,42,541
+falseKey1,otherKey566CoolText,43,43,43,43,43,43,43,43,43,43,542
+key123Text,falseKey2,44,44,44,44,44,44,44,44,44,44,543
+falseKey1,otherKey566CoolText,45,45,45,45,45,45,45,45,45,45,544
+key123Text,falseKey2,46,46,46,46,46,46,46,46,46,46,545
+key123Text,otherKey566CoolText,47,47,47,47,47,47,47,47,47,47,546
+key123Text,falseKey2,48,48,48,48,48,48,48,48,48,48,547
+falseKey1,otherKey566CoolText,49,49,49,49,49,49,49,49,49,49,548
+falseKey1,otherKey566CoolText,50,50,50,50,50,50,50,50,50,50,549
+
+CREATE SINK sinkStream1Stream2(
+  stream1stream2.start UINT64,
+  stream1stream2.end UINT64,
+  stream1.key1_s1 VARSIZED,
+  stream1.key2_s1 VARSIZED,
+  stream1.i8_s1 INT8,
+  stream1.i16_s1 INT16,
+  stream1.i32_s1 INT32,
+  stream1.i64_s1 INT64,
+  stream1.u8_s1 UINT8,
+  stream1.u16_s1 UINT16,
+  stream1.u32_s1 UINT32,
+  stream1.u64_s1 UINT64,
+  stream1.f32_s1 FLOAT32,
+  stream1.f64_s1 FLOAT64,
+  stream1.ts UINT64,
+  stream2.key1_s2 VARSIZED,
+  stream2.key2_s2 VARSIZED,
+  stream2.i8_s2 INT8,
+  stream2.i16_s2 INT16,
+  stream2.i32_s2 INT32,
+  stream2.i64_s2 INT64,
+  stream2.u8_s2 UINT8,
+  stream2.u16_s2 UINT16,
+  stream2.u32_s2 UINT32,
+  stream2.u64_s2 UINT64,
+  stream2.f32_s2 FLOAT32,
+  stream2.f64_s2 FLOAT64,
+  stream2.ts UINT64
+) TYPE File;
+
+# Join on single VARSIZED key
+SELECT *
+FROM (SELECT * FROM stream1)
+JOIN (SELECT * FROM stream2)
+ON key1_s1 == key1_s2
+WINDOW TUMBLING (ts, size 1 sec)
+INTO sinkStream1Stream2;
+----
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,2,2,2,2,2,2,2,2,2,2,501
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,4,4,4,4,4,4,4,4,4,4,503
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,6,6,6,6,6,6,6,6,6,6,505
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,7,7,7,7,7,7,7,7,7,7,506
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,8,8,8,8,8,8,8,8,8,8,507
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,11,11,11,11,11,11,11,11,11,11,510
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,12,12,12,12,12,12,12,12,12,12,511
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,14,14,14,14,14,14,14,14,14,14,513
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,16,16,16,16,16,16,16,16,16,16,515
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,17,17,17,17,17,17,17,17,17,17,516
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,18,18,18,18,18,18,18,18,18,18,517
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,21,21,21,21,21,21,21,21,21,21,520
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,22,22,22,22,22,22,22,22,22,22,521
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,24,24,24,24,24,24,24,24,24,24,523
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,26,26,26,26,26,26,26,26,26,26,525
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,27,27,27,27,27,27,27,27,27,27,526
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,28,28,28,28,28,28,28,28,28,28,527
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,31,31,31,31,31,31,31,31,31,31,530
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,32,32,32,32,32,32,32,32,32,32,531
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,34,34,34,34,34,34,34,34,34,34,533
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,36,36,36,36,36,36,36,36,36,36,535
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,37,37,37,37,37,37,37,37,37,37,536
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,38,38,38,38,38,38,38,38,38,38,537
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,41,41,41,41,41,41,41,41,41,41,540
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,42,42,42,42,42,42,42,42,42,42,541
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,44,44,44,44,44,44,44,44,44,44,543
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,46,46,46,46,46,46,46,46,46,46,545
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,47,47,47,47,47,47,47,47,47,47,546
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,falseKey2,48,48,48,48,48,48,48,48,48,48,547
+
+# Join on multiple VARSIZED keys
+SELECT *
+FROM (SELECT * FROM stream1)
+JOIN (SELECT * FROM stream2)
+ON key1_s1 == key1_s2 AND key2_s1 == key2_s2
+WINDOW TUMBLING (ts, size 1 sec)
+INTO sinkStream1Stream2;
+----
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,1,1,1,1,1,1,1,1,1,1,500
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,7,7,7,7,7,7,7,7,7,7,506
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,11,11,11,11,11,11,11,11,11,11,510
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,17,17,17,17,17,17,17,17,17,17,516
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,21,21,21,21,21,21,21,21,21,21,520
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,27,27,27,27,27,27,27,27,27,27,526
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,31,31,31,31,31,31,31,31,31,31,530
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,37,37,37,37,37,37,37,37,37,37,536
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,41,41,41,41,41,41,41,41,41,41,540
+0,1000,key123Text,otherKey566CoolText,1,2,3,4,5,6,7,8,9,10,100,key123Text,otherKey566CoolText,47,47,47,47,47,47,47,47,47,47,546
