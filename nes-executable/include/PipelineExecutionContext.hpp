@@ -52,6 +52,8 @@ public:
     virtual void repeatTask(const TupleBuffer&, std::chrono::milliseconds) = 0;
 
     virtual TupleBuffer allocateTupleBuffer() = 0;
+    /// Pins a buffer, meaning the returned reference should be valid throughout the lifetime of the pipeline execution context
+    virtual TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) = 0;
     [[nodiscard]] virtual WorkerThreadId getId() const = 0;
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<AbstractBufferProvider> getBufferManager() const = 0;

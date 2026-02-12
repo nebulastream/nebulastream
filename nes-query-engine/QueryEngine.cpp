@@ -210,6 +210,9 @@ struct DefaultPEC final : PipelineExecutionContext
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+    /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
+    /// the address might change as the vector might be resized and thus, the object have a different address.
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
 
 #ifndef NO_ASSERT
     bool wasRepeated = false;
@@ -241,6 +244,13 @@ struct DefaultPEC final : PipelineExecutionContext
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return bm->getBufferBlocking();
+    }
+
+    TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+        return *pinnedBuffers.back();
     }
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override

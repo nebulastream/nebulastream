@@ -91,6 +91,8 @@ public:
 
     TupleBuffer allocateTupleBuffer() override;
 
+    TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override;
+
     void setRepeatTaskCallback(std::function<void()> repeatTaskCallback) { this->repeatTaskCallback = std::move(repeatTaskCallback); }
 
     [[nodiscard]] WorkerThreadId getId() const override { return workerThreadId; };
@@ -114,6 +116,9 @@ public:
     PipelineId pipelineId;
 
 private:
+    /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
+    /// the address might change as the vector might be resized and thus, the object have a different address.
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
     std::function<void()> repeatTaskCallback;
     std::shared_ptr<AbstractBufferProvider> bufferManager;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
