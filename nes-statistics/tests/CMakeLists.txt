@@ -19,4 +19,4 @@ function(add_nes_statistic_store_test)
 endfunction()
 
 
-add_nes_statistic_store_test(default-statistic-store-test DefaultStatisticStoreTest.cpp)
+add_nes_statistic_store_test(statistic-store-test StatisticStoreTest.cpp)

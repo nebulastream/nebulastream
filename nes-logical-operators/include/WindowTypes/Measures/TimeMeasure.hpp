@@ -36,7 +36,9 @@ public:
     [[nodiscard]] std::string toString() const;
 
     bool operator<(const TimeMeasure& other) const;
+    bool operator>(const TimeMeasure& other) const;
     bool operator<=(const TimeMeasure& other) const;
+    bool operator>=(const TimeMeasure& other) const;
     bool operator==(const TimeMeasure& other) const;
 
 private:
@@ -57,5 +59,14 @@ template <>
 struct Unreflector<Windowing::TimeMeasure>
 {
     Windowing::TimeMeasure operator()(const Reflected& reflected) const;
+};
+}
+
+namespace std
+{
+template <>
+struct hash<NES::Windowing::TimeMeasure>
+{
+    size_t operator()(const NES::Windowing::TimeMeasure& tm) const { return hash<uint64_t>()(tm.getTime()); }
 };
 }

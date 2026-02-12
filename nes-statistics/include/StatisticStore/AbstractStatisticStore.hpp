@@ -23,6 +23,13 @@
 namespace NES
 {
 
+enum class StatisticStoreType : uint8_t
+{
+    DEFAULT,
+    WINDOW,
+    SUB_STORES
+};
+
 class AbstractStatisticStore
 {
 public:

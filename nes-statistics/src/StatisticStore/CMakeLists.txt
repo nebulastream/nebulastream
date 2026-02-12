@@ -13,4 +13,6 @@
 
 add_source_files(nes-statistics
         DefaultStatisticStore.cpp
+        WindowStatisticStore.cpp
+        SubStoresStatisticStore.cpp
 )

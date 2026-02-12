@@ -14,7 +14,9 @@
 
 #include <random>
 #include <ranges>
-#include <../include/StatisticStore/DefaultStatisticStore.hpp>
+#include <StatisticStore/DefaultStatisticStore.hpp>
+#include <StatisticStore/SubStoresStatisticStore.hpp>
+#include <StatisticStore/WindowStatisticStore.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <gtest/gtest.h>
@@ -52,17 +54,39 @@ Statistic createDummyStatistic(const Statistic::StatisticId statisticId, Windowi
 
 }
 
-class DefaultStatisticStoreTest : public Testing::BaseUnitTest, public testing::WithParamInterface<std::tuple<int, int, int, int>>
+class StatisticStoreTest : public Testing::BaseUnitTest,
+                           public testing::WithParamInterface<std::tuple<int, int, int, int, StatisticStoreType>>
 {
 public:
+    using StatisticStoreUnderTest = std::variant<DefaultStatisticStore, WindowStatisticStore, SubStoresStatisticStore>;
+
     static void SetUpTestCase()
     {
-        Logger::setupLogging("DefaultStatisticStoreTest.log", LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DefaultStatisticStoreTest test class.");
+        Logger::setupLogging("StatisticStoreTest.log", LogLevel::LOG_DEBUG);
+        NES_INFO("Setup StatisticStoreTest test class.");
     }
 
     /// Will be called before a test is executed.
-    void SetUp() override { BaseUnitTest::SetUp(); }
+    void SetUp() override
+    {
+        BaseUnitTest::SetUp();
+
+        const auto statisticStoreString = std::get<4>(GetParam());
+        const auto numberOfThreads = std::get<0>(GetParam());
+        const Windowing::TimeMeasure windowSize{static_cast<uint64_t>(std::get<3>(GetParam()))};
+        switch (statisticStoreString)
+        {
+            case StatisticStoreType::DEFAULT:
+                statisticStore = DefaultStatisticStore();
+                break;
+            case StatisticStoreType::WINDOW:
+                statisticStore = WindowStatisticStore(numberOfThreads, windowSize);
+                break;
+            case StatisticStoreType::SUB_STORES:
+                statisticStore = SubStoresStatisticStore(numberOfThreads);
+                break;
+        }
+    }
 
     static std::pair<Windowing::TimeMeasure, std::vector<Statistic>>
     createData(const int numberOfStatisticIds, const int numberOfStatisticPerId, const uint64_t windowSize)
@@ -91,10 +115,10 @@ public:
         return {Windowing::TimeMeasure{maxEndTs}, statistics};
     }
 
-    DefaultStatisticStore defaultStatisticStore;
+    StatisticStoreUnderTest statisticStore;
 };
 
-TEST_F(DefaultStatisticStoreTest, singleItem)
+TEST_P(StatisticStoreTest, singleItem)
 {
     constexpr auto numberOfStatisticIds = 1;
     constexpr auto numberOfStatisticPerId = 1;
@@ -103,19 +127,30 @@ TEST_F(DefaultStatisticStoreTest, singleItem)
     const auto& dummyStatistic = statistics[0];
 
     /// Checking if insert and get works properly
-    ASSERT_TRUE(defaultStatisticStore.insertStatistic(dummyStatistic.getHash(), dummyStatistic));
-    auto getStatistics
-        = defaultStatisticStore.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs());
+    ASSERT_TRUE(
+        std::visit(
+            [&dummyStatistic](auto& store) { return store.insertStatistic(dummyStatistic.getHash(), dummyStatistic); }, statisticStore));
+    auto getStatistics = std::visit(
+        [&dummyStatistic](auto& store)
+        { return store.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
+        statisticStore);
     ASSERT_EQ(getStatistics.size(), 1);
     EXPECT_TRUE(*getStatistics[0] == dummyStatistic);
 
     /// Now, we delete the statistic and then check that we can not retrieve it anymore
-    ASSERT_TRUE(defaultStatisticStore.deleteStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()));
-    getStatistics = defaultStatisticStore.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs());
+    ASSERT_TRUE(
+        std::visit(
+            [&dummyStatistic](auto& store)
+            { return store.deleteStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
+            statisticStore));
+    getStatistics = std::visit(
+        [&dummyStatistic](auto& store)
+        { return store.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
+        statisticStore);
     ASSERT_EQ(getStatistics.size(), 0);
 }
 
-TEST_P(DefaultStatisticStoreTest, multipleItem)
+TEST_P(StatisticStoreTest, multipleItem)
 {
     /// Parsing the parameters
     const auto numberOfThreads = std::get<0>(GetParam());
@@ -138,9 +173,14 @@ TEST_P(DefaultStatisticStoreTest, multipleItem)
                 while ((nextPos = statisticsPos++) < allStatistics.size())
                 {
                     const auto& dummyStatistic = allStatistics[nextPos];
-                    ASSERT_TRUE(defaultStatisticStore.insertStatistic(dummyStatistic.getHash(), dummyStatistic));
-                    auto getStatistics = defaultStatisticStore.getStatistics(
-                        dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs());
+                    ASSERT_TRUE(
+                        std::visit(
+                            [&dummyStatistic](auto& store) { return store.insertStatistic(dummyStatistic.getHash(), dummyStatistic); },
+                            statisticStore));
+                    auto getStatistics = std::visit(
+                        [&dummyStatistic](auto& store)
+                        { return store.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
+                        statisticStore);
                     ASSERT_EQ(getStatistics.size(), 1);
                     EXPECT_TRUE(*getStatistics[0] == dummyStatistic);
                 }
@@ -154,7 +194,7 @@ TEST_P(DefaultStatisticStoreTest, multipleItem)
 
     /// Checking, if we can retrieve all inserted statistics via getAllStatistics() and that we can find every retrieved actual statistics
     /// in the created dummy statistics
-    const auto allActualStatistics = defaultStatisticStore.getAllStatistics();
+    const auto allActualStatistics = std::visit([](auto& store) { return store.getAllStatistics(); }, statisticStore);
     ASSERT_EQ(allActualStatistics.size(), allStatistics.size());
     for (const auto& actualStatistic : allActualStatistics | std::views::values)
     {
@@ -166,7 +206,10 @@ TEST_P(DefaultStatisticStoreTest, multipleItem)
     /// Checking, if we can retrieve all inserted statistics for a particular statistic hash
     for (auto& dummyStatistic : allStatistics)
     {
-        auto retrievedStatistics = defaultStatisticStore.getStatistics(dummyStatistic.getHash(), Windowing::TimeMeasure{0}, maxEndTs);
+        auto retrievedStatistics = std::visit(
+            [&dummyStatistic, &maxEndTs](auto& store)
+            { return store.getStatistics(dummyStatistic.getHash(), Windowing::TimeMeasure{0}, maxEndTs); },
+            statisticStore);
 
         const auto foundStatistic
             = std::ranges::any_of(retrievedStatistics, [&dummyStatistic](const auto& statistic) { return dummyStatistic == *statistic; });
@@ -187,8 +230,17 @@ TEST_P(DefaultStatisticStoreTest, multipleItem)
                     const auto& dummyStatistic = allStatistics[nextPos];
                     const auto startTs = dummyStatistic.getStartTs();
                     const auto endTs = dummyStatistic.getEndTs();
-                    ASSERT_TRUE(defaultStatisticStore.deleteStatistics(dummyStatistic.getHash(), startTs, endTs));
-                    auto getStatistics = defaultStatisticStore.getStatistics(dummyStatistic.getHash(), startTs, endTs);
+                    ASSERT_TRUE(
+                        std::visit(
+                            [&dummyStatistic, &startTs, &endTs](auto& store)
+                            { return store.deleteStatistics(dummyStatistic.getHash(), startTs, endTs); },
+                            statisticStore))
+                        << "Could not delete: " << dummyStatistic;
+
+                    auto getStatistics = std::visit(
+                        [&dummyStatistic, &startTs, &endTs](auto& store)
+                        { return store.getStatistics(dummyStatistic.getHash(), startTs, endTs); },
+                        statisticStore);
                     ASSERT_EQ(getStatistics.size(), 0);
                 }
             });
@@ -199,26 +251,31 @@ TEST_P(DefaultStatisticStoreTest, multipleItem)
     }
 
     /// After, we have deleted all items, we should not get any statistic
-    ASSERT_EQ(defaultStatisticStore.getAllStatistics().size(), 0);
+    ASSERT_EQ(std::visit([](auto& store) { return store.getAllStatistics(); }, statisticStore).size(), 0);
     for (auto& dummyStatistic : allStatistics)
     {
-        auto getStatistics = defaultStatisticStore.getStatistics(dummyStatistic.getHash(), Windowing::TimeMeasure{0}, maxEndTs);
+        auto getStatistics = std::visit(
+            [&dummyStatistic, &maxEndTs](auto& store)
+            { return store.getStatistics(dummyStatistic.getHash(), Windowing::TimeMeasure{0}, maxEndTs); },
+            statisticStore);
         ASSERT_EQ(getStatistics.size(), 0);
     }
 }
 
 INSTANTIATE_TEST_CASE_P(
-    testDefaultStatisticStore,
-    DefaultStatisticStoreTest,
+    testStatisticStore,
+    StatisticStoreTest,
     ::testing::Combine(
         ::testing::Values(1, 2, 4, 8), /// No. threads
         ::testing::Values(1, 5, 10), /// No. statistic ids
         ::testing::Values(1, 500, 1000), /// No. statistics per ids
-        ::testing::Values(1, 10, 1000)), /// Window Size
-    [](const testing::TestParamInfo<DefaultStatisticStoreTest::ParamType>& info)
+        ::testing::Values(1, 10, 1000), /// Window Size
+        ::testing::ValuesIn(magic_enum::enum_values<StatisticStoreType>())), /// The statistic stores to test
+    [](const testing::TestParamInfo<StatisticStoreTest::ParamType>& info)
     {
         return std::string(
-            std::to_string(std::get<0>(info.param)) + "_Threads" + std::to_string(std::get<1>(info.param)) + "_StatisticId"
-            + std::to_string(std::get<2>(info.param)) + "_StatisticsPerId" + std::to_string(std::get<3>(info.param)) + "_WindowSize");
+                   std::to_string(std::get<0>(info.param)) + "_Threads" + std::to_string(std::get<1>(info.param)) + "_StatisticId"
+                   + std::to_string(std::get<2>(info.param)) + "_StatisticsPerId" + std::to_string(std::get<3>(info.param)) + "_WindowSize")
+            + std::string(magic_enum::enum_name(std::get<4>(info.param)));
     });
 }
