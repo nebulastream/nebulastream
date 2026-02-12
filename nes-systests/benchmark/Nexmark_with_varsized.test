@@ -22,7 +22,7 @@ CREATE SINK q2CheckSum(bid.auctionId INT32 NOT NULL, bid.price FLOAT64 NOT NULL)
 CREATE SINK q5Checksum(bidbid.start UINT64 NOT NULL, bidbid.end UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.num UINT64 NOT NULL, bid.max_tmp UINT64 NOT NULL)  TYPE Checksum;
 CREATE SINK q8CheckSum(personauction.start UINT64 NOT NULL, personauction.end UINT64 NOT NULL, person.id INT32 NOT NULL, person.name VARSIZED NOT NULL)  TYPE Checksum;
 CREATE SINK q8VariantCheckSum(bidauction.start UINT64 NOT NULL, bidauction.end UINT64 NOT NULL, bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, bid.price FLOAT64 NOT NULL, bid.timestamp UINT64 NOT NULL, auction.id INT32 NOT NULL, auction.initialbid INT32 NOT NULL, auction.reserve INT32 NOT NULL, auction.expires UINT64 NOT NULL, auction.seller INT32 NOT NULL, auction.category INT32 NOT NULL)  TYPE Checksum;
-
+CREATE SINK q8testCheckSum(auction.timestamp UINT64, auction.id INT32, auction.initialbid INT32, auction.reserve INT32, auction.expires UINT64, auction.seller INT32, auction.category INT32) TYPE Checksum;
 
 # Query 0
 SELECT * FROM bid INTO bidCheckSum;

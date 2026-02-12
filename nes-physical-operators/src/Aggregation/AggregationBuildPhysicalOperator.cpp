@@ -40,7 +40,9 @@
 
 namespace NES
 {
-HashMap* getAggHashMapProxy(
+TupleBuffer* getAggHashMapProxy(
+    AbstractBufferProvider* bufferProvider,
+    PipelineExecutionContext* pec,
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -57,7 +59,7 @@ HashMap* getAggHashMapProxy(
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
     auto wrappedCreateFunction(
-        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(bufferProvider, hashMapSliceArgs),
          cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
             const auto createdSlices = createFunction(sliceStart, sliceEnd);
@@ -74,7 +76,8 @@ HashMap* getAggHashMapProxy(
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+    auto hashMapTupleBuffer = aggregationSlice->loadHashMapBuffer(aggregationSlice->getWorkerHashMapIndex(workerThreadId));
+    return std::addressof(pec->pinBuffer(std::move(hashMapTupleBuffer)));
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -95,8 +98,16 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                 [copyOfHashMapOptions = hashMapOptions,
                  copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
                 {
+                    auto tupleBuffer = nautilus::invoke(
+                        +[](HashMap* hm)
+                        {
+                            auto& chm = dynamic_cast<ChainedHashMap&>(*hm);
+                            return chm.getBuffer();
+                        },
+                        hashMap);
+
                     const ChainedHashMapRef hashMapRef(
-                        hashMap,
+                        tupleBuffer,
                         copyOfHashMapOptions.fieldKeys,
                         copyOfHashMapOptions.fieldValues,
                         copyOfHashMapOptions.entriesPerPage,
@@ -104,7 +115,7 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                     for (const auto entry : hashMapRef)
                     {
                         const ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
+                            entry, tupleBuffer, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
                         auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
                         for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                         {
@@ -127,10 +138,16 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
-        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+    const auto hashMapTupleBuffer = invoke(
+        getAggHashMapProxy,
+        ctx.pipelineMemoryProvider.bufferProvider,
+        ctx.pipelineContext,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     ChainedHashMapRef hashMap(
-        hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
+        hashMapTupleBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
     /// Calling the key functions to add/update the keys to the record
     for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)
@@ -148,7 +165,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         [&](const nautilus::val<AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
-            const ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+            const ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                entry, hashMapTupleBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
@@ -160,7 +178,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
 
     /// Updating the aggregation states
-    const ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+    const ChainedHashMapRef::ChainedEntryRef entryRef(
+        hashMapEntry, hashMapTupleBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {

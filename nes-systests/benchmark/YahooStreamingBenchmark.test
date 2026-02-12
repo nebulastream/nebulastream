@@ -2,6 +2,7 @@
 # description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks) with changed data types
 # groups: [milestone, benchmark, large, Aggregation]
 
+
 # Source definitions
 CREATE LOGICAL SOURCE ysb1k(user_id UINT64 NOT NULL, page_id UINT64 NOT NULL, campaign_id UINT64 NOT NULL, ad_type UINT64 NOT NULL, event_type UINT64 NOT NULL, current_ms UINT64 NOT NULL, ip UINT64 NOT NULL, d1 UINT64 NOT NULL, d2 UINT64 NOT NULL, d3 UINT32 NOT NULL, d4 UINT16 NOT NULL);
 CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;

@@ -29,7 +29,7 @@ class ChainedHashMapCustomValueTestUtils : public TestUtils::ChainedHashMapTestU
 public:
     /// Compiles a method that finds a key in the hash map and inserts all record from the value buffer into the paged vector
     /// We are using the findOrCreateEntry() method of the hash map interface.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, HashMap*>
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, TupleBuffer*>
     compileFindAndInsertIntoPagedVector(const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const;
 
 
