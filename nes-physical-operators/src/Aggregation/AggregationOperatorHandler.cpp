@@ -51,19 +51,21 @@ AggregationOperatorHandler::AggregationOperatorHandler(
 {
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-AggregationOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> AggregationOperatorHandler::getCreateNewSlicesFunction(
+    AbstractBufferProvider* bufferProvider, const CreateNewSlicesArguments& newSlicesArguments) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
     auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
     newHashMapArgs.numberOfBuckets = std::clamp(rollingAverageNumberOfKeys.rlock()->getAverage(), 1UL, maxNumberOfBuckets);
     return std::function(
-        [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
-            SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        [bufferProvider,
+         outputOriginId = outputOriginId,
+         numberOfWorkerThreads = numberOfWorkerThreads,
+         copyOfNewHashMapArgs = newHashMapArgs](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE("Creating new aggregation slice with for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<AggregationSlice>(sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
+            return {std::make_shared<AggregationSlice>(bufferProvider, sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
         });
 }
 
@@ -73,26 +75,28 @@ void AggregationOperatorHandler::triggerSlices(
 {
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
-        /// Getting all hashmaps for each slice that has at least one tuple
-        std::unique_ptr<ChainedHashMap> finalHashMap;
-        std::vector<HashMap*> allHashMaps;
+        /// Getting all tuple buffers for each slice that has at least one tuple
+        std::vector<TupleBuffer> allTupleBuffers;
         uint64_t totalNumberOfTuples = 0;
+
         for (const auto& slice : allSlices)
         {
             const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
-            for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
+            for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->numberOfHashMaps(); ++hashMapIdx)
             {
-                if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
-                    (hashMap != nullptr) and hashMap->getNumberOfTuples() > 0)
+                auto tupleBufferOpt = aggregationSlice->getHashMapTupleBuffer(WorkerThreadId(hashMapIdx));
+                if (tupleBufferOpt.has_value())
                 {
-                    /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
-                    rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
-
-                    allHashMaps.emplace_back(hashMap);
-                    totalNumberOfTuples += hashMap->getNumberOfTuples();
-                    if (not finalHashMap)
+                    auto tupleBuffer = tupleBufferOpt.value();
+                    /// Get the hashmap pointer from the tuple buffer to check if it has tuples
+                    ChainedHashMap chainedHashMap = ChainedHashMap::load(tupleBuffer);
+                    HashMap* hashMap = &chainedHashMap;
+                    if (hashMap->numberOfTuples() > 0)
                     {
-                        finalHashMap = ChainedHashMap::createNewMapWithSameConfiguration(*dynamic_cast<ChainedHashMap*>(hashMap));
+                        /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
+                        rollingAverageNumberOfKeys.wlock()->add(hashMap->numberOfTuples());
+                        allTupleBuffers.emplace_back(tupleBuffer);
+                        totalNumberOfTuples += hashMap->numberOfTuples();
                     }
                 }
             }
@@ -100,16 +104,20 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// We need a buffer that is large enough to store:
-        /// - all pointers to all hashmaps of the window to be triggered
-        /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
-        const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(HashMap*));
+        /// Note: We no longer store pointers, but attach buffers as children
+        const auto neededBufferSize = sizeof(EmittedAggregationWindow);
         const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
         if (not tupleBufferVal.has_value())
         {
             throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
         }
         auto tupleBuffer = tupleBufferVal.value();
+        /// Then, attach all hashmap tuple buffers as children
+        for (auto& hashMapTupleBuffer : allTupleBuffers)
+        {
+            auto bufferIndex = tupleBuffer.storeChildBuffer(hashMapTupleBuffer);
+        }
 
         /// It might be that the buffer is not zeroed out.
         std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});
@@ -128,8 +136,7 @@ void AggregationOperatorHandler::triggerSlices(
 
         /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
         auto tmp = tupleBuffer.getAvailableMemoryArea();
-        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, std::move(finalHashMap), allHashMaps};
-
+        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, allTupleBuffers.size()};
 
         /// Dispatching the buffer to the probe operator via the task queue.
         pipelineCtx->emitBuffer(tupleBuffer);
