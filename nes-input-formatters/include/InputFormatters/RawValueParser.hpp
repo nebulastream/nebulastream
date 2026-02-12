@@ -15,6 +15,7 @@
 #pragma once
 
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -43,16 +44,40 @@ enum class QuotationType : uint8_t
 };
 
 template <typename T>
-T parseIntoNautilusRecordProxy(const char* fieldAddress, const uint64_t fieldSize, const bool isNull)
+struct ParseResult
 {
+    T value;
+    bool validValue;
+};
+
+template <typename T>
+ParseResult<T>* parseIntoNautilusRecordProxy(const char* fieldAddress, const uint64_t fieldSize, const bool isNull)
+{
+    /// We use the thread local to return multiple values.
+    /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
+    thread_local static ParseResult<T> result;
+
     /// We handle null in the nautilus::invoke to reduce the amount of branches in nautilus code to reduce the tracing time.
     if (isNull)
     {
-        return T{0};
+        result.validValue = false;
+        result.value = T{0};
+        return &result;
     }
 
-    const auto fieldView = std::string_view(fieldAddress, fieldSize);
-    return NES::from_chars_with_exception<T>(fieldView);
+    const std::string_view fieldView{fieldAddress, fieldSize};
+    try
+    {
+        const auto value = NES::from_chars_with_exception<T>(fieldView);
+        result.validValue = true;
+        result.value = value;
+    }
+    catch (...)
+    {
+        result.validValue = false;
+        result.value = T{0};
+    }
+    return &result;
 }
 
 template <typename T>
@@ -62,8 +87,10 @@ VarVal parseIntoNautilusRecord(
     const nautilus::val<bool>& isNull,
     const DataType::NULLABLE isNullable)
 {
-    nautilus::val<T> result = nautilus::invoke(parseIntoNautilusRecordProxy<T>, fieldAddress, fieldSize, isNull);
-    return VarVal{result, isNullable, isNull};
+    const auto parseResult = nautilus::invoke(parseIntoNautilusRecordProxy<T>, fieldAddress, fieldSize, isNull);
+    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
+    const nautilus::val<bool> isValidValue = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, validValue));
+    return VarVal{nautilusValue, isNullable, isNull or not isValidValue};
 }
 
 template <typename IndexerMetaData>
