@@ -1,5 +1,5 @@
 # name: window/WindowAggregationDifferentDataTypes.test
-# description: Test window aggregations over different data types
+# description: Test window aggregations over different data types TODO #1272
 # groups: [Aggregation, WindowOperators, CompilationIntensive]
 
 
