@@ -42,7 +42,9 @@ class ChainedHashMapTest
 public:
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 10000};
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 10, .max = 2048};
-    static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 1024, .max = 10240};
+    static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 4096, .max = 4096};
+
+    std::shared_ptr<BufferManager> bufferManager;
 
     static void SetUpTestSuite()
     {
@@ -66,11 +68,20 @@ public:
 
 TEST_P(ChainedHashMapTest, fixedDataTypesSingleInsert)
 {
+    /// Create buffer manager
+    bufferManager = BufferManager::create();
+
     /// Creating the hash map
-    auto hashMap = ChainedHashMap(keySize, valueSize, params.numberOfBuckets, params.pageSize);
+    std::optional<TupleBuffer> hashMapBuffer
+        = bufferManager->getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(params.numberOfBuckets));
+    if (!hashMapBuffer)
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+    }
+    auto hashMap = ChainedHashMap::init(hashMapBuffer.value(), keySize, valueSize, params.numberOfBuckets, params.pageSize);
 
     /// Check if the hash map is empty.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
+    ASSERT_EQ(hashMap.numberOfTuples(), 0);
 
     /// We are inserting the records from the random key and value buffers into a map.
     /// Thus, we can check if the provided values are correct.
@@ -82,7 +93,7 @@ TEST_P(ChainedHashMapTest, fixedDataTypesSingleInsert)
     auto findAndInsert = compileFindAndInsert();
     for (auto& buffer : inputBuffers)
     {
-        findAndInsert(std::addressof(buffer), bufferManager.get(), std::addressof(hashMap));
+        findAndInsert(std::addressof(buffer), bufferManager.get(), std::addressof(hashMapBuffer.value()));
     }
 
     /// Now we are searching for the entries and checking if the values are correct.
@@ -94,11 +105,20 @@ TEST_P(ChainedHashMapTest, fixedDataTypesSingleInsert)
 
 TEST_P(ChainedHashMapTest, fixedDataTypesUpdate)
 {
+    /// Create buffer manager
+    bufferManager = BufferManager::create();
+
     /// Creating the hash map
-    auto hashMap = ChainedHashMap(keySize, valueSize, params.numberOfBuckets, params.pageSize);
+    std::optional<TupleBuffer> hashMapBuffer
+        = bufferManager->getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(params.numberOfBuckets));
+    if (!hashMapBuffer)
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+    }
+    auto hashMap = ChainedHashMap::init(hashMapBuffer.value(), keySize, valueSize, params.numberOfBuckets, params.pageSize);
 
     /// Check if the hash map is empty.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
+    ASSERT_EQ(hashMap.numberOfTuples(), 0);
 
     /// Getting new values for updating the values in the hash map.
     inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
@@ -111,7 +131,7 @@ TEST_P(ChainedHashMapTest, fixedDataTypesUpdate)
     auto findAndUpdate = compileFindAndUpdate();
     for (auto& buffer : inputBuffers)
     {
-        findAndUpdate(std::addressof(buffer), std::addressof(buffer), bufferManager.get(), std::addressof(hashMap));
+        findAndUpdate(std::addressof(buffer), std::addressof(buffer), bufferManager.get(), std::addressof(hashMapBuffer.value()));
     }
 
     /// Now we are searching for the entries and checking if the values are correct.

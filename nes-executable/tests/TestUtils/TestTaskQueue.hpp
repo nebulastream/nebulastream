@@ -110,6 +110,8 @@ public:
 
     void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override;
 
+    [[nodiscard]] TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override;
+
     WorkerThreadId workerThreadId;
     PipelineId pipelineId;
 
@@ -121,6 +123,7 @@ private:
     /// Each thread writes its own results in a dedicated slot. This keeps results in a single place and does not require awkward logic
     /// to get the result buffers out of the TestPipelineExecutionContexts.
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
 };
 
 /// Represents a single ExecutablePipelineStage with multiple functions ('taskSteps').
