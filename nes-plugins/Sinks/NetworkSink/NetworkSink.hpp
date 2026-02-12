@@ -119,13 +119,13 @@ struct ConfigParametersNetworkSink
 
     static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
         "backpressure_upper_threshold",
-        100,
+        1000,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
         "backpressure_lower_threshold",
-        50,
+        200,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
 
