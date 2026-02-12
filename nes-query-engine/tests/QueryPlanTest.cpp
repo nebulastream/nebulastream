@@ -141,6 +141,7 @@ struct TestPipelineExecutionContext : PipelineExecutionContext
     MOCK_METHOD(void, repeatTask, (const TupleBuffer&, std::chrono::milliseconds), (override));
     MOCK_METHOD(WorkerThreadId, getId, (), (const, override));
     MOCK_METHOD(TupleBuffer, allocateTupleBuffer, (), (override));
+    MOCK_METHOD(TupleBuffer&, pinBuffer, (TupleBuffer&&), (override));
     MOCK_METHOD(uint64_t, getNumberOfWorkerThreads, (), (const, override));
     MOCK_METHOD(std::shared_ptr<AbstractBufferProvider>, getBufferManager, (), (const, override));
     MOCK_METHOD(PipelineId, getPipelineId, (), (const, override));
