@@ -14,6 +14,8 @@
 #define NES_TIDY_MULTI_RETURN_VAL_CHECK_HPP
 
 #include "clang-tidy/ClangTidyCheck.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 namespace clang::tidy::nes {
@@ -39,8 +41,15 @@ private:
 
     /// Check if a QualType is or transitively contains nautilus::val<T>.
     /// Inspects fields, base classes, and template arguments recursively.
-    static bool containsValType(QualType Type,
-                                llvm::SmallPtrSetImpl<const RecordDecl *> &Visited);
+    bool containsValType(QualType Type,
+                         llvm::SmallPtrSetImpl<const RecordDecl *> &Visited);
+
+    /// Cache for containsValType results, keyed by RecordDecl.
+    llvm::DenseMap<const RecordDecl *, bool> ContainsValCache;
+
+    /// Tracks source locations where fix-its have already been emitted (per TU),
+    /// preventing duplicate fixes for the same function (e.g. template instantiations).
+    llvm::DenseSet<SourceLocation> FixedLocations;
 };
 
 } // namespace clang::tidy::nes

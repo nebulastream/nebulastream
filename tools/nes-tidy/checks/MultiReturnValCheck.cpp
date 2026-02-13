@@ -23,14 +23,37 @@ namespace clang::tidy::nes {
 
 namespace {
 
+/// Returns true if an expression tree contains a call to singleReturnWrapper.
+static bool isWrapperCall(const Expr *E) {
+    if (!E)
+        return false;
+    // Strip all implicit nodes, parens, and casts.
+    E = E->IgnoreUnlessSpelledInSource();
+    if (const auto *CE = dyn_cast<CallExpr>(E)) {
+        if (const auto *Callee = CE->getDirectCallee())
+            if (Callee->getNameAsString() == "singleReturnWrapper")
+                return true;
+    }
+    // Also check through CXXConstructExpr (implicit conversion via constructor).
+    if (const auto *CCE = dyn_cast<CXXConstructExpr>(E)) {
+        for (const auto *Arg : CCE->arguments())
+            if (isWrapperCall(Arg))
+                return true;
+    }
+    return false;
+}
+
 /// Visitor that counts return statements and detects SINGLE_RETURN_WRAPPER usage.
 class ReturnCounter : public RecursiveASTVisitor<ReturnCounter> {
 public:
-    unsigned Count = 0;
+    /// Number of return statements whose value is NOT a singleReturnWrapper call.
+    unsigned BareCount = 0;
+    /// Whether any singleReturnWrapper call exists in the body.
     bool HasWrapper = false;
 
-    bool VisitReturnStmt(ReturnStmt *) {
-        ++Count;
+    bool VisitReturnStmt(ReturnStmt *RS) {
+        if (!isWrapperCall(RS->getRetValue()))
+            ++BareCount;
         return true;
     }
 
@@ -46,9 +69,9 @@ public:
     bool TraverseLambdaExpr(LambdaExpr *) { return true; }
     bool TraverseBlockExpr(BlockExpr *) { return true; }
 
-    /// Returns true if the function needs wrapping: multiple returns,
-    /// or any return alongside an existing SINGLE_RETURN_WRAPPER.
-    bool needsWrapping() const { return Count > 1 || (Count > 0 && HasWrapper); }
+    /// Returns true if the function needs wrapping: multiple bare returns,
+    /// or any bare return alongside an existing SINGLE_RETURN_WRAPPER.
+    bool needsWrapping() const { return BareCount > 1 || (BareCount > 0 && HasWrapper); }
 };
 
 } // namespace
@@ -87,33 +110,51 @@ bool MultiReturnValCheck::containsValType(
 
     RD = RD->getDefinition();
 
+    // Check the per-TU cache first.
+    auto CacheIt = ContainsValCache.find(RD);
+    if (CacheIt != ContainsValCache.end())
+        return CacheIt->second;
+
     // Avoid infinite recursion on circular types.
     if (!Visited.insert(RD).second)
         return false;
 
+    bool Result = false;
+
     // Check base classes.
     for (const auto &Base : RD->bases()) {
-        if (containsValType(Base.getType(), Visited))
-            return true;
+        if (containsValType(Base.getType(), Visited)) {
+            Result = true;
+            break;
+        }
     }
 
     // Check fields.
-    for (const auto *Field : RD->fields()) {
-        if (containsValType(Field->getType(), Visited))
-            return true;
-    }
-
-    // Check template arguments (covers std::variant, std::optional, etc.).
-    if (const auto *CTSD = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
-        for (const auto &Arg : CTSD->getTemplateArgs().asArray()) {
-            if (Arg.getKind() == TemplateArgument::Type) {
-                if (containsValType(Arg.getAsType(), Visited))
-                    return true;
+    if (!Result) {
+        for (const auto *Field : RD->fields()) {
+            if (containsValType(Field->getType(), Visited)) {
+                Result = true;
+                break;
             }
         }
     }
 
-    return false;
+    // Check template arguments (covers std::variant, std::optional, etc.).
+    if (!Result) {
+        if (const auto *CTSD = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
+            for (const auto &Arg : CTSD->getTemplateArgs().asArray()) {
+                if (Arg.getKind() == TemplateArgument::Type) {
+                    if (containsValType(Arg.getAsType(), Visited)) {
+                        Result = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    ContainsValCache[RD] = Result;
+    return Result;
 }
 
 void MultiReturnValCheck::registerMatchers(MatchFinder *Finder) {
@@ -155,19 +196,28 @@ void MultiReturnValCheck::check(const MatchFinder::MatchResult &Result) {
     auto D = diag(Func->getLocation(),
                   "function %0 returns a type containing nautilus::val and has %1 "
                   "return statements; consider single return")
-             << Func << Counter.Count;
+             << Func << Counter.BareCount;
 
     // Only provide automatic fix when the return type is directly nautilus::val<T>
-    // and the function is defined in the main file (not a header), to avoid
-    // duplicate fixes when multiple TUs include the same header.
-    if (IsDirectVal &&
-        Result.SourceManager->isInMainFile(Func->getLocation())) {
-        const auto *Body = cast<CompoundStmt>(Func->getBody());
-        SourceLocation AfterLBrace = Body->getLBracLoc().getLocWithOffset(1);
-        SourceLocation RBrace = Body->getRBracLoc();
+    // by value (not a reference), and the function is not a lambda operator().
+    // Use FixedLocations to deduplicate fixes for the same source location
+    // (e.g. multiple template instantiations of the same function).
+    bool IsReference = Func->getReturnType()->isReferenceType();
+    bool IsLambda = false;
+    if (const auto *MD = dyn_cast<CXXMethodDecl>(Func))
+        IsLambda = MD->getParent()->isLambda();
 
-        D << FixItHint::CreateInsertion(AfterLBrace, "\nSINGLE_RETURN_WRAPPER({")
-          << FixItHint::CreateInsertion(RBrace, "});\n");
+    if (IsDirectVal && !IsReference && !IsLambda) {
+        SourceLocation BodyLoc = Func->getBody()->getBeginLoc();
+        if (FixedLocations.insert(BodyLoc).second) {
+            const auto *Body = cast<CompoundStmt>(Func->getBody());
+            SourceLocation AfterLBrace = Body->getLBracLoc().getLocWithOffset(1);
+            SourceLocation RBrace = Body->getRBracLoc();
+
+            D << FixItHint::CreateInsertion(AfterLBrace,
+                                            "\nreturn SINGLE_RETURN_WRAPPER({")
+              << FixItHint::CreateInsertion(RBrace, "});\n");
+        }
     }
 }
 

@@ -23,6 +23,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 
 namespace NES
 {
@@ -84,14 +85,16 @@ nautilus::val<bool> VariableSizedData::isValid() const
 
 nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
 {
+return SINGLE_RETURN_WRAPPER({
     if (size != rhs.size)
     {
-        return {false};
+        return nautilus::val<bool>(false);
     }
     const auto varSizedData = getContent();
     const auto rhsVarSizedData = rhs.getContent();
     const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
-    return {compareResult};
+    return nautilus::val<bool>(compareResult);
+});
 }
 
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const

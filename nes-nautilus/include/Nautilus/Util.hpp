@@ -14,12 +14,11 @@
 
 #pragma once
 
-#include <concepts>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <type_traits>
 #include <utility>
+
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -27,6 +26,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <val.hpp>
 
 namespace NES
@@ -117,17 +117,4 @@ static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
     std::unreachable();
 }
 
-template <typename Fn, typename... Args>
-requires(std::invocable<Fn, Args...>)
-auto singleReturnWrapper(Fn&& func, Args&&... args)
-{
-    auto result = std::invoke_result_t<Fn, Args...>(0);
-    result = std::invoke(std::forward<Fn>(func), std::forward<Args>(args)...);
-    return result;
 }
-
-}
-
-// NOLINTBEGIN(cppcoreguidelines-macro-usage)
-#define SINGLE_RETURN_WRAPPER(body) NES::singleReturnWrapper([&]() -> decltype(auto) body)
-// NOLINTEND(cppcoreguidelines-macro-usage)
