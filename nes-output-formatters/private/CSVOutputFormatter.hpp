@@ -62,6 +62,14 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
 private:
+    [[nodiscard]] nautilus::val<uint64_t> writeFieldDelimiter(
+        const nautilus::static_val<uint64_t>& fieldIndex,
+        const nautilus::val<int8_t*>& fieldPointer,
+        const nautilus::val<uint64_t>& remainingSize,
+        const nautilus::val<bool>& allowChildren,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
+
     bool escapeStrings;
     std::string fieldDelimiter;
     std::string tupleDelimiter;

@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -46,51 +47,31 @@
 
 namespace NES
 {
-CSVOutputFormatter::CSVOutputFormatter(const size_t numberOfFields, const OutputFormatterDescriptor& descriptor)
-    : OutputFormatter(numberOfFields)
-    , escapeStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::ESCAPE_STRINGS))
-    , fieldDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::FIELD_DELIMITER))
-    , tupleDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::TUPLE_DELIMITER))
+namespace
 {
-}
+constexpr uint64_t INVALID_WRITE_RETURN = std::numeric_limits<uint64_t>::max();
 
-nautilus::val<uint64_t> CSVOutputFormatter::getFormattedValue(
-    VarVal value,
-    const Record::RecordFieldIdentifier&,
-    const DataType& fieldType,
-    const nautilus::static_val<uint64_t>& fieldIndex,
+nautilus::val<uint64_t> writeVarsizedValue(
+    const VariableSizedData& varSizedValue,
     const nautilus::val<int8_t*>& fieldPointer,
     const nautilus::val<uint64_t>& remainingSize,
     const nautilus::val<bool>& allowChildren,
     const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const bool escapeStrings)
 {
-    nautilus::val<uint64_t> written(0);
-    nautilus::val<uint64_t> currentRemainingSize = remainingSize;
-    if (fieldType.type != DataType::Type::VARSIZED)
+    /// Calculate the size of the content that needs to be written
+    const nautilus::val<uint64_t> amountToWrite = varSizedValue.getSize() + nautilus::val<uint8_t>(escapeStrings) * 2;
+
+    nautilus::val<uint64_t> result(0);
+    if (amountToWrite > remainingSize)
     {
-        /// Convert the VarVal to a string and write it into the address.
-        nautilus::val<uint64_t> amountWritten
-            = formatAndWriteVal(value, fieldType, fieldPointer, currentRemainingSize, allowChildren, recordBuffer, bufferProvider);
-        if (amountWritten == INVALID_WRITE_RETURN)
+        if (!allowChildren)
         {
-            return INVALID_WRITE_RETURN;
+            result = INVALID_WRITE_RETURN;
         }
-        written += amountWritten;
-        currentRemainingSize -= amountWritten;
-    }
-    else
-    {
-        /// For varsized values, we cast to VariableSizedData and access the formatted string that way
-        const auto varSizedValue = value.cast<VariableSizedData>();
-        /// Calculate the size of the content that needs to be written
-        const nautilus::val<uint64_t> amountToWrite = varSizedValue.getSize() + nautilus::val<uint8_t>(escapeStrings) * 2;
-        if (amountToWrite > currentRemainingSize)
+        else
         {
-            if (!allowChildren)
-            {
-                return INVALID_WRITE_RETURN;
-            }
             /// Convert the varsized value to a string and allocate child memory to fully write it
             nautilus::invoke(
                 +[](int8_t* bufferStartingAddress,
@@ -109,36 +90,78 @@ nautilus::val<uint64_t> CSVOutputFormatter::getFormattedValue(
                     writeWithChildBuffers(stringFormattedValue, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
                 },
                 fieldPointer,
-                currentRemainingSize,
+                remainingSize,
                 nautilus::val<bool>(escapeStrings),
                 varSizedValue.getContent(),
                 varSizedValue.getSize(),
                 recordBuffer.getReference(),
                 bufferProvider);
-            /// We only keep track of the bytes written in the main record buffer, so we only increment by the remaining size
-            written += currentRemainingSize;
-            currentRemainingSize -= currentRemainingSize;
-        }
-        else
-        {
-            /// Copy varsized value into the record buffer without invoke
-            if (escapeStrings)
-            {
-                nautilus::memcpy(fieldPointer, nautilus::val<const char*>("\""), 1);
-                written += 1;
-                currentRemainingSize -= 1;
-            }
-            nautilus::memcpy(fieldPointer + written, varSizedValue.getContent(), varSizedValue.getSize());
-            written += varSizedValue.getSize();
-            currentRemainingSize -= varSizedValue.getSize();
-            if (escapeStrings)
-            {
-                nautilus::memcpy(fieldPointer + written, nautilus::val<const char*>("\""), 1);
-                written += 1;
-                currentRemainingSize -= 1;
-            }
+            result = remainingSize;
         }
     }
+    else
+    {
+        /// Copy varsized value into the record buffer without invoke
+        nautilus::val<uint64_t> offset(0);
+        if (escapeStrings)
+        {
+            nautilus::memcpy(fieldPointer + offset, nautilus::val<const char*>("\""), 1);
+            offset += 1;
+        }
+        nautilus::memcpy(fieldPointer + offset, varSizedValue.getContent(), varSizedValue.getSize());
+        offset += varSizedValue.getSize();
+        if (escapeStrings)
+        {
+            nautilus::memcpy(fieldPointer + offset, nautilus::val<const char*>("\""), 1);
+            offset += 1;
+        }
+        result = amountToWrite;
+    }
+    return result;
+}
+
+nautilus::val<uint64_t> writeFieldValue(
+    VarVal value,
+    const DataType& fieldType,
+    const nautilus::val<int8_t*>& fieldPointer,
+    const nautilus::val<uint64_t>& remainingSize,
+    const nautilus::val<bool>& allowChildren,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const bool escapeStrings)
+{
+    nautilus::val<uint64_t> result(0);
+    if (fieldType.type != DataType::Type::VARSIZED)
+    {
+        /// Convert the VarVal to a string and write it into the address.
+        result = formatAndWriteVal(value, fieldType, fieldPointer, remainingSize, allowChildren, recordBuffer, bufferProvider);
+    }
+    else
+    {
+        /// For varsized values, we cast to VariableSizedData and access the formatted string that way
+        const auto varSizedValue = value.cast<VariableSizedData>();
+        result = writeVarsizedValue(varSizedValue, fieldPointer, remainingSize, allowChildren, recordBuffer, bufferProvider, escapeStrings);
+    }
+    return result;
+}
+}
+
+CSVOutputFormatter::CSVOutputFormatter(const size_t numberOfFields, const OutputFormatterDescriptor& descriptor)
+    : OutputFormatter(numberOfFields)
+    , escapeStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::ESCAPE_STRINGS))
+    , fieldDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::FIELD_DELIMITER))
+    , tupleDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::TUPLE_DELIMITER))
+{
+}
+
+nautilus::val<uint64_t> CSVOutputFormatter::writeFieldDelimiter(
+    const nautilus::static_val<uint64_t>& fieldIndex,
+    const nautilus::val<int8_t*>& fieldPointer,
+    const nautilus::val<uint64_t>& remainingSize,
+    const nautilus::val<bool>& allowChildren,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
     /// Write either the field delimiter or the tuple delimiter, depending on the field index
     nautilus::val<const char*> delimiter("");
     if (fieldIndex == nautilus::val<uint64_t>(numberOfFields) - 1)
@@ -150,36 +173,73 @@ nautilus::val<uint64_t> CSVOutputFormatter::getFormattedValue(
         delimiter = fieldDelimiter.c_str();
     }
 
-    nautilus::val delimiterLength(nautilus::strlen(delimiter));
-    if (delimiterLength > currentRemainingSize)
+    const nautilus::val delimiterLength(nautilus::strlen(delimiter));
+
+    nautilus::val<uint64_t> result(0);
+    if (delimiterLength > remainingSize)
     {
         if (!allowChildren)
         {
-            return INVALID_WRITE_RETURN;
+            result = INVALID_WRITE_RETURN;
         }
-        nautilus::invoke(
-            +[](const char* delimiterPointer,
-                const uint64_t remainingSpace,
-                int8_t* bufferStartingAddress,
-                TupleBuffer* tupleBuffer,
-                AbstractBufferProvider* bufferProvider)
-            {
-                const std::string delimiterString(delimiterPointer);
-                writeWithChildBuffers(delimiterString, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-            },
-            delimiter,
-            currentRemainingSize,
-            fieldPointer + written,
-            recordBuffer.getReference(),
-            bufferProvider);
-        written += currentRemainingSize;
+        else
+        {
+            nautilus::invoke(
+                +[](const char* delimiterPointer,
+                    const uint64_t remainingSpace,
+                    int8_t* bufferStartingAddress,
+                    TupleBuffer* tupleBuffer,
+                    AbstractBufferProvider* bufferProvider)
+                {
+                    const std::string delimiterString(delimiterPointer);
+                    writeWithChildBuffers(delimiterString, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+                },
+                delimiter,
+                remainingSize,
+                fieldPointer,
+                recordBuffer.getReference(),
+                bufferProvider);
+            result = remainingSize;
+        }
     }
     else
     {
-        nautilus::memcpy(fieldPointer + written, delimiter, delimiterLength);
-        written += delimiterLength;
+        nautilus::memcpy(fieldPointer, delimiter, delimiterLength);
+        result = delimiterLength;
     }
-    return written;
+    return result;
+}
+
+nautilus::val<uint64_t> CSVOutputFormatter::getFormattedValue(
+    VarVal value,
+    const Record::RecordFieldIdentifier&,
+    const DataType& fieldType,
+    const nautilus::static_val<uint64_t>& fieldIndex,
+    const nautilus::val<int8_t*>& fieldPointer,
+    const nautilus::val<uint64_t>& remainingSize,
+    const nautilus::val<bool>& allowChildren,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
+    /// Write the value
+    const nautilus::val<uint64_t> valueBytesWritten
+        = writeFieldValue(value, fieldType, fieldPointer, remainingSize, allowChildren, recordBuffer, bufferProvider, escapeStrings);
+
+    /// Write the delimiter
+    const nautilus::val<uint64_t> delimiterBytesWritten = writeFieldDelimiter(
+        fieldIndex, fieldPointer + valueBytesWritten, remainingSize - valueBytesWritten, allowChildren, recordBuffer, bufferProvider);
+
+    nautilus::val<uint64_t> result(0);
+    if (valueBytesWritten != INVALID_WRITE_RETURN && delimiterBytesWritten != INVALID_WRITE_RETURN)
+    {
+        result = valueBytesWritten + delimiterBytesWritten;
+    }
+    else
+    {
+        result = INVALID_WRITE_RETURN;
+    }
+
+    return result;
 }
 
 std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)

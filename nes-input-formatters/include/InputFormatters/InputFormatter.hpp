@@ -127,12 +127,8 @@ public:
             nautilus::val<const InputFormatter*>(this),
             arenaRef.getArena()));
 
-        if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
-        {
-            return {false};
-        }
-
-        return {true};
+        nautilus::val<bool> result = *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat));
+        return !result;
     }
 
     /// Executes the second phase, which iterates over a (raw) buffer, reading specific records and fields from a (raw) buffer

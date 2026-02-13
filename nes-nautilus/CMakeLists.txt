@@ -38,6 +38,7 @@ target_include_directories(nes-nautilus PUBLIC
 # Link with the nautilus library
 find_package(spdlog REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
+find_package(cpptrace REQUIRED CONFIG)
 find_package(nautilus REQUIRED CONFIG)
 
 # We have to set the nes-nautilus to public to use the nautilus library in other modules

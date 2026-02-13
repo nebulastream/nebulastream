@@ -22,6 +22,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
@@ -55,6 +56,15 @@ public:
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
+
+private:
+    [[nodiscard]] nautilus::val<uint64_t> writeFieldDelimiter(
+        const nautilus::static_val<uint64_t>& fieldIndex,
+        const nautilus::val<int8_t*>& fieldPointer,
+        const nautilus::val<uint64_t>& remainingSize,
+        const nautilus::val<bool>& allowChildren,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
 };
 
 }
