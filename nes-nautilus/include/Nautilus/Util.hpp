@@ -21,12 +21,12 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Nautilus/SingleReturnWrapper.hpp>
 #include <val.hpp>
 
 namespace NES
@@ -86,35 +86,37 @@ VarVal createNautilusMaxValue(DataType::Type physicalType);
 template <typename T>
 static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
 {
-    switch (physicalType)
-    {
-        case DataType::Type::INT8:
-            return VarVal(nautilus::val<int8_t>(value));
-        case DataType::Type::INT16:
-            return VarVal(nautilus::val<int16_t>(value));
-        case DataType::Type::INT32:
-            return VarVal(nautilus::val<int32_t>(value));
-        case DataType::Type::INT64:
-            return VarVal(nautilus::val<int64_t>(value));
-        case DataType::Type::UINT8:
-            return VarVal(nautilus::val<uint8_t>(value));
-        case DataType::Type::UINT16:
-            return VarVal(nautilus::val<uint16_t>(value));
-        case DataType::Type::UINT32:
-            return VarVal(nautilus::val<uint32_t>(value));
-        case DataType::Type::UINT64:
-            return VarVal(nautilus::val<uint64_t>(value));
-        case DataType::Type::FLOAT32:
-            return VarVal(nautilus::val<float>(value));
-        case DataType::Type::FLOAT64:
-            return VarVal(nautilus::val<double>(value));
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
-        case DataType::Type::VARSIZED:
-        case DataType::Type::UNDEFINED:
-            throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(physicalType));
-    }
-    std::unreachable();
+    return SINGLE_RETURN_WRAPPER({
+        switch (physicalType)
+        {
+            case DataType::Type::INT8:
+                return VarVal(nautilus::val<int8_t>(value));
+            case DataType::Type::INT16:
+                return VarVal(nautilus::val<int16_t>(value));
+            case DataType::Type::INT32:
+                return VarVal(nautilus::val<int32_t>(value));
+            case DataType::Type::INT64:
+                return VarVal(nautilus::val<int64_t>(value));
+            case DataType::Type::UINT8:
+                return VarVal(nautilus::val<uint8_t>(value));
+            case DataType::Type::UINT16:
+                return VarVal(nautilus::val<uint16_t>(value));
+            case DataType::Type::UINT32:
+                return VarVal(nautilus::val<uint32_t>(value));
+            case DataType::Type::UINT64:
+                return VarVal(nautilus::val<uint64_t>(value));
+            case DataType::Type::FLOAT32:
+                return VarVal(nautilus::val<float>(value));
+            case DataType::Type::FLOAT64:
+                return VarVal(nautilus::val<double>(value));
+            case DataType::Type::BOOLEAN:
+            case DataType::Type::CHAR:
+            case DataType::Type::VARSIZED:
+            case DataType::Type::UNDEFINED:
+                throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(physicalType));
+        }
+        std::unreachable();
+    });
 }
 
 }

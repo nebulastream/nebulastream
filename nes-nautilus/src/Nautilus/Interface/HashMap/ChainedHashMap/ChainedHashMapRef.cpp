@@ -23,12 +23,12 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/SingleReturnWrapper.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMapRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/static.hpp>
@@ -172,19 +172,19 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noe
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Record& recordKey, const HashFunction::HashValue& hash) const
 {
-return SINGLE_RETURN_WRAPPER({
-    auto entry = findChain(hash);
-    while (entry)
-    {
-        const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
-        if (compareKeys(entryRef, recordKey))
+    return SINGLE_RETURN_WRAPPER({
+        auto entry = findChain(hash);
+        while (entry)
         {
-            return nautilus::val<ChainedHashMapEntry*>(entry);
+            const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
+            if (compareKeys(entryRef, recordKey))
+            {
+                return nautilus::val<ChainedHashMapEntry*>(entry);
+            }
+            entry = entryRef.getNext();
         }
-        entry = entryRef.getNext();
-    }
-    return nautilus::val<ChainedHashMapEntry*>(nullptr);
-});
+        return nautilus::val<ChainedHashMapEntry*>(nullptr);
+    });
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findEntry(const ChainedEntryRef& otherEntryRef) const
@@ -207,39 +207,39 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-return SINGLE_RETURN_WRAPPER({
-    /// Calculating the hash value of the keys and finding the entry.
-    /// We can use here a std::vector to store the read VarValues of the keyFunction, as the number of keys does not change between
-    /// tracing and run time of the compiled query
-    std::vector<VarVal> keyValues;
-    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
-    {
-        const auto& keyValue = recordKey.read(fieldIdentifier);
-        keyValues.emplace_back(keyValue);
-    }
+    return SINGLE_RETURN_WRAPPER({
+        /// Calculating the hash value of the keys and finding the entry.
+        /// We can use here a std::vector to store the read VarValues of the keyFunction, as the number of keys does not change between
+        /// tracing and run time of the compiled query
+        std::vector<VarVal> keyValues;
+        for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
+        {
+            const auto& keyValue = recordKey.read(fieldIdentifier);
+            keyValues.emplace_back(keyValue);
+        }
 
-    ///  If entry contains nullptr, there does not exist a key with the same values.
-    const auto hashValue = hashFunction.calculate(keyValues);
-    if (const auto entryRef = findKey(recordKey, hashValue))
-    {
-        return nautilus::val<AbstractHashMapEntry*>(static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef));
-    }
+        ///  If entry contains nullptr, there does not exist a key with the same values.
+        const auto hashValue = hashFunction.calculate(keyValues);
+        if (const auto entryRef = findKey(recordKey, hashValue))
+        {
+            return nautilus::val<AbstractHashMapEntry*>(static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef));
+        }
 
-    /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntry = insert(hashValue, bufferProvider);
-    const auto newEntryRef = ChainedEntryRef(newEntry, hashMapRef, fieldKeys, fieldValues);
-    newEntryRef.copyKeysToEntry(recordKey, bufferProvider);
+        /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
+        const auto newEntry = insert(hashValue, bufferProvider);
+        const auto newEntryRef = ChainedEntryRef(newEntry, hashMapRef, fieldKeys, fieldValues);
+        newEntryRef.copyKeysToEntry(recordKey, bufferProvider);
 
 
-    /// Calling the onInsert lambda function to insert values or anything else that the user wants.
-    auto castedEntryRef = static_cast<nautilus::val<AbstractHashMapEntry*>>(newEntryRef.entryRef);
-    if (onInsert)
-    {
-        onInsert(castedEntryRef);
-    }
+        /// Calling the onInsert lambda function to insert values or anything else that the user wants.
+        auto castedEntryRef = static_cast<nautilus::val<AbstractHashMapEntry*>>(newEntryRef.entryRef);
+        if (onInsert)
+        {
+            onInsert(castedEntryRef);
+        }
 
-    return nautilus::val<AbstractHashMapEntry*>(castedEntryRef);
-});
+        return nautilus::val<AbstractHashMapEntry*>(castedEntryRef);
+    });
 }
 
 void ChainedHashMapRef::insertOrUpdateEntry(
@@ -306,22 +306,22 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
-return SINGLE_RETURN_WRAPPER({
-    const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
-    const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
-    if (numberOfTuples == 0)
-    {
-        return nautilus::val<ChainedHashMapEntry*>(nullptr);
-    }
+    return SINGLE_RETURN_WRAPPER({
+        const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
+        const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
+        if (numberOfTuples == 0)
+        {
+            return nautilus::val<ChainedHashMapEntry*>(nullptr);
+        }
 
-    const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
-    auto mask = readValueFromMemRef<uint64_t>(maskRef);
-    const auto entryStartPos = hash & mask;
-    const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
-    auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
-    const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
-    return nautilus::val<ChainedHashMapEntry*>(chainStart);
-});
+        const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
+        auto mask = readValueFromMemRef<uint64_t>(maskRef);
+        const auto entryStartPos = hash & mask;
+        const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
+        auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
+        const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
+        return nautilus::val<ChainedHashMapEntry*>(chainStart);
+    });
 }
 
 nautilus::val<ChainedHashMapEntry*>
@@ -338,16 +338,16 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
 
 nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const
 {
-return SINGLE_RETURN_WRAPPER({
-    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
-    {
-        if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier))
+    return SINGLE_RETURN_WRAPPER({
+        for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
         {
-            return false;
+            if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier))
+            {
+                return false;
+            }
         }
-    }
-    return true;
-});
+        return true;
+    });
 }
 
 ChainedHashMapRef::ChainedHashMapRef(
@@ -399,6 +399,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
 {
 }
 
+///NOLINTNEXTLINE(nes-multi-return-val)
 ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
 {
     /// We have to increment the tupleIndex, as we have seen a new tuple.

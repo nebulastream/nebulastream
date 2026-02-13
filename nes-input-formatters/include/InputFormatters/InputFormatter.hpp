@@ -120,19 +120,21 @@ public:
     /// to the second phase, which uses the index to access specific records/fields
     [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
     {
-        /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
-        const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
-            indexLeadingSpanningTupleAndBufferProxy,
-            recordBuffer.getReference(),
-            nautilus::val<const InputFormatter*>(this),
-            arenaRef.getArena()));
+        return SINGLE_RETURN_WRAPPER({
+            /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
+            const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
+                indexLeadingSpanningTupleAndBufferProxy,
+                recordBuffer.getReference(),
+                nautilus::val<const InputFormatter*>(this),
+                arenaRef.getArena()));
 
-        if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
-        {
-            return {false};
-        }
+            if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
+            {
+                return nautilus::val<bool>{false};
+            }
 
-        return {true};
+            return nautilus::val<bool>{true};
+        });
     }
 
     /// Executes the second phase, which iterates over a (raw) buffer, reading specific records and fields from a (raw) buffer

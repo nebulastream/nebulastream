@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-option(NES_ENABLE_TIDY_CHECKS "Build custom NES clang-tidy checks" OFF)
+option(NES_ENABLE_TIDY_CHECKS "Build custom NES clang-tidy checks" ON)
 
 if (NES_ENABLE_TIDY_CHECKS)
     add_subdirectory(nes-tidy)

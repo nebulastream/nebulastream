@@ -231,6 +231,7 @@ public:
     {
     }
 
+    ///NOLINTNEXTLINE(nes-multi-return-val)
     std::optional<Record> getNextTuple()
     {
         if (currentTupleIdx >= buffers.at(currentBufferIdx).getNumberOfTuples())

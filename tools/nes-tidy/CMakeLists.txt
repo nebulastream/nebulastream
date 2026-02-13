@@ -22,9 +22,11 @@ add_library(NesClangTidyChecks MODULE
 )
 
 target_include_directories(NesClangTidyChecks PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+target_include_directories(NesClangTidyChecks SYSTEM PRIVATE
     ${LLVM_INCLUDE_DIRS}
     ${CLANG_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(NesClangTidyChecks PRIVATE
