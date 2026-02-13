@@ -289,6 +289,15 @@ std::chrono::duration<double> RunningQuery::getElapsedTime() const
     return std::chrono::duration_cast<std::chrono::duration<double>>(stop.value() - running.value());
 }
 
+std::chrono::duration<double> RunningQuery::getSetupTime() const
+{
+    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+    const auto start = queryStatus.metrics.start;
+    const auto running = queryStatus.metrics.running;
+    INVARIANT(start.has_value() && running.has_value(), "Query {} has no timestamps attached", queryId);
+    return std::chrono::duration_cast<std::chrono::duration<double>>(running.value() - start.value());
+}
+
 std::string RunningQuery::getThroughput() const
 {
     INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");

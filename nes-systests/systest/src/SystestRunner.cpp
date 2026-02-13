@@ -316,8 +316,9 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         }
         const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
         resultJson.push_back({
-            {"query name", queryRan.systestQuery.testName},
+            {"query name", fmt::format("{}:{}", queryRan.systestQuery.testName, queryRan.systestQuery.queryIdInFile)},
             {"time", executionTimeInSeconds},
+            {"setupTime", queryRan.getSetupTime().count()},
             {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
             {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
         });
@@ -406,8 +407,11 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 
         auto errorMessage = checkResult(*ranQueries.back());
         ranQueries.back()->passed = not errorMessage.has_value();
-        const auto queryPerformanceMessage
-            = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
+        const auto queryPerformanceMessage = fmt::format(
+            " in {} ({}) setup: {}",
+            ranQueries.back()->getElapsedTime(),
+            ranQueries.back()->getThroughput(),
+            ranQueries.back()->getSetupTime());
         progressTracker.incrementQueryCounter();
         printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), progressTracker, queryPerformanceMessage);
     }
