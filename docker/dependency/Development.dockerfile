@@ -8,6 +8,7 @@ ARG ANTLR4_VERSION=4.13.2
 RUN apt-get update -y && apt-get install -y \
         clang-format-${LLVM_TOOLCHAIN_VERSION} \
         clang-tidy-${LLVM_TOOLCHAIN_VERSION} \
+        libclang-${LLVM_TOOLCHAIN_VERSION}-dev \
         lldb-${LLVM_TOOLCHAIN_VERSION} \
         gdb \
         python3-venv \

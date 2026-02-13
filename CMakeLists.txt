@@ -243,6 +243,8 @@ foreach (NES_DIR ${NES_DIRECTORIES_ALL})
     endif ()
 endforeach ()
 
+add_subdirectory(tools)
+
 # Other configurations
 project_enable_format()
 
