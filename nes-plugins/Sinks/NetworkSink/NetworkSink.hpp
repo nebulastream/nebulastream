@@ -63,7 +63,7 @@ public:
 class NetworkSink final : public Sink
 {
 public:
-    constexpr static auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(25);
+    constexpr static auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
 
     static const std::string& name()
     {
