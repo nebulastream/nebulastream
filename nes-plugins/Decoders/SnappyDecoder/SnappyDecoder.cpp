@@ -14,16 +14,19 @@
 #include <SnappyDecoder.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 #include <snappy.h>
 #include <Runtime/TupleBuffer.hpp>
+#include <crc32c/crc32c.h>
 #include <DecoderRegistry.hpp>
 
 namespace NES
@@ -62,16 +65,28 @@ void SnappyDecoder::decodeAndEmit(
                     /// We need to obtain more buffers before being able to decode
                     return;
                 }
-                /// Pure payload without header. We need to skip the 4 byte header and the 4 byte checksum at the start of the payload
+                /// Get checksum
+                uint32_t checksum = 0;
+                std::memcpy(&checksum, &encodedBufferStorage[4], 4);
+
+                /// Pure payload without header & checksum
                 const char* encodedData = &encodedBufferStorage[8];
                 /// We use a string as decoded data sink, since the decompress function expects this.
                 std::string decodedString;
                 /// Length of the body, without the checksum
-                uint32_t payloadLength = length - 4;
+                const uint32_t payloadLength = length - 4;
 
                 if (!snappy::Uncompress(encodedData, payloadLength, &decodedString))
                 {
                     NES_ERROR("Decompression of snappy encoded frame failed!")
+                    return;
+                }
+                /// Calculate the checksum of the decompressed content & compare
+                const uint32_t unmaskedChecksum = crc32c::Crc32c(decodedString);
+                const uint32_t maskedChecksum = ((unmaskedChecksum >> 15) | (unmaskedChecksum << 17)) + 0xa282ead8;
+                if (checksum != maskedChecksum)
+                {
+                    NES_ERROR("Decompressed snappy payload checksum does not match. Possible data corruption");
                     return;
                 }
                 size_t emittedBytes = 0;
@@ -159,16 +174,61 @@ void SnappyDecoder::decodeAndEmit(
     }
 }
 
-Decoder::DecodingResult SnappyDecoder::decodeBuffer(std::span<const std::byte> src, std::vector<char>&) const
+Decoder::DecodingResult SnappyDecoder::decodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const
 {
-    /// Src should hold an entire snappy frame. This means that at least the 4 byte header is included
-    /// This function should also only be called on decodeab
-    if (src.size_bytes() < 4)
+    size_t currentSrcPosition = 0;
+    size_t currentDstPosition = 0;
+
+    /// Decompress src frame by frame. It is to be expected that src only contains full, valid frames
+    while (currentSrcPosition < src.size_bytes())
     {
-        return DecodingResult{DecodingResultStatus::DECODING_ERROR, 0};
+        /// Check, if enough bytes to contain the header are available
+        if (src.size_bytes() - currentSrcPosition < 8)
+        {
+            NES_ERROR("Error during snappy buffer decoding: Src buffer contains incomplete frame.");
+            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
+        }
+
+        /// Currently, this is only used to decompress snappy buffers produced by this systems encodeBuffer method for snappy.
+        /// This method only produces compressed chunks. Therefore, the chunk identifier should always be 0.
+        /// We assume that this is the case to avoid a branch here and skip to the length.
+        uint32_t chunkLength = 0;
+        std::memcpy(&chunkLength, src.data() + currentSrcPosition + 1, 3);
+        /// Get checksum
+        uint32_t checksum = 0;
+        std::memcpy(&checksum, src.data() + currentSrcPosition + 4, 4);
+
+        /// Check if frame contains the whole payload
+        if (src.size_bytes() - (currentSrcPosition + 4) < chunkLength)
+        {
+            NES_ERROR("Error during snappy buffer decoding: Src buffer contains incomplete frame.");
+            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
+        }
+        std::string decompressedString;
+        /// Decompress buffer
+        if (!snappy::Uncompress(reinterpret_cast<const char*>(src.data() + currentSrcPosition + 8), chunkLength - 4, &decompressedString))
+        {
+            NES_ERROR("Decompression of snappy frame failed.");
+            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
+        }
+
+        /// Calculate checksum
+        const uint32_t unmaskedChecksum = crc32c::Crc32c(decompressedString);
+        const uint32_t maskedChecksum = ((unmaskedChecksum >> 15) | (unmaskedChecksum << 17)) + 0xa282ead8;
+        if (maskedChecksum != checksum)
+        {
+            NES_ERROR("Checksum of decompressed snappy data does not match frame checksum. Possible corruption of payload.");
+            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
+        }
+
+        /// Write the decompressed content into dst. Dst is assumed to have allocated enough memory
+        std::memcpy(dst.data() + currentDstPosition, decompressedString.c_str(), decompressedString.size());
+
+        /// Update positions
+        currentSrcPosition += chunkLength + 4;
+        currentDstPosition += decompressedString.size();
     }
-    /// TBD
-    return DecodingResult{DecodingResultStatus::SUCCESSFULLY_DECODED, 0};
+    return DecodingResult(DecodingResultStatus::SUCCESSFULLY_DECODED, currentDstPosition);
 }
 
 std::ostream& SnappyDecoder::toString(std::ostream& str) const

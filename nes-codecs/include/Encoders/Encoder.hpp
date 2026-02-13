@@ -15,9 +15,10 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <ostream>
 #include <span>
 #include <vector>
-#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {

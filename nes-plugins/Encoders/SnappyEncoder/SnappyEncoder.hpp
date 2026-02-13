@@ -13,40 +13,28 @@
 */
 
 #pragma once
-
 #include <cstddef>
-#include <memory>
 #include <ostream>
 #include <span>
-#include <string>
 #include <vector>
 #include <Encoders/Encoder.hpp>
-#include <lz4frame.h>
 
 namespace NES
 {
-/// Encoder to encode a batch of data into the framing-LZ4 format
-/// Will create a full frame for every method call.
-
-class LZ4Encoder final : public Encoder
+/// Transforms a batch of data into the snappy framing format. Might produce multiple frames, since only 65536 bytes can be compressed into one frame.
+class SnappyEncoder final : public Encoder
 {
 public:
-    explicit LZ4Encoder();
-    ~LZ4Encoder() override;
-
-    LZ4Encoder(const LZ4Encoder&) = delete;
-    LZ4Encoder& operator=(const LZ4Encoder&) = delete;
-    LZ4Encoder(LZ4Encoder&&) = delete;
-    LZ4Encoder& operator=(LZ4Encoder&&) = delete;
+    explicit SnappyEncoder();
+    ~SnappyEncoder() override;
+    
+    SnappyEncoder(const SnappyEncoder&) = delete;
+    SnappyEncoder& operator=(const SnappyEncoder&) = delete;
+    SnappyEncoder(SnappyEncoder&&) = delete;
+    SnappyEncoder& operator=(SnappyEncoder&&) = delete;
 
     [[nodiscard]] EncodingResult encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const override;
-
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-
-private:
-    /// Includes all compression options like block size, linkage, compression level etc.
-    /// Will currently be set to default settings but has potential for future customization
-    LZ4F_preferences_t preferences;
 };
 }

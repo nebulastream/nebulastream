@@ -14,6 +14,10 @@ include(FetchContent)
 # Snappy
 set(SNAPPY_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(SNAPPY_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(CRC32C_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(CRC32C_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(CRC32C_USE_GLOG OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
         snappy
         GIT_REPOSITORY https://github.com/google/snappy.git
@@ -25,6 +29,14 @@ if(TARGET snappy)
     target_compile_options(snappy PRIVATE -Wno-error=sign-compare)
 endif()
 
+# Library for checksum calculations
+FetchContent_Declare(
+        crc32c
+        GIT_REPOSITORY https://github.com/google/crc32c.git
+        GIT_TAG 1.1.2
+)
+FetchContent_MakeAvailable(crc32c)
+
 add_plugin_as_library(Snappy Decoder nes-codecs-registry snappy_decoder_plugin_library SnappyDecoder.cpp)
 target_include_directories(snappy_decoder_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
-target_link_libraries(snappy_decoder_plugin_library PRIVATE snappy)
+target_link_libraries(snappy_decoder_plugin_library PRIVATE snappy crc32c)

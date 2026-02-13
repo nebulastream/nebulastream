@@ -14,6 +14,10 @@
 
 #pragma once
 
+#include <cstddef>
+#include <ostream>
+#include <span>
+#include <vector>
 #include <Encoders/Encoder.hpp>
 
 namespace NES
@@ -22,16 +26,17 @@ namespace NES
 /// A single batch is encoded into a whole frame
 class ZstdEncoder final : public Encoder
 {
-    public:
+public:
     explicit ZstdEncoder();
     ~ZstdEncoder() override;
-    
+
     ZstdEncoder(const ZstdEncoder&) = delete;
     ZstdEncoder& operator=(const ZstdEncoder&) = delete;
     ZstdEncoder(ZstdEncoder&&) = delete;
     ZstdEncoder& operator=(ZstdEncoder&&) = delete;
 
     [[nodiscard]] EncodingResult encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const override;
+protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 };
 }
