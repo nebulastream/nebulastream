@@ -31,7 +31,7 @@ add_custom_command(
         COMMENT "Building Zstd"
 )
 add_custom_target(BuildZstd DEPENDS ${ZSTD_LIBRARY})
-# Specify where the built libraries and headers are locatedS
+# Specify where the built libraries and headers are located
 set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
 
 add_plugin_as_library(Zstd Decoder nes-codecs-registry zstd_decoder_plugin_library ZstdDecoder.cpp)

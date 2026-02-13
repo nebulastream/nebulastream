@@ -24,6 +24,7 @@ activate_optional_plugin("Decoders/ZstdDecoder" ON)
 activate_optional_plugin("Sources/NetworkSource" ON)
 activate_optional_plugin("Sinks/NetworkSink" ON)
 activate_optional_plugin("Decoders/SnappyDecoder" ON)
+activate_optional_plugin("Encoders/ZstdEncoder" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

@@ -77,7 +77,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         {{"channel", channel.id.getRawValue()},
          {"bind", channel.downstreamNode.getRawValue()},
          {"host", channel.downstreamNode.getRawValue()},
-         {"codec", "LZ4"}});
+         {"codec", "None"}});
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
@@ -89,7 +89,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
          {"bind", channel.upstreamNode.getRawValue()},
          {"host", channel.upstreamNode.getRawValue()},
          {"connection", channel.downstreamNode.getRawValue()},
-         {"codec", "LZ4"}});
+         {"codec", "None"}});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();

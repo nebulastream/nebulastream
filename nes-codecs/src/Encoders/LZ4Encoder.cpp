@@ -47,7 +47,7 @@ Encoder::EncodingResult LZ4Encoder::encodeBuffer(std::span<const std::byte> src,
     const size_t compressedSize = LZ4F_compressFrame(dst.data(), worstCaseSize, src.data(), src.size_bytes(), &preferences);
     if (LZ4F_isError(compressedSize))
     {
-        NES_WARNING("Error occurred during LZ4 Encoding operation: {}", LZ4F_getErrorName(compressedSize));
+        NES_ERROR("Error occurred during LZ4 Encoding operation: {}", LZ4F_getErrorName(compressedSize));
         return EncodingResult(EncodeStatusType::ENCODING_ERROR, 0);
     }
     return EncodingResult(EncodeStatusType::SUCCESSFULLY_ENCODED, compressedSize);
