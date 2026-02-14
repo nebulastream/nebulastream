@@ -138,7 +138,7 @@ struct TypedPhysicalOperator
     /// Constructs a LogicalOperator from a concrete operator type.
     /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
     /// @param op The operator to wrap.
-    template <PhysicalOperatorConcept T>
+    template <typename T>
     TypedPhysicalOperator(const T& op) : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
