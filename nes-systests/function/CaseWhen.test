@@ -17,6 +17,7 @@ ATTACH INLINE
 10,0.95,true,false
 
 CREATE SINK simple_signal(intersection.intersection_id INT32, signal VARSIZED) TYPE File;
+CREATE SINK traffic_light(intersection.intersection_id INT32, signal_command VARSIZED) TYPE File;
 
 # Minimal conditional: single condition with default (two-way branch)
 SELECT intersection_id,
@@ -37,5 +38,30 @@ INTO simple_signal;
 9,GO
 10,STOP
 
-CREATE SINK traffic_light(intersection.intersection_id INT32, signal_command VARSIZED) TYPE File;
-# TODO: write the systest shown on the slides
+# All five branches are taken: emergency, pedestrian+low density, high density, medium density, and default.
+# Rows 6-10 test priority ordering when multiple conditions could match:
+#   Row 6: emergency + pedestrian both true -> first branch (emergency) wins
+#   Row 7: pedestrian=true but density too high for branch 2, falls through to branch 3
+#   Row 8: pedestrian=true but density too high for branch 2, density not > 0.8, falls to branch 4
+#   Row 9: pedestrian=true but density not < 0.2, density not > 0.5, falls to default
+#   Row 10: emergency=true with high density -> branch 1 wins over branch 3
+SELECT intersection_id,
+       Conditional(emergency_vehicle_detected, VARSIZED("ALL_RED_EMERGENCY"),
+                   pedestrian_waiting AND traffic_density < FLOAT32(0.2), VARSIZED("PEDESTRIAN_WALK"),
+                   traffic_density > FLOAT32(0.8), VARSIZED("GREEN_EXTENDED"),
+                   traffic_density > FLOAT32(0.5), VARSIZED("GREEN_STANDARD"),
+                   VARSIZED("FLASHING_YELLOW"))
+       AS signal_command
+FROM intersection
+INTO traffic_light;
+----
+1,ALL_RED_EMERGENCY
+2,PEDESTRIAN_WALK
+3,GREEN_EXTENDED
+4,GREEN_STANDARD
+5,FLASHING_YELLOW
+6,ALL_RED_EMERGENCY
+7,GREEN_EXTENDED
+8,GREEN_STANDARD
+9,FLASHING_YELLOW
+10,ALL_RED_EMERGENCY
