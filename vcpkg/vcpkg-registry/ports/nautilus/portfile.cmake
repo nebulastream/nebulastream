@@ -18,6 +18,7 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-increase-typed-value-ref-u16-to-u32.patch
+		0003-remove-noexcept-from-val-bool-move-assignment.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
