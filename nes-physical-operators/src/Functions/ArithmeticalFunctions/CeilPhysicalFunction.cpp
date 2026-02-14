@@ -34,15 +34,17 @@ CeilPhysicalFunction::CeilPhysicalFunction(PhysicalFunction childFunction, DataT
 
 VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto value = childFunction.execute(record, arena);
-    /// If the input type is a float, we need to ceil the value and returned the ceiled value.
-    /// If the input type is an integer, we do not need to do anything.
-    if (inputType.isFloat())
-    {
-        const auto ceiledValue = nautilus::ceil(value.cast<nautilus::val<double>>());
-        return VarVal{ceiledValue}.castToType(outputType.type);
-    }
-    return value.castToType(outputType.type);
+    return SINGLE_RETURN_WRAPPER({
+        const auto value = childFunction.execute(record, arena);
+        /// If the input type is a float, we need to ceil the value and returned the ceiled value.
+        /// If the input type is an integer, we do not need to do anything.
+        if (inputType.isFloat())
+        {
+            const auto ceiledValue = nautilus::ceil(value.cast<nautilus::val<double>>());
+            return VarVal{ceiledValue}.castToType(outputType.type);
+        }
+        return value.castToType(outputType.type);
+    });
 }
 
 PhysicalFunctionRegistryReturnType

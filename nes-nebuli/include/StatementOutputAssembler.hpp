@@ -20,6 +20,7 @@
 #include <string_view>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
@@ -65,8 +66,9 @@ using SourceDescriptorOutputRowType
 constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config"};
 
-using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
-constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
+using SinkDescriptorOutputRowType
+    = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
+constexpr std::array<std::string_view, 5> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config", "format_config"};
 
 using QueryIdOutputRowType = std::tuple<QueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
@@ -116,7 +118,11 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
         return std::make_pair(
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
-                result.created.getSinkName(), *result.created.getSchema(), result.created.getSinkType(), result.created.getConfig())});
+                result.created.getSinkName(),
+                *result.created.getSchema(),
+                result.created.getSinkType(),
+                result.created.getConfig(),
+                result.created.getOutputFormatterConfig())});
     }
 };
 
@@ -171,7 +177,8 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
         output.reserve(result.sinks.size());
         for (const auto& sink : result.sinks)
         {
-            output.emplace_back(sink.getSinkName(), *sink.getSchema(), sink.getSinkType(), sink.getConfig());
+            output.emplace_back(
+                sink.getSinkName(), *sink.getSchema(), sink.getSinkType(), sink.getConfig(), sink.getOutputFormatterConfig());
         }
         return std::make_pair(sinkDescriptorOutputColumns, output);
     }
@@ -218,7 +225,11 @@ struct StatementOutputAssembler<DropSinkStatementResult>
         return std::make_pair(
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
-                result.dropped.getSinkName(), *result.dropped.getSchema(), result.dropped.getSinkType(), result.dropped.getConfig())});
+                result.dropped.getSinkName(),
+                *result.dropped.getSchema(),
+                result.dropped.getSinkType(),
+                result.dropped.getConfig(),
+                result.dropped.getOutputFormatterConfig())});
     }
 };
 

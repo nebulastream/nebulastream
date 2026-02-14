@@ -18,7 +18,7 @@ get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
-target_link_libraries(nes-nautilus PUBLIC nes-memory)
+target_link_libraries(nes-nautilus PUBLIC nes-memory nes-output-formatters)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
@@ -38,6 +38,7 @@ target_include_directories(nes-nautilus PUBLIC
 # Link with the nautilus library
 find_package(spdlog REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
+find_package(cpptrace REQUIRED CONFIG)
 find_package(nautilus REQUIRED CONFIG)
 
 # We have to set the nes-nautilus to public to use the nautilus library in other modules

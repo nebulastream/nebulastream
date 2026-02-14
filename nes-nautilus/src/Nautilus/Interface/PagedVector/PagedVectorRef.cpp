@@ -23,6 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -159,15 +160,17 @@ PagedVectorRefIter& PagedVectorRefIter::operator++()
 
 nautilus::val<bool> PagedVectorRefIter::operator==(const PagedVectorRefIter& other) const
 {
+return SINGLE_RETURN_WRAPPER({
     if (this == &other)
     {
-        return true;
+        return nautilus::val<bool>(true);
     }
 
     const auto samePos = pos == other.pos;
     const auto samePagedVector = pagedVector == other.pagedVector;
     const auto sameProjections = projections == other.projections;
-    return samePos && samePagedVector && sameProjections;
+    return nautilus::val<bool>(samePos && samePagedVector && sameProjections);
+});
 }
 
 nautilus::val<bool> PagedVectorRefIter::operator!=(const PagedVectorRefIter& other) const

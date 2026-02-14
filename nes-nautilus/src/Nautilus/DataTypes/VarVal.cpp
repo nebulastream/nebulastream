@@ -100,101 +100,106 @@ VarVal::operator bool() const
 
 VarVal VarVal::castToType(const DataType::Type type) const
 {
-    switch (type)
-    {
-        case DataType::Type::BOOLEAN: {
-            return {cast<nautilus::val<bool>>()};
+    return SINGLE_RETURN_WRAPPER({
+        switch (type)
+        {
+            case DataType::Type::BOOLEAN: {
+                return VarVal{cast<nautilus::val<bool>>()};
+            }
+            case DataType::Type::INT8: {
+                return VarVal{cast<nautilus::val<int8_t>>()};
+            }
+            case DataType::Type::INT16: {
+                return VarVal{cast<nautilus::val<int16_t>>()};
+            }
+            case DataType::Type::INT32: {
+                return VarVal{cast<nautilus::val<int32_t>>()};
+            }
+            case DataType::Type::INT64: {
+                return VarVal{cast<nautilus::val<int64_t>>()};
+            }
+            case DataType::Type::UINT8: {
+                return VarVal{cast<nautilus::val<uint8_t>>()};
+            }
+            case DataType::Type::UINT16: {
+                return VarVal{cast<nautilus::val<uint16_t>>()};
+            }
+            case DataType::Type::UINT32: {
+                return VarVal{cast<nautilus::val<uint32_t>>()};
+            }
+            case DataType::Type::UINT64: {
+                return VarVal{cast<nautilus::val<uint64_t>>()};
+            }
+            case DataType::Type::FLOAT32: {
+                return VarVal{cast<nautilus::val<float>>()};
+            }
+            case DataType::Type::FLOAT64: {
+                return VarVal{cast<nautilus::val<double>>()};
+            }
+            case DataType::Type::VARSIZED: {
+                return VarVal{cast<VariableSizedData>()};
+            }
+            case DataType::Type::CHAR:
+            case DataType::Type::UNDEFINED:
+                throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
         }
-        case DataType::Type::INT8: {
-            return {cast<nautilus::val<int8_t>>()};
-        }
-        case DataType::Type::INT16: {
-            return {cast<nautilus::val<int16_t>>()};
-        }
-        case DataType::Type::INT32: {
-            return {cast<nautilus::val<int32_t>>()};
-        }
-        case DataType::Type::INT64: {
-            return {cast<nautilus::val<int64_t>>()};
-        }
-        case DataType::Type::UINT8: {
-            return {cast<nautilus::val<uint8_t>>()};
-        }
-        case DataType::Type::UINT16: {
-            return {cast<nautilus::val<uint16_t>>()};
-        }
-        case DataType::Type::UINT32: {
-            return {cast<nautilus::val<uint32_t>>()};
-        }
-        case DataType::Type::UINT64: {
-            return {cast<nautilus::val<uint64_t>>()};
-        }
-        case DataType::Type::FLOAT32: {
-            return {cast<nautilus::val<float>>()};
-        }
-        case DataType::Type::FLOAT64: {
-            return {cast<nautilus::val<double>>()};
-        }
-        case DataType::Type::VARSIZED: {
-            return cast<VariableSizedData>();
-        }
-        case DataType::Type::CHAR:
-        case DataType::Type::UNDEFINED:
-            throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
-    }
-    std::unreachable();
+        std::unreachable();
+    });
 }
 
 VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const DataType::Type type)
 {
-    switch (type)
-    {
-        case DataType::Type::BOOLEAN: {
-            return {readValueFromMemRef<bool>(memRef)};
+    return SINGLE_RETURN_WRAPPER({
+        switch (type)
+        {
+            case DataType::Type::BOOLEAN: {
+                return VarVal{readValueFromMemRef<bool>(memRef)};
+            }
+            case DataType::Type::INT8: {
+                return VarVal{readValueFromMemRef<int8_t>(memRef)};
+            }
+            case DataType::Type::INT16: {
+                return VarVal{readValueFromMemRef<int16_t>(memRef)};
+            }
+            case DataType::Type::INT32: {
+                return VarVal{readValueFromMemRef<int32_t>(memRef)};
+            }
+            case DataType::Type::INT64: {
+                return VarVal{readValueFromMemRef<int64_t>(memRef)};
+            }
+            case DataType::Type::CHAR: {
+                return VarVal{readValueFromMemRef<char>(memRef)};
+            }
+            case DataType::Type::UINT8: {
+                return VarVal{readValueFromMemRef<uint8_t>(memRef)};
+            }
+            case DataType::Type::UINT16: {
+                return VarVal{readValueFromMemRef<uint16_t>(memRef)};
+            }
+            case DataType::Type::UINT32: {
+                return VarVal{readValueFromMemRef<uint32_t>(memRef)};
+            }
+            case DataType::Type::UINT64: {
+                return VarVal{readValueFromMemRef<uint64_t>(memRef)};
+            }
+            case DataType::Type::FLOAT32: {
+                return VarVal{readValueFromMemRef<float>(memRef)};
+            }
+            case DataType::Type::FLOAT64: {
+                return VarVal{readValueFromMemRef<double>(memRef)};
+            }
+            case DataType::Type::VARSIZED:
+            case DataType::Type::UNDEFINED:
+                throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
         }
-        case DataType::Type::INT8: {
-            return {readValueFromMemRef<int8_t>(memRef)};
-        }
-        case DataType::Type::INT16: {
-            return {readValueFromMemRef<int16_t>(memRef)};
-        }
-        case DataType::Type::INT32: {
-            return {readValueFromMemRef<int32_t>(memRef)};
-        }
-        case DataType::Type::INT64: {
-            return {readValueFromMemRef<int64_t>(memRef)};
-        }
-        case DataType::Type::CHAR: {
-            return {readValueFromMemRef<char>(memRef)};
-        }
-        case DataType::Type::UINT8: {
-            return {readValueFromMemRef<uint8_t>(memRef)};
-        }
-        case DataType::Type::UINT16: {
-            return {readValueFromMemRef<uint16_t>(memRef)};
-        }
-        case DataType::Type::UINT32: {
-            return {readValueFromMemRef<uint32_t>(memRef)};
-        }
-        case DataType::Type::UINT64: {
-            return {readValueFromMemRef<uint64_t>(memRef)};
-        }
-        case DataType::Type::FLOAT32: {
-            return {readValueFromMemRef<float>(memRef)};
-        }
-        case DataType::Type::FLOAT64: {
-            return {readValueFromMemRef<double>(memRef)};
-        }
-        case DataType::Type::VARSIZED:
-        case DataType::Type::UNDEFINED:
-            throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
-    }
-    std::unreachable();
+        std::unreachable();
+    });
 }
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal)
 {
     return std::visit(
+        ///NOLINTNEXTLINE(nes-multi-return-val)
         [&os]<typename T>(T& value) -> nautilus::val<std::ostream>&
         {
             /// If the T is of type uint8_t or int8_t, we want to convert it to an integer to print it as an integer and not as a char

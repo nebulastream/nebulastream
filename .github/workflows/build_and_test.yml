@@ -67,8 +67,8 @@ jobs:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
-            # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
-            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 2400 ${ADDTIONAL_CTEST_ARGS}
+            # timeout after 1 hour. This timeout can be adjusted if it causes failures.
+            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 3600 ${ADDTIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.

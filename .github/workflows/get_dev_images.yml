@@ -145,7 +145,7 @@ jobs:
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
     concurrency:
-      group: build-dev-image-lock-${{ needs.detect-dependency-changes.outputs.tag }}
+      group: build-dev-image-lock-${{ needs.detect-dependency-changes.outputs.tag }}-${{ matrix.sanitizer }}-${{ matrix.arch }}-${{ matrix.stdlib }}
       # To reduce the amount of work, i.e., building the same deps multiple times, we only allow one job to continue.
       # We do not cancel the in progress one, as it might have run for quite some time and is close to finishing.
       cancel-in-progress: false

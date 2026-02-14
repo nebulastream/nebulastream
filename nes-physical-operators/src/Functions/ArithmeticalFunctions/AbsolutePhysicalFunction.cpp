@@ -32,20 +32,22 @@ AbsolutePhysicalFunction::AbsolutePhysicalFunction(PhysicalFunction childFunctio
 
 VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    auto value = childFunction.execute(record, arena);
-    if (not inputType.isSignedInteger() and not inputType.isFloat())
-    {
-        return value;
-    }
+    return SINGLE_RETURN_WRAPPER({
+        auto value = childFunction.execute(record, arena);
+        if (not inputType.isSignedInteger() and not inputType.isFloat())
+        {
+            return value;
+        }
 
-    /// We need to built a zero and negativeOne via castToType, as we can not make any assumptions on the input type.
-    const auto zero = VarVal{0}.castToType(inputType.type);
-    const auto negativeOne = VarVal{-1}.castToType(inputType.type);
-    if (value < zero)
-    {
-        return value * negativeOne;
-    }
-    return value;
+        /// We need to built a zero and negativeOne via castToType, as we can not make any assumptions on the input type.
+        const auto zero = VarVal{0}.castToType(inputType.type);
+        const auto negativeOne = VarVal{-1}.castToType(inputType.type);
+        if (value < zero)
+        {
+            return value * negativeOne;
+        }
+        return value;
+    });
 }
 
 PhysicalFunctionRegistryReturnType

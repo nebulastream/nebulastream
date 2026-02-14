@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
+#include <functional>
+#include <type_traits>
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -25,6 +28,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -93,10 +97,11 @@ public:
     template <typename T1>
     T1 cast() const
     {
+return SINGLE_RETURN_WRAPPER({
         /// If the underlying value is the same type as T1, we can return it directly.
         if (std::holds_alternative<T1>(value))
         {
-            return std::get<T1>(value);
+            return T1(std::get<T1>(value));
         }
 
         return std::visit(
@@ -114,6 +119,7 @@ public:
                 }
             },
             value);
+});
     }
 
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
@@ -163,6 +169,14 @@ static_assert(std::is_convertible_v<nautilus::val<uint32_t>, VarVal>, "Should al
 static_assert(std::is_constructible_v<VarVal, VariableSizedData>, "Should be constructible from VariableSizedData");
 static_assert(std::is_convertible_v<VariableSizedData, VarVal>, "Should allow conversion from VariableSizedData to VarVal");
 static_assert(!std::is_convertible_v<int32_t, VarVal>, "Should not allow conversion from underlying to VarVal");
+
+template <typename Fn, typename... Args>
+requires(std::invocable<Fn, Args...> && std::same_as<std::remove_cvref_t<std::invoke_result_t<Fn, Args...>>, VarVal>)
+VarVal singleReturnWrapper(Fn&& func, Args&&... args)
+{
+    VarVal val = std::invoke(std::forward<Fn>(func), std::forward<Args>(args)...);
+    return val;
+}
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal);
 }

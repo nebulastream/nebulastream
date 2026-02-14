@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -159,6 +160,13 @@ SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const Serial
     const auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
     auto sinkType = serializableSinkDescriptor.sinktype();
 
+    /// Deserialize OutputFormatterConfig
+    std::unordered_map<std::string, std::string> formatConfig;
+    for (const auto& [key, value] : serializableSinkDescriptor.formatconfig())
+    {
+        formatConfig[key] = value;
+    }
+
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
     DescriptorConfig::Config sinkDescriptorConfig{};
     for (const auto& [key, descriptor] : serializableSinkDescriptor.config())
@@ -166,7 +174,7 @@ SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(const Serial
         sinkDescriptorConfig[key] = protoToDescriptorConfigType(descriptor);
     }
 
-    return SinkDescriptor{std::move(sinkName), schema, std::move(sinkType), std::move(sinkDescriptorConfig)};
+    return SinkDescriptor{std::move(sinkName), schema, std::move(sinkType), formatConfig, std::move(sinkDescriptorConfig)};
 }
 
 

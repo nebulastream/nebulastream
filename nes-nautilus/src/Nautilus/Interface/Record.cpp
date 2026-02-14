@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <std/ostream.h>
 #include <ErrorHandling.hpp>
 #include <static.hpp>
@@ -85,6 +86,7 @@ bool Record::hasField(const RecordFieldIdentifier& fieldName) const
 
 nautilus::val<bool> operator==(const Record& lhs, const Record& rhs)
 {
+return SINGLE_RETURN_WRAPPER({
     if (lhs.recordFields.size() != rhs.recordFields.size())
     {
         return false;
@@ -99,6 +101,7 @@ nautilus::val<bool> operator==(const Record& lhs, const Record& rhs)
     }
 
     return true;
+});
 }
 
 }

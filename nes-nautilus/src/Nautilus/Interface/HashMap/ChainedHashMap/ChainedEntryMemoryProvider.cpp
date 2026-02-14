@@ -70,29 +70,30 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
 VarVal ChainedEntryMemoryProvider::readVarVal(
     const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record::RecordFieldIdentifier& fieldName) const
 {
-    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
-    {
-        if (fieldIdentifier == fieldName)
+    return SINGLE_RETURN_WRAPPER({
+        for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
         {
-            const auto& entryRefCopy = entryRef;
-            auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
-            const auto memoryAddress = castedEntryAddress + fieldOffset;
-            if (type.isType(DataType::Type::VARSIZED))
+            if (fieldIdentifier == fieldName)
             {
-                const auto varSizedDataPtr
-                    = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
-                const auto sizeOfVarSized = readValueFromMemRef<uint32_t>(varSizedDataPtr);
-                const auto payloadOffset = nautilus::val<uint32_t>(sizeof(uint32_t));
-                const auto varSizedPayloadPtr = varSizedDataPtr + payloadOffset;
-                VariableSizedData varSizedData(varSizedPayloadPtr, sizeOfVarSized);
-                return varSizedData;
-            }
+                const auto& entryRefCopy = entryRef;
+                auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
+                const auto memoryAddress = castedEntryAddress + fieldOffset;
+                if (type.isType(DataType::Type::VARSIZED))
+                {
+                    const auto varSizedDataPtr
+                        = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
+                    const auto sizeOfVarSized = readValueFromMemRef<uint32_t>(varSizedDataPtr);
+                    const auto payloadOffset = nautilus::val<uint32_t>(sizeof(uint32_t));
+                    const auto varSizedPayloadPtr = varSizedDataPtr + payloadOffset;
+                    VariableSizedData varSizedData(varSizedPayloadPtr, sizeOfVarSized);
+                    return VarVal{varSizedData};
+                }
 
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);
-            return varVal;
+                return VarVal::readVarValFromMemory(memoryAddress, type.type);
+            }
         }
-    }
-    throw FieldNotFound("Field {} not found in ChainedEntryMemoryProvider", fieldName);
+        throw FieldNotFound("Field {} not found in ChainedEntryMemoryProvider", fieldName);
+    });
 }
 
 Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef) const

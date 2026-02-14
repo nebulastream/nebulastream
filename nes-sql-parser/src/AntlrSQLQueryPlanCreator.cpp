@@ -93,9 +93,10 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
             {
                 const auto& [type, configOptions] = inlineSink;
                 const auto sinkConfig = getSinkConfig(configOptions);
+                const auto formatConfig = getParserConfig(configOptions);
                 const auto schemaOpt = getSinkSchema(configOptions);
                 const Schema schema = (schemaOpt.has_value() ? schemaOpt.value() : Schema{});
-                return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, queryPlans.top());
+                return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, formatConfig, queryPlans.top());
             }},
         sinks.front());
 }

@@ -34,6 +34,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
@@ -43,8 +44,16 @@ namespace NES
 {
 
 SinkDescriptor::SinkDescriptor(
-    std::variant<std::string, uint64_t> sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
-    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<Schema>(schema)), sinkType(sinkType)
+    std::variant<std::string, uint64_t> sinkName,
+    const Schema& schema,
+    const std::string_view sinkType,
+    const std::unordered_map<std::string, std::string>& formatConfig,
+    DescriptorConfig::Config config)
+    : Descriptor(std::move(config))
+    , sinkName(std::move(sinkName))
+    , schema(std::make_shared<Schema>(schema))
+    , sinkType(sinkType)
+    , formatConfig(formatConfig)
 {
 }
 
@@ -53,7 +62,7 @@ std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
     return schema;
 }
 
-std::optional<std::string_view> SinkDescriptor::getFormatType() const
+std::string_view SinkDescriptor::getFormatType() const
 {
     try
     {
@@ -61,8 +70,8 @@ std::optional<std::string_view> SinkDescriptor::getFormatType() const
     }
     catch (std::out_of_range& e)
     {
-        NES_WARNING("Sinks of the type {} do not have an INPUT_FORMAT parameter.", getSinkType());
-        return std::nullopt;
+        /// If no output format is set, then the format will be native
+        return "Native";
     }
 }
 
@@ -81,6 +90,11 @@ std::string SinkDescriptor::getSinkName() const
         sinkName);
 }
 
+std::unordered_map<std::string, std::string> SinkDescriptor::getOutputFormatterConfig() const
+{
+    return formatConfig;
+}
+
 bool SinkDescriptor::isInline() const
 {
     return std::holds_alternative<uint64_t>(this->sinkName);
@@ -96,10 +110,11 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, Config: {})",
+        "SinkDescriptor: (name: {}, type: {}, Config: {}, FormatConfig: {{{}}})",
         sinkDescriptor.sinkName,
         sinkDescriptor.sinkType,
-        sinkDescriptor.toStringConfig());
+        sinkDescriptor.toStringConfig(),
+        fmt::join(sinkDescriptor.formatConfig, ","));
     return out;
 }
 
@@ -113,6 +128,12 @@ SerializableSinkDescriptor SinkDescriptor::serialize() const
     SerializableSinkDescriptor serializedSinkDescriptor;
     serializedSinkDescriptor.set_sinkname(getSinkName());
     SchemaSerializationUtil::serializeSchema(*schema, serializedSinkDescriptor.mutable_sinkschema());
+    /// Serialize Output Formatter Config
+    for (const auto& [key, value] : formatConfig)
+    {
+        serializedSinkDescriptor.mutable_formatconfig()->emplace(key, value);
+    }
+
     serializedSinkDescriptor.set_sinktype(sinkType);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : getConfig())
