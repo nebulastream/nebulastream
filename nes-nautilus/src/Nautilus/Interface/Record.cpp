@@ -44,6 +44,18 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
     return recordFields.at(recordFieldIdentifier);
 }
 
+VarVal& Record::at(const RecordFieldIdentifier& recordFieldIdentifier)
+{
+    return recordFields.at(recordFieldIdentifier);
+}
+
+VarVal Record::exchange(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& newValue)
+{
+    VarVal oldValue = recordFields.at(recordFieldIdentifier);
+    recordFields.at(recordFieldIdentifier) = newValue;
+    return oldValue;
+}
+
 void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal)
 {
     /// We can not use the insert_or_assign method, as we otherwise run into a tracing exception, as this might result in incorrect code.
