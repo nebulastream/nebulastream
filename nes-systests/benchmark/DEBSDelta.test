@@ -1,0 +1,57 @@
+# name: benchmark/DEBSDelta.test
+# description: Delta operator on large DEBS data sets with filters and window aggregations
+# groups: [milestone, benchmark, large, Delta]
+
+CREATE LOGICAL SOURCE solarPanels(producerId INT32, groupId INT32, producedPower FLOAT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR solarPanels TYPE File;
+ATTACH FILE large/debs/SOLAR_PANELS_TOPIC_1G.csv
+
+CREATE LOGICAL SOURCE windTurbines(producerId INT32, groupId INT32, producedPower FLOAT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR windTurbines TYPE File;
+ATTACH FILE large/debs/WIND_TURBINES_TOPIC_5M.csv
+
+CREATE SINK solarDeltaChecksum(deltaPower FLOAT64) TYPE Checksum;
+CREATE SINK solarDeltaTimestampChecksum(solarPanels.timestamp UINT64, deltaPower FLOAT64) TYPE Checksum;
+CREATE SINK windDeltaChecksum(deltaPower FLOAT64) TYPE Checksum;
+CREATE SINK filteredDeltaChecksum(deltaPower FLOAT64) TYPE Checksum;
+CREATE SINK deltaWindowChecksum(solarPanels.start UINT64, solarPanels.end UINT64, solarPanels.groupId INT32, sumDelta FLOAT64) TYPE Checksum;
+CREATE SINK deltaFilterWindowChecksum(solarPanels.start UINT64, solarPanels.end UINT64, sumDelta FLOAT64) TYPE Checksum;
+
+# Query 1 - Simple delta on solar panel produced power (~42.7M tuples)
+SELECT deltaPower FROM DELTA(solarPanels, producedPower AS deltaPower) INTO solarDeltaChecksum;
+----
+42699999 22791491865
+
+# Query 2 - Delta on solar panels with pass-through timestamp
+SELECT timestamp, deltaPower FROM DELTA(solarPanels, producedPower AS deltaPower) INTO solarDeltaTimestampChecksum;
+----
+42699999 52297816474
+
+# Query 3 - Delta on wind turbines (~200K tuples)
+SELECT deltaPower FROM DELTA(windTurbines, producedPower AS deltaPower) INTO windDeltaChecksum;
+----
+200000 64572359
+
+# Query 4 - Filter BEFORE delta: only group 1 solar panels, then compute delta
+SELECT deltaPower
+FROM DELTA((SELECT producedPower, timestamp FROM solarPanels WHERE groupId = INT32(1)), producedPower AS deltaPower)
+INTO filteredDeltaChecksum;
+----
+10675008 5697995439
+
+# Query 5 - Delta THEN window aggregation: compute power deltas, then sum per group per hour
+SELECT start, end, groupId, SUM(deltaPower) AS sumDelta
+FROM DELTA(solarPanels, producedPower AS deltaPower)
+GROUP BY groupId
+WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
+INTO deltaWindowChecksum;
+----
+1914020 3826294433
+
+# Query 6 - Filter, delta, then window: filter to high-power panels, delta, sum per hour
+SELECT start, end, SUM(deltaPower) AS sumDelta
+FROM DELTA((SELECT producedPower, timestamp FROM solarPanels WHERE producedPower >= FLOAT64(400)), producedPower AS deltaPower)
+WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
+INTO deltaFilterWindowChecksum;
+----
+478505 890982345

@@ -21,6 +21,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/DeltaLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -52,6 +53,9 @@ public:
     /// @return the updated queryPlan
     static LogicalPlan
     addProjection(std::vector<ProjectionLogicalOperator::Projection> projections, bool asterisk, const LogicalPlan& queryPlan);
+
+    /// @brief Adds a delta operator to the query plan.
+    static LogicalPlan addDelta(std::vector<DeltaLogicalOperator::DeltaExpression> deltaExpressions, const LogicalPlan& queryPlan);
 
     /// @brief: this call adds the selection operator to the queryPlan; the operator selects records according to the predicate.
     /// @param selectionFunction a function node containing the predicate

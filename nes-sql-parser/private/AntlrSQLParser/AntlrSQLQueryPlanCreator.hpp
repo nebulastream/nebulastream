@@ -81,6 +81,9 @@ public:
     void exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context) override;
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
     void enterInlineSource(AntlrSQLParser::InlineSourceContext* context) override;
+    void enterDeltaSource(AntlrSQLParser::DeltaSourceContext* context) override;
+    void exitDeltaSource(AntlrSQLParser::DeltaSourceContext* context) override;
+    void exitDeltaExpression(AntlrSQLParser::DeltaExpressionContext* context) override;
 };
 
 }
